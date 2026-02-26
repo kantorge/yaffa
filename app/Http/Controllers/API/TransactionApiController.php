@@ -12,14 +12,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
-use App\Models\ReceivedMail;
+use App\Models\AiDocument;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use App\Models\User;
 use App\Services\CategoryService;
+use App\Services\CategoryLearningService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +29,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -43,7 +46,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -55,8 +59,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function reconcile(Transaction $transaction, string $newState): JsonResponse
     {
         /**
-         * @put('/api/transaction/{transaction}/reconciled/{newState}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @put("/api/transaction/{transaction}/reconciled/{newState}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $transaction);
 
@@ -69,9 +73,11 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getItem(Transaction $transaction): JsonResponse
     {
         /**
-         * @get('/api/transaction/{transaction}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transaction/{transaction}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
+        Gate::authorize('view', $transaction);
+
         $transaction->loadDetails();
 
         return response()->json(
@@ -85,8 +91,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getScheduledItems(string $type, Request $request): JsonResponse
     {
         /**
-         * @get('/api/transactions/get_scheduled_items/{type}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transactions/get_scheduled_items/{type}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Return empty response if categories are required, but not set or empty
@@ -201,8 +207,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function findTransactions(Request $request): JsonResponse
     {
         /**
-         * @get('/api/transactions')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transactions")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // A request without any search criteria will return an empty response to avoid loading all transactions
@@ -369,19 +375,19 @@ class TransactionApiController extends Controller implements HasMiddleware
             ) ?? 1;
 
             // Extend the optional amount_to and amount_from fields in the config
-            if ($transaction->config->amount_to) {
-                $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
-            }
-            if ($transaction->config->amount_from) {
-                $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+            if ($transaction->config instanceof TransactionDetailStandard) {
+                if ($transaction->config->amount_to) {
+                    $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
+                }
+                if ($transaction->config->amount_from) {
+                    $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+                }
             }
 
             // Extend the amount field in the items
-            if ($transaction->transactionItems) {
-                $transaction->transactionItems->map(function ($item) use ($transaction) {
-                    $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
-                });
-            }
+            $transaction->transactionItems->map(function ($item) use ($transaction) {
+                $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
+            });
 
             return $transaction;
         });
@@ -397,9 +403,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post('/api/transactions/standard')
-         * @name('api.transactions.storeStandard')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/transactions/standard")
+         * @name("api.transactions.storeStandard")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -440,13 +446,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->handleSourceTransactionUpdates($validated);
 
-        // Save reference to incoming mail, if finalizing a transaction from email
-        if ($validated['action'] === 'finalize' && $validated['source_id']) {
-            $mail = ReceivedMail::find($validated['source_id']);
-            $mail->transaction_id = $transaction->id;
-            $mail->handled = true;
-            $mail->save();
-        }
+        $this->finalizeAiDocument($validated, $transaction, $request->user());
 
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
@@ -462,9 +462,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post('/api/transactions/investment')
-         * @name('api.transactions.storeInvestment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/transactions/investment")
+         * @name("api.transactions.storeInvestment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -493,6 +493,8 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->handleSourceTransactionUpdates($validated);
 
+        $this->finalizeAiDocument($validated, $transaction, $request->user());
+
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
 
@@ -507,9 +509,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/standard/{transaction}')
-         * @name('api.transactions.updateStandard')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/standard/{transaction}")
+         * @name("api.transactions.updateStandard")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -586,13 +588,12 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
-    // TODO: unify the update methods, account for the differences in the update process
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/investment/{transaction}')
-         * @name('api.transactions.updateInvestment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/investment/{transaction}")
+         * @name("api.transactions.updateInvestment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -684,9 +685,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/{transaction}/skip')
-         * @name('api.transactions.skipScheduleInstance')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/{transaction}/skip")
+         * @name("api.transactions.skipScheduleInstance")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
@@ -705,9 +706,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function destroy(Transaction $transaction): JsonResponse
     {
         /**
-         * @delete('/api/transactions/{transaction}')
-         * @name('api.transactions.destroy')
-         * @middlewares('web', 'auth', 'verified')
+         * @delete("/api/transactions/{transaction}")
+         * @name("api.transactions.destroy")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Load the details of the transaction for the event
@@ -731,6 +732,7 @@ class TransactionApiController extends Controller implements HasMiddleware
     private function handleSourceTransactionUpdates(array $validated): void
     {
         // Adjust source transaction schedule, if entering schedule instance
+        // The reference is passed as the ID
         if ($validated['action'] === 'enter') {
             $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
@@ -761,6 +763,86 @@ class TransactionApiController extends Controller implements HasMiddleware
             event(new TransactionUpdated($sourceTransaction, [
                 'schedule_config' => $originalScheduleConfig,
             ]));
+        }
+    }
+
+    /**
+     * Finalize an AI document after transaction creation.
+     */
+    private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): void
+    {
+        if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
+            Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
+                'action' => $validated['action'] ?? null,
+                'ai_document_id' => $validated['ai_document_id'],
+            ]);
+            return;
+        }
+
+        $aiDocument = AiDocument::query()
+            ->where('id', $validated['ai_document_id'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        // Silently return if the AI document is not found
+        if (! $aiDocument) {
+            Log::debug('AI document not found for finalization', [
+                'ai_document_id' => $validated['ai_document_id'],
+                'user_id' => $user->id,
+            ]);
+            return;
+        }
+
+        $aiDocument->status = 'finalized';
+        if (! $aiDocument->processed_at) {
+            $aiDocument->processed_at = now();
+        }
+        $aiDocument->save();
+
+        if ($transaction->ai_document_id !== $aiDocument->id) {
+            $transaction->ai_document_id = $aiDocument->id;
+            // The update of the reference should not trigger update-based events
+            $transaction->saveQuietly();
+        }
+
+        // Update CategoryLearning for accepted recommendations if there are any
+        if ($validated['items'] && is_array($validated['items'])) {
+            $this->updateCategoryLearning($transaction, $user, $validated['items']);
+        }
+    }
+
+    /**
+     * Update CategoryLearning from user-submitted transaction items.
+     */
+    private function updateCategoryLearning(
+        Transaction $transaction,
+        User $user,
+        array $submittedItems = []
+    ): void {
+        // Only applicable for standard transactions with items
+        if ($transaction->config_type !== 'standard') {
+            return;
+        }
+
+        $learningService = new CategoryLearningService($user);
+
+        // Process each submitted item where learning is enabled
+        foreach ($submittedItems as $submittedItem) {
+            // Learning is enabled by default, skip only if explicitly disabled
+            if (! ($submittedItem['learnRecommendation'] ?? true)) {
+                continue;
+            }
+
+            $categoryId = $submittedItem['category_id'] ?? null;
+            $description = $submittedItem['description'] ?? null;
+
+            // Need both category and description to learn
+            if (! $categoryId || ! $description) {
+                continue;
+            }
+
+            // Use service method to record the learning
+            $learningService->recordCategorySelection($description, (int) $categoryId);
         }
     }
 }

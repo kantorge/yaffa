@@ -86,7 +86,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __("First transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
+                    return (data ? data.toLocaleDateString(window.YAFFA.userSettings.locale) : __('Never used'));
                 }
 
                 return data || null;
@@ -99,7 +99,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Last transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
+                    return (data ? data.toLocaleDateString(window.YAFFA.userSettings.locale) : __('Never used'));
                 }
 
                 return data || null;

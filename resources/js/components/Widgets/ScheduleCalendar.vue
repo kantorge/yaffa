@@ -65,7 +65,7 @@
     props: {
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
       },
       language: {
         type: String,
@@ -79,7 +79,7 @@
           return '';
         }
 
-        return dataTableHelpers.transactionTypeIcon(
+        return transactionTypeIcon(
           transaction.transaction_type,
           this.getTransactionLabel(transaction),
         );

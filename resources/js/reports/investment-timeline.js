@@ -44,7 +44,7 @@ function initializeChart() {
     dateAxis.dateFormatter.dateFormat = "yyyy-MM-dd";
     dateAxis.renderer.minGridDistance = 70;
     dateAxis.baseInterval = { count: 1, timeUnit: "month" };
-    dateAxis.max = new Date(window.YAFFA.end_date).getTime();
+    dateAxis.max = new Date(window.YAFFA.userSettings.end_date).getTime();
     dateAxis.strictMinMax = true;
     dateAxis.renderer.tooltipLocation = 0;
 
@@ -159,13 +159,13 @@ fetch('/api/assets/investment/timeline')
             item.value = item.quantity * item.last_price;
 
             item.formatted_quantity = item.quantity.toLocaleString(
-                window.YAFFA.locale,
+                window.YAFFA.userSettings.locale,
                 {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 4,
                 }
             );
-            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.locale, item.currency);
+            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.userSettings.locale, item.currency);
 
             return item;
         });

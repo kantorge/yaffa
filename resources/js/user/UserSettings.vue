@@ -12,7 +12,7 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="row mb-3">
+        <div class="row">
           <label for="language" class="col-form-label col-sm-3">
             {{ __('Language') }}
           </label>
@@ -33,7 +33,7 @@
                 </option>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="__('Controls the language used in YAFFA.')"
@@ -44,7 +44,7 @@
             <HasError field="language" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="locale" class="col-form-label col-sm-3">
             {{ __('Locale') }}
           </label>
@@ -65,20 +65,20 @@
                 </option>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
                   __('Controls how numbers, dates, currencies are formatted.')
                 "
               >
-                <i class="fa fa-info-circle"></i>
+                <i class="fa fa-info-circle text-info"></i>
               </span>
             </div>
             <HasError field="locale" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="start_date" class="col-form-label col-sm-3">
             {{ __('Start date for YAFFA') }}
           </label>
@@ -108,7 +108,7 @@
                 </template>
               </DatePicker>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -123,7 +123,7 @@
             <HasError field="start_date" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="end_date" class="col-form-label col-sm-3">
             {{ __('End date for YAFFA') }}
           </label>
@@ -153,7 +153,7 @@
                 </template>
               </DatePicker>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -166,7 +166,7 @@
             <HasError field="end_date" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label
             for="account_details_date_range"
             class="col-form-label col-sm-3"
@@ -191,7 +191,7 @@
                 </optgroup>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -231,13 +231,14 @@
     },
     datePresets: {
       type: Object,
-      default: window.datePresets,
+      default: window.YAFFA.config.datePresets,
     },
   });
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
   import { __ } from '../i18n';
+  import { initializeBootstrapTooltips } from '../helpers';
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
@@ -251,22 +252,17 @@
     },
     data: () => ({
       form: new Form({
-        language: window.YAFFA.language,
-        locale: window.YAFFA.locale,
-        end_date: window.YAFFA.end_date,
-        start_date: window.YAFFA.start_date,
+        language: window.YAFFA.userSettings.language,
+        locale: window.YAFFA.userSettings.locale,
+        end_date: window.YAFFA.userSettings.end_date,
+        start_date: window.YAFFA.userSettings.start_date,
         account_details_date_range:
-          window.YAFFA.account_details_date_range || 'none',
+          window.YAFFA.userSettings.account_details_date_range || 'none',
       }),
     }),
     mounted() {
       // Finally, initialize tooltips
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-coreui-toggle="tooltip"]',
-      );
-      [...tooltipTriggerList].map(
-        (tooltipTriggerEl) => new coreui.Tooltip(tooltipTriggerEl),
-      );
+      initializeBootstrapTooltips(this.$el);
     },
     methods: {
       onSubmit: function () {
@@ -279,11 +275,11 @@
           .then((response) => {
             if (response.status === 200) {
               // Update the global YAFFA object with the new settings
-              window.YAFFA.language = response.data.data.language;
-              window.YAFFA.locale = response.data.data.locale;
-              window.YAFFA.start_date = response.data.data.start_date;
-              window.YAFFA.end_date = response.data.data.end_date;
-              window.YAFFA.account_details_date_range =
+              window.YAFFA.userSettings.language = response.data.data.language;
+              window.YAFFA.userSettings.locale = response.data.data.locale;
+              window.YAFFA.userSettings.start_date = response.data.data.start_date;
+              window.YAFFA.userSettings.end_date = response.data.data.end_date;
+              window.YAFFA.userSettings.account_details_date_range =
                 response.data.data.account_details_date_range;
 
               // Emit a custom event to global scope about the result
@@ -315,3 +311,10 @@
     },
   };
 </script>
+
+<style scoped>
+  form div.row:not(:last-child) {
+    /* Apply mb-3 margin only to rows except the last one */
+    margin-bottom: 1rem !important;
+  }
+</style>

@@ -504,7 +504,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   export default {
     components: {
@@ -529,14 +529,21 @@
       },
       fromModal: {
         // If true, the form is shown in a modal, which controls a few parts of the form
-        // - notification behavior
         // - availability of callback options
         type: Boolean,
         default: false,
       },
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
+      },
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
       },
     },
 
@@ -565,6 +572,7 @@
           frequency: 'DAILY',
           interval: 1,
         },
+        ai_document_id: null,
       });
 
       // Other values
@@ -678,7 +686,7 @@
 
     created() {
       // Load transaction types from window global context first
-      const transactionTypesConfig = window.transactionTypes || {};
+      const transactionTypesConfig = window.YAFFA.config.transactionTypes || {};
 
       // Filter and map investment types to component format
       this.transactionTypes = Object.values(transactionTypesConfig)
@@ -705,6 +713,7 @@
 
       // Set form action
       this.form.action = this.action;
+      this.form.ai_document_id = this.aiDocumentId;
     },
 
     mounted() {
@@ -737,11 +746,7 @@
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $(this.dropdownParentSelector),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {
@@ -814,11 +819,7 @@
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $(this.dropdownParentSelector),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {
@@ -933,16 +934,15 @@
           this.form.budget = this.transaction.budget;
           this.form.reconciled = this.transaction.reconciled;
 
-          // Copy configuration
-          this.form.config.quantity = this.transaction.config?.quantity;
-          this.form.config.price = this.transaction.config?.price;
-          this.form.config.commission = this.transaction.config?.commission;
-          this.form.config.tax = this.transaction.config?.tax;
-          this.form.config.dividend = this.transaction.config?.dividend;
-
-          this.form.config.account_id = this.transaction.config.account_id;
-          this.form.config.investment_id =
-            this.transaction.config.investment_id;
+          // Copy configuration (handle both saved transactions and AI drafts)
+          const config = this.transaction.config || {};
+          this.form.config.quantity = config.quantity;
+          this.form.config.price = config.price;
+          this.form.config.commission = config.commission;
+          this.form.config.tax = config.tax;
+          this.form.config.dividend = config.dividend;
+          this.form.config.account_id = config.account_id;
+          this.form.config.investment_id = config.investment_id;
 
           // Copy schedule config
           // TODO: date conversion should take place here, or elsewehere?
@@ -1005,8 +1005,9 @@
           }
         }
 
-        // Set form action
+        // Set form action and AI document ID
         this.form.action = this.action;
+        this.form.ai_document_id = this.aiDocumentId;
       },
 
       transactionTypeChanged() {

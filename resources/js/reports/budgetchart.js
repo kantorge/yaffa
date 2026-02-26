@@ -20,7 +20,7 @@ import 'datatables.net-bs5';
 // Select2 for account selection
 import select2 from 'select2';
 select2();
-loadSelect2Language(window.YAFFA.language);
+loadSelect2Language(window.YAFFA.userSettings.language);
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
@@ -85,10 +85,10 @@ am4core.useTheme(am4themes_kelly);
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
 applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
 
-chart.numberFormatter.intlLocales = window.YAFFA.locale;
+chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
 chart.numberFormatter.numberFormat = {
     style: 'currency',
-    currency: window.YAFFA.baseCurrency.iso_code,
+    currency: window.YAFFA.userSettings.baseCurrency.iso_code,
     minimumFractionDigits: 0
 };
 
@@ -404,7 +404,7 @@ window.table = $(tableSelector).DataTable({
         },
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.userSettings.locale),
         {
             data: "transaction_schedule.rule",
             title: __("Schedule"),
@@ -414,7 +414,7 @@ window.table = $(tableSelector).DataTable({
                 return data.toText();
             }
         },
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.next_date", __("Next date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.next_date", __("Next date"), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),

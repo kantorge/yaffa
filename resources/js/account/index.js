@@ -53,7 +53,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Opening balance"),
             render: function (data, type, row) {
                 if (type === 'display') {
-                    return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
+                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.config.currency);
                 }
                 return data;
             },
@@ -69,7 +69,7 @@ window.table = $(dataTableSelector).DataTable({
                     if (data > 0) {
                         return `<a href="${window.route('reports.transactions', {accounts: [row.id]})}"
                         title="${__('Show transactions')}"
-                        >${data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
+                        >${data.toLocaleString(window.YAFFA.userSettings.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
                     }
                     return data;
                 }

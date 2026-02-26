@@ -26,15 +26,16 @@ class AccountApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/account')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/account")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $parameters = [
             'user' => $request->user(),
@@ -98,7 +99,6 @@ class AccountApiController extends Controller implements HasMiddleware
             ->when($parameters['limit'] !== 0, function ($query) use ($parameters) {
                 $query->limit($parameters['limit']);
             })
-            ->get()
             ->pluck('id');
 
         if ($accountIds->count() > 0) {
@@ -164,8 +164,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/account/investment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/account/investment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $user = $request->user();
 
@@ -241,8 +241,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @get('/api/assets/account/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/account/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $accountEntity);
 
@@ -265,8 +265,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
         /**
-         * @get('/api/account/balance/{accountEntity?}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/account/balance/{accountEntity?}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         $user = $request->user();
@@ -299,9 +299,11 @@ class AccountApiController extends Controller implements HasMiddleware
         $baseCurrency = $this->getBaseCurrency();
 
         // Get all currencies for rate calculation
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Currency> $currencies */
         $currencies = $user->currencies()->get();
 
         // Load all accounts or the selected one
+        /** @var \Illuminate\Database\Eloquent\Collection<int, AccountEntity> $accounts */
         $accounts = $user
             ->accounts()
             ->when($accountEntity, fn ($query) => $query->where('id', $accountEntity->id))
@@ -363,7 +365,11 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
 
         $accounts
-            ->map(function ($account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+            ->map(function (AccountEntity $account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+                if (! $account->config instanceof Account) {
+                    return $account;
+                }
+
                 // Get the account group name for later grouping
                 $account['account_group_name'] = $account->config->accountGroup->name;
                 $account['account_group_id'] = $account->config->accountGroup->id;
@@ -419,8 +425,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function updateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @put('/api/account/monthlySummary/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @put("/api/account/monthlySummary/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 

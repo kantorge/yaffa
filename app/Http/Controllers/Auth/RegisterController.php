@@ -70,9 +70,9 @@ class RegisterController extends Controller implements HasMiddleware
     public function showRegistrationForm(): View|RedirectResponse
     {
         /**
-         * @get('/register')
-         * @name('register')
-         * @middlewares('web', 'guest')
+         * @get("/register")
+         * @name("register")
+         * @middlewares("web", "guest")
          */
         if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
             self::addMessage(

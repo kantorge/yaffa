@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Jobs\CalculateAccountMonthlySummary;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
 
 class TransactionService
 {
@@ -18,6 +21,9 @@ class TransactionService
      */
     public function enterScheduleInstance(Transaction $transaction): void
     {
+        // Ensure the schedule is loaded
+        $transaction->loadMissing('transactionSchedule');
+
         // Clone the transaction using cloner
         /** @var Transaction $newTransaction */
         $newTransaction = $transaction->duplicate();
@@ -60,11 +66,18 @@ class TransactionService
             'config.accountTo.config',
         ]);
 
+        /** @var TransactionDetailStandard|null $config */
+        $config = $this->getStandardConfig($transaction);
+
+        if ($config === null) {
+            return null;
+        }
+
         if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT) {
-            return $transaction->config->accountTo?->config->currency_id;
+            return $this->getAccountCurrencyIdFromEntity($config->accountTo);
         }
         if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
-            return $transaction->config->accountFrom?->config->currency_id;
+            return $this->getAccountCurrencyIdFromEntity($config->accountFrom);
         }
 
         return null;
@@ -78,7 +91,14 @@ class TransactionService
             'config.account.config',
         ]);
 
-        return $transaction->config->account->config->currency_id;
+        /** @var TransactionDetailInvestment|null $config */
+        $config = $this->getInvestmentConfig($transaction);
+
+        if ($config === null) {
+            return null;
+        }
+
+        return $this->getAccountCurrencyIdFromEntity($config->account);
     }
 
     /**
@@ -101,11 +121,18 @@ class TransactionService
             'config',
         ]);
 
+        /** @var TransactionDetailStandard|null $config */
+        $config = $this->getStandardConfig($transaction);
+
+        if ($config === null) {
+            return null;
+        }
+
         if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT) {
-            return $transaction->config->amount_from;
+            return $config->amount_from;
         }
         if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
-            return $transaction->config->amount_from * -1;
+            return $config->amount_from * -1;
         }
 
         return null;
@@ -117,14 +144,20 @@ class TransactionService
             'config',
         ]);
 
+        /** @var TransactionDetailInvestment|null $config */
+        $config = $this->getInvestmentConfig($transaction);
+
+        if ($config === null) {
+            return null;
+        }
+
         if ($transaction->transaction_type->amountMultiplier() !== null) {
             return $transaction->transaction_type->amountMultiplier()
-                * $transaction->config->price
-                * $transaction->config->quantity
-
-                + $transaction->config->dividend
-                - $transaction->config->tax
-                - $transaction->config->commission;
+                * $config->price
+                * $config->quantity
+                + $config->dividend
+                - $config->tax
+                - $config->commission;
         }
 
         return null;
@@ -156,16 +189,23 @@ class TransactionService
             'config.accountTo',
         ]);
 
-        /** @var AccountEntity $accountFrom */
-        $accountFrom = $transaction->config->accountFrom;
+        /** @var TransactionDetailStandard|null $config */
+        $config = $this->getStandardConfig($transaction);
 
-        /** @var AccountEntity $accountTo */
-        $accountTo = $transaction->config->accountTo;
+        if ($config === null) {
+            return;
+        }
+
+        /** @var AccountEntity|null $accountFrom */
+        $accountFrom = $config->accountFrom;
+
+        /** @var AccountEntity|null $accountTo */
+        $accountTo = $config->accountTo;
 
         if (!$transaction->schedule && !$transaction->budget) {
             // This is a simple transaction with no schedule or budget attached
             // We need to recalculate only the given month for one or both accounts
-            if ($accountFrom->isAccount()) {
+            if ($accountFrom?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
                     $transaction->user,
                     'account_balance-fact',
@@ -178,7 +218,7 @@ class TransactionService
                 dispatch_sync($job);
             }
 
-            if ($accountTo->isAccount()) {
+            if ($accountTo?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
                     $transaction->user,
                     'account_balance-fact',
@@ -197,7 +237,7 @@ class TransactionService
         if ($transaction->schedule) {
             // This is a scheduled transaction, optionally with a budget attached
             // We need to recalculate the entire forecast for one or both accounts
-            if ($accountFrom->isAccount()) {
+            if ($accountFrom?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
                     $transaction->user,
                     'account_balance-forecast',
@@ -208,7 +248,7 @@ class TransactionService
                 dispatch($job);
             }
 
-            if ($accountTo->isAccount()) {
+            if ($accountTo?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
                     $transaction->user,
                     'account_balance-forecast',
@@ -262,8 +302,15 @@ class TransactionService
             'config.account',
         ]);
 
+        /** @var TransactionDetailInvestment|null $config */
+        $config = $this->getInvestmentConfig($transaction);
+
+        if ($config === null) {
+            return;
+        }
+
         /** @var AccountEntity $account */
-        $account = $transaction->config->account;
+        $account = $config->account;
 
         if (!$transaction->schedule) {
             // This is a simple transaction with no schedule attached
@@ -284,5 +331,42 @@ class TransactionService
             $account
         );
         dispatch($job);
+    }
+
+    private function getStandardConfig(Transaction $transaction): ?TransactionDetailStandard
+    {
+        $config = $transaction->config;
+
+        if (!$config instanceof TransactionDetailStandard) {
+            return null;
+        }
+
+        return $config;
+    }
+
+    private function getInvestmentConfig(Transaction $transaction): ?TransactionDetailInvestment
+    {
+        $config = $transaction->config;
+
+        if (!$config instanceof TransactionDetailInvestment) {
+            return null;
+        }
+
+        return $config;
+    }
+
+    private function getAccountCurrencyIdFromEntity(?AccountEntity $accountEntity): ?int
+    {
+        if ($accountEntity === null || !$accountEntity->isAccount()) {
+            return null;
+        }
+
+        $accountConfig = $accountEntity->config;
+
+        if (!$accountConfig instanceof Account) {
+            return null;
+        }
+
+        return $accountConfig->currency_id;
     }
 }

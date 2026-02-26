@@ -136,7 +136,7 @@
         ? new Date(Math.max(...allDates))
         : new Date();
       return {
-        locale: window.YAFFA ? window.YAFFA.locale : navigator.language,
+        locale: window.YAFFA ? window.YAFFA.userSettings.locale : navigator.language,
         internalDateFrom: this.dateFrom || minDate,
         internalDateTo: this.dateTo || maxDate,
       };

@@ -1,0 +1,108 @@
+<?php
+
+return [
+    /*
+     * File upload configuration
+     */
+    'file_upload' => [
+        'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 5),
+        'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 20),
+        // This is a restrictive default. Adjust as needed, but be cautious about allowing too many types for security reasons.
+        'allowed_types' => explode(',', env('AI_DOCUMENT_ALLOWED_TYPES', 'txt'))
+    ],
+
+    /*
+     * File retention and cleanup - NOT IMPLEMENTED YET, but reserved for future use.
+     */
+    'local_storage_file_retention' => [
+        'retention_days' => env('AI_DOCUMENT_FILE_RETENTION_DAYS', 90),
+    ],
+
+    /*
+     * Asset matching similarity threshold
+     */
+    'asset_matching' => [
+        'similarity_threshold' => 0.5,
+        'max_suggestions' => 10,
+    ],
+
+    /*
+     * Duplicate detection configuration
+     */
+    'duplicate_detection' => [
+        'date_window_days' => 3,
+        'amount_tolerance_percent' => 10,
+        'similarity_threshold' => 0.5,
+    ],
+
+    /*
+     * Google Drive monitoring configuration
+     */
+    'google_drive' => [
+        'enabled' => env('AI_GOOGLE_DRIVE_ENABLED', false),
+        'sync_interval_minutes' => env('AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES', 15),
+    ],
+
+    /*
+     * Supported AI providers and models
+     */
+    'providers' => [
+        'openai' => [
+            'name' => 'OpenAI',
+            'models' => [
+                'gpt-4o' => [
+                    'vision' => true,
+                ],
+                'gpt-4o-mini' => [
+                    'vision' => true,
+                ],
+                'gpt-5-mini' => [
+                    'vision' => false,
+                ],
+            ],
+        ],
+        'gemini' => [
+            'name' => 'Google Gemini',
+            'models' => [
+                'gemini-1.5-pro' => [
+                    'vision' => true,
+                ],
+                'gemini-1.5-flash' => [
+                    'vision' => true,
+                ],
+            ],
+        ],
+    ],
+
+    /*
+     * OCR configuration
+     */
+    'ocr' => [
+        'tesseract_enabled' => env('TESSERACT_ENABLED', false),
+        'tesseract_mode' => env('TESSERACT_MODE', 'binary'), // 'binary' or 'http'
+        'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
+
+        // Binary mode (local execution on same container)
+        'tesseract_binary' => [
+            'path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        ],
+
+        // HTTP mode (separate Tesseract container/service)
+        'tesseract_http' => [
+            'host' => env('TESSERACT_HTTP_HOST', 'localhost'),
+            'port' => env('TESSERACT_HTTP_PORT', 8888),
+            'timeout' => env('TESSERACT_HTTP_TIMEOUT', 30),
+            'endpoint' => '/api/v1/ocr', // Path to OCR endpoint on HTTP server
+        ],
+    ],
+
+    /*
+     * Image processing
+     */
+    'image_processing' => [
+        'max_width' => 2048,
+        'max_height' => 2048,
+        'quality' => 85,
+    ],
+
+];

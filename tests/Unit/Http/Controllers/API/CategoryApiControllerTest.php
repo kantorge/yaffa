@@ -138,6 +138,9 @@ class CategoryApiControllerTest extends TestCase
         ]));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
 
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
@@ -356,6 +359,9 @@ class CategoryApiControllerTest extends TestCase
         ]));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
 
         $this->assertDatabaseHas('categories', [
             'id' => $categoryChild->id,

@@ -10,7 +10,7 @@ import { loadSelect2Language } from '../i18n/select2';
 import { __ } from '../i18n';
 import select2 from 'select2';
 select2();
-loadSelect2Language(window.YAFFA.language);
+loadSelect2Language(window.YAFFA.userSettings.language);
 
 import * as toastHelpers from '../toast';
 
@@ -20,12 +20,12 @@ let chart;
 chart = am4core.create("chartdiv", am4charts.XYChart);
 applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
 
-chart.numberFormatter.intlLocales = window.YAFFA.locale;
-chart.dateFormatter.intlLocales = window.YAFFA.locale;
+chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
 chart.numberFormatter.numberFormat = {
     style: 'currency',
-    currency: window.YAFFA.baseCurrency.iso_code,
+    currency: window.YAFFA.userSettings.baseCurrency.iso_code,
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 0
 };
@@ -37,7 +37,7 @@ chart.dateFormatter.dateFormat = {
 
 let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
 dateAxis.dataFields.category = "month";
-dateAxis.dateFormatter.intlLocales = window.YAFFA.locale;
+dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 dateAxis.dateFormats.setKey("year", {"year": "numeric"});
 dateAxis.dateFormats.setKey("month", {"year": "numeric", "month": "short"});
 

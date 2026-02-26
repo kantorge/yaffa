@@ -3,8 +3,9 @@
     :action="action"
     :initial-callback="callback"
     :transaction="transactionData"
-    :source-id="sourceId"
+    :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
+    :dropdown-parent-selector="'body'"
     @cancel="onCancel"
     @success="onSuccess"
   ></transaction-form-standard>
@@ -42,7 +43,7 @@
           },
         },
       },
-      sourceId: {
+      aiDocumentId: {
         type: Number,
         default: null,
       },

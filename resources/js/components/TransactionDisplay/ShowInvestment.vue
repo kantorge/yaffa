@@ -210,14 +210,14 @@
       },
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
       },
     },
 
     computed: {
       transactionTypeLabel() {
         // Get transaction type configuration from window
-        const transactionTypes = window.transactionTypes || {};
+        const transactionTypes = window.YAFFA.config.transactionTypes || {};
         const typeConfig = transactionTypes[this.transaction.transaction_type];
         return typeConfig?.label || this.transaction.transaction_type;
       },

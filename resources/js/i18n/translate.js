@@ -8,7 +8,7 @@
  * @returns {string}
  */
 export function __(key, replace = {}) {
-    let translation = window.YAFFA.translations[key] || key;
+    let translation = window.YAFFA.config.translations[key] || key;
 
     // If the replace object is empty, return the translation as is
     if (Object.keys(replace).length === 0) {

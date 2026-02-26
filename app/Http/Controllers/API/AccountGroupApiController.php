@@ -25,6 +25,7 @@ class AccountGroupApiController extends Controller implements HasMiddleware
     {
         return [
             'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -34,9 +35,9 @@ class AccountGroupApiController extends Controller implements HasMiddleware
     public function destroy(AccountGroup $accountGroup): JsonResponse
     {
         /**
-         * @delete('/api/assets/accountgroup/{accountGroup}')
-         * @name('api.accountgroup.destroy')
-         * @middlewares('api', 'auth:sanctum')
+         * @delete("/api/assets/accountgroup/{accountGroup}")
+         * @name("api.accountgroup.destroy")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $accountGroup);
         $result = $this->accountGroupService->delete($accountGroup);

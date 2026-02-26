@@ -103,45 +103,18 @@
                 </div>
             </div>
         </div>
-        <div class="card mb-3">
-            <div class="card-header">
-                <div class="card-title">
-                    {{ __('Date') }}
-                </div>
-            </div>
-            <div class="card-body" id="dateRangePicker">
-                <div class="row">
-                    <div class="col-6">
-                        <label for="date_from" class="form-label">{{ __('Date from') }}</label>
-                        <input type="text" class="form-control" name="date_from" id="date_from"
-                            placeholder="{{ __('Select date') }}" autocomplete="off">
-                    </div>
-                    <div class="col-6">
-                        <label for="date_to" class="form-label">{{ __('Date to') }}</label>
-                        <input type="text" class="form-control" name="date_to" id="date_to"
-                            placeholder="{{ __('Select date') }}" autocomplete="off">
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-12">
-                        <select id="dateRangePickerPresets" class="form-select">
-                            <option value="none">{{ __('Select preset') }}</option>
-                            @foreach(config('yaffa.account_date_presets') as $group)
-                                <optgroup label="{{ __($group['label']) }}">
-                                    @foreach($group['options'] as $option)
-                                        <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer text-end">
-                <button class="btn btn-sm btn-outline-dark" id="clear_dates">{{ __('Clear selection') }}</button>
-                <button name="reload" type="button" id="reload"
-                    class="btn btn-sm btn-primary ms-2">{{ __('Update') }}</button>
-            </div>
+        <div id="account-date-range-filter">
+            <date-range-filter-card
+                :expanded="true"
+                :show-update-button="true"
+                component-id="accountDate"
+                :initial-date-from="initialDateFrom"
+                :initial-date-to="initialDateTo"
+                :initial-preset="initialPreset"
+                :update-url="true"
+                ref="dateFilter"
+                @update="onDateRangeUpdated"
+            ></date-range-filter-card>
         </div>
     </div>
 

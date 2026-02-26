@@ -38,7 +38,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int|null $currency_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read Model|Eloquent $config
+ * @property-read TransactionDetailInvestment|TransactionDetailStandard|Model|Eloquent|null $config
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
@@ -60,6 +60,30 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereTransactionType($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
+ * @property int|null $ai_document_id
+ * @property float|null $cashflow_value
+ * @property float|null $currencyRateToBase
+ * @property float|null $sum
+ * @property int|null $originalId
+ * @property string|null $transactionGroup
+ * @property int|null $transactionOperator
+ * @property string|null $account_from_name
+ * @property string|null $account_to_name
+ * @property float|null $amount_from
+ * @property float|null $amount_to
+ * @property mixed $tags
+ * @property mixed $categories
+ * @property float|null $quantity
+ * @property float|null $price
+ * @property float|null $running_total
+ * @property bool|null $schedule_first_instance
+ * @property-read AiDocument|null $aiDocument
+ * @property-read Currency|null $currency
+ * @property-read Currency|null $transaction_currency
+ * @property-read User $user
+ * @method static Builder<static>|Transaction whereAiDocumentId($value)
+ * @method static Builder<static>|Transaction whereCashflowValue($value)
+ * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
 class Transaction extends Model
@@ -71,9 +95,10 @@ class Transaction extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
+        'ai_document_id',
         'date',
         'transaction_type',
         'reconciled',
@@ -138,6 +163,11 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function aiDocument(): BelongsTo
+    {
+        return $this->belongsTo(AiDocument::class);
     }
 
     public function tags()
@@ -347,7 +377,7 @@ class Transaction extends Model
             $newTransaction = $this->replicate();
 
             $newTransaction->originalId = $this->id;
-            $newTransaction->date = $instance->getStart();
+            $newTransaction->date = \Illuminate\Support\Carbon::instance($instance->getStart());
             $newTransaction->transactionGroup = 'forecast';
             $newTransaction->schedule_first_instance = $first;
 

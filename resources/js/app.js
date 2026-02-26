@@ -3,9 +3,18 @@ import './bootstrap';
 import { initializeDataTablesI18n } from './i18n/datatables';
 
 // One glob map for all .js files under resources/js
-const modules = import.meta.glob('./**/*.js');
+// Exclude files that are statically imported to avoid redundant dynamic imports
+const modules = import.meta.glob([
+    './**/*.js',
+    '!./bootstrap.js',
+    '!./i18n/**/*.js',
+    '!./display_notifications.js'
+]);
 
-const dataTablesI18nReady = initializeDataTablesI18n(window.YAFFA?.locale, window.YAFFA?.language)
+const dataTablesI18nReady = initializeDataTablesI18n(
+    window.YAFFA?.userSettings?.locale || window.YAFFA?.locale,
+    window.YAFFA?.userSettings?.language || window.YAFFA?.language,
+)
     .catch(() => null);
 
 const loadModule = async (path) => {
@@ -34,8 +43,6 @@ const routeMap = new Map([
     ['investment-price.create', 'investment-price/form'],
     ['investment-price.edit', 'investment-price/form'],
     ['investment-price.list', 'investment-price/list'],
-    ['received-mail.index', 'received-mail/index'],
-    ['received-mail.show', 'received-mail/show'],
     ['report.schedules', 'reports/schedules'],
     ['reports.cashflow', 'reports/cashflow'],
     ['reports.budgetchart', 'reports/budgetchart'],
@@ -43,6 +50,8 @@ const routeMap = new Map([
     ['reports.investment_timeline', 'reports/investment-timeline'],
     ['search', 'search/search'],
     ['import.csv', 'import/csv'],
+    ['ai-documents.index', 'ai-documents/index'],
+    ['ai-documents.show', 'ai-documents/show'],
     ['register', 'auth/register'],
     ['login', 'auth/login'],
     ['tag.index', 'tag/index'],
@@ -135,7 +144,7 @@ if (import.meta.env.DEV) {
 /**
  * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
  */
-if (window.sandbox_mode) {
+if (window.YAFFA.config.sandbox_mode) {
     if (current !== 'login') {
         loadModule('sandbox-components/reset-timer');
     } else {

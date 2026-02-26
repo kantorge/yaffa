@@ -84,7 +84,7 @@
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
               'date',
               this.__('Date'),
-              window.YAFFA.locale,
+              window.YAFFA.userSettings.locale,
             ),
             {
               data: 'rate',
@@ -93,7 +93,7 @@
                 return dataTableHelpers.toFormattedCurrency(
                   type,
                   data,
-                  window.YAFFA.locale,
+                  window.YAFFA.userSettings.locale,
                   Object.assign({}, self.toCurrency, { max_digits: 4 }),
                 );
               },

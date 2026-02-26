@@ -4,8 +4,10 @@ namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionFormStandardModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -37,7 +39,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 // The modal should be visible
                 ->assertVisible('#modal-transaction-form-standard')
                 // The form should be visible
@@ -60,7 +62,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
 
                 // Verify that the add new payee button is visible next to the account to dropdown
                 ->assertNotPresent('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
@@ -91,7 +93,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormStandard')
 
                 // Test the reconciled checkbox with prefixed ID
@@ -124,7 +126,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormStandard')
 
                 // Fill the form

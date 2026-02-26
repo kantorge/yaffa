@@ -663,7 +663,7 @@
           dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
             'date',
             __('Date'),
-            window.YAFFA.locale,
+            window.YAFFA.userSettings.locale,
           ),
           dataTableHelpers.transactionColumnDefinition.type(true),
           {

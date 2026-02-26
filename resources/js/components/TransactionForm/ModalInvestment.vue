@@ -19,6 +19,8 @@
             :transaction="transactionData"
             :simplified="true"
             :fromModal="true"
+            :ai-document-id="aiDocumentId"
+            :dropdown-parent-selector="'#modal-transaction-form-investment'"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-investment>
@@ -58,6 +60,10 @@
             tax: null,
           },
         },
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
       },
     },
     data() {
@@ -118,7 +124,7 @@
         this.modal.show();
       },
       onInitiateCreateDraft(transaction) {
-        this.action = 'create';
+        this.action = 'finalize';
         this.transactionData = transaction;
 
         this.modal.show();
@@ -160,6 +166,7 @@
           ['clone', __('Clone existing transaction')],
           ['enter', __('Enter scheduled transaction instance')],
           ['replace', __('Clone scheduled transaction and close base item')],
+          ['finalize', __('Finalize transaction draft')],
         ]);
 
         return titles.get(this.action);

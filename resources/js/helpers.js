@@ -1,3 +1,73 @@
+/**
+ * @param {number} input The number to be formatted as currency.
+ * @param {string} locale The locale to be used for formatting.
+ * @param {Object} currencySettings Object with settings to apply. Expected key(s): iso_code. Optional key(s): min_digits, max_digits.
+ * @property {string} currencySettings.iso_code
+ * @property {number} currencySettings.min_digits
+ * @property {number} currencySettings.max_digits
+ *
+ * @type {string}
+ */
+export function toFormattedCurrency(input, locale, currencySettings) {
+    // Fallback to raw input if currency settings are missing
+    if (!currencySettings || !currencySettings.iso_code) {
+        return input.toString();
+    }
+
+    // If input is not a number, return it as is
+    if (input === null || input === undefined) {
+        return '';
+    }
+    if (isNaN(input)) {
+        return input.toString();
+    }
+
+    return input.toLocaleString(
+        locale,
+        {
+            style: 'currency',
+            currency: currencySettings.iso_code,
+            currencyDisplay: 'narrowSymbol',
+            minimumFractionDigits: currencySettings.min_digits || 0,
+            maximumFractionDigits: currencySettings.max_digits
+        }
+    );
+}
+
+/**
+ * Helper function to get transaction type configuration from window.YAFFA.config.transactionTypes
+ * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
+ * @returns {object} Transaction type configuration with category, label, multipliers, etc.
+ */
+export function getTransactionTypeConfig(transactionTypeValue) {
+    const transactionTypes = window.YAFFA.config.transactionTypes || {};
+    return transactionTypes[transactionTypeValue] || {
+        value: transactionTypeValue,
+        label: transactionTypeValue,
+        category: 'unknown',
+        amount_multiplier: null,
+        quantity_multiplier: null,
+    };
+}
+
+/**
+ * Gets the currency symbol for a given locale and ISO currency code.
+ *
+ * @param {string} locale - The locale string (e.g., 'en-US', 'de-DE')
+ * @param {string} iso_code - The ISO 4217 currency code (e.g., 'USD', 'EUR')
+ *
+ * @returns {string} The currency symbol for the specified locale and currency
+ */
+export function getCurrencySymbol(locale, iso_code) {
+    const numberFormat = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: iso_code,
+        currencyDisplay: 'narrowSymbol',
+    });
+    const symbol = numberFormat.format(0).match(/[^0-9,.\s]+/);
+    return symbol[0];
+}
+
 // Function to return just the ISO version of a date.
 export function toIsoDateString(date) {
     // Verify that the date is a Date object
@@ -106,9 +176,9 @@ export function transactionLink(id, text) {
     return `<a href="${url}">${text}</a>`;
 }
 
-export function initializeBootstrapTooltips() {
-    const tooltipTriggerList = document.querySelectorAll(
-      '[data-bs-toggle="tooltip"]',
+export function initializeBootstrapTooltips(parent = document) {
+    const tooltipTriggerList = parent.querySelectorAll(
+      '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
     );
     [...tooltipTriggerList].map(
       (tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl),

@@ -17,7 +17,8 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -27,9 +28,9 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     public function updateActive(AccountEntity $accountEntity, $active): JsonResponse
     {
         /**
-         * @put('/api/assets/accountentity/{accountEntity}/active/{active}')
-         * @name('api.accountentity.updateActive')
-         * @middlewares('api', 'auth:sanctum')
+         * @put("/api/assets/accountentity/{accountEntity}/active/{active}")
+         * @name("api.accountentity.updateActive")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('update', $accountEntity);
 
@@ -51,9 +52,9 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @delete('/api/accountentity/{accountEntity}')
-         * @name('api.accountentity.destroy')
-         * @middlewares('web', 'auth', 'verified')
+         * @delete("/api/accountentity/{accountEntity}")
+         * @name("api.accountentity.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         Gate::authorize('forceDelete', $accountEntity);
 

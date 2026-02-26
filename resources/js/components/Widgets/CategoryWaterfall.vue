@@ -117,8 +117,8 @@
       return {
         available: false,
         busy: false,
-        baseCurrency: window.YAFFA.baseCurrency,
-        locale: window.YAFFA.locale,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
+        locale: window.YAFFA.userSettings.locale,
         rawData: [],
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
@@ -355,6 +355,13 @@
       dateLabel() {
         const date = new Date(this.year, this.month - 1, 1);
         return date.toLocaleDateString(window.YAFFA.locale, {
+          year: 'numeric',
+          month: 'long',
+        });
+      },
+      dateLabel() {
+        const date = new Date(this.year, this.month - 1, 1);
+        return date.toLocaleDateString(window.YAFFA.userSettings.locale, {
           year: 'numeric',
           month: 'long',
         });

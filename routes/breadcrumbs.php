@@ -3,6 +3,7 @@
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
+use App\Models\AiDocument;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
@@ -221,17 +222,6 @@ Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail
     $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
 });
 
-// Miscellaneous routes - received mails resource views
-Breadcrumbs::for('received-mail.index', function (BreadcrumbTrail $trail) {
-    $trail->parent('home');
-    $trail->push(__('Automations'));
-    $trail->push(__('Received emails'), route('received-mail.index'));
-});
-Breadcrumbs::for('received-mail.show', function (BreadcrumbTrail $trail, $receivedMail) {
-    $trail->parent('received-mail.index');
-    $trail->push(__('Show'), route('received-mail.show', $receivedMail));
-});
-
 // Search
 Breadcrumbs::for('search', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -243,6 +233,17 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
     $trail->push(__('Import transactions'), route('import.csv'));
+});
+
+// AI documents
+Breadcrumbs::for('ai-documents.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('AI documents'), route('ai-documents.index'));
+});
+Breadcrumbs::for('ai-documents.show', function (BreadcrumbTrail $trail, AiDocument $aiDocument) {
+    $trail->parent('ai-documents.index');
+    $trail->push(__('Document #:id', ['id' => $aiDocument->id]), route('ai-documents.show', $aiDocument));
 });
 
 // User related routes

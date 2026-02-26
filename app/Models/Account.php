@@ -53,6 +53,8 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Account whereId($value)
  * @method static Builder|Account whereOpeningBalance($value)
  * @mixin Eloquent
+ * @method static Builder<static>|Account whereDefaultDateRange($value)
+ * @mixin \Eloquent
  */
 class Account extends Model
 {
@@ -72,7 +74,7 @@ class Account extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'opening_balance',
@@ -154,7 +156,7 @@ class Account extends Model
             )
             ->where('transactions.schedule', 0)
             ->where('transactions.config_type', 'investment')
-            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();
     }

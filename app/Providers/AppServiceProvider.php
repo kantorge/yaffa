@@ -9,6 +9,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -37,7 +38,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Add throttling rule to the API routes, if running in production
         if ($this->app->environment('production')) {
-            $this->app->router->middlewareGroup('api', [
+            $router = $this->app->make(Router::class);
+            $router->middlewareGroup('api', [
                 \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
                 \Illuminate\Routing\Middleware\SubstituteBindings::class,
                 \Illuminate\Routing\Middleware\ThrottleRequests::class . ':60:1',

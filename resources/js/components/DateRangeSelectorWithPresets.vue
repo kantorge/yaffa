@@ -145,7 +145,7 @@ export default {
         todayBtn: true,
         todayBtnMode: 1,
         todayHighlight: true,
-        language: window.YAFFA ? window.YAFFA.language : 'en',
+        language: window.YAFFA ? window.YAFFA.userSettings.language : 'en',
         format: 'yyyy-mm-dd',
         autohide: true,
         buttonClass: 'btn',

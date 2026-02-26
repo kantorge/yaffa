@@ -125,13 +125,13 @@
     props: {
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
       },
     },
 
     data() {
       return {
-        baseCurrency: window.YAFFA.baseCurrency,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
         accountBalanceData: [],
         withClosed: false,
         // Expected values: loading, data-loaded, data-not-available, error

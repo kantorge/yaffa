@@ -13,15 +13,24 @@
             aria-label="Close"
           ></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body d-md-none d-lg-block">
           <transaction-form-standard
             :action="action"
             :transaction="transactionData"
             :simplified="true"
             :fromModal="true"
+            :ai-document-id="aiDocumentId"
+            :dropdown-parent-selector="'#transaction_item_container'"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-standard>
+        </div>
+        <div class="modal-body d-none d-md-block">
+          {{
+            __(
+              'Sorry, the transaction form is not available on smaller screens.',
+            )
+          }}
         </div>
       </div>
     </div>
@@ -55,6 +64,10 @@
             amount_to: null,
           },
         },
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
       },
     },
     data() {
@@ -101,7 +114,7 @@
         this.modal.show();
       },
       onInitiateCreateDraft(transaction) {
-        this.action = 'create';
+        this.action = 'finalize';
         this.transactionData = transaction;
 
         this.modal.show();
@@ -143,6 +156,7 @@
           ['clone', __('Clone existing transaction')],
           ['enter', __('Enter scheduled transaction instance')],
           ['replace', __('Clone scheduled transaction and close base item')],
+          ['finalize', __('Finalize transaction draft')],
         ]);
 
         return titles.get(this.action);

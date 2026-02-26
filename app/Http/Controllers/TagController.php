@@ -16,10 +16,10 @@ class TagController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\Tag', only: ['index']),
-            new Middleware('can:view,tag', only: ['show']),
-            new Middleware('can:create,App\Models\Tag', only: ['create', 'store']),
+            'auth',
+            'verified',
+            new Middleware('can:viewAny,' . Tag::class, only: ['index']),
+            new Middleware('can:create,' . Tag::class, only: ['create', 'store']),
             new Middleware('can:update,tag', only: ['edit', 'update']),
             new Middleware('can:delete,tag', only: ['destroy']),
         ];
@@ -31,9 +31,9 @@ class TagController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/tag')
-         * @name('tag.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
+         * @get("/tag")
+         * @name("tag.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Get all tags of the user from the database and return to view
         $tags = $request->user()
@@ -53,9 +53,9 @@ class TagController extends Controller implements HasMiddleware
     public function create(): View
     {
         /**
-         * @get('/tag/create')
-         * @name('tag.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
+         * @get("/tag/create")
+         * @name("tag.create")
+         * @middlewares("web", "auth", "verified")
          */
         return view('tag.form');
     }
@@ -66,9 +66,9 @@ class TagController extends Controller implements HasMiddleware
     public function edit(Tag $tag): View
     {
         /**
-         * @get('/tag/{tag}/edit')
-         * @name('tag.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,tag')
+         * @get("/tag/{tag}/edit")
+         * @name("tag.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return view('tag.form', ['tag' => $tag]);
     }
@@ -76,9 +76,9 @@ class TagController extends Controller implements HasMiddleware
     public function store(TagRequest $request): RedirectResponse
     {
         /**
-         * @post('/tag')
-         * @name('tag.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
+         * @post("/tag")
+         * @name("tag.store")
+         * @middlewares("web", "auth", "verified")
          */
         $request->user()->tags()->create($request->validated());
 
@@ -90,10 +90,10 @@ class TagController extends Controller implements HasMiddleware
     public function update(TagRequest $request, Tag $tag): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
-         * @uri('/tag/{tag}')
-         * @name('tag.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,tag')
+         * @methods("PUT", "PATCH")
+         * @uri("/tag/{tag}")
+         * @name("tag.update")
+         * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
         $validated = $request->validated();
@@ -112,9 +112,9 @@ class TagController extends Controller implements HasMiddleware
     public function destroy(Tag $tag): RedirectResponse
     {
         /**
-         * @delete('/tag/{tag}')
-         * @name('tag.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,tag')
+         * @delete("/tag/{tag}")
+         * @name("tag.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         $tag->delete();
 

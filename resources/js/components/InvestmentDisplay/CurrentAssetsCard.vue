@@ -47,7 +47,7 @@
     },
     data() {
       return {
-        locale: window.YAFFA.locale,
+        locale: window.YAFFA.userSettings.locale,
       };
     },
     methods: {

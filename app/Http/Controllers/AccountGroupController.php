@@ -17,10 +17,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\AccountGroup', only: ['index']),
-            new Middleware('can:view,account_group', only: ['show']),
-            new Middleware('can:create,App\Models\AccountGroup', only: ['create', 'store']),
+            'auth',
+            'verified',
+            new Middleware('can:create,' . AccountGroup::class, only: ['create', 'store']),
             new Middleware('can:update,account_group', only: ['edit', 'update']),
             new Middleware('can:delete,account_group', only: ['destroy']),
         ];
@@ -32,9 +31,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/account-group')
-         * @name('account-group.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountGroup')
+         * @get("/account-group")
+         * @name("account-group.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Get all account groups of the user from the database and return to view
         $accountGroups = $request->user()
@@ -54,9 +53,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function create(): View
     {
         /**
-         * @get('/account-group/create')
-         * @name('account-group.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountGroup')
+         * @get("/account-group/create")
+         * @name("account-group.create")
+         * @middlewares("web", "auth", "verified")
          */
         return view('account-group.form');
     }
@@ -67,9 +66,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function edit(AccountGroup $accountGroup): View
     {
         /**
-         * @get('/account-group/{account_group}/edit')
-         * @name('account-group.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_group')
+         * @get("/account-group/{account_group}/edit")
+         * @name("account-group.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return view('account-group.form', ['accountGroup' => $accountGroup]);
     }
@@ -77,9 +76,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function store(AccountGroupRequest $request): RedirectResponse
     {
         /**
-         * @post('/account-group')
-         * @name('account-group.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountGroup')
+         * @post("/account-group")
+         * @name("account-group.store")
+         * @middlewares("web", "auth", "verified")
          */
         $request->user()->accountGroups()->create($request->validated());
 
@@ -91,10 +90,10 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function update(AccountGroupRequest $request, AccountGroup $accountGroup): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
-         * @uri('/account-group/{account_group}')
-         * @name('account-group.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_group')
+         * @methods("PUT", "PATCH")
+         * @uri("/account-group/{account_group}")
+         * @name("account-group.update")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 
@@ -112,9 +111,9 @@ class AccountGroupController extends Controller implements HasMiddleware
     public function destroy(AccountGroup $accountGroup): RedirectResponse
     {
         /**
-         * @delete('/account-group/{account_group}')
-         * @name('account-group.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,account_group')
+         * @delete("/account-group/{account_group}")
+         * @name("account-group.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         try {
             $accountGroup->delete();

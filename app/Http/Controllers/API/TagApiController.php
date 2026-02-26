@@ -16,20 +16,21 @@ class TagApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/tag')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/tag")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $tags = $request->user()
             ->tags()
             ->when($request->missing('withInactive'), function ($query) {
-                $query->active();
+                $query->where('active', true);
             })
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
@@ -49,8 +50,8 @@ class TagApiController extends Controller implements HasMiddleware
     public function getItem(Tag $tag): JsonResponse
     {
         /**
-         * @get('/api/assets/tag/{tag}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/tag/{tag}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $tag);
 
@@ -67,8 +68,8 @@ class TagApiController extends Controller implements HasMiddleware
     public function updateActive(Tag $tag, string $active): JsonResponse
     {
         /**
-         * @put('/api/assets/tag/{tag}/active/{active}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @put("/api/assets/tag/{tag}/active/{active}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $tag);
 

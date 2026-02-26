@@ -8,8 +8,10 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class AccountShowTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -326,7 +328,7 @@ class AccountShowTest extends DuskTestCase
                 // Verify the transaction is shown
                 ->assertSeeIn('#historyTable tbody', '€1.11')
                 // Additionally, verify that the date range selector shows the default "Select preset" option, as we used explicit date parameters
-                ->assertSeeIn('#dateRangePickerPresets', 'Select preset');
+                ->assertSeeIn('#accountDatePresets', 'Select preset');
         });
     }
 
@@ -359,7 +361,7 @@ class AccountShowTest extends DuskTestCase
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
                 // Additionally, verify that the date range selector shows the preset option we used in the URL parameters
-                ->assertSeeIn('#dateRangePickerPresets', 'Previous 7 days');
+                ->assertSeeIn('#accountDatePresets', 'Previous 7 days');
         });
     }
 
@@ -391,7 +393,7 @@ class AccountShowTest extends DuskTestCase
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
                 // Additionally, verify that the date range selector shows the account's preset option, as we used no explicit date parameters
-                ->assertSeeIn('#dateRangePickerPresets', 'Previous 90 days');
+                ->assertSeeIn('#accountDatePresets', 'Previous 90 days');
         });
     }
 
@@ -423,7 +425,7 @@ class AccountShowTest extends DuskTestCase
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
                 // Additionally, verify that the date range selector shows the user's preset option, as we used no explicit date parameters and the account has no setting
-                ->assertSeeIn('#dateRangePickerPresets', 'Previous 30 days');
+                ->assertSeeIn('#accountDatePresets', 'Previous 30 days');
         });
     }
 
@@ -455,7 +457,7 @@ class AccountShowTest extends DuskTestCase
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
                 // Additionally, verify that the date range selector shows the default preset option, as we used no explicit date parameters and neither the user nor the account have a setting
-                ->assertSeeIn('#dateRangePickerPresets', 'Select preset')
+                ->assertSeeIn('#accountDatePresets', 'Select preset')
                 // Verify that the table loads no data
                 ->assertSeeIn('#historyTable_info', 'Showing 0 to 0 of 0 entries');
         });
@@ -501,12 +503,12 @@ class AccountShowTest extends DuskTestCase
                     'account_entity' => $account->id,
                 ])
                 ->waitFor('#historyTable')
-                ->waitFor('#reload')
+                ->waitFor('#accountDateUpdate')
                 // Select a date range that includes the transaction
-                ->type('[name="date_from"]', $date->copy()->subDays(1)->format('Y-m-d'))
-                ->type('[name="date_to"]', $date->copy()->addDays(1)->format('Y-m-d'))
+                ->type('#accountDate_from', $date->copy()->subDays(1)->format('Y-m-d'))
+                ->type('#accountDate_to', $date->copy()->addDays(1)->format('Y-m-d'))
                 // Click the Update button to trigger table reload
-                ->click('#reload')
+                ->click('#accountDateUpdate')
                 // Wait for table to reload with the transaction
                 ->waitUsing(10, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
                 // Verify the transaction is shown

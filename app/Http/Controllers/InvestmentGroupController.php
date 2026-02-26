@@ -17,10 +17,10 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\InvestmentGroup', only: ['index']),
-            new Middleware('can:view,investment_group', only: ['show']),
-            new Middleware('can:create,App\Models\InvestmentGroup', only: ['create', 'store']),
+            'auth',
+            'verified',
+            new Middleware('can:viewAny,' . InvestmentGroup::class, only: ['index']),
+            new Middleware('can:create,' . InvestmentGroup::class, only: ['create', 'store']),
             new Middleware('can:update,investment_group', only: ['edit', 'update']),
             new Middleware('can:delete,investment_group', only: ['destroy']),
         ];
@@ -32,9 +32,9 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/investment-group')
-         * @name('investment-group.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\InvestmentGroup')
+         * @get("/investment-group")
+         * @name("investment-group.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Get all investment groups of the user from the database and return to view
         $investmentGroups = $request->user()
@@ -54,9 +54,9 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function create(): View
     {
         /**
-         * @get('/investment-group/create')
-         * @name('investment-group.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
+         * @get("/investment-group/create")
+         * @name("investment-group.create")
+         * @middlewares("web", "auth", "verified")
          */
         return view('investment-group.form');
     }
@@ -67,9 +67,9 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function edit(InvestmentGroup $investmentGroup): View
     {
         /**
-         * @get('/investment-group/{investment_group}/edit')
-         * @name('investment-group.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,investment_group')
+         * @get("/investment-group/{investment_group}/edit")
+         * @name("investment-group.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
     }
@@ -77,9 +77,9 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function store(InvestmentGroupRequest $request): RedirectResponse
     {
         /**
-         * @post('/investment-group')
-         * @name('investment-group.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
+         * @post("/investment-group")
+         * @name("investment-group.store")
+         * @middlewares("web", "auth", "verified")
          */
         $request->user()->investmentGroups()->create($request->validated());
 
@@ -91,10 +91,10 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
-         * @uri('/investment-group/{investment_group}')
-         * @name('investment-group.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,investment_group')
+         * @methods("PUT", "PATCH")
+         * @uri("/investment-group/{investment_group}")
+         * @name("investment-group.update")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 
@@ -113,9 +113,9 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
-         * @delete('/investment-group/{investment_group}')
-         * @name('investment-group.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,investment_group')
+         * @delete("/investment-group/{investment_group}")
+         * @name("investment-group.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         try {
             $investmentGroup->delete();

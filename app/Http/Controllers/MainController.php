@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -25,16 +26,17 @@ class MainController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 
     public function account_details(Request $request, AccountEntity $account, $withForecast = null)
     {
         /**
-         * @get('/account/history/{account}/{withForecast?}')
-         * @name('account.history')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/account/history/{account}/{withForecast?}")
+         * @name("account.history")
+         * @middlewares("web", "auth", "verified")
          */
         $user = $request->user();
 
@@ -95,10 +97,13 @@ class MainController extends Controller implements HasMiddleware
             ->get();
 
         // Unify and merge two transaction types
+        /** @var Account $accountConfig */
+        $accountConfig = $account->config;
+
         $transactions = $standardTransactions
             ->concat($investmentTransactions)
             // Add custom and pre-calculated attributes
-            ->map(function ($transaction) use ($account) {
+            ->map(function ($transaction) use ($accountConfig) {
                 if ($transaction->schedule) {
                     $transaction->load(['transactionSchedule']);
 
@@ -107,7 +112,7 @@ class MainController extends Controller implements HasMiddleware
                     $transaction->transactionGroup = 'history';
                 }
 
-                if ($transaction->isStandard()) {
+                if ($transaction->isStandard() && $transaction->config instanceof TransactionDetailStandard) {
                     $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier()
                         ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
@@ -116,7 +121,7 @@ class MainController extends Controller implements HasMiddleware
                     $transaction->amount_to = $transaction->config->amount_to;
                     $transaction->tags = $transaction->tags()->values();
                     $transaction->categories = $transaction->categories()->values();
-                } elseif ($transaction->isInvestment()) {
+                } elseif ($transaction->isInvestment() && $transaction->config instanceof TransactionDetailInvestment) {
                     $amount = $transaction->cashflow_value ?? 0;
 
                     $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier();
@@ -128,13 +133,14 @@ class MainController extends Controller implements HasMiddleware
                     $transaction->categories = [];
                     $transaction->quantity = $transaction->config->quantity;
                     $transaction->price = $transaction->config->price;
-                    $transaction->currency = $account->config->currency;
+                    $transaction->setRelation('currency', $accountConfig->currency);
                 }
 
                 return $transaction;
             })
             // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
+            ->filter(fn ($transaction) => ! $transaction->schedule
+                || ($transaction->transactionSchedule?->next_date !== null));
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
@@ -164,7 +170,7 @@ class MainController extends Controller implements HasMiddleware
                 ];
             })
             // Add the opening balance dummy item to the beginning of transaction list
-            ->prepend($account->config->openingBalance())
+            ->prepend($accountConfig->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
                 $subTotal += ($transaction->transactionOperator === 1
                     ? $transaction->amount_to
@@ -176,7 +182,7 @@ class MainController extends Controller implements HasMiddleware
             ->values();
 
         JavaScriptFacade::put([
-            'currency' => $account->config->currency,
+            'currency' => $accountConfig->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
                 ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')

@@ -3,29 +3,33 @@
 namespace App\Services;
 
 use App\Models\Category;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class CategoryService
 {
     public function delete(Category $category): array
     {
+        if ($category->children()->exists() || $category->transactionItem()->exists()) {
+            return [
+                'success' => false,
+                'error' => __('Category is in use, cannot be deleted'),
+            ];
+        }
+
         $success = false;
         $error = null;
 
         try {
-            $category->delete();
-            $success = true;
-        } catch (ModelNotFoundException $e) {
-            $error = __('Category not found');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                $error = __('Category is in use, cannot be deleted');
-            } else {
-                $error = __('Database error:') . ' ' . $e->errorInfo[2];
+            $success = (bool) $category->delete();
+
+            if (! $success) {
+                $error = __('Category could not be deleted');
             }
+        } catch (Throwable $e) {
+            report($e);
+            $error = __('Database error:') . ' ' . $e->getMessage();
         }
 
         return [

@@ -22,10 +22,10 @@ class CategoryController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\Category', only: ['index']),
-            new Middleware('can:view,category', only: ['show']),
-            new Middleware('can:create,App\Models\Category', only: ['create', 'store']),
+            'auth',
+            'verified',
+            new Middleware('can:viewAny,' . Category::class, only: ['index']),
+            new Middleware('can:create,' . Category::class, only: ['create', 'store']),
             new Middleware('can:update,category', only: ['edit', 'update']),
             new Middleware('can:delete,category', only: ['destroy']),
         ];
@@ -37,9 +37,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/categories')
-         * @name('categories.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Category')
+         * @get("/categories")
+         * @name("categories.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Show all categories of user from the database and return to view
         $categories = $request->user()
@@ -90,9 +90,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function create(): View
     {
         /**
-         * @get('/categories/create')
-         * @name('categories.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
+         * @get("/categories/create")
+         * @name("categories.create")
+         * @middlewares("web", "auth", "verified")
          */
         return view('categories.form');
     }
@@ -100,9 +100,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function store(CategoryRequest $request): RedirectResponse
     {
         /**
-         * @post('/categories')
-         * @name('categories.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
+         * @post("/categories")
+         * @name("categories.store")
+         * @middlewares("web", "auth", "verified")
          */
         $request->user()->categories()->create($request->validated());
 
@@ -117,9 +117,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function edit(Category $category): View
     {
         /**
-         * @get('/categories/{category}/edit')
-         * @name('categories.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,category')
+         * @get("/categories/{category}/edit")
+         * @name("categories.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return view(
             'categories.form',
@@ -132,10 +132,10 @@ class CategoryController extends Controller implements HasMiddleware
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
-         * @uri('/categories/{category}')
-         * @name('categories.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,category')
+         * @methods("PUT", "PATCH")
+         * @uri("/categories/{category}")
+         * @name("categories.update")
+         * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
         $validated = $request->validated();
@@ -154,9 +154,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function destroy(Category $category): RedirectResponse
     {
         /**
-         * @delete('/categories/{category}')
-         * @name('categories.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,category')
+         * @delete("/categories/{category}")
+         * @name("categories.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         try {
             $category->delete();
@@ -180,9 +180,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function mergeCategoriesForm(?Category $categorySource): View
     {
         /**
-         * @get('/categories/merge/{categorySource?}')
-         * @name('categories.merge.form')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/categories/merge/{categorySource?}")
+         * @name("categories.merge.form")
+         * @middlewares("web", "auth", "verified")
          */
         if ($categorySource) {
             JavaScriptFacade::put([
@@ -202,9 +202,9 @@ class CategoryController extends Controller implements HasMiddleware
     public function mergeCategories(CategoryMergeRequest $request): RedirectResponse
     {
         /**
-         * @post('/categories/merge')
-         * @name('categories.merge.submit')
-         * @middlewares('web', 'auth', 'verified')
+         * @post("/categories/merge")
+         * @name("categories.merge.submit")
+         * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
         $validated = $request->validated();

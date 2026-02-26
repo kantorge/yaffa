@@ -237,3 +237,19 @@ div.card-header > div.card-title {
     border-radius: 0.125rem;
     font-size: 1.25rem;
 }
+
+// Input group info icon button style
+div.input-group span.btn-outline-input-info {
+    border-color: var(--cui-border-color);
+    color: var(--cui-info);
+    background-color: transparent;
+}
+div.input-group span.btn-outline-input-info:hover {
+    background-color: var(--cui-border-color);
+}
+
+// Vue form loader spinner positioning
+button[type="submit"] .spinner-border {
+    // Replicate me-1 class spacing for the spinner icon
+    margin-right: 0.25rem;
+}

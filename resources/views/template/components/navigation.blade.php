@@ -98,10 +98,9 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
-                href="{{ route('received-mail.index') }}"
-                iconClasses="fa-solid fa-envelope"
-                text="{{ __('Received emails')  }}"
-
+                href="{{ route('ai-documents.index') }}"
+                iconClasses="fa-solid fa-file-lines"
+                text="{{ __('AI documents') }}"
             />
             <x-nav-link
                     href="{{ route('import.csv') }}"

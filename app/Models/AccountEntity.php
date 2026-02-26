@@ -28,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Collection|Category[] $categoryPreference
  * @property-read int|null $category_preference_count
- * @property-read Model|Eloquent $config
+ * @property-read Account|Payee|Model|Eloquent $config
  * @property-read Collection|Category[] $deferredCategories
  * @property-read int|null $deferred_categories_count
  * @property-read Collection|Category[] $preferredCategories
@@ -57,6 +57,15 @@ use Illuminate\Support\Carbon;
  * @method static Builder|AccountEntity whereName($value)
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
+ * @property string|null $alias
+ * @property-read Collection<int, Transaction> $transactionsInvestment
+ * @property-read int|null $transactions_investment_count
+ * @property-read Collection<int, Transaction> $transactionsStandardFrom
+ * @property-read int|null $transactions_standard_from_count
+ * @property-read Collection<int, Transaction> $transactionsStandardTo
+ * @property-read int|null $transactions_standard_to_count
+ * @property int|null $transactions_count
+ * @method static Builder<static>|AccountEntity whereAlias($value)
  * @mixin Eloquent
  */
 class AccountEntity extends Model
@@ -66,7 +75,7 @@ class AccountEntity extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',

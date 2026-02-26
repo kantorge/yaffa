@@ -10,7 +10,7 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
-use Carbon\Carbon;
+use App\Services\PayeeCategoryStatsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,18 +20,23 @@ use Illuminate\Support\Str;
 
 class PayeeApiController extends Controller implements HasMiddleware
 {
+    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
+    {
+    }
+
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/payee')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         if ($request->get('q')) {
             $payees = $request->user()
@@ -96,7 +101,6 @@ class PayeeApiController extends Controller implements HasMiddleware
                 ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
-                ->get()
                 ->pluck('id');
 
             // Hydrate models
@@ -112,135 +116,16 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
-         * @get('/api/assets/get_default_category_suggestion')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/get_default_category_suggestion")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
-        $baseQueryFrom = DB::table('transaction_items')
-            ->join(
-                'transactions',
-                'transactions.id',
-                '=',
-                'transaction_items.transaction_id'
-            )
-            ->join(
-                'transaction_details_standard',
-                'transaction_details_standard.id',
-                '=',
-                'transactions.config_id'
-            )
-            ->join(
-                'categories',
-                'categories.id',
-                '=',
-                'transaction_items.category_id'
-            )
-            ->join(
-                'account_entities',
-                'account_entities.id',
-                '=',
-                'transaction_details_standard.account_from_id'
-            )
-            ->join(
-                'payees',
-                'payees.id',
-                '=',
-                'account_entities.config_id'
-            )
-            ->where('categories.user_id', $request->user()->id)
-            ->where('transactions.user_id', $request->user()->id)
-            ->where('account_entities.user_id', $request->user()->id)
-            ->where('categories.active', true) // Only active category can be recommended
-            ->whereNull('payees.category_id') // No category set
-            ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
-            ->where('account_entities.config_type', 'payee')
-            ->where('account_entities.active', true) // Only active payee can get recommendation
-            ->select([
-                'transaction_details_standard.account_from_id as payee_id',
-                'categories.id as category_id',
-            ]);
+        $payeeSuggestion = $this->payeeCategoryStatsService->getDefaultSuggestion($request->user());
 
-        $baseQuery = DB::table('transaction_items')
-            ->join(
-                'transactions',
-                'transactions.id',
-                '=',
-                'transaction_items.transaction_id'
-            )
-            ->join(
-                'transaction_details_standard',
-                'transaction_details_standard.id',
-                '=',
-                'transactions.config_id'
-            )
-            ->join(
-                'categories',
-                'categories.id',
-                '=',
-                'transaction_items.category_id'
-            )
-            ->join(
-                'account_entities',
-                'account_entities.id',
-                '=',
-                'transaction_details_standard.account_to_id'
-            )
-            ->join(
-                'payees',
-                'payees.id',
-                '=',
-                'account_entities.config_id'
-            )
-            ->where('categories.user_id', $request->user()->id) // Only for authenticated user
-            ->where('categories.active', true) // Only active category can be recommended
-            ->whereNull('payees.category_id') // No category set
-            ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
-            ->where('account_entities.config_type', 'payee')
-            ->where('account_entities.active', true) // Only active payee can get recommendation
-            ->select([
-                'transaction_details_standard.account_to_id as payee_id',
-                'categories.id as category_id',
-            ])
-            ->unionAll($baseQueryFrom);
-
-        $data = DB::query()
-            ->fromSub($baseQuery, 'base')
-            ->select([
-                'payee_id',
-                'category_id',
-            ])
-            ->selectRaw('count(*) as transactions')
-            ->groupBy([
-                'payee_id',
-                'category_id',
-            ])
-            ->get();
-
-        // Calculate total by payees
-        $payees = $data
-            ->groupBy('payee_id')
-            ->map(fn ($payee) => [
-                'payee_id' => $payee->first()->payee_id,
-                'sum' => $payee->sum('transactions'),
-                'max' => $payee->max('transactions'),
-                'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
-            ])
-            // Minimum required transactions to calculate with payee
-            // TODO: make this dynamic, e.g based on average or mean
-            ->filter(fn ($value) => $value['sum'] > 5)
-            // Only where maximum is significant (at least half of all items)
-            // TODO: make this dynamic
-            ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
-
-        if ($payees->count() === 0) {
+        if ($payeeSuggestion === null) {
             return response()->noContent(Response::HTTP_OK);
         }
 
-        $payee = $payees->random();
-
-        $payee['payee'] = AccountEntity::find($payee['payee_id'])->name;
-        $payee['category'] = Category::with('parent')->find($payee['max_category_id'])?->full_name;
-
-        return response($payee, Response::HTTP_OK);
+        return response($payeeSuggestion, Response::HTTP_OK);
     }
 
     /**
@@ -249,12 +134,16 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
-         * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/accept_default_category_suggestion/{accountEntity}/{category}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
+        if (! $accountEntity->config instanceof Payee) {
+            return response()->noContent(Response::HTTP_BAD_REQUEST);
+        }
+
         $accountEntity->config->category_id = $category->id;
         $accountEntity->config->save();
 
@@ -267,13 +156,17 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
-         * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/dismiss_default_category_suggestion/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
-        $accountEntity->config->category_suggestion_dismissed = Carbon::now();
+        if (! $accountEntity->config instanceof Payee) {
+            return response()->noContent(Response::HTTP_BAD_REQUEST);
+        }
+
+        $accountEntity->config->category_suggestion_dismissed = now();
         $accountEntity->config->save();
 
         return response()->noContent(Response::HTTP_OK);
@@ -282,9 +175,9 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function storePayee(AccountEntityRequest $request)
     {
         /**
-         * @post('/api/assets/payee')
-         * @name('api.payee.store')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/assets/payee")
+         * @name("api.payee.store")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('create', AccountEntity::class);
 
@@ -308,9 +201,9 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getSimilarPayees(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/payee/similar')
-         * @name('api.payee.similar')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee/similar")
+         * @name("api.payee.similar")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $query = Str::lower($request->get('query'));
         $withActive = $request->get('withActive');
@@ -324,9 +217,13 @@ class PayeeApiController extends Controller implements HasMiddleware
         // Filter payees by similarity to query
         $payees = $payees->map(function ($payee) use ($query) {
             similar_text($query, Str::lower($payee->name), $percentage);
-            $payee->percentage = $percentage;
 
-            return $payee;
+            return [
+                'id' => $payee->id,
+                'name' => $payee->name,
+                'active' => $payee->active,
+                'percentage' => $percentage,
+            ];
         })
             ->sortByDesc('percentage')
             ->take(5)
@@ -346,8 +243,8 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @get('/api/assets/payee/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $accountEntity);
 

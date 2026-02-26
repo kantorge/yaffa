@@ -457,6 +457,29 @@
           </div>
         </div>
         <div class="col-md-8">
+          <!-- AI Recommendations Info Banner -->
+          <div
+            v-if="hasAiRecommendations"
+            class="alert alert-primary mb-3"
+            role="alert"
+          >
+            <div class="d-flex align-items-center">
+              <i class="fa fa-robot fa-2x me-3"></i>
+              <div>
+                <h6 class="alert-heading mb-2">
+                  ✨ {{ __('AI-Assisted Transaction') }}
+                </h6>
+                <p class="mb-1 small">
+                  {{
+                    __(
+                      'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
+                    )
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <transaction-item-container
             @addTransactionItem="addTransactionItem"
             :transactionItems="form.items"
@@ -466,6 +489,7 @@
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
+            :dropdown-parent-selector="dropdownParentSelector"
           ></transaction-item-container>
         </div>
       </div>
@@ -558,7 +582,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   import MathInput from '@components/MathInput.vue';
 
@@ -607,6 +631,14 @@
         type: Number,
         default: null,
       },
+      aiDocumentId: {
+        type: Number,
+        default: null,
+      },
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
+      },
     },
 
     data() {
@@ -647,7 +679,7 @@
         },
         remaining_payee_default_amount: 0,
         remaining_payee_default_category_id: null,
-        source_id: null,
+        ai_document_id: null,
       });
 
       // Id counter for items
@@ -695,7 +727,7 @@
       ];
 
       // Some other settings
-      data.locale = window.YAFFA.locale;
+      data.locale = window.YAFFA.userSettings.locale;
 
       return data;
     },
@@ -766,7 +798,7 @@
 
       // Provide the base currency from the global scope for the template
       baseCurrency() {
-        return window.YAFFA.baseCurrency;
+        return window.YAFFA.userSettings.baseCurrency;
       },
 
       remainingAmountToPayeeDefault() {
@@ -847,7 +879,15 @@
 
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
-        return ['create', 'clone', 'finalize'].includes(this.action);
+        return ['create', 'finalize'].includes(this.action);
+      },
+
+      // Check if any items have AI recommendations
+      hasAiRecommendations() {
+        return this.form.items.some(
+          (item) =>
+            item.recommended_category_id || item.description || item.match_type,
+        );
       },
     },
 
@@ -955,7 +995,7 @@
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
       // Initialize tooltips
-      initializeBootstrapTooltips();
+      initializeBootstrapTooltips(this.$el);
     },
 
     methods: {
@@ -984,14 +1024,19 @@
           this.form.config.account_to_id =
             this.transaction.config.account_to_id;
 
-          // Copy items, and ensure that amount is number
+          // Copy transaction items from either saved transaction or AI draft
+          // Both sources use 'transaction_items' key for consistency
+          //
+          // Property mapping between sources:
+          // - Saved transactions: Have category_id, comment, tags (from database)
+          // - AI drafts: Have description, recommended_category_id, match_type, confidence_score (ephemeral AI metadata)
+          //
+          // Note: AI-specific properties (description, match_type, confidence_score) are used during
+          // finalization but NOT persisted to the database. Only the user-selected category_id and
+          // optional comment are saved. The 'description' field is preserved for category learning.
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
-              .map((item) => {
-                item.id = this.itemCounter++;
-                item.amount = Number(item.amount);
-                return item;
-              })
+              .map((item) => this.normalizeTransactionItem(item))
               .forEach((item) => this.form.items.push(item));
           }
 
@@ -1056,8 +1101,8 @@
           }
         }
 
-        // Assign any source ID passed to the form. Currently, this can be a received mail ID
-        this.form.source_id = this.sourceId;
+        // Assign AI document ID passed to the form for future reference when saving the transaction
+        this.form.ai_document_id = this.aiDocumentId;
 
         // Set form action
         this.form.action = this.action;
@@ -1072,6 +1117,28 @@
         }
 
         return null;
+      },
+
+      normalizeTransactionItem(rawItem) {
+        const item = { ...rawItem };
+
+        item.id = this.itemCounter++;
+        item.amount = Number(item.amount);
+        item.learnRecommendation = true;
+
+        item.category_full_name =
+          item.category_full_name || item.category?.full_name || null;
+
+        item.recommended_category_full_name =
+          item.recommended_category_full_name ||
+          item.recommended_category?.full_name ||
+          null;
+
+        item.description = item.description || null;
+        item.match_type = item.match_type || null;
+        item.confidence_score = item.confidence_score || null;
+
+        return item;
       },
 
       changeTransactionType: function (event) {
@@ -1169,6 +1236,7 @@
       addTransactionItem() {
         this.form.items.push({
           id: this.itemCounter++,
+          learnRecommendation: true,
         });
       },
 
@@ -1218,7 +1286,7 @@
 
         return {
           theme: 'bootstrap-5',
-          language: window.YAFFA.language,
+          language: window.YAFFA.userSettings.language,
           ajax: {
             url: $vm.getAccountApiUrl(type),
             dataType: 'json',
@@ -1257,10 +1325,7 @@
           allowClear: true,
           width: 'resolve',
           // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-standard') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $(this.dropdownParentSelector),
         };
       },
 

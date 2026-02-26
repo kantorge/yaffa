@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\ReceivedMail
@@ -15,8 +15,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $subject
  * @property string $html
  * @property string $text
- * @property bool $processed
- * @property bool $handled
+ * @property string $message_id
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read AiDocument|null $aiDocument
+ * @property-read User $user
+ * @method static \Database\Factories\ReceivedMailFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereHtml($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereMessageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereUserId($value)
  * @mixin Eloquent
  */
 class ReceivedMail extends Model
@@ -29,40 +45,15 @@ class ReceivedMail extends Model
         'subject',
         'html',
         'text',
-        'processed',
-        'handled',
-        'transaction_data',
-        'transaction_id',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'processed' => 'boolean',
-            'handled' => 'boolean',
-            'transaction_data' => 'array',
-        ];
-    }
-
-    #[Scope]
-    protected function unprocessed($query)
-    {
-        return $query->where('processed', false);
-    }
-
-    #[Scope]
-    protected function unhandled($query)
-    {
-        return $query->where('handled', false);
-    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function transaction(): BelongsTo
+    public function aiDocument(): HasOne
     {
-        return $this->belongsTo(Transaction::class);
+        return $this->hasOne(AiDocument::class);
     }
 }

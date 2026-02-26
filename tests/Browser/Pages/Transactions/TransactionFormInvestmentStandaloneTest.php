@@ -6,9 +6,11 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 use Throwable;
 
+#[Group('critical')]
 class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

@@ -34,7 +34,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -44,8 +45,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public function budgetChart(Request $request): JsonResponse
     {
         /**
-         * @get('/api/budgetchart')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/budgetchart")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get list of requested categories
@@ -71,8 +72,9 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->whereIn('category_id', $categories->pluck('id'))
                 ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
                     $query->whereUserId($request->user()->id)
-                        ->byScheduleType('none')
-                        ->byType('standard')
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
                         ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                             'config',
                             TransactionDetailStandard::class,
@@ -240,8 +242,8 @@ class ReportApiController extends Controller implements HasMiddleware
         int|null $month = null
     ): JsonResponse {
         /**
-         * @get('/api/reports/waterfall/{type}/{year}/{month?}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/reports/waterfall/{type}/{year}/{month?}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get monthly average currency rate for all currencies against base currency
@@ -265,8 +267,9 @@ class ReportApiController extends Controller implements HasMiddleware
                         ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                         ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                             ->whereRaw('MONTH(date) = ?', [$month]))
-                        ->byScheduleType('none')
-                        ->byType('standard')
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
                         ->where('transaction_type', '!=', TransactionTypeEnum::TRANSFER);
                 })
                 ->get();
@@ -274,7 +277,9 @@ class ReportApiController extends Controller implements HasMiddleware
             $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
                 // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
-                $category = $item->category?->parent?->name ?? $item->category?->name ?? 'Error: no category assigned';
+                $category = $item->category->parent
+                    ? $item->category->parent->name
+                    : $item->category->name;
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
@@ -302,17 +307,11 @@ class ReportApiController extends Controller implements HasMiddleware
 
         if ($transactionType === 'all' || $transactionType === 'investment') {
             // Add investment transaction results
-            // Get investment types with amount multipliers
-            $investmentTypesWithAmount = array_map(
-                fn ($type) => $type->value,
-                TransactionTypeEnum::investmentTypesWithAmount()
-            );
-
             $investmentTransactions = Transaction::with([
                 'currency',
             ])
                 ->byType('investment')
-                ->whereIn('transaction_type', $investmentTypesWithAmount)
+                ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithAmountValues())
                 ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])

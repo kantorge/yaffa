@@ -36,10 +36,10 @@
   DataTable.use(DataTablesBootstrap5);
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
-  import * as dataTableHelpers from '../../components/dataTableHelper';
+  import * as dataTableHelpers from '@/components/dataTableHelper';
   import { __, getDataTablesLanguageOptions } from '@/i18n';
-  import { toIsoDateString } from '../../helpers';
-  import * as toastHelpers from '../../toast';
+  import { toIsoDateString } from '@/helpers';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'TransactionHistoryCard',
@@ -52,7 +52,7 @@
       locale: {
         type: String,
         default: () =>
-          window.YAFFA ? window.YAFFA.locale : navigator.language,
+          window.YAFFA ? window.YAFFA.userSettings.locale : navigator.language,
       },
     },
     emits: ['set-date-range', 'delete-transaction'],

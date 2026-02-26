@@ -4,8 +4,10 @@ namespace Tests\Browser\Pages\Reports\FindTransactions;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class FindTransactionsFilterBehaviorTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

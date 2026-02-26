@@ -8,8 +8,10 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionFormInvestmentModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -43,7 +45,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 // The modal should be visible
                 ->assertVisible('#modal-transaction-form-investment')
                 // The form should be visible
@@ -66,7 +68,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
 
                 // Test the reconciled checkbox with prefixed ID
@@ -99,7 +101,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -142,7 +144,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button again
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -165,7 +167,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -185,7 +187,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Reopen the modal
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -208,7 +210,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -248,7 +250,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -283,7 +285,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -345,7 +347,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)

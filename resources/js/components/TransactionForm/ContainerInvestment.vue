@@ -3,7 +3,9 @@
     :action="action"
     :initial-callback="callback"
     :transaction="transactionData"
+    :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
+    :dropdown-parent-selector="'body'"
     @cancel="onCancel"
     @success="onSuccess"
   ></transaction-form-investment>
@@ -40,6 +42,10 @@
             tax: null,
           },
         },
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
       },
     },
 

@@ -22,6 +22,7 @@ class TransactionRequest extends FormRequest
             'config.tax' => __('tax'),
             // Standard fields
             'config.amount_to' => __('amount to'),
+            'ai_document_id' => __('AI document'),
             // Schedule fields
             'schedule_config.start_date' => __('schedule start date'),
             'schedule_config.next_date' => __('schedule next date'),
@@ -37,7 +38,6 @@ class TransactionRequest extends FormRequest
     {
         $rules = [
             'action' => 'required|in:create,edit,clone,enter,replace,finalize',
-            'fromModal' => 'nullable|boolean',
 
             'id' => 'nullable|exists:transactions,id',
             'transaction_type' => [
@@ -58,7 +58,14 @@ class TransactionRequest extends FormRequest
             'budget' => 'boolean',
             'config_type' => 'required|in:standard,investment',
 
-            'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
+            // Optional AI document association - exists, owned by the user, and not already finalized
+            'ai_document_id' => [
+                'nullable',
+                Rule::exists('ai_documents', 'id')->where(function ($query) {
+                    $query->where('user_id', $this->user()->id)
+                        ->where('status', '!=', 'finalized');
+                }),
+            ],
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled
@@ -151,10 +158,14 @@ class TransactionRequest extends FormRequest
                     'required',
                     'exists:categories,id',
                 ],
-                'items.*.comment' => 'nullable|max:191',
+                'items.*.comment' => 'nullable|max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 'items.*.tags' => 'array',
                 //TODO: rule validation with option to create new tag
                 //'transactionItems.*.tags.*' => 'nullable|exists:tags,id',
+
+                // Fields related to AI-based matching and learning
+                'items.*.description' => 'nullable|max:' . self::DEFAULT_STRING_MAX_LENGTH,
+                'items.*.learnRecommendation' => 'nullable|boolean',
             ]);
 
             // Adjust detail related rules, based on transaction type

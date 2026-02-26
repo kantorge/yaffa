@@ -56,15 +56,26 @@
           @update:category_id="updateItemCategory(index, $event)"
           @update:tags="updateItemTag(index, $event)"
           @update:comment="updateItemComment(index, $event)"
+          @update:learnRecommendation="
+            updateItemLearnRecommendation(index, $event)
+          "
           :id="item.id"
           :amount="item.amount"
           :category_id="item.category_id ? Number(item.category_id) : null"
-          :category="item.category"
+          :category_full_name="item.category_full_name || null"
+          :recommended_category_id="item.recommended_category_id || null"
+          :recommended_category_full_name="
+            item.recommended_category_full_name || null
+          "
+          :description="item.description || null"
+          :match_type="item.match_type || null"
+          :confidence_score="item.confidence_score || null"
           :tags="item.tags || []"
           :comment="item.comment"
           :currencySymbol="currencySymbol"
           :remainingAmount="remainingAmount"
           :payee="payee"
+          :dropdown-parent-selector="dropdownParentSelector"
         ></transaction-item>
       </div>
       <div v-if="!enabled">
@@ -137,6 +148,10 @@
         type: Boolean,
         default: true,
       },
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
+      },
     },
 
     emits: ['addTransactionItem'],
@@ -174,6 +189,12 @@
       // Update transaction item comment with value received from child component
       updateItemComment(index, value) {
         this.transactionItems[index].comment = value;
+      },
+
+      // Update transaction item learn recommendation flag with value received from child component
+      updateItemLearnRecommendation(index, value) {
+        this.transactionItems[index].learnRecommendation =
+          value.learnRecommendation;
       },
 
       // Item list collapse and expand functionality

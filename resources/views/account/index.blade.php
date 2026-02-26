@@ -12,8 +12,7 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <div
-                            class="card-title collapse-control
-                                @handheld collapsed @endhandheld"
+                            class="card-title collapse-control"
                             data-coreui-toggle="collapse"
                             data-coreui-target="#cardActions"
                     >
@@ -22,9 +21,8 @@
                     </div>
                 </div>
                 <ul
-                        class="list-group list-group-flush collapse
-                            @desktop show @enddesktop"
-                        aria-expanded="@desktop true @elsedesktop false @enddesktop"
+                        class="list-group list-group-flush collapse show"
+                        aria-expanded="true"
                         id="cardActions"
                 >
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -43,8 +41,7 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <div
-                            class="card-title collapse-control
-                                @handheld collapsed @endhandheld"
+                            class="card-title collapse-control"
                             data-coreui-toggle="collapse"
                             data-coreui-target="#cardFilters"
                     >
@@ -53,9 +50,8 @@
                     </div>
                 </div>
                 <ul
-                        class="list-group list-group-flush collapse
-                            @desktop show @enddesktop"
-                        aria-expanded="@desktop true @elsedesktop false @enddesktop"
+                        class="list-group list-group-flush collapse show"
+                        aria-expanded="true"
                         id="cardFilters">
                     <x-tablefilter-sidebar-switch
                             label=" {{ __('Active') }}"
