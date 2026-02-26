@@ -4,7 +4,7 @@
 
 Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
 
-**Current Implementation Status:** This feature is **~90% implemented**. Core functionality is complete including document upload, AI processing, transaction finalization, and category learning.
+**Current Implementation Status:** This feature is **near MVP completion**. Core functionality is complete including document upload, AI processing, transaction finalization, category learning, and Google Drive sync; the remaining MVP gap is scanned-PDF OCR fallback.
 
 ## Goals / Non-Goals
 
@@ -166,7 +166,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `AiDocumentApiController` (✅ implemented)
     - `POST /api/documents` - Upload document
       - Request: multipart/form-data with `files[]`, `text_input`, `custom_prompt`
-      - Validation: at least one file OR text_input required; max files and size are config-based (default: 3 files, 20MB/file); allowed types: pdf,jpg,jpeg,png,txt
+      - Validation: at least one file OR text_input required; max files and size are config-based (default: 5 files, 20MB/file); allowed types are config-driven (`AI_DOCUMENT_ALLOWED_TYPES`, restrictive default is `txt`)
       - Response: `{"id": 1, "status": "ready_for_processing", "message": "..."}`
     - `PATCH /api/documents/{id}` - Update custom prompt or status
       - Request: `{"custom_prompt": "...", "status": "..."}`
@@ -961,7 +961,7 @@ A few notes on the statuses
     - Delete configuration
     - One config per user enforcement (UI level)
 
-## OCR & Vision Processing Strategy (✅ COMPLETED)
+## OCR & Vision Processing Strategy (✅ Implemented with one known MVP gap)
 
 ### Overview
 
@@ -996,7 +996,7 @@ YAFFA supports three methods for extracting text from documents, with automatic 
 
 - ✅ Always attempt text extraction with smalot/pdfparser first
 - ✅ If successful (text extracted), proceed with AI text completion
-- ✅ If unsuccessful (scanned PDF, returns empty), treat as image and require OCR
+- ⏳ If extraction is empty (scanned PDF), no OCR fallback is currently applied; processing fails with "No text could be extracted" (tracked as pending work)
 
 **For image files (JPG, PNG):**
 
@@ -1106,9 +1106,8 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - **Upload Validation:**
   - No files and no text → reject with 422
   - File size 0 bytes → reject
-  - File size > 50MB → reject
-  - 11 files uploaded → reject (max 10)
-  - Total size > 500MB → reject
+  - File size > configured max (`AI_DOCUMENT_MAX_FILE_SIZE_MB`, default 20MB) → reject
+  - Files uploaded beyond configured limit (`AI_DOCUMENT_MAX_FILES_PER_SUBMISSION`, default 5) → reject
   - Unsupported file type (.exe, .zip) → reject
   - Corrupted PDF → graceful failure with error message
 
@@ -1116,12 +1115,12 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - **Image uploaded, Tesseract disabled, Vision AI disabled** → mark processing_failed, email user with `ocr_unavailable` error
   - **Image uploaded, Tesseract enabled but binary not found** → mark processing_failed, email user (check TESSERACT_PATH)
   - **Image uploaded, Vision AI enabled but model doesn't support vision** → mark processing_failed, email user (suggest vision-capable model)
-  - **Scanned PDF (no extractable text), no OCR available** → mark processing_failed, email user
+  - **Scanned PDF (no extractable text)** → mark processing_failed (current behavior; PDF OCR fallback is pending)
   - **Text PDF with smalot/pdfparser** → extract successfully, no OCR needed
   - **Mixed document (text + images), partial OCR failure** → extract what's possible, continue processing
   - **Tesseract returns empty string** → mark processing_failed (unreadable image)
   - **Vision API image too large (>20MB after resize)** → reject during validation
-  - **Multi-page scanned PDF** → extract each page with smalot/pdfparser (treat as one text blob), if empty use OCR fallback per page
+  - **Multi-page scanned PDF** → attempt text extraction for all pages; if no extractable text, processing fails (OCR fallback for scanned PDFs is pending)
 
 - **AI Processing:**
   - AI response missing required fields → mark processing_failed
@@ -1285,16 +1284,16 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 - ✅ TextExtractionService created: Orchestrates PDF, OCR, and text extraction with intelligent routing
 - ✅ OcrService with triple-fallback: Tesseract binary → Tesseract HTTP → Vision API
-- ✅ PdfExtractionService: Extracts text from PDFs (native or scanned with OCR fallback)
+- ✅ PdfExtractionService: Extracts text from PDFs with native/extractable text
 - ✅ ImagePreprocessingService: Resizes images for Vision API (max 2048px, preserves aspect ratio)
 - ✅ OcrUnavailableException: Clear error handling when images require OCR but none available
-- ✅ Helper functions: tesseract_is_available(), tesseract_http_available(), tesseract_version()
-- ✅ Comprehensive test coverage: OcrServiceTest (9 tests), PdfExtractionServiceTest (3 tests), TextExtractionServiceTest (2 tests)
+- ✅ Helper functions: tesseract_is_available(), tesseract_http_available(), tesseract_binary_available()
+- ✅ Comprehensive test coverage: OcrServiceHttpModeTest (3 tests), PdfExtractionServiceTest (3 tests), TextExtractionServiceTest (7 tests), plus helper tests
 - ✅ Documentation consolidated: 4 concise guides (README, SETUP, USAGE, REFERENCE) in .ai/docs/ replacing 9 verbose files
 - ✅ Configuration: Flexible mode selection (binary/http) via environment variables
 - ✅ ProcessDocumentService: Refactored to use TextExtractionService, removed duplicate detection from processing
-- ✅ Docker Compose: Tesseract service merged into main compose with profile-based activation
-- ✅ Total: 23 OCR tests passing, 0 breaking changes, proper ServiceProvider registration
+- ✅ Docker Compose: Optional Tesseract sidecar configuration is documented in compose file comments
+- ✅ Total: 24 OCR-related tests passing, 0 breaking changes, proper ServiceProvider registration
 
 **AI Processing Pipeline (✅ Fully Implemented):**
 
@@ -1455,56 +1454,56 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - ✅ GoogleDriveMonitorJob scheduled (configurable interval via `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`)
 - ⏳ File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task) - NOT YET IMPLEMENTED
 
-**Other open items, tech debts, future improvements:**
+**Tech debts, future improvements:**
 
-- [Post-MVP] Add an optional title field for AiDocument for user-friendly naming.
+- Add an optional title field for AiDocument for user-friendly naming.
   - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
-- [Post-MVP] Add camera capture support in upload flow for mobile receipt capture.
+- Add camera capture support in upload flow for mobile receipt capture.
   - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
-- [Post-MVP] Store and display Google Drive folder name in addition to folder ID.
+- Store and display Google Drive folder name in addition to folder ID.
   - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
-- [Post-MVP] Add payee/account-level custom prompt support and optional prompt-learning UX.
+- Add payee/account-level custom prompt support and optional prompt-learning UX.
   - Verbose detail: Consider optional per-payee (and maybe per-account) custom prompts to improve extraction on recurring receipt formats, plus optional “save as custom prompt” suggestion after successful extractions.
-- [Post-MVP] Consider side-by-side receipt vs extracted-values review UI.
+- Consider side-by-side receipt vs extracted-values review UI.
   - Verbose detail: Current tab layout works, but side-by-side could improve review speed; requires careful design for multi-file documents and dense extracted data.
-- [Post-MVP research] Tune Tesseract parameters for OCR quality.
+- [Research] Tune Tesseract parameters for OCR quality.
   - Verbose detail: Current default OCR results may be weak; investigate concrete parameter combinations that improve practical extraction accuracy.
-- [Post-MVP research] Define and enforce minimum Tesseract binary version for local mode.
+- [Research] Define and enforce minimum Tesseract binary version for local mode.
   - Verbose detail: Add version checks and enforcement strategy so binary mode runs only on supported/minimum versions for compatibility and OCR quality.
-- [Post-MVP] Add richer live status completion feedback for reprocessing (polling or realtime).
+- Add richer live status completion feedback for reprocessing (polling or realtime).
   - Verbose detail: Reprocessing currently updates status minimally; evaluate if simple polling is enough or if Echo/Reverb realtime would be justified.
-- [Post-MVP] Allow creating payee from unidentified payee result in AiDocument review flow.
+- Allow creating payee from unidentified payee result in AiDocument review flow.
   - Verbose detail: Add “create payee” action when extraction returns unidentified payee, likely aligned with the modal-based payee management direction in PR 371.
-- [Post-MVP] Add category-learning management UI (list, delete/archive).
+- Add category-learning management UI (list, delete/archive).
   - Verbose detail: Once mappings are learned, users currently cannot manage them; add list + cleanup controls in category management.
-- [Post-MVP] Handle duplicate item descriptions with contextual learning (amount/position aware).
+- Handle duplicate item descriptions with contextual learning (amount/position aware).
   - Verbose detail: Current learning key is mostly description-only, which can fail when same item text appears with different categories; consider amount/position/context-sensitive learning.
-- [Post-MVP] Improve receipt discount handling and optional warning heuristics.
+- Improve receipt discount handling and optional warning heuristics.
   - Verbose detail: Test and improve handling of item-level discounts and mixed pricing cases; MVP fallback could warn when same normalized item appears with conflicting category-learning intent.
-- [Post-MVP] Add payee-level toggle to disable item-level breakdown when desired.
+- Add payee-level toggle to disable item-level breakdown when desired.
   - Verbose detail: For some payees (e.g., restaurants), item-level split may be unnecessary; add per-payee preference to collapse to total-category behavior.
-- [Post-MVP] Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
+- Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
   - Verbose detail: System already holds preference data but management is cumbersome; add both per-payee and mass-assignment tooling for preferred/non-preferred categories.
-- [Post-MVP] Add optional category description and category type constraints for better AI guidance.
+- Add optional category description and category type constraints for better AI guidance.
   - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
-- [Post-MVP] Make item-level editing foldable in finalization UI.
+- Make item-level editing foldable in finalization UI.
   - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
-- [Post-MVP] Explore vector search for AI cost/performance optimization.
+- Explore vector search for AI cost/performance optimization.
   - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
-- [Post-MVP] Consider storing AI conversation history per document for observability.
+- Consider storing AI conversation history per document for observability.
   - Verbose detail: Storing full AI message exchange can help debugging, transparency, and user-driven prompt tuning; possible as JSON + collapsible viewer section.
-- [Post-MVP] Add learning flow for account/payee/investment overrides during finalization.
+- Add learning flow for account/payee/investment overrides during finalization.
   - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
-- [Post-MVP tech debt] Revisit AI documents DataTable column width behavior after async refresh.
+- [Tech debt] Revisit AI documents DataTable column width behavior after async refresh.
   - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
-- [Post-MVP] Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
-- [Post-MVP] Normalize quantities out of item descriptions to improve matching/learning.
+- Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
+- Normalize quantities out of item descriptions to improve matching/learning.
   - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
-- [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.
+- Add overlap hint for multi-image receipts in extraction prompt.
   - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
-- [Post-MVP] Improve failed-processing UX and allow prompt editing directly from AiDocument view.
+- Improve failed-processing UX and allow prompt editing directly from AiDocument view.
   - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing. This could be implemented together with the verbose processing history and AI conversation logging features for better transparency and control.
   - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
-- [Post-MVP] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
+- Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.

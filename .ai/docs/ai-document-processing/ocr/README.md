@@ -4,11 +4,13 @@ Production-ready document OCR and text extraction for YAFFA.
 
 ## Features
 
-✅ Extract text from PDFs (native or scanned)
+✅ Extract text from PDFs with native text
 ✅ Extract text from images (JPG, PNG) via OCR
 ✅ Multiple deployment modes (binary, Docker, cloud)
 ✅ Automatic fallback to Vision API
-✅ 23 passing tests, zero breaking changes
+✅ 24 passing tests, zero breaking changes
+
+⚠️ Scanned PDF OCR fallback is not yet implemented (tracked as pending MVP gap)
 
 ## Quick Start
 
@@ -101,11 +103,11 @@ Upload document / Load from Google Drive
     ↓
 TextExtractionService detects file type
     ↓
-┌─ PDF → Extract native text (or OCR if scanned)
+┌─ PDF → Extract native text
 ├─ Image → Tesseract OCR → fallback to Vision API (whichever available and enabled)
 └─ Text → Read directly
     ↓
 Return extracted text for further processing
 ```
 
-Graceful degradation ensures processing continues even if Tesseract unavailable.
+If Tesseract is unavailable, extraction falls back to Vision API when configured; otherwise processing fails with a clear OCR-related error.

@@ -15,9 +15,7 @@ TextExtractionService (Main Orchestrator)
 ├─ OcrService (Tesseract + Vision API)
 │  ├─ extract(filePath, visionConfig): string
 │  ├─ isAvailable(visionConfig): bool
-│  ├─ extractWithTesseractBinary(filePath): string
-│  ├─ extractWithTesseractHttp(filePath): string
-│  └─ extractWithVisionApi(filePath, config): string
+│  └─ (private) tesseract/vision extraction helpers
 │
 └─ ImagePreprocessingService
    ├─ resizeForVisionApi(filePath, maxDimension): string
@@ -36,9 +34,9 @@ TextExtractionService (Main Orchestrator)
         ↓
 4a. PDF → PdfExtractionService::extract()
     ├─ Native text found? → Return text
-    └─ Scanned PDF → Continue to OCR (step 4b)
+    └─ Scanned PDF / empty text → Returns empty (OCR fallback for PDFs is pending)
         ↓
-4b. Image/Scanned PDF → OcrService::extract()
+4b. Image files → OcrService::extract()
     ├─ TESSERACT_ENABLED=true
     │   ├─ Binary mode → exec tesseract binary
     │   ├─ HTTP mode → POST to tesseract container
@@ -95,24 +93,6 @@ isAvailable(?AiProviderConfig $visionConfig): bool
 
 Check if any OCR method available (Tesseract or Vision API).
 
-```php
-extractWithTesseractBinary(string $filePath): string
-```
-
-Execute local Tesseract binary. Used when `TESSERACT_MODE=binary`.
-
-```php
-extractWithTesseractHttp(string $filePath): string
-```
-
-Send image to Tesseract HTTP service. Used when `TESSERACT_MODE=http`.
-
-```php
-extractWithVisionApi(string $filePath, AiProviderConfig $config): string
-```
-
-Use Vision API (gpt-4o/gemini). Automatically preprocesses large images.
-
 **Throws:** `OcrUnavailableException` if all methods unavailable/failed
 
 ---
@@ -142,7 +122,7 @@ Check if PDF contains native (non-scanned) text.
 **File:** `app/Services/ImagePreprocessingService.php`
 
 ```php
-resizeForVisionApi(string $filePath, int $maxDimension = 2048): string
+resizeForVisionApi(string $filePath): string
 ```
 
 Resize image to max dimension while maintaining aspect ratio. Returns temp file path.
@@ -169,22 +149,23 @@ Delete temporary resized image file.
 return [
     'ocr' => [
         // Enable/disable Tesseract OCR entirely
-        'enabled' => env('TESSERACT_ENABLED', false),
+        'tesseract_enabled' => env('TESSERACT_ENABLED', false),
 
         // Mode: 'binary' (local exec) or 'http' (Docker sidecar)
-        'mode' => env('TESSERACT_MODE', 'binary'),
+        'tesseract_mode' => env('TESSERACT_MODE', 'binary'),
+        'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
 
         // Binary mode configuration
-        'binary' => [
+        'tesseract_binary' => [
             'path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
         ],
 
         // HTTP mode configuration
-        'http' => [
-            'enabled' => env('TESSERACT_HTTP_ENABLED', true),
+        'tesseract_http' => [
             'host' => env('TESSERACT_HTTP_HOST', 'tesseract'),
             'port' => env('TESSERACT_HTTP_PORT', 8888),
             'timeout' => env('TESSERACT_HTTP_TIMEOUT', 30),
+            'endpoint' => '/api/v1/ocr',
         ],
     ],
 ];
@@ -197,8 +178,8 @@ return [
 | `TESSERACT_ENABLED`      | `false`              | Enable Tesseract OCR           |
 | `TESSERACT_MODE`         | `binary`             | Mode: `binary` or `http`       |
 | `TESSERACT_PATH`         | `/usr/bin/tesseract` | Binary path (binary mode)      |
-| `TESSERACT_HTTP_ENABLED` | `true`               | Enable HTTP mode               |
-| `TESSERACT_HTTP_HOST`    | `tesseract`          | HTTP service hostname          |
+| `TESSERACT_LANGUAGE`     | `eng`                | OCR language                   |
+| `TESSERACT_HTTP_HOST`    | `localhost`          | HTTP service hostname          |
 | `TESSERACT_HTTP_PORT`    | `8888`               | HTTP service port              |
 | `TESSERACT_HTTP_TIMEOUT` | `30`                 | HTTP request timeout (seconds) |
 
@@ -206,31 +187,29 @@ return [
 
 ### Test Coverage
 
-**23 tests across 5 files:**
+**24 tests across 5 files:**
 
 1. `tests/Unit/Helpers/OcrHelpersTest.php` - 5 tests
    - Binary path validation
    - Availability checks
    - Version detection
 
-2. `tests/Unit/Helpers/OcrHelpersHttpTest.php` - 4 tests
+2. `tests/Unit/Helpers/OcrHelpersHttpTest.php` - 6 tests
    - HTTP health checks
    - Connection availability
    - Timeout handling
 
-3. `tests/Unit/Services/OcrServiceTest.php` - 9 tests
-   - Mode dispatching
-   - Binary execution
-   - HTTP communication
-   - Vision API fallback
-   - Error handling
+3. `tests/Feature/Services/OcrServiceHttpModeTest.php` - 3 tests
+    - Mode dispatching behavior
+    - HTTP mode availability path
+    - Binary mode switch behavior
 
-4. `tests/Unit/Services/PdfExtractionServiceTest.php` - 3 tests
-   - Text extraction
-   - Multi-page PDFs
-   - Scanned PDFs
+4. `tests/Feature/Services/PdfExtractionServiceTest.php` - 3 tests
+    - Invalid PDF exception path
+    - Empty/invalid extractable-text checks
+    - Basic parser failure handling
 
-5. `tests/Unit/Services/TextExtractionServiceTest.php` - 2 tests
+5. `tests/Feature/Services/TextExtractionServiceTest.php` - 7 tests
    - File type routing
    - End-to-end extraction
 
@@ -241,7 +220,7 @@ return [
 vendor/bin/sail artisan test --filter Ocr --compact
 
 # Specific test classes
-vendor/bin/sail artisan test tests/Unit/Services/OcrServiceTest.php
+vendor/bin/sail artisan test tests/Feature/Services/OcrServiceHttpModeTest.php
 vendor/bin/sail artisan test tests/Unit/Helpers/OcrHelpersTest.php
 
 # With coverage
@@ -250,12 +229,7 @@ vendor/bin/sail artisan test --coverage --min=80
 
 ### Test Data
 
-Test fixtures in `tests/fixtures/`:
-
-- `sample.pdf` - Native text PDF
-- `scanned.pdf` - Image-based PDF
-- `test-image.jpg` - Sample OCR image
-- `test-corrupted.jpg` - Invalid image
+The OCR-focused tests primarily create temporary files at runtime for isolation.
 
 ## Helper Functions
 
@@ -269,8 +243,21 @@ function tesseract_is_available(): bool
 
 Check if Tesseract binary is available and executable.
 
-**Returns:** `true` if binary exists at configured path
-**Config:** Uses `TESSERACT_PATH` from config
+**Returns:** `true` only when OCR is enabled and the configured mode is available
+**Config:** Uses `TESSERACT_ENABLED` + `TESSERACT_MODE`
+
+---
+
+### tesseract_binary_available()
+
+```php
+function tesseract_binary_available(): bool
+```
+
+Check if local Tesseract binary exists and is executable.
+
+**Returns:** `true` when configured binary path is valid and executable
+**Config:** Uses `TESSERACT_PATH`
 
 ---
 
@@ -288,17 +275,6 @@ Check if Tesseract HTTP service is responding.
 
 ---
 
-### tesseract_version()
-
-```php
-function tesseract_version(): ?string
-```
-
-Get installed Tesseract version.
-
-**Returns:** Version string (e.g., "5.3.0") or `null` if unavailable
-**Example:** `"tesseract 5.3.0"`
-
 ## Exception Handling
 
 ### OcrUnavailableException
@@ -307,7 +283,7 @@ Get installed Tesseract version.
 
 Thrown when:
 
-- Image/scanned PDF requires OCR
+- Image file requires OCR
 - `TESSERACT_ENABLED=false` AND no Vision API configured
 - Tesseract fails AND Vision API unavailable
 
@@ -355,18 +331,16 @@ try {
 | -------------------- | ------- | ----------------------- |
 | `smalot/pdfparser`   | ^2.0    | PDF text extraction     |
 | `guzzlehttp/guzzle`  | ^7.0    | HTTP client (built-in)  |
-| `intervention/image` | -       | Not required (using GD) |
+| `intervention/image` | ^3.x    | Image resizing for Vision API |
 
 Tesseract OCR is external dependency (binary or Docker).
 
 ## Database Schema
 
-No database changes required. Uses existing `AiDocument` model with columns:
+No OCR-specific migrations are required. OCR uses existing AI document entities:
 
-- `file_path` - Document storage path
-- `file_type` - File extension
-
-No new migrations needed.
+- `ai_documents` for document-level processing state
+- `ai_document_files` for per-file `file_path` and `file_type`
 
 ## File Structure
 
@@ -383,11 +357,12 @@ app/
 │   └── ImagePreprocessingService.php
 tests/
 ├── Unit/
-│   ├── Helpers/
-│   │   ├── OcrHelpersTest.php
-│   │   └── OcrHelpersHttpTest.php
+│   └── Helpers/
+│       ├── OcrHelpersTest.php
+│       └── OcrHelpersHttpTest.php
+├── Feature/
 │   └── Services/
-│       ├── OcrServiceTest.php
+│       ├── OcrServiceHttpModeTest.php
 │       ├── PdfExtractionServiceTest.php
 │       └── TextExtractionServiceTest.php
 config/
@@ -396,4 +371,4 @@ docker/
 └── docker-compose.yml (tesseract service)
 ```
 
-Total: 9 application files + 5 test files = 14 files, ~1,410 lines of code
+Total: 9 application files + 5 test files = 14 files
