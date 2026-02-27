@@ -579,5 +579,3 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (40,'2025_02_08_124
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (41,'2025_03_10_205956_fix_investment_price_decimals',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (42,'2025_09_27_122558_add_default_account_date_column',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (43,'2025_10_03_000000_rename_password_resets_table',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (44,'2026_02_09_222240_add_transaction_type_enum_column_to_transactions_table',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (45,'2026_02_09_222241_drop_transaction_types_table',1);
