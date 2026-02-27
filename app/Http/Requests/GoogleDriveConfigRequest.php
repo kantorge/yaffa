@@ -23,7 +23,7 @@ class GoogleDriveConfigRequest extends FormRequest
     public function rules(): array
     {
         $isUpdate = $this->isMethod('patch') || $this->isMethod('put');
-        $isTest = $this->routeIs('api.google-drive.config.test');
+        $isTest = $this->routeIs('api.google-drive.config.test') || $this->routeIs('api.v1.google-drive.config.test');
 
         // Service account JSON validation rules depend on context
         // For test: required (can be __existing__ or actual JSON)
@@ -96,7 +96,7 @@ class GoogleDriveConfigRequest extends FormRequest
         $validator->after(function ($validator) {
             // Enforce business rule: only one Google Drive config per user (MVP)
             // Skip this check if we're updating an existing config or running a test
-            if (!$this->route('googleDriveConfig') && !$this->routeIs('api.google-drive.config.test')) {
+            if (!$this->route('googleDriveConfig') && !$this->routeIs('api.google-drive.config.test') && !$this->routeIs('api.v1.google-drive.config.test')) {
                 $existingConfig = GoogleDriveConfig::where('user_id', auth()->id())->exists();
 
                 if ($existingConfig) {

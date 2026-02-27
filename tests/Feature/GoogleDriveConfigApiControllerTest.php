@@ -134,7 +134,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->getJson('/api/google-drive/config');
 
         $response->assertStatus(404);
-        $response->assertJsonStructure(['error']);
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_show_returns_config_without_service_account_json(): void
@@ -483,7 +483,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(400);
         $response->assertJson([
-            'message' => __('No existing Google Drive configuration found'),
+            'error' => [
+                'code' => 'CONFIG_NOT_FOUND',
+                'message' => __('No existing Google Drive configuration found'),
+            ],
         ]);
     }
 
@@ -502,8 +505,8 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ]);
 
         // Should attempt connection (will fail because credentials are fake)
-        // But should not return "No existing config" message
-        $response->assertJsonMissing(['message' => __('No existing Google Drive configuration found')]);
+        // But should not return "No existing config" error code
+        $response->assertJsonMissing(['error' => ['code' => 'CONFIG_NOT_FOUND']]);
     }
 
     // ===== SYNC ENDPOINT (POST /api/google-drive/sync/{id}) =====
@@ -536,7 +539,12 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->postJson("/api/google-drive/sync/{$config->id}");
 
         $response->assertStatus(400);
-        $response->assertJson(['message' => __('Cannot sync disabled Google Drive configuration')]);
+        $response->assertJson([
+            'error' => [
+                'code' => 'CONFIG_DISABLED',
+                'message' => __('Cannot sync disabled Google Drive configuration'),
+            ],
+        ]);
     }
 
     public function test_sync_cannot_trigger_for_other_users_config(): void
@@ -566,7 +574,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 
@@ -584,7 +595,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 
@@ -601,7 +615,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 
@@ -616,7 +633,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 
@@ -632,7 +652,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 
@@ -647,7 +670,10 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $response->assertStatus(403);
         $response->assertJson([
-            'message' => __('Google Drive integration is disabled in configuration'),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ],
         ]);
     }
 }

@@ -20,6 +20,67 @@ use App\Http\Controllers\API\TransactionApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
+// ============================================================
+// API V1 - Versioned, resource-oriented routes
+// ============================================================
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    // CurrencyRate endpoints
+    Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
+        ->name('currency-rates.index');
+    Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
+        ->name('currency-rates.store');
+    Route::put('/currency-rates/{currencyRate}', [CurrencyRateApiController::class, 'update'])
+        ->name('currency-rates.update');
+    Route::delete('/currency-rates/{currencyRate}', [CurrencyRateApiController::class, 'destroy'])
+        ->name('currency-rates.destroy');
+    Route::post('/currency-rates/{currency}/retrieve-missing', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
+        ->name('currency-rates.retrieve-missing');
+
+    // InvestmentPrice endpoints
+    Route::get('/investment-prices/{investment}', [InvestmentPriceApiController::class, 'index'])
+        ->name('investment-prices.index');
+    Route::post('/investment-prices', [InvestmentPriceApiController::class, 'store'])
+        ->name('investment-prices.store');
+    Route::put('/investment-prices/{investmentPrice}', [InvestmentPriceApiController::class, 'update'])
+        ->name('investment-prices.update');
+    Route::delete('/investment-prices/{investmentPrice}', [InvestmentPriceApiController::class, 'destroy'])
+        ->name('investment-prices.destroy');
+    Route::post('/investment-prices/{investment}/retrieve-missing', [InvestmentPriceApiController::class, 'retrieveMissingPrices'])
+        ->name('investment-prices.retrieve-missing');
+    Route::get('/investment-prices/{investment}/check', [InvestmentPriceApiController::class, 'checkPrice'])
+        ->name('investment-prices.check');
+
+    // AiProviderConfig endpoints
+    Route::get('/ai/config', [AiProviderConfigApiController::class, 'show'])
+        ->name('ai.config.show');
+    Route::post('/ai/config', [AiProviderConfigApiController::class, 'store'])
+        ->name('ai.config.store');
+    Route::patch('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'update'])
+        ->name('ai.config.update');
+    Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'destroy'])
+        ->name('ai.config.destroy');
+    Route::post('/ai/config/test', [AiProviderConfigApiController::class, 'test'])
+        ->name('ai.config.test');
+
+    // GoogleDriveConfig endpoints
+    Route::get('/google-drive/config', [GoogleDriveConfigApiController::class, 'show'])
+        ->name('google-drive.config.show');
+    Route::post('/google-drive/config', [GoogleDriveConfigApiController::class, 'store'])
+        ->name('google-drive.config.store');
+    Route::patch('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'update'])
+        ->name('google-drive.config.update');
+    Route::delete('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'destroy'])
+        ->name('google-drive.config.destroy');
+    Route::post('/google-drive/config/test', [GoogleDriveConfigApiController::class, 'test'])
+        ->name('google-drive.config.test');
+    Route::post('/google-drive/config/{googleDriveConfig}/sync', [GoogleDriveConfigApiController::class, 'sync'])
+        ->name('google-drive.config.sync');
+});
+
+// ============================================================
+// Legacy routes (kept for backward compatibility during migration)
+// ============================================================
+
 Route::get('/assets/account', [AccountApiController::class, 'getList']);
 Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
 Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);

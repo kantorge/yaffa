@@ -11,7 +11,7 @@ class AiProviderConfigRequest extends FormRequest
     {
         $supportedProviders = array_keys(config('ai-documents.providers', []));
         $isUpdate = $this->isMethod('patch') || $this->isMethod('put');
-        $isTest = $this->routeIs('api.ai.config.test');
+        $isTest = $this->routeIs('api.ai.config.test') || $this->routeIs('api.v1.ai.config.test');
 
         // API key is required for creation and testing, but optional for updates
         $apiKeyRules = $isUpdate ? [
@@ -71,7 +71,7 @@ class AiProviderConfigRequest extends FormRequest
         $validator->after(function ($validator) {
             // Enforce business rule: only one provider config per user
             // Skip this check if we're updating an existing config or running a test
-            if (!$this->route('aiProviderConfig') && !$this->routeIs('api.ai.config.test')) {
+            if (!$this->route('aiProviderConfig') && !$this->routeIs('api.ai.config.test') && !$this->routeIs('api.v1.ai.config.test')) {
                 $existingConfig = AiProviderConfig::where('user_id', auth()->id())->exists();
 
                 if ($existingConfig) {

@@ -167,8 +167,8 @@
 
         try {
           await window.axios.delete(
-            window.route('api.investment-price.destroy', {
-              investment_price: price.id,
+            window.route('api.v1.investment-prices.destroy', {
+              investmentPrice: price.id,
             }),
           );
 

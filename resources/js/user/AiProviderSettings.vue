@@ -354,7 +354,7 @@
       loadConfig() {
         // Fetch existing config from API
         axios
-          .get('/api/ai/config')
+          .get('/api/v1/ai/config')
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
@@ -394,8 +394,8 @@
         this.testResult = null;
 
         const url = this.hasConfig
-          ? `/api/ai/config/${this.configId}`
-          : '/api/ai/config';
+          ? `/api/v1/ai/config/${this.configId}`
+          : '/api/v1/ai/config';
         const method = this.hasConfig ? 'patch' : 'post';
 
         // If updating and API key is empty, remove it from the request
@@ -446,7 +446,7 @@
         };
 
         axios
-          .post('/api/ai/test', testData)
+          .post('/api/v1/ai/config/test', testData)
           .then((response) => {
             this.testResult = {
               success: true,
@@ -457,7 +457,7 @@
             this.testResult = {
               success: false,
               message:
-                error.response?.data?.message || __('Connection test failed'),
+                error.response?.data?.error?.message || error.response?.data?.message || __('Connection test failed'),
             };
           })
           .finally(() => {
@@ -480,7 +480,7 @@
         }).then((result) => {
           if (result.isConfirmed) {
             axios
-              .delete(`/api/ai/config/${this.configId}`)
+              .delete(`/api/v1/ai/config/${this.configId}`)
               .then(() => {
                 this.configId = null;
                 this.hasConfig = false;

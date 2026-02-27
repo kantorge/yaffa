@@ -220,7 +220,7 @@
         try {
           // Fetch all prices from the API
           const response = await window.axios.get(
-            window.route('api.investment-price.index', {
+            window.route('api.v1.investment-prices.index', {
               investment: this.investment.id,
             }),
           );

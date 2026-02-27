@@ -1,9 +1,14 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders()
@@ -35,5 +40,49 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Standardized error contract for API V1 routes
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => $e->getMessage(),
+                        'details' => $e->errors(),
+                    ],
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'FORBIDDEN',
+                        'message' => 'This action is unauthorized.',
+                    ],
+                ], 403);
+            }
+        });
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'UNAUTHENTICATED',
+                        'message' => 'Unauthenticated.',
+                    ],
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => 'The requested resource was not found.',
+                    ],
+                ], 404);
+            }
+        });
     })->create();

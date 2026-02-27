@@ -466,7 +466,7 @@
     methods: {
       loadConfig() {
         axios
-          .get('/api/google-drive/config')
+          .get('/api/v1/google-drive/config')
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
@@ -543,8 +543,8 @@
         this.normalizeFolderId();
 
         const url = this.hasConfig
-          ? `/api/google-drive/config/${this.configId}`
-          : '/api/google-drive/config';
+          ? `/api/v1/google-drive/config/${this.configId}`
+          : '/api/v1/google-drive/config';
         const method = this.hasConfig ? 'patch' : 'post';
 
         const formData = { ...this.form.data() };
@@ -604,7 +604,7 @@
         };
 
         axios
-          .post('/api/google-drive/test', testData)
+          .post('/api/v1/google-drive/config/test', testData)
           .then((response) => {
             this.testResult = {
               success: true,
@@ -618,7 +618,7 @@
             this.testResult = {
               success: false,
               message:
-                error.response?.data?.message || __('Connection test failed'),
+                error.response?.data?.error?.message || error.response?.data?.message || __('Connection test failed'),
             };
           })
           .finally(() => {
@@ -639,7 +639,7 @@
 
         this.syncing = true;
         axios
-          .post(`/api/google-drive/sync/${this.configId}`)
+          .post(`/api/v1/google-drive/config/${this.configId}/sync`)
           .then((response) => {
             toastHelpers.showInfoToast(
               response.data?.message || __('Sync queued'),
@@ -678,7 +678,7 @@
         }).then((result) => {
           if (result.isConfirmed) {
             axios
-              .delete(`/api/google-drive/config/${this.configId}`)
+              .delete(`/api/v1/google-drive/config/${this.configId}`)
               .then(() => {
                 this.configId = null;
                 this.hasConfig = false;

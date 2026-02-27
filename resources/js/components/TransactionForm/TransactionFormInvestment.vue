@@ -1163,7 +1163,7 @@
           }
 
           const response = await window.axios.get(
-            window.route('api.investment-price.checkPrice', {
+            window.route('api.v1.investment-prices.check', {
               investment: this.form.config.investment_id,
             }),
             {
@@ -1202,7 +1202,7 @@
         }
 
         try {
-          await window.axios.post(window.route('api.investment-price.store'), {
+          await window.axios.post(window.route('api.v1.investment-prices.store'), {
             investment_id: transaction.config.investment_id,
             date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
             price: transaction.config.price,

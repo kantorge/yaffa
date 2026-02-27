@@ -138,7 +138,7 @@ class AiProviderConfigApiControllerTest extends TestCase
             ->getJson('/api/ai/config');
 
         $response->assertStatus(404);
-        $response->assertJsonStructure(['error']);
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_show_returns_config_without_api_key(): void
@@ -425,7 +425,7 @@ class AiProviderConfigApiControllerTest extends TestCase
             ]);
 
         $response->assertStatus(400);
-        $response->assertJsonStructure(['message']);
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_test_fails_with_existing_placeholder_and_no_config(): void
@@ -439,7 +439,10 @@ class AiProviderConfigApiControllerTest extends TestCase
 
         $response->assertStatus(400);
         $response->assertJson([
-            'message' => __('No existing AI provider configuration found'),
+            'error' => [
+                'code' => 'CONFIG_NOT_FOUND',
+                'message' => __('No existing AI provider configuration found'),
+            ],
         ]);
     }
 
@@ -462,7 +465,7 @@ class AiProviderConfigApiControllerTest extends TestCase
 
         // Should fail because API key is invalid, but should attempt to use the existing key
         $response->assertStatus(400);
-        // Should not be the "No existing config" message
-        $response->assertJsonMissing(['message' => __('No existing AI provider configuration found')]);
+        // Should not be the "No existing config" error code
+        $response->assertJsonMissing(['error' => ['code' => 'CONFIG_NOT_FOUND']]);
     }
 }

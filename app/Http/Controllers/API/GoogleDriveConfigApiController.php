@@ -50,7 +50,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         if (! $config) {
             return response()->json([
-                'error' => __('No Google Drive configuration found'),
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => __('No Google Drive configuration found'),
+                ],
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -194,7 +197,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             $existingConfig = $user->googleDriveConfigs()->first();
             if (! $existingConfig) {
                 return response()->json([
-                    'message' => __('No existing Google Drive configuration found'),
+                    'error' => [
+                        'code' => 'CONFIG_NOT_FOUND',
+                        'message' => __('No existing Google Drive configuration found'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
             $validated['service_account_json'] = $existingConfig->service_account_json;
@@ -206,7 +212,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return response()->json([
-                    'message' => __('Invalid JSON format in service account credentials'),
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => __('Invalid JSON format in service account credentials'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -222,13 +231,19 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             }
 
             return response()->json([
-                'message' => $result['message'],
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => $result['message'],
+                ],
             ], Response::HTTP_BAD_REQUEST);
         } catch (Exception $e) {
             Log::error("Google Drive test failed: {$e->getMessage()}");
 
             return response()->json([
-                'message' => __('Connection failed: :error', ['error' => $e->getMessage()]),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => __('Connection failed: :error', ['error' => $e->getMessage()]),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -248,7 +263,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         if (! $googleDriveConfig->enabled) {
             return response()->json([
-                'message' => __('Cannot sync disabled Google Drive configuration'),
+                'error' => [
+                    'code' => 'CONFIG_DISABLED',
+                    'message' => __('Cannot sync disabled Google Drive configuration'),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -267,7 +285,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         }
 
         return response()->json([
-            'message' => __(self::FEATURE_DISABLED_MESSAGE),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __(self::FEATURE_DISABLED_MESSAGE),
+            ],
         ], Response::HTTP_FORBIDDEN);
     }
 }

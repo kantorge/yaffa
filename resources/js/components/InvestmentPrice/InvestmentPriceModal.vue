@@ -211,14 +211,14 @@
           let response;
           if (this.isEditMode) {
             response = await window.axios.put(
-              window.route('api.investment-price.update', {
-                investment_price: this.editPrice.id,
+              window.route('api.v1.investment-prices.update', {
+                investmentPrice: this.editPrice.id,
               }),
               data,
             );
           } else {
             response = await window.axios.post(
-              window.route('api.investment-price.store'),
+              window.route('api.v1.investment-prices.store'),
               data,
             );
           }

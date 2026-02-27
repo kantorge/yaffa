@@ -38,7 +38,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         if (! $config) {
             return response()->json([
-                'error' => __('No AI provider configured yet.'),
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => __('No AI provider configured yet.'),
+                ],
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -157,7 +160,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             $existingConfig = $user->aiProviderConfigs()->first();
             if (!$existingConfig) {
                 return response()->json([
-                    'message' => __('No existing AI provider configuration found'),
+                    'error' => [
+                        'code' => 'CONFIG_NOT_FOUND',
+                        'message' => __('No existing AI provider configuration found'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
             $validated['api_key'] = $existingConfig->api_key;
@@ -180,13 +186,19 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             }
 
             return response()->json([
-                'message' => __('No response from AI provider'),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => __('No response from AI provider'),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         } catch (Exception $e) {
             Log::error("AI provider test failed: {$e->getMessage()}");
 
             return response()->json([
-                'message' => $e->getMessage(),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => $e->getMessage(),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
     }
