@@ -40,7 +40,7 @@ class CurrencyRateRequest extends FormRequest
                 ->where('to_id', $this->to_id));
 
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $uniqueRule->ignore($this->route('currency_rate'));
+            $uniqueRule->ignore($this->route('currency_rate') ?? $this->route('currencyRate'));
         }
 
         $rules['date'][] = $uniqueRule;

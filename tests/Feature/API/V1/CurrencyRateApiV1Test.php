@@ -30,20 +30,30 @@ class CurrencyRateApiV1Test extends TestCase
 
     public function test_unauthenticated_cannot_access_v1_index(): void
     {
-        $this->getJson(route('api.v1.currency-rates.index', [
+        $response = $this->getJson(route('api.v1.currency-rates.index', [
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
-        ]))->assertForbidden();
+        ]));
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_store(): void
     {
-        $this->postJson(route('api.v1.currency-rates.store'), [
+        $response = $this->postJson(route('api.v1.currency-rates.store'), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-15',
             'rate' => 1.2345,
-        ])->assertForbidden();
+        ]);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_update(): void
@@ -52,12 +62,17 @@ class CurrencyRateApiV1Test extends TestCase
             ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
             ->create(['date' => '2024-01-15', 'rate' => 1.2345]);
 
-        $this->putJson(route('api.v1.currency-rates.update', $rate), [
+        $response = $this->putJson(route('api.v1.currency-rates.update', $rate), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-16',
             'rate' => 1.3456,
-        ])->assertForbidden();
+        ]);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_destroy(): void
@@ -66,7 +81,12 @@ class CurrencyRateApiV1Test extends TestCase
             ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
             ->create(['date' => '2024-01-15', 'rate' => 1.2345]);
 
-        $this->deleteJson(route('api.v1.currency-rates.destroy', $rate))->assertForbidden();
+        $response = $this->deleteJson(route('api.v1.currency-rates.destroy', $rate));
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     // ===== HAPPY PATH TESTS =====

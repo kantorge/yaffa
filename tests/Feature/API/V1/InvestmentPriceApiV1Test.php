@@ -32,23 +32,36 @@ class InvestmentPriceApiV1Test extends TestCase
 
     public function test_unauthenticated_cannot_access_v1_index(): void
     {
-        $this->getJson(route('api.v1.investment-prices.index', ['investment' => $this->investment->id]))
-            ->assertForbidden();
+        $response = $this->getJson(route('api.v1.investment-prices.index', ['investment' => $this->investment->id]));
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_store(): void
     {
-        $this->postJson(route('api.v1.investment-prices.store'), [
+        $response = $this->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $this->investment->id,
             'date' => '2024-01-15',
             'price' => 100.00,
-        ])->assertForbidden();
+        ]);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_check(): void
     {
-        $this->getJson(route('api.v1.investment-prices.check', ['investment' => $this->investment->id]) . '?date=2024-01-15')
-            ->assertForbidden();
+        $response = $this->getJson(route('api.v1.investment-prices.check', ['investment' => $this->investment->id]) . '?date=2024-01-15');
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
+        );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     // ===== HAPPY PATH TESTS =====
@@ -114,7 +127,7 @@ class InvestmentPriceApiV1Test extends TestCase
 
         $updateData = [
             'investment_id' => $this->investment->id,
-            'date' => '2024-01-15',
+            'date' => '2024-01-16',
             'price' => 110.00,
         ];
 

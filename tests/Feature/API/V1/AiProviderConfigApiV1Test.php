@@ -31,6 +31,7 @@ class AiProviderConfigApiV1Test extends TestCase
             $response->status(),
             $this->logicalOr($this->equalTo(401), $this->equalTo(403))
         );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_store(): void
@@ -44,6 +45,7 @@ class AiProviderConfigApiV1Test extends TestCase
             $response->status(),
             $this->logicalOr($this->equalTo(401), $this->equalTo(403))
         );
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     // ===== HAPPY PATH TESTS =====
