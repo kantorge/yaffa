@@ -152,7 +152,7 @@ investmentGroupTree(
 );
 
 // Fetch API and calculate Gantt dates
-fetch('/api/assets/investment/timeline')
+fetch('/api/v1/investments/timeline')
     .then(response => response.json())
     .then(function(data) {
         window.chartData = data.map(function(item) {

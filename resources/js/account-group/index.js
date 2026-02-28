@@ -70,7 +70,7 @@ window.table = $(dataTableSelector).DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.accountgroup.destroy', row.data().id),
+                url: window.route('api.v1.account-groups.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },

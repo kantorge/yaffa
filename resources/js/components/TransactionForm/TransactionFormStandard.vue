@@ -911,7 +911,7 @@
 
           if ($vm.getAccountType('from') === 'account') {
             $.ajax({
-              url: '/api/assets/account/' + e.params.data.id,
+              url: '/api/v1/accounts/' + e.params.data.id,
               data: {
                 _token: $vm.csrfToken,
               },
@@ -920,7 +920,7 @@
             });
           } else {
             $.ajax({
-              url: '/api/assets/payee/' + e.params.data.id,
+              url: '/api/v1/payees/' + e.params.data.id,
               data: {
                 _token: $vm.csrfToken,
               },
@@ -957,7 +957,7 @@
 
           if ($vm.getAccountType('to') === 'account') {
             $.ajax({
-              url: '/api/assets/account/' + e.params.data.id,
+              url: '/api/v1/accounts/' + e.params.data.id,
               data: {
                 _token: $vm.csrfToken,
               },
@@ -966,7 +966,7 @@
             });
           } else if ($vm.getAccountType('to') === 'payee') {
             $.ajax({
-              url: '/api/assets/payee/' + e.params.data.id,
+              url: '/api/v1/payees/' + e.params.data.id,
               data: {
                 _token: $vm.csrfToken,
               },
@@ -1255,8 +1255,8 @@
 
       // Get url to payee or account list, based on source or target type
       getAccountApiUrl(type) {
-        const accountUrl = '/api/assets/account';
-        const payeeUrl = '/api/assets/payee';
+        const accountUrl = '/api/v1/accounts';
+        const payeeUrl = '/api/v1/payees';
 
         return this.getAccountType(type) === 'account' ? accountUrl : payeeUrl;
       },
@@ -1343,8 +1343,7 @@
 
         $.ajax({
           url:
-            '/api/assets/' +
-            this.getAccountType(type) +
+            this.getAccountApiUrl(type) +
             '/' +
             account_entity_id,
           data: {
@@ -1381,7 +1380,7 @@
         if (this.action === 'edit') {
           this.form
             .patch(
-              window.route('api.transactions.updateStandard', {
+              window.route('api.v1.transactions.update-standard', {
                 transaction: this.form.id,
               }),
               this.form,
@@ -1400,7 +1399,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.transactions.storeStandard'), this.form)
+          .post(window.route('api.v1.transactions.store-standard'), this.form)
           .then((response) => {
             this.$emit(
               'success',

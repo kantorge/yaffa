@@ -15,7 +15,7 @@ function getTransactionCount (element) {
   const id = element.dataset.id;
 
   // Get the count from the API
-  fetch(`/api/transactions/?only_count=1&${apiParameterName}=${id}`)
+  fetch(`/api/v1/transactions/?only_count=1&${apiParameterName}=${id}`)
   .then(response => response.json())
   .then(data => {
     if (data.count === 0) {

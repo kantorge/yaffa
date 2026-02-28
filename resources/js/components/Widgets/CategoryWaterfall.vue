@@ -262,7 +262,7 @@
         let $vm = this;
 
         let url =
-          '/api/reports/waterfall/' +
+          '/api/v1/reports/waterfall/' +
           this.transactionTypeData +
           '/result/' +
           this.year +

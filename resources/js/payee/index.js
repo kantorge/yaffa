@@ -170,13 +170,13 @@ window.table = $(dataTableSelector).DataTable({
 
             // Send request to change payee active state
             $.ajax ({
-                type: 'PUT',
-                url: window.route('api.accountentity.updateActive', {accountEntity: row.data().id, active: (row.data().active ? 0 : 1)}),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.account-entities.patch-active', {accountEntity: row.data().id}),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 success: function (data) {
                     // Update row in table data source
                     payees.filter(payee => payee.id === data.id)[0].active = data.active;
@@ -207,7 +207,7 @@ window.table = $(dataTableSelector).DataTable({
             // Send request to delete payee
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.accountentity.destroy', row.data().id),
+                url: window.route('api.v1.account-entities.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },

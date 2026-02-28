@@ -86,7 +86,7 @@
 
           window.axios
             .delete(
-              window.route('api.transactions.destroy', { transaction: id }),
+              window.route('api.v1.transactions.destroy', { transaction: id }),
             )
             .then(() => {
               toastHelpers.showSuccessToast(
@@ -141,7 +141,7 @@
 
           window.axios
             .patch(
-              window.route('api.transactions.skipScheduleInstance', {
+              window.route('api.v1.transactions.skip', {
                 transaction: id,
               }),
             )

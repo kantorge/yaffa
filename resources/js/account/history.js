@@ -259,13 +259,13 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
-        type: 'PUT',
-        url: '/api/transaction/' + $(this).data("id") + '/reconciled/' + (!currentState ? 1 : 0),
-        data: {
-            "_token": csrfToken,
-        },
-        dataType: "json",
-        context: this,
+        type: 'PATCH',
+        url: '/api/v1/transactions/' + $(this).data("id") + '/reconciliation',
+        data: JSON.stringify({
+            "reconciled": !currentState ? true : false,
+        }),
+        contentType: 'application/json',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             currentState = !currentState;
 

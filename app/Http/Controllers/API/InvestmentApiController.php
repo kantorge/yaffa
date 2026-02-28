@@ -158,6 +158,24 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * V1: PATCH /api/v1/investments/{investment}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws AuthorizationException
+     */
+    public function patchActive(Request $request, Investment $investment): JsonResponse
+    {
+        Gate::authorize('update', $investment);
+
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $investment->active = $validated['active'];
+        $investment->save();
+
+        return response()->json($investment, Response::HTTP_OK);
+    }
+
+    /**
      * Get all investments with timeline data
      */
     public function getInvestmentsWithTimeline(Request $request): JsonResponse

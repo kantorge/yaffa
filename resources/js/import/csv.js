@@ -154,7 +154,7 @@ function collectSimilarTransactions() {
     })));
 
     // Get all standard transactions in the range of min and max date
-    let url = new URL(window.location.origin + '/api/transactions');
+    let url = new URL(window.location.origin + '/api/v1/transactions');
     url.searchParams.append('date_from', toIsoDateString(minDate));
     url.searchParams.append('date_to', toIsoDateString(maxDate));
 
@@ -287,7 +287,7 @@ function refillUnmatchedRows(data) {
 $('#account').select2({
     multiple: false,
     ajax: {
-        url: '/api/assets/account',
+        url: '/api/v1/accounts',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -313,7 +313,7 @@ $('#account').select2({
 })
     .on('select2:select', function (e) {
         $.ajax({
-            url: '/api/assets/account/' + e.params.data.id,
+            url: '/api/v1/accounts/' + e.params.data.id,
             data: {
                 _token: csrfToken,
             }
@@ -566,7 +566,7 @@ $(tableSelector).on('click', 'button.transaction-similar.transaction-basic.trans
     const originalIconClass = icon.className;
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
-    fetch('/api/transaction/' + this.dataset.id)
+    fetch('/api/v1/transactions/' + this.dataset.id)
         .then(function (response) {
             if (!response.ok) {
                 throw Error(response.statusText);
@@ -631,7 +631,7 @@ $(tableSelector).on('click', 'button.transaction-related.transaction-quickview',
     const originalIconClass = icon.className;
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
-    fetch('/api/transaction/' + this.dataset.id)
+    fetch('/api/v1/transactions/' + this.dataset.id)
         .then(function (response) {
             if (!response.ok) {
                 throw Error(response.statusText);
@@ -716,7 +716,7 @@ $(tableSelector).on('click', 'button.record', function () {
     }
 
     // Call the backend to create the transaction
-    const url = route('api.transactions.storeStandard');
+    const url = route('api.v1.transactions.store-standard');
     fetch(url, {
         method: 'POST',
         headers: {
@@ -816,7 +816,7 @@ $('#reset').on('click', function () {
 });
 
 // Load active schedules via API
-fetch('/api/transactions/get_scheduled_items/schedule')
+fetch('/api/v1/transactions/scheduled-items?type=schedule')
     .then(response => response.json())
     .then(data => {
         window.schedules = data.transactions

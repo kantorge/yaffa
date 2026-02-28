@@ -9,6 +9,7 @@ use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
@@ -42,6 +43,24 @@ class AccountEntityApiController extends Controller implements HasMiddleware
                 $accountEntity,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * V1: PATCH /api/v1/account-entities/{accountEntity}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws AuthorizationException
+     */
+    public function patchActive(Request $request, AccountEntity $accountEntity): JsonResponse
+    {
+        Gate::authorize('update', $accountEntity);
+
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $accountEntity->active = $validated['active'];
+        $accountEntity->save();
+
+        return response()->json($accountEntity, Response::HTTP_OK);
     }
 
     /**

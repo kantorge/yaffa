@@ -120,12 +120,13 @@ let table = $('#investmentSummary').DataTable({
 
             // Send request to change investment active state
             $.ajax({
-                type: 'PUT',
-                url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.investments.patch-active', row.data().id),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 context: this,
                 success: function (data) {
                     // Update row in table data source
@@ -157,7 +158,7 @@ let table = $('#investmentSummary').DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investment.destroy', row.data().id),
+                url: window.route('api.v1.investments.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -306,7 +307,7 @@ table.contextualActions({
                         `toast-investment-${id}`
                     );
 
-                    window.axios.delete(window.route('api.investment.destroy', {investment: id}))
+                    window.axios.delete(window.route('api.v1.investments.destroy', {investment: id}))
                         .then(response => {
                             // Remove investment from data source
                             window.investments = window.investments.filter(investment => investment.id !== response.data.investment.id);

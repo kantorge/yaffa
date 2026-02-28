@@ -723,7 +723,7 @@
       $('#account')
         .select2({
           ajax: {
-            url: '/api/assets/account/investment',
+            url: '/api/v1/accounts/investment',
             dataType: 'json',
             delay: 150,
             data: function (params) {
@@ -756,7 +756,7 @@
           e.target.dispatchEvent(event);
 
           $.ajax({
-            url: '/api/assets/account/' + e.params.data.id,
+            url: '/api/v1/accounts/' + e.params.data.id,
             data: {
               _token: $vm.csrfToken,
             },
@@ -777,7 +777,7 @@
       $('#investment')
         .select2({
           ajax: {
-            url: '/api/assets/investment',
+            url: '/api/v1/investments',
             data: function (params) {
               return {
                 query: params.term,
@@ -866,7 +866,7 @@
         const $vm = this;
 
         $.ajax({
-          url: '/api/assets/account/' + this.form.config.account_id,
+          url: '/api/v1/accounts/' + this.form.config.account_id,
           data: {
             _token: $vm.csrfToken,
           },
@@ -1078,7 +1078,7 @@
         if (this.action === 'edit') {
           this.form
             .patch(
-              window.route('api.transactions.updateInvestment', {
+              window.route('api.v1.transactions.update-investment', {
                 transaction: this.form.id,
               }),
               this.form,
@@ -1097,7 +1097,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.transactions.storeInvestment'), this.form)
+          .post(window.route('api.v1.transactions.store-investment'), this.form)
           .then(async (response) => {
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(

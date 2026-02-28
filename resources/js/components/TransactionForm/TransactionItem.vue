@@ -347,7 +347,7 @@
           language: window.YAFFA.userSettings.language,
           theme: 'bootstrap-5',
           ajax: {
-            url: '/api/assets/category',
+            url: '/api/v1/categories',
             dataType: 'json',
             delay: 150,
             data: function (params) {
@@ -458,7 +458,7 @@
             return $result;
           },
           ajax: {
-            url: '/api/assets/tag',
+            url: '/api/v1/tags',
             dataType: 'json',
             delay: 150,
             processResults: function (data) {

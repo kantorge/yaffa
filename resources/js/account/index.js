@@ -121,13 +121,13 @@ window.table = $(dataTableSelector).DataTable({
 
             // Send request to change account active state
             $.ajax ({
-                type: 'PUT',
-                url: window.route('api.accountentity.updateActive', {accountEntity: row.data().id, active: (row.data().active ? 0 : 1)}),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.account-entities.patch-active', {accountEntity: row.data().id}),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 success: function (data) {
                     // Update row in table data source
                     window.accounts.filter(account => account.id === data.id)[0].active = data.active;
@@ -231,7 +231,7 @@ table.contextualActions({
                     }
 
                     // Send request to delete account
-                    axios.delete(window.route('api.accountentity.destroy', account.id))
+                    axios.delete(window.route('api.v1.account-entities.destroy', account.id))
                     .then((response) => {
                         // Update row in table data source
                         window.accounts = window.accounts.filter(account => account.id !== response.data.accountEntity.id);

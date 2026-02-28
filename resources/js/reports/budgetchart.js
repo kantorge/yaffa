@@ -153,7 +153,7 @@ let reloadData = function () {
     const selectedCategories = ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked', true) : []);
 
     $.ajax({
-        url: window.route('api.reports.budgetchart'),
+        url: window.route('api.v1.reports.budget-chart'),
         data: {
             categories: selectedCategories.map(category => category.id),
             accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
@@ -375,7 +375,7 @@ const tableSelector = '#table';
 window.table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: window.route('api.transactions.getScheduledItems', {type: 'any'}),
+        url: window.route('api.v1.transactions.scheduled-items', {type: 'any'}),
         type: 'GET',
         dataSrc: function (data) {
             if (!data.transactions) {
@@ -522,7 +522,7 @@ $(treeSelector)
     .jstree({
         core: {
             data: function (_obj, callback) {
-                fetch('/api/assets/categories?withInactive=1')
+                fetch('/api/v1/categories?withInactive=1')
                     .then(response => response.json())
                     .then(data => {
                         /**
@@ -579,7 +579,7 @@ $(treeSelector)
 $(accountSelector).select2({
     theme: "bootstrap-5",
     ajax: {
-        url: '/api/assets/account',
+        url: '/api/v1/accounts',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -609,7 +609,7 @@ $(accountSelector).select2({
 // Default account
 if (typeof presetAccount !== 'undefined') {
     $.ajax({
-        url: '/api/assets/account/' + presetAccount,
+        url: '/api/v1/accounts/' + presetAccount,
         data: {
             _token: window.csrfToken,
         }

@@ -203,6 +203,24 @@ class CategoryApiController extends Controller implements HasMiddleware
             );
     }
 
+    /**
+     * V1: PATCH /api/v1/categories/{category}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function patchActive(Request $request, Category $category): JsonResponse
+    {
+        Gate::authorize('update', $category);
+
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $category->active = $validated['active'];
+        $category->save();
+
+        return response()->json($category, Response::HTTP_OK);
+    }
+
     public function destroy(Category $category): JsonResponse
     {
         /**

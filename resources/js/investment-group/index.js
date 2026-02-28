@@ -70,7 +70,7 @@ let table = $(dataTableSelector).DataTable({
             // Send request to delete the investment group
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investmentgroup.destroy', row.data().id),
+                url: window.route('api.v1.investment-groups.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },

@@ -70,6 +70,37 @@ class TransactionApiController extends Controller implements HasMiddleware
         return response()->json([], Response::HTTP_OK);
     }
 
+    /**
+     * V1: PATCH /api/v1/transactions/{transaction}/reconciliation
+     * Accepts { reconciled: true|false } in request body.
+     *
+     * @throws AuthorizationException
+     */
+    public function reconcileV1(Request $request, Transaction $transaction): JsonResponse
+    {
+        Gate::authorize('update', $transaction);
+
+        $validated = $request->validate([
+            'reconciled' => ['required', 'boolean'],
+        ]);
+
+        $transaction->reconciled = $validated['reconciled'];
+        $transaction->save();
+
+        return response()->json([], Response::HTTP_OK);
+    }
+
+    /**
+     * V1: GET /api/v1/transactions/scheduled-items?type=...
+     * Reads $type from the ?type query parameter instead of URL path.
+     */
+    public function getScheduledItemsV1(Request $request): JsonResponse
+    {
+        $type = $request->query('type', 'any');
+
+        return $this->getScheduledItems($type, $request);
+    }
+
     public function getItem(Transaction $transaction): JsonResponse
     {
         /**

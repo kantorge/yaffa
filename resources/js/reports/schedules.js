@@ -15,7 +15,7 @@ const tableSelector = '#table';
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/transactions/get_scheduled_items/any',
+        url: '/api/v1/transactions/scheduled-items?type=any',
         type: 'GET',
         dataSrc: function(data) {
             ajaxIsBusy = false;
@@ -131,7 +131,7 @@ table.contextualActions({
                     `toast-transaction-${id}`
                 );
 
-                window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
+                window.axios.patch(window.route('api.v1.transactions.skip', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
                         let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
@@ -243,7 +243,7 @@ table.contextualActions({
                         `toast-transaction-${id}`
                     );
 
-                    window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+                    window.axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
                         .then(function () {
                             // Find and remove original row in schedule table
                             let row = $(tableSelector).dataTable().api().row(function (_idx, data) {

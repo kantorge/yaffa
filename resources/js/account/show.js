@@ -70,7 +70,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 
         // Ajax will now only fire programmatically, via ajax.reload()
         fetch(
-            '/api/transactions?' + params,
+            '/api/v1/transactions?' + params,
             {
                 method: 'GET',
                 headers: {
@@ -176,8 +176,8 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 let dtSchedule = $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/transactions/get_scheduled_items/schedule' +
-            '?accountEntity=' + window.account.id +
+        url: '/api/v1/transactions/scheduled-items?type=schedule' +
+            '&accountEntity=' + window.account.id +
             '&accountSelection=selected',
         type: 'GET',
         dataSrc: function (data) {
@@ -276,7 +276,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
 
     $(this).addClass('busy');
 
-    axios.patch('/api/transactions/' + id + '/skip')
+    axios.patch('/api/v1/transactions/' + id + '/skip')
         .then(function (response) {
             // Find and update original row in schedule table
             let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
@@ -327,7 +327,7 @@ let getAccountBalance = function () {
             elementCurrentBalance.innerHTML =
                 '<i class="fa fa-fw fa-spinner fa-spin"></i>';
 
-    axios.get('/api/account/balance/' + window.account.id)
+    axios.get('/api/v1/accounts/' + window.account.id + '/balance')
         .then(function (response) {
             // Check if the response is valid data
             if (response.data.result === 'busy') {
@@ -408,13 +408,13 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
-        type: 'PUT',
-        url: '/api/transaction/' + currentId + '/reconciled/' + (currentState ? 0 : 1),
-        data: {
-            "_token": csrfToken,
-        },
-        dataType: "json",
-        context: this,
+        type: 'PATCH',
+        url: '/api/v1/transactions/' + currentId + '/reconciliation',
+        data: JSON.stringify({
+            "reconciled": currentState ? false : true,
+        }),
+        contentType: 'application/json',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             let row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
                 return data.id === currentId
@@ -594,7 +594,7 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
     const button = this;
 
     axios.put(window.route(
-        'api.account.updateMonthlySummary',
+        'api.v1.accounts.monthly-summary',
         {accountEntity: window.account.id}
     ))
         .then(function (response) {

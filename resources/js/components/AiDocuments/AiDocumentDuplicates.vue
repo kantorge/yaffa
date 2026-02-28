@@ -126,7 +126,7 @@
     }
 
     try {
-      const response = await fetch(`/api/transaction/${transactionId}`);
+      const response = await fetch(`/api/v1/transactions/${transactionId}`);
       const data = await response.json();
       const transaction = data.transaction;
 

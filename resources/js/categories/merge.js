@@ -14,7 +14,7 @@ $(selectorSourceCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -44,7 +44,7 @@ $(selectorSourceCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }
@@ -78,7 +78,7 @@ $(selectorTargetCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -108,7 +108,7 @@ $(selectorTargetCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }

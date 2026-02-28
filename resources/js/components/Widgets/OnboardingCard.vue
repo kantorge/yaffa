@@ -109,7 +109,7 @@
       let vue = this;
 
       axios
-        .get('/api/onboarding/' + this.topic)
+        .get('/api/v1/onboarding/' + this.topic)
         .then((response) => {
           vue.dismissed = response.data.dismissed;
           vue.onboardingSteps = response.data.steps;
@@ -123,7 +123,7 @@
               onDestroyStarted: () => {
                 if (!vue.tourData.hasNextStep()) {
                   axios
-                    .put(`/api/onboarding/${vue.topic}/complete-tour`)
+                    .post(`/api/v1/onboarding/${vue.topic}/complete-tour`)
                     .then(() => {
                       vue.onboardingSteps.forEach((step) => {
                         if (step.tour) {
@@ -167,7 +167,7 @@
       dismiss() {
         this.busy = true;
         axios
-          .put(`/api/onboarding/${this.topic}/dismiss`)
+          .post(`/api/v1/onboarding/${this.topic}/dismiss`)
           .then(() => this.hide());
       },
       __,

@@ -7,7 +7,7 @@ loadSelect2Language(window.YAFFA.userSettings.language);
 const config = {
     multiple: true,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {

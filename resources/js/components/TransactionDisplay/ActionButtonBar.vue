@@ -120,7 +120,7 @@
         }
         this.skipInstanceButtonBusy = true;
 
-        let url = window.route('api.transactions.skipScheduleInstance', {
+        let url = window.route('api.v1.transactions.skip', {
           transaction: this.transaction.id,
         });
         axios
