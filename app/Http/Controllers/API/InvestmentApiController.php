@@ -138,25 +138,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function updateActive(Investment $investment, $active): JsonResponse
-    {
-        /**
-         * @put("/api/assets/investment/{investment}/active/{active}")
-         * @name("api.investment.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
-        Gate::authorize('update', $investment);
-
-        $investment->active = $active;
-        $investment->save();
-
-        return response()
-            ->json(
-                $investment,
-                Response::HTTP_OK
-            );
-    }
-
     /**
      * V1: PATCH /api/v1/investments/{investment}
      * Accepts { active: true|false } in request body.

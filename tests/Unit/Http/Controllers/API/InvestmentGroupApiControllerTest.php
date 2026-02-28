@@ -17,7 +17,7 @@ class InvestmentGroupApiControllerTest extends TestCase
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();
 
         $response = $this->actingAs($user)
-            ->deleteJson(route('api.investmentgroup.destroy', $investmentGroup));
+            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_OK);
         $this->assertDatabaseMissing('investment_groups', ['id' => $investmentGroup->id]);
@@ -29,7 +29,7 @@ class InvestmentGroupApiControllerTest extends TestCase
         $investmentGroup = InvestmentGroup::factory()->create();
 
         $response = $this->actingAs($user)
-            ->deleteJson(route('api.investmentgroup.destroy', $investmentGroup));
+            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         $this->assertDatabaseHas('investment_groups', ['id' => $investmentGroup->id]);
@@ -43,7 +43,7 @@ class InvestmentGroupApiControllerTest extends TestCase
         Investment::factory()->for($user)->for($investmentGroup)->create();
 
         $response = $this->actingAs($user)
-            ->deleteJson(route('api.investmentgroup.destroy', $investmentGroup));
+            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson(['error' => __('Investment group is in use, cannot be deleted')]);

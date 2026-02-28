@@ -34,10 +34,11 @@ class AccountEntityApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->put(route('api.accountentity.updateActive', [
+        $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
             'accountEntity' => $accountEntity->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -61,15 +62,14 @@ class AccountEntityApiControllerTest extends TestCase
             ]);
 
         // Try to update the account entity as an unauthenticated user
-        $response = $this->put(
+        $response = $this->patchJson(
             route(
-                'api.accountentity.updateActive',
+                'api.v1.account-entities.patch-active',
                 [
                     'accountEntity' => $accountEntity->id,
-                    'active' => 1,
                 ]
             ),
-            [],
+            ['active' => true],
             [
                 'Accept' => 'application/json'
             ]
@@ -90,10 +90,11 @@ class AccountEntityApiControllerTest extends TestCase
         $user2 = User::factory()->create();
 
         $this->actingAs($user2);
-        $response = $this->put(route('api.accountentity.updateActive', [
+        $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
             'accountEntity' => $accountEntity->id,
-            'active' => 1,
-        ]));
+        ]), [
+            'active' => true,
+        ]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
@@ -117,7 +118,7 @@ class AccountEntityApiControllerTest extends TestCase
         $payee->load('config');
 
         $response = $this->actingAs($user)
-            ->deleteJson(route("api.accountentity.destroy", $payee));
+            ->deleteJson(route("api.v1.account-entities.destroy", $payee));
 
         // Response should be 200 OK
         $response->assertStatus(Response::HTTP_OK);
@@ -149,7 +150,7 @@ class AccountEntityApiControllerTest extends TestCase
         $account->load('config');
 
         $response = $this->actingAs($user)
-            ->deleteJson(route("api.accountentity.destroy", $account));
+            ->deleteJson(route("api.v1.account-entities.destroy", $account));
 
         // Response should be 200 OK
         $response->assertStatus(Response::HTTP_OK);
@@ -207,7 +208,7 @@ class AccountEntityApiControllerTest extends TestCase
 
         // Try to delete the payee
         $response = $this->actingAs($user)
-            ->deleteJson(route("api.accountentity.destroy", $payee));
+            ->deleteJson(route("api.v1.account-entities.destroy", $payee));
 
         // Response should be 422 Unprocessable Entity
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -222,7 +223,7 @@ class AccountEntityApiControllerTest extends TestCase
 
         // Try to delete the account
         $response = $this->actingAs($user)
-            ->deleteJson(route("api.accountentity.destroy", $account));
+            ->deleteJson(route("api.v1.account-entities.destroy", $account));
 
         // Response should be 422 Unprocessable Entity
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

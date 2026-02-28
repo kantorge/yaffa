@@ -24,28 +24,6 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * @throws AuthorizationException
-     */
-    public function updateActive(AccountEntity $accountEntity, $active): JsonResponse
-    {
-        /**
-         * @put("/api/assets/accountentity/{accountEntity}/active/{active}")
-         * @name("api.accountentity.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
-        Gate::authorize('update', $accountEntity);
-
-        $accountEntity->active = $active;
-        $accountEntity->save();
-
-        return response()
-            ->json(
-                $accountEntity,
-                Response::HTTP_OK
-            );
-    }
-
-    /**
      * V1: PATCH /api/v1/account-entities/{accountEntity}
      * Accepts { active: true|false } in request body.
      *

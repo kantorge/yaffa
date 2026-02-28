@@ -52,25 +52,6 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Change the reconciled flag of a transaction to a new value.
-     *
-     * @throws AuthorizationException
-     */
-    public function reconcile(Transaction $transaction, string $newState): JsonResponse
-    {
-        /**
-         * @put("/api/transaction/{transaction}/reconciled/{newState}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $transaction);
-
-        $transaction->reconciled = boolval($newState);
-        $transaction->save();
-
-        return response()->json([], Response::HTTP_OK);
-    }
-
-    /**
      * V1: PATCH /api/v1/transactions/{transaction}/reconciliation
      * Accepts { reconciled: true|false } in request body.
      *

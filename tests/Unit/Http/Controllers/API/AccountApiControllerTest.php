@@ -53,7 +53,7 @@ class AccountApiControllerTest extends TestCase
             ]);
 
         // Query string is applied
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -71,20 +71,20 @@ class AccountApiControllerTest extends TestCase
                 'name' => self::BASE_ACCOUNT_NAME . " - inactive",
             ]);
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
 
         // Inactive items can be requested
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/account?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
+            ->getJson('/api/v1/accounts?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
 
         // Currency can be specified
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/account?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
+            ->getJson('/api/v1/accounts?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -101,17 +101,17 @@ class AccountApiControllerTest extends TestCase
                 ]);
         }
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(10);
 
         // Custom limit is applied for number of results
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone&limit=15');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=15');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(15);
 
         // All items can be requested to be returned
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone&limit=0');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=0');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(20);
     }
@@ -122,11 +122,11 @@ class AccountApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=invalid_type');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=invalid_type');
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=withdrawal');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
     }
 }

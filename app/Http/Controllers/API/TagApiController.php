@@ -63,27 +63,6 @@ class TagApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * @throws AuthorizationException
-     */
-    public function updateActive(Tag $tag, string $active): JsonResponse
-    {
-        /**
-         * @put("/api/assets/tag/{tag}/active/{active}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $tag);
-
-        $tag->active = $active === '1';
-        $tag->save();
-
-        return response()
-            ->json(
-                $tag,
-                Response::HTTP_OK
-            );
-    }
-
-    /**
      * V1: PATCH /api/v1/tags/{tag}
      * Accepts { active: true|false } in request body.
      *

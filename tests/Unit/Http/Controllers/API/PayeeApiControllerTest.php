@@ -51,7 +51,7 @@ class PayeeApiControllerTest extends TestCase
             ]);
 
         // Query string is applied
-        $response = $this->actingAs($user)->getJson('/api/assets/payee?q=' . self::BASE_PAYEE_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/payees?q=' . self::BASE_PAYEE_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_PAYEE_NAME);
@@ -69,14 +69,14 @@ class PayeeApiControllerTest extends TestCase
                 'name' => self::BASE_PAYEE_NAME . " - inactive",
             ]);
 
-        $response = $this->actingAs($user)->getJson('/api/assets/payee?q=' . self::BASE_PAYEE_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/payees?q=' . self::BASE_PAYEE_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_PAYEE_NAME);
 
         // Inactive items can be requested
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/payee?withInactive=1&q=' . self::BASE_PAYEE_NAME);
+            ->getJson('/api/v1/payees?withInactive=1&q=' . self::BASE_PAYEE_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
 
@@ -91,7 +91,7 @@ class PayeeApiControllerTest extends TestCase
                 ]);
         }
 
-        $response = $this->actingAs($user)->getJson('/api/assets/payee?q=clone');
+        $response = $this->actingAs($user)->getJson('/api/v1/payees?q=clone');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(10);
     }
@@ -102,12 +102,12 @@ class PayeeApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         // When account_entity_id is provided, controller validates transaction_type
-        $response = $this->actingAs($user)->getJson('/api/assets/payee?account_entity_id=1&transaction_type=invalid_type');
+        $response = $this->actingAs($user)->getJson('/api/v1/payees?account_entity_id=1&transaction_type=invalid_type');
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
 
         // A valid transaction type should pass (use 'withdrawal' as in account tests)
-        $response = $this->actingAs($user)->getJson('/api/assets/payee?account_entity_id=1&transaction_type=withdrawal');
+        $response = $this->actingAs($user)->getJson('/api/v1/payees?account_entity_id=1&transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
     }
 
@@ -145,7 +145,7 @@ class PayeeApiControllerTest extends TestCase
         }
 
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/get_default_category_suggestion');
+            ->getJson('/api/v1/payees/category-suggestions/default');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('payee_id', $payee->id);

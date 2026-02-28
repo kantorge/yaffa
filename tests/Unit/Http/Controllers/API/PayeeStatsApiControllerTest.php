@@ -50,7 +50,7 @@ class PayeeStatsApiControllerTest extends TestCase
         $this->createTransactionWithCategory($user, $account->id, $payee->id, $oldCategory->id, now()->subMonths(8));
 
         $response = $this->actingAs($user)
-            ->getJson('/api/ai/payees/' . $payee->id . '/category-stats');
+            ->getJson('/api/v1/payees/' . $payee->id . '/category-stats');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('payee_id', $payee->id);
@@ -77,7 +77,7 @@ class PayeeStatsApiControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($user)
-            ->getJson('/api/ai/payees/' . $payee->id . '/category-stats');
+            ->getJson('/api/v1/payees/' . $payee->id . '/category-stats');
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }

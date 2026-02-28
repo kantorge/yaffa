@@ -33,10 +33,11 @@ class CategoryApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->put(route('api.category.updateActive', [
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -61,12 +62,11 @@ class CategoryApiControllerTest extends TestCase
         $user2 = User::factory()->create();
 
         // Try to update the category as an unauthenticated user
-        $response = $this->put(
-            route('api.category.updateActive', [
+        $response = $this->patchJson(
+            route('api.v1.categories.patch-active', [
                 'category' => $category->id,
-                'active' => true,
             ]),
-            [],
+            ['active' => true],
             [
                 'Accept' => 'application/json'
             ]
@@ -84,10 +84,11 @@ class CategoryApiControllerTest extends TestCase
 
         // Try to update the category as the different user
         $this->actingAs($user2);
-        $response = $this->put(route('api.category.updateActive', [
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
@@ -106,7 +107,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
 
@@ -140,7 +141,7 @@ class CategoryApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
 
@@ -160,7 +161,7 @@ class CategoryApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
             'default_aggregation' => 'month',
@@ -188,7 +189,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
             'parent_id' => $parentCategory->id,
@@ -216,13 +217,13 @@ class CategoryApiControllerTest extends TestCase
         $this->actingAs($user);
 
         // Missing name
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'default_aggregation' => 'month',
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
 
         // Missing default_aggregation
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test',
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -234,7 +235,7 @@ class CategoryApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
             'parent_id' => 99999,
@@ -254,7 +255,7 @@ class CategoryApiControllerTest extends TestCase
             ->create(['name' => 'Existing Category']);
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Existing Category',
             'active' => true,
             'default_aggregation' => 'month',
@@ -277,7 +278,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user2);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
             'parent_id' => $parentCategory->id,
@@ -301,7 +302,7 @@ class CategoryApiControllerTest extends TestCase
             ->create(['name' => 'Groceries']);
 
         $this->actingAs($user2);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Groceries',
             'active' => true,
             'default_aggregation' => 'month',
@@ -361,7 +362,7 @@ class CategoryApiControllerTest extends TestCase
         ]);
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $categoryChild->id,
         ]));
 

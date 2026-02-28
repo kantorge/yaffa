@@ -133,27 +133,6 @@ class CategoryApiController extends Controller implements HasMiddleware
             );
     }
 
-    public function getFullList(Request $request): JsonResponse
-    {
-        /**
-         * @get("/api/assets/categories")
-         * @middlewares("api", "auth:sanctum")
-         */
-        $categories = $request->user()
-            ->categories()
-            ->with('parent')
-            ->when($request->missing('withInactive'), function ($query) {
-                $query->active();
-            })
-            ->get();
-
-        return response()
-            ->json(
-                $categories,
-                Response::HTTP_OK
-            );
-    }
-
     public function getItem(Category $category): JsonResponse
     {
         /**
@@ -182,25 +161,6 @@ class CategoryApiController extends Controller implements HasMiddleware
         $category = $request->user()->categories()->create($request->validated());
 
         return response()->json($category, Response::HTTP_CREATED);
-    }
-
-    public function updateActive(Category $category, $active): JsonResponse
-    {
-        /**
-         * @put("/api/assets/category/{category}/active/{active}")
-         * @name("api.category.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
-        Gate::authorize('update', $category);
-
-        $category->active = $active;
-        $category->save();
-
-        return response()
-            ->json(
-                $category,
-                Response::HTTP_OK
-            );
     }
 
     /**
