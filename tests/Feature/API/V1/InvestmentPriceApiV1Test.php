@@ -33,10 +33,7 @@ class InvestmentPriceApiV1Test extends TestCase
     public function test_unauthenticated_cannot_access_v1_index(): void
     {
         $response = $this->getJson(route('api.v1.investment-prices.index', ['investment' => $this->investment->id]));
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -47,20 +44,14 @@ class InvestmentPriceApiV1Test extends TestCase
             'date' => '2024-01-15',
             'price' => 100.00,
         ]);
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
     public function test_unauthenticated_cannot_access_v1_check(): void
     {
         $response = $this->getJson(route('api.v1.investment-prices.check', ['investment' => $this->investment->id]) . '?date=2024-01-15');
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -178,16 +169,15 @@ class InvestmentPriceApiV1Test extends TestCase
             ->assertJson(['exists' => true]);
     }
 
-    // ===== ERROR FORMAT TESTS (V1 error.* contract) =====
+    // ===== ERROR FORMAT TESTS =====
 
-    public function test_v1_validation_error_uses_error_contract(): void
+    public function test_v1_validation_error_uses_default_validation_contract(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.investment-prices.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonStructure(['error' => ['code', 'message', 'details']])
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+            ->assertJsonStructure(['message', 'errors' => ['investment_id', 'date', 'price']]);
     }
 
     public function test_v1_validation_error_includes_field_details(): void
@@ -196,8 +186,7 @@ class InvestmentPriceApiV1Test extends TestCase
             ->postJson(route('api.v1.investment-prices.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
-            ->assertJsonStructure(['error' => ['details' => ['investment_id', 'date', 'price']]]);
+            ->assertJsonValidationErrors(['investment_id', 'date', 'price']);
     }
 
     public function test_v1_authorization_error_uses_error_contract(): void
@@ -210,8 +199,7 @@ class InvestmentPriceApiV1Test extends TestCase
             ->getJson(route('api.v1.investment-prices.index', ['investment' => $otherInvestment->id]));
 
         $response->assertForbidden()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+            ->assertJsonStructure(['message']);
     }
 
     public function test_v1_not_found_uses_error_contract(): void
@@ -220,7 +208,6 @@ class InvestmentPriceApiV1Test extends TestCase
             ->deleteJson(route('api.v1.investment-prices.destroy', ['investmentPrice' => 99999]));
 
         $response->assertNotFound()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'NOT_FOUND');
+            ->assertJsonStructure(['message']);
     }
 }

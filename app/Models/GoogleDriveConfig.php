@@ -44,6 +44,10 @@ class GoogleDriveConfig extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
+    protected $hidden = [
+        'service_account_json',
+    ];
+
     protected $fillable = [
         'service_account_email',
         'service_account_json',

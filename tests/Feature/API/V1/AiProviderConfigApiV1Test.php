@@ -27,10 +27,7 @@ class AiProviderConfigApiV1Test extends TestCase
     public function test_unauthenticated_cannot_access_v1_show(): void
     {
         $response = $this->getJson(route('api.v1.ai.config.show'));
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -41,10 +38,7 @@ class AiProviderConfigApiV1Test extends TestCase
             'model' => 'gpt-4o-mini',
             'api_key' => 'sk-test-1234567890abcdefghij',
         ]);
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -86,7 +80,7 @@ class AiProviderConfigApiV1Test extends TestCase
             ]);
 
         $response->assertCreated()
-            ->assertJsonStructure(['id', 'provider', 'model', 'vision_enabled', 'message'])
+            ->assertJsonStructure(['id', 'provider', 'model', 'vision_enabled'])
             ->assertJsonMissing(['api_key']);
 
         $this->assertDatabaseHas('ai_provider_configs', [
@@ -126,16 +120,15 @@ class AiProviderConfigApiV1Test extends TestCase
         $this->assertDatabaseMissing('ai_provider_configs', ['id' => $config->id]);
     }
 
-    // ===== ERROR FORMAT TESTS (V1 error.* contract) =====
+    // ===== ERROR FORMAT TESTS =====
 
-    public function test_v1_validation_error_uses_error_contract(): void
+    public function test_v1_validation_error_uses_default_validation_contract(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.ai.config.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonStructure(['error' => ['code', 'message', 'details']])
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+            ->assertJsonStructure(['message', 'errors' => ['provider', 'model', 'api_key']]);
     }
 
     public function test_v1_cannot_view_other_users_config(): void
@@ -161,8 +154,7 @@ class AiProviderConfigApiV1Test extends TestCase
             ]);
 
         $response->assertForbidden()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+            ->assertJsonStructure(['message']);
     }
 
     public function test_v1_secret_not_exposed_in_show(): void

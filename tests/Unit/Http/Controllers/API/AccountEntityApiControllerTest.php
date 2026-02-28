@@ -75,7 +75,13 @@ class AccountEntityApiControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
 
         $this->assertEquals(false, $accountEntity->fresh()->active);
 

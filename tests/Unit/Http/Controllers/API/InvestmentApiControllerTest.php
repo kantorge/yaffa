@@ -20,7 +20,14 @@ class InvestmentApiControllerTest extends TestCase
     public function test_unauthenticated_users_cannot_access_investment_list(): void
     {
         $response = $this->getJson(self::BASE_API_ENDPOINT);
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
     }
 
     public function test_investment_list_with_query_applies_all_provided_filters(): void

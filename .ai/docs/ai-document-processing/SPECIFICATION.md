@@ -181,36 +181,36 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `DELETE /api/documents/{id}` - Delete document and files
       - Response: 204 No Content
   - `AiProviderConfigApiController` (✅ implemented)
-    - `GET /api/ai/config` - Get user's config (only one exists)
+    - `GET /api/v1/ai/config` - Get user's config (only one exists)
       - Response: `{"id": 1, "provider": "openai", "model": "gpt-4o-mini", "created_at": "...", "updated_at": "..."}` (API key never returned)
-    - `POST /api/ai/config` - Create config (enforced: one per user)
+    - `POST /api/v1/ai/config` - Create config (enforced: one per user)
       - Request: `{"provider": "openai|gemini", "model": "...", "api_key": "..."}`
       - Validation: provider required, model required, api_key required; rejects if config exists
       - Response: `{"id": 1, "provider": "...", "model": "...", "message": "AI provider configured successfully"}`
-    - `PATCH /api/ai/config/{aiProviderConfig}` - Update config
+    - `PATCH /api/v1/ai/config/{aiProviderConfig}` - Update config
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be omitted or `__existing__`)
       - Response: `{"id": 1, "provider": "...", "model": "...", "updated_at": "..."}`
-    - `DELETE /api/ai/config/{aiProviderConfig}` - Delete config
+    - `DELETE /api/v1/ai/config/{aiProviderConfig}` - Delete config
       - Response: 204 No Content
-    - `POST /api/ai/test` - Test connection
+    - `POST /api/v1/ai/config/test` - Test connection
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be `__existing__`)
       - Response: `{"message": "Connection successful"}` OR `{"message": "..."}` (400)
   - `GoogleDriveConfigApiController` (✅ implemented)
-    - `GET /api/google-drive/config` - Get user's configs (MVP returns first only)
+    - `GET /api/v1/google-drive/config` - Get user's configs (MVP returns first only)
       - Response: `{"id": 1, "service_account_email": "...", "folder_id": "...", "delete_after_import": false, "enabled": true, "last_sync_at": "...", "created_at": "...", "updated_at": "..."}` (service_account_json never returned)
-    - `POST /api/google-drive/config` - Create config (MVP enforces one per user at app level)
+    - `POST /api/v1/google-drive/config` - Create config (MVP enforces one per user at app level)
       - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}`
       - Validation: service_account_json required (valid JSON with required Google keys), folder_id required
       - Response: 201 with config details (no service_account_json)
-    - `PATCH /api/google-drive/config/{id}` - Update config
+    - `PATCH /api/v1/google-drive/config/{id}` - Update config
       - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}` (service_account_json can be omitted or `__existing__`)
       - Response: 200 with updated config (no service_account_json)
-    - `DELETE /api/google-drive/config/{id}` - Delete config
+    - `DELETE /api/v1/google-drive/config/{id}` - Delete config
       - Response: 204 No Content
-    - `POST /api/google-drive/test` - Test connection
+    - `POST /api/v1/google-drive/test` - Test connection
       - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
       - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
-    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger, ignoring last_sync_at (for testing and user-triggered syncs)
+    - `POST /api/v1/google-drive/sync/{id}` - Manual one-time sync trigger, ignoring last_sync_at (for testing and user-triggered syncs)
       - Dispatches `ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id)` to queue
       - Response: **202 ACCEPTED** with `{"message": "Google Drive sync has been queued"}`
       - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint)

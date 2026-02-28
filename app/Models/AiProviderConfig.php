@@ -36,6 +36,10 @@ class AiProviderConfig extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
+    protected $hidden = [
+        'api_key',
+    ];
+
     protected $fillable = [
         'provider',
         'model',

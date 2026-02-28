@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GoogleDriveConfigRequest;
+use App\Http\Resources\GoogleDriveConfigResource;
 use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
@@ -34,11 +35,14 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * GET /api/google-drive/config - Get user's Google Drive config
-     */
     public function show(Request $request): JsonResponse
     {
+        /**
+         * @get("/api/v1/google-drive/config")
+         * @name("api.v1.google-drive.config.show")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
             return $response;
         }
@@ -59,28 +63,20 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         Gate::authorize('view', $config);
 
-        // Return config without exposing service account JSON
-        return response()->json([
-            'id' => $config->id,
-            'service_account_email' => $config->service_account_email,
-            'folder_id' => $config->folder_id,
-            'delete_after_import' => $config->delete_after_import,
-            'enabled' => $config->enabled,
-            'last_sync_at' => $config->last_sync_at,
-            'last_error' => $config->last_error,
-            'error_count' => $config->error_count,
-            'created_at' => $config->created_at,
-            'updated_at' => $config->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json((new GoogleDriveConfigResource($config))->resolve(), Response::HTTP_OK);
     }
 
     /**
-     * POST /api/google-drive/config - Create Google Drive config
-     *
      * @throws AuthorizationException
      */
     public function store(GoogleDriveConfigRequest $request): JsonResponse
     {
+        /**
+         * @post("/api/v1/google-drive/config")
+         * @name("api.v1.google-drive.config.store")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
             return $response;
         }
@@ -108,11 +104,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         ]);
 
         return response()->json([
-            'id' => $config->id,
-            'service_account_email' => $config->service_account_email,
-            'folder_id' => $config->folder_id,
-            'delete_after_import' => $config->delete_after_import,
-            'enabled' => $config->enabled,
+            ...(new GoogleDriveConfigResource($config))->resolve(),
             'message' => __('Google Drive configured successfully'),
         ], Response::HTTP_CREATED);
     }
@@ -150,14 +142,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         $googleDriveConfig->update($updateData);
 
-        return response()->json([
-            'id' => $googleDriveConfig->id,
-            'service_account_email' => $googleDriveConfig->service_account_email,
-            'folder_id' => $googleDriveConfig->folder_id,
-            'delete_after_import' => $googleDriveConfig->delete_after_import,
-            'enabled' => $googleDriveConfig->enabled,
-            'updated_at' => $googleDriveConfig->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json((new GoogleDriveConfigResource($googleDriveConfig))->resolve(), Response::HTTP_OK);
     }
 
     /**

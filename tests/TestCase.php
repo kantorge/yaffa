@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Http\Response;
 use Illuminate\Testing\TestResponse;
 
 abstract class TestCase extends BaseTestCase
@@ -75,5 +76,16 @@ abstract class TestCase extends BaseTestCase
         $this->assertDatabaseMissing($model->getTable(), ['id' => $model->id]);
 
         return $response;
+    }
+
+    protected function assertUserNotAuthorized(TestResponse $response)
+    {
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
     }
 }

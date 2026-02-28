@@ -278,6 +278,10 @@
       type: Object,
       default: () => window.aiProviders || {},
     },
+    route: {
+      type: Function,
+      default: () => window.route,
+    },
   });
 </script>
 
@@ -354,7 +358,7 @@
       loadConfig() {
         // Fetch existing config from API
         axios
-          .get('/api/v1/ai/config')
+          .get(this.route('api.v1.ai.config.show'))
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
@@ -394,8 +398,8 @@
         this.testResult = null;
 
         const url = this.hasConfig
-          ? `/api/v1/ai/config/${this.configId}`
-          : '/api/v1/ai/config';
+          ? this.route('api.v1.ai.config.update', { id: this.configId })
+          : this.route('api.v1.ai.config.store');
         const method = this.hasConfig ? 'patch' : 'post';
 
         // If updating and API key is empty, remove it from the request
@@ -446,7 +450,7 @@
         };
 
         axios
-          .post('/api/v1/ai/config/test', testData)
+          .post(this.route('api.v1.ai.config.test'), testData)
           .then((response) => {
             this.testResult = {
               success: true,
@@ -457,7 +461,9 @@
             this.testResult = {
               success: false,
               message:
-                error.response?.data?.error?.message || error.response?.data?.message || __('Connection test failed'),
+                error.response?.data?.error?.message ||
+                error.response?.data?.message ||
+                __('Connection test failed'),
             };
           })
           .finally(() => {
@@ -480,7 +486,11 @@
         }).then((result) => {
           if (result.isConfirmed) {
             axios
-              .delete(`/api/v1/ai/config/${this.configId}`)
+              .delete(
+                this.route('api.v1.ai.config.destroy', {
+                  config: this.configId,
+                }),
+              )
               .then(() => {
                 this.configId = null;
                 this.hasConfig = false;

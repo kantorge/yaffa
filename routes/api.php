@@ -220,32 +220,6 @@ Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController
 Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
     ->name('api.documents.destroy');
 
-// AI Provider Config routes
-Route::get('/ai/config', [AiProviderConfigApiController::class, 'show'])
-    ->name('api.ai.config.show');
-Route::post('/ai/config', [AiProviderConfigApiController::class, 'store'])
-    ->name('api.ai.config.store');
-Route::patch('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'update'])
-    ->name('api.ai.config.update');
-Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'destroy'])
-    ->name('api.ai.config.destroy');
-Route::post('/ai/test', [AiProviderConfigApiController::class, 'test'])
-    ->name('api.ai.config.test');
-
-// Google Drive Config routes
-Route::get('/google-drive/config', [GoogleDriveConfigApiController::class, 'show'])
-    ->name('api.google-drive.config.show');
-Route::post('/google-drive/config', [GoogleDriveConfigApiController::class, 'store'])
-    ->name('api.google-drive.config.store');
-Route::patch('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'update'])
-    ->name('api.google-drive.config.update');
-Route::delete('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'destroy'])
-    ->name('api.google-drive.config.destroy');
-Route::post('/google-drive/test', [GoogleDriveConfigApiController::class, 'test'])
-    ->name('api.google-drive.config.test');
-Route::post('/google-drive/sync/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'sync'])
-    ->name('api.google-drive.config.sync');
-
 // Payee stats routes
 Route::get('/ai/payees/{payee}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
     ->name('api.payee-stats.category-stats');

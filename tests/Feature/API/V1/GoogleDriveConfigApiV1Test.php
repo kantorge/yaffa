@@ -31,10 +31,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
     public function test_unauthenticated_cannot_access_v1_show(): void
     {
         $response = $this->getJson(route('api.v1.google-drive.config.show'));
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -44,10 +41,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
             'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             'folder_id' => 'test-folder-id',
         ]);
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -144,9 +138,9 @@ class GoogleDriveConfigApiV1Test extends TestCase
         Queue::assertPushed(ProcessGoogleDriveConfigJob::class);
     }
 
-    // ===== ERROR FORMAT TESTS (V1 error.* contract) =====
+    // ===== ERROR FORMAT TESTS =====
 
-    public function test_v1_validation_error_uses_error_contract(): void
+    public function test_v1_validation_error_uses_default_validation_contract(): void
     {
         config(['ai-documents.google_drive.enabled' => true]);
 
@@ -154,8 +148,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ->postJson(route('api.v1.google-drive.config.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonStructure(['error' => ['code', 'message', 'details']])
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+            ->assertJsonStructure(['message', 'errors' => ['service_account_json', 'folder_id']]);
     }
 
     public function test_v1_feature_disabled_uses_error_contract(): void
@@ -196,8 +189,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ]);
 
         $response->assertForbidden()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+            ->assertJsonStructure(['message']);
     }
 
     public function test_v1_secret_not_exposed_in_show(): void

@@ -21,12 +21,12 @@ class AiProviderConfigRequestTest extends TestCase
         ]);
     }
 
-    // ===== CREATE (POST /api/ai/config) =====
+    // ===== CREATE (POST /api/v1/ai/config) =====
 
     public function test_create_requires_provider(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
@@ -38,7 +38,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_requires_model(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
@@ -50,7 +50,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_requires_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
             ]);
@@ -62,7 +62,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_rejects_invalid_provider(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'invalid-provider',
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',
@@ -75,7 +75,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_rejects_invalid_model_for_provider(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'invalid-model',
                 'api_key' => 'sk-test-1234567890abcdefghij',
@@ -88,7 +88,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_rejects_short_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'short',
@@ -101,7 +101,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_rejects_very_long_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => str_repeat('x', 501),
@@ -114,7 +114,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_create_rejects_invalid_vision_enabled(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',
@@ -132,7 +132,7 @@ class AiProviderConfigRequestTest extends TestCase
 
         // Try to create second config
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/config', [
+            ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'gemini',
                 'model' => 'gemini-1.5-flash',
                 'api_key' => 'test-key-1234567890abcdefghij',
@@ -142,14 +142,14 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['provider']);
     }
 
-    // ===== UPDATE (PATCH /api/ai/config/{id}) =====
+    // ===== UPDATE (PATCH /api/v1/ai/config/{id}) =====
 
     public function test_update_requires_provider(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'model' => 'gpt-4o-mini',
             ]);
 
@@ -162,7 +162,7 @@ class AiProviderConfigRequestTest extends TestCase
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
             ]);
 
@@ -176,7 +176,7 @@ class AiProviderConfigRequestTest extends TestCase
         $originalKey = $config->api_key;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
             ]);
@@ -194,7 +194,7 @@ class AiProviderConfigRequestTest extends TestCase
         $originalKey = $config->api_key;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
                 'api_key' => '',
@@ -213,7 +213,7 @@ class AiProviderConfigRequestTest extends TestCase
         $newKey = 'sk-new-key-1234567890abcdefghij';
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
                 'api_key' => $newKey,
@@ -231,7 +231,7 @@ class AiProviderConfigRequestTest extends TestCase
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
                 'api_key' => 'short',
@@ -247,7 +247,7 @@ class AiProviderConfigRequestTest extends TestCase
         $originalKey = $config->api_key;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
                 'api_key' => '__existing__',
@@ -265,7 +265,7 @@ class AiProviderConfigRequestTest extends TestCase
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/ai/config/{$config->id}", [
+            ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
                 'vision_enabled' => 'invalid',
@@ -275,12 +275,12 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['vision_enabled']);
     }
 
-    // ===== TEST CONNECTION (POST /api/ai/test) =====
+    // ===== TEST CONNECTION (POST /api/v1/ai/test) =====
 
     public function test_test_connection_requires_provider(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/test', [
+            ->postJson(route('api.v1.ai.config.test'), [
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
@@ -292,7 +292,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_test_connection_requires_model(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/test', [
+            ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
@@ -304,7 +304,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_test_connection_requires_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/test', [
+            ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
             ]);
@@ -320,7 +320,7 @@ class AiProviderConfigRequestTest extends TestCase
         AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/test', [
+            ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => '__existing__',
@@ -333,7 +333,7 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_test_connection_allows_new_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/ai/test', [
+            ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',

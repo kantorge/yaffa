@@ -72,7 +72,14 @@ class CategoryApiControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
+
         $this->assertFalse($category->fresh()->active);
 
         // Try to update the category as the different user

@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Tests\TestCase;
 
 class CurrencyRateApiTest extends TestCase
@@ -35,18 +36,21 @@ class CurrencyRateApiTest extends TestCase
         // This is expected behavior when using Gate::authorize() with unauthenticated users.
 
         // Get rates - returns 403 because Gate::authorize() fails
-        $this->actingAsGuest()->getJson(route('api.currency-rate.index', [
+        $response = $this->actingAsGuest()->getJson(route('api.currency-rate.index', [
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
-        ]))->assertForbidden();
+        ]));
+        $this->assertUserNotAuthorized($response);
 
         // Create rate - returns 403 because of missing authentication
-        $this->actingAsGuest()->postJson(route('api.currency-rate.store'), [
+        $response = $this->actingAsGuest()->postJson(route('api.currency-rate.store'), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-15',
             'rate' => 1.2345,
-        ])->assertForbidden();
+        ]);
+
+        $this->assertUserNotAuthorized($response);
 
         // Update rate - returns 403
         $rate = CurrencyRate::factory()
@@ -55,20 +59,23 @@ class CurrencyRateApiTest extends TestCase
                 'date' => '2024-01-15',
                 'rate' => 1.2345,
             ]);
-        $this->actingAsGuest()->putJson(route('api.currency-rate.update', $rate), [
+        $response = $this->actingAsGuest()->putJson(route('api.currency-rate.update', $rate), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-16',
             'rate' => 1.3456,
-        ])->assertForbidden();
+        ]);
+        $this->assertUserNotAuthorized($response);
 
         // Delete rate - returns 403
-        $this->actingAsGuest()->deleteJson(route('api.currency-rate.destroy', $rate))->assertForbidden();
+        $response = $this->actingAsGuest()->deleteJson(route('api.currency-rate.destroy', $rate));
+        $this->assertUserNotAuthorized($response);
 
         // Get missing rates - returns 403
-        $this->actingAsGuest()->getJson(route('api.currency-rate.retrieveMissing', [
+        $response = $this->actingAsGuest()->getJson(route('api.currency-rate.retrieveMissing', [
             'currency' => $this->fromCurrency->id,
-        ]))->assertForbidden();
+        ]));
+        $this->assertUserNotAuthorized($response);
     }
 
     public function test_user_cannot_access_other_users_currencies(): void
@@ -76,22 +83,25 @@ class CurrencyRateApiTest extends TestCase
         $otherUser = User::factory()->create();
         $otherCurrency = Currency::factory()->for($otherUser)->create(['iso_code' => 'GBP']);
 
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->getJson(route('api.currency-rate.index', [
                 'from' => $otherCurrency->id,
                 'to' => $this->toCurrency->id,
-            ]))->assertForbidden();
+            ]));
+        $this->assertUserNotAuthorized($response);
 
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->getJson(route('api.currency-rate.index', [
                 'from' => $this->fromCurrency->id,
                 'to' => $otherCurrency->id,
-            ]))->assertForbidden();
+            ]));
+        $this->assertUserNotAuthorized($response);
 
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->getJson(route('api.currency-rate.retrieveMissing', [
                 'currency' => $otherCurrency->id
-            ]))->assertForbidden();
+            ]));
+        $this->assertUserNotAuthorized($response);
     }
 
     public function test_can_get_all_rates(): void

@@ -40,7 +40,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
         // Test index endpoint
         $response = $this->getJson("/api/investment-prices/{$investment->id}");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertUserNotAuthorized($response);
 
         // Test store endpoint
         $response = $this->postJson('/api/investment-prices', [
@@ -48,11 +48,11 @@ class InvestmentPriceApiControllerTest extends TestCase
             'date' => '2024-01-01',
             'price' => 100,
         ]);
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertUserNotAuthorized($response);
 
         // Test checkPrice endpoint
         $response = $this->getJson("/api/investment-prices/check/{$investment->id}?date=2024-01-01");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertUserNotAuthorized($response);
     }
 
     public function test_users_cannot_access_other_users_investment_prices(): void
@@ -79,7 +79,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
         // User2 tries to access user1's investment prices
         $response = $this->actingAs($user2)->getJson("/api/investment-prices/{$investment->id}");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertUserNotAuthorized($response);
 
         // User2 tries to update user1's investment price
         // Note: This will fail validation because investment_id must belong to authenticated user

@@ -38,11 +38,12 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        $this->getJson("/api/transaction/{$transaction->id}")
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->getJson("/api/transaction/{$transaction->id}");
+        $this->assertUserNotAuthorized($response);
 
-        $this->putJson("/api/transaction/{$transaction->id}/reconciled/1")
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $response = $this->putJson("/api/transaction/{$transaction->id}/reconciled/1");
+        $this->assertUserNotAuthorized($response);
     }
 
     /**

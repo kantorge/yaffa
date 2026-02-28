@@ -8,7 +8,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders()
@@ -40,19 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Standardized error contract for API V1 routes
-        $exceptions->render(function (ValidationException $e, Request $request) {
-            if ($request->is('api/v1/*')) {
-                return response()->json([
-                    'error' => [
-                        'code' => 'VALIDATION_ERROR',
-                        'message' => $e->getMessage(),
-                        'details' => $e->errors(),
-                    ],
-                ], 422);
-            }
-        });
-
         $exceptions->render(function (AuthorizationException $e, Request $request) {
             if ($request->is('api/v1/*')) {
                 return response()->json([

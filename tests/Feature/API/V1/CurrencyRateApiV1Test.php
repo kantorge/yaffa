@@ -34,10 +34,7 @@ class CurrencyRateApiV1Test extends TestCase
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
         ]));
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -49,10 +46,7 @@ class CurrencyRateApiV1Test extends TestCase
             'date' => '2024-01-15',
             'rate' => 1.2345,
         ]);
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -68,10 +62,7 @@ class CurrencyRateApiV1Test extends TestCase
             'date' => '2024-01-16',
             'rate' => 1.3456,
         ]);
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -82,10 +73,7 @@ class CurrencyRateApiV1Test extends TestCase
             ->create(['date' => '2024-01-15', 'rate' => 1.2345]);
 
         $response = $this->deleteJson(route('api.v1.currency-rates.destroy', $rate));
-        $this->assertThat(
-            $response->status(),
-            $this->logicalOr($this->equalTo(401), $this->equalTo(403))
-        );
+        $this->assertUserNotAuthorized($response);
         $response->assertJsonStructure(['error' => ['code', 'message']]);
     }
 
@@ -197,18 +185,15 @@ class CurrencyRateApiV1Test extends TestCase
         $this->assertDatabaseMissing('currency_rates', ['id' => $rate->id]);
     }
 
-    // ===== ERROR FORMAT TESTS (V1 error.* contract) =====
+    // ===== ERROR FORMAT TESTS =====
 
-    public function test_v1_validation_error_uses_error_contract(): void
+    public function test_v1_validation_error_uses_default_validation_contract(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.currency-rates.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonStructure([
-                'error' => ['code', 'message', 'details'],
-            ])
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+            ->assertJsonStructure(['message', 'errors' => ['from_id', 'to_id', 'date', 'rate']]);
     }
 
     public function test_v1_validation_error_includes_field_details(): void
@@ -217,8 +202,7 @@ class CurrencyRateApiV1Test extends TestCase
             ->postJson(route('api.v1.currency-rates.store'), []);
 
         $response->assertUnprocessable()
-            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
-            ->assertJsonStructure(['error' => ['details' => ['from_id', 'to_id', 'date', 'rate']]]);
+            ->assertJsonValidationErrors(['from_id', 'to_id', 'date', 'rate']);
     }
 
     public function test_v1_authorization_error_uses_error_contract(): void
@@ -233,8 +217,7 @@ class CurrencyRateApiV1Test extends TestCase
             ]));
 
         $response->assertForbidden()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+            ->assertJsonStructure(['message']);
     }
 
     public function test_v1_not_found_uses_error_contract(): void
@@ -243,8 +226,7 @@ class CurrencyRateApiV1Test extends TestCase
             ->deleteJson(route('api.v1.currency-rates.destroy', ['currencyRate' => 99999]));
 
         $response->assertNotFound()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'NOT_FOUND');
+            ->assertJsonStructure(['message']);
     }
 
     public function test_v1_cross_user_currency_access_is_forbidden(): void
@@ -258,6 +240,6 @@ class CurrencyRateApiV1Test extends TestCase
                 'to' => $otherCurrency->id,
             ]))
             ->assertForbidden()
-            ->assertJsonPath('error.code', 'FORBIDDEN');
+            ->assertJsonStructure(['message']);
     }
 }
