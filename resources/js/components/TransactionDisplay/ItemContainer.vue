@@ -89,7 +89,7 @@
 
 <script>
   import TransactionItem from './Item.vue';
-  import { __ } from '../../i18n';
+  import { __ } from '@/i18n';
 
   export default {
     components: {

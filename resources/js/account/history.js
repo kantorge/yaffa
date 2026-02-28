@@ -2,7 +2,7 @@ import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from './../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '../i18n';
+import { getDataTablesLanguageOptions } from '@/i18n';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';

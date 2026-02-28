@@ -184,8 +184,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function destroy(Category $category): JsonResponse
     {
         /**
-         * @delete("/api/assets/category/{category}")
-         * @name("api.category.destroy")
+         * @delete("/api/v1/categories/{category}")
+         * @name("api.v1.categories.destroy")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $category);

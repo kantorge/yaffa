@@ -49,8 +49,8 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @delete("/api/accountentity/{accountEntity}")
-         * @name("api.accountentity.destroy")
+         * @delete("/api/v1/account-entities/{accountEntity}")
+         * @name("api.v1.account-entities.destroy")
          * @middlewares("web", "auth", "verified")
          */
         Gate::authorize('forceDelete', $accountEntity);

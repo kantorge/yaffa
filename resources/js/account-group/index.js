@@ -6,8 +6,8 @@ import {
     initializeStandardExternalSearch
 } from '../components/dataTableHelper';
 
-import { __, getDataTablesLanguageOptions } from '../i18n';
-import * as toastHelpers from '../toast';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
+import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
 

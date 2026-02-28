@@ -395,7 +395,7 @@
     props: {
       route: {
         type: Function,
-        default: () => window.route,
+        default: (...args) => window.route(...args),
       },
     },
     data: () => ({
@@ -550,7 +550,7 @@
 
         const url = this.hasConfig
           ? this.route('api.v1.google-drive.config.update', {
-              id: this.configId,
+              googleDriveConfig: this.configId,
             })
           : this.route('api.v1.google-drive.config.store');
         const method = this.hasConfig ? 'patch' : 'post';
@@ -651,7 +651,7 @@
         axios
           .post(
             this.route('api.v1.google-drive.config.sync', {
-              id: this.configId,
+              googleDriveConfig: this.configId,
             }),
           )
           .then((response) => {
@@ -694,7 +694,7 @@
             axios
               .delete(
                 this.route('api.v1.google-drive.config.destroy', {
-                  id: this.configId,
+                  googleDriveConfig: this.configId,
                 }),
               )
               .then(() => {
@@ -734,6 +734,5 @@
   .password-masked {
     -webkit-text-security: disc;
     -moz-text-security: disc;
-    text-security: disc;
   }
 </style>

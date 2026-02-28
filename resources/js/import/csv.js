@@ -6,17 +6,17 @@
 // Import dataTable helper functions
 import 'datatables.net-bs5';
 import * as dataTableHelpers from './../components/dataTableHelper'
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
 import { toIsoDateString } from '../helpers';
 
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
 
 // General helper functions
-import { __ } from '../i18n';
+import { __ } from '@i18n';
 
 // Select2 for account selection
-import { loadSelect2Language } from '../i18n/select2';
+import { loadSelect2Language } from '@/i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.language);

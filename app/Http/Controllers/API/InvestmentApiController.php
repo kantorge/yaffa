@@ -237,8 +237,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function destroy(Investment $investment): JsonResponse
     {
         /**
-         * @delete("/api/investment/{investment}")
-         * @name("api.investment.destroy")
+         * @delete("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.destroy")
          * @middlewares("web", "auth", "verified")
          */
         $result = $this->investmentService->delete($investment);

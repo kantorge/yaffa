@@ -3,9 +3,9 @@ import "datatables.net-responsive-bs5";
 
 import { createApp } from 'vue';
 import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '../helpers';
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
-import * as toastHelpers from '../toast';
+import * as helpers from '@/helpers';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
+import * as toastHelpers from '@/toast';
 import DateRangeFilterCard from '../components/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';

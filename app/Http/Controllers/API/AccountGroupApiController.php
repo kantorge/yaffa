@@ -35,8 +35,8 @@ class AccountGroupApiController extends Controller implements HasMiddleware
     public function destroy(AccountGroup $accountGroup): JsonResponse
     {
         /**
-         * @delete("/api/assets/accountgroup/{accountGroup}")
-         * @name("api.accountgroup.destroy")
+         * @delete("/api/v1/account-groups/{accountGroup}")
+         * @name("api.v1.account-groups.destroy")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $accountGroup);

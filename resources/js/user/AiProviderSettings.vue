@@ -280,7 +280,7 @@
     },
     route: {
       type: Function,
-      default: () => window.route,
+      default: (...args) => window.route(...args),
     },
   });
 </script>
@@ -398,7 +398,9 @@
         this.testResult = null;
 
         const url = this.hasConfig
-          ? this.route('api.v1.ai.config.update', { id: this.configId })
+          ? this.route('api.v1.ai.config.update', {
+              aiProviderConfig: this.configId,
+            })
           : this.route('api.v1.ai.config.store');
         const method = this.hasConfig ? 'patch' : 'post';
 
@@ -488,7 +490,7 @@
             axios
               .delete(
                 this.route('api.v1.ai.config.destroy', {
-                  config: this.configId,
+                  aiProviderConfig: this.configId,
                 }),
               )
               .then(() => {

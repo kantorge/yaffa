@@ -5,9 +5,9 @@ import {
     booleanToTableIcon,
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '../i18n';
+import { getDataTablesLanguageOptions } from '@/i18n';
 
-import * as toastHelpers from '../toast';
+import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
 

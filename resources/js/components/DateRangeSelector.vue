@@ -66,7 +66,7 @@
 
 <script>
   import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
-  import { __ } from '../i18n';
+  import { __ } from '@/i18n';
 
   export default {
     name: 'DateRangeSelector',

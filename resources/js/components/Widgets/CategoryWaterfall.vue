@@ -99,8 +99,8 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
-  import { __ } from '../../i18n';
-  import { applyAmChartsLocalization } from '../../i18n/amcharts';
+  import { __ } from '@/i18n';
+  import { applyAmChartsLocalization } from '@/i18n/amcharts';
 
   export default {
     props: {

@@ -237,9 +237,9 @@
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
-  import { __ } from '../i18n';
-  import { initializeBootstrapTooltips } from '../helpers';
-  import * as toastHelpers from '../toast';
+  import { __ } from '@/i18n';
+  import { initializeBootstrapTooltips } from '@/helpers';
+  import * as toastHelpers from '@/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
 
@@ -277,7 +277,8 @@
               // Update the global YAFFA object with the new settings
               window.YAFFA.userSettings.language = response.data.data.language;
               window.YAFFA.userSettings.locale = response.data.data.locale;
-              window.YAFFA.userSettings.start_date = response.data.data.start_date;
+              window.YAFFA.userSettings.start_date =
+                response.data.data.start_date;
               window.YAFFA.userSettings.end_date = response.data.data.end_date;
               window.YAFFA.userSettings.account_details_date_range =
                 response.data.data.account_details_date_range;

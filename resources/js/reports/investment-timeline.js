@@ -6,9 +6,9 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { __, toFormattedCurrency } from "../i18n";
-import { applyAmChartsLocalization } from '../i18n/amcharts';
-import * as toastHelpers from '../toast';
+import { __, toFormattedCurrency } from "@/i18n";
+import { applyAmChartsLocalization } from '@/i18n/amcharts';
+import * as toastHelpers from '@/toast';
 import { investmentGroupTree } from "../components/dataTableHelper";
 
 window.chartData = [];

@@ -4,24 +4,11 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import * as dataTableHelpers from './../components/dataTableHelper';
-import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
-import * as toastHelpers from '../toast';
+import * as dataTableHelpers from '../components/dataTableHelper';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
+import * as toastHelpers from '@/toast';
 
 let ajaxIsBusy = false;
-
-/**
- * Define the conditions for the delete button, as required by the DataTables helper.
- */
-const deleteButtonConditions = [
-    {
-        property: 'transactions_count',
-        value: 0,
-        negate: false,
-        errorMessage: __('It is already used in transactions.'),
-    },
-];
-
 
 let table = $('#investmentSummary').DataTable({
     language: getDataTablesLanguageOptions() || undefined,

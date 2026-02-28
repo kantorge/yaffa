@@ -6,9 +6,9 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 
 // Generic helpers
 import * as dataTableHelpers from './../components/dataTableHelper'
-import * as helpers from "../helpers";
-import { applyAmChartsLocalization } from '../i18n/amcharts';
-import { __, getDataTablesLanguageOptions, loadSelect2Language } from '../i18n';
+import * as helpers from "@/helpers";
+import { applyAmChartsLocalization } from '@/i18n/amcharts';
+import { __, getDataTablesLanguageOptions, loadSelect2Language } from '@/i18n';
 
 // Category tree
 import 'jstree';

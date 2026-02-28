@@ -72,7 +72,7 @@
 </template>
 
 <script>
-  import { __ } from '../../i18n';
+  import { __ } from '@/i18n';
   import { driver } from 'driver.js';
   import 'driver.js/dist/driver.css';
 

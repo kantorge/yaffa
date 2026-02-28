@@ -1,6 +1,6 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../i18n';
-import { getTransactionTypeConfig } from '../helpers';
-import * as toastHelpers from '../toast.js';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '@/i18n';
+import { getTransactionTypeConfig } from '@/helpers';
+import * as toastHelpers from '@/toast.js';
 
 const route = window.route;
 

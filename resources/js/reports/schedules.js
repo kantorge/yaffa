@@ -5,9 +5,9 @@ import 'datatables-contextual-actions';
 import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '../helpers';
-import * as toastHelpers from '../toast';
-import { __, getDataTablesLanguageOptions } from '../i18n';
+import * as helpers from '@/helpers';
+import * as toastHelpers from '@/toast';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
 
 let ajaxIsBusy = true;
 

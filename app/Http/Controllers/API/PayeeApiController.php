@@ -175,8 +175,8 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function storePayee(AccountEntityRequest $request)
     {
         /**
-         * @post("/api/assets/payee")
-         * @name("api.payee.store")
+         * @post("/api/v1/payees")
+         * @name("api.v1.payees.store")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('create', AccountEntity::class);
@@ -201,8 +201,8 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getSimilarPayees(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/payee/similar")
-         * @name("api.payee.similar")
+         * @get("/api/v1/payees/similar")
+         * @name("api.v1.payees.similar")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $query = Str::lower($request->get('query'));

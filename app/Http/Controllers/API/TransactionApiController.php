@@ -415,8 +415,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post("/api/transactions/standard")
-         * @name("api.transactions.storeStandard")
+         * @post("/api/v1/transactions/standard")
+         * @name("api.v1.transactions.store-standard")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -474,8 +474,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post("/api/transactions/investment")
-         * @name("api.transactions.storeInvestment")
+         * @post("/api/v1/transactions/investment")
+         * @name("api.v1.transactions.store-investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -521,8 +521,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/standard/{transaction}")
-         * @name("api.transactions.updateStandard")
+         * @patch("/api/v1/transactions/standard/{transaction}")
+         * @name("api.v1.transactions.update-standard")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -603,8 +603,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/investment/{transaction}")
-         * @name("api.transactions.updateInvestment")
+         * @patch("/api/v1/transactions/investment/{transaction}")
+         * @name("api.v1.transactions.update-investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -697,8 +697,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/{transaction}/skip")
-         * @name("api.transactions.skipScheduleInstance")
+         * @patch("/api/v1/transactions/{transaction}/skip")
+         * @name("api.v1.transactions.skip")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $transaction->loadDetails();
@@ -718,8 +718,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function destroy(Transaction $transaction): JsonResponse
     {
         /**
-         * @delete("/api/transactions/{transaction}")
-         * @name("api.transactions.destroy")
+         * @delete("/api/v1/transactions/{transaction}")
+         * @name("api.v1.transactions.destroy")
          * @middlewares("web", "auth", "verified")
          */
 

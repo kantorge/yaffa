@@ -61,8 +61,8 @@
   import CurrencyRateChart from './CurrencyRateChart.vue';
   import CurrencyRateModal from './CurrencyRateModal.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
-  import { __ } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'CurrencyRateManager',
