@@ -20,7 +20,7 @@ class AiDocumentApiDuplicateCheckTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/documents/{$document->id}/check-duplicates");
+            ->postJson(route('api.v1.documents.checkDuplicates', ['aiDocument' => $document]));
 
         $response->assertStatus(400);
     }
@@ -39,7 +39,7 @@ class AiDocumentApiDuplicateCheckTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/documents/{$document->id}/check-duplicates");
+            ->postJson(route('api.v1.documents.checkDuplicates', ['aiDocument' => $document]));
 
         $response->assertStatus(200)
             ->assertJson([

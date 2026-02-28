@@ -110,7 +110,9 @@
 
       window.axios
         .post(
-          window.route('api.documents.reprocess', { aiDocument: documentId }),
+          window.route('api.v1.documents.reprocess', {
+            aiDocument: documentId,
+          }),
         )
         .then((response) => {
           updateRow(row, { status: response.data.status });
@@ -155,7 +157,7 @@
 
       window.axios
         .delete(
-          window.route('api.documents.destroy', { aiDocument: documentId }),
+          window.route('api.v1.documents.destroy', { aiDocument: documentId }),
         )
         .then(() => {
           row.remove().draw();

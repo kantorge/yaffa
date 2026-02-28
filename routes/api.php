@@ -75,6 +75,22 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('google-drive.config.test');
     Route::post('/google-drive/config/{googleDriveConfig}/sync', [GoogleDriveConfigApiController::class, 'sync'])
         ->name('google-drive.config.sync');
+
+    // AI Document endpoints
+    Route::post('/documents', [AiDocumentApiController::class, 'store'])
+        ->name('documents.store');
+    Route::get('/documents', [AiDocumentApiController::class, 'index'])
+        ->name('documents.index');
+    Route::get('/documents/{aiDocument}', [AiDocumentApiController::class, 'show'])
+        ->name('documents.show');
+    Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
+        ->name('documents.update');
+    Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
+        ->name('documents.reprocess');
+    Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
+        ->name('documents.checkDuplicates');
+    Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
+        ->name('documents.destroy');
 });
 
 // ============================================================
@@ -204,21 +220,6 @@ Route::get('/user/preference/{key}', [UserApiController::class, 'getPreference']
     ->name('api.user.preference.get');
 Route::put('/user/preference/{key}', [UserApiController::class, 'setPreference'])
     ->name('api.user.preference.set');
-// AI Document routes
-Route::post('/documents', [AiDocumentApiController::class, 'store'])
-    ->name('api.documents.store');
-Route::get('/documents', [AiDocumentApiController::class, 'index'])
-    ->name('api.documents.index');
-Route::get('/documents/{aiDocument}', [AiDocumentApiController::class, 'show'])
-    ->name('api.documents.show');
-Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
-    ->name('api.documents.update');
-Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
-    ->name('api.documents.reprocess');
-Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
-    ->name('api.documents.checkDuplicates');
-Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
-    ->name('api.documents.destroy');
 
 // Payee stats routes
 Route::get('/ai/payees/{payee}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])

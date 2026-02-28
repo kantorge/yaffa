@@ -744,7 +744,7 @@
 
       window.axios
         .post(
-          window.route('api.documents.reprocess', {
+          window.route('api.v1.documents.reprocess', {
             aiDocument: aiDocument.value.id,
           }),
         )
@@ -794,7 +794,7 @@
 
       window.axios
         .delete(
-          window.route('api.documents.destroy', {
+          window.route('api.v1.documents.destroy', {
             aiDocument: aiDocument.value.id,
           }),
         )
@@ -840,7 +840,7 @@
   const refreshDocument = () =>
     window.axios
       .get(
-        window.route('api.documents.show', {
+        window.route('api.v1.documents.show', {
           aiDocument: aiDocument.value.id,
         }),
       )

@@ -118,7 +118,7 @@
 
       do {
         const response = await window.axios.get(
-          window.route('api.documents.index'),
+          window.route('api.v1.documents.index'),
           {
             params: {
               page,

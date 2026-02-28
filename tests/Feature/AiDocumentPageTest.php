@@ -127,7 +127,7 @@ class AiDocumentPageTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('api.documents.checkDuplicates', $document))
+            ->post(route('api.v1.documents.checkDuplicates', ['aiDocument' => $document]))
             ->assertStatus(Response::HTTP_OK)
             ->assertJsonFragment([
                 'id' => $transaction->id,

@@ -90,7 +90,7 @@
 
     window.axios
       .post(
-        window.route('api.documents.checkDuplicates', {
+        window.route('api.v1.documents.checkDuplicates', {
           aiDocument: props.aiDocumentId,
         }),
       )

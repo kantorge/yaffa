@@ -365,7 +365,7 @@
         formData.append('custom_prompt', form.customPrompt);
       }
 
-      const response = await fetch(route('api.documents.store'), {
+      const response = await fetch(route('api.v1.documents.store'), {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')

@@ -20,7 +20,7 @@ class AiDocumentProcessingQueueUniquenessTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/documents', [
+            ->postJson(route('api.v1.documents.store'), [
                 'text_input' => 'Coffee 4.50 USD',
             ])
             ->assertCreated();
@@ -45,7 +45,7 @@ class AiDocumentProcessingQueueUniquenessTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/documents/{$document->id}/reprocess")
+            ->postJson(route('api.v1.documents.reprocess', ['aiDocument' => $document]))
             ->assertOk();
 
         $this->artisan('app:process-ai-documents', ['--limit' => 10])
