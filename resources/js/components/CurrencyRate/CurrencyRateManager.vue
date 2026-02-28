@@ -202,7 +202,7 @@
         try {
           // Fetch all rates from the API
           const response = await window.axios.get(
-            window.route('api.v1.currency-rates.index', {
+            this.route('api.v1.currency-rates.index', {
               from: this.fromCurrency.id,
               to: this.toCurrency.id,
             }),

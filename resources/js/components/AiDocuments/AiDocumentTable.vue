@@ -40,6 +40,7 @@
   const tableElement = ref(null);
   const table = ref(null);
   const ajaxIsBusy = ref(false);
+  const route = window.route;
   const RESIZE_RECALC_DELAY_MS = 100;
 
   const statusBadgeClass = (status) => {
@@ -156,9 +157,7 @@
       }
 
       window.axios
-        .delete(
-          window.route('api.v1.documents.destroy', { aiDocument: documentId }),
-        )
+        .delete(route('api.v1.documents.destroy', { aiDocument: documentId }))
         .then(() => {
           row.remove().draw();
           toastHelpers.showSuccessToast(__('Document deleted'));
@@ -230,7 +229,7 @@
               <div class="d-flex justify-content-start align-items-center">
                 <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
                 <span class="ai-document-title-wrapper">
-                  <a href="${window.route('ai-documents.show', {
+                  <a href="${route('ai-documents.show', {
                     aiDocument: row.id,
                   })}" title="${value}" class="ai-document-title-link">${value}</a>
                 </span>
@@ -337,7 +336,7 @@
           iconClass: 'fa fa-fw fa-search',
           contextMenuClasses: ['text-success fw-bold'],
           action: (selectedRows) => {
-            window.location.href = window.route('ai-documents.show', {
+            window.location.href = route('ai-documents.show', {
               aiDocument: selectedRows[0].id,
             });
           },
@@ -353,7 +352,7 @@
               return;
             }
 
-            window.location.href = window.route('transaction.open', {
+            window.location.href = route('transaction.open', {
               transaction: selectedRows[0].transaction.id,
               action: 'show',
             });

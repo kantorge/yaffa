@@ -60,5 +60,6 @@
 
   defineEmits(['open-upload-form']);
 
-  const settingsUrl = window.route('user.settings');
+  const route = window.route;
+  const settingsUrl = route('user.settings');
 </script>

@@ -1342,10 +1342,7 @@
         const selector = '#account_' + type;
 
         $.ajax({
-          url:
-            this.getAccountApiUrl(type) +
-            '/' +
-            account_entity_id,
+          url: this.getAccountApiUrl(type) + '/' + account_entity_id,
           data: {
             _token: $vm.csrfToken,
           },
@@ -1380,7 +1377,7 @@
         if (this.action === 'edit') {
           this.form
             .patch(
-              window.route('api.v1.transactions.update-standard', {
+              this.route('api.v1.transactions.update-standard', {
                 transaction: this.form.id,
               }),
               this.form,
@@ -1399,7 +1396,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.v1.transactions.store-standard'), this.form)
+          .post(this.route('api.v1.transactions.store-standard'), this.form)
           .then((response) => {
             this.$emit(
               'success',

@@ -85,7 +85,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getItem(Transaction $transaction): JsonResponse
     {
         /**
-         * @get("/api/transaction/{transaction}")
+         * @get("/api/v1/transactions/{transaction}")
+         * @name("api.v1.transactions.show")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $transaction);
@@ -103,7 +104,7 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getScheduledItems(string $type, Request $request): JsonResponse
     {
         /**
-         * @get("/api/transactions/get_scheduled_items/{type}")
+         * @get("/api/v1/transactions/get_scheduled_items/{type}")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 

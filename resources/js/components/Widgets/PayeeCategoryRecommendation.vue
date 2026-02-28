@@ -137,7 +137,7 @@
 
     computed: {
       editlink() {
-        return window.route('account-entity.edit', {
+        return this.route('account-entity.edit', {
           type: 'payee',
           account_entity: this.payeeSuggestion.payee_id,
         });

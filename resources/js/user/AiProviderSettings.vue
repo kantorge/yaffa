@@ -278,10 +278,6 @@
       type: Object,
       default: () => window.aiProviders || {},
     },
-    route: {
-      type: Function,
-      default: (...args) => window.route(...args),
-    },
   });
 </script>
 

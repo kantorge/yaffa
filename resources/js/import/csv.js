@@ -13,7 +13,7 @@ import { toIsoDateString } from '../helpers';
 import {RRule} from 'rrule';
 
 // General helper functions
-import { __ } from '@i18n';
+import { __ } from '@/i18n';
 
 // Select2 for account selection
 import { loadSelect2Language } from '@/i18n/select2';
@@ -855,11 +855,13 @@ fetch('/api/v1/transactions/scheduled-items?type=schedule')
 
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'

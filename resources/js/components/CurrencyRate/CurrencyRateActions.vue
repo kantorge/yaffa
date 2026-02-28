@@ -106,7 +106,7 @@
         try {
           // Call the existing endpoint to retrieve missing rates
           await window.axios.post(
-            window.route('api.v1.currency-rates.retrieve-missing', {
+            this.route('api.v1.currency-rates.retrieve-missing', {
               currency: this.fromCurrency.id,
             }),
           );

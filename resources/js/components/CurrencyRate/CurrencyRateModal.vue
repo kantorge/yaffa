@@ -194,14 +194,14 @@
           let response;
           if (this.isEditMode) {
             response = await window.axios.put(
-              window.route('api.v1.currency-rates.update', {
+              this.route('api.v1.currency-rates.update', {
                 currencyRate: this.editRate.id,
               }),
               data,
             );
           } else {
             response = await window.axios.post(
-              window.route('api.v1.currency-rates.store'),
+              this.route('api.v1.currency-rates.store'),
               data,
             );
           }

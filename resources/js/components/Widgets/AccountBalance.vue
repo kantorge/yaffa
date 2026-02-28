@@ -203,7 +203,7 @@
         this.state = 'loading';
 
         axios
-          .get('/api/account/balance/')
+          .get(this.route('api.v1.accounts.balance'))
           .then(function (response) {
             // Check if the response is valid data
             if (response.data.result === 'busy') {
@@ -233,7 +233,7 @@
       },
 
       getRoute: function (account) {
-        return window.route('account-entity.show', {
+        return this.route('account-entity.show', {
           account_entity: account.id,
         });
       },

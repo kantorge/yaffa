@@ -119,8 +119,10 @@ window.onboardingTourSteps = [
 ];
 
 // Initialize the onboarding widget
-import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
+import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
 const app = createApp({});
+installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);
 app.mount('#onboarding-card');

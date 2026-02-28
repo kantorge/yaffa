@@ -171,7 +171,7 @@
 
         try {
           await window.axios.delete(
-            window.route('api.v1.currency-rates.destroy', {
+            this.route('api.v1.currency-rates.destroy', {
               currencyRate: rate.id,
             }),
           );

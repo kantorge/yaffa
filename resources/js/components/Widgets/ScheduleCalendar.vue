@@ -85,7 +85,7 @@
         );
       },
       getTransactionLink: function (id) {
-        return window.route('transaction.open', {
+        return this.route('transaction.open', {
           transaction: id,
           action: 'enter',
         });

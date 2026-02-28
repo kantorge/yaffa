@@ -65,6 +65,7 @@
   });
 
   const selectedFile = ref(null);
+  const route = window.route;
 
   const hasFiles = computed(() => props.files && props.files.length > 0);
 
@@ -94,7 +95,7 @@
   const isImage = (file) => ['jpg', 'jpeg', 'png'].includes(file.file_type);
 
   const previewUrl = (file) =>
-    window.route('ai-documents.files.show', {
+    route('ai-documents.files.show', {
       aiDocument: props.aiDocumentId,
       aiDocumentFile: file.id,
     });

@@ -67,6 +67,7 @@
   const tableRef = ref(null);
   const uploadFormRef = ref(null);
   const isLoading = ref(false);
+  const route = window.route;
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -118,7 +119,7 @@
 
       do {
         const response = await window.axios.get(
-          window.route('api.v1.documents.index'),
+          route('api.v1.documents.index'),
           {
             params: {
               page,

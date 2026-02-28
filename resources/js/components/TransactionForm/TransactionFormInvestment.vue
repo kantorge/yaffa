@@ -1025,19 +1025,19 @@
 
       loadCallbackUrl(transactionId) {
         if (this.callback === 'returnToDashboard') {
-          location.href = window.route('home');
+          location.href = this.route('home');
           return;
         }
 
         if (this.callback === 'new') {
-          location.href = window.route('transaction.create', {
+          location.href = this.route('transaction.create', {
             type: 'investment',
           });
           return;
         }
 
         if (this.callback === 'clone') {
-          location.href = window.route('transaction.open', {
+          location.href = this.route('transaction.open', {
             transaction: transactionId,
             action: 'clone',
           });
@@ -1045,14 +1045,14 @@
         }
 
         if (this.callback === 'returnToPrimaryAccount') {
-          location.href = window.route('account.history', {
+          location.href = this.route('account.history', {
             account: this.form.config.account_id,
           });
           return;
         }
 
         if (this.callback === 'returnToSecondaryAccount') {
-          location.href = window.route('account.history', {
+          location.href = this.route('account.history', {
             account: this.form.config.account_id,
           });
           return;
@@ -1078,7 +1078,7 @@
         if (this.action === 'edit') {
           this.form
             .patch(
-              window.route('api.v1.transactions.update-investment', {
+              this.route('api.v1.transactions.update-investment', {
                 transaction: this.form.id,
               }),
               this.form,
@@ -1097,7 +1097,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.v1.transactions.store-investment'), this.form)
+          .post(this.route('api.v1.transactions.store-investment'), this.form)
           .then(async (response) => {
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(
@@ -1163,7 +1163,7 @@
           }
 
           const response = await window.axios.get(
-            window.route('api.v1.investment-prices.check', {
+            this.route('api.v1.investment-prices.check', {
               investment: this.form.config.investment_id,
             }),
             {
@@ -1202,11 +1202,14 @@
         }
 
         try {
-          await window.axios.post(window.route('api.v1.investment-prices.store'), {
-            investment_id: transaction.config.investment_id,
-            date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
-            price: transaction.config.price,
-          });
+          await window.axios.post(
+            this.route('api.v1.investment-prices.store'),
+            {
+              investment_id: transaction.config.investment_id,
+              date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
+              price: transaction.config.price,
+            },
+          );
 
           // Show success toast
           return 'success';

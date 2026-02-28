@@ -278,10 +278,12 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
 });
 
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)

@@ -110,7 +110,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * PATCH /api/google-drive/config/{id} - Update Google Drive config
+     * PATCH /api/v1/google-drive/config/{id} - Update Google Drive config
      *
      * @throws AuthorizationException
      */
@@ -146,7 +146,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/google-drive/config/{id} - Delete Google Drive config
+     * DELETE /api/v1/google-drive/config/{id} - Delete Google Drive config
      *
      * @throws AuthorizationException
      */
@@ -164,7 +164,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/google-drive/test - Test Google Drive connection
+     * POST /api/v1/google-drive/test - Test Google Drive connection
      */
     public function test(GoogleDriveConfigRequest $request): JsonResponse
     {
@@ -234,7 +234,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/google-drive/sync/{id} - Manually trigger sync for a config
+     * POST /api/v1/google-drive/sync/{id} - Manually trigger sync for a config
      *
      * @throws AuthorizationException
      */

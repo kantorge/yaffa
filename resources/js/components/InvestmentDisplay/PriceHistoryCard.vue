@@ -53,8 +53,8 @@
         return this.prices && this.prices.length > 0;
       },
       priceListUrl() {
-        return window.route
-          ? window.route('investment-price.list', {
+        return this.route
+          ? this.route('investment-price.list', {
               investment: this.investment.id,
             })
           : '#';

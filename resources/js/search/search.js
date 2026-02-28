@@ -57,10 +57,12 @@ dataTableHelpers.initializeQuickViewButton('table');
 
 // Transaction quick view modal
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import QuickViewTransactionModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', QuickViewTransactionModal)

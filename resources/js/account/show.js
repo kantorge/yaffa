@@ -1,7 +1,6 @@
 import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
-import { createApp } from 'vue';
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '@/helpers';
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
@@ -474,6 +473,7 @@ const dateRangeApp = createApp({
     },
 });
 
+installRouteGlobal(dateRangeApp);
 dateRangeApp.mount('#account-date-range-filter');
 
 // Set up event listener for new standard transaction button
@@ -613,10 +613,14 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 });
 
 // Initialize Vue for the quick view
+import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
+
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'

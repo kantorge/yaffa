@@ -392,12 +392,6 @@
       Button,
       HasError,
     },
-    props: {
-      route: {
-        type: Function,
-        default: (...args) => window.route(...args),
-      },
-    },
     data: () => ({
       form: new Form({
         service_account_json: '',

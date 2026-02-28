@@ -35,7 +35,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/category")
+         * @get("/api/v1/categories")
+         * @name("api.v1.categories.index")
          * @middlewares("api", "auth:sanctum")
          */
         $user = $request->user();
@@ -136,7 +137,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function getItem(Category $category): JsonResponse
     {
         /**
-         * @get("/api/assets/category/{category}")
+         * @get("/api/v1/categories/{category}")
+         * @name("api.v1.categories.show")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $category);
@@ -151,7 +153,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     /**
      * Store a newly created category in storage.
      *
-     * @post("/api/assets/category")
+     * @post("/api/v1/categories")
+     * @name("api.v1.categories.store")
      * @middlewares("api", "auth:sanctum")
      */
     public function store(CategoryRequest $request): JsonResponse

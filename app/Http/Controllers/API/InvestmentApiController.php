@@ -37,7 +37,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function index(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/investment")
+         * @get("/api/v1/investments")
+         * @name("api.v1.investments.index")
          * @middlewares("api", "auth:sanctum")
          *
          * Currently supported query parameters:
@@ -107,8 +108,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/{investment}")
-         * @name("investment.getDetails")
+         * @get("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.show")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
@@ -121,7 +122,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/price/{investment}")
+         * @get("/api/v1/investments/{investment}/price-history")
+         * @name("api.v1.investments.price-history")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
@@ -162,7 +164,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/timeline")
+         * @get("/api/v1/investments/timeline")
+         * @name("api.v1.investments.timeline")
          * @middlewares("api", "auth:sanctum")
          */
         $investments = $request->user()

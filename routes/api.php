@@ -97,11 +97,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('accounts.index');
     Route::get('/accounts/investment', [AccountApiController::class, 'getAccountListForInvestments'])
         ->name('accounts.investment');
-    Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
-        ->name('accounts.show');
-    Route::get('/accounts/{accountEntity}/balance', [AccountApiController::class, 'getAccountBalance'])
+    Route::get('/accounts/balance', [AccountApiController::class, 'getAccountBalance'])
         ->name('accounts.balance');
+    Route::get('/accounts/{accountEntity}/balance', [AccountApiController::class, 'getAccountBalance'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.balance.show');
+    Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.show');
     Route::patch('/accounts/{accountEntity}/monthly-summary', [AccountApiController::class, 'updateMonthlySummary'])
+        ->whereNumber('accountEntity')
         ->name('accounts.monthly-summary');
 
     // AccountEntity endpoints
@@ -153,13 +158,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('payees.similar');
     Route::get('/payees/category-suggestions/default', [PayeeApiController::class, 'getPayeeDefaultSuggestion'])
         ->name('payees.category-suggestions.default');
-    Route::get('/payees/{payee}', [PayeeApiController::class, 'getItem'])
+    Route::get('/payees/{accountEntity}', [PayeeApiController::class, 'getItem'])
         ->name('payees.show');
-    Route::post('/payees/{payee}/category-suggestions/accept/{category}', [PayeeApiController::class, 'acceptPayeeDefaultCategorySuggestion'])
+    Route::post('/payees/{accountEntity}/category-suggestions/accept/{category}', [PayeeApiController::class, 'acceptPayeeDefaultCategorySuggestion'])
         ->name('payees.category-suggestions.accept');
-    Route::post('/payees/{payee}/category-suggestions/dismiss', [PayeeApiController::class, 'dismissPayeeDefaultCategorySuggestion'])
+    Route::post('/payees/{accountEntity}/category-suggestions/dismiss', [PayeeApiController::class, 'dismissPayeeDefaultCategorySuggestion'])
         ->name('payees.category-suggestions.dismiss');
-    Route::get('/payees/{payee}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
+    Route::get('/payees/{accountEntity}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
         ->name('payees.category-stats');
 
     // Tag endpoints
@@ -223,4 +228,3 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::put('/users/me/preferences/{key}', [UserApiController::class, 'setPreference'])
         ->name('users.me.preferences.set');
 });
-

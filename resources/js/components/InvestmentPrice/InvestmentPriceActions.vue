@@ -112,7 +112,7 @@
         try {
           // Call the API endpoint to retrieve missing prices
           const response = await window.axios.post(
-            window.route('api.v1.investment-prices.retrieve-missing', {
+            this.route('api.v1.investment-prices.retrieve-missing', {
               investment: this.investment.id,
             }),
           );
