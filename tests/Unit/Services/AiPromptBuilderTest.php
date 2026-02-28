@@ -44,8 +44,10 @@ class AiPromptBuilderTest extends TestCase
         );
 
         $this->assertStringContainsString('CATEGORY LEARNING PATTERNS', $prompt);
-        $this->assertStringContainsString('[0] Coffee beans - $12.5', $prompt);
-        $this->assertStringContainsString('[1] Milk - $3.1', $prompt);
+        $this->assertStringContainsString('[0] Coffee beans', $prompt);
+        $this->assertStringContainsString('[1] Milk', $prompt);
+        $this->assertStringNotContainsString('$12.5', $prompt);
+        $this->assertStringNotContainsString('$3.1', $prompt);
         $this->assertStringContainsString('7: Food > Drinks', $prompt);
     }
 

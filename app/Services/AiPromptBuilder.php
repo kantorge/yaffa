@@ -72,7 +72,7 @@ EOF;
 
         $itemsLines = [];
         foreach ($items as $index => $item) {
-            $itemsLines[] = "[{$index}] {$item['description']} - \${$item['amount']}";
+            $itemsLines[] = "[{$index}] {$item['description']}";
         }
         $itemsList = implode("\n", $itemsLines);
 
@@ -87,8 +87,13 @@ Your task: Match each line item to the most appropriate category.
 RULES:
 - Prioritize learning patterns if item description closely matches past patterns
 - Use category list to find best semantic match if no learning patterns match
+- Treat quantity/unit/packaging tokens as non-semantic noise while matching (examples: "2x", "500g", "1.5l", "pcs", "pack", and localized equivalents in the document language).
+- Match based on the core product or service meaning, not on quantity, size, or package count.
 - Categories can have up to two levels. For example: "Standalone parent", "Parent", "Parent > Child 1", "Parent > Child 2", "Another standalone parent", etc.
-- You will receive the parent and child categories. Always prefer the child categories if they are a good match. Don't assign to parent if a more specific child category exists that matches well.
+- You will receive both parent and child categories.
+- Prefer a child category whenever the item clearly fits at least one child.
+- Do NOT assign a parent category if any of its child categories are semantically suitable.
+- Assign a parent category only when no child category under that parent is a good fit.
 - Return confidence score 0.0-1.0 for each match (1.0 = certain, <0.5 = uncertain)
 - Return recommended_category_id as null if no reasonable match exists (confidence too low or no semantic match)
 - IMPORTANT: item_index must match the index shown in square brackets [N] in LINE ITEMS list
@@ -170,6 +175,11 @@ RULES:
 * For transfers, extract BOTH account_from and account_to names
 * For transfers, the transaction_items array must be empty (it is not supported to have line items on transfers)
 * For receipts with multiple line items, extract each item separately into the transaction_items array
+* For each transaction item description, keep only the core item/service name.
+* Remove quantity, size, measurement, and packaging fragments from description (examples: "2x", "x3", "500g", "1kg", "250ml", "1.5l", "pcs", "pack", plus language-specific/localized equivalents present in the document).
+* Keep meaningful product qualifiers (brand/flavor/type/model) when they help categorization; remove only quantity/unit/packaging noise.
+* When extracting amounts, account for localization (especially for thousands separators and decimal marks). Convert the final amount to a plain number without any symbols, and use dot as decimal separator.
+* For standard transactions, validate your response to see if extracted amount and the sum of transaction_items amounts are consistent.
 * For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
 * Date format must be yyyy-mm-dd, use today's date if not specified
 * You must extract at most one transaction from the document. If there are multiple transactions mentioned, extract only the first one that appears, that can be identified as a transaction qualifying the above schemas.

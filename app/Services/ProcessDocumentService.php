@@ -57,7 +57,7 @@ class ProcessDocumentService
             }
 
             // Step 2: Extract core transaction data
-            $rawData = $this->extractTransactionData($config, $extractedText, $document->custom_prompt);
+            $rawData = $this->extractTransactionData($config, $document, $extractedText, $document->custom_prompt);
 
             Log::debug('AI extracted raw transaction data', ['raw_data' => $rawData]);
 
@@ -74,36 +74,36 @@ class ProcessDocumentService
             if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $user, $rawData['account']);
+                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account']);
                 }
                 if (!empty($rawData['investment'])) {
-                    $investmentId = $this->matchInvestment($config, $user, $rawData['investment']);
+                    $investmentId = $this->matchInvestment($config, $document, $user, $rawData['investment']);
                 }
             } elseif ($transactionType === 'transfer') {
                 // Transfer: match two accounts
                 if (!empty($rawData['account_from'])) {
-                    $accountFromId = $this->matchAccount($config, $user, $rawData['account_from']);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from']);
                 }
                 if (!empty($rawData['account_to'])) {
-                    $accountToId = $this->matchAccount($config, $user, $rawData['account_to']);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to']);
                 }
             } elseif ($transactionType === 'withdrawal') {
                 // Withdrawal: match account (from) and payee (to)
                 if (!empty($rawData['account'])) {
-                    $accountFromId = $this->matchAccount($config, $user, $rawData['account']);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account']);
                 }
                 if (!empty($rawData['payee'])) {
-                    $accountToId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountToId;
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
-                    $accountFromId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountFromId;
                 }
                 if (!empty($rawData['account'])) {
-                    $accountToId = $this->matchAccount($config, $user, $rawData['account']);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account']);
                 }
             }
 
@@ -111,7 +111,8 @@ class ProcessDocumentService
                 $user,
                 $transactionType,
                 $matchedPayeeId,
-                $rawData
+                $rawData,
+                $document,
             );
 
             // Step 4: Build final transaction data structure
@@ -124,7 +125,8 @@ class ProcessDocumentService
                 $investmentId,
                 $payeeCategoryShortcutItem,
                 $user,
-                $config
+                $config,
+                $document,
             );
 
             // Step 5: Store processed data and update document
@@ -181,11 +183,11 @@ class ProcessDocumentService
     /**
      * Extract basic transaction data from text using AI
      */
-    protected function extractTransactionData(AiProviderConfig $config, string $text, ?string $customPrompt = null): array
+    protected function extractTransactionData(AiProviderConfig $config, AiDocument $document, string $text, ?string $customPrompt = null): array
     {
         $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt);
 
-        $response = $this->callAi($config, $prompt);
+        $response = $this->callAi($config, $document, $prompt, 'main_extraction');
 
         try {
             $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
@@ -211,7 +213,7 @@ class ProcessDocumentService
     /**
      * Match account name to user's accounts
      */
-    private function matchAccount(AiProviderConfig $config, User $user, string $accountName): ?int
+    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -221,6 +223,18 @@ class ProcessDocumentService
 
         if (empty($similarAccounts)) {
             Log::debug('No similar accounts found', ['account_name' => $accountName]);
+
+            $this->appendLocalProcessingHistory(
+                $document,
+                'account_matching',
+                [
+                    'account_name' => $accountName,
+                    'path' => 'no_candidates',
+                ],
+                [
+                    'matched_id' => null,
+                ]
+            );
 
             return null;
         }
@@ -235,6 +249,21 @@ class ProcessDocumentService
                 'similarity' => $topMatch['similarity'],
             ]);
 
+            $this->appendLocalProcessingHistory(
+                $document,
+                'account_matching',
+                [
+                    'account_name' => $accountName,
+                    'path' => 'high_confidence_match',
+                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
+                ],
+                [
+                    'matched_id' => $topMatch['id'],
+                    'matched_name' => $topMatch['name'],
+                    'similarity' => $topMatch['similarity'],
+                ]
+            );
+
             return $topMatch['id'];
         }
 
@@ -245,7 +274,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildAccountMatchingPrompt($accountsList, $accountName);
 
-        $response = $this->callAi($config, $prompt);
+        $response = $this->callAi($config, $document, $prompt, 'account_matching');
 
         $result = mb_trim($response);
 
@@ -261,7 +290,7 @@ class ProcessDocumentService
     /**
      * Match payee name to user's payees
      */
-    private function matchPayee(AiProviderConfig $config, User $user, string $payeeName): ?int
+    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -271,6 +300,18 @@ class ProcessDocumentService
 
         if (empty($similarPayees)) {
             Log::debug('No similar payees found', ['payee_name' => $payeeName]);
+
+            $this->appendLocalProcessingHistory(
+                $document,
+                'payee_matching',
+                [
+                    'payee_name' => $payeeName,
+                    'path' => 'no_candidates',
+                ],
+                [
+                    'matched_id' => null,
+                ]
+            );
 
             return null;
         }
@@ -285,6 +326,21 @@ class ProcessDocumentService
                 'similarity' => $topMatch['similarity'],
             ]);
 
+            $this->appendLocalProcessingHistory(
+                $document,
+                'payee_matching',
+                [
+                    'payee_name' => $payeeName,
+                    'path' => 'high_confidence_match',
+                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
+                ],
+                [
+                    'matched_id' => $topMatch['id'],
+                    'matched_name' => $topMatch['name'],
+                    'similarity' => $topMatch['similarity'],
+                ]
+            );
+
             return $topMatch['id'];
         }
 
@@ -295,7 +351,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildPayeeMatchingPrompt($payeesList, $payeeName);
 
-        $response = $this->callAi($config, $prompt);
+        $response = $this->callAi($config, $document, $prompt, 'payee_matching');
 
         $result = mb_trim($response);
 
@@ -311,7 +367,7 @@ class ProcessDocumentService
     /**
      * Match investment name to user's investments
      */
-    private function matchInvestment(AiProviderConfig $config, User $user, string $investmentName): ?int
+    private function matchInvestment(AiProviderConfig $config, AiDocument $document, User $user, string $investmentName): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -321,6 +377,18 @@ class ProcessDocumentService
 
         if (empty($similarInvestments)) {
             Log::debug('No similar investments found', ['investment_name' => $investmentName]);
+
+            $this->appendLocalProcessingHistory(
+                $document,
+                'investment_matching',
+                [
+                    'investment_name' => $investmentName,
+                    'path' => 'no_candidates',
+                ],
+                [
+                    'matched_id' => null,
+                ]
+            );
 
             return null;
         }
@@ -335,6 +403,21 @@ class ProcessDocumentService
                 'similarity' => $topMatch['similarity'],
             ]);
 
+            $this->appendLocalProcessingHistory(
+                $document,
+                'investment_matching',
+                [
+                    'investment_name' => $investmentName,
+                    'path' => 'high_confidence_match',
+                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
+                ],
+                [
+                    'matched_id' => $topMatch['id'],
+                    'matched_name' => $topMatch['name'],
+                    'similarity' => $topMatch['similarity'],
+                ]
+            );
+
             return $topMatch['id'];
         }
 
@@ -345,7 +428,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildInvestmentMatchingPrompt($investmentsList, $investmentName);
 
-        $response = $this->callAi($config, $prompt);
+        $response = $this->callAi($config, $document, $prompt, 'investment_matching');
 
         $result = mb_trim($response);
 
@@ -370,7 +453,8 @@ class ProcessDocumentService
         ?int $investmentId,
         ?array $payeeCategoryShortcutItem,
         User $user,
-        AiProviderConfig $config
+        AiProviderConfig $config,
+        AiDocument $document,
     ): array {
         $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypeValues());
 
@@ -417,7 +501,7 @@ class ProcessDocumentService
 
         // Build transaction_items array with category learning (batch AI matching)
         if (! $isInvestment && isset($rawData['transaction_items']) && is_array($rawData['transaction_items'])) {
-            $data['transaction_items'] = $this->matchCategoriesForItems($rawData['transaction_items'], $user, $config);
+            $data['transaction_items'] = $this->matchCategoriesForItems($rawData['transaction_items'], $user, $config, $document);
         }
 
         return $data;
@@ -435,7 +519,8 @@ class ProcessDocumentService
         User $user,
         string $transactionType,
         ?int $payeeId,
-        array $rawData
+        array $rawData,
+        ?AiDocument $document = null,
     ): ?array {
         if (! in_array($transactionType, ['withdrawal', 'deposit'], true) || $payeeId === null) {
             return null;
@@ -464,6 +549,25 @@ class ProcessDocumentService
             'category_id' => $categoryId,
             'transaction_type' => $transactionType,
         ]);
+
+        if ($document !== null) {
+            $this->appendLocalProcessingHistory(
+                $document,
+                'category_batch_matching',
+                [
+                    'path' => 'single_payee_category_shortcut',
+                    'payee_id' => $payee->id,
+                    'payee_name' => $payee->name,
+                    'transaction_type' => $transactionType,
+                    'description' => (string) $description,
+                ],
+                [
+                    'recommended_category_id' => $categoryId,
+                    'match_type' => 'exact',
+                    'confidence_score' => 1.0,
+                ]
+            );
+        }
 
         return [
             'amount' => $amount,
@@ -513,7 +617,7 @@ class ProcessDocumentService
      * @param  array  $items  Raw items from AI extraction
      * @return array Enriched items with recommended_category_id, match_type, confidence_score
      */
-    protected function matchCategoriesForItems(array $items, User $user, AiProviderConfig $config): array
+    protected function matchCategoriesForItems(array $items, User $user, AiProviderConfig $config, AiDocument $document): array
     {
         $enrichedItems = [];
         $itemsNeedingAi = [];
@@ -534,6 +638,22 @@ class ProcessDocumentService
                     'match_type' => $exactMatch['match_type'],
                     'confidence_score' => $exactMatch['confidence_score'],
                 ];
+
+                $this->appendLocalProcessingHistory(
+                    $document,
+                    'category_batch_matching',
+                    [
+                        'path' => 'exact_learning_match',
+                        'item_index' => $index,
+                        'description' => $description,
+                        'amount' => $amount,
+                    ],
+                    [
+                        'recommended_category_id' => $exactMatch['recommended_category_id'],
+                        'match_type' => $exactMatch['match_type'],
+                        'confidence_score' => $exactMatch['confidence_score'],
+                    ]
+                );
             } else {
                 // No exact match, will need AI
                 $itemsNeedingAi[$index] = [
@@ -562,7 +682,7 @@ class ProcessDocumentService
 
         // Second pass: AI matching for items without exact matches
         try {
-            $aiMatches = $this->matchCategoriesBatch($itemsNeedingAi, $user, $config);
+            $aiMatches = $this->matchCategoriesBatch($itemsNeedingAi, $user, $config, $document);
 
             // Merge AI results back into enriched items
             // All recommendations (exact or AI) populate recommended_category_id
@@ -590,7 +710,7 @@ class ProcessDocumentService
      * @param  array  $items  Items needing AI matching (indexed by original position)
      * @return array AI match results indexed by original position
      */
-    protected function matchCategoriesBatch(array $items, User $user, AiProviderConfig $config): array
+    protected function matchCategoriesBatch(array $items, User $user, AiProviderConfig $config, AiDocument $document): array
     {
         if (empty($items)) {
             return [];
@@ -614,7 +734,7 @@ class ProcessDocumentService
             $this->assetMatchingService->formatCategoriesForPrompt($user)
         );
 
-        $response = $this->callAi($config, $prompt);
+        $response = $this->callAi($config, $document, $prompt, 'category_batch_matching');
 
         Log::debug('Category matching AI response', [
             'prompt' => $prompt,
@@ -676,7 +796,7 @@ class ProcessDocumentService
     /**
      * Call AI provider and get text response
      */
-    protected function callAi(AiProviderConfig $config, string $prompt): string
+    protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
     {
         try {
             $response = \Prism\Prism\Facades\Prism::text()
@@ -687,8 +807,14 @@ class ProcessDocumentService
                 ->withPrompt($prompt)
                 ->asText();
 
-            return $response->text ?? '';
+            $textResponse = $response->text ?? '';
+
+            $this->appendProcessingHistory($document, $step, $prompt, $textResponse);
+
+            return $textResponse;
         } catch (Exception $e) {
+            $this->appendProcessingHistory($document, $step, $prompt, 'ERROR: ' . $e->getMessage());
+
             Log::error('AI provider call failed', [
                 'provider' => $config->provider,
                 'model' => $config->model,
@@ -697,5 +823,51 @@ class ProcessDocumentService
 
             throw new Exception("AI provider error: {$e->getMessage()}");
         }
+    }
+
+    private function appendProcessingHistory(AiDocument $document, string $step, string $prompt, string $response): void
+    {
+        $history = $document->ai_chat_history;
+
+        if (! is_array($history)) {
+            $history = [];
+        }
+
+        $history[] = [
+            'timestamp' => now()->toIso8601String(),
+            'step' => $step,
+            'prompt' => $prompt,
+            'response' => $response,
+        ];
+
+        $document->ai_chat_history = $history;
+        $document->saveQuietly();
+    }
+
+    private function appendLocalProcessingHistory(AiDocument $document, string $step, array $context, array $result): void
+    {
+        $this->appendProcessingHistory(
+            $document,
+            $step,
+            $this->encodeHistoryPayload([
+                'source' => 'local',
+                'context' => $context,
+            ]),
+            $this->encodeHistoryPayload([
+                'source' => 'local',
+                'result' => $result,
+            ])
+        );
+    }
+
+    private function encodeHistoryPayload(array $payload): string
+    {
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($encoded === false) {
+            return 'Unable to encode local history payload';
+        }
+
+        return $encoded;
     }
 }

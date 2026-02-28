@@ -3,6 +3,7 @@
 return [
     'common' => [
         'na' => 'brak',
+        'greeting' => 'Witaj :name,',
         'thanks' => 'Dziękujemy,',
     ],
 
@@ -37,7 +38,6 @@ return [
 
     'ai_document_processed' => [
         'subject' => 'Dokument przetworzony - gotowy do sprawdzenia',
-        'greeting' => 'Witaj :name,',
         'intro' => 'Twój dokument AI jest gotowy do sprawdzenia.',
         'what_happened' => 'Co się stało',
         'extracted_summary' => 'Podsumowanie ekstrakcji',
@@ -49,7 +49,6 @@ return [
 
     'ai_document_processing_failed' => [
         'subject' => 'Przetwarzanie dokumentu nie powiodło się',
-        'greeting' => 'Witaj :name,',
         'intro' => 'Nie udało się przetworzyć dokumentu AI.',
         'document_details' => 'Szczegóły dokumentu',
         'next_action_title' => 'Następny krok',
@@ -58,5 +57,26 @@ return [
         'fallback_reason' => 'Wystąpił nieznany błąd podczas przetwarzania.',
         'button_review_reprocess' => 'Sprawdź i przetwórz ponownie',
         'button_open_settings' => 'Otwórz ustawienia AI',
+    ],
+
+    'google_drive_import_success' => [
+        'subject' => 'Import z Google Drive zakończony',
+        'intro' => 'Import z Google Drive zakończył się pomyślnie.',
+        'folder' => 'Folder: :folder',
+        'imported' => 'Zaimportowane dokumenty: :count',
+        'skipped_existing' => 'Pominięte (już zaimportowane): :count',
+        'skipped_unsupported' => 'Pominięte (nieobsługiwany typ): :count',
+        'skipped_too_large' => 'Pominięte (zbyt duży plik): :count',
+        'failed_downloads' => 'Błędy pobierania: :count',
+        'button_open_documents' => 'Otwórz dokumenty AI',
+    ],
+
+    'google_drive_import_failed' => [
+        'subject' => 'Import z Google Drive nie powiódł się',
+        'intro' => 'Proces importu z Google Drive zakończył się błędem.',
+        'folder' => 'Folder: :folder',
+        'error' => 'Błąd: :error',
+        'error_count' => 'Liczba kolejnych błędów: :count',
+        'button_open_settings' => 'Otwórz ustawienia profilu',
     ],
 ];

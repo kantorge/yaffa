@@ -6,6 +6,7 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\InvalidAiResponseSchemaException;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
 use App\Models\Category;
 use App\Models\Payee;
@@ -23,6 +24,7 @@ use App\Services\TextExtractionService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use RuntimeException;
 
 class ProcessDocumentServiceTest extends TestCase
 {
@@ -43,10 +45,12 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public function extractData(AiProviderConfig $config, string $text): array
             {
-                return $this->extractTransactionData($config, $text);
+                $document = AiDocument::factory()->for($config->user)->create();
+
+                return $this->extractTransactionData($config, $document, $text);
             }
 
-            protected function callAi(AiProviderConfig $config, string $prompt): string
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
             {
                 return '{"transaction_type":"withdrawal"';
             }
@@ -73,10 +77,12 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public function extractData(AiProviderConfig $config, string $text): array
             {
-                return $this->extractTransactionData($config, $text);
+                $document = AiDocument::factory()->for($config->user)->create();
+
+                return $this->extractTransactionData($config, $document, $text);
             }
 
-            protected function callAi(AiProviderConfig $config, string $prompt): string
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
             {
                 return json_encode([
                     'transaction_type' => 'withdrawal',
@@ -135,10 +141,12 @@ class ProcessDocumentServiceTest extends TestCase
 
             public function matchCategories(array $items, User $user, AiProviderConfig $config): array
             {
-                return $this->matchCategoriesForItems($items, $user, $config);
+                $document = AiDocument::factory()->for($user)->create();
+
+                return $this->matchCategoriesForItems($items, $user, $config, $document);
             }
 
-            protected function callAi(AiProviderConfig $config, string $prompt): string
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
             {
                 return json_encode([
                     [
@@ -160,6 +168,70 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame('ai', $result[0]['match_type']);
         $this->assertSame(0.4, $result[0]['confidence_score']);
         $this->assertSame($category->id, $result[0]['recommended_category_id']);
+    }
+
+    public function test_exact_category_match_is_logged_to_ai_chat_history_without_ai_call(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create([
+            'active' => 1,
+        ]);
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $categoryLearningService = new CategoryLearningService();
+        $user->categoryLearning()->create([
+            'item_description' => $categoryLearningService->normalize('Coffee beans'),
+            'category_id' => $category->id,
+            'usage_count' => 3,
+        ]);
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            $this->createMock(AssetMatchingService::class),
+            $categoryLearningService,
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder()
+        ) extends ProcessDocumentService {
+            public function matchCategoriesWithHistory(array $items, User $user, AiProviderConfig $config): array
+            {
+                $document = AiDocument::factory()->for($user)->create();
+
+                $matchedItems = $this->matchCategoriesForItems($items, $user, $config, $document);
+
+                $document->refresh();
+
+                return [
+                    'items' => $matchedItems,
+                    'history' => $document->ai_chat_history,
+                ];
+            }
+
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                throw new RuntimeException('AI should not be called for exact category matches');
+            }
+        };
+
+        $result = $service->matchCategoriesWithHistory([
+            ['description' => 'Coffee beans', 'amount' => 12.5],
+        ], $user, $config);
+
+        $this->assertCount(1, $result['items']);
+        $this->assertSame($category->id, $result['items'][0]['recommended_category_id']);
+        $this->assertSame('exact', $result['items'][0]['match_type']);
+        $this->assertIsArray($result['history']);
+        $this->assertCount(1, $result['history']);
+        $this->assertSame('category_batch_matching', $result['history'][0]['step']);
+
+        $promptPayload = json_decode($result['history'][0]['prompt'], true, 512, JSON_THROW_ON_ERROR);
+        $responsePayload = json_decode($result['history'][0]['response'], true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame('local', $promptPayload['source']);
+        $this->assertSame('exact_learning_match', $promptPayload['context']['path']);
+        $this->assertSame(0, $promptPayload['context']['item_index']);
+        $this->assertSame('local', $responsePayload['source']);
+        $this->assertSame($category->id, $responsePayload['result']['recommended_category_id']);
     }
 
     public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void
@@ -196,21 +268,23 @@ class ProcessDocumentServiceTest extends TestCase
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
         ) extends ProcessDocumentService {
-            public function resolveShortcut(User $user, string $transactionType, ?int $payeeId, array $rawData): ?array
+            public function resolveShortcut(User $user, string $transactionType, ?int $payeeId, array $rawData, ?AiDocument $document = null): ?array
             {
-                return $this->resolvePayeeCategoryShortcutItem($user, $transactionType, $payeeId, $rawData);
+                return $this->resolvePayeeCategoryShortcutItem($user, $transactionType, $payeeId, $rawData, $document);
             }
 
-            protected function callAi(AiProviderConfig $config, string $prompt): string
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
             {
                 return '[]';
             }
         };
 
+        $document = AiDocument::factory()->for($user)->create();
+
         $result = $service->resolveShortcut($user, 'withdrawal', $payee->id, [
             'amount' => 42.5,
             'payee' => 'Coffee Shop',
-        ]);
+        ], $document);
 
         $this->assertNotNull($result);
         $this->assertSame(42.5, $result['amount']);
@@ -218,6 +292,14 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame($category->id, $result['recommended_category_id']);
         $this->assertSame('exact', $result['match_type']);
         $this->assertSame(1.0, $result['confidence_score']);
+
+        $document->refresh();
+        $this->assertIsArray($document->ai_chat_history);
+        $this->assertCount(1, $document->ai_chat_history);
+        $this->assertSame('category_batch_matching', $document->ai_chat_history[0]['step']);
+
+        $shortcutPromptPayload = json_decode($document->ai_chat_history[0]['prompt'], true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('single_payee_category_shortcut', $shortcutPromptPayload['context']['path']);
     }
 
     private function createTransactionWithCategory(

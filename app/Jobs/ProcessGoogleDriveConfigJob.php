@@ -53,11 +53,19 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
 
         try {
             $newFiles = $driveService->listNewFiles($config, !$this->isManual);
+            $stats = [
+                'imported' => 0,
+                'skipped_existing' => 0,
+                'skipped_unsupported' => 0,
+                'skipped_too_large' => 0,
+                'failed_downloads' => 0,
+            ];
 
             foreach ($newFiles as $file) {
                 // Skip if already imported
                 if (AiDocument::where('google_drive_file_id', $file['id'])->exists()) {
                     Log::debug('File already imported, skipping', ['file_id' => $file['id']]);
+                    $stats['skipped_existing']++;
                     continue;
                 }
 
@@ -65,6 +73,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 $ext = mb_strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                 if (! in_array($ext, $allowedTypes)) {
                     Log::debug('File type not allowed, skipping', ['file_id' => $file['id'], 'file_type' => $ext]);
+                    $stats['skipped_unsupported']++;
                     continue;
                 }
 
@@ -78,12 +87,14 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                     $driveService->downloadFile($file['id'], $credentials, $fullPath);
                 } catch (Exception $e) {
                     Log::error('Failed to download file from Google Drive', ['file_id' => $file['id'], 'error' => $e->getMessage()]);
+                    $stats['failed_downloads']++;
                     continue;
                 }
 
                 // Check file size
                 if (filesize($fullPath) > $maxFileSizeBytes) {
                     Storage::delete($storagePath);
+                    $stats['skipped_too_large']++;
                     continue;
                 }
 
@@ -106,6 +117,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
 
                 // Fire event
                 event(new DocumentImported($aiDocument));
+                $stats['imported']++;
 
                 // Delete file from Drive if enabled
                 if ($config->delete_after_import) {
@@ -123,7 +135,9 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
             $config->last_error = null;
             $config->save();
 
-            $user->notify(new GoogleDriveImportSuccess($config));
+            if ($stats['imported'] > 0) {
+                $user->notify(new GoogleDriveImportSuccess($config, $stats));
+            }
         } catch (Throwable $e) {
             // Error: increment counter and potentially disable
             $config->error_count = ($config->error_count ?? 0) + 1;

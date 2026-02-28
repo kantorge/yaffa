@@ -11,7 +11,10 @@ class GoogleDriveImportSuccess extends Notification
 {
     use Queueable;
 
-    public function __construct(public GoogleDriveConfig $config)
+    /**
+     * @param array{imported:int, skipped_existing:int, skipped_unsupported:int, skipped_too_large:int, failed_downloads:int} $stats
+     */
+    public function __construct(public GoogleDriveConfig $config, public array $stats)
     {
     }
 
@@ -23,8 +26,11 @@ class GoogleDriveImportSuccess extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage())
-            ->subject(__('Google Drive Import Succeeded'))
-            ->line(__('Your Google Drive import completed successfully for folder: :folder', ['folder' => $this->config->folder_id]))
-            ->line(__('You can now review the imported documents.'));
+            ->subject(__('mail.google_drive_import_success.subject'))
+            ->markdown('emails.google-drive-import-success', [
+                'user' => $notifiable,
+                'config' => $this->config,
+                'stats' => $this->stats,
+            ]);
     }
 }

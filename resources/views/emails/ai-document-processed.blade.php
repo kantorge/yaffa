@@ -1,6 +1,6 @@
 @component('mail::message')
 
-{{ __('mail.ai_document_processed.greeting', ['name' => $document->user->name]) }}
+{{ __('mail.common.greeting', ['name' => $document->user->name]) }}
 
 {{ __('mail.ai_document_processed.intro') }}
 

@@ -3,6 +3,7 @@
 return [
     'common' => [
         'na' => 'N/A',
+        'greeting' => 'Dear :name,',
         'thanks' => 'Thanks,',
     ],
 
@@ -37,7 +38,6 @@ return [
 
     'ai_document_processed' => [
         'subject' => 'Document Processed - Ready for Review',
-        'greeting' => 'Dear :name,',
         'intro' => 'Your AI document is ready for review.',
         'what_happened' => 'What happened',
         'extracted_summary' => 'Extracted summary',
@@ -49,7 +49,6 @@ return [
 
     'ai_document_processing_failed' => [
         'subject' => 'Document Processing Failed',
-        'greeting' => 'Dear :name,',
         'intro' => 'Your AI document could not be processed.',
         'document_details' => 'Document details',
         'next_action_title' => 'Next action',
@@ -58,5 +57,26 @@ return [
         'fallback_reason' => 'An unknown error occurred during processing.',
         'button_review_reprocess' => 'Review & Reprocess',
         'button_open_settings' => 'Open AI Settings',
+    ],
+
+    'google_drive_import_success' => [
+        'subject' => 'Google Drive Import Completed',
+        'intro' => 'Your Google Drive import has completed successfully.',
+        'folder' => 'Folder: :folder',
+        'imported' => 'Imported documents: :count',
+        'skipped_existing' => 'Skipped (already imported): :count',
+        'skipped_unsupported' => 'Skipped (unsupported type): :count',
+        'skipped_too_large' => 'Skipped (too large): :count',
+        'failed_downloads' => 'Download failures: :count',
+        'button_open_documents' => 'Open AI Documents',
+    ],
+
+    'google_drive_import_failed' => [
+        'subject' => 'Google Drive Import Failed',
+        'intro' => 'The Google Drive import process failed.',
+        'folder' => 'Folder: :folder',
+        'error' => 'Error: :error',
+        'error_count' => 'Consecutive errors: :count',
+        'button_open_settings' => 'Open Profile Settings',
     ],
 ];

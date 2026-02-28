@@ -402,6 +402,27 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         Notification::assertSentTo($user, GoogleDriveImportSuccess::class);
     }
 
+    public function test_job_does_not_send_success_notification_when_nothing_imported(): void
+    {
+        $user = User::factory()->create();
+        $config = GoogleDriveConfig::factory()->neverSynced()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+        ]);
+
+        $mock = $this->createMockService([
+            'listNewFiles' => [
+                ['id' => 'file-1', 'name' => 'unsupported.exe', 'mimeType' => 'application/octet-stream', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+            ],
+            'downloadFile' => fn () => throw new Exception('Should not be called'),
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+
+        Notification::assertNotSentTo($user, GoogleDriveImportSuccess::class);
+    }
+
     public function test_job_sends_failure_notification(): void
     {
         $user = User::factory()->create();

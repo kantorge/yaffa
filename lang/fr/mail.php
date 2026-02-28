@@ -3,6 +3,7 @@
 return [
     'common' => [
         'na' => 'N/D',
+        'greeting' => 'Bonjour :name,',
         'thanks' => 'Merci,',
     ],
 
@@ -37,7 +38,6 @@ return [
 
     'ai_document_processed' => [
         'subject' => 'Document traité - prêt pour révision',
-        'greeting' => 'Bonjour :name,',
         'intro' => 'Votre document IA est prêt pour révision.',
         'what_happened' => 'Ce qui s\'est passé',
         'extracted_summary' => 'Résumé extrait',
@@ -49,7 +49,6 @@ return [
 
     'ai_document_processing_failed' => [
         'subject' => 'Échec du traitement du document',
-        'greeting' => 'Bonjour :name,',
         'intro' => 'Votre document IA n\'a pas pu être traité.',
         'document_details' => 'Détails du document',
         'next_action_title' => 'Action suivante',
@@ -58,5 +57,26 @@ return [
         'fallback_reason' => 'Une erreur inconnue est survenue pendant le traitement.',
         'button_review_reprocess' => 'Réviser et retraiter',
         'button_open_settings' => 'Ouvrir les paramètres IA',
+    ],
+
+    'google_drive_import_success' => [
+        'subject' => 'Import Google Drive terminé',
+        'intro' => 'Votre import Google Drive est terminé avec succès.',
+        'folder' => 'Dossier : :folder',
+        'imported' => 'Documents importés : :count',
+        'skipped_existing' => 'Ignorés (déjà importés) : :count',
+        'skipped_unsupported' => 'Ignorés (type non pris en charge) : :count',
+        'skipped_too_large' => 'Ignorés (trop volumineux) : :count',
+        'failed_downloads' => 'Échecs de téléchargement : :count',
+        'button_open_documents' => 'Ouvrir les documents IA',
+    ],
+
+    'google_drive_import_failed' => [
+        'subject' => 'Échec de l\'import Google Drive',
+        'intro' => 'Le processus d\'import Google Drive a échoué.',
+        'folder' => 'Dossier : :folder',
+        'error' => 'Erreur : :error',
+        'error_count' => 'Erreurs consécutives : :count',
+        'button_open_settings' => 'Ouvrir les paramètres du profil',
     ],
 ];

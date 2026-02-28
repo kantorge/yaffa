@@ -993,5 +993,6 @@
     "widget.payeeCategoryRecommendation.paragraph": "A(z) :payeeLink üzletben a :categoryText kategória :maxCount alkalommal szerepelt :totalCount tranzakcióból. Érdemes lehet ezt alapértelmezett kategóriának beállítani.",
     "widget.payeeCategoryRecommendation.success": "Sikeresen elmentve",
     "widget.scheduleCalendar.cardTitle": "Ütemezett tranzakciós példányok",
-    "widget.scheduleCalendar.transactionLabel": ":type :amount innen: :fromAccount ide: :toAccount"
+    "widget.scheduleCalendar.transactionLabel": ":type :amount innen: :fromAccount ide: :toAccount",
+    "Matched database entity": "Egyező adatbázis-elem"
 }

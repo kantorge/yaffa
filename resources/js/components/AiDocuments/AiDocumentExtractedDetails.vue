@@ -22,7 +22,23 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.account) }"
             >
-              {{ formatRawValue(rawData.account) }}
+              <template v-if="matchedEntities.account?.matched">
+                <a
+                  v-if="matchedEntities.account?.url"
+                  :href="matchedEntities.account.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ matchedEntities.account.name }}
+                </a>
+                <span v-else>{{ matchedEntities.account.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.account) }}
+              </template>
             </dd>
 
             <dt class="col-6">{{ __('Investment') }}</dt>
@@ -30,7 +46,23 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.investment) }"
             >
-              {{ formatRawValue(rawData.investment) }}
+              <template v-if="matchedEntities.investment?.matched">
+                <a
+                  v-if="matchedEntities.investment?.url"
+                  :href="matchedEntities.investment.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ matchedEntities.investment.name }}
+                </a>
+                <span v-else>{{ matchedEntities.investment.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.investment) }}
+              </template>
             </dd>
           </template>
 
@@ -40,7 +72,23 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.account_from) }"
             >
-              {{ formatRawValue(rawData.account_from) }}
+              <template v-if="matchedEntities.account_from?.matched">
+                <a
+                  v-if="matchedEntities.account_from?.url"
+                  :href="matchedEntities.account_from.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ matchedEntities.account_from.name }}
+                </a>
+                <span v-else>{{ matchedEntities.account_from.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.account_from) }}
+              </template>
             </dd>
 
             <dt class="col-6">{{ __('Account to') }}</dt>
@@ -48,7 +96,23 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.account_to) }"
             >
-              {{ formatRawValue(rawData.account_to) }}
+              <template v-if="matchedEntities.account_to?.matched">
+                <a
+                  v-if="matchedEntities.account_to?.url"
+                  :href="matchedEntities.account_to.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ matchedEntities.account_to.name }}
+                </a>
+                <span v-else>{{ matchedEntities.account_to.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.account_to) }}
+              </template>
             </dd>
           </template>
 
@@ -58,7 +122,23 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.account) }"
             >
-              {{ formatRawValue(rawData.account) }}
+              <template v-if="matchedEntities.account?.matched">
+                <a
+                  v-if="matchedEntities.account?.url"
+                  :href="matchedEntities.account.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ matchedEntities.account.name }}
+                </a>
+                <span v-else>{{ matchedEntities.account.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.account) }}
+              </template>
             </dd>
 
             <dt class="col-6">{{ __('Payee') }}</dt>
@@ -66,7 +146,15 @@
               class="col-6"
               :class="{ 'text-muted': isUnidentified(rawData.payee) }"
             >
-              {{ formatRawValue(rawData.payee) }}
+              <template v-if="matchedEntities.payee?.matched">
+                <span>{{ matchedEntities.payee.name }}</span>
+                <span class="text-muted small ms-1">
+                  <i class="fa fa-check-circle text-success"></i>
+                </span>
+              </template>
+              <template v-else>
+                {{ formatRawValue(rawData.payee) }}
+              </template>
             </dd>
           </template>
         </dl>
@@ -235,6 +323,9 @@
   );
 
   const rawData = computed(() => props.draftData?.raw || {});
+  const matchedEntities = computed(
+    () => props.draftData?.matched_entities || {},
+  );
   const draftTransactionType = computed(
     () => rawData.value.transaction_type || props.draftData?.transaction_type,
   );

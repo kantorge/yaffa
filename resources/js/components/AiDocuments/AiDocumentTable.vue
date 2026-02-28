@@ -88,24 +88,45 @@
       return;
     }
 
-    ajaxIsBusy.value = true;
+    Swal.fire({
+      text: __(
+        'Reprocessing will remove the previous extraction data and AI chat history. Do you want to continue?',
+      ),
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: __('Cancel'),
+      confirmButtonText: __('Reprocess'),
+      buttonsStyling: false,
+      customClass: {
+        confirmButton: 'btn btn-warning',
+        cancelButton: 'btn btn-outline-secondary ms-3',
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
 
-    window.axios
-      .post(window.route('api.documents.reprocess', { aiDocument: documentId }))
-      .then((response) => {
-        updateRow(row, { status: response.data.status });
-        toastHelpers.showSuccessToast(response.data.message);
-      })
-      .catch((error) => {
-        toastHelpers.showErrorToast(
-          __('Error while reprocessing document: :errorMessage', {
-            errorMessage: error.response?.data?.message || error.message,
-          }),
-        );
-      })
-      .finally(() => {
-        ajaxIsBusy.value = false;
-      });
+      ajaxIsBusy.value = true;
+
+      window.axios
+        .post(
+          window.route('api.documents.reprocess', { aiDocument: documentId }),
+        )
+        .then((response) => {
+          updateRow(row, { status: response.data.status });
+          toastHelpers.showSuccessToast(response.data.message);
+        })
+        .catch((error) => {
+          toastHelpers.showErrorToast(
+            __('Error while reprocessing document: :errorMessage', {
+              errorMessage: error.response?.data?.message || error.message,
+            }),
+          );
+        })
+        .finally(() => {
+          ajaxIsBusy.value = false;
+        });
+    });
   };
 
   const deleteDocument = (documentId, row) => {

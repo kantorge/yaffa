@@ -993,5 +993,6 @@
     "widget.payeeCategoryRecommendation.paragraph": "Twój odbiorca :payeeLink użył kategorii :categoryText :maxCount razy na :totalCount transakcji. Dobrym pomysłem może być ustawienie jej jako kategorii domyślnej.",
     "widget.payeeCategoryRecommendation.success": "Zapisano pomyślnie",
     "widget.scheduleCalendar.cardTitle": "Instancje zaplanowanych transakcji",
-    "widget.scheduleCalendar.transactionLabel": ":type :amount z :fromAccount do :toAccount"
+    "widget.scheduleCalendar.transactionLabel": ":type :amount z :fromAccount do :toAccount",
+    "Matched database entity": "Zgodna jednostka bazy danych"
 }

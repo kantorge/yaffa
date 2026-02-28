@@ -18,6 +18,7 @@ return new class () extends Migration {
             $table->string('status', 50)->default('ready_for_processing');
             $table->string('source_type', 50);
             $table->json('processed_transaction_data')->nullable();
+            $table->json('ai_chat_history')->nullable();
             $table->string('google_drive_file_id', 255)->nullable()->unique();
             $table->foreignId('received_mail_id')
                 ->nullable()

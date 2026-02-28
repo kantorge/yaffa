@@ -54,7 +54,7 @@
         </div>
       </div>
 
-      <div class="card mb-3" v-if="hasDraftData">
+      <div class="card mb-3" v-if="showExtractedDetails">
         <div
           class="card-header d-flex justify-content-between align-items-center"
         >
@@ -106,7 +106,23 @@
                   'text-muted text-italic': isUnidentified(rawData.account),
                 }"
               >
-                {{ formatRawValue(rawData.account) }}
+                <template v-if="matchedEntities.account?.matched">
+                  <a
+                    v-if="matchedEntities.account?.url"
+                    :href="matchedEntities.account.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ matchedEntities.account.name }}
+                  </a>
+                  <span v-else>{{ matchedEntities.account.name }}</span>
+                  <span class="text-muted small ms-1">
+                    <i class="fa fa-check-circle text-success"></i>
+                  </span>
+                </template>
+                <template v-else>
+                  {{ formatRawValue(rawData.account) }}
+                </template>
               </dd>
               <dt class="col-6">{{ __('Investment') }}</dt>
               <dd
@@ -115,7 +131,23 @@
                   'text-muted text-italic': isUnidentified(rawData.investment),
                 }"
               >
-                {{ formatRawValue(rawData.investment) }}
+                <template v-if="matchedEntities.investment?.matched">
+                  <a
+                    v-if="matchedEntities.investment?.url"
+                    :href="matchedEntities.investment.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ matchedEntities.investment.name }}
+                  </a>
+                  <span v-else>{{ matchedEntities.investment.name }}</span>
+                  <span class="text-muted small ms-1">
+                    <i class="fa fa-check-circle text-success"></i>
+                  </span>
+                </template>
+                <template v-else>
+                  {{ formatRawValue(rawData.investment) }}
+                </template>
               </dd>
               <dt class="col-6">{{ __('Quantity') }}</dt>
               <dd
@@ -166,7 +198,26 @@
                     ),
                   }"
                 >
-                  {{ formatRawValue(rawData.account_from) }}
+                  <template v-if="matchedEntities.account_from?.matched">
+                    <a
+                      v-if="matchedEntities.account_from?.url"
+                      :href="matchedEntities.account_from.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ matchedEntities.account_from.name }}
+                    </a>
+                    <span v-else>{{ matchedEntities.account_from.name }}</span>
+                    <span class="text-muted small ms-1">
+                      <i
+                        class="fa fa-check-circle text-success"
+                        :title="__('Matched database entity')"
+                      ></i>
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ formatRawValue(rawData.account_from) }}
+                  </template>
                 </dd>
                 <dt class="col-6">{{ __('Account to') }}</dt>
                 <dd
@@ -177,7 +228,26 @@
                     ),
                   }"
                 >
-                  {{ formatRawValue(rawData.account_to) }}
+                  <template v-if="matchedEntities.account_to?.matched">
+                    <a
+                      v-if="matchedEntities.account_to?.url"
+                      :href="matchedEntities.account_to.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ matchedEntities.account_to.name }}
+                    </a>
+                    <span v-else>{{ matchedEntities.account_to.name }}</span>
+                    <span class="text-muted small ms-1">
+                      <i
+                        class="fa fa-check-circle text-success"
+                        :title="__('Matched database entity')"
+                      ></i>
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ formatRawValue(rawData.account_to) }}
+                  </template>
                 </dd>
               </template>
               <template v-else>
@@ -188,7 +258,26 @@
                     'text-muted text-italic': isUnidentified(rawData.account),
                   }"
                 >
-                  {{ formatRawValue(rawData.account) }}
+                  <template v-if="matchedEntities.account?.matched">
+                    <a
+                      v-if="matchedEntities.account?.url"
+                      :href="matchedEntities.account.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ matchedEntities.account.name }}
+                    </a>
+                    <span v-else>{{ matchedEntities.account.name }}</span>
+                    <span class="text-muted small ms-1">
+                      <i
+                        class="fa fa-check-circle text-success"
+                        :title="__('Matched database entity')"
+                      ></i>
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ formatRawValue(rawData.account) }}
+                  </template>
                 </dd>
                 <dt class="col-6">{{ __('Payee') }}</dt>
                 <dd
@@ -197,7 +286,18 @@
                     'text-muted text-italic': isUnidentified(rawData.payee),
                   }"
                 >
-                  {{ formatRawValue(rawData.payee) }}
+                  <template v-if="matchedEntities.payee?.matched">
+                    <span>{{ matchedEntities.payee.name }}</span>
+                    <span class="text-muted small ms-1">
+                      <i
+                        class="fa fa-check-circle text-success"
+                        :title="__('Matched database entity')"
+                      ></i>
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ formatRawValue(rawData.payee) }}
+                  </template>
                 </dd>
               </template>
 
@@ -358,6 +458,20 @@
                 {{ __('Extracted details') }}
               </button>
             </li>
+            <li class="nav-item" v-if="hasProcessingHistory">
+              <button
+                class="nav-link"
+                id="nav-document-tab-history"
+                data-coreui-toggle="tab"
+                data-coreui-target="#document-tab-history"
+                type="button"
+                role="tab"
+                aria-controls="document-tab-history"
+                aria-selected="false"
+              >
+                {{ __('AI chat history') }}
+              </button>
+            </li>
           </ul>
         </div>
         <div class="card-body">
@@ -404,6 +518,17 @@
                 :draft-type-label="draftTypeLabel"
               />
             </div>
+
+            <div
+              v-if="hasProcessingHistory"
+              class="tab-pane fade"
+              id="document-tab-history"
+              role="tabpanel"
+              aria-labelledby="nav-document-tab-history"
+              tabindex="0"
+            >
+              <ai-document-processing-history :entries="processingHistory" />
+            </div>
           </div>
         </div>
       </div>
@@ -428,6 +553,7 @@
   import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
   import AiDocumentExtractedDetails from './AiDocumentExtractedDetails.vue';
   import AiDocumentDuplicates from './AiDocumentDuplicates.vue';
+  import AiDocumentProcessingHistory from './AiDocumentProcessingHistory.vue';
   import Swal from 'sweetalert2';
 
   const aiDocument = ref(window.aiDocument || {});
@@ -489,6 +615,9 @@
     () => aiDocument.value.processed_transaction_data || {},
   );
   const rawData = computed(() => draftData.value?.raw || {});
+  const matchedEntities = computed(
+    () => draftData.value?.matched_entities || {},
+  );
   const draftTransactionType = computed(
     () => rawData.value.transaction_type || draftData.value.transaction_type,
   );
@@ -518,6 +647,17 @@
     () =>
       hasDraftData.value &&
       ['ready_for_review', 'finalized'].includes(aiDocument.value.status),
+  );
+
+  const processingHistory = computed(
+    () => aiDocument.value.ai_chat_history || [],
+  );
+
+  const hasProcessingHistory = computed(
+    () =>
+      showExtractedDetails.value &&
+      Array.isArray(processingHistory.value) &&
+      processingHistory.value.length > 0,
   );
 
   const canReprocess = computed(() =>
@@ -582,28 +722,50 @@
       return;
     }
 
-    isBusy.value = true;
+    Swal.fire({
+      text: __(
+        'Reprocessing will remove the previous extraction data and AI chat history. Do you want to continue?',
+      ),
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: __('Cancel'),
+      confirmButtonText: __('Reprocess'),
+      buttonsStyling: false,
+      customClass: {
+        confirmButton: 'btn btn-warning',
+        cancelButton: 'btn btn-outline-secondary ms-3',
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
 
-    window.axios
-      .post(
-        window.route('api.documents.reprocess', {
-          aiDocument: aiDocument.value.id,
-        }),
-      )
-      .then((response) => {
-        aiDocument.value.status = response.data.status;
-        toastHelpers.showSuccessToast(response.data.message);
-      })
-      .catch((error) => {
-        toastHelpers.showErrorToast(
-          __('Error while reprocessing document: :errorMessage', {
-            errorMessage: error.response?.data?.message || error.message,
+      isBusy.value = true;
+
+      window.axios
+        .post(
+          window.route('api.documents.reprocess', {
+            aiDocument: aiDocument.value.id,
           }),
-        );
-      })
-      .finally(() => {
-        isBusy.value = false;
-      });
+        )
+        .then((response) => {
+          aiDocument.value.status = response.data.status;
+          aiDocument.value.processed_transaction_data = null;
+          aiDocument.value.ai_chat_history = [];
+          toastHelpers.showSuccessToast(response.data.message);
+          showFilesTab();
+        })
+        .catch((error) => {
+          toastHelpers.showErrorToast(
+            __('Error while reprocessing document: :errorMessage', {
+              errorMessage: error.response?.data?.message || error.message,
+            }),
+          );
+        })
+        .finally(() => {
+          isBusy.value = false;
+        });
+    });
   };
 
   const deleteDocument = () => {
@@ -659,6 +821,19 @@
     const tab = new window.coreui.Tab(
       window.document.getElementById('nav-document-tab-extracted'),
     );
+    tab.show();
+  };
+
+  const showFilesTab = () => {
+    const filesTabButton = window.document.getElementById(
+      'nav-document-tab-files',
+    );
+
+    if (!filesTabButton) {
+      return;
+    }
+
+    const tab = new window.coreui.Tab(filesTabButton);
     tab.show();
   };
 

@@ -993,5 +993,6 @@
     "widget.payeeCategoryRecommendation.paragraph": "Your payee :payeeLink used category :categoryText :maxCount times out of :totalCount transactions. It might be a good idea to set it as default category.",
     "widget.payeeCategoryRecommendation.success": "Saved successfully",
     "widget.scheduleCalendar.cardTitle": "Scheduled transaction instances",
-    "widget.scheduleCalendar.transactionLabel": ":type :amount from :fromAccount to :toAccount"
+    "widget.scheduleCalendar.transactionLabel": ":type :amount from :fromAccount to :toAccount",
+    "Matched database entity": "Matched database entity"
 }

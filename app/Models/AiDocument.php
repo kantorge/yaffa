@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $status
  * @property string $source_type
  * @property array<array-key, mixed>|null $processed_transaction_data
+ * @property array<array-key, mixed>|null $ai_chat_history
  * @property string|null $google_drive_file_id
  * @property int|null $received_mail_id
  * @property string|null $custom_prompt
@@ -56,6 +57,7 @@ class AiDocument extends Model
         'status',
         'source_type',
         'processed_transaction_data',
+        'ai_chat_history',
         'google_drive_file_id',
         'received_mail_id',
         'custom_prompt',
@@ -66,6 +68,7 @@ class AiDocument extends Model
     {
         return [
             'processed_transaction_data' => 'array',
+            'ai_chat_history' => 'array',
             'processed_at' => 'datetime',
         ];
     }
