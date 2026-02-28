@@ -481,6 +481,18 @@ CREATE TABLE `transaction_schedules` (
   CONSTRAINT `transaction_schedules_transaction_id_foreign` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `transaction_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `transaction_types` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount_multiplier` smallint DEFAULT NULL,
+  `quantity_multiplier` smallint DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transactions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -488,7 +500,7 @@ CREATE TABLE `transactions` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned NOT NULL,
   `date` date DEFAULT NULL,
-  `transaction_type` enum('withdrawal','deposit','transfer','buy','sell','add_shares','remove_shares','dividend','interest_yield') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transaction_type_id` bigint unsigned NOT NULL,
   `reconciled` tinyint(1) NOT NULL DEFAULT '0',
   `schedule` tinyint(1) NOT NULL DEFAULT '0',
   `budget` tinyint(1) NOT NULL DEFAULT '0',
@@ -536,6 +548,21 @@ CREATE TABLE `users` (
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+/* Add transaction types */
+INSERT INTO `transaction_types` (`id`, `name`, `type`, `amount_multiplier`, `quantity_multiplier`) VALUES
+(1, 'withdrawal', 'standard', -1, NULL),
+(2, 'deposit', 'standard', 1, NULL),
+(3, 'transfer', 'standard', NULL, NULL),
+(4, 'Buy', 'investment', -1, 1),
+(5, 'Sell', 'investment', 1, -1),
+(6, 'Add shares', 'investment', NULL, 1),
+(7, 'Remove shares', 'investment', NULL, -1),
+(8, 'Dividend', 'investment', 1, NULL),
+(9, 'unused', 'unused', NULL, NULL),
+(10, 'unused', 'unused', NULL, NULL),
+(11, 'Interest yield', 'investment', 1, NULL);
+
+/* Set migration state based on original migration files for compatibility */
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (1,'2014_10_12_000000_create_users_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (2,'2014_10_12_100000_create_password_resets_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (3,'2018_08_08_100000_create_telescope_entries_table',1);
