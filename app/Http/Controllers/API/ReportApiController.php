@@ -361,6 +361,9 @@ class ReportApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Get monthly cashflow data with optional forecast values.
+     */
     public function getCashflowData(Request $request): JsonResponse
     {
         $user = $request->user();

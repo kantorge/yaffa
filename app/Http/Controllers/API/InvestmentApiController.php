@@ -34,6 +34,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of investments with optional filtering and sorting.
+     */
     public function index(Request $request): JsonResponse
     {
         /**
@@ -119,6 +122,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
         return response()->json($investment, Response::HTTP_OK);
     }
 
+    /**
+     * Get historical price points for an investment.
+     */
     public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**

@@ -21,6 +21,9 @@ class TagApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of tags with optional search filtering.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**

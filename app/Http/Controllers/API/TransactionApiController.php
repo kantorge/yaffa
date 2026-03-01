@@ -94,6 +94,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Get scheduled transactions filtered by schedule type and optional criteria.
+     */
     public function getScheduledItems(Request $request): JsonResponse
     {
         $type = $request->query('type', 'any');
@@ -212,6 +215,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Search transactions by date range and related entities.
+     */
     public function findTransactions(Request $request): JsonResponse
     {
         /**
@@ -408,6 +414,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Create a standard transaction.
+     */
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
@@ -467,6 +476,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Create an investment transaction.
+     */
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
         /**
@@ -514,6 +526,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Update an existing standard transaction.
+     */
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
@@ -596,6 +611,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Update an existing investment transaction.
+     */
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
@@ -690,6 +708,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         return $processedTransactionItems;
     }
 
+    /**
+     * Skip the next scheduled occurrence of a transaction.
+     */
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**

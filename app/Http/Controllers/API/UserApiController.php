@@ -22,6 +22,10 @@ class UserApiController extends Controller implements HasMiddleware
             'verified',
         ];
     }
+
+    /**
+     * Update user profile settings.
+     */
     public function updateSettings(UserRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -62,6 +66,9 @@ class UserApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Change the authenticated user's password.
+     */
     public function changePassword(Request $request): JsonResponse
     {
         // This endpoint is not allowed in sandbox mode

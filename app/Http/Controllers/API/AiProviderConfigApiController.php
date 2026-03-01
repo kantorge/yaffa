@@ -27,6 +27,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get the current AI provider configuration for the authenticated user.
+     */
     public function show(Request $request): JsonResponse
     {
         /**
@@ -156,6 +159,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
+    /**
+     * Test connectivity to the configured AI provider.
+     */
     public function test(AiProviderConfigRequest $request): JsonResponse
     {
         /**

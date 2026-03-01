@@ -23,7 +23,6 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/sail (SAIL) - v1
 - phpunit/phpunit (PHPUNIT) - v11
 - vue (VUE) - v3
-- eslint (ESLINT) - v9
 
 ## Conventions
 

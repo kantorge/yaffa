@@ -24,6 +24,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get onboarding state and steps for a given topic.
+     */
     public function getOnboardingData(Request $request, string $topic): JsonResponse
     {
         $this->loadOnboardingSteps($topic);
@@ -37,6 +40,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Mark the onboarding widget as dismissed for a given topic.
+     */
     public function setDismissedFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('dismissOnboardingWidget' . ucfirst($topic));
@@ -44,6 +50,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
         return response()->noContent(Response::HTTP_OK);
     }
 
+    /**
+     * Mark the guided tour as completed for a given topic.
+     */
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('viewProductTour-' . $topic);

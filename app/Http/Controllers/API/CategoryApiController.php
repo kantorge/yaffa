@@ -33,6 +33,9 @@ class CategoryApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of categories with optional search and usage-based ordering.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
@@ -127,6 +130,9 @@ class CategoryApiController extends Controller implements HasMiddleware
             );
     }
 
+    /**
+     * Get a category by ID.
+     */
     public function getItem(Category $category): JsonResponse
     {
         /**
@@ -177,6 +183,9 @@ class CategoryApiController extends Controller implements HasMiddleware
         return response()->json($category, Response::HTTP_OK);
     }
 
+    /**
+     * Delete a category.
+     */
     public function destroy(Category $category): JsonResponse
     {
         /**

@@ -31,6 +31,9 @@ class AccountApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of accounts with optional search and filters.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
@@ -162,6 +165,9 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
     }
 
+    /**
+     * Get a list of accounts for investment transactions.
+     */
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
         /**

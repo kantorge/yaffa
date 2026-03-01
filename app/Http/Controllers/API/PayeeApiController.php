@@ -32,6 +32,9 @@ class PayeeApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of payees with optional search and contextual filters.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
@@ -114,6 +117,9 @@ class PayeeApiController extends Controller implements HasMiddleware
         return response()->json($payees, Response::HTTP_OK);
     }
 
+    /**
+     * Get the default category suggestion for payees.
+     */
     public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
@@ -176,6 +182,9 @@ class PayeeApiController extends Controller implements HasMiddleware
         return response()->noContent(Response::HTTP_OK);
     }
 
+    /**
+     * Create a new payee.
+     */
     public function storePayee(AccountEntityRequest $request)
     {
         /**

@@ -35,6 +35,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get the current Google Drive configuration for the authenticated user.
+     */
     public function show(Request $request): JsonResponse
     {
         /**
