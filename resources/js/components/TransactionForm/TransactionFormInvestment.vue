@@ -710,6 +710,9 @@
       if (urlParams.get('account')) {
         this.form.config.account_id = urlParams.get('account');
       }
+      if (urlParams.get('investment')) {
+        this.form.config.investment_id = urlParams.get('investment');
+      }
 
       // Set form action
       this.form.action = this.action;
@@ -768,6 +771,11 @@
           $vm.account_id = null;
           $vm.account_currency = null;
           $vm.account_currency_id = null;
+        })
+        .on('select2:clear', function () {
+          $vm.account_id = null;
+          $vm.account_currency = null;
+          $vm.account_currency_id = null;
         });
 
       // Load default value for account
@@ -798,6 +806,7 @@
                 results: data.map((item) => ({
                   id: item.id,
                   text: item.name,
+                  currency_id: item.currency_id,
                   html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
                   title: item.name,
                 })),
@@ -828,6 +837,13 @@
           });
           e.target.dispatchEvent(event);
 
+          // Set currency id immediately to avoid a race condition in account filtering.
+          if (e.params.data.currency_id) {
+            $vm.investment_currency = {
+              id: e.params.data.currency_id,
+            };
+          }
+
           $.ajax({
             url: route('investment.getDetails', {
               investment: e.params.data.id,
@@ -840,6 +856,14 @@
           });
         })
         .on('select2:unselect', function () {
+          $vm.investment_id = null;
+          $vm.investment_currency = null;
+          $vm.form.config.investment_id = null;
+          // Reset price-related data when investment is cleared
+          $vm.existingPriceForDate = null;
+          $vm.storePriceEnabled = false;
+        })
+        .on('select2:clear', function () {
           $vm.investment_id = null;
           $vm.investment_currency = null;
           $vm.form.config.investment_id = null;

@@ -136,7 +136,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
-         * @get("/api/v1/payees/{accountEntity}/category-suggestions/accept/{category}")
+         * @post("/api/v1/payees/{accountEntity}/category-suggestions/accept/{category}")
          * @name("api.v1.payees.category-suggestions.accept")
          * @middlewares("api", "auth:sanctum", "verified")
          */
@@ -159,7 +159,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
-         * @get("/api/v1/payees/{accountEntity}/category-suggestions/dismiss")
+         * @post("/api/v1/payees/{accountEntity}/category-suggestions/dismiss")
          * @name("api.v1.payees.category-suggestions.dismiss")
          * @middlewares("api", "auth:sanctum", "verified")
          */

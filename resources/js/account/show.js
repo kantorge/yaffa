@@ -593,7 +593,7 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
     this.classList.add('busy');
     const button = this;
 
-    axios.put(window.route(
+    axios.post(window.route(
         'api.v1.accounts.monthly-summary',
         {accountEntity: window.account.id}
     ))

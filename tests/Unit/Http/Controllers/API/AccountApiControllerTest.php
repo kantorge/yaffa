@@ -6,10 +6,12 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class AccountApiControllerTest extends TestCase
@@ -128,5 +130,49 @@ class AccountApiControllerTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function test_recalculate_monthly_summary_uses_post_and_returns_accepted(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $accountEntity */
+        $accountEntity = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->with('app:cache:account-monthly-summaries', [
+                'accountEntityId' => $accountEntity->id,
+            ]);
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/accounts/' . $accountEntity->id . '/monthly-summary');
+
+        $response->assertStatus(Response::HTTP_ACCEPTED);
+        $response->assertJsonPath('message', __('The monthly summary for this account is being updated.'));
+    }
+
+    public function test_recalculate_monthly_summary_returns_bad_request_for_non_account_entity(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $payeeEntity */
+        $payeeEntity = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        Artisan::shouldReceive('call')->never();
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/accounts/' . $payeeEntity->id . '/monthly-summary');
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', __('This account entity is not an account.'));
     }
 }
