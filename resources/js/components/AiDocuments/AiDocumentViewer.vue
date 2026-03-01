@@ -469,7 +469,7 @@
                 aria-controls="document-tab-history"
                 aria-selected="false"
               >
-                {{ __('AI chat history') }}
+                {{ __('Processing details') }}
               </button>
             </li>
           </ul>

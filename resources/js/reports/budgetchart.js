@@ -522,7 +522,7 @@ $(treeSelector)
     .jstree({
         core: {
             data: function (_obj, callback) {
-                fetch('/api/v1/categories?withInactive=1')
+                fetch('/api/v1/categories?withInactive=1&q=*')
                     .then(response => response.json())
                     .then(data => {
                         /**

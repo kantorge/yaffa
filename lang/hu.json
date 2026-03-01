@@ -994,5 +994,6 @@
     "widget.payeeCategoryRecommendation.success": "Sikeresen elmentve",
     "widget.scheduleCalendar.cardTitle": "Ütemezett tranzakciós példányok",
     "widget.scheduleCalendar.transactionLabel": ":type :amount innen: :fromAccount ide: :toAccount",
-    "Matched database entity": "Egyező adatbázis-elem"
+    "Matched database entity": "Egyező adatbázis-elem",
+    "Processing details": "Feldolgozás részletei"
 }
