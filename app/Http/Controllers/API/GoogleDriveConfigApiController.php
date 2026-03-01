@@ -103,9 +103,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'enabled' => $request->input('enabled', true),
         ]);
 
-        return response()->json([
-            new GoogleDriveConfigResource($config)->resolve()
-        ], Response::HTTP_CREATED);
+        return response()->json((new GoogleDriveConfigResource($config))->resolve(), Response::HTTP_CREATED);
     }
 
     /**
