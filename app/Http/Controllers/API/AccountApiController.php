@@ -268,6 +268,7 @@ class AccountApiController extends Controller implements HasMiddleware
     {
         /**
          * @get("/api/v1/accounts/balance/{accountEntity?}")
+         * @get("/api/v1/accounts/balance")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 
