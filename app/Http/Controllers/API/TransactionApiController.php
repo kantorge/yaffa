@@ -57,7 +57,7 @@ class TransactionApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function reconcileV1(Request $request, Transaction $transaction): JsonResponse
+    public function reconcile(Request $request, Transaction $transaction): JsonResponse
     {
         Gate::authorize('update', $transaction);
 
@@ -73,14 +73,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
     /**
      * V1: GET /api/v1/transactions/scheduled-items?type=...
-     * Reads $type from the ?type query parameter instead of URL path.
      */
-    public function getScheduledItemsV1(Request $request): JsonResponse
-    {
-        $type = $request->query('type', 'any');
-
-        return $this->getScheduledItems($type, $request);
-    }
 
     public function getItem(Transaction $transaction): JsonResponse
     {
@@ -101,10 +94,12 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
-    public function getScheduledItems(string $type, Request $request): JsonResponse
+    public function getScheduledItems(Request $request): JsonResponse
     {
+        $type = $request->query('type', 'any');
+
         /**
-         * @get("/api/v1/transactions/get_scheduled_items/{type}")
+         * @get("/api/v1/transactions/scheduled-items?type=...")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 

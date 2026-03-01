@@ -178,7 +178,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])
         ->name('transactions.index');
-    Route::get('/transactions/scheduled-items', [TransactionApiController::class, 'getScheduledItemsV1'])
+    Route::get('/transactions/scheduled-items', [TransactionApiController::class, 'getScheduledItems'])
         ->name('transactions.scheduled-items');
     Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
         ->name('transactions.store-standard');
@@ -192,7 +192,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('transactions.skip');
     Route::get('/transactions/{transaction}', [TransactionApiController::class, 'getItem'])
         ->name('transactions.show');
-    Route::patch('/transactions/{transaction}/reconciliation', [TransactionApiController::class, 'reconcileV1'])
+    Route::patch('/transactions/{transaction}/reconciliation', [TransactionApiController::class, 'reconcile'])
         ->name('transactions.reconcile');
     Route::delete('/transactions/{transaction}', [TransactionApiController::class, 'destroy'])
         ->name('transactions.destroy');
