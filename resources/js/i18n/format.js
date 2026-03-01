@@ -43,11 +43,22 @@ export function toFormattedCurrency(input, locale, currencySettings) {
  * @returns {string} The currency symbol for the specified locale and currency
  */
 export function getCurrencySymbol(locale, iso_code) {
-    const numberFormat = new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: iso_code,
-        currencyDisplay: 'narrowSymbol',
-    });
+    if (!iso_code) {
+        return '';
+    }
+
+    let numberFormat;
+
+    try {
+        numberFormat = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: iso_code,
+            currencyDisplay: 'narrowSymbol',
+        });
+    } catch (e) {
+        return '';
+    }
+
     const symbol = numberFormat.format(0).match(/[^0-9,.\s]+/);
-    return symbol[0];
+    return symbol ? symbol[0] : '';
 }

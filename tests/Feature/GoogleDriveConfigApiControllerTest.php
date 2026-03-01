@@ -143,19 +143,16 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $response->assertJsonStructure([
+        $response->assertJsonStructure([[
             'id',
             'service_account_email',
             'folder_id',
             'delete_after_import',
             'enabled',
-            'message',
-        ]);
-        $response->assertJson([
-            'folder_id' => 'test-folder-id-123',
-            'delete_after_import' => true,
-            'enabled' => true,
-        ]);
+        ]]);
+        $response->assertJsonPath('0.folder_id', 'test-folder-id-123');
+        $response->assertJsonPath('0.delete_after_import', true);
+        $response->assertJsonPath('0.enabled', true);
 
         $this->assertDatabaseHas('google_drive_configs', [
             'user_id' => $this->user->id,
@@ -174,9 +171,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $response->assertJson([
-            'service_account_email' => 'test@test-project.iam.gserviceaccount.com',
-        ]);
+        $response->assertJsonPath('0.service_account_email', 'test@test-project.iam.gserviceaccount.com');
 
         $this->assertDatabaseHas('google_drive_configs', [
             'user_id' => $this->user->id,
@@ -229,7 +224,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $response->assertJson(['delete_after_import' => false]);
+        $response->assertJsonPath('0.delete_after_import', false);
     }
 
     public function test_store_defaults_enabled_to_true(): void
@@ -241,7 +236,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $response->assertJson(['enabled' => true]);
+        $response->assertJsonPath('0.enabled', true);
     }
 
     // ===== UPDATE ENDPOINT (PATCH /api/v1/google-drive/config/{id}) =====

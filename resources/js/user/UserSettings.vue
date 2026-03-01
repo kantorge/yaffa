@@ -269,9 +269,9 @@
         let _vue = this;
         this.form.busy = true;
 
-        // Send the form data to the server via the API route user.settings.update
+        // Send the form data to the server via the API route
         this.form
-          .patch(this.route('user.settings.update'), this.form)
+          .patch(this.route('api.v1.users.me.settings'), this.form)
           .then((response) => {
             if (response.status === 200) {
               // Update the global YAFFA object with the new settings

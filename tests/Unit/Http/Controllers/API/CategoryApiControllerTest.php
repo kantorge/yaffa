@@ -19,6 +19,95 @@ class CategoryApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_returns_consistent_resource_shape_for_category_list(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $parent */
+        $parent = Category::factory()->for($user)->create([
+            'name' => 'Parent',
+            'active' => true,
+            'default_aggregation' => 'quarter',
+        ]);
+
+        /** @var Category $child */
+        $child = Category::factory()->for($user)->create([
+            'name' => 'Child',
+            'active' => false,
+            'parent_id' => $parent->id,
+            'default_aggregation' => 'year',
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'withInactive' => 1,
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment([
+            'id' => $child->id,
+            'name' => 'Child',
+            'default_aggregation' => 'year',
+            'active' => false,
+        ]);
+        $response->assertJsonPath('1.full_name', 'Parent > Child');
+        $response->assertJsonMissingPath('1.text');
+    }
+
+    public function test_category_list_excludes_inactive_by_default(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Active',
+            'active' => true,
+        ]);
+
+        Category::factory()->for($user)->create([
+            'name' => 'Inactive',
+            'active' => false,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'name' => 'Active',
+        ]);
+        $response->assertJsonMissing([
+            'name' => 'Inactive',
+        ]);
+    }
+
+    public function test_category_list_search_uses_consistent_resource_shape(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Groceries',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => 'Gro',
+            'withInactive' => 1,
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('0.name', 'Groceries');
+        $response->assertJsonPath('0.full_name', 'Groceries');
+        $response->assertJsonMissingPath('0.text');
+    }
+
     public function test_it_updates_the_active_status_of_a_category(): void
     {
         // Create a user and a category

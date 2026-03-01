@@ -356,7 +356,12 @@
                 payee: $vm.payee,
               };
             },
-            processResults: (data) => ({ results: data }),
+            processResults: (data) => ({
+              results: data.map((item) => ({
+                id: item.id,
+                text: item.full_name,
+              })),
+            }),
             cache: true,
           },
           selectOnClose: true,

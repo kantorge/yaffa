@@ -86,7 +86,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ]);
 
         $response->assertCreated()
-            ->assertJsonStructure(['id', 'service_account_email', 'folder_id', 'delete_after_import', 'enabled', 'message'])
+            ->assertJsonStructure([['id', 'service_account_email', 'folder_id', 'delete_after_import', 'enabled']])
             ->assertJsonMissing(['service_account_json']);
 
         $this->assertDatabaseHas('google_drive_configs', [

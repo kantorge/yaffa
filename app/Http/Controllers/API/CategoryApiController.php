@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Resources\CategoryResource;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
@@ -55,16 +56,12 @@ class CategoryApiController extends Controller implements HasMiddleware
                         function (Builder $query) use ($request) {
                             $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
                         }
-                    )->get();
+                    );
                 })
                 ->get()
                 ->filter(fn ($category) => mb_stripos($category->full_name, $query) !== false)
                 ->sortBy('full_name')
                 ->take(10)
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         } elseif ($query === '*') {
             $categories = $user->categories()
@@ -74,10 +71,6 @@ class CategoryApiController extends Controller implements HasMiddleware
                 })
                 ->get()
                 ->sortBy('full_name')
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         } else {
             $results = DB::table('transaction_items')
@@ -120,16 +113,16 @@ class CategoryApiController extends Controller implements HasMiddleware
 
             $categories = Category::with('parent')->findMany($results)
                 ->sortBy(fn ($category) => array_search($category->getKey(), $results))
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         }
 
+        $payload = $categories
+            ->map(fn (Category $category): array => (new CategoryResource($category))->toArray($request))
+            ->values();
+
         return response()
             ->json(
-                $categories,
+                $payload,
                 Response::HTTP_OK
             );
     }

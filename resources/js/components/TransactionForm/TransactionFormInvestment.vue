@@ -845,7 +845,7 @@
           }
 
           $.ajax({
-            url: route('investment.getDetails', {
+            url: route('api.v1.investments.show', {
               investment: e.params.data.id,
             }),
             data: {
@@ -915,7 +915,7 @@
         const $vm = this;
 
         $.ajax({
-          url: route('investment.getDetails', { investment: investment_id }),
+          url: route('api.v1.investments.show', { investment: investment_id }),
           data: {
             _token: $vm.csrfToken,
           },

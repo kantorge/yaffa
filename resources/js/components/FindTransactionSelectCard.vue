@@ -108,7 +108,11 @@
                 results: data.map(function (data) {
                   return {
                     id: data.id,
-                    text: data[vue.search_label_field],
+                    text:
+                      data[vue.search_label_field] ??
+                      data.full_name ??
+                      data.text ??
+                      data.name,
                   };
                 }),
               };

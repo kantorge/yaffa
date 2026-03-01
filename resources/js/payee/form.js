@@ -23,9 +23,16 @@ const config = {
             const otherItems = otherSelect.select2('val');
 
             return {
-                results: data.filter(function(item) {
-                    return !otherItems.includes(item.id.toString());
-                }),
+                results: data
+                    .filter(function(item) {
+                        return !otherItems.includes(item.id.toString());
+                    })
+                    .map(function (item) {
+                        return {
+                            id: item.id,
+                            text: item.full_name,
+                        };
+                    }),
             };
         },
         cache: true

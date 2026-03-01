@@ -35,7 +35,12 @@ $(selectorSourceCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -99,7 +104,12 @@ $(selectorTargetCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,

@@ -38,7 +38,7 @@
         title="Category"
         placeholder="Select category"
         search-api-path="/api/v1/categories"
-        search_label_field="text"
+        search_label_field="full_name"
         details-api-path="/api/v1/categories/#id#"
         details-label-field="full_name"
         :preset-item-ids="selectedCategories"

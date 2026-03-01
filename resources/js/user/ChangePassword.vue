@@ -109,7 +109,7 @@
 
         // Make the API call
         this.form
-          .patch(this.route('users.me.password'), this.form)
+          .patch(this.route('api.v1.users.me.password'), this.form)
           .then(function () {
             toastHelpers.showSuccessToast(__('Password changed successfully.'));
 
