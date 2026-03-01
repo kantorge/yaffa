@@ -22,8 +22,8 @@
 </template>
 
 <script>
-  import { __ } from '../i18n';
-  import { loadSelect2Language } from '../i18n/select2';
+  import { __ } from '@/i18n';
+  import { loadSelect2Language } from '@/i18n/select2';
 
   import select2 from 'select2';
   select2();
@@ -108,7 +108,11 @@
                 results: data.map(function (data) {
                   return {
                     id: data.id,
-                    text: data[vue.search_label_field],
+                    text:
+                      data[vue.search_label_field] ??
+                      data.full_name ??
+                      data.text ??
+                      data.name,
                   };
                 }),
               };

@@ -1,13 +1,13 @@
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import { applyAmChartsLocalization } from '../i18n/amcharts';
+import { applyAmChartsLocalization } from '@/i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
 
 // Select2 for account selection
-import { loadSelect2Language } from '../i18n/select2';
-import { __ } from '../i18n';
+import { loadSelect2Language } from '@/i18n/select2';
+import { __ } from '@/i18n';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.userSettings.language);
@@ -104,7 +104,7 @@ chart.cursor = new am4charts.XYCursor();
 
 
 function reloadData() {
-    const url = window.route('api.reports.cashflow', {
+    const url = window.route('api.v1.reports.cashflow', {
             withForecast: document.getElementById('withForecast').checked,
             accountEntity: $(elementAccountSelector).val() ? $(elementAccountSelector).val() : undefined,
         });
@@ -157,7 +157,7 @@ function rebuildUrl() {
 $(elementAccountSelector).select2({
     theme: "bootstrap-5",
     ajax: {
-        url: '/api/assets/account',
+        url: '/api/v1/accounts',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -202,7 +202,7 @@ document.getElementById('btnReload').addEventListener('click', reloadData);
 // Default account
 if (window.presetAccount) {
     $.ajax({
-        url: '/api/assets/account/' + window.presetAccount,
+        url: '/api/v1/accounts/' + window.presetAccount,
         data: {
             _token: window.csrfToken,
         }

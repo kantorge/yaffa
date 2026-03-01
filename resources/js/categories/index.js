@@ -7,8 +7,8 @@ import {
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
-import { __, getDataTablesLanguageOptions } from '../i18n';
-import * as toastHelpers from '../toast';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
+import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
 
@@ -177,12 +177,13 @@ window.table = $(dataTableSelector).DataTable({
 
             // Send request to change account active state
             $.ajax ({
-                type: 'PUT',
-                url: '/api/assets/category/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.categories.patch-active', row.data().id),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 context: this,
                 success: function (data) {
                     // Update row in table data source
@@ -220,7 +221,7 @@ window.table = $(dataTableSelector).DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.category.destroy', row.data().id),
+                url: window.route('api.v1.categories.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },

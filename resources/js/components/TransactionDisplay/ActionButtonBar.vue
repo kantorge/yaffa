@@ -73,7 +73,7 @@
 </template>
 
 <script>
-  import { __ } from '../../i18n';
+  import { __ } from '@/i18n';
 
   export default {
     name: 'ActionButtonBar',
@@ -111,7 +111,7 @@
           { transaction: this.transaction.id, action: action },
           additionalParams,
         );
-        return window.route('transaction.open', routeParams);
+        return this.route('transaction.open', routeParams);
       },
       skipInstance() {
         // Prevent double clicks
@@ -120,7 +120,7 @@
         }
         this.skipInstanceButtonBusy = true;
 
-        let url = window.route('api.transactions.skipScheduleInstance', {
+        let url = this.route('api.v1.transactions.skip', {
           transaction: this.transaction.id,
         });
         axios

@@ -30,21 +30,21 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function categoryStats(Request $request, AccountEntity $payee): JsonResponse
+    public function categoryStats(Request $request, AccountEntity $accountEntity): JsonResponse
     {
         $user = $request->user();
 
-        if (! $payee->isPayee() || $payee->user_id !== $user->id) {
+        if (! $accountEntity->isPayee() || $accountEntity->user_id !== $user->id) {
             return response()->json([
                 'error' => __('Payee not found'),
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $categories = $this->payeeCategoryStatsService->getCategoryStatsForPayee($user, $payee, 6);
+        $categories = $this->payeeCategoryStatsService->getCategoryStatsForPayee($user, $accountEntity, 6);
 
         return response()->json([
-            'payee_id' => $payee->id,
-            'payee_name' => $payee->name,
+            'payee_id' => $accountEntity->id,
+            'payee_name' => $accountEntity->name,
             'categories' => $categories,
             'period_months' => 6,
         ], Response::HTTP_OK);

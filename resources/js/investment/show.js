@@ -19,10 +19,12 @@ $.fn.dataTable.ext.search.push(
 
 // Initialize the Vue component for the content display
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({});
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import InvestmentDisplayContainer from './../components/InvestmentDisplay/InvestmentDisplayContainer.vue';
 app.component('InvestmentDisplayContainer', InvestmentDisplayContainer);

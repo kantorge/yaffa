@@ -121,7 +121,10 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         } catch (CurrencyRateConversionException $e) {
             return response()->json(
                 [
-                    'message' => $e->getMessage(),
+                    'error' => [
+                        'code' => 'CONVERSION_ERROR',
+                        'message' => $e->getMessage(),
+                    ],
                 ],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );

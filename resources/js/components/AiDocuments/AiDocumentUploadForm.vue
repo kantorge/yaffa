@@ -260,7 +260,7 @@
 
     // Fetch warning dismissal state
     fetch(
-      route('api.user.preference.get', {
+      route('api.v1.users.me.preferences.get', {
         key: 'dismissAiDocumentUploadWarning',
       }),
     )
@@ -365,7 +365,7 @@
         formData.append('custom_prompt', form.customPrompt);
       }
 
-      const response = await fetch(route('api.documents.store'), {
+      const response = await fetch(route('api.v1.documents.store'), {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
@@ -421,7 +421,7 @@
   const dismissWarning = async () => {
     try {
       const response = await fetch(
-        route('api.user.preference.set', {
+        route('api.v1.users.me.preferences.set', {
           key: 'dismissAiDocumentUploadWarning',
         }),
         {

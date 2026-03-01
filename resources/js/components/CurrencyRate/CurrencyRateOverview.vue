@@ -53,7 +53,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '../../i18n';
+  import { __, toFormattedCurrency } from '@/i18n';
 
   export default {
     name: 'CurrencyRateOverview',

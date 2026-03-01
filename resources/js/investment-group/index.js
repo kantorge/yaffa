@@ -6,8 +6,8 @@ import {
     initializeStandardExternalSearch
 } from '../components/dataTableHelper';
 
-import { __, getDataTablesLanguageOptions } from '../i18n';
-import * as toastHelpers from '../toast';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
+import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
 
@@ -70,7 +70,7 @@ let table = $(dataTableSelector).DataTable({
             // Send request to delete the investment group
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investmentgroup.destroy', row.data().id),
+                url: window.route('api.v1.investment-groups.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -121,6 +121,8 @@ window.onboardingTourSteps = [
 // Initialize the onboarding widget
 import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({});
+installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);
 app.mount('#onboarding-card');

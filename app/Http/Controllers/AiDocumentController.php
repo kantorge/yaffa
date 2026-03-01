@@ -87,7 +87,7 @@ class AiDocumentController extends Controller implements HasMiddleware
     {
         $processedData = $aiDocument->processed_transaction_data;
 
-        if (! $processedData || ! is_array($processedData)) {
+        if (! $processedData) {
             return;
         }
 

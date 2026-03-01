@@ -74,6 +74,7 @@
   const duplicates = ref([]);
   const duplicatesLoading = ref(false);
   const duplicatesCard = ref(null);
+  const route = window.route;
   const locale = window.YAFFA?.userSettings?.locale || 'en';
 
   const initializeTooltips = async () => {
@@ -90,7 +91,7 @@
 
     window.axios
       .post(
-        window.route('api.documents.checkDuplicates', {
+        route('api.v1.documents.checkDuplicates', {
           aiDocument: props.aiDocumentId,
         }),
       )
@@ -126,7 +127,7 @@
     }
 
     try {
-      const response = await fetch(`/api/transaction/${transactionId}`);
+      const response = await fetch(`/api/v1/transactions/${transactionId}`);
       const data = await response.json();
       const transaction = data.transaction;
 

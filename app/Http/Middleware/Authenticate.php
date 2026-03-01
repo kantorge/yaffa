@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class Authenticate extends Middleware
 {
@@ -17,10 +16,6 @@ class Authenticate extends Middleware
      */
     protected function unauthenticated($request, array $guards): void
     {
-        if ($request->expectsJson()) {
-            abort(Response::HTTP_FORBIDDEN, 'Unauthorized.');
-        }
-
         throw new AuthenticationException(
             'Unauthenticated.',
             $guards,

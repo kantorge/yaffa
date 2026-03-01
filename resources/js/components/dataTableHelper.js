@@ -1,6 +1,6 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../i18n';
-import { getTransactionTypeConfig } from '../helpers';
-import * as toastHelpers from '../toast.js';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '@/i18n';
+import { getTransactionTypeConfig } from '@/helpers';
+import * as toastHelpers from '@/toast.js';
 
 const route = window.route;
 
@@ -493,7 +493,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
 
         $(this).addClass('busy');
 
-        axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+        axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
             .then(function () {
                 // Find and remove original row in schedule table
                 let row = $(selector).dataTable().api().row(function (_idx, data) {
@@ -530,7 +530,7 @@ export function initializeQuickViewButton(selector) {
         $(this).addClass('busy');
         let el = $(this);
 
-        fetch('/api/transaction/' + this.dataset.id)
+        fetch('/api/v1/transactions/' + this.dataset.id)
             .then(response => response.json())
             .then(function (data) {
                 let transaction = data.transaction;

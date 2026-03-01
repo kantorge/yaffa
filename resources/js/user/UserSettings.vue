@@ -237,9 +237,9 @@
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
-  import { __ } from '../i18n';
-  import { initializeBootstrapTooltips } from '../helpers';
-  import * as toastHelpers from '../toast';
+  import { __ } from '@/i18n';
+  import { initializeBootstrapTooltips } from '@/helpers';
+  import * as toastHelpers from '@/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
 
@@ -269,15 +269,16 @@
         let _vue = this;
         this.form.busy = true;
 
-        // Send the form data to the server via the API route user.settings.update
+        // Send the form data to the server via the API route
         this.form
-          .patch(window.route('user.settings.update'), this.form)
+          .patch(this.route('api.v1.users.me.settings'), this.form)
           .then((response) => {
             if (response.status === 200) {
               // Update the global YAFFA object with the new settings
               window.YAFFA.userSettings.language = response.data.data.language;
               window.YAFFA.userSettings.locale = response.data.data.locale;
-              window.YAFFA.userSettings.start_date = response.data.data.start_date;
+              window.YAFFA.userSettings.start_date =
+                response.data.data.start_date;
               window.YAFFA.userSettings.end_date = response.data.data.end_date;
               window.YAFFA.userSettings.account_details_date_range =
                 response.data.data.account_details_date_range;

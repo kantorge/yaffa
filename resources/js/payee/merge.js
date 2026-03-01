@@ -1,4 +1,4 @@
-import { loadSelect2Language } from '../i18n/select2';
+import { loadSelect2Language } from '@/i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.userSettings.language);
@@ -12,7 +12,7 @@ $(selectorSourcePayee).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/payee',
+        url: '/api/v1/payees',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -55,7 +55,7 @@ $(selectorTargetPayee).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/payee',
+        url: '/api/v1/payees',
         dataType: 'json',
         delay: 150,
         data: function (params) {

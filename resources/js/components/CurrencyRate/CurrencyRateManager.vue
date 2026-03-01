@@ -61,8 +61,8 @@
   import CurrencyRateChart from './CurrencyRateChart.vue';
   import CurrencyRateModal from './CurrencyRateModal.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
-  import { __ } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'CurrencyRateManager',
@@ -202,7 +202,7 @@
         try {
           // Fetch all rates from the API
           const response = await window.axios.get(
-            window.route('api.currency-rate.index', {
+            this.route('api.v1.currency-rates.index', {
               from: this.fromCurrency.id,
               to: this.toCurrency.id,
             }),

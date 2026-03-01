@@ -6,10 +6,12 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class AccountApiControllerTest extends TestCase
@@ -53,7 +55,7 @@ class AccountApiControllerTest extends TestCase
             ]);
 
         // Query string is applied
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -71,20 +73,20 @@ class AccountApiControllerTest extends TestCase
                 'name' => self::BASE_ACCOUNT_NAME . " - inactive",
             ]);
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
 
         // Inactive items can be requested
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/account?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
+            ->getJson('/api/v1/accounts?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
 
         // Currency can be specified
         $response = $this->actingAs($user)
-            ->getJson('/api/assets/account?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
+            ->getJson('/api/v1/accounts?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -101,17 +103,17 @@ class AccountApiControllerTest extends TestCase
                 ]);
         }
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(10);
 
         // Custom limit is applied for number of results
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone&limit=15');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=15');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(15);
 
         // All items can be requested to be returned
-        $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone&limit=0');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=0');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(20);
     }
@@ -122,11 +124,55 @@ class AccountApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=invalid_type');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=invalid_type');
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
 
-        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=withdrawal');
+        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function test_recalculate_monthly_summary_uses_post_and_returns_accepted(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $accountEntity */
+        $accountEntity = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->with('app:cache:account-monthly-summaries', [
+                'accountEntityId' => $accountEntity->id,
+            ]);
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/accounts/' . $accountEntity->id . '/monthly-summary');
+
+        $response->assertStatus(Response::HTTP_ACCEPTED);
+        $response->assertJsonPath('message', __('The monthly summary for this account is being updated.'));
+    }
+
+    public function test_recalculate_monthly_summary_returns_bad_request_for_non_account_entity(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $payeeEntity */
+        $payeeEntity = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        Artisan::shouldReceive('call')->never();
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/accounts/' . $payeeEntity->id . '/monthly-summary');
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', __('This account entity is not an account.'));
     }
 }

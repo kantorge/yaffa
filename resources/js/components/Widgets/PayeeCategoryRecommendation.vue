@@ -76,7 +76,7 @@
 
     created() {
       axios
-        .get('/api/assets/get_default_category_suggestion')
+        .get('/api/v1/payees/category-suggestions/default')
         .then((response) => (this.payeeSuggestion = response.data));
     },
 
@@ -86,10 +86,10 @@
         let vue = this;
 
         axios
-          .get(
-            '/api/assets/accept_default_category_suggestion/' +
+          .post(
+            '/api/v1/payees/' +
               this.payeeSuggestion.payee_id +
-              '/' +
+              '/category-suggestions/accept/' +
               this.payeeSuggestion.max_category_id,
           )
           .then(function () {
@@ -108,9 +108,10 @@
         let vue = this;
 
         axios
-          .get(
-            '/api/assets/dismiss_default_category_suggestion/' +
-              this.payeeSuggestion.payee_id,
+          .post(
+            '/api/v1/payees/' +
+              this.payeeSuggestion.payee_id +
+              '/category-suggestions/dismiss',
           )
           .finally(() => this.hide())
           .catch(function () {
@@ -136,7 +137,7 @@
 
     computed: {
       editlink() {
-        return window.route('account-entity.edit', {
+        return this.route('account-entity.edit', {
           type: 'payee',
           account_entity: this.payeeSuggestion.payee_id,
         });

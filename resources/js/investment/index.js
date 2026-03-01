@@ -4,24 +4,11 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import * as dataTableHelpers from './../components/dataTableHelper';
-import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
-import * as toastHelpers from '../toast';
+import * as dataTableHelpers from '../components/dataTableHelper';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
+import * as toastHelpers from '@/toast';
 
 let ajaxIsBusy = false;
-
-/**
- * Define the conditions for the delete button, as required by the DataTables helper.
- */
-const deleteButtonConditions = [
-    {
-        property: 'transactions_count',
-        value: 0,
-        negate: false,
-        errorMessage: __('It is already used in transactions.'),
-    },
-];
-
 
 let table = $('#investmentSummary').DataTable({
     language: getDataTablesLanguageOptions() || undefined,
@@ -120,12 +107,13 @@ let table = $('#investmentSummary').DataTable({
 
             // Send request to change investment active state
             $.ajax({
-                type: 'PUT',
-                url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.investments.patch-active', row.data().id),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 context: this,
                 success: function (data) {
                     // Update row in table data source
@@ -157,7 +145,7 @@ let table = $('#investmentSummary').DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investment.destroy', row.data().id),
+                url: window.route('api.v1.investments.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -306,7 +294,7 @@ table.contextualActions({
                         `toast-investment-${id}`
                     );
 
-                    window.axios.delete(window.route('api.investment.destroy', {investment: id}))
+                    window.axios.delete(window.route('api.v1.investments.destroy', {investment: id}))
                         .then(response => {
                             // Remove investment from data source
                             window.investments = window.investments.filter(investment => investment.id !== response.data.investment.id);
@@ -417,6 +405,8 @@ window.onboardingTourSteps = [
 // Initialize the onboarding widget
 import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({});
+installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);
 app.mount('#onboarding-card');

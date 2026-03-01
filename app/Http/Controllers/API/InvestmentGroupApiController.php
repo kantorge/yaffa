@@ -35,8 +35,8 @@ class InvestmentGroupApiController extends Controller implements HasMiddleware
     public function destroy(InvestmentGroup $investmentGroup): JsonResponse
     {
         /**
-         * @delete("/api/assets/investmentgroup/{investmentGroup}")
-         * @name("api.investmentgroup.destroy")
+         * @delete("/api/v1/investment-groups/{investmentGroup}")
+         * @name("api.v1.investment-groups.destroy")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $investmentGroup);

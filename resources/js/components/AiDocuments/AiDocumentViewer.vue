@@ -469,7 +469,7 @@
                 aria-controls="document-tab-history"
                 aria-selected="false"
               >
-                {{ __('AI chat history') }}
+                {{ __('Processing details') }}
               </button>
             </li>
           </ul>
@@ -560,6 +560,7 @@
   const statusLabels = window.aiDocumentStatusLabels || {};
   const sourceLabels = window.aiDocumentSourceLabels || {};
   const isBusy = ref(false);
+  const route = window.route;
   const locale = window.YAFFA.userSettings.locale || 'en';
   const unidentifiedLabel = __('Unidentified');
 
@@ -666,7 +667,7 @@
 
   const transactionLink = computed(() =>
     aiDocument.value.transaction
-      ? window.route('transaction.open', {
+      ? route('transaction.open', {
           transaction: aiDocument.value.transaction.id,
           action: 'show',
         })
@@ -744,7 +745,7 @@
 
       window.axios
         .post(
-          window.route('api.documents.reprocess', {
+          window.route('api.v1.documents.reprocess', {
             aiDocument: aiDocument.value.id,
           }),
         )
@@ -794,7 +795,7 @@
 
       window.axios
         .delete(
-          window.route('api.documents.destroy', {
+          route('api.v1.documents.destroy', {
             aiDocument: aiDocument.value.id,
           }),
         )
@@ -802,7 +803,7 @@
           storeNotification('success', __('Document deleted'), {
             dismissible: true,
           });
-          window.location.href = window.route('ai-documents.index');
+          window.location.href = route('ai-documents.index');
         })
         .catch((error) => {
           toastHelpers.showErrorToast(
@@ -840,7 +841,7 @@
   const refreshDocument = () =>
     window.axios
       .get(
-        window.route('api.documents.show', {
+        route('api.v1.documents.show', {
           aiDocument: aiDocument.value.id,
         }),
       )

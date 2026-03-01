@@ -38,4 +38,14 @@ class AiProviderConfigTest extends TestCase
         // When accessed through the model, it should be decrypted
         $this->assertEquals($plainKey, $config->api_key);
     }
+
+    public function test_api_key_is_hidden_from_serialized_output(): void
+    {
+        $plainKey = 'sk-test-super-secret-key-12345';
+        $config = AiProviderConfig::factory()->create(['api_key' => $plainKey]);
+
+        $serialized = $config->toArray();
+
+        $this->assertArrayNotHasKey('api_key', $serialized);
+    }
 }

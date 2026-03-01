@@ -6,7 +6,7 @@ import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
 } from '../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '../i18n';
+import { getDataTablesLanguageOptions } from '@/i18n';
 
 const dataTableSelector = '#table';
 
@@ -76,12 +76,13 @@ window.table = $(dataTableSelector).DataTable({
 
             // Send request to change tag active state
             $.ajax({
-                type: 'PUT',
-                url: '/api/assets/tag/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.tags.patch-active', row.data().id),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 context: this,
                 success: function (data) {
                     // Update row in table data source

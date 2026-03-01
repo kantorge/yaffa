@@ -1,10 +1,12 @@
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 import AiDocumentManager from '../components/AiDocuments/AiDocumentManager.vue';
 import { __ } from '@/i18n';
 
 const app = createApp({});
 
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 app.component('ai-document-manager', AiDocumentManager);
 app.mount('#app');
 

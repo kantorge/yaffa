@@ -8,6 +8,7 @@ const modules = import.meta.glob([
     './**/*.js',
     '!./bootstrap.js',
     '!./i18n/**/*.js',
+    '!./vue/installRouteGlobal.js',
     '!./display_notifications.js'
 ]);
 

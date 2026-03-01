@@ -17,8 +17,8 @@
   import 'datatables.net-bs5';
   import * as dataTableHelpers from '../dataTableHelper';
   import Swal from 'sweetalert2';
-  import { __, getDataTablesLanguageOptions } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __, getDataTablesLanguageOptions } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'InvestmentPriceTable',
@@ -167,8 +167,8 @@
 
         try {
           await window.axios.delete(
-            window.route('api.investment-price.destroy', {
-              investment_price: price.id,
+            this.route('api.v1.investment-prices.destroy', {
+              investmentPrice: price.id,
             }),
           );
 

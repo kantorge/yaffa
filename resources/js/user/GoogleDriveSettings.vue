@@ -466,7 +466,7 @@
     methods: {
       loadConfig() {
         axios
-          .get('/api/google-drive/config')
+          .get(this.route('api.v1.google-drive.config.show'))
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
@@ -543,8 +543,10 @@
         this.normalizeFolderId();
 
         const url = this.hasConfig
-          ? `/api/google-drive/config/${this.configId}`
-          : '/api/google-drive/config';
+          ? this.route('api.v1.google-drive.config.update', {
+              googleDriveConfig: this.configId,
+            })
+          : this.route('api.v1.google-drive.config.store');
         const method = this.hasConfig ? 'patch' : 'post';
 
         const formData = { ...this.form.data() };
@@ -604,7 +606,7 @@
         };
 
         axios
-          .post('/api/google-drive/test', testData)
+          .post(this.route('api.v1.google-drive.config.test'), testData)
           .then((response) => {
             this.testResult = {
               success: true,
@@ -618,7 +620,9 @@
             this.testResult = {
               success: false,
               message:
-                error.response?.data?.message || __('Connection test failed'),
+                error.response?.data?.error?.message ||
+                error.response?.data?.message ||
+                __('Connection test failed'),
             };
           })
           .finally(() => {
@@ -639,7 +643,11 @@
 
         this.syncing = true;
         axios
-          .post(`/api/google-drive/sync/${this.configId}`)
+          .post(
+            this.route('api.v1.google-drive.config.sync', {
+              googleDriveConfig: this.configId,
+            }),
+          )
           .then((response) => {
             toastHelpers.showInfoToast(
               response.data?.message || __('Sync queued'),
@@ -678,7 +686,11 @@
         }).then((result) => {
           if (result.isConfirmed) {
             axios
-              .delete(`/api/google-drive/config/${this.configId}`)
+              .delete(
+                this.route('api.v1.google-drive.config.destroy', {
+                  googleDriveConfig: this.configId,
+                }),
+              )
               .then(() => {
                 this.configId = null;
                 this.hasConfig = false;
@@ -716,6 +728,5 @@
   .password-masked {
     -webkit-text-security: disc;
     -moz-text-security: disc;
-    text-security: disc;
   }
 </style>

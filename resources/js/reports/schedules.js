@@ -5,9 +5,9 @@ import 'datatables-contextual-actions';
 import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '../helpers';
-import * as toastHelpers from '../toast';
-import { __, getDataTablesLanguageOptions } from '../i18n';
+import * as helpers from '@/helpers';
+import * as toastHelpers from '@/toast';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
 
 let ajaxIsBusy = true;
 
@@ -15,7 +15,7 @@ const tableSelector = '#table';
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/transactions/get_scheduled_items/any',
+        url: '/api/v1/transactions/scheduled-items?type=any',
         type: 'GET',
         dataSrc: function(data) {
             ajaxIsBusy = false;
@@ -131,7 +131,7 @@ table.contextualActions({
                     `toast-transaction-${id}`
                 );
 
-                window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
+                window.axios.patch(window.route('api.v1.transactions.skip', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
                         let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
@@ -243,7 +243,7 @@ table.contextualActions({
                         `toast-transaction-${id}`
                     );
 
-                    window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+                    window.axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
                         .then(function () {
                             // Find and remove original row in schedule table
                             let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
@@ -308,6 +308,8 @@ window.onboardingTourSteps = [
 // Initialize the onboarding widget
 import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({});
+installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);
 app.mount('#onboarding-card');

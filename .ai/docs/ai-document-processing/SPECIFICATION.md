@@ -164,58 +164,58 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 
 - Controllers / APIs:
   - `AiDocumentApiController` (✅ implemented)
-    - `POST /api/documents` - Upload document
+    - `POST /api/v1/documents` - Upload document
       - Request: multipart/form-data with `files[]`, `text_input`, `custom_prompt`
       - Validation: at least one file OR text_input required; max files and size are config-based (default: 5 files, 20MB/file); allowed types are config-driven (`AI_DOCUMENT_ALLOWED_TYPES`, restrictive default is `txt`)
       - Response: `{"id": 1, "status": "ready_for_processing", "message": "..."}`
-    - `PATCH /api/documents/{id}` - Update custom prompt or status
+    - `PATCH /api/v1/documents/{aiDocument}` - Update custom prompt or status
       - Request: `{"custom_prompt": "...", "status": "..."}`
       - Response: `{"id": 1, "status": "...", "custom_prompt": "..."}`
-    - `GET /api/documents` - List user's documents
+    - `GET /api/v1/documents` - List user's documents
       - Query params: `status`, `source_type`, `page`, `per_page` (default 15)
       - Response: paginated list with `{"data": [...], "meta": {...}, "links": {...}}`
-    - `GET /api/documents/{id}` - Get document details
+    - `GET /api/v1/documents/{aiDocument}` - Get document details
       - Response: full document with files, processed_transaction_data
-    - `POST /api/documents/{id}/reprocess` - Trigger reprocessing
+    - `POST /api/v1/documents/{aiDocument}/reprocess` - Trigger reprocessing
       - Response: `{"message": "Reprocessing queued", "status": "ready_for_processing"}`
-    - `DELETE /api/documents/{id}` - Delete document and files
+    - `DELETE /api/v1/documents/{aiDocument}` - Delete document and files
       - Response: 204 No Content
   - `AiProviderConfigApiController` (✅ implemented)
-    - `GET /api/ai/config` - Get user's config (only one exists)
+    - `GET /api/v1/ai/config` - Get user's config (only one exists)
       - Response: `{"id": 1, "provider": "openai", "model": "gpt-4o-mini", "created_at": "...", "updated_at": "..."}` (API key never returned)
-    - `POST /api/ai/config` - Create config (enforced: one per user)
+    - `POST /api/v1/ai/config` - Create config (enforced: one per user)
       - Request: `{"provider": "openai|gemini", "model": "...", "api_key": "..."}`
       - Validation: provider required, model required, api_key required; rejects if config exists
       - Response: `{"id": 1, "provider": "...", "model": "...", "message": "AI provider configured successfully"}`
-    - `PATCH /api/ai/config/{aiProviderConfig}` - Update config
+    - `PATCH /api/v1/ai/config/{aiProviderConfig}` - Update config
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be omitted or `__existing__`)
       - Response: `{"id": 1, "provider": "...", "model": "...", "updated_at": "..."}`
-    - `DELETE /api/ai/config/{aiProviderConfig}` - Delete config
+    - `DELETE /api/v1/ai/config/{aiProviderConfig}` - Delete config
       - Response: 204 No Content
-    - `POST /api/ai/test` - Test connection
+    - `POST /api/v1/ai/config/test` - Test connection
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be `__existing__`)
       - Response: `{"message": "Connection successful"}` OR `{"message": "..."}` (400)
   - `GoogleDriveConfigApiController` (✅ implemented)
-    - `GET /api/google-drive/config` - Get user's configs (MVP returns first only)
+    - `GET /api/v1/google-drive/config` - Get user's configs (MVP returns first only)
       - Response: `{"id": 1, "service_account_email": "...", "folder_id": "...", "delete_after_import": false, "enabled": true, "last_sync_at": "...", "created_at": "...", "updated_at": "..."}` (service_account_json never returned)
-    - `POST /api/google-drive/config` - Create config (MVP enforces one per user at app level)
+    - `POST /api/v1/google-drive/config` - Create config (MVP enforces one per user at app level)
       - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}`
       - Validation: service_account_json required (valid JSON with required Google keys), folder_id required
       - Response: 201 with config details (no service_account_json)
-    - `PATCH /api/google-drive/config/{id}` - Update config
+    - `PATCH /api/v1/google-drive/config/{googleDriveConfig}` - Update config
       - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}` (service_account_json can be omitted or `__existing__`)
       - Response: 200 with updated config (no service_account_json)
-    - `DELETE /api/google-drive/config/{id}` - Delete config
+    - `DELETE /api/v1/google-drive/config/{googleDriveConfig}` - Delete config
       - Response: 204 No Content
-    - `POST /api/google-drive/test` - Test connection
+    - `POST /api/v1/google-drive/config/test` - Test connection
       - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
       - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
-    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger, ignoring last_sync_at (for testing and user-triggered syncs)
+    - `POST /api/v1/google-drive/config/{googleDriveConfig}/sync` - Manual one-time sync trigger, ignoring last_sync_at (for testing and user-triggered syncs)
       - Dispatches `ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id)` to queue
       - Response: **202 ACCEPTED** with `{"message": "Google Drive sync has been queued"}`
       - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint)
   - `PayeeStatsApiController` (✅ implemented)
-    - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
+    - `GET /api/v1/payees/{accountEntity}/category-stats` - Category usage stats for a payee
       - Route model binding uses `AccountEntity` (payee) with ownership validation (`config_type = payee`, `user_id` match)
       - Response: `{"payee_id": 123, "payee_name": "Coffee Shop", "categories": [{"category_id": 7, "usage_count": 14}], "period_months": 6}`
       - Stats basis: standard transaction items linked to the payee within a 6-month window; categories are returned sorted by usage_count desc.
@@ -735,7 +735,7 @@ A few notes on the statuses
   - **Future Enhancement:** Track `error_count`, notify user after N consecutive failures
 
 - **Connection Testing:**
-  - Endpoint: `POST /api/google-drive/test`
+  - Endpoint: `POST /api/v1/google-drive/config/test`
   - Tests performed:
     - Authenticate with service account JSON
     - Access specified folder (verify read permission)
@@ -1097,7 +1097,7 @@ The system will use multi-step prompting similar to existing email processing:
    - Returns: `[{item_index, recommended_category_id, confidence_score}]` for all items in single AI call
 
 **IMPORTANT:** line item matching is only needed for withdrawals and deposits, not for transfers or investment transactions.
-After payee matching, backend processing resolves category usage from shared payee-stats logic (the same logic powering `GET /api/ai/payees/{id}/category-stats`). If only one category is present in the 6-month stats, category matching is skipped and that category is assigned to the entire amount as one line item.
+After payee matching, backend processing resolves category usage from shared payee-stats logic (the same logic powering `GET /api/v1/payees/{accountEntity}/category-stats`). If only one category is present in the 6-month stats, category matching is skipped and that category is assigned to the entire amount as one line item.
 
 All prompts require JSON responses with strict schemas to ensure validation.
 

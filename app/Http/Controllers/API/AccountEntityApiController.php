@@ -9,6 +9,7 @@ use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
@@ -23,25 +24,21 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * V1: PATCH /api/v1/account-entities/{accountEntity}
+     * Accepts { active: true|false } in request body.
+     *
      * @throws AuthorizationException
      */
-    public function updateActive(AccountEntity $accountEntity, $active): JsonResponse
+    public function patchActive(Request $request, AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @put("/api/assets/accountentity/{accountEntity}/active/{active}")
-         * @name("api.accountentity.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('update', $accountEntity);
 
-        $accountEntity->active = $active;
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $accountEntity->active = $validated['active'];
         $accountEntity->save();
 
-        return response()
-            ->json(
-                $accountEntity,
-                Response::HTTP_OK
-            );
+        return response()->json($accountEntity, Response::HTTP_OK);
     }
 
     /**
@@ -52,8 +49,8 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @delete("/api/accountentity/{accountEntity}")
-         * @name("api.accountentity.destroy")
+         * @delete("/api/v1/account-entities/{accountEntity}")
+         * @name("api.v1.account-entities.destroy")
          * @middlewares("web", "auth", "verified")
          */
         Gate::authorize('forceDelete', $accountEntity);

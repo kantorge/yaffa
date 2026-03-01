@@ -57,8 +57,8 @@
   import InvestmentPriceModal from './InvestmentPriceModal.vue';
   import PriceHistoryCard from '../InvestmentDisplay/PriceHistoryCard.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
-  import { __ } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'InvestmentPriceManager',
@@ -220,7 +220,7 @@
         try {
           // Fetch all prices from the API
           const response = await window.axios.get(
-            window.route('api.investment-price.index', {
+            this.route('api.v1.investment-prices.index', {
               investment: this.investment.id,
             }),
           );

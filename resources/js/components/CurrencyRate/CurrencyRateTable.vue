@@ -17,8 +17,8 @@
   import 'datatables.net-bs5';
   import * as dataTableHelpers from '../dataTableHelper';
   import Swal from 'sweetalert2';
-  import { __, getDataTablesLanguageOptions } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __, getDataTablesLanguageOptions } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   const selectorRatesTable = '#ratesTable';
 
@@ -171,8 +171,8 @@
 
         try {
           await window.axios.delete(
-            window.route('api.currency-rate.destroy', {
-              currency_rate: rate.id,
+            this.route('api.v1.currency-rates.destroy', {
+              currencyRate: rate.id,
             }),
           );
 

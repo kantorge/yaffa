@@ -2,7 +2,7 @@ import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from './../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '../i18n';
+import { getDataTablesLanguageOptions } from '@/i18n';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -259,13 +259,13 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
-        type: 'PUT',
-        url: '/api/transaction/' + $(this).data("id") + '/reconciled/' + (!currentState ? 1 : 0),
-        data: {
-            "_token": csrfToken,
-        },
-        dataType: "json",
-        context: this,
+        type: 'PATCH',
+        url: '/api/v1/transactions/' + $(this).data("id") + '/reconciliation',
+        data: JSON.stringify({
+            "reconciled": !currentState ? true : false,
+        }),
+        contentType: 'application/json',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             currentState = !currentState;
 
@@ -278,10 +278,12 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
 });
 
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)

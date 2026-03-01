@@ -710,6 +710,9 @@
       if (urlParams.get('account')) {
         this.form.config.account_id = urlParams.get('account');
       }
+      if (urlParams.get('investment')) {
+        this.form.config.investment_id = urlParams.get('investment');
+      }
 
       // Set form action
       this.form.action = this.action;
@@ -723,7 +726,7 @@
       $('#account')
         .select2({
           ajax: {
-            url: '/api/assets/account/investment',
+            url: '/api/v1/accounts/investment',
             dataType: 'json',
             delay: 150,
             data: function (params) {
@@ -756,7 +759,7 @@
           e.target.dispatchEvent(event);
 
           $.ajax({
-            url: '/api/assets/account/' + e.params.data.id,
+            url: '/api/v1/accounts/' + e.params.data.id,
             data: {
               _token: $vm.csrfToken,
             },
@@ -765,6 +768,11 @@
           });
         })
         .on('select2:unselect', function () {
+          $vm.account_id = null;
+          $vm.account_currency = null;
+          $vm.account_currency_id = null;
+        })
+        .on('select2:clear', function () {
           $vm.account_id = null;
           $vm.account_currency = null;
           $vm.account_currency_id = null;
@@ -777,7 +785,7 @@
       $('#investment')
         .select2({
           ajax: {
-            url: '/api/assets/investment',
+            url: '/api/v1/investments',
             data: function (params) {
               return {
                 query: params.term,
@@ -798,6 +806,7 @@
                 results: data.map((item) => ({
                   id: item.id,
                   text: item.name,
+                  currency_id: item.currency_id,
                   html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
                   title: item.name,
                 })),
@@ -828,8 +837,15 @@
           });
           e.target.dispatchEvent(event);
 
+          // Set currency id immediately to avoid a race condition in account filtering.
+          if (e.params.data.currency_id) {
+            $vm.investment_currency = {
+              id: e.params.data.currency_id,
+            };
+          }
+
           $.ajax({
-            url: route('investment.getDetails', {
+            url: route('api.v1.investments.show', {
               investment: e.params.data.id,
             }),
             data: {
@@ -840,6 +856,14 @@
           });
         })
         .on('select2:unselect', function () {
+          $vm.investment_id = null;
+          $vm.investment_currency = null;
+          $vm.form.config.investment_id = null;
+          // Reset price-related data when investment is cleared
+          $vm.existingPriceForDate = null;
+          $vm.storePriceEnabled = false;
+        })
+        .on('select2:clear', function () {
           $vm.investment_id = null;
           $vm.investment_currency = null;
           $vm.form.config.investment_id = null;
@@ -866,7 +890,7 @@
         const $vm = this;
 
         $.ajax({
-          url: '/api/assets/account/' + this.form.config.account_id,
+          url: '/api/v1/accounts/' + this.form.config.account_id,
           data: {
             _token: $vm.csrfToken,
           },
@@ -891,7 +915,7 @@
         const $vm = this;
 
         $.ajax({
-          url: route('investment.getDetails', { investment: investment_id }),
+          url: route('api.v1.investments.show', { investment: investment_id }),
           data: {
             _token: $vm.csrfToken,
           },
@@ -1025,19 +1049,19 @@
 
       loadCallbackUrl(transactionId) {
         if (this.callback === 'returnToDashboard') {
-          location.href = window.route('home');
+          location.href = this.route('home');
           return;
         }
 
         if (this.callback === 'new') {
-          location.href = window.route('transaction.create', {
+          location.href = this.route('transaction.create', {
             type: 'investment',
           });
           return;
         }
 
         if (this.callback === 'clone') {
-          location.href = window.route('transaction.open', {
+          location.href = this.route('transaction.open', {
             transaction: transactionId,
             action: 'clone',
           });
@@ -1045,14 +1069,14 @@
         }
 
         if (this.callback === 'returnToPrimaryAccount') {
-          location.href = window.route('account.history', {
+          location.href = this.route('account.history', {
             account: this.form.config.account_id,
           });
           return;
         }
 
         if (this.callback === 'returnToSecondaryAccount') {
-          location.href = window.route('account.history', {
+          location.href = this.route('account.history', {
             account: this.form.config.account_id,
           });
           return;
@@ -1078,7 +1102,7 @@
         if (this.action === 'edit') {
           this.form
             .patch(
-              window.route('api.transactions.updateInvestment', {
+              this.route('api.v1.transactions.update-investment', {
                 transaction: this.form.id,
               }),
               this.form,
@@ -1097,7 +1121,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.transactions.storeInvestment'), this.form)
+          .post(this.route('api.v1.transactions.store-investment'), this.form)
           .then(async (response) => {
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(
@@ -1163,7 +1187,7 @@
           }
 
           const response = await window.axios.get(
-            window.route('api.investment-price.checkPrice', {
+            this.route('api.v1.investment-prices.check', {
               investment: this.form.config.investment_id,
             }),
             {
@@ -1202,11 +1226,14 @@
         }
 
         try {
-          await window.axios.post(window.route('api.investment-price.store'), {
-            investment_id: transaction.config.investment_id,
-            date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
-            price: transaction.config.price,
-          });
+          await window.axios.post(
+            this.route('api.v1.investment-prices.store'),
+            {
+              investment_id: transaction.config.investment_id,
+              date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
+              price: transaction.config.price,
+            },
+          );
 
           // Show success toast
           return 'success';

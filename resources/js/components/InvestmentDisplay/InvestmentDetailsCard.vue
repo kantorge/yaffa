@@ -23,7 +23,7 @@
         <dt class="col-4">{{ __('ISIN number') }}</dt>
         <dd
           class="col-8"
-          :class="{'text-muted text-italic': !investment.isin}"
+          :class="{ 'text-muted text-italic': !investment.isin }"
         >
           {{ investment.isin || __('Not set') }}
         </dd>
@@ -34,11 +34,7 @@
             class="fa fa-check-square text-success"
             :title="__('Yes')"
           ></i>
-          <i
-            v-else
-            class="fa fa-square text-danger"
-            :title="__('No')"
-          ></i>
+          <i v-else class="fa fa-square text-danger" :title="__('No')"></i>
         </dd>
         <dt class="col-4">{{ __('Group') }}</dt>
         <dd class="col-8">{{ investment.investment_group.name }}</dd>
@@ -55,11 +51,7 @@
             class="fa fa-check-square text-success"
             :title="__('Yes')"
           ></i>
-          <i
-            v-else
-            class="fa fa-square text-danger"
-            :title="__('No')"
-          ></i>
+          <i v-else class="fa fa-square text-danger" :title="__('No')"></i>
         </dd>
         <template v-if="investment.auto_update">
           <dt class="col-4">{{ __('Price provider') }}</dt>
@@ -71,18 +63,20 @@
 </template>
 
 <script>
-export default {
-  name: "InvestmentDetailsCard",
-  props: {
-    investment: {
-      type: Object,
-      required: true
-    }
-  },
-  methods: {
-    getEditUrl() {
-        return window.route('investment.edit', {investment: this.investment.id});
-    }
-  }
-};
+  export default {
+    name: 'InvestmentDetailsCard',
+    props: {
+      investment: {
+        type: Object,
+        required: true,
+      },
+    },
+    methods: {
+      getEditUrl() {
+        return this.route('investment.edit', {
+          investment: this.investment.id,
+        });
+      },
+    },
+  };
 </script>

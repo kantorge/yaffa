@@ -34,10 +34,11 @@ class TagApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->put(route('api.tag.updateActive', [
+        $response = $this->patchJson(route('api.v1.tags.patch-active', [
             'tag' => $tag->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -62,26 +63,33 @@ class TagApiControllerTest extends TestCase
         $user2 = User::factory()->create();
 
         // Try to update the category as an unauthenticated user
-        $response = $this->put(
-            route('api.tag.updateActive', [
+        $response = $this->patchJson(
+            route('api.v1.tags.patch-active', [
                 'tag' => $tag->id,
-                'active' => true,
             ]),
-            [],
+            ['active' => true],
             [
                 'Accept' => 'application/json'
             ]
         );
 
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
+
         $this->assertFalse($tag->fresh()->active);
 
         // Try to update the category as the different user
         $this->actingAs($user2);
-        $response = $this->put(route('api.tag.updateActive', [
+        $response = $this->patchJson(route('api.v1.tags.patch-active', [
             'tag' => $tag->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 

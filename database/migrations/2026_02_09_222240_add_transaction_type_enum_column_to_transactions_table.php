@@ -45,7 +45,7 @@ return new class () extends Migration {
             $table->enum(
                 'transaction_type',
                 array_values($supportedTransactionTypes)
-                )
+            )
                 ->after('date')
                 ->nullable();
         });

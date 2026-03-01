@@ -52,28 +52,34 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Change the reconciled flag of a transaction to a new value.
+     * V1: PATCH /api/v1/transactions/{transaction}/reconciliation
+     * Accepts { reconciled: true|false } in request body.
      *
      * @throws AuthorizationException
      */
-    public function reconcile(Transaction $transaction, string $newState): JsonResponse
+    public function reconcile(Request $request, Transaction $transaction): JsonResponse
     {
-        /**
-         * @put("/api/transaction/{transaction}/reconciled/{newState}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $transaction);
 
-        $transaction->reconciled = boolval($newState);
+        $validated = $request->validate([
+            'reconciled' => ['required', 'boolean'],
+        ]);
+
+        $transaction->reconciled = $validated['reconciled'];
         $transaction->save();
 
         return response()->json([], Response::HTTP_OK);
     }
 
+    /**
+     * V1: GET /api/v1/transactions/scheduled-items?type=...
+     */
+
     public function getItem(Transaction $transaction): JsonResponse
     {
         /**
-         * @get("/api/transaction/{transaction}")
+         * @get("/api/v1/transactions/{transaction}")
+         * @name("api.v1.transactions.show")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $transaction);
@@ -88,10 +94,15 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
-    public function getScheduledItems(string $type, Request $request): JsonResponse
+    /**
+     * Get scheduled transactions filtered by schedule type and optional criteria.
+     */
+    public function getScheduledItems(Request $request): JsonResponse
     {
+        $type = $request->query('type', 'any');
+
         /**
-         * @get("/api/transactions/get_scheduled_items/{type}")
+         * @get("/api/v1/transactions/scheduled-items?type=...")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 
@@ -204,6 +215,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Search transactions by date range and related entities.
+     */
     public function findTransactions(Request $request): JsonResponse
     {
         /**
@@ -400,11 +414,14 @@ class TransactionApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Create a standard transaction.
+     */
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post("/api/transactions/standard")
-         * @name("api.transactions.storeStandard")
+         * @post("/api/v1/transactions/standard")
+         * @name("api.v1.transactions.store-standard")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -459,11 +476,14 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Create an investment transaction.
+     */
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post("/api/transactions/investment")
-         * @name("api.transactions.storeInvestment")
+         * @post("/api/v1/transactions/investment")
+         * @name("api.v1.transactions.store-investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -506,11 +526,14 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Update an existing standard transaction.
+     */
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/standard/{transaction}")
-         * @name("api.transactions.updateStandard")
+         * @patch("/api/v1/transactions/standard/{transaction}")
+         * @name("api.v1.transactions.update-standard")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -588,11 +611,14 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Update an existing investment transaction.
+     */
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/investment/{transaction}")
-         * @name("api.transactions.updateInvestment")
+         * @patch("/api/v1/transactions/investment/{transaction}")
+         * @name("api.v1.transactions.update-investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
@@ -682,11 +708,14 @@ class TransactionApiController extends Controller implements HasMiddleware
         return $processedTransactionItems;
     }
 
+    /**
+     * Skip the next scheduled occurrence of a transaction.
+     */
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**
-         * @patch("/api/transactions/{transaction}/skip")
-         * @name("api.transactions.skipScheduleInstance")
+         * @patch("/api/v1/transactions/{transaction}/skip")
+         * @name("api.v1.transactions.skip")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $transaction->loadDetails();
@@ -706,8 +735,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function destroy(Transaction $transaction): JsonResponse
     {
         /**
-         * @delete("/api/transactions/{transaction}")
-         * @name("api.transactions.destroy")
+         * @delete("/api/v1/transactions/{transaction}")
+         * @name("api.v1.transactions.destroy")
          * @middlewares("web", "auth", "verified")
          */
 

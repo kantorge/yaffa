@@ -34,10 +34,14 @@ class InvestmentApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of investments with optional filtering and sorting.
+     */
     public function index(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/investment")
+         * @get("/api/v1/investments")
+         * @name("api.v1.investments.index")
          * @middlewares("api", "auth:sanctum")
          *
          * Currently supported query parameters:
@@ -107,8 +111,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/{investment}")
-         * @name("investment.getDetails")
+         * @get("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.show")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
@@ -118,10 +122,14 @@ class InvestmentApiController extends Controller implements HasMiddleware
         return response()->json($investment, Response::HTTP_OK);
     }
 
+    /**
+     * Get historical price points for an investment.
+     */
     public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/price/{investment}")
+         * @get("/api/v1/investments/{investment}/price-history")
+         * @name("api.v1.investments.price-history")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
@@ -138,23 +146,22 @@ class InvestmentApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function updateActive(Investment $investment, $active): JsonResponse
+    /**
+     * V1: PATCH /api/v1/investments/{investment}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws AuthorizationException
+     */
+    public function patchActive(Request $request, Investment $investment): JsonResponse
     {
-        /**
-         * @put("/api/assets/investment/{investment}/active/{active}")
-         * @name("api.investment.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('update', $investment);
 
-        $investment->active = $active;
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $investment->active = $validated['active'];
         $investment->save();
 
-        return response()
-            ->json(
-                $investment,
-                Response::HTTP_OK
-            );
+        return response()->json($investment, Response::HTTP_OK);
     }
 
     /**
@@ -163,7 +170,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/investment/timeline")
+         * @get("/api/v1/investments/timeline")
+         * @name("api.v1.investments.timeline")
          * @middlewares("api", "auth:sanctum")
          */
         $investments = $request->user()
@@ -238,8 +246,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function destroy(Investment $investment): JsonResponse
     {
         /**
-         * @delete("/api/investment/{investment}")
-         * @name("api.investment.destroy")
+         * @delete("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.destroy")
          * @middlewares("web", "auth", "verified")
          */
         $result = $this->investmentService->delete($investment);

@@ -42,7 +42,7 @@ class AiDocumentApiShowEnrichmentTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/documents/{$document->id}");
+            ->getJson("/api/v1/documents/{$document->id}");
 
         $response->assertOk()
             ->assertJsonPath('document.processed_transaction_data.transaction_items.0.recommended_category_full_name', $category->full_name)

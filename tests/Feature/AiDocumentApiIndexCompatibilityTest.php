@@ -22,7 +22,7 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/documents?per_page=10');
+            ->getJson(route('api.v1.documents.index', ['per_page' => 10]));
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -67,7 +67,10 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/documents?date_from=' . now()->subDays(90)->format('Y-m-d') . '&date_to=' . now()->format('Y-m-d'));
+            ->getJson(route('api.v1.documents.index', [
+                'date_from' => now()->subDays(90)->format('Y-m-d'),
+                'date_to' => now()->format('Y-m-d'),
+            ]));
 
         $response->assertStatus(200)
             ->assertJsonPath('meta.total', 1)
@@ -91,7 +94,11 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/documents?status=processing&source_type=manual_upload&search=Coffee');
+            ->getJson(route('api.v1.documents.index', [
+                'status' => 'processing',
+                'source_type' => 'manual_upload',
+                'search' => 'Coffee',
+            ]));
 
         $response->assertStatus(200)
             ->assertJsonPath('meta.total', 1)

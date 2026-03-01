@@ -37,9 +37,9 @@
         property="category"
         title="Category"
         placeholder="Select category"
-        search-api-path="/api/assets/category"
-        search_label_field="text"
-        details-api-path="/api/assets/category/#id#"
+        search-api-path="/api/v1/categories"
+        search_label_field="full_name"
+        details-api-path="/api/v1/categories/#id#"
         details-label-field="full_name"
         :preset-item-ids="selectedCategories"
         @update="onUpdateCategory($event)"
@@ -47,34 +47,34 @@
       ></find-transaction-select-card>
 
       <find-transaction-select-card
-        search-api-path="/api/assets/payee"
+        search-api-path="/api/v1/payees"
         property="payee"
         title="Payee"
         placeholder="Select payee"
-        details-api-path="/api/assets/payee/#id#"
+        details-api-path="/api/v1/payees/#id#"
         :preset-item-ids="selectedPayees"
         @update="onUpdatePayee($event)"
         @preset-ready="setReadyFlag($event)"
       ></find-transaction-select-card>
 
       <find-transaction-select-card
-        search-api-path="/api/assets/account"
+        search-api-path="/api/v1/accounts"
         property="account"
         title="Account"
         placeholder="Select account"
-        details-api-path="/api/assets/account/#id#"
+        details-api-path="/api/v1/accounts/#id#"
         :preset-item-ids="selectedAccounts"
         @update="onUpdateAccount($event)"
         @preset-ready="setReadyFlag($event)"
       ></find-transaction-select-card>
 
       <find-transaction-select-card
-        search-api-path="/api/assets/tag"
+        search-api-path="/api/v1/tags"
         search_label_field="text"
         property="tag"
         title="Tag"
         placeholder="Select tag"
-        details-api-path="/api/assets/tag/#id#"
+        details-api-path="/api/v1/tags/#id#"
         :preset-item-ids="selectedTags"
         @update="onUpdateTag($event)"
         @preset-ready="setReadyFlag($event)"
@@ -560,7 +560,7 @@
         }
 
         window.axios
-          .get('/api/transactions', {
+          .get('/api/v1/transactions', {
             params: {
               date_from: this.dateFrom,
               date_to: this.dateTo,

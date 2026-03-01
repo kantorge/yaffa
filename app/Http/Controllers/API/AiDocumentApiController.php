@@ -32,12 +32,14 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/documents - Upload and create a new AI document
-     *
      * @throws AuthorizationException
      */
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
+        /**
+         * @post("/api/v1/documents")
+         * @middleware("api", "auth:sanctum", "verified")
+         */
         Gate::authorize('create', AiDocument::class);
 
         $user = $request->user();
@@ -73,7 +75,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * PATCH /api/documents/{id} - Update document (custom prompt or status)
+     * PATCH /api/v1/documents/{id} - Update document (custom prompt or status)
      *
      * @throws AuthorizationException
      */
@@ -99,7 +101,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/documents - List user's documents with filters
+     * GET /api/v1/documents - List user's documents with filters
      */
     public function index(Request $request): JsonResponse
     {
@@ -159,7 +161,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/documents/{id} - Get document details
+     * GET /api/v1/documents/{id} - Get document details
      *
      * @throws AuthorizationException
      */
@@ -176,7 +178,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/documents/{id}/reprocess - Trigger document reprocessing
+     * POST /api/v1/documents/{id}/reprocess - Trigger document reprocessing
      *
      * @throws AuthorizationException
      */
@@ -208,7 +210,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/documents/{id} - Delete a document and its files
+     * DELETE /api/v1/documents/{id} - Delete a document and its files
      *
      * @throws AuthorizationException
      */
@@ -233,7 +235,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/documents/{id}/check-duplicates - Check for duplicate transactions
+     * POST /api/v1/documents/{id}/check-duplicates - Check for duplicate transactions
      *
      * @throws AuthorizationException
      */
@@ -352,7 +354,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     {
         $processedData = $aiDocument->processed_transaction_data;
 
-        if (! $processedData || ! is_array($processedData)) {
+        if (! $processedData) {
             return;
         }
 

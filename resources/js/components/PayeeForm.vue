@@ -119,7 +119,7 @@
 </template>
 
 <script>
-  import { loadSelect2Language } from '../i18n/select2';
+  import { loadSelect2Language } from '@/i18n/select2';
   import select2 from 'select2';
   select2();
   loadSelect2Language(window.YAFFA.userSettings.language);
@@ -174,7 +174,7 @@
       elementCategory
         .select2({
           ajax: {
-            url: '/api/assets/category',
+            url: '/api/v1/categories',
             dataType: 'json',
             delay: 150,
             data: function (params) {
@@ -184,7 +184,12 @@
             },
             processResults: function (data) {
               return {
-                results: data,
+                results: data.map(function (item) {
+                  return {
+                    id: item.id,
+                    text: item.full_name,
+                  };
+                }),
               };
             },
             cache: true,
@@ -228,7 +233,7 @@
 
       onNameChange(event) {
         // Get similar payees from API
-        fetch('/api/assets/payee/similar?query=' + event.target.value)
+        fetch('/api/v1/payees/similar?query=' + event.target.value)
           .then((response) => response.json())
           .then((data) => {
             this.similarPayees = data;
@@ -238,12 +243,12 @@
       onSelectPayee(payee) {
         // If payee is inactive, activate it before adding it to form
         if (!payee.active) {
-          this.form
-            .put(
-              route('api.accountentity.updateActive', {
+          window.axios
+            .patch(
+              route('api.v1.account-entities.patch-active', {
                 accountEntity: payee.id,
-                active: 1,
               }),
+              { active: true },
             )
             .then((response) => this.processAfterSubmit(response));
         } else {
@@ -269,7 +274,7 @@
       onSubmit() {
         if (this.action === 'new') {
           this.form
-            .post(route('api.payee.store'), this.form)
+            .post(route('api.v1.payees.store'), this.form)
             .then((response) => this.processAfterSubmit(response));
         } else {
           this.form

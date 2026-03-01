@@ -110,7 +110,7 @@
 </template>
 
 <script>
-  import { __ } from '../../i18n';
+  import { __ } from '@/i18n';
 
   /**
    * @property {Object} schedule

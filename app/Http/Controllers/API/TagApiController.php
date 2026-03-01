@@ -21,10 +21,14 @@ class TagApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of tags with optional search filtering.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/tag")
+         * @get("/api/v1/tags")
+         * @name("api.v1.tags.list")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $tags = $request->user()
@@ -50,7 +54,8 @@ class TagApiController extends Controller implements HasMiddleware
     public function getItem(Tag $tag): JsonResponse
     {
         /**
-         * @get("/api/assets/tag/{tag}")
+         * @get("/api/v1/tags/{tag}")
+         * @name("api.v1.tags.item")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $tag);
@@ -63,23 +68,21 @@ class TagApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * V1: PATCH /api/v1/tags/{tag}
+     * @name("api.v1.tags.patchActive")
+     * Accepts { active: true|false } in request body.
+     *
      * @throws AuthorizationException
      */
-    public function updateActive(Tag $tag, string $active): JsonResponse
+    public function patchActive(Request $request, Tag $tag): JsonResponse
     {
-        /**
-         * @put("/api/assets/tag/{tag}/active/{active}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $tag);
 
-        $tag->active = $active === '1';
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $tag->active = $validated['active'];
         $tag->save();
 
-        return response()
-            ->json(
-                $tag,
-                Response::HTTP_OK
-            );
+        return response()->json($tag, Response::HTTP_OK);
     }
 }

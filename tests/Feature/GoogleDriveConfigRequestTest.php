@@ -23,12 +23,12 @@ class GoogleDriveConfigRequestTest extends TestCase
         ]);
     }
 
-    // ===== CREATE (POST /api/google-drive/config) =====
+    // ===== CREATE (POST /api/v1/google-drive/config) =====
 
     public function test_create_requires_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'folder_id' => 'test-folder-id',
             ]);
 
@@ -39,7 +39,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_requires_folder_id(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             ]);
 
@@ -50,7 +50,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_rejects_short_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => 'too short',
                 'folder_id' => 'test-folder-id',
             ]);
@@ -62,7 +62,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_rejects_very_long_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => str_repeat('x', 5001),
                 'folder_id' => 'test-folder-id',
             ]);
@@ -74,7 +74,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_rejects_invalid_json_format(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => '{"invalid": "json", missing bracket',
                 'folder_id' => 'test-folder-id',
             ]);
@@ -88,7 +88,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $invalidJson = '{"type":"service_account","project_id":"test"}'; // Missing most required keys
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => $invalidJson,
                 'folder_id' => 'test-folder-id',
             ]);
@@ -100,7 +100,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_accepts_valid_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
             ]);
@@ -113,7 +113,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'another-folder-id',
             ]);
@@ -125,7 +125,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_accepts_delete_after_import_boolean(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
                 'delete_after_import' => true,
@@ -137,7 +137,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_create_accepts_enabled_boolean(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/config', [
+            ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
                 'enabled' => false,
@@ -146,7 +146,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertStatus(201);
     }
 
-    // ===== UPDATE (PATCH /api/google-drive/config/{id}) =====
+    // ===== UPDATE (PATCH /api/v1/google-drive/config/{id}) =====
 
     public function test_update_allows_missing_folder_id(): void
     {
@@ -156,7 +156,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'delete_after_import' => true,
             ]);
 
@@ -173,7 +173,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $originalJson = $config->service_account_json;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
             ]);
 
@@ -189,7 +189,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $originalJson = $config->service_account_json;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '',
             ]);
@@ -206,7 +206,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $newJson = '{"type":"service_account","project_id":"new-project","private_key_id":"newkey","private_key":"-----BEGIN PRIVATE KEY-----\nnewtest\n-----END PRIVATE KEY-----","client_email":"new@new-project.iam.gserviceaccount.com","client_id":"987654321","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}';
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => $newJson,
             ]);
@@ -222,7 +222,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '{"invalid": json}',
             ]);
@@ -237,7 +237,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $originalJson = $config->service_account_json;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '__existing__',
             ]);
@@ -256,7 +256,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
                 'delete_after_import' => true,
             ]);
@@ -275,7 +275,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson("/api/google-drive/config/{$config->id}", [
+            ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
                 'enabled' => false,
             ]);
@@ -286,12 +286,12 @@ class GoogleDriveConfigRequestTest extends TestCase
         $this->assertFalse($config->enabled);
     }
 
-    // ===== TEST CONNECTION (POST /api/google-drive/test) =====
+    // ===== TEST CONNECTION (POST /api/v1/google-drive/config/test) =====
 
     public function test_test_connection_requires_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'folder_id' => 'test-folder-id',
             ]);
 
@@ -302,7 +302,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_test_connection_requires_folder_id(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             ]);
 
@@ -315,7 +315,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => '__existing__',
                 'folder_id' => 'test-folder-id',
             ]);
@@ -327,7 +327,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_test_connection_allows_new_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
             ]);
@@ -339,7 +339,7 @@ class GoogleDriveConfigRequestTest extends TestCase
     public function test_test_connection_rejects_invalid_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => 'not valid json',
                 'folder_id' => 'test-folder-id',
             ]);
@@ -353,7 +353,7 @@ class GoogleDriveConfigRequestTest extends TestCase
         $invalidJson = '{"type":"service_account","project_id":"test"}';
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/google-drive/test', [
+            ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => $invalidJson,
                 'folder_id' => 'test-folder-id',
             ]);

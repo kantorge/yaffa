@@ -1,4 +1,4 @@
-import { loadSelect2Language } from '../i18n/select2';
+import { loadSelect2Language } from '@/i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.userSettings.language);
@@ -7,7 +7,7 @@ loadSelect2Language(window.YAFFA.userSettings.language);
 const config = {
     multiple: true,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -23,9 +23,16 @@ const config = {
             const otherItems = otherSelect.select2('val');
 
             return {
-                results: data.filter(function(item) {
-                    return !otherItems.includes(item.id.toString());
-                }),
+                results: data
+                    .filter(function(item) {
+                        return !otherItems.includes(item.id.toString());
+                    })
+                    .map(function (item) {
+                        return {
+                            id: item.id,
+                            text: item.full_name,
+                        };
+                    }),
             };
         },
         cache: true

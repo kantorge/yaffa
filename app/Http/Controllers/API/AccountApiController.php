@@ -31,10 +31,14 @@ class AccountApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of accounts with optional search and filters.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/account")
+         * @get("/api/v1/accounts")
+         * @name("api.v1.accounts.index")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $parameters = [
@@ -161,10 +165,14 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
     }
 
+    /**
+     * Get a list of accounts for investment transactions.
+     */
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/account/investment")
+         * @get("/api/v1/accounts/investment")
+         * @name("api.v1.accounts.investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         $user = $request->user();
@@ -241,7 +249,7 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @get("/api/assets/account/{accountEntity}")
+         * @get("/api/v1/accounts/{accountEntity}")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $accountEntity);
@@ -265,7 +273,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
         /**
-         * @get("/api/account/balance/{accountEntity?}")
+         * @get("/api/v1/accounts/balance/{accountEntity?}")
+         * @get("/api/v1/accounts/balance")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 
@@ -422,10 +431,10 @@ class AccountApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function updateMonthlySummary(AccountEntity $accountEntity): JsonResponse
+    public function recalculateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @put("/api/account/monthlySummary/{accountEntity}")
+         * @post("/api/v1/accounts/{accountEntity}/monthly-summary")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
@@ -453,7 +462,7 @@ class AccountApiController extends Controller implements HasMiddleware
                 [
                     'message' => __('The monthly summary for this account is being updated.'),
                 ],
-                Response::HTTP_OK
+                Response::HTTP_ACCEPTED
             );
     }
 }

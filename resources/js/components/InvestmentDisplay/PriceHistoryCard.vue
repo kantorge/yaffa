@@ -30,8 +30,8 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
-  import { __ } from '../../i18n';
-  import { applyAmChartsLocalization } from '../../i18n/amcharts';
+  import { __ } from '@/i18n';
+  import { applyAmChartsLocalization } from '@/i18n/amcharts';
 
   export default {
     name: 'PriceHistoryCard',
@@ -53,8 +53,8 @@
         return this.prices && this.prices.length > 0;
       },
       priceListUrl() {
-        return window.route
-          ? window.route('investment-price.list', {
+        return this.route
+          ? this.route('investment-price.list', {
               investment: this.investment.id,
             })
           : '#';

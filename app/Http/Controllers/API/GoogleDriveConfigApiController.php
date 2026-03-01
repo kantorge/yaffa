@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GoogleDriveConfigRequest;
+use App\Http\Resources\GoogleDriveConfigResource;
 use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
@@ -35,10 +36,16 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/google-drive/config - Get user's Google Drive config
+     * Get the current Google Drive configuration for the authenticated user.
      */
     public function show(Request $request): JsonResponse
     {
+        /**
+         * @get("/api/v1/google-drive/config")
+         * @name("api.v1.google-drive.config.show")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
             return $response;
         }
@@ -50,34 +57,29 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         if (! $config) {
             return response()->json([
-                'error' => __('No Google Drive configuration found'),
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => __('No Google Drive configuration found'),
+                ],
             ], Response::HTTP_NOT_FOUND);
         }
 
         Gate::authorize('view', $config);
 
-        // Return config without exposing service account JSON
-        return response()->json([
-            'id' => $config->id,
-            'service_account_email' => $config->service_account_email,
-            'folder_id' => $config->folder_id,
-            'delete_after_import' => $config->delete_after_import,
-            'enabled' => $config->enabled,
-            'last_sync_at' => $config->last_sync_at,
-            'last_error' => $config->last_error,
-            'error_count' => $config->error_count,
-            'created_at' => $config->created_at,
-            'updated_at' => $config->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json((new GoogleDriveConfigResource($config))->resolve(), Response::HTTP_OK);
     }
 
     /**
-     * POST /api/google-drive/config - Create Google Drive config
-     *
      * @throws AuthorizationException
      */
     public function store(GoogleDriveConfigRequest $request): JsonResponse
     {
+        /**
+         * @post("/api/v1/google-drive/config")
+         * @name("api.v1.google-drive.config.store")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
             return $response;
         }
@@ -104,18 +106,11 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'enabled' => $request->input('enabled', true),
         ]);
 
-        return response()->json([
-            'id' => $config->id,
-            'service_account_email' => $config->service_account_email,
-            'folder_id' => $config->folder_id,
-            'delete_after_import' => $config->delete_after_import,
-            'enabled' => $config->enabled,
-            'message' => __('Google Drive configured successfully'),
-        ], Response::HTTP_CREATED);
+        return response()->json((new GoogleDriveConfigResource($config))->resolve(), Response::HTTP_CREATED);
     }
 
     /**
-     * PATCH /api/google-drive/config/{id} - Update Google Drive config
+     * PATCH /api/v1/google-drive/config/{id} - Update Google Drive config
      *
      * @throws AuthorizationException
      */
@@ -147,18 +142,11 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         $googleDriveConfig->update($updateData);
 
-        return response()->json([
-            'id' => $googleDriveConfig->id,
-            'service_account_email' => $googleDriveConfig->service_account_email,
-            'folder_id' => $googleDriveConfig->folder_id,
-            'delete_after_import' => $googleDriveConfig->delete_after_import,
-            'enabled' => $googleDriveConfig->enabled,
-            'updated_at' => $googleDriveConfig->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json((new GoogleDriveConfigResource($googleDriveConfig))->resolve(), Response::HTTP_OK);
     }
 
     /**
-     * DELETE /api/google-drive/config/{id} - Delete Google Drive config
+     * DELETE /api/v1/google-drive/config/{id} - Delete Google Drive config
      *
      * @throws AuthorizationException
      */
@@ -176,7 +164,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/google-drive/test - Test Google Drive connection
+     * POST /api/v1/google-drive/test - Test Google Drive connection
      */
     public function test(GoogleDriveConfigRequest $request): JsonResponse
     {
@@ -194,7 +182,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             $existingConfig = $user->googleDriveConfigs()->first();
             if (! $existingConfig) {
                 return response()->json([
-                    'message' => __('No existing Google Drive configuration found'),
+                    'error' => [
+                        'code' => 'CONFIG_NOT_FOUND',
+                        'message' => __('No existing Google Drive configuration found'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
             $validated['service_account_json'] = $existingConfig->service_account_json;
@@ -206,7 +197,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return response()->json([
-                    'message' => __('Invalid JSON format in service account credentials'),
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => __('Invalid JSON format in service account credentials'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -222,19 +216,25 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             }
 
             return response()->json([
-                'message' => $result['message'],
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => $result['message'],
+                ],
             ], Response::HTTP_BAD_REQUEST);
         } catch (Exception $e) {
             Log::error("Google Drive test failed: {$e->getMessage()}");
 
             return response()->json([
-                'message' => __('Connection failed: :error', ['error' => $e->getMessage()]),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => __('Connection failed: :error', ['error' => $e->getMessage()]),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
     }
 
     /**
-     * POST /api/google-drive/sync/{id} - Manually trigger sync for a config
+     * POST /api/v1/google-drive/sync/{id} - Manually trigger sync for a config
      *
      * @throws AuthorizationException
      */
@@ -248,7 +248,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         if (! $googleDriveConfig->enabled) {
             return response()->json([
-                'message' => __('Cannot sync disabled Google Drive configuration'),
+                'error' => [
+                    'code' => 'CONFIG_DISABLED',
+                    'message' => __('Cannot sync disabled Google Drive configuration'),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -267,7 +270,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         }
 
         return response()->json([
-            'message' => __(self::FEATURE_DISABLED_MESSAGE),
+            'error' => [
+                'code' => 'FEATURE_DISABLED',
+                'message' => __(self::FEATURE_DISABLED_MESSAGE),
+            ],
         ], Response::HTTP_FORBIDDEN);
     }
 }

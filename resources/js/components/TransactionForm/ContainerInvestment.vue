@@ -90,19 +90,19 @@
       // Decide how to proceed on success
       loadCallbackUrl(transaction) {
         if (this.callback === 'returnToDashboard') {
-          location.href = window.route('home');
+          location.href = this.route('home');
           return;
         }
 
         if (this.callback === 'create') {
-          location.href = window.route('transaction.create', {
+          location.href = this.route('transaction.create', {
             type: 'investment',
           });
           return;
         }
 
         if (this.callback === 'clone') {
-          location.href = window.route('transaction.open', {
+          location.href = this.route('transaction.open', {
             transaction: transaction.id,
             action: 'clone',
           });
@@ -110,7 +110,7 @@
         }
 
         if (this.callback === 'show') {
-          location.href = window.route('transaction.open', {
+          location.href = this.route('transaction.open', {
             transaction: transaction.id,
             action: 'show',
           });
@@ -118,14 +118,14 @@
         }
 
         if (this.callback === 'returnToPrimaryAccount') {
-          location.href = window.route('account-entity.show', {
+          location.href = this.route('account-entity.show', {
             account_entity: transaction.config.account_id,
           });
           return;
         }
 
         if (this.callback === 'returnToInvestment') {
-          location.href = window.route('investment.show', {
+          location.href = this.route('investment.show', {
             investment: transaction.config.investment_id,
           });
           return;

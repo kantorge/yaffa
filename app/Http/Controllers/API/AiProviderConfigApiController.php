@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiProviderConfigRequest;
+use App\Http\Resources\AiProviderConfigResource;
 use App\Models\AiProviderConfig;
 use App\Models\User;
 use Exception;
@@ -27,48 +28,66 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/ai/config - Get user's AI provider config
+     * Get the current AI provider configuration for the authenticated user.
      */
     public function show(Request $request): JsonResponse
     {
+        /**
+         * @get("/api/v1/ai/config")
+         * @name("api.v1.ai.config.show")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         // For MVP, we assume one config per user
+        // Later, this needs to be converted to a normal show method with config ID and proper ownership checks
+
         /** @var User $user */
         $user = $request->user();
         $config = $user->aiProviderConfigs()->first();
 
         if (! $config) {
             return response()->json([
-                'error' => __('No AI provider configured yet.'),
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => __('No AI provider configured yet.'),
+                ],
             ], Response::HTTP_NOT_FOUND);
         }
 
+        // As we have just loaded the config for the user, this check is somewhat redundant, but it's good to be consistent and explicit about authorization
         Gate::authorize('view', $config);
 
-        // Return config without exposing API key
-        return response()->json([
-            'id' => $config->id,
-            'provider' => $config->provider,
-            'model' => $config->model,
-            'vision_enabled' => $config->vision_enabled,
-            'created_at' => $config->created_at,
-            'updated_at' => $config->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json(
+            (
+            new AiProviderConfigResource($config))->resolve(),
+            Response::HTTP_OK
+        );
     }
 
     /**
-     * POST /api/ai/config - Create AI provider config
-     *
      * @throws AuthorizationException
      */
     public function store(AiProviderConfigRequest $request): JsonResponse
     {
+        /**
+         * @post("/api/v1/ai/config")
+         * @name("api.v1.ai.config.store")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
         Gate::authorize('create', AiProviderConfig::class);
 
         /** @var User $user */
         $user = $request->user();
 
-        // Delete existing config(s) if present (enforce one per user)
-        $user->aiProviderConfigs()->delete();
+        // At the moment we only support one config per user, so if a config already exists, return an error
+        if ($user->aiProviderConfigs()->exists()) {
+            return response()->json([
+                'error' => [
+                    'code' => 'CONFIG_ALREADY_EXISTS',
+                    'message' => __('You already have an AI provider configuration. Please update your existing configuration instead.'),
+                ],
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
         // Create new config
         $config = AiProviderConfig::create([
@@ -79,22 +98,23 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             'vision_enabled' => (bool) $request->input('vision_enabled', false),
         ]);
 
-        return response()->json([
-            'id' => $config->id,
-            'provider' => $config->provider,
-            'model' => $config->model,
-            'vision_enabled' => $config->vision_enabled,
-            'message' => __('AI provider configured successfully'),
-        ], Response::HTTP_CREATED);
+        return response()->json(
+            new AiProviderConfigResource($config)->resolve(),
+            Response::HTTP_CREATED
+        );
     }
 
     /**
-     * PATCH /api/ai/config/{id} - Update AI provider config
-     *
      * @throws AuthorizationException
      */
     public function update(AiProviderConfigRequest $request, AiProviderConfig $aiProviderConfig): JsonResponse
     {
+        /**
+         * @patch("/api/v1/ai/config/{config}")
+         * @name("api.v1.ai.config.update")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         Gate::authorize('update', $aiProviderConfig);
 
         $validated = $request->validated();
@@ -116,13 +136,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         $aiProviderConfig->update($updateData);
 
-        return response()->json([
-            'id' => $aiProviderConfig->id,
-            'provider' => $aiProviderConfig->provider,
-            'model' => $aiProviderConfig->model,
-            'vision_enabled' => $aiProviderConfig->vision_enabled,
-            'updated_at' => $aiProviderConfig->updated_at,
-        ], Response::HTTP_OK);
+        return response()->json(
+            (new AiProviderConfigResource($aiProviderConfig))->resolve(),
+            Response::HTTP_OK
+        );
     }
 
     /**
@@ -131,8 +148,8 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     public function destroy(AiProviderConfig $aiProviderConfig): JsonResponse
     {
         /**
-         * @delete("/api/ai/config/{config}")
-         * @name("api.ai.config.destroy")
+         * @delete("/api/v1/ai/config/{config}")
+         * @name("api.v1.ai.config.destroy")
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('delete', $aiProviderConfig);
@@ -143,10 +160,16 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/ai/test - Test AI provider connection
+     * Test connectivity to the configured AI provider.
      */
     public function test(AiProviderConfigRequest $request): JsonResponse
     {
+        /**
+         * @post("/api/v1/ai/config/test")
+         * @name("api.v1.ai.config.test")
+         * @middlewares("api", "auth:sanctum", "verified")
+         */
+
         // Basic validation is already done by AiProviderConfigRequest
         $validated = $request->validated();
 
@@ -157,7 +180,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             $existingConfig = $user->aiProviderConfigs()->first();
             if (!$existingConfig) {
                 return response()->json([
-                    'message' => __('No existing AI provider configuration found'),
+                    'error' => [
+                        'code' => 'CONFIG_NOT_FOUND',
+                        'message' => __('No existing AI provider configuration found'),
+                    ],
                 ], Response::HTTP_BAD_REQUEST);
             }
             $validated['api_key'] = $existingConfig->api_key;
@@ -180,13 +206,19 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             }
 
             return response()->json([
-                'message' => __('No response from AI provider'),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => __('No response from AI provider'),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         } catch (Exception $e) {
             Log::error("AI provider test failed: {$e->getMessage()}");
 
             return response()->json([
-                'message' => $e->getMessage(),
+                'error' => [
+                    'code' => 'CONNECTION_FAILED',
+                    'message' => $e->getMessage(),
+                ],
             ], Response::HTTP_BAD_REQUEST);
         }
     }

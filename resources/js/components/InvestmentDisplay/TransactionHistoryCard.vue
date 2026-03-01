@@ -86,7 +86,7 @@
 
           window.axios
             .delete(
-              window.route('api.transactions.destroy', { transaction: id }),
+              this.route('api.v1.transactions.destroy', { transaction: id }),
             )
             .then(() => {
               toastHelpers.showSuccessToast(
@@ -141,7 +141,7 @@
 
           window.axios
             .patch(
-              window.route('api.transactions.skipScheduleInstance', {
+              this.route('api.v1.transactions.skip', {
                 transaction: id,
               }),
             )
@@ -171,10 +171,10 @@
     },
     computed: {
       newTransactionUrl() {
-        if (!window.route) {
+        if (!this.route) {
           return '#';
         }
-        return window.route('transaction.create', {
+        return this.route('transaction.create', {
           type: 'investment',
           callback: 'back',
         });
@@ -316,13 +316,13 @@
               if (!row.schedule) {
                 const id = row.id;
                 actions +=
-                  `<a href="${window.route('transaction.open', {
+                  `<a href="${vm.route('transaction.open', {
                     transaction: id,
                     action: 'edit',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
                     'Edit',
                   )}"><i class="fa fa-fw fa-edit"></i></a> ` +
-                  `<a href="${window.route('transaction.open', {
+                  `<a href="${vm.route('transaction.open', {
                     transaction: id,
                     action: 'clone',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
@@ -336,13 +336,13 @@
                 // For scheduled instances, use originalId (parent transaction ID)
                 const id = row.originalId || row.id;
                 actions +=
-                  `<a href="${window.route('transaction.open', {
+                  `<a href="${vm.route('transaction.open', {
                     transaction: id,
                     action: 'enter',
                   })}" class="btn btn-xs btn-success" title="${vm.__(
                     'Enter/Finalize',
                   )}"><i class="fa fa-fw fa-calendar-check"></i></a> ` +
-                  `<a href="${window.route('transaction.open', {
+                  `<a href="${vm.route('transaction.open', {
                     transaction: id,
                     action: 'replace',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(

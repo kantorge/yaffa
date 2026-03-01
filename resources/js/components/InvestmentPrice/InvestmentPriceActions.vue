@@ -70,8 +70,8 @@
 </template>
 
 <script>
-  import { __ } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'InvestmentPriceActions',
@@ -111,8 +111,8 @@
 
         try {
           // Call the API endpoint to retrieve missing prices
-          const response = await window.axios.get(
-            window.route('api.investment-price.retrieveMissing', {
+          const response = await window.axios.post(
+            this.route('api.v1.investment-prices.retrieve-missing', {
               investment: this.investment.id,
             }),
           );

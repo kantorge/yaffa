@@ -62,8 +62,8 @@
 </template>
 
 <script>
-  import { __ } from '../../i18n';
-  import * as toastHelpers from '../../toast';
+  import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'CurrencyRateActions',
@@ -105,8 +105,8 @@
 
         try {
           // Call the existing endpoint to retrieve missing rates
-          await window.axios.get(
-            window.route('api.currency-rate.retrieveMissing', {
+          await window.axios.post(
+            this.route('api.v1.currency-rates.retrieve-missing', {
               currency: this.fromCurrency.id,
             }),
           );

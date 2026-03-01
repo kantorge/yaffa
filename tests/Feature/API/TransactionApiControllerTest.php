@@ -38,11 +38,12 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        $this->getJson("/api/transaction/{$transaction->id}")
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->getJson(route('api.v1.transactions.show', $transaction));
+        $this->assertUserNotAuthorized($response);
 
-        $this->putJson("/api/transaction/{$transaction->id}/reconciled/1")
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $response = $this->patchJson(route('api.v1.transactions.reconcile', $transaction), ['reconciled' => true]);
+        $this->assertUserNotAuthorized($response);
     }
 
     /**
@@ -56,7 +57,7 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        $response = $this->getJson("/api/transaction/{$transaction->id}");
+        $response = $this->getJson(route('api.v1.transactions.show', $transaction));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure([
@@ -90,7 +91,7 @@ class TransactionApiControllerTest extends TestCase
             ->create(['user_id' => $this->user->id]);
 
         // Attempting to access should fail due to route model binding with user scope
-        $response = $this->getJson("/api/transaction/{$transaction->id}");
+        $response = $this->getJson(route('api.v1.transactions.show', $transaction));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -109,7 +110,7 @@ class TransactionApiControllerTest extends TestCase
                 'reconciled' => false,
             ]);
 
-        $response = $this->putJson("/api/transaction/{$transaction->id}/reconciled/1");
+        $response = $this->patchJson(route('api.v1.transactions.reconcile', $transaction), ['reconciled' => true]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -131,7 +132,7 @@ class TransactionApiControllerTest extends TestCase
                 'reconciled' => true,
             ]);
 
-        $response = $this->putJson("/api/transaction/{$transaction->id}/reconciled/0");
+        $response = $this->patchJson(route('api.v1.transactions.reconcile', $transaction), ['reconciled' => false]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -154,7 +155,7 @@ class TransactionApiControllerTest extends TestCase
                 'reconciled' => false,
             ]);
 
-        $response = $this->putJson("/api/transaction/{$transaction->id}/reconciled/1");
+        $response = $this->patchJson(route('api.v1.transactions.reconcile', $transaction), ['reconciled' => true]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
@@ -174,7 +175,7 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal_schedule($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        $response = $this->getJson('/api/transactions/get_scheduled_items/schedule');
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items'));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure([
@@ -195,7 +196,7 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $response = $this->getJson('/api/transactions/get_scheduled_items/schedule?category_required=1');
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?category_required=1');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([]);
@@ -289,7 +290,7 @@ class TransactionApiControllerTest extends TestCase
             'ai_document_id' => $aiDocument->id,
         ];
 
-        $response = $this->postJson('/api/transactions/standard', $payload);
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), $payload);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -368,7 +369,7 @@ class TransactionApiControllerTest extends TestCase
             'ai_document_id' => $aiDocument->id,
         ];
 
-        $response = $this->postJson('/api/transactions/standard', $payload);
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), $payload);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -445,7 +446,7 @@ class TransactionApiControllerTest extends TestCase
             'ai_document_id' => $aiDocument->id,
         ];
 
-        $response = $this->postJson('/api/transactions/standard', $payload);
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), $payload);
 
         $response->assertStatus(Response::HTTP_OK);
 

@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
-// Add global route values
-app.config.globalProperties.route = window.route;
+installRouteGlobal(app);
 
 // Component for displaying transaction details
 import Container from './../components/TransactionDisplay/Container.vue'

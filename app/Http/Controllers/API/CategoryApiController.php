@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Resources\CategoryResource;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
@@ -32,10 +33,14 @@ class CategoryApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * Get a list of categories with optional search and usage-based ordering.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get("/api/assets/category")
+         * @get("/api/v1/categories")
+         * @name("api.v1.categories.index")
          * @middlewares("api", "auth:sanctum")
          */
         $user = $request->user();
@@ -54,16 +59,12 @@ class CategoryApiController extends Controller implements HasMiddleware
                         function (Builder $query) use ($request) {
                             $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
                         }
-                    )->get();
+                    );
                 })
                 ->get()
                 ->filter(fn ($category) => mb_stripos($category->full_name, $query) !== false)
                 ->sortBy('full_name')
                 ->take(10)
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         } elseif ($query === '*') {
             $categories = $user->categories()
@@ -73,10 +74,6 @@ class CategoryApiController extends Controller implements HasMiddleware
                 })
                 ->get()
                 ->sortBy('full_name')
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         } else {
             $results = DB::table('transaction_items')
@@ -119,45 +116,28 @@ class CategoryApiController extends Controller implements HasMiddleware
 
             $categories = Category::with('parent')->findMany($results)
                 ->sortBy(fn ($category) => array_search($category->getKey(), $results))
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'text' => $category->full_name,
-                ])
                 ->values();
         }
 
+        $payload = $categories
+            ->map(fn (Category $category): array => (new CategoryResource($category))->toArray($request))
+            ->values();
+
         return response()
             ->json(
-                $categories,
+                $payload,
                 Response::HTTP_OK
             );
     }
 
-    public function getFullList(Request $request): JsonResponse
-    {
-        /**
-         * @get("/api/assets/categories")
-         * @middlewares("api", "auth:sanctum")
-         */
-        $categories = $request->user()
-            ->categories()
-            ->with('parent')
-            ->when($request->missing('withInactive'), function ($query) {
-                $query->active();
-            })
-            ->get();
-
-        return response()
-            ->json(
-                $categories,
-                Response::HTTP_OK
-            );
-    }
-
+    /**
+     * Get a category by ID.
+     */
     public function getItem(Category $category): JsonResponse
     {
         /**
-         * @get("/api/assets/category/{category}")
+         * @get("/api/v1/categories/{category}")
+         * @name("api.v1.categories.show")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $category);
@@ -172,7 +152,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     /**
      * Store a newly created category in storage.
      *
-     * @post("/api/assets/category")
+     * @post("/api/v1/categories")
+     * @name("api.v1.categories.store")
      * @middlewares("api", "auth:sanctum")
      */
     public function store(CategoryRequest $request): JsonResponse
@@ -184,30 +165,32 @@ class CategoryApiController extends Controller implements HasMiddleware
         return response()->json($category, Response::HTTP_CREATED);
     }
 
-    public function updateActive(Category $category, $active): JsonResponse
+    /**
+     * V1: PATCH /api/v1/categories/{category}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function patchActive(Request $request, Category $category): JsonResponse
     {
-        /**
-         * @put("/api/assets/category/{category}/active/{active}")
-         * @name("api.category.updateActive")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('update', $category);
 
-        $category->active = $active;
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $category->active = $validated['active'];
         $category->save();
 
-        return response()
-            ->json(
-                $category,
-                Response::HTTP_OK
-            );
+        return response()->json($category, Response::HTTP_OK);
     }
 
+    /**
+     * Delete a category.
+     */
     public function destroy(Category $category): JsonResponse
     {
         /**
-         * @delete("/api/assets/category/{category}")
-         * @name("api.category.destroy")
+         * @delete("/api/v1/categories/{category}")
+         * @name("api.v1.categories.destroy")
          * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $category);

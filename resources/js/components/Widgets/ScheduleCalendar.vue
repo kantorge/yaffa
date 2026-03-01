@@ -85,7 +85,7 @@
         );
       },
       getTransactionLink: function (id) {
-        return window.route('transaction.open', {
+        return this.route('transaction.open', {
           transaction: id,
           action: 'enter',
         });
@@ -140,7 +140,7 @@
       let vue = this;
 
       axios
-        .get('/api/transactions/get_scheduled_items/schedule')
+        .get('/api/v1/transactions/scheduled-items?type=schedule')
         .then(function (response) {
           vue.transactions = response.data.transactions
             // Keep only the transactions with a next date set.

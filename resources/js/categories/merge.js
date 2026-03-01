@@ -1,5 +1,5 @@
-import { __ } from '../i18n';
-import { loadSelect2Language } from '../i18n/select2';
+import { __ } from '@/i18n';
+import { loadSelect2Language } from '@/i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.userSettings.language);
@@ -14,7 +14,7 @@ $(selectorSourceCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -35,7 +35,12 @@ $(selectorSourceCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -44,7 +49,7 @@ $(selectorSourceCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }
@@ -78,7 +83,7 @@ $(selectorTargetCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -99,7 +104,12 @@ $(selectorTargetCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -108,7 +118,7 @@ $(selectorTargetCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }

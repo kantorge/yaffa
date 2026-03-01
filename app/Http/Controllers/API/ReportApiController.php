@@ -45,7 +45,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public function budgetChart(Request $request): JsonResponse
     {
         /**
-         * @get("/api/budgetchart")
+         * @get("/api/v1/reports/budget-chart")
+         * @name("api.v1.reports.budget-chart")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 
@@ -242,7 +243,8 @@ class ReportApiController extends Controller implements HasMiddleware
         int|null $month = null
     ): JsonResponse {
         /**
-         * @get("/api/reports/waterfall/{type}/{year}/{month?}")
+         * @get("/api/v1/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}")
+         * @name("api.v1.reports.waterfall")
          * @middlewares("api", "auth:sanctum", "verified")
          */
 
@@ -359,6 +361,9 @@ class ReportApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Get monthly cashflow data with optional forecast values.
+     */
     public function getCashflowData(Request $request): JsonResponse
     {
         $user = $request->user();
