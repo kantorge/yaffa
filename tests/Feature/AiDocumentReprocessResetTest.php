@@ -39,7 +39,7 @@ class AiDocumentReprocessResetTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/documents/{$document->id}/reprocess")
+            ->postJson("/api/v1/documents/{$document->id}/reprocess")
             ->assertOk()
             ->assertJsonPath('status', 'ready_for_processing');
 
