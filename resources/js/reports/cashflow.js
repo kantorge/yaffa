@@ -6,11 +6,9 @@ import { applyAmChartsLocalization } from '@/i18n/amcharts';
 am4core.useTheme(am4themes_animated);
 
 // Select2 for account selection
-import { loadSelect2Language } from '@/i18n/select2';
 import { __ } from '@/i18n';
-import select2 from 'select2';
-select2();
-loadSelect2Language(window.YAFFA.userSettings.language);
+import { initializeSelect2 } from '@/select2';
+initializeSelect2(window.YAFFA.userSettings.language);
 
 import * as toastHelpers from '../toast';
 

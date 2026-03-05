@@ -8,7 +8,8 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 import * as dataTableHelpers from './../components/dataTableHelper'
 import * as helpers from "@/helpers";
 import { applyAmChartsLocalization } from '@/i18n/amcharts';
-import { __, getDataTablesLanguageOptions, loadSelect2Language } from '@/i18n';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
+import { initializeSelect2 } from '@/select2';
 
 // Category tree
 import 'jstree';
@@ -18,9 +19,7 @@ import 'jstree/src/themes/default/style.css'
 import 'datatables.net-bs5';
 
 // Select2 for account selection
-import select2 from 'select2';
-select2();
-loadSelect2Language(window.YAFFA.userSettings.language);
+initializeSelect2(window.YAFFA.userSettings.language);
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';

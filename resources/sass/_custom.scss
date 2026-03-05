@@ -253,3 +253,9 @@ button[type="submit"] .spinner-border {
     // Replicate me-1 class spacing for the spinner icon
     margin-right: 0.25rem;
 }
+
+// Lighter placeholder for Select2 search input
+.select2-container--bootstrap-5 .select2-search__field::placeholder {
+    color: var(--cui-secondary-color);
+    opacity: 0.5;
+}

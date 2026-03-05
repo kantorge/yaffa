@@ -500,11 +500,8 @@
     initializeBootstrapTooltips,
   } from '@/helpers';
   import { __, getCurrencySymbol, toFormattedCurrency } from '@/i18n';
-  import { loadSelect2Language } from '@/i18n/select2';
-
-  import select2 from 'select2';
-  select2();
-  loadSelect2Language(window.YAFFA.userSettings.language);
+  import { initializeSelect2 } from '@/select2';
+  initializeSelect2(window.YAFFA.userSettings.language);
 
   export default {
     components: {
@@ -746,6 +743,7 @@
           },
           selectOnClose: false,
           placeholder: __('Select account'),
+          searchInputPlaceholder: __('Type to search...'),
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
@@ -825,6 +823,7 @@
           },
           selectOnClose: false,
           placeholder: __('Select investment'),
+          searchInputPlaceholder: __('Type to search...'),
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
