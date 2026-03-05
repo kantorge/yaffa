@@ -51,6 +51,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
             ->click('@button-add-transaction-item')
+            // Wait for the transaction item row to be visible
+            ->waitFor('#transaction_item_container .transaction_item_row', 10)
             // Set the first category input
             ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
             // Set the first amount to the same amount as the transaction
