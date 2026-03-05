@@ -12,6 +12,26 @@ import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
 
+function recalculateChildrenCounts(categories) {
+    const childrenCountByParentId = {};
+
+    categories.forEach(function (category) {
+        if (!category.parent || !category.parent.id) {
+            return;
+        }
+
+        if (!childrenCountByParentId[category.parent.id]) {
+            childrenCountByParentId[category.parent.id] = 0;
+        }
+
+        childrenCountByParentId[category.parent.id]++;
+    });
+
+    categories.forEach(function (category) {
+        category.children_count = childrenCountByParentId[category.id] || 0;
+    });
+}
+
 // Loop categories and prepare data for datatable
 window.categories = window.categories.map(function(category) {
     // Parse first date if it exists
@@ -230,8 +250,10 @@ window.table = $(dataTableSelector).DataTable({
                 success: function (data) {
                     // Update row in table data source
                     window.categories = window.categories.filter(category => category.id !== data.category.id);
+                    recalculateChildrenCounts(window.categories);
 
-                    row.remove().draw();
+                    row.remove();
+                    table.rows().invalidate().draw(false);
                     toastHelpers.showSuccessToast(
                         __('Category deleted')
                     );
