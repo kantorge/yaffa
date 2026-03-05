@@ -233,11 +233,13 @@ table.contextualActions({
                     // Send request to delete account
                     axios.delete(window.route('api.v1.account-entities.destroy', account.id))
                     .then((response) => {
+                        const deletedAccountId = response.data.accountEntity.id;
+
                         // Update row in table data source
-                        window.accounts = window.accounts.filter(account => account.id !== response.data.accountEntity.id);
+                        window.accounts = window.accounts.filter(account => account.id !== deletedAccountId);
 
                         table
-                            .row(account)
+                            .row((_, data) => data.id === deletedAccountId)
                             .remove()
                             .draw();
 
