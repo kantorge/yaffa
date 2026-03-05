@@ -14,6 +14,7 @@
       ></ai-document-actions>
 
       <ai-document-filters
+        :initial-status="initialStatus"
         :status-options="statusLabels"
         :source-options="sourceLabels"
         @update="onFiltersUpdated"
@@ -73,6 +74,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const initialDateFrom = ref(urlParams.get('date_from') || null);
   const initialDateTo = ref(urlParams.get('date_to') || null);
+  const initialStatus = ref(urlParams.get('status') || 'ready_for_review');
   const hasExplicitDateFilter = Boolean(
     initialDateFrom.value || initialDateTo.value,
   );
@@ -82,7 +84,7 @@
   );
 
   const currentFilters = ref({
-    status: '',
+    status: initialStatus.value,
     source: '',
     search: '',
     dateFrom: initialDateFrom.value,
@@ -166,8 +168,10 @@
     uploadFormRef.value?.show?.();
   };
 
-  const onDocumentCreated = (data) => {
-    // Refresh the documents list
-    location.reload();
+  const onDocumentCreated = async () => {
+    await fetchDocuments({
+      dateFrom: currentFilters.value.dateFrom,
+      dateTo: currentFilters.value.dateTo,
+    });
   };
 </script>

@@ -164,7 +164,7 @@ class ProcessDocumentServiceTest extends TestCase
 
         $this->assertCount(1, $result);
         $this->assertSame(12.5, $result[0]['amount']);
-        $this->assertSame('Coffee beans', $result[0]['description']);
+        $this->assertSame('coffee beans', $result[0]['description']);
         $this->assertSame('ai', $result[0]['match_type']);
         $this->assertSame(0.4, $result[0]['confidence_score']);
         $this->assertSame($category->id, $result[0]['recommended_category_id']);
@@ -234,6 +234,84 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame($category->id, $responsePayload['result']['recommended_category_id']);
     }
 
+    public function test_mixed_exact_and_ai_category_matching_uses_ai_for_remaining_items_and_normalizes_descriptions(): void
+    {
+        $user = User::factory()->create();
+        $exactCategory = Category::factory()->for($user)->create(['active' => 1]);
+        $aiCategory = Category::factory()->for($user)->create(['active' => 1]);
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $categoryLearningService = new CategoryLearningService();
+        $user->categoryLearning()->create([
+            'item_description' => $categoryLearningService->normalize('Coffee'),
+            'category_id' => $exactCategory->id,
+            'usage_count' => 5,
+        ]);
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            $this->createMock(AssetMatchingService::class),
+            $categoryLearningService,
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+            $aiCategory->id
+        ) extends ProcessDocumentService {
+            public function __construct(
+                TextExtractionService $textExtractor,
+                AssetMatchingService $assetMatchingService,
+                CategoryLearningService $categoryLearningService,
+                PayeeCategoryStatsService $payeeCategoryStatsService,
+                AiExtractionSchemaValidator $aiExtractionSchemaValidator,
+                AiPromptBuilder $aiPromptBuilder,
+                private int $aiCategoryId,
+            ) {
+                parent::__construct(
+                    $textExtractor,
+                    $assetMatchingService,
+                    $categoryLearningService,
+                    $payeeCategoryStatsService,
+                    $aiExtractionSchemaValidator,
+                    $aiPromptBuilder,
+                );
+            }
+
+            public function matchCategories(array $items, User $user, AiProviderConfig $config): array
+            {
+                $document = AiDocument::factory()->for($user)->create();
+
+                return $this->matchCategoriesForItems($items, $user, $config, $document);
+            }
+
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                return json_encode([
+                    [
+                        'item_index' => 0,
+                        'recommended_category_id' => $this->aiCategoryId,
+                        'confidence_score' => 0.77,
+                    ],
+                ]) ?: '[]';
+            }
+        };
+
+        $result = $service->matchCategories([
+            ['description' => 'COFFEE', 'amount' => 5],
+            ['description' => 'BREAD ROLL', 'amount' => 2],
+        ], $user, $config);
+
+        $this->assertCount(2, $result);
+
+        $this->assertSame('coffee', $result[0]['description']);
+        $this->assertSame($exactCategory->id, $result[0]['recommended_category_id']);
+        $this->assertSame('exact', $result[0]['match_type']);
+
+        $this->assertSame('bread roll', $result[1]['description']);
+        $this->assertSame($aiCategory->id, $result[1]['recommended_category_id']);
+        $this->assertSame('ai', $result[1]['match_type']);
+        $this->assertSame(0.77, $result[1]['confidence_score']);
+    }
+
     public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void
     {
         $user = User::factory()->create();
@@ -288,7 +366,7 @@ class ProcessDocumentServiceTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertSame(42.5, $result['amount']);
-        $this->assertSame('Coffee Shop', $result['description']);
+        $this->assertSame('coffee shop', $result['description']);
         $this->assertSame($category->id, $result['recommended_category_id']);
         $this->assertSame('exact', $result['match_type']);
         $this->assertSame(1.0, $result['confidence_score']);

@@ -90,6 +90,10 @@
       type: Object,
       default: () => ({}),
     },
+    initialStatus: {
+      type: String,
+      default: '',
+    },
     sourceOptions: {
       type: Object,
       default: () => ({}),
@@ -99,7 +103,7 @@
   const emit = defineEmits(['update']);
 
   const filters = reactive({
-    status: '',
+    status: props.initialStatus || '',
     source: '',
     search: '',
   });

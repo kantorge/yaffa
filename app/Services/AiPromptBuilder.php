@@ -87,6 +87,7 @@ Your task: Match each line item to the most appropriate category.
 RULES:
 - Prioritize learning patterns if item description closely matches past patterns
 - Use category list to find best semantic match if no learning patterns match
+- Item descriptions and categories can be in different languages; do semantic matching across languages (translate internally when needed before deciding category).
 - Treat quantity/unit/packaging tokens as non-semantic noise while matching (examples: "2x", "500g", "1.5l", "pcs", "pack", and localized equivalents in the document language).
 - Match based on the core product or service meaning, not on quantity, size, or package count.
 - Categories can have up to two levels. For example: "Standalone parent", "Parent", "Parent > Child 1", "Parent > Child 2", "Another standalone parent", etc.
@@ -176,7 +177,9 @@ RULES:
 * For transfers, the transaction_items array must be empty (it is not supported to have line items on transfers)
 * For receipts with multiple line items, extract each item separately into the transaction_items array
 * For each transaction item description, keep only the core item/service name.
+* Use lowercase only for each transaction item description.
 * Remove quantity, size, measurement, and packaging fragments from description (examples: "2x", "x3", "500g", "1kg", "250ml", "1.5l", "pcs", "pack", plus language-specific/localized equivalents present in the document).
+* Exclude non-semantic receipt codes from item descriptions (for example PLU/SKU/internal register codes, barcode-like tokens, and random uppercase code fragments that are not meaningful product/service names).
 * Keep meaningful product qualifiers (brand/flavor/type/model) when they help categorization; remove only quantity/unit/packaging noise.
 * When extracting amounts, account for localization (especially for thousands separators and decimal marks). Convert the final amount to a plain number without any symbols, and use dot as decimal separator.
 * For standard transactions, validate your response to see if extracted amount and the sum of transaction_items amounts are consistent.

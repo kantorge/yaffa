@@ -30,20 +30,6 @@
               ></button>
             </div>
 
-            <!-- Success Alert -->
-            <div
-              v-if="successMessage"
-              class="alert alert-success alert-dismissible fade show"
-              role="alert"
-            >
-              {{ successMessage }}
-              <button
-                type="button"
-                class="btn-close"
-                @click="successMessage = ''"
-              ></button>
-            </div>
-
             <!-- Warning Alert -->
             <div
               v-if="!warningDismissed"
@@ -211,6 +197,7 @@
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
   import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
   const props = defineProps({
     modalId: {
@@ -229,7 +216,6 @@
   const isDraggingOver = ref(false);
   const isSubmitting = ref(false);
   const errors = ref([]);
-  const successMessage = ref('');
   const warningDismissed = ref(false);
 
   const form = reactive({
@@ -376,9 +362,10 @@
 
       if (response.ok) {
         const data = await response.json();
-        successMessage.value = __(
+        const successMessage = __(
           'Document uploaded successfully and queued for processing. You will receive a notification when processing is complete.',
         );
+        toastHelpers.showSuccessToast(successMessage);
 
         // Reset form
         selectedFiles.value = [];
@@ -387,10 +374,7 @@
         // Emit event for parent to refresh the list
         emit('document-created', data);
 
-        // Close modal after 1.5 seconds
-        setTimeout(() => {
-          modal.value?.hide();
-        }, 1500);
+        modal.value?.hide();
       } else {
         const data = await response.json();
 

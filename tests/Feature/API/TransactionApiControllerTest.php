@@ -9,6 +9,9 @@ use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\Category;
 use App\Models\CategoryLearning;
+use App\Models\Currency;
+use App\Models\Investment;
+use App\Models\InvestmentGroup;
 use App\Models\Payee;
 use App\Services\CategoryLearningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -456,5 +459,66 @@ class TransactionApiControllerTest extends TestCase
             'item_description' => $learningService->normalize('Tea'),
             'category_id' => $category->id,
         ]);
+    }
+
+    public function test_store_investment_finalization_does_not_require_items_array(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $currency = $this->user->currencies()->first() ?: Currency::factory()->for($this->user)->create();
+        $investmentGroup = $this->user->investmentGroups()->first() ?: InvestmentGroup::factory()->for($this->user)->create();
+
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+
+        $aiDocument = AiDocument::factory()->for($this->user)->create([
+            'status' => 'ready_for_review',
+        ]);
+
+        $payload = [
+            'action' => 'finalize',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 12.5,
+                'quantity' => 2,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+            'ai_document_id' => $aiDocument->id,
+        ];
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), $payload);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $transactionId = $response->json('transaction.id');
+
+        $this->assertNotNull($transactionId);
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transactionId,
+            'ai_document_id' => $aiDocument->id,
+            'config_type' => 'investment',
+        ]);
+
+        $aiDocument->refresh();
+        $this->assertSame('finalized', $aiDocument->status);
     }
 }

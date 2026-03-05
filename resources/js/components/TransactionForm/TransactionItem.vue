@@ -9,38 +9,32 @@
       class="alert mb-2 py-2 px-3 d-flex justify-content-between align-items-center"
       :class="aiAlertClass"
     >
-      <div>
-        <i class="fa fa-receipt me-2"></i>
-        {{ description }}
-        <span v-if="showAddButton">
-          → {{ recommended_category_full_name }}
-        </span>
+      <div class="d-flex align-items-center gap-3">
+        <button
+          v-if="categoryIdData"
+          type="button"
+          class="btn btn-sm btn-link p-0 border-0 shadow-none"
+          :class="learnRecommendation ? 'text-success' : 'text-muted'"
+          :title="learnRecommendationTooltip"
+          :aria-label="learnRecommendationTooltip"
+          :aria-pressed="learnRecommendation ? 'true' : 'false'"
+          @click="toggleLearnRecommendation"
+        >
+          <i
+            class="fa fa-lg"
+            :class="learnRecommendation ? 'fa-toggle-on' : 'fa-toggle-off'"
+          ></i>
+        </button>
+
+        <div>
+          <i class="fa fa-receipt me-2"></i>
+          {{ description }}
+          <span v-if="showAddButton">
+            → {{ recommended_category_full_name }}
+          </span>
+        </div>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <!-- Learn recommendation toggle for AI-based and manually selected categories -->
-        <div
-          v-if="
-            (match_type === 'ai' && recommended_category_id) ||
-            (categoryIdData && !recommended_category_id)
-          "
-          class="form-check form-check-inline"
-          :title="
-            recommended_category_id
-              ? __('Toggle whether to learn from this recommendation')
-              : __('Toggle whether to learn from your selection')
-          "
-        >
-          <input
-            type="checkbox"
-            class="form-check-input"
-            :id="'learn-recommendation-' + id"
-            v-model="learnRecommendation"
-            @change="onLearnRecommendationChange"
-          />
-          <label class="form-check-label" :for="'learn-recommendation-' + id">
-            <small>{{ __('Learn') }}</small>
-          </label>
-        </div>
         <!-- Status badge for AI suggestions -->
         <span
           v-if="recommended_category_id && isRecommendationAccepted"
@@ -299,6 +293,18 @@
         return 'bg-warning';
       },
 
+      learnRecommendationTooltip() {
+        if (this.learnRecommendation) {
+          return this.recommended_category_id
+            ? __('Disable learning from this AI recommendation')
+            : __('Disable learning from this selected category');
+        }
+
+        return this.recommended_category_id
+          ? __('Enable learning from this AI recommendation')
+          : __('Enable learning from this selected category');
+      },
+
       /**
        * Show remove button for high-confidence AI matches or exact matches
        * Exact: auto-selected with no button initially, but show if user tries to change
@@ -381,6 +387,11 @@
           if ($vm.recommended_category_id) {
             $vm.isRecommendationAccepted =
               newValue == $vm.recommended_category_id;
+          }
+
+          if (!newValue) {
+            $vm.learnRecommendation = false;
+            $vm.onLearnRecommendationChange();
           }
 
           $vm.$emit('update:category_id', event.target.value);
@@ -627,6 +638,11 @@
           itemId: this.id,
           learnRecommendation: this.learnRecommendation,
         });
+      },
+
+      toggleLearnRecommendation() {
+        this.learnRecommendation = !this.learnRecommendation;
+        this.onLearnRecommendationChange();
       },
     },
 

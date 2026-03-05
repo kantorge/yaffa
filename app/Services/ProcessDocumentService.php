@@ -326,19 +326,11 @@ class ProcessDocumentService
                 'similarity' => $topMatch['similarity'],
             ]);
 
-            $this->appendLocalProcessingHistory(
+            $this->appendProcessingHistory(
                 $document,
                 'payee_matching',
-                [
-                    'payee_name' => $payeeName,
-                    'path' => 'high_confidence_match',
-                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
-                ],
-                [
-                    'matched_id' => $topMatch['id'],
-                    'matched_name' => $topMatch['name'],
-                    'similarity' => $topMatch['similarity'],
-                ]
+                "Local payee matching used. AI call skipped because similarity reached threshold " . self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH . ". Input: \"{$payeeName}\".",
+                "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 
             return $topMatch['id'];
@@ -541,7 +533,9 @@ class ProcessDocumentService
 
         $categoryId = (int) $categoryStats->first()['category_id'];
         $amount = floatval($rawData['amount'] ?? 0);
-        $description = $rawData['transaction_items'][0]['description'] ?? ($rawData['payee'] ?? '');
+        $description = $this->normalizeTransactionItemDescription(
+            $rawData['transaction_items'][0]['description'] ?? ($rawData['payee'] ?? '')
+        );
 
         Log::info('Single-category payee shortcut applied', [
             'user_id' => $user->id,
@@ -621,10 +615,11 @@ class ProcessDocumentService
     {
         $enrichedItems = [];
         $itemsNeedingAi = [];
+        $aiItemIndexMap = [];
 
         // First pass: Check for exact matches
         foreach ($items as $index => $item) {
-            $description = $item['description'] ?? '';
+            $description = $this->normalizeTransactionItemDescription($item['description'] ?? '');
             $amount = floatval($item['amount'] ?? 0);
 
             $exactMatch = $this->checkExactCategoryMatch($description, $user);
@@ -656,10 +651,12 @@ class ProcessDocumentService
                 );
             } else {
                 // No exact match, will need AI
-                $itemsNeedingAi[$index] = [
+                $aiItemIndex = count($itemsNeedingAi);
+                $itemsNeedingAi[$aiItemIndex] = [
                     'amount' => $amount,
                     'description' => $description,
                 ];
+                $aiItemIndexMap[$aiItemIndex] = $index;
                 // Placeholder for now
                 $enrichedItems[$index] = [
                     'amount' => $amount,
@@ -686,11 +683,13 @@ class ProcessDocumentService
 
             // Merge AI results back into enriched items
             // All recommendations (exact or AI) populate recommended_category_id
-            foreach ($aiMatches as $index => $aiMatch) {
-                if (isset($enrichedItems[$index])) {
-                    $enrichedItems[$index]['recommended_category_id'] = $aiMatch['recommended_category_id'];
-                    $enrichedItems[$index]['match_type'] = $aiMatch['match_type'];
-                    $enrichedItems[$index]['confidence_score'] = $aiMatch['confidence_score'];
+            foreach ($aiMatches as $aiItemIndex => $aiMatch) {
+                $originalIndex = $aiItemIndexMap[$aiItemIndex] ?? null;
+
+                if ($originalIndex !== null && isset($enrichedItems[$originalIndex])) {
+                    $enrichedItems[$originalIndex]['recommended_category_id'] = $aiMatch['recommended_category_id'];
+                    $enrichedItems[$originalIndex]['match_type'] = $aiMatch['match_type'];
+                    $enrichedItems[$originalIndex]['confidence_score'] = $aiMatch['confidence_score'];
                 }
             }
         } catch (Exception $e) {
@@ -791,6 +790,11 @@ class ProcessDocumentService
 
             throw new Exception('Failed to parse category matching AI response as JSON');
         }
+    }
+
+    private function normalizeTransactionItemDescription(?string $description): string
+    {
+        return Str::lower(Str::trim((string) $description));
     }
 
     /**

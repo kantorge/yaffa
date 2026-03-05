@@ -803,7 +803,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
             Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
                 'action' => $validated['action'] ?? null,
-                'ai_document_id' => $validated['ai_document_id'],
+                'ai_document_id' => $validated['ai_document_id'] ?? null,
             ]);
             return;
         }
@@ -835,7 +835,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         }
 
         // Update CategoryLearning for accepted recommendations if there are any
-        if ($validated['items'] && is_array($validated['items'])) {
+        if (! empty($validated['items']) && is_array($validated['items'])) {
             $this->updateCategoryLearning($transaction, $user, $validated['items']);
         }
     }
