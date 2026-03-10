@@ -7,6 +7,7 @@ use App\Exceptions\InvalidAiResponseSchemaException;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
+use App\Models\AiDocumentFile;
 use App\Models\AiProviderConfig;
 use App\Models\Category;
 use App\Models\Payee;
@@ -310,6 +311,134 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame($aiCategory->id, $result[1]['recommended_category_id']);
         $this->assertSame('ai', $result[1]['match_type']);
         $this->assertSame(0.77, $result[1]['confidence_score']);
+    }
+
+    public function test_high_confidence_account_and_payee_matches_are_logged_with_readable_history(): void
+    {
+        $user = User::factory()->create();
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $accountName = 'Main Wallet';
+        $payeeName = 'Coffee Shop';
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'account',
+                'active' => true,
+                'name' => $accountName,
+                'alias' => null,
+            ]);
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => $payeeName,
+                'alias' => null,
+            ]);
+
+        $document = AiDocument::factory()
+            ->for($user)
+            ->create([
+                'status' => 'ready_for_processing',
+                'source_type' => 'manual_upload',
+            ]);
+
+        AiDocumentFile::factory()->create([
+            'ai_document_id' => $document->id,
+            'file_path' => 'ai_documents/test/input.txt',
+            'file_name' => 'input.txt',
+            'file_type' => 'txt',
+        ]);
+
+        $textExtractor = $this->createMock(TextExtractionService::class);
+        $textExtractor->expects($this->once())
+            ->method('extractFromFile')
+            ->willReturn('Receipt text');
+
+        $service = new class (
+            $textExtractor,
+            new AssetMatchingService($user),
+            new CategoryLearningService(),
+            new PayeeCategoryStatsService(),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+            $accountName,
+            $payeeName,
+        ) extends ProcessDocumentService {
+            public function __construct(
+                TextExtractionService $textExtractor,
+                AssetMatchingService $assetMatchingService,
+                CategoryLearningService $categoryLearningService,
+                PayeeCategoryStatsService $payeeCategoryStatsService,
+                AiExtractionSchemaValidator $aiExtractionSchemaValidator,
+                AiPromptBuilder $aiPromptBuilder,
+                private string $accountName,
+                private string $payeeName,
+            ) {
+                parent::__construct(
+                    $textExtractor,
+                    $assetMatchingService,
+                    $categoryLearningService,
+                    $payeeCategoryStatsService,
+                    $aiExtractionSchemaValidator,
+                    $aiPromptBuilder,
+                );
+            }
+
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                if ($step !== 'main_extraction') {
+                    throw new RuntimeException("Unexpected AI call for step {$step}");
+                }
+
+                return json_encode([
+                    'transaction_type' => 'withdrawal',
+                    'account' => $this->accountName,
+                    'account_from' => null,
+                    'account_to' => null,
+                    'payee' => $this->payeeName,
+                    'date' => '2026-02-25',
+                    'amount' => 9.99,
+                    'currency' => 'USD',
+                    'transaction_items' => [],
+                ]) ?: '';
+            }
+        };
+
+        $result = $service->process($document);
+
+        $this->assertTrue($result['success']);
+
+        $document->refresh();
+        $this->assertSame('ready_for_review', $document->status);
+        $this->assertIsArray($document->ai_chat_history);
+
+        $historyByStep = collect($document->ai_chat_history)
+            ->keyBy('step')
+            ->all();
+
+        $this->assertArrayHasKey('account_matching', $historyByStep);
+        $this->assertArrayHasKey('payee_matching', $historyByStep);
+
+        $accountHistory = $historyByStep['account_matching'];
+        $payeeHistory = $historyByStep['payee_matching'];
+
+        $this->assertStringContainsString('Local account matching used. AI call skipped because similarity reached threshold', $accountHistory['prompt']);
+        $this->assertStringContainsString("Input: \"{$accountName}\".", $accountHistory['prompt']);
+        $this->assertStringContainsString("Matched account ID {$account->id} ({$accountName})", $accountHistory['response']);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['prompt']);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['response']);
+
+        $this->assertStringContainsString('Local payee matching used. AI call skipped because similarity reached threshold', $payeeHistory['prompt']);
+        $this->assertStringContainsString("Input: \"{$payeeName}\".", $payeeHistory['prompt']);
+        $this->assertStringContainsString("Matched payee ID {$payee->id} ({$payeeName})", $payeeHistory['response']);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $payeeHistory['prompt']);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $payeeHistory['response']);
     }
 
     public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void

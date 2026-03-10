@@ -1510,7 +1510,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 Bugs, issues - quick fix
 
 - If there's at least one exact category match from learning, the rest of the categories does not seem to get passed to the AI for matching.
-- When there's an exact payee match, the chat history still gets a prompt and a response with JSON content, which is not very readable. A different wording should be added to the chat history. -> This needs to be added to the accounts, too.
 - It is not consistent, when the items are returned in full capitals or full lowercase. Even if normalization is applied later for identification, this should be more consistent, using lower case only.
 - The item category matching is still not very accurate. Should the quality of the category matching be improved by translating the prompts to the user's language?
 - Item detection picks up random code from the receipt, e.g. "COO RAGCSALÓLESE" The prompt should be improved to exclude such codes.
@@ -1565,36 +1564,36 @@ This plan also moves Google Drive sync cadence from global env to per-config DB 
 
 #### DB-backed settings (move to user/config tables)
 
-| Setting | Current Source | Target Storage | Default / Backfill Source | Main Consumers |
-| --- | --- | --- | --- | --- |
-| `ai_enabled` | not present | `ai_user_settings.ai_enabled` | `false` | upload/reprocess/process entrypoints |
-| `ocr_language` | `TESSERACT_LANGUAGE` -> `config('ai-documents.ocr.tesseract_language')` | `ai_user_settings.ocr_language` | current config value | `OcrService` |
-| `image_max_width_vision` | `config('ai-documents.image_processing.max_width')` | `ai_user_settings.image_max_width_vision` | current config value | `ImagePreprocessingService` |
-| `image_max_height_vision` | `config('ai-documents.image_processing.max_height')` | `ai_user_settings.image_max_height_vision` | current config value | `ImagePreprocessingService` |
-| `image_quality_vision` | `config('ai-documents.image_processing.quality')` | `ai_user_settings.image_quality_vision` | current config value | `ImagePreprocessingService` |
-| `image_max_width_tesseract` | not present | `ai_user_settings.image_max_width_tesseract` | `null` (no resize by default) | `OcrService` (tesseract path) |
-| `image_max_height_tesseract` | not present | `ai_user_settings.image_max_height_tesseract` | `null` (no resize by default) | `OcrService` (tesseract path) |
-| `asset_similarity_threshold` | `config('ai-documents.asset_matching.similarity_threshold')` | `ai_user_settings.asset_similarity_threshold` | current config value | `AssetMatchingService` |
-| `asset_max_suggestions` | `config('ai-documents.asset_matching.max_suggestions')` | `ai_user_settings.asset_max_suggestions` | current config value | `AssetMatchingService` |
-| `match_auto_accept_threshold` | `ProcessDocumentService::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH` (0.95 hardcoded) | `ai_user_settings.match_auto_accept_threshold` | `0.95` | `ProcessDocumentService` |
-| `duplicate_date_window_days` | `config('ai-documents.duplicate_detection.date_window_days')` | `ai_user_settings.duplicate_date_window_days` | current config value | `DuplicateDetectionService` |
-| `duplicate_amount_tolerance_percent` | `config('ai-documents.duplicate_detection.amount_tolerance_percent')` | `ai_user_settings.duplicate_amount_tolerance_percent` | current config value | `DuplicateDetectionService` |
-| `duplicate_similarity_threshold` | `config('ai-documents.duplicate_detection.similarity_threshold')` | `ai_user_settings.duplicate_similarity_threshold` | current config value | `DuplicateDetectionService` |
-| `category_matching_mode` | prompt hardcoded preference | `ai_user_settings.category_matching_mode` | `child_preferred` | `AiPromptBuilder` + category list preparation |
-| `warn_on_child_mode_without_children` | not present | `ai_user_settings.warn_on_child_mode_without_children` | `true` | settings API/UI warnings |
-| `sync_interval_minutes` | `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` -> `config('ai-documents.google_drive.sync_interval_minutes')` | `google_drive_configs.sync_interval_minutes` | current config value | `GoogleDriveMonitorJob` |
+| Setting                               | Current Source                                                                                         | Target Storage                                         | Default / Backfill Source     | Main Consumers                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------- | --------------------------------------------- |
+| `ai_enabled`                          | not present                                                                                            | `ai_user_settings.ai_enabled`                          | `false`                       | upload/reprocess/process entrypoints          |
+| `ocr_language`                        | `TESSERACT_LANGUAGE` -> `config('ai-documents.ocr.tesseract_language')`                                | `ai_user_settings.ocr_language`                        | current config value          | `OcrService`                                  |
+| `image_max_width_vision`              | `config('ai-documents.image_processing.max_width')`                                                    | `ai_user_settings.image_max_width_vision`              | current config value          | `ImagePreprocessingService`                   |
+| `image_max_height_vision`             | `config('ai-documents.image_processing.max_height')`                                                   | `ai_user_settings.image_max_height_vision`             | current config value          | `ImagePreprocessingService`                   |
+| `image_quality_vision`                | `config('ai-documents.image_processing.quality')`                                                      | `ai_user_settings.image_quality_vision`                | current config value          | `ImagePreprocessingService`                   |
+| `image_max_width_tesseract`           | not present                                                                                            | `ai_user_settings.image_max_width_tesseract`           | `null` (no resize by default) | `OcrService` (tesseract path)                 |
+| `image_max_height_tesseract`          | not present                                                                                            | `ai_user_settings.image_max_height_tesseract`          | `null` (no resize by default) | `OcrService` (tesseract path)                 |
+| `asset_similarity_threshold`          | `config('ai-documents.asset_matching.similarity_threshold')`                                           | `ai_user_settings.asset_similarity_threshold`          | current config value          | `AssetMatchingService`                        |
+| `asset_max_suggestions`               | `config('ai-documents.asset_matching.max_suggestions')`                                                | `ai_user_settings.asset_max_suggestions`               | current config value          | `AssetMatchingService`                        |
+| `match_auto_accept_threshold`         | `ProcessDocumentService::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH` (0.95 hardcoded)                        | `ai_user_settings.match_auto_accept_threshold`         | `0.95`                        | `ProcessDocumentService`                      |
+| `duplicate_date_window_days`          | `config('ai-documents.duplicate_detection.date_window_days')`                                          | `ai_user_settings.duplicate_date_window_days`          | current config value          | `DuplicateDetectionService`                   |
+| `duplicate_amount_tolerance_percent`  | `config('ai-documents.duplicate_detection.amount_tolerance_percent')`                                  | `ai_user_settings.duplicate_amount_tolerance_percent`  | current config value          | `DuplicateDetectionService`                   |
+| `duplicate_similarity_threshold`      | `config('ai-documents.duplicate_detection.similarity_threshold')`                                      | `ai_user_settings.duplicate_similarity_threshold`      | current config value          | `DuplicateDetectionService`                   |
+| `category_matching_mode`              | prompt hardcoded preference                                                                            | `ai_user_settings.category_matching_mode`              | `child_preferred`             | `AiPromptBuilder` + category list preparation |
+| `warn_on_child_mode_without_children` | not present                                                                                            | `ai_user_settings.warn_on_child_mode_without_children` | `true`                        | settings API/UI warnings                      |
+| `sync_interval_minutes`               | `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` -> `config('ai-documents.google_drive.sync_interval_minutes')` | `google_drive_configs.sync_interval_minutes`           | current config value          | `GoogleDriveMonitorJob`                       |
 
 #### Global-only settings (stay in env/config)
 
-| Setting | Keep Global Reason |
-| --- | --- |
-| `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION` / `config('ai-documents.file_upload.max_files_per_submission')` | Hard security/abuse limit; no user override |
-| `AI_DOCUMENT_MAX_FILE_SIZE_MB` / `config('ai-documents.file_upload.max_file_size_mb')` | Hard resource-protection limit; no user override |
-| `AI_DOCUMENT_ALLOWED_TYPES` / `config('ai-documents.file_upload.allowed_types')` | Strict global allowlist for safety and consistency |
-| `AI_GOOGLE_DRIVE_ENABLED` | System-wide feature gate |
-| `TESSERACT_ENABLED`, `TESSERACT_MODE`, `TESSERACT_PATH`, `TESSERACT_HTTP_HOST`, `TESSERACT_HTTP_PORT`, `TESSERACT_HTTP_TIMEOUT` | Infrastructure/deployment concerns |
-| `config('ai-documents.providers')` | Server-supported provider/model capability matrix |
-| `AI_DOCUMENT_FILE_RETENTION_DAYS` | Global lifecycle policy until retention job is implemented |
+| Setting                                                                                                                         | Keep Global Reason                                         |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION` / `config('ai-documents.file_upload.max_files_per_submission')`                          | Hard security/abuse limit; no user override                |
+| `AI_DOCUMENT_MAX_FILE_SIZE_MB` / `config('ai-documents.file_upload.max_file_size_mb')`                                          | Hard resource-protection limit; no user override           |
+| `AI_DOCUMENT_ALLOWED_TYPES` / `config('ai-documents.file_upload.allowed_types')`                                                | Strict global allowlist for safety and consistency         |
+| `AI_GOOGLE_DRIVE_ENABLED`                                                                                                       | System-wide feature gate                                   |
+| `TESSERACT_ENABLED`, `TESSERACT_MODE`, `TESSERACT_PATH`, `TESSERACT_HTTP_HOST`, `TESSERACT_HTTP_PORT`, `TESSERACT_HTTP_TIMEOUT` | Infrastructure/deployment concerns                         |
+| `config('ai-documents.providers')`                                                                                              | Server-supported provider/model capability matrix          |
+| `AI_DOCUMENT_FILE_RETENTION_DAYS`                                                                                               | Global lifecycle policy until retention job is implemented |
 
 ### Backend Scope (Laravel)
 
@@ -1743,4 +1742,3 @@ Validation baseline (to be finalized before coding):
 10. Rollback policy: On rollback, drop AI settings schema additions without back-migrating values.
 11. UI placement: Keep editing on `/user/settings`; keep/discover via links from `/ai-documents`.
 12. Conversation-chain migration: Explicitly out of scope for this settings implementation milestone.
-

@@ -249,19 +249,11 @@ class ProcessDocumentService
                 'similarity' => $topMatch['similarity'],
             ]);
 
-            $this->appendLocalProcessingHistory(
+            $this->appendProcessingHistory(
                 $document,
                 'account_matching',
-                [
-                    'account_name' => $accountName,
-                    'path' => 'high_confidence_match',
-                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
-                ],
-                [
-                    'matched_id' => $topMatch['id'],
-                    'matched_name' => $topMatch['name'],
-                    'similarity' => $topMatch['similarity'],
-                ]
+                "Local account matching used. AI call skipped because similarity reached threshold " . self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH . ". Input: \"{$accountName}\".",
+                "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 
             return $topMatch['id'];
