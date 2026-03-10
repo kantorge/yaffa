@@ -279,7 +279,8 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Other errors: Log and continue (silent fail for MVP)
   - `GoogleDriveMonitorJob` (✅ implemented - Orchestrator)
     - Simplified orchestrator (28 lines) that queries enabled configs and dispatches per-config jobs (✅ implemented)
-    - Scheduled frequency via .env `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default 15)
+    - Current behavior: scheduled frequency gate from .env `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default 15)
+    - Planned in AI settings expansion: move frequency gate to per-config `google_drive_configs.sync_interval_minutes`
     - Runs for all users with `enabled = true` in `google_drive_configs`
     - For each enabled config:
       - Dispatches `ProcessGoogleDriveConfigJob($config->id)` to queue (✅ implemented)
@@ -700,8 +701,8 @@ A few notes on the statuses
   - Track `last_sync_at` timestamp in `google_drive_configs` table
 - **Monitoring Schedule:**
   - Job: `App\Jobs\GoogleDriveMonitorJob`
-  - Frequency: Configurable via `.env` variable `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default: 15)
-  - NOT a user-configurable setting (global system setting)
+  - Current behavior: configurable via `.env` variable `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default: 15)
+  - Planned in AI settings expansion: configurable per Google Drive config (`google_drive_configs.sync_interval_minutes`)
   - Only processes configs with `enabled = true`
   - Manual trigger: User can request one-time sync via UI button (queues job immediately)
 
@@ -1451,7 +1452,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 **Notifications & Jobs:**
 
 - ✅ Email notifications wired (AiDocumentProcessedEvent/FailedEvent with queued listeners)
-- ✅ GoogleDriveMonitorJob scheduled (configurable interval via `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`)
+- ✅ GoogleDriveMonitorJob scheduled (current interval gate via `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`)
 - ⏳ File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task) - NOT YET IMPLEMENTED
 
 **Tech debts, future improvements:**
@@ -1497,8 +1498,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - [Tech debt] Revisit AI documents DataTable column width behavior after async refresh.
   - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
 - Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
-- Normalize quantities out of item descriptions to improve matching/learning.
-  - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
 - Add overlap hint for multi-image receipts in extraction prompt.
   - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
 - Improve failed-processing UX and allow prompt editing directly from AiDocument view.
@@ -1507,3 +1506,241 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
+
+Bugs, issues - quick fix
+
+- If there's at least one exact category match from learning, the rest of the categories does not seem to get passed to the AI for matching.
+- When there's an exact payee match, the chat history still gets a prompt and a response with JSON content, which is not very readable. A different wording should be added to the chat history. -> This needs to be added to the accounts, too.
+- It is not consistent, when the items are returned in full capitals or full lowercase. Even if normalization is applied later for identification, this should be more consistent, using lower case only.
+- The item category matching is still not very accurate. Should the quality of the category matching be improved by translating the prompts to the user's language?
+- Item detection picks up random code from the receipt, e.g. "COO RAGCSALÓLESE" The prompt should be improved to exclude such codes.
+- When extracting the account, the prompt should refer to a potential case of last 4 digits of a card number, which can be used for idenification.
+
+Bugs, issues - detailed planning needed
+
+- As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
+- The Google Drive sync is not picking up documents, and there's no UI to indicate any issues or logs.
+- Item category detection still prefers parent category over child category. Should there be a flag that prevents passing parent categories to the AI when a child category is available? Does this also mean, that a group of AI-based settings should be introduced?
+- Should the Google Drive sync frequency be configurable by the user? Should this be moved to the drive config model from .env?
+- The AI-based payee matching is poor. Probably the local similarity matching is filtering out the best results. E.g.
+  - The list of payees is:
+  - 488: Spar (SPAR Magyarország Kereskedelmi Kft.)
+  - 851: Fitness Five (Angel Warriors Kft.)
+  - 659: Gate and Alarm Kft.
+  - 377: Magyaros Kenyér
+  - The payee mentioned in the document is: AUCHAN MAGYARORSZAG KFT => Auchan is not even passed to the AI
+
+## AI User Settings Expansion Plan (Implementation-Ready)
+
+### Feature Summary
+
+Introduce a dedicated per-user AI behavior settings domain to control document processing behavior (thresholds, category strategy, OCR/image constraints, feature toggles), with end-to-end wiring across backend APIs, frontend settings UI, and runtime consumers.
+
+This plan also moves Google Drive sync cadence from global env to per-config DB setting.
+
+### Scope Decisions (Confirmed)
+
+- Implementation scope: full end-to-end in one milestone (DB, API, Vue, runtime consumers, tests).
+- Storage model: new `ai_user_settings` table (one row per user).
+- Google Drive sync cadence: store per config (`google_drive_configs.sync_interval_minutes`).
+- Category matching default mode: `child_preferred`.
+- AI off behavior: hard block processing actions.
+- Backfill strategy: eager backfill for all existing users.
+- Upload limits and allowed file types remain global hard limits (no user override).
+- Out of scope for this milestone: Prism conversation-chain migration.
+
+### Goals / Non-Goals
+
+- Goals:
+  - Move selected AI behavior knobs from global env/config/hardcoded values to user-owned DB settings.
+  - Keep infrastructure and security sensitive settings global.
+  - Keep API error/validation conventions aligned with existing v1 endpoints.
+  - Keep runtime behavior deterministic with explicit fallback precedence.
+- Non-Goals:
+  - Dynamic provider/model catalog retrieval.
+  - Conversation-chain redesign in Prism.
+  - Generic system-wide admin settings UI.
+
+### Settings Inventory and Migration Map (Final)
+
+#### DB-backed settings (move to user/config tables)
+
+| Setting | Current Source | Target Storage | Default / Backfill Source | Main Consumers |
+| --- | --- | --- | --- | --- |
+| `ai_enabled` | not present | `ai_user_settings.ai_enabled` | `false` | upload/reprocess/process entrypoints |
+| `ocr_language` | `TESSERACT_LANGUAGE` -> `config('ai-documents.ocr.tesseract_language')` | `ai_user_settings.ocr_language` | current config value | `OcrService` |
+| `image_max_width_vision` | `config('ai-documents.image_processing.max_width')` | `ai_user_settings.image_max_width_vision` | current config value | `ImagePreprocessingService` |
+| `image_max_height_vision` | `config('ai-documents.image_processing.max_height')` | `ai_user_settings.image_max_height_vision` | current config value | `ImagePreprocessingService` |
+| `image_quality_vision` | `config('ai-documents.image_processing.quality')` | `ai_user_settings.image_quality_vision` | current config value | `ImagePreprocessingService` |
+| `image_max_width_tesseract` | not present | `ai_user_settings.image_max_width_tesseract` | `null` (no resize by default) | `OcrService` (tesseract path) |
+| `image_max_height_tesseract` | not present | `ai_user_settings.image_max_height_tesseract` | `null` (no resize by default) | `OcrService` (tesseract path) |
+| `asset_similarity_threshold` | `config('ai-documents.asset_matching.similarity_threshold')` | `ai_user_settings.asset_similarity_threshold` | current config value | `AssetMatchingService` |
+| `asset_max_suggestions` | `config('ai-documents.asset_matching.max_suggestions')` | `ai_user_settings.asset_max_suggestions` | current config value | `AssetMatchingService` |
+| `match_auto_accept_threshold` | `ProcessDocumentService::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH` (0.95 hardcoded) | `ai_user_settings.match_auto_accept_threshold` | `0.95` | `ProcessDocumentService` |
+| `duplicate_date_window_days` | `config('ai-documents.duplicate_detection.date_window_days')` | `ai_user_settings.duplicate_date_window_days` | current config value | `DuplicateDetectionService` |
+| `duplicate_amount_tolerance_percent` | `config('ai-documents.duplicate_detection.amount_tolerance_percent')` | `ai_user_settings.duplicate_amount_tolerance_percent` | current config value | `DuplicateDetectionService` |
+| `duplicate_similarity_threshold` | `config('ai-documents.duplicate_detection.similarity_threshold')` | `ai_user_settings.duplicate_similarity_threshold` | current config value | `DuplicateDetectionService` |
+| `category_matching_mode` | prompt hardcoded preference | `ai_user_settings.category_matching_mode` | `child_preferred` | `AiPromptBuilder` + category list preparation |
+| `warn_on_child_mode_without_children` | not present | `ai_user_settings.warn_on_child_mode_without_children` | `true` | settings API/UI warnings |
+| `sync_interval_minutes` | `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` -> `config('ai-documents.google_drive.sync_interval_minutes')` | `google_drive_configs.sync_interval_minutes` | current config value | `GoogleDriveMonitorJob` |
+
+#### Global-only settings (stay in env/config)
+
+| Setting | Keep Global Reason |
+| --- | --- |
+| `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION` / `config('ai-documents.file_upload.max_files_per_submission')` | Hard security/abuse limit; no user override |
+| `AI_DOCUMENT_MAX_FILE_SIZE_MB` / `config('ai-documents.file_upload.max_file_size_mb')` | Hard resource-protection limit; no user override |
+| `AI_DOCUMENT_ALLOWED_TYPES` / `config('ai-documents.file_upload.allowed_types')` | Strict global allowlist for safety and consistency |
+| `AI_GOOGLE_DRIVE_ENABLED` | System-wide feature gate |
+| `TESSERACT_ENABLED`, `TESSERACT_MODE`, `TESSERACT_PATH`, `TESSERACT_HTTP_HOST`, `TESSERACT_HTTP_PORT`, `TESSERACT_HTTP_TIMEOUT` | Infrastructure/deployment concerns |
+| `config('ai-documents.providers')` | Server-supported provider/model capability matrix |
+| `AI_DOCUMENT_FILE_RETENTION_DAYS` | Global lifecycle policy until retention job is implemented |
+
+### Backend Scope (Laravel)
+
+- New model/table:
+  - `AiUserSettings` model.
+  - `ai_user_settings` migration with unique `user_id` FK.
+- Existing model change:
+  - Add `sync_interval_minutes` column to `google_drive_configs` migration.
+  - Update `GoogleDriveConfig` model casts/fillable.
+- User relations:
+  - Add `User::aiUserSettings()` relationship.
+- New service:
+  - `AiUserSettingsResolver` to provide effective values with fallback precedence.
+- API:
+  - `AiUserSettingsApiController` with `show` and `update`.
+  - `AiUserSettingsRequest` validation.
+  - `AiUserSettingsResource` serialization.
+  - `AiUserSettingsPolicy` ownership authorization.
+- Route additions:
+  - `GET /api/v1/ai/settings` -> `api.v1.ai.settings.show`
+  - `PATCH /api/v1/ai/settings` -> `api.v1.ai.settings.update`
+
+### Proposed `ai_user_settings` Schema
+
+- `id` bigint PK
+- `user_id` foreign key unique
+- `ai_enabled` boolean default false
+- `ocr_language` string(64)
+- `image_max_width_vision` unsigned smallint
+- `image_max_height_vision` unsigned smallint
+- `image_quality_vision` unsigned tinyint
+- `image_max_width_tesseract` unsigned smallint nullable
+- `image_max_height_tesseract` unsigned smallint nullable
+- `asset_similarity_threshold` decimal(4,3)
+- `asset_max_suggestions` unsigned tinyint
+- `match_auto_accept_threshold` decimal(4,3)
+- `duplicate_date_window_days` unsigned tinyint
+- `duplicate_amount_tolerance_percent` decimal(5,2)
+- `duplicate_similarity_threshold` decimal(4,3)
+- `category_matching_mode` string(32)
+- `warn_on_child_mode_without_children` boolean default true
+- `created_at`, `updated_at`
+
+### API Contract (AI Settings)
+
+- `GET /api/v1/ai/settings`
+  - Returns one resolved settings object for authenticated user.
+  - Includes optional warning payload if `warn_on_child_mode_without_children` is true and mode is child-oriented without available child categories.
+- `PATCH /api/v1/ai/settings`
+  - Partial update of settings values.
+  - Returns updated resolved settings payload.
+- Error contracts:
+  - Validation: Laravel standard `422` shape.
+  - Authorization and domain errors: existing API v1 error pattern (`error.code`, `error.message`) where applicable.
+
+Validation baseline (to be finalized before coding):
+
+- Thresholds: decimal range `0.0` to `1.0`.
+- Duplicate amount tolerance: `0.0` to `100.0`.
+- Sync interval: integer range `1` to `1440` minutes.
+- `category_matching_mode` in: `parent_only`, `parent_preferred`, `child_only`, `child_preferred`.
+- Upload limits and allowed types are validated exclusively from global config (not user settings).
+
+### Frontend Scope (Vue + Bootstrap)
+
+- New component: `resources/js/user/AiBehaviorSettings.vue`
+  - Add as new card in `resources/js/user/MyProfile.vue`.
+  - Form style and interaction should follow existing `AiProviderSettings.vue` and `GoogleDriveSettings.vue` conventions (`vform`, toasts, tooltip behavior).
+- Extend component: `resources/js/user/GoogleDriveSettings.vue`
+  - Add `sync_interval_minutes` field to create/update/test flows where relevant.
+- Optional navigation tweak:
+  - Keep `AiDocumentActions.vue` links pointing to `/user/settings`; no route split required.
+- UX warning:
+  - Show non-blocking warning in settings UI when child-only/child-preferred is selected but user has no active child categories.
+
+### Runtime Consumer Changes (Downstream Usage)
+
+- Hard AI-off enforcement:
+  - Block manual upload and reprocess endpoints with clear API error.
+  - Ensure queued processors avoid processing when AI is disabled.
+- Upload constraints:
+  - Keep file count, file size, and allowed types as global hard limits in validation and import paths.
+- Matching and thresholds:
+  - `AssetMatchingService`: similarity threshold and max suggestions from user settings.
+  - `ProcessDocumentService`: auto-accept threshold from user settings.
+  - `DuplicateDetectionService`: date window, tolerance, and similarity threshold from user settings.
+- OCR/image behavior:
+  - Use per-user OCR language.
+  - Use per-user Vision resize dimensions/quality.
+  - Support per-user optional Tesseract image limits.
+- Category matching mode:
+  - Shape category list and prompt guidance according to selected mode.
+  - Preserve default as `child_preferred`.
+- Google Drive cadence:
+  - `GoogleDriveMonitorJob` keeps every-minute scheduler trigger.
+  - Eligibility check uses each config's `sync_interval_minutes`.
+
+### Data Backfill and Precedence
+
+- Backfill strategy: eager creation of `ai_user_settings` rows for existing users at deploy-time migration.
+- Initial values sourced from currently effective config/hardcoded defaults.
+- Precedence order at runtime:
+  1. User DB value
+  2. Global config fallback
+  3. Safe hardcoded fallback
+
+### Work Breakdown (Recommended Order)
+
+1. Add migrations (`ai_user_settings`, `google_drive_configs.sync_interval_minutes`) and eager backfill.
+2. Add model/relation/factory updates (`AiUserSettings`, `User`, `GoogleDriveConfig`).
+3. Add resolver service (`AiUserSettingsResolver`) and category warning helper logic.
+4. Add API endpoints (`show`, `update`) with policy/request/resource.
+5. Integrate `ai_enabled` guard into upload/reprocess/processing entry points.
+6. Integrate thresholds into matching/duplicate/auto-accept services.
+7. Integrate OCR language and image constraints into OCR/image services.
+8. Integrate per-config Google Drive sync cadence in monitor job.
+9. Add new Vue settings card and extend Google Drive settings form.
+10. Add/adjust tests (Feature, Unit, Browser/Dusk) and run focused test suite.
+
+### Test Additions Required
+
+- Feature API:
+  - `AiUserSettingsApiV1Test` for auth, show/update, validation, and ownership behavior.
+  - Extend `GoogleDriveConfigApiV1Test` for `sync_interval_minutes`.
+- Unit:
+  - Resolver tests for fallback precedence.
+  - Service tests for per-user threshold usage (`AssetMatchingService`, `DuplicateDetectionService`, `ProcessDocumentService`).
+- Feature/Job:
+  - Extend `GoogleDriveMonitorJobTest` to assert per-config cadence.
+  - Extend document upload/reprocess tests for hard AI-off behavior.
+  - Extend upload/import tests to confirm global hard-limit behavior remains enforced.
+- Browser/Dusk:
+  - New coverage for `AiBehaviorSettings.vue` and updated `GoogleDriveSettings.vue` sync interval field.
+
+## Finalized Decisions (From Review Inputs)
+
+1. AI-off behavior for non-manual sources: If AI is disabled, skip creation of new `AiDocument` records from email and Google Drive sources.
+2. Existing queued/in-flight documents when AI is turned off: Let already claimed jobs finish; block new jobs from starting.
+3. Upload bounds ownership: Keep upload max file count and max file size as global hard limits only.
+4. Allowed file types ownership: Keep allowed file types as global allowlist only (no user override).
+5. Tesseract image limits behavior: If limits are configured and exceeded, downscale automatically; add warning logs (and optional UI warning where available).
+6. Category mode semantics: `parent_preferred` and `child_preferred` must be strict, deterministic behavior (not soft guidance).
+7. Child-only mode without child categories: Warning only; do not block save/update.
+8. Google Drive sync interval granularity: Keep `sync_interval_minutes` per config now and in future multi-config scenarios.
+9. AI settings API ergonomics: PATCH-only updates; no dedicated reset-to-default endpoint.
+10. Rollback policy: On rollback, drop AI settings schema additions without back-migrating values.
+11. UI placement: Keep editing on `/user/settings`; keep/discover via links from `/ai-documents`.
+12. Conversation-chain migration: Explicitly out of scope for this settings implementation milestone.
+
