@@ -295,7 +295,21 @@ class TransactionController extends Controller implements HasMiddleware
                     : null;
             }
 
-            return new TransactionItem($itemData);
+            $transactionItem = new TransactionItem([
+                'category_id' => $categoryId,
+                'amount' => $itemData['amount'] ?? 0,
+                'comment' => $itemData['comment'] ?? null,
+            ]);
+
+            // Preserve AI-context attributes so the standalone finalize form can render AI recommendation controls.
+            $transactionItem->setAttribute('category_full_name', $itemData['category_full_name'] ?? null);
+            $transactionItem->setAttribute('recommended_category_id', $recommendedCategoryId);
+            $transactionItem->setAttribute('recommended_category_full_name', $itemData['recommended_category_full_name'] ?? null);
+            $transactionItem->setAttribute('description', $itemData['description'] ?? null);
+            $transactionItem->setAttribute('match_type', $itemData['match_type'] ?? null);
+            $transactionItem->setAttribute('confidence_score', $itemData['confidence_score'] ?? null);
+
+            return $transactionItem;
         });
     }
 }

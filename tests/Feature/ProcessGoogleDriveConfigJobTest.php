@@ -254,10 +254,13 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
                 }
                 file_put_contents($dest, 'pdf content');
             },
-            'deleteFile' => function ($fileId, $creds) use (&$deleteCallCount) {
+            'deleteFile' => function ($fileId, $creds, $folderId) use (&$deleteCallCount, $config) {
                 $deleteCallCount++;
                 if ($fileId !== 'file-123') {
                     throw new Exception('Unexpected file ID');
+                }
+                if ($folderId !== $config->folder_id) {
+                    throw new Exception('Unexpected folder ID');
                 }
             },
         ]);
@@ -288,7 +291,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
                 }
                 file_put_contents($dest, 'pdf content');
             },
-            'deleteFile' => fn () => throw new Exception('Delete failed'),
+            'deleteFile' => fn (...$args) => throw new Exception('Delete failed'),
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 

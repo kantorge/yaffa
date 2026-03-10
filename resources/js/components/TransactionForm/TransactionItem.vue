@@ -10,24 +10,32 @@
       :class="aiAlertClass"
     >
       <div class="d-flex align-items-center gap-3">
-        <button
-          v-if="categoryIdData"
-          type="button"
-          class="btn btn-sm btn-link p-0 border-0 shadow-none"
-          :class="learnRecommendation ? 'text-success' : 'text-muted'"
-          :title="learnRecommendationTooltip"
-          :aria-label="learnRecommendationTooltip"
-          :aria-pressed="learnRecommendation ? 'true' : 'false'"
-          @click="toggleLearnRecommendation"
-        >
-          <i
-            class="fa fa-lg"
-            :class="learnRecommendation ? 'fa-toggle-on' : 'fa-toggle-off'"
-          ></i>
-        </button>
+        <i class="fa fa-receipt me-2"></i>
+
+        <div class="d-inline-flex align-items-center">
+          <input
+            :id="learnRecommendationToggleId"
+            type="checkbox"
+            class="btn-check"
+            :disabled="!categoryIdData"
+            v-model="learnRecommendation"
+            :title="learnRecommendationTooltip"
+            :aria-label="learnRecommendationTooltip"
+            autocomplete="off"
+            value="1"
+            @change="onLearnRecommendationChange"
+          />
+          <label
+            class="btn btn-outline-dark btn-sm d-inline-flex align-items-center gap-1"
+            :for="learnRecommendationToggleId"
+            :title="learnRecommendationTooltip"
+            :aria-label="learnRecommendationTooltip"
+          >
+            <i class="fa fa-database" aria-hidden="true"></i>
+          </label>
+        </div>
 
         <div>
-          <i class="fa fa-receipt me-2"></i>
           {{ description }}
           <span v-if="showAddButton">
             → {{ recommended_category_full_name }}
@@ -290,16 +298,32 @@
         return 'bg-warning';
       },
 
+      learnRecommendationToggleId() {
+        return `learn-recommendation-toggle-${this.id}`;
+      },
+
       learnRecommendationTooltip() {
+        if (!this.categoryIdData) {
+          return __('Select category first to store learning');
+        }
+
         if (this.learnRecommendation) {
           return this.recommended_category_id
-            ? __('Disable learning from this AI recommendation')
-            : __('Disable learning from this selected category');
+            ? __(
+                'AI recommendation will be stored for future matches. Click to disable.',
+              )
+            : __(
+                'Selected category will be stored for future matches. Click to disable.',
+              );
         }
 
         return this.recommended_category_id
-          ? __('Enable learning from this AI recommendation')
-          : __('Enable learning from this selected category');
+          ? __(
+              'AI recommendation will not be stored for future matches. Click to enable.',
+            )
+          : __(
+              'Selected category will not be stored for future matches. Click to enable.',
+            );
       },
 
       /**
@@ -635,11 +659,6 @@
           itemId: this.id,
           learnRecommendation: this.learnRecommendation,
         });
-      },
-
-      toggleLearnRecommendation() {
-        this.learnRecommendation = !this.learnRecommendation;
-        this.onLearnRecommendationChange();
       },
     },
 

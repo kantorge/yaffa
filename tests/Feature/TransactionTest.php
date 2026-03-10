@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
+use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -335,6 +336,18 @@ class TransactionTest extends TestCase
             )
             ->create(['active' => true]);
 
+        $expenseCategory = Category::factory()->create([
+            'user_id' => $this->user->id,
+            'active' => true,
+            'name' => 'Groceries',
+        ]);
+
+        $recommendedCategory = Category::factory()->create([
+            'user_id' => $this->user->id,
+            'active' => true,
+            'name' => 'Food',
+        ]);
+
         $draftData = [
             'config_type' => 'standard',
             'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
@@ -344,6 +357,16 @@ class TransactionTest extends TestCase
                 'account_to_id' => $payee->id,
                 'amount_from' => 100,
                 'amount_to' => 100,
+            ],
+            'transaction_items' => [
+                [
+                    'amount' => 100,
+                    'category_id' => $expenseCategory->id,
+                    'recommended_category_id' => $recommendedCategory->id,
+                    'description' => 'milk',
+                    'match_type' => 'ai',
+                    'confidence_score' => 0.82,
+                ],
             ],
         ];
 
@@ -355,5 +378,16 @@ class TransactionTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertViewIs('transactions.form');
         $response->assertViewHas('action', 'finalize');
+
+        /** @var Transaction $transaction */
+        $transaction = $response->viewData('transaction');
+        $this->assertCount(1, $transaction->transactionItems);
+
+        $item = $transaction->transactionItems->first();
+        $this->assertSame($recommendedCategory->id, $item->getAttribute('recommended_category_id'));
+        $this->assertSame('milk', $item->getAttribute('description'));
+        $this->assertSame('ai', $item->getAttribute('match_type'));
+        $this->assertSame(0.82, $item->getAttribute('confidence_score'));
+        $this->assertSame($recommendedCategory->full_name, $item->getAttribute('recommended_category_full_name'));
     }
 }

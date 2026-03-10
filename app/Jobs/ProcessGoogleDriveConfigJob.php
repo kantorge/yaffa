@@ -122,7 +122,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 // Delete file from Drive if enabled
                 if ($config->delete_after_import) {
                     try {
-                        $driveService->deleteFile($file['id'], $credentials);
+                        $driveService->deleteFile($file['id'], $credentials, $config->folder_id);
                     } catch (Exception $e) {
                         Log::warning('Failed to delete file from Google Drive', ['file_id' => $file['id'], 'error' => $e->getMessage()]);
                     }

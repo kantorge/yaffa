@@ -66,8 +66,18 @@ if (routeMap.has(current)) {
 }
 
 // More specific loaders
-if (route('transactions.createFromDraft') === window.location.href) {
-    loadModule('transactions/standard');
+const createFromDraftPath = new URL(
+    route('transactions.createFromDraft'),
+    window.location.origin,
+).pathname;
+const currentPath = window.location.pathname;
+
+if (currentPath === createFromDraftPath) {
+    if (document.querySelector('transaction-container-investment')) {
+        loadModule('transactions/investment');
+    } else {
+        loadModule('transactions/standard');
+    }
 }
 
 if (current === 'account-entity.index' && ['account', 'payee'].includes(route().params.type)) {

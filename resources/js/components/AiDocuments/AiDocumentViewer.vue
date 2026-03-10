@@ -698,6 +698,62 @@
     return draft;
   };
 
+  const shouldOpenStandaloneFinalizeView = (draft) => {
+    if (draft.config_type !== 'standard') {
+      return false;
+    }
+
+    return (
+      Array.isArray(draft.transaction_items) &&
+      draft.transaction_items.length > 3
+    );
+  };
+
+  const submitDraftToStandaloneFinalizeView = (draft) => {
+    const csrfToken =
+      window.csrfToken ||
+      window.document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content');
+
+    if (!csrfToken) {
+      toastHelpers.showErrorToast(__('Unable to open finalize view.'));
+      return;
+    }
+
+    const form = window.document.createElement('form');
+    form.method = 'POST';
+
+    const callbackValue =
+      new URLSearchParams(window.location.search).get('callback') || 'back';
+    const targetUrl = new URL(
+      route('transactions.createFromDraft'),
+      window.location.origin,
+    );
+    targetUrl.searchParams.set('callback', callbackValue);
+
+    form.action = targetUrl.toString();
+    form.style.display = 'none';
+
+    const addHiddenField = (name, value) => {
+      const input = window.document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
+
+    addHiddenField('_token', csrfToken);
+    addHiddenField('transaction', JSON.stringify(draft));
+
+    if (aiDocument.value.id) {
+      addHiddenField('ai_document_id', String(aiDocument.value.id));
+    }
+
+    window.document.body.appendChild(form);
+    form.submit();
+  };
+
   const finalizeDocument = () => {
     // The button should be disabled if there's no draft data, but we add a check here just in case
     if (!hasDraftData.value) {
@@ -706,6 +762,11 @@
     }
 
     const draft = buildDraftTransaction();
+
+    if (shouldOpenStandaloneFinalizeView(draft)) {
+      submitDraftToStandaloneFinalizeView(draft);
+      return;
+    }
 
     // Always dispatch event to modal (for both investment and standard transactions)
     window.dispatchEvent(
