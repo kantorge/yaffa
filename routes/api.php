@@ -5,6 +5,7 @@ use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
+use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
@@ -61,6 +62,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('ai.config.destroy');
     Route::post('/ai/config/test', [AiProviderConfigApiController::class, 'test'])
         ->name('ai.config.test');
+
+    // AiUserSettings endpoints
+    Route::get('/ai/settings', [AiUserSettingsApiController::class, 'show'])
+        ->name('ai.settings.show');
+    Route::patch('/ai/settings', [AiUserSettingsApiController::class, 'update'])
+        ->name('ai.settings.update');
 
     // GoogleDriveConfig endpoints
     Route::get('/google-drive/config', [GoogleDriveConfigApiController::class, 'show'])

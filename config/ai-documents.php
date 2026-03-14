@@ -19,28 +19,10 @@ return [
     ],
 
     /*
-     * Asset matching similarity threshold
-     */
-    'asset_matching' => [
-        'similarity_threshold' => 0.5,
-        'max_suggestions' => 10,
-    ],
-
-    /*
-     * Duplicate detection configuration
-     */
-    'duplicate_detection' => [
-        'date_window_days' => 3,
-        'amount_tolerance_percent' => 10,
-        'similarity_threshold' => 0.5,
-    ],
-
-    /*
      * Google Drive monitoring configuration
      */
     'google_drive' => [
         'enabled' => env('AI_GOOGLE_DRIVE_ENABLED', false),
-        'sync_interval_minutes' => env('AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES', 15),
     ],
 
     /*
@@ -80,7 +62,6 @@ return [
     'ocr' => [
         'tesseract_enabled' => env('TESSERACT_ENABLED', false),
         'tesseract_mode' => env('TESSERACT_MODE', 'binary'), // 'binary' or 'http'
-        'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
 
         // Binary mode (local execution on same container)
         'tesseract_binary' => [
@@ -94,15 +75,6 @@ return [
             'timeout' => env('TESSERACT_HTTP_TIMEOUT', 30),
             'endpoint' => '/api/v1/ocr', // Path to OCR endpoint on HTTP server
         ],
-    ],
-
-    /*
-     * Image processing
-     */
-    'image_processing' => [
-        'max_width' => 2048,
-        'max_height' => 2048,
-        'quality' => 85,
     ],
 
 ];

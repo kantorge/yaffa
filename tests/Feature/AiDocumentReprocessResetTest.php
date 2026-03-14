@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\AiProcessingJob;
+use App\Models\AiUserSettings;
 use App\Models\AiDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +19,7 @@ class AiDocumentReprocessResetTest extends TestCase
         Bus::fake();
 
         $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
 
         $document = AiDocument::factory()->for($user)->create([
             'status' => 'ready_for_review',

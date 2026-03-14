@@ -18,6 +18,8 @@ class OcrService
 {
     private ImagePreprocessingService $imagePreprocessingService;
 
+    private const DEFAULT_OCR_LANGUAGE = 'eng';
+
     public function __construct()
     {
         $this->imagePreprocessingService = new ImagePreprocessingService();
@@ -33,17 +35,18 @@ class OcrService
      *
      * @param string $filePath Full file path to the image
      * @param AiProviderConfig|null $visionConfig User's AI config for Vision API fallback
+     * @param array<string, mixed>|null $aiUserSettings Resolved per-user AI settings
      * @return string Extracted text from the image
      *
      * @throws OcrUnavailableException if no OCR method is available
      * @throws Exception if OCR processing fails
      */
-    public function extract(string $filePath, ?AiProviderConfig $visionConfig = null): string
+    public function extract(string $filePath, ?AiProviderConfig $visionConfig = null, ?array $aiUserSettings = null): string
     {
         // Try Tesseract first (local, cheapest)
         if (tesseract_is_available()) {
             try {
-                $text = $this->extractWithTesseract($filePath);
+                $text = $this->extractWithTesseract($filePath, $aiUserSettings);
                 if ($text) {
                     return $text;
                 }
@@ -55,7 +58,7 @@ class OcrService
         // Fall back to Vision AI
         if ($visionConfig?->vision_enabled && $this->modelSupportsVision($visionConfig)) {
             try {
-                $text = $this->extractWithVisionApi($filePath, $visionConfig);
+                $text = $this->extractWithVisionApi($filePath, $visionConfig, $aiUserSettings);
 
                 return $text;
             } catch (Exception $e) {
@@ -82,15 +85,23 @@ class OcrService
      *
      * @throws Exception if Tesseract fails
      */
-    private function extractWithTesseract(string $filePath): string
+    private function extractWithTesseract(string $filePath, ?array $aiUserSettings = null): string
     {
         $mode = config('ai-documents.ocr.tesseract_mode', 'binary');
+        $language = $this->resolveOcrLanguage($aiUserSettings);
+        $preparedFilePath = $this->prepareImageForTesseract($filePath, $aiUserSettings);
 
-        return match ($mode) {
-            'http' => $this->extractWithTesseractHttp($filePath),
-            'binary' => $this->extractWithTesseractBinary($filePath),
-            default => throw new Exception("Unknown Tesseract mode: {$mode}"),
-        };
+        try {
+            return match ($mode) {
+                'http' => $this->extractWithTesseractHttp($preparedFilePath, $language),
+                'binary' => $this->extractWithTesseractBinary($preparedFilePath, $language),
+                default => throw new Exception("Unknown Tesseract mode: {$mode}"),
+            };
+        } finally {
+            if ($preparedFilePath !== $filePath) {
+                $this->imagePreprocessingService->cleanup($preparedFilePath);
+            }
+        }
     }
 
     /**
@@ -101,17 +112,16 @@ class OcrService
      *
      * @throws Exception if Tesseract fails
      */
-    private function extractWithTesseractBinary(string $filePath): string
+    private function extractWithTesseractBinary(string $filePath, string $language): string
     {
         try {
             $tesseractPath = config('ai-documents.ocr.tesseract_binary.path');
-            $language = config('ai-documents.ocr.tesseract_language', 'eng');
 
             $process = new Process([$tesseractPath, $filePath, 'stdout', '-l', $language]);
             $process->setTimeout(30); // Tesseract can take time on large images
             $process->run();
 
-            if (!$process->isSuccessful()) {
+            if (! $process->isSuccessful()) {
                 throw new ProcessFailedException($process);
             }
 
@@ -141,14 +151,13 @@ class OcrService
      *
      * @throws Exception if Tesseract HTTP service fails
      */
-    private function extractWithTesseractHttp(string $filePath): string
+    private function extractWithTesseractHttp(string $filePath, string $language): string
     {
         try {
             $host = config('ai-documents.ocr.tesseract_http.host');
             $port = config('ai-documents.ocr.tesseract_http.port');
             $timeout = (int) config('ai-documents.ocr.tesseract_http.timeout', 30);
             $endpoint = config('ai-documents.ocr.tesseract_http.endpoint', '/api/v1/ocr');
-            $language = config('ai-documents.ocr.tesseract_language', 'eng');
 
             $url = "http://{$host}:{$port}{$endpoint}";
 
@@ -172,7 +181,7 @@ class OcrService
 
             $result = json_decode((string) $response->getBody(), true);
 
-            if (!is_array($result)) {
+            if (! is_array($result)) {
                 throw new Exception('Invalid response from Tesseract server');
             }
 
@@ -211,13 +220,18 @@ class OcrService
      * @throws Exception if Vision API call fails
      * @throws ClientExceptionInterface if HTTP request fails
      */
-    private function extractWithVisionApi(string $filePath, AiProviderConfig $config): string
+    private function extractWithVisionApi(string $filePath, AiProviderConfig $config, ?array $aiUserSettings = null): string
     {
         $resizedPath = $filePath;
 
         try {
             // Resize image for Vision API (reduces token costs)
-            $resizedPath = $this->imagePreprocessingService->resizeForVisionApi($filePath);
+            $resizedPath = $this->imagePreprocessingService->resizeForVisionApi(
+                filePath: $filePath,
+                maxWidth: $this->resolveIntSetting($aiUserSettings, 'image_max_width_vision'),
+                maxHeight: $this->resolveIntSetting($aiUserSettings, 'image_max_height_vision'),
+                quality: $this->resolveIntSetting($aiUserSettings, 'image_quality_vision'),
+            );
 
             // Build vision prompt
             $prompt = 'Please extract all text from this image. Return ONLY the extracted text, nothing else. Ignore any non-text content or hand-writing.';
@@ -286,5 +300,60 @@ class OcrService
         $visionAvailable = $visionConfig?->vision_enabled && $this->modelSupportsVision($visionConfig);
 
         return $tesseractAvailable || $visionAvailable;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $aiUserSettings
+     */
+    private function prepareImageForTesseract(string $filePath, ?array $aiUserSettings = null): string
+    {
+        $maxWidth = $this->resolveIntSetting($aiUserSettings, 'image_max_width_tesseract');
+        $maxHeight = $this->resolveIntSetting($aiUserSettings, 'image_max_height_tesseract');
+
+        if ($maxWidth === null && $maxHeight === null) {
+            return $filePath;
+        }
+
+        $preparedPath = $this->imagePreprocessingService->resizeForTesseract($filePath, $maxWidth, $maxHeight);
+
+        if ($preparedPath !== $filePath) {
+            Log::warning('Image downscaled before Tesseract OCR based on user settings', [
+                'max_width' => $maxWidth,
+                'max_height' => $maxHeight,
+                'file_path' => $filePath,
+            ]);
+        }
+
+        return $preparedPath;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $aiUserSettings
+     */
+    private function resolveOcrLanguage(?array $aiUserSettings = null): string
+    {
+        $language = $aiUserSettings['ocr_language'] ?? self::DEFAULT_OCR_LANGUAGE;
+
+        if (! is_string($language) || $language === '') {
+            return self::DEFAULT_OCR_LANGUAGE;
+        }
+
+        return $language;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $aiUserSettings
+     */
+    private function resolveIntSetting(?array $aiUserSettings, string $key): ?int
+    {
+        if (! is_array($aiUserSettings)) {
+            return null;
+        }
+
+        if (! array_key_exists($key, $aiUserSettings) || $aiUserSettings[$key] === null) {
+            return null;
+        }
+
+        return (int) $aiUserSettings[$key];
     }
 }

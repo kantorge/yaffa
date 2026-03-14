@@ -7,6 +7,8 @@ use App\Models\AiDocumentFile;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Investment;
+use App\Models\User;
+use App\Services\AiUserSettingsResolver;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,6 +21,11 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AiDocumentController extends Controller implements HasMiddleware
 {
+    public function __construct(
+        private AiUserSettingsResolver $aiUserSettingsResolver
+    ) {
+    }
+
     public static function middleware(): array
     {
         return [
@@ -39,6 +46,9 @@ class AiDocumentController extends Controller implements HasMiddleware
          * @name("ai-documents.index")
          * @middlewares("web", "auth", "verified")
          */
+        /** @var User $user */
+        $user = $request->user();
+
         JavaScriptFacade::put([
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
             'aiDocumentSourceLabels' => AiDocument::sourceLabels(),
@@ -46,6 +56,8 @@ class AiDocumentController extends Controller implements HasMiddleware
                 'maxFilesPerSubmission' => config('ai-documents.file_upload.max_files_per_submission'),
                 'maxFileSize' => config('ai-documents.file_upload.max_file_size_mb'),
                 'allowedTypes' => config('ai-documents.file_upload.allowed_types'),
+                'aiProcessingEnabled' => $this->aiUserSettingsResolver->isEnabledForUser($user),
+                'aiSettingsUrl' => route('user.ai-settings'),
             ],
         ]);
 

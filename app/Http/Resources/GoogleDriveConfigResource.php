@@ -22,6 +22,7 @@ class GoogleDriveConfigResource extends JsonResource
             'folder_id' => $this->folder_id,
             'delete_after_import' => $this->delete_after_import,
             'enabled' => $this->enabled,
+            'sync_interval_minutes' => $this->sync_interval_minutes,
             'last_sync_at' => $this->last_sync_at,
             'last_error' => $this->last_error,
             'error_count' => $this->error_count,

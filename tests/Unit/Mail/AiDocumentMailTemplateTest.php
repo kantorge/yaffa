@@ -61,6 +61,6 @@ class AiDocumentMailTemplateTest extends TestCase
         $mailable->assertSeeInHtml('Reprocess');
         $mailable->assertSeeInHtml('Open AI Settings');
         $mailable->assertSeeInHtml(route('ai-documents.show', $document->id));
-        $mailable->assertSeeInHtml(route('user.settings'));
+        $mailable->assertSeeInHtml(route('user.ai-settings'));
     }
 }

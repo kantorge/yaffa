@@ -9,6 +9,19 @@ use App\Models\User;
 
 class DuplicateDetectionService
 {
+    private const int DEFAULT_DATE_WINDOW_DAYS = 3;
+
+    private const float DEFAULT_AMOUNT_TOLERANCE_PERCENT = 10.0;
+
+    private const float DEFAULT_SIMILARITY_THRESHOLD = 0.5;
+
+    private ?AiUserSettingsResolver $settingsResolver = null;
+
+    public function __construct(?AiUserSettingsResolver $settingsResolver = null)
+    {
+        $this->settingsResolver = $settingsResolver;
+    }
+
     /**
      * Find potential duplicate transactions based on extracted transaction data
      *
@@ -17,8 +30,10 @@ class DuplicateDetectionService
      */
     public function findDuplicates(User $user, array $extractedData): array
     {
-        $dateWindowDays = config('ai-documents.duplicate_detection.date_window_days', 3);
-        $amountTolerancePercent = config('ai-documents.duplicate_detection.amount_tolerance_percent', 10);
+        $resolvedSettings = $this->resolveSettings($user);
+        $dateWindowDays = max(1, (int) ($resolvedSettings['duplicate_date_window_days'] ?? self::DEFAULT_DATE_WINDOW_DAYS));
+        $amountTolerancePercent = (float) ($resolvedSettings['duplicate_amount_tolerance_percent'] ?? self::DEFAULT_AMOUNT_TOLERANCE_PERCENT);
+        $similarityThreshold = (float) ($resolvedSettings['duplicate_similarity_threshold'] ?? self::DEFAULT_SIMILARITY_THRESHOLD);
 
         $date = \Carbon\Carbon::parse($extractedData['date']);
         $startDate = $date->clone()->subDays($dateWindowDays);
@@ -44,7 +59,7 @@ class DuplicateDetectionService
 
             $similarity = $this->calculateSimilarity($extractedData, $transaction, $amountTolerancePercent);
 
-            if ($similarity > config('ai-documents.duplicate_detection.similarity_threshold', 0.5)) {
+            if ($similarity > $similarityThreshold) {
                 $matches[] = [
                     'id' => $transaction->id,
                     'similarity' => round($similarity, 3),
@@ -162,5 +177,15 @@ class DuplicateDetectionService
         }
 
         return 0;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveSettings(User $user): array
+    {
+        $resolver = $this->settingsResolver ?? app(AiUserSettingsResolver::class);
+
+        return $resolver->resolveForUser($user);
     }
 }

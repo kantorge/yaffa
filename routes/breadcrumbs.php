@@ -251,3 +251,7 @@ Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('My profile'), route('user.settings'));
 });
+Breadcrumbs::for('user.ai-settings', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('AI document settings'), route('user.ai-settings'));
+});

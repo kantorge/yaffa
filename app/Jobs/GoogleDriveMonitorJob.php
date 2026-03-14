@@ -20,6 +20,8 @@ class GoogleDriveMonitorJob implements ShouldQueue
 
     public $timeout = 60;
 
+    private const DEFAULT_SYNC_INTERVAL_MINUTES = 15;
+
     public function handle(): void
     {
         // Skip if Google Drive feature is disabled
@@ -27,15 +29,26 @@ class GoogleDriveMonitorJob implements ShouldQueue
             return;
         }
 
+        $now = now();
+
         // Collect all enabled configs and dispatch a job for each
         // Check if the configured time interval has passed since the last sync to avoid unnecessary job dispatching
         $configs = GoogleDriveConfig::query()
             ->where('enabled', true)
-            ->where(function ($query) {
-                $query->whereNull('last_sync_at')
-                    ->orWhere('last_sync_at', '<=', now()->subMinutes(config('ai-documents.google_drive.sync_interval_minutes', 15)));
+            ->whereHas('user.aiUserSettings', function ($query) {
+                $query->where('ai_enabled', true);
             })
-            ->get();
+            ->get()
+            ->filter(function (GoogleDriveConfig $config) use ($now): bool {
+                if ($config->last_sync_at === null) {
+                    return true;
+                }
+
+                $syncIntervalMinutes = max(1, (int) ($config->sync_interval_minutes ?: self::DEFAULT_SYNC_INTERVAL_MINUTES));
+
+                return $config->last_sync_at->copy()->addMinutes($syncIntervalMinutes)->lessThanOrEqualTo($now);
+            })
+            ->values();
 
         foreach ($configs as $config) {
             ProcessGoogleDriveConfigJob::dispatch($config->id);

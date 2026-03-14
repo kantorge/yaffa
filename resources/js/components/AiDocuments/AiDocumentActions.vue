@@ -30,25 +30,13 @@
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
-        {{ __('AI provider settings') }}
+        {{ __('AI document settings') }}
         <a
           class="btn btn-sm btn-outline-primary"
-          :href="settingsUrl"
-          :title="__('AI provider settings')"
+          :href="aiSettingsUrl"
+          :title="__('AI document settings')"
         >
           <i class="fa fa-fw fa-sliders"></i>
-        </a>
-      </li>
-      <li
-        class="list-group-item d-flex justify-content-between align-items-center"
-      >
-        {{ __('Google Drive settings') }}
-        <a
-          class="btn btn-sm btn-outline-primary"
-          :href="settingsUrl"
-          :title="__('Google Drive settings')"
-        >
-          <i class="fa fa-fw fa-cloud"></i>
         </a>
       </li>
     </ul>
@@ -61,5 +49,5 @@
   defineEmits(['open-upload-form']);
 
   const route = window.route;
-  const settingsUrl = route('user.settings');
+  const aiSettingsUrl = route('user.ai-settings');
 </script>

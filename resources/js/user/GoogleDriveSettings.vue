@@ -12,6 +12,17 @@
         </div>
         <div>
           <span
+            v-if="!aiProcessingEnabled"
+            class="fa fa-exclamation-triangle text-warning me-2"
+            :title="
+              __(
+                'These settings can be provided, but will not take effect until AI processing is enabled.',
+              )
+            "
+            data-coreui-toggle="tooltip"
+            data-coreui-placement="top"
+          ></span>
+          <span
             class="fa fa-info-circle text-info"
             :title="
               __(
@@ -238,6 +249,39 @@
             </div>
           </div>
 
+          <div class="row mb-3">
+            <label for="sync_interval_minutes" class="col-form-label col-sm-3">
+              {{ __('Sync Interval (minutes)') }}
+            </label>
+            <div class="col-sm-9">
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="sync_interval_minutes"
+                  name="sync_interval_minutes"
+                  v-model.number="form.sync_interval_minutes"
+                  min="1"
+                  max="1440"
+                  dusk="sync-interval-minutes"
+                />
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __(
+                      'How often (in minutes) to check for new files. Minimum 1, maximum 1440 (24 hours).',
+                    )
+                  "
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
+              </div>
+              <HasError field="sync_interval_minutes" :form="form" />
+            </div>
+          </div>
+
           <div v-if="hasConfig" class="row mb-3">
             <label class="col-form-label col-sm-3">
               {{ __('Last sync') }}
@@ -388,6 +432,12 @@
 
   export default {
     name: 'GoogleDriveSettings',
+    props: {
+      aiProcessingEnabled: {
+        type: Boolean,
+        default: true,
+      },
+    },
     components: {
       Button,
       HasError,
@@ -398,6 +448,7 @@
         folder_id: '',
         delete_after_import: false,
         enabled: true,
+        sync_interval_minutes: 15,
       }),
       configId: null,
       hasConfig: false,
@@ -475,6 +526,8 @@
               this.form.delete_after_import =
                 response.data.delete_after_import || false;
               this.form.enabled = response.data.enabled ?? true;
+              this.form.sync_interval_minutes =
+                response.data.sync_interval_minutes ?? 15;
               this.lastSyncAt = response.data.last_sync_at;
               this.lastError = response.data.last_error;
               this.hasConfig = true;

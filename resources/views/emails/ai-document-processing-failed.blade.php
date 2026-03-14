@@ -21,7 +21,7 @@
 
 {{ __('mail.ai_document_processing_failed.settings_hint') }}
 
-@component('mail::button', ['url' => route('user.settings')])
+@component('mail::button', ['url' => route('user.ai-settings')])
 {{ __('mail.ai_document_processing_failed.button_open_settings') }}
 @endcomponent
 

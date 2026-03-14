@@ -8,6 +8,7 @@ use App\Listeners\CreateAiDocumentFromSource;
 use App\Mail\TestMail;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\AiUserSettings;
 use App\Models\ReceivedMail;
 use App\Models\User;
 use Illuminate\Events\CallQueuedListener;
@@ -138,6 +139,7 @@ class IncomingEmailTest extends TestCase
         Storage::fake('local');
 
         $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
 
         $mail = ReceivedMail::factory()
             ->for($user)
@@ -147,7 +149,7 @@ class IncomingEmailTest extends TestCase
                 'text' => 'Hello',
             ]);
 
-        $listener = new CreateAiDocumentFromSource();
+        $listener = new CreateAiDocumentFromSource(app(\App\Services\AiUserSettingsResolver::class));
         $listener->handleEmailReceived(new EmailReceived($mail));
 
         $document = AiDocument::first();
@@ -163,6 +165,28 @@ class IncomingEmailTest extends TestCase
         $this->assertNotNull($file);
         Storage::disk('local')->assertExists($file->file_path);
         $this->assertSame('txt', $file->file_type);
+    }
+
+    public function test_received_email_does_not_create_ai_document_when_ai_is_disabled(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        AiUserSettings::factory()->create(['user_id' => $user->id, 'ai_enabled' => false]);
+
+        $mail = ReceivedMail::factory()
+            ->for($user)
+            ->create([
+                'subject' => 'Disabled AI subject',
+                'html' => '<p>Hello</p>',
+                'text' => 'Hello',
+            ]);
+
+        $listener = new CreateAiDocumentFromSource(app(\App\Services\AiUserSettingsResolver::class));
+        $listener->handleEmailReceived(new EmailReceived($mail));
+
+        $this->assertSame(0, AiDocument::count());
+        $this->assertSame(0, AiDocumentFile::count());
     }
 
     public function test_email_without_subject_is_stored_with_default_subject(): void

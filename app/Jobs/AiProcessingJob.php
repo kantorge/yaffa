@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\AiDocumentProcessedEvent;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Models\AiDocument;
+use App\Services\AiUserSettingsResolver;
 use App\Services\ProcessDocumentService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -45,23 +46,40 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
     /**
      * Execute the job
      */
-    public function handle(ProcessDocumentService $service): void
+    public function handle(ProcessDocumentService $service, AiUserSettingsResolver $settingsResolver): void
     {
+        $document = $this->document->fresh(['user']);
+
+        if (! $document) {
+            return;
+        }
+
+        if (! $settingsResolver->isEnabledForUser($document->user)) {
+            Log::info("Skipping document {$document->id} processing because AI is disabled for user {$document->user_id}");
+
+            if ($document->status !== 'ready_for_processing') {
+                $document->status = 'ready_for_processing';
+                $document->save();
+            }
+
+            return;
+        }
+
         try {
             // Process the document
-            $result = $service->process($this->document);
+            $result = $service->process($document);
 
             // Success - document status already updated to ready_for_review by service
-            Log::info("Document {$this->document->id} processed successfully");
+            Log::info("Document {$document->id} processed successfully");
 
             // Dispatch success event
-            AiDocumentProcessedEvent::dispatch($this->document);
+            AiDocumentProcessedEvent::dispatch($document);
         } catch (Exception $e) {
-            Log::error("Document {$this->document->id} processing failed: {$e->getMessage()}");
+            Log::error("Document {$document->id} processing failed: {$e->getMessage()}");
 
             // Dispatch failure event
             AiDocumentProcessingFailedEvent::dispatch(
-                $this->document,
+                $document,
                 $e->getMessage(),
                 $e::class,
                 (int) $e->getCode(),
@@ -101,6 +119,4 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
 
         return false;
     }
-
-
 }

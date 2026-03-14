@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\AiUserSettings;
 use App\Models\ReceivedMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +20,7 @@ class SimulateIncomingEmailCommandTest extends TestCase
         Storage::fake('local');
 
         $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
 
         $this->artisan('app:simulate-incoming-email', [
             '--from' => $user->email,

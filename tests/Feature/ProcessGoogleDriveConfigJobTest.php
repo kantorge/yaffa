@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Events\DocumentImported;
 use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\AiDocument;
+use App\Models\AiUserSettings;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use App\Notifications\GoogleDriveImportFailed;
 use App\Notifications\GoogleDriveImportSuccess;
+use App\Services\AiUserSettingsResolver;
 use App\Services\GoogleDriveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -35,27 +37,27 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         $mock = $this->createMockService(['listNewFiles' => fn () => throw new Exception('Should not be called')]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob(999))->handle(app(GoogleDriveService::class));
+        $this->runJob(999);
 
         Event::assertNotDispatched(DocumentImported::class);
     }
 
     public function test_job_skips_execution_when_config_disabled(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->create(['user_id' => $user->id, 'enabled' => false]);
 
         $mock = $this->createMockService(['listNewFiles' => fn () => throw new Exception('Should not be called')]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         Event::assertNotDispatched(DocumentImported::class);
     }
 
     public function test_job_imports_single_file_and_creates_ai_document(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -79,7 +81,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertDatabaseHas('ai_documents', [
             'user_id' => $user->id,
@@ -110,7 +112,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
             'ai-documents.file_upload.allowed_types' => ['pdf', 'jpg', 'jpeg', 'png', 'txt'],
         ]);
 
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -125,7 +127,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertDatabaseMissing('ai_documents', ['google_drive_file_id' => 'file-1']);
         $this->assertDatabaseMissing('ai_documents', ['google_drive_file_id' => 'file-2']);
@@ -134,7 +136,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_skips_files_already_imported(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -154,7 +156,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertSame(1, AiDocument::count());
         Event::assertNotDispatched(DocumentImported::class);
@@ -166,7 +168,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
             'ai-documents.file_upload.max_file_size_mb' => 20,
         ]);
 
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -189,7 +191,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertDatabaseMissing('ai_documents', ['google_drive_file_id' => 'file-big']);
         Event::assertNotDispatched(DocumentImported::class);
@@ -197,7 +199,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_continues_after_download_failure(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -222,7 +224,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertSame(2, $downloadCallCount);
         $this->assertDatabaseMissing('ai_documents', ['google_drive_file_id' => 'file-fail']);
@@ -236,7 +238,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_deletes_file_from_drive_when_enabled(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -266,7 +268,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertSame(1, $deleteCallCount);
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
@@ -274,7 +276,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_continues_after_delete_failure(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -295,7 +297,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         // Document should still be created even if deletion fails
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
@@ -303,7 +305,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_handles_api_errors_gracefully(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -316,7 +318,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
         $this->expectException(Exception::class);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $config->refresh();
         $this->assertSame(1, $config->error_count);
@@ -325,7 +327,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_increments_error_count_on_repeated_errors(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -338,7 +340,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         $this->instance(GoogleDriveService::class, $mock);
 
         try {
-            (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+            $this->runJob($config->id);
         } catch (Exception) {
             // Expected
         }
@@ -350,7 +352,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_resets_error_count_on_success(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -371,7 +373,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $config->refresh();
         $this->assertSame(0, $config->error_count);
@@ -380,7 +382,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_sends_success_notification(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -399,7 +401,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
         Notification::assertSentTo($user, GoogleDriveImportSuccess::class);
@@ -407,7 +409,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
 
     public function test_job_does_not_send_success_notification_when_nothing_imported(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -421,14 +423,14 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
-        (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+        $this->runJob($config->id);
 
         Notification::assertNotSentTo($user, GoogleDriveImportSuccess::class);
     }
 
     public function test_job_sends_failure_notification(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
@@ -440,12 +442,34 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         $this->instance(GoogleDriveService::class, $mock);
 
         try {
-            (new ProcessGoogleDriveConfigJob($config->id))->handle(app(GoogleDriveService::class));
+            $this->runJob($config->id);
         } catch (Exception) {
             // Expected
         }
 
         Notification::assertSentTo($user, GoogleDriveImportFailed::class);
+    }
+
+    public function test_job_skips_import_when_ai_processing_is_disabled(): void
+    {
+        $user = User::factory()->create();
+        AiUserSettings::factory()->create(['user_id' => $user->id, 'ai_enabled' => false]);
+
+        $config = GoogleDriveConfig::factory()->neverSynced()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+        ]);
+
+        $mock = $this->createMockService([
+            'listNewFiles' => fn () => throw new Exception('Should not be called'),
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $this->runJob($config->id);
+
+        $this->assertSame(0, AiDocument::count());
+        Event::assertNotDispatched(DocumentImported::class);
+        Notification::assertNotSentTo($user, GoogleDriveImportSuccess::class);
     }
 
     /**
@@ -464,5 +488,21 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         }
 
         return $mock;
+    }
+
+    private function createUserWithAiEnabled(): User
+    {
+        $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
+
+        return $user;
+    }
+
+    private function runJob(int $configId): void
+    {
+        (new ProcessGoogleDriveConfigJob($configId))->handle(
+            app(GoogleDriveService::class),
+            app(AiUserSettingsResolver::class),
+        );
     }
 }

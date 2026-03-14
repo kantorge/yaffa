@@ -5,6 +5,8 @@ namespace Tests\Unit\Jobs;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
+use App\Models\AiUserSettings;
+use App\Services\AiUserSettingsResolver;
 use App\Services\ProcessDocumentService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -34,12 +36,15 @@ class AiProcessingJobTest extends TestCase
 
         /** @var AiDocument $document */
         $document = AiDocument::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $document->user_id]);
 
         $service = Mockery::mock(ProcessDocumentService::class);
         $service->shouldReceive('process')
             ->once()
-            ->with($document)
+            ->with(Mockery::on(fn (AiDocument $jobDocument): bool => $jobDocument->is($document)))
             ->andThrow(new Exception('No AI provider configured for user', 401));
+
+        $settingsResolver = app(AiUserSettingsResolver::class);
 
         $job = new AiProcessingJob($document);
 
@@ -47,7 +52,7 @@ class AiProcessingJobTest extends TestCase
         $this->expectExceptionMessage('No AI provider configured for user');
 
         try {
-            $job->handle($service);
+            $job->handle($service, $settingsResolver);
         } finally {
             Event::assertDispatched(AiDocumentProcessingFailedEvent::class, fn (AiDocumentProcessingFailedEvent $event): bool => $event->document->is($document)
                     && $event->errorMessage === 'No AI provider configured for user'

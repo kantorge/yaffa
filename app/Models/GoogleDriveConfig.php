@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $service_account_email
  * @property string $service_account_json
  * @property string $folder_id
+ * @property int $sync_interval_minutes
  * @property bool $delete_after_import
  * @property bool $enabled
  * @property \Illuminate\Support\Carbon|null $last_sync_at
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereLastSyncAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereServiceAccountEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereServiceAccountJson($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereSyncIntervalMinutes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereUserId($value)
  * @mixin \Eloquent
@@ -52,6 +54,7 @@ class GoogleDriveConfig extends Model
         'service_account_email',
         'service_account_json',
         'folder_id',
+        'sync_interval_minutes',
         'delete_after_import',
         'enabled',
     ];
@@ -62,6 +65,7 @@ class GoogleDriveConfig extends Model
             'service_account_json' => 'encrypted',
             'delete_after_import' => 'boolean',
             'enabled' => 'boolean',
+            'sync_interval_minutes' => 'integer',
             'last_sync_at' => 'datetime',
             'error_count' => 'integer',
         ];

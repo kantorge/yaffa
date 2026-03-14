@@ -18,6 +18,7 @@ return new class () extends Migration {
             $table->string('service_account_email');
             $table->text('service_account_json');
             $table->string('folder_id', 191);
+            $table->unsignedSmallInteger('sync_interval_minutes')->default(15);
             $table->boolean('delete_after_import')->default(false);
             $table->boolean('enabled')->default(true);
             $table->timestamp('last_sync_at')->nullable();

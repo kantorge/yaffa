@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\AiDocumentStatus;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
+use App\Services\AiUserSettingsResolver;
 use Illuminate\Console\Command;
 use Exception;
 
@@ -28,7 +29,7 @@ class ProcessAiDocuments extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(AiUserSettingsResolver $settingsResolver): int
     {
         $limit = (int) $this->option('limit');
 
@@ -53,6 +54,20 @@ class ProcessAiDocuments extends Command
             $document = null;
 
             try {
+                $document = AiDocument::query()
+                    ->with(['user.aiUserSettings'])
+                    ->find($documentId);
+
+                if (! $document) {
+                    continue;
+                }
+
+                if (! $settingsResolver->isEnabledForUser($document->user)) {
+                    $this->line("Skipped document #{$document->id} because AI processing is disabled for the user");
+
+                    continue;
+                }
+
                 $claimed = AiDocument::query()
                     ->whereKey($documentId)
                     ->where('status', AiDocumentStatus::ReadyForProcessing->value)

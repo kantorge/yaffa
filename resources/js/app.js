@@ -57,6 +57,7 @@ const routeMap = new Map([
     ['login', 'auth/login'],
     ['tag.index', 'tag/index'],
     ['user.settings', 'user/settings'],
+    ['user.ai-settings', 'user/settings'],
 ]);
 
 // Generic loader

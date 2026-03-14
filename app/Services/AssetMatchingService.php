@@ -16,9 +16,19 @@ class AssetMatchingService
 
     private ?User $user = null;
 
-    public function __construct(?User $user = null)
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $resolvedSettings = null;
+
+    private ?int $resolvedSettingsUserId = null;
+
+    private ?AiUserSettingsResolver $settingsResolver = null;
+
+    public function __construct(?User $user = null, ?AiUserSettingsResolver $settingsResolver = null)
     {
         $this->user = $user;
+        $this->settingsResolver = $settingsResolver;
     }
 
     /**
@@ -31,6 +41,8 @@ class AssetMatchingService
         if (! $accountName || ! $this->user) {
             return [];
         }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $accounts = $this->user
             ->accounts()
@@ -50,7 +62,7 @@ class AssetMatchingService
                 $secondaryParts ?: null
             );
 
-            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+            if ($similarity >= $similarityThreshold) {
                 $matches[] = [
                     'id' => $account->id,
                     'name' => $account->name . ($account->alias ? ' (' . $account->alias . ')' : ''),
@@ -63,7 +75,7 @@ class AssetMatchingService
         usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         // Return top matches
-        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+        $maxSuggestions = $this->resolveMaxSuggestions();
 
         return array_slice($matches, 0, $maxSuggestions);
     }
@@ -78,6 +90,8 @@ class AssetMatchingService
         if (! $payeeName || ! $this->user) {
             return [];
         }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $payees = $this->user
             ->payees()
@@ -97,7 +111,7 @@ class AssetMatchingService
                 $secondaryParts ?: null
             );
 
-            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+            if ($similarity >= $similarityThreshold) {
                 $matches[] = [
                     'id' => $payee->id,
                     'name' => $payee->name . ($payee->alias ? ' (' . $payee->alias . ')' : ''),
@@ -110,7 +124,7 @@ class AssetMatchingService
         usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         // Return top matches
-        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+        $maxSuggestions = $this->resolveMaxSuggestions();
 
         return array_slice($matches, 0, $maxSuggestions);
     }
@@ -125,6 +139,8 @@ class AssetMatchingService
         if (! $investmentName || ! $this->user) {
             return [];
         }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $investments = $this->user->investments()->get();
 
@@ -148,7 +164,7 @@ class AssetMatchingService
                 $secondaryParts ?: null
             );
 
-            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+            if ($similarity >= $similarityThreshold) {
                 $matches[] = [
                     'id' => $investment->id,
                     'name' => $investment->name .
@@ -163,7 +179,7 @@ class AssetMatchingService
         usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         // Return top matches
-        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+        $maxSuggestions = $this->resolveMaxSuggestions();
 
         return array_slice($matches, 0, $maxSuggestions);
     }
@@ -178,6 +194,8 @@ class AssetMatchingService
         if (! $description || ! $this->user) {
             return [];
         }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $learningRecords = $this->user->categoryLearning()
             ->with('category')
@@ -199,7 +217,7 @@ class AssetMatchingService
             similar_text($normalizedSearch, $normalizedItem, $similarity);
             $similarity /= 100;
 
-            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+            if ($similarity >= $similarityThreshold) {
                 $matches[] = [
                     'id' => $learning->id,
                     'description' => $learning->item_description,
@@ -214,7 +232,7 @@ class AssetMatchingService
         usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         // Return top matches
-        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+        $maxSuggestions = $this->resolveMaxSuggestions();
 
         return array_slice($matches, 0, $maxSuggestions);
     }
@@ -316,5 +334,36 @@ class AssetMatchingService
     private function normalize(string $text): string
     {
         return Str::lower(Str::trim($text));
+    }
+
+    private function resolveSimilarityThreshold(): float
+    {
+        return (float) $this->resolveUserSetting('asset_similarity_threshold', self::SIMILARITY_THRESHOLD);
+    }
+
+    private function resolveMaxSuggestions(): int
+    {
+        return max(1, (int) $this->resolveUserSetting('asset_max_suggestions', self::MAX_SUGGESTIONS));
+    }
+
+    private function resolveUserSetting(string $key, int|float $fallback): int|float
+    {
+        if (! $this->user) {
+            return $fallback;
+        }
+
+        if ($this->resolvedSettingsUserId !== $this->user->id || $this->resolvedSettings === null) {
+            $resolver = $this->settingsResolver ?? app(AiUserSettingsResolver::class);
+            $this->resolvedSettings = $resolver->resolveForUser($this->user);
+            $this->resolvedSettingsUserId = $this->user->id;
+        }
+
+        $value = $this->resolvedSettings[$key] ?? null;
+
+        if ($value === null) {
+            return $fallback;
+        }
+
+        return $value;
     }
 }

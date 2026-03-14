@@ -124,6 +124,7 @@ Route::get('/ai-documents/{aiDocument}/files/{aiDocumentFile}', [AiDocumentContr
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
+Route::get('/user/ai-settings', [UserController::class, 'aiSettings'])->name('user.ai-settings');
 
 /*******************
  * Authentication and verification routes

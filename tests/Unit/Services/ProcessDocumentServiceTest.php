@@ -9,6 +9,7 @@ use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\AiProviderConfig;
+use App\Models\AiUserSettings;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Models\Transaction;
@@ -316,6 +317,11 @@ class ProcessDocumentServiceTest extends TestCase
     public function test_high_confidence_account_and_payee_matches_are_logged_with_readable_history(): void
     {
         $user = User::factory()->create();
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'match_auto_accept_threshold' => 0.88,
+        ]);
+
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $accountName = 'Main Wallet';
@@ -429,16 +435,95 @@ class ProcessDocumentServiceTest extends TestCase
         $payeeHistory = $historyByStep['payee_matching'];
 
         $this->assertStringContainsString('Local account matching used. AI call skipped because similarity reached threshold', $accountHistory['prompt']);
+        $this->assertStringContainsString('threshold 0.88', $accountHistory['prompt']);
         $this->assertStringContainsString("Input: \"{$accountName}\".", $accountHistory['prompt']);
         $this->assertStringContainsString("Matched account ID {$account->id} ({$accountName})", $accountHistory['response']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['prompt']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['response']);
 
         $this->assertStringContainsString('Local payee matching used. AI call skipped because similarity reached threshold', $payeeHistory['prompt']);
+        $this->assertStringContainsString('threshold 0.88', $payeeHistory['prompt']);
         $this->assertStringContainsString("Input: \"{$payeeName}\".", $payeeHistory['prompt']);
         $this->assertStringContainsString("Matched payee ID {$payee->id} ({$payeeName})", $payeeHistory['response']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $payeeHistory['prompt']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $payeeHistory['response']);
+    }
+
+    public function test_process_passes_user_ocr_and_image_settings_to_text_extractor(): void
+    {
+        $user = User::factory()->create();
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'ocr_language' => 'hun',
+            'image_max_width_vision' => 1666,
+            'image_max_height_vision' => 1222,
+            'image_quality_vision' => 71,
+            'image_max_width_tesseract' => 1800,
+            'image_max_height_tesseract' => 1400,
+        ]);
+
+        AiProviderConfig::factory()->for($user)->create();
+
+        $document = AiDocument::factory()
+            ->for($user)
+            ->create([
+                'status' => 'ready_for_processing',
+                'source_type' => 'manual_upload',
+            ]);
+
+        AiDocumentFile::factory()->create([
+            'ai_document_id' => $document->id,
+            'file_path' => 'ai_documents/test/input.txt',
+            'file_name' => 'input.txt',
+            'file_type' => 'txt',
+        ]);
+
+        $textExtractor = $this->createMock(TextExtractionService::class);
+        $textExtractor
+            ->expects($this->once())
+            ->method('extractFromFile')
+            ->with(
+                $this->equalTo('ai_documents/test/input.txt'),
+                $this->equalTo('txt'),
+                $this->isInstanceOf(AiProviderConfig::class),
+                $this->callback(fn (array $settings): bool => $settings['ocr_language'] === 'hun'
+                        && $settings['image_max_width_vision'] === 1666
+                        && $settings['image_max_height_vision'] === 1222
+                        && $settings['image_quality_vision'] === 71
+                        && $settings['image_max_width_tesseract'] === 1800
+                        && $settings['image_max_height_tesseract'] === 1400)
+            )
+            ->willReturn('Receipt text');
+
+        $service = new class (
+            $textExtractor,
+            $this->createMock(AssetMatchingService::class),
+            new CategoryLearningService(),
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+        ) extends ProcessDocumentService {
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                return json_encode([
+                    'transaction_type' => 'withdrawal',
+                    'account' => null,
+                    'account_from' => null,
+                    'account_to' => null,
+                    'payee' => null,
+                    'date' => '2026-03-01',
+                    'amount' => 12.5,
+                    'currency' => 'HUF',
+                    'transaction_items' => [],
+                ]) ?: '';
+            }
+        };
+
+        $result = $service->process($document);
+
+        $this->assertTrue($result['success']);
+        $document->refresh();
+        $this->assertSame('ready_for_review', $document->status);
     }
 
     public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void

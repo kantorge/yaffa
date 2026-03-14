@@ -11,6 +11,8 @@ use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\Category;
 use App\Models\Investment;
+use App\Models\User;
+use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -23,6 +25,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AiDocumentApiController extends Controller implements HasMiddleware
 {
+    private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
+
+    public function __construct(
+        private AiUserSettingsResolver $aiUserSettingsResolver
+    ) {
+    }
+
     public static function middleware(): array
     {
         return [
@@ -42,7 +51,12 @@ class AiDocumentApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('create', AiDocument::class);
 
+        /** @var User $user */
         $user = $request->user();
+
+        if ($response = $this->ensureAiProcessingEnabled($user)) {
+            return $response;
+        }
 
         // Create the document
         $document = AiDocument::create([
@@ -186,6 +200,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('reprocess', $aiDocument);
 
+        if ($response = $this->ensureAiProcessingEnabled($aiDocument->user)) {
+            return $response;
+        }
+
         // Only allow reprocessing if document is in a terminal or failed state
         if (! in_array($aiDocument->status, ['ready_for_review', 'processing_failed', 'finalized'])) {
             return response()->json([
@@ -257,7 +275,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             ], Response::HTTP_OK);
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $aiDocument->user;
 
         $duplicates = $duplicateService->findDuplicates($user, $extractedData);
@@ -328,6 +346,20 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             'file_name' => $filename,
             'file_type' => 'txt',
         ]);
+    }
+
+    private function ensureAiProcessingEnabled(User $user): ?JsonResponse
+    {
+        if ($this->aiUserSettingsResolver->isEnabledForUser($user)) {
+            return null;
+        }
+
+        return response()->json([
+            'error' => [
+                'code' => 'AI_DISABLED',
+                'message' => __(self::AI_DISABLED_MESSAGE),
+            ],
+        ], Response::HTTP_FORBIDDEN);
     }
 
     /**

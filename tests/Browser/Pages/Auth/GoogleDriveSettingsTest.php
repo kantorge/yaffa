@@ -36,7 +36,7 @@ class GoogleDriveSettingsTest extends DuskTestCase
     private function visitSettings(Browser $browser): Browser
     {
         return $browser
-            ->visit('/user/settings')
+            ->visit('/user/ai-settings')
             ->waitFor(self::VUE_COMPONENT_SELECTOR, 10)
             ->waitForText('Google Drive Configuration', 10);
     }

@@ -32,6 +32,24 @@
       ></date-range-filter-card>
     </div>
     <div class="col-12 col-lg-9">
+      <div
+        v-if="!aiProcessingEnabled"
+        class="alert alert-warning d-flex justify-content-between align-items-center"
+        role="alert"
+      >
+        <div>
+          <i class="fa fa-exclamation-triangle me-1"></i>
+          {{
+            __(
+              'AI processing is currently disabled. Uploaded or imported documents will not be processed until it is enabled.',
+            )
+          }}
+        </div>
+        <a class="btn btn-sm btn-outline-warning" :href="aiSettingsUrl">
+          {{ __('Open AI settings') }}
+        </a>
+      </div>
+
       <ai-document-table
         ref="tableRef"
         :documents="documents"
@@ -69,6 +87,12 @@
   const uploadFormRef = ref(null);
   const isLoading = ref(false);
   const route = window.route;
+  const aiProcessingEnabled = ref(
+    window.aiDocumentConfig?.aiProcessingEnabled ?? true,
+  );
+  const aiSettingsUrl = ref(
+    window.aiDocumentConfig?.aiSettingsUrl || route('user.ai-settings'),
+  );
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);

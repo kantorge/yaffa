@@ -88,6 +88,7 @@ class GoogleDriveConfigRequest extends FormRequest
             'folder_id' => $folderIdRules,
             'delete_after_import' => ['boolean'],
             'enabled' => ['boolean'],
+            'sync_interval_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
         ];
     }
 

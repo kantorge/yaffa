@@ -11,7 +11,7 @@
 - {{ __('mail.google_drive_import_failed.folder', ['folder' => $config->folder_id]) }}
 - {{ __('mail.google_drive_import_failed.error_count', ['count' => (int) $config->error_count]) }}
 
-@component('mail::button', ['url' => route('user.settings')])
+@component('mail::button', ['url' => route('user.ai-settings')])
 {{ __('mail.google_drive_import_failed.button_open_settings') }}
 @endcomponent
 

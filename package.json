@@ -3,7 +3,7 @@
     "license": "MIT",
     "scripts": {
         "production": "npm run build",
-        "dev": "vite",
+        "dev": "fuser -k 5173/tcp 2>/dev/null; vite",
         "build": "vite build"
     },
     "devDependencies": {

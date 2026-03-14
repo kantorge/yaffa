@@ -31,12 +31,13 @@ class TextExtractionService
      *
      * @param AiDocument $document The document to extract text from
      * @param AiProviderConfig|null $visionConfig Optional config for Vision API fallback on images
+     * @param  array<string, mixed>|null  $aiUserSettings  Optional resolved AI settings for per-user OCR/image behavior
      * @return string Content from all files concatenated with separators
      *
      * @throws OcrUnavailableException if document has images but no OCR is available
      * @throws Exception if text extraction fails
      */
-    public function extractFromDocument(AiDocument $document, ?AiProviderConfig $visionConfig = null): string
+    public function extractFromDocument(AiDocument $document, ?AiProviderConfig $visionConfig = null, ?array $aiUserSettings = null): string
     {
         $texts = [];
         $imageCount = 0;
@@ -46,7 +47,8 @@ class TextExtractionService
                 $text = $this->extractFromFile(
                     $file->file_path,
                     $file->file_type,
-                    $visionConfig
+                    $visionConfig,
+                    $aiUserSettings,
                 );
 
                 if ($text) {
@@ -85,6 +87,7 @@ class TextExtractionService
      * @param string $filePath Relative path within storage
      * @param string $fileType File extension (pdf, txt, jpg, jpeg, png)
      * @param AiProviderConfig|null $visionConfig Optional config for Vision API fallback
+     * @param  array<string, mixed>|null  $aiUserSettings  Optional resolved AI settings for per-user OCR/image behavior
      * @return string Extracted text
      *
      * @throws OcrUnavailableException if images present but no OCR available
@@ -93,7 +96,8 @@ class TextExtractionService
     public function extractFromFile(
         string $filePath,
         string $fileType,
-        ?AiProviderConfig $visionConfig = null
+        ?AiProviderConfig $visionConfig = null,
+        ?array $aiUserSettings = null,
     ): string {
         $fileType = mb_strtolower($fileType);
         $fullPath = Storage::disk('local')->path($filePath);
@@ -101,7 +105,7 @@ class TextExtractionService
         return match ($fileType) {
             'pdf' => $this->extractFromPdf($fullPath),
             'txt' => $this->extractFromText($fullPath),
-            'jpg', 'jpeg', 'png' => $this->extractFromImage($fullPath, $visionConfig),
+            'jpg', 'jpeg', 'png' => $this->extractFromImage($fullPath, $visionConfig, $aiUserSettings),
             default => throw new Exception("Unsupported file type: {$fileType}"),
         };
     }
@@ -152,14 +156,15 @@ class TextExtractionService
      *
      * @param string $fullPath Full file system path to image
      * @param AiProviderConfig|null $visionConfig Config for Vision API fallback
+     * @param  array<string, mixed>|null  $aiUserSettings  Optional resolved AI settings for per-user OCR/image behavior
      * @return string Extracted text
      *
      * @throws OcrUnavailableException if no OCR method available
      * @throws Exception if extraction fails
      */
-    private function extractFromImage(string $fullPath, ?AiProviderConfig $visionConfig = null): string
+    private function extractFromImage(string $fullPath, ?AiProviderConfig $visionConfig = null, ?array $aiUserSettings = null): string
     {
-        return $this->ocrService->extract($fullPath, $visionConfig);
+        return $this->ocrService->extract($fullPath, $visionConfig, $aiUserSettings);
     }
 
     /**

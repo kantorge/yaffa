@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\GoogleDriveMonitorJob;
 use App\Jobs\ProcessGoogleDriveConfigJob;
+use App\Models\AiUserSettings;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +21,7 @@ class GoogleDriveMonitorJobTest extends TestCase
 
         Queue::fake();
 
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         GoogleDriveConfig::factory()->create(['user_id' => $user->id, 'enabled' => true]);
 
         (new GoogleDriveMonitorJob())->handle();
@@ -34,8 +35,8 @@ class GoogleDriveMonitorJobTest extends TestCase
 
         Queue::fake();
 
-        $user1 = User::factory()->create();
-        $user2 = User::factory()->create();
+        $user1 = $this->createUserWithAiEnabled();
+        $user2 = $this->createUserWithAiEnabled();
 
         $config1 = GoogleDriveConfig::factory()->create([
             'user_id' => $user1->id,
@@ -71,7 +72,7 @@ class GoogleDriveMonitorJobTest extends TestCase
 
         Queue::fake();
 
-        $user = User::factory()->create();
+        $user = $this->createUserWithAiEnabled();
         GoogleDriveConfig::factory()->create([
             'user_id' => $user->id,
             'enabled' => false,
@@ -80,5 +81,67 @@ class GoogleDriveMonitorJobTest extends TestCase
         (new GoogleDriveMonitorJob())->handle();
 
         Queue::assertNotPushed(ProcessGoogleDriveConfigJob::class);
+    }
+
+    public function test_job_skips_configs_for_users_with_ai_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => true]);
+
+        Queue::fake();
+
+        $user = User::factory()->create();
+        AiUserSettings::factory()->create(['user_id' => $user->id, 'ai_enabled' => false]);
+
+        GoogleDriveConfig::factory()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+        ]);
+
+        (new GoogleDriveMonitorJob())->handle();
+
+        Queue::assertNotPushed(ProcessGoogleDriveConfigJob::class);
+    }
+
+    public function test_job_uses_each_configs_sync_interval_for_dispatch_eligibility(): void
+    {
+        config(['ai-documents.google_drive.enabled' => true]);
+
+        Queue::fake();
+
+        $user = $this->createUserWithAiEnabled();
+
+        $dueConfig = GoogleDriveConfig::factory()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+            'sync_interval_minutes' => 10,
+            'last_sync_at' => now()->subMinutes(11),
+        ]);
+
+        $notDueConfig = GoogleDriveConfig::factory()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+            'sync_interval_minutes' => 30,
+            'last_sync_at' => now()->subMinutes(20),
+        ]);
+
+        (new GoogleDriveMonitorJob())->handle();
+
+        Queue::assertPushed(ProcessGoogleDriveConfigJob::class, 1);
+        Queue::assertPushed(
+            ProcessGoogleDriveConfigJob::class,
+            fn (ProcessGoogleDriveConfigJob $job) => $job->configId === $dueConfig->id
+        );
+        Queue::assertNotPushed(
+            ProcessGoogleDriveConfigJob::class,
+            fn (ProcessGoogleDriveConfigJob $job) => $job->configId === $notDueConfig->id
+        );
+    }
+
+    private function createUserWithAiEnabled(): User
+    {
+        $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
+
+        return $user;
     }
 }

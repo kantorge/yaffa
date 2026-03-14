@@ -19,14 +19,18 @@ class ProcessDocumentService
 {
     public const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
 
+    private AiUserSettingsResolver $aiUserSettingsResolver;
+
     public function __construct(
         private TextExtractionService $textExtractor,
         private AssetMatchingService $assetMatchingService,
         private CategoryLearningService $categoryLearningService,
         private PayeeCategoryStatsService $payeeCategoryStatsService,
         private AiExtractionSchemaValidator $aiExtractionSchemaValidator,
-        private AiPromptBuilder $aiPromptBuilder
+        private AiPromptBuilder $aiPromptBuilder,
+        ?AiUserSettingsResolver $aiUserSettingsResolver = null,
     ) {
+        $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
     }
 
     /**
@@ -45,12 +49,15 @@ class ProcessDocumentService
                 throw new Exception('No AI provider configured for user');
             }
 
+            $resolvedSettings = $this->resolveAiUserSettings($user);
+            $autoAcceptThreshold = (float) ($resolvedSettings['match_auto_accept_threshold'] ?? self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH);
+
             // Update status to processing
             $document->status = 'processing';
             $document->save();
 
             // Step 1: Extract text from all files
-            $extractedText = $this->extractTextFromFiles($document, $config);
+            $extractedText = $this->extractTextFromFiles($document, $config, $resolvedSettings);
 
             if (empty($extractedText)) {
                 throw new Exception('No text could be extracted from document files');
@@ -74,36 +81,36 @@ class ProcessDocumentService
             if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account']);
+                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
                 }
                 if (!empty($rawData['investment'])) {
-                    $investmentId = $this->matchInvestment($config, $document, $user, $rawData['investment']);
+                    $investmentId = $this->matchInvestment($config, $document, $user, $rawData['investment'], $autoAcceptThreshold);
                 }
             } elseif ($transactionType === 'transfer') {
                 // Transfer: match two accounts
                 if (!empty($rawData['account_from'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from']);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from'], $autoAcceptThreshold);
                 }
                 if (!empty($rawData['account_to'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to']);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to'], $autoAcceptThreshold);
                 }
             } elseif ($transactionType === 'withdrawal') {
                 // Withdrawal: match account (from) and payee (to)
                 if (!empty($rawData['account'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account']);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
                 }
                 if (!empty($rawData['payee'])) {
-                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee']);
+                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
                     $matchedPayeeId = $accountToId;
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
-                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee']);
+                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
                     $matchedPayeeId = $accountFromId;
                 }
                 if (!empty($rawData['account'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account']);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
                 }
             }
 
@@ -154,7 +161,10 @@ class ProcessDocumentService
     /**
      * Extract text from all files in the document
      */
-    private function extractTextFromFiles(AiDocument $document, AiProviderConfig $config): string
+    /**
+     * @param  array<string, mixed>  $aiUserSettings
+     */
+    private function extractTextFromFiles(AiDocument $document, AiProviderConfig $config, array $aiUserSettings): string
     {
         $texts = [];
 
@@ -163,7 +173,8 @@ class ProcessDocumentService
                 $text = $this->textExtractor->extractFromFile(
                     filePath: $file->file_path,
                     fileType: $file->file_type,
-                    visionConfig: $config
+                    visionConfig: $config,
+                    aiUserSettings: $aiUserSettings,
                 );
 
                 if ($text) {
@@ -213,7 +224,7 @@ class ProcessDocumentService
     /**
      * Match account name to user's accounts
      */
-    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName): ?int
+    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName, float $autoAcceptThreshold): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -241,7 +252,7 @@ class ProcessDocumentService
 
         // If the top match has high confidence, return it immediately to save AI calls
         $topMatch = reset($similarAccounts);
-        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
             Log::info('High confidence match found for account name, skipping AI call', [
                 'account_name' => $accountName,
                 'account_name_in_list' => $topMatch['name'],
@@ -252,7 +263,7 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'account_matching',
-                "Local account matching used. AI call skipped because similarity reached threshold " . self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH . ". Input: \"{$accountName}\".",
+                "Local account matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$accountName}\".",
                 "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 
@@ -282,7 +293,7 @@ class ProcessDocumentService
     /**
      * Match payee name to user's payees
      */
-    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName): ?int
+    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName, float $autoAcceptThreshold): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -310,7 +321,7 @@ class ProcessDocumentService
 
         // If the top match has high confidence, return it immediately to save AI calls
         $topMatch = reset($similarPayees);
-        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
             Log::info('High confidence match found for payee name, skipping AI call', [
                 'payee_name' => $payeeName,
                 'payee_name_in_list' => $topMatch['name'],
@@ -321,7 +332,7 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'payee_matching',
-                "Local payee matching used. AI call skipped because similarity reached threshold " . self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH . ". Input: \"{$payeeName}\".",
+                "Local payee matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$payeeName}\".",
                 "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 
@@ -351,7 +362,7 @@ class ProcessDocumentService
     /**
      * Match investment name to user's investments
      */
-    private function matchInvestment(AiProviderConfig $config, AiDocument $document, User $user, string $investmentName): ?int
+    private function matchInvestment(AiProviderConfig $config, AiDocument $document, User $user, string $investmentName, float $autoAcceptThreshold): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -379,7 +390,7 @@ class ProcessDocumentService
 
         // If the top match has high confidence, return it immediately to save AI calls
         $topMatch = reset($similarInvestments);
-        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
             Log::info('High confidence match found for investment name, skipping AI call', [
                 'investment_name' => $investmentName,
                 'investment_name_in_list' => $topMatch['name'],
@@ -393,7 +404,7 @@ class ProcessDocumentService
                 [
                     'investment_name' => $investmentName,
                     'path' => 'high_confidence_match',
-                    'threshold' => self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH,
+                    'threshold' => $autoAcceptThreshold,
                 ],
                 [
                     'matched_id' => $topMatch['id'],
@@ -865,5 +876,13 @@ class ProcessDocumentService
         }
 
         return $encoded;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveAiUserSettings(User $user): array
+    {
+        return $this->aiUserSettingsResolver->resolveForUser($user);
     }
 }

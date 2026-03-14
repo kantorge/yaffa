@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
@@ -84,6 +85,7 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property-read int|null $ai_documents_count
  * @property-read Collection<int, AiProviderConfig> $aiProviderConfigs
  * @property-read int|null $ai_provider_configs_count
+ * @property-read AiUserSettings|null $aiUserSettings
  * @property-read Collection<int, CategoryLearning> $categoryLearning
  * @property-read int|null $category_learning_count
  * @property-read Collection<int, GoogleDriveConfig> $googleDriveConfigs
@@ -227,6 +229,14 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     public function aiProviderConfigs(): HasMany
     {
         return $this->hasMany(AiProviderConfig::class);
+    }
+
+    /**
+     * @return HasOne<AiUserSettings, $this>
+     */
+    public function aiUserSettings(): HasOne
+    {
+        return $this->hasOne(AiUserSettings::class);
     }
 
     /**

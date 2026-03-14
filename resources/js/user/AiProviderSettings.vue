@@ -12,6 +12,17 @@
         </div>
         <div>
           <span
+            v-if="!aiProcessingEnabled"
+            class="fa fa-exclamation-triangle text-warning me-2"
+            :title="
+              __(
+                'These settings can be provided, but will not take effect until AI processing is enabled.',
+              )
+            "
+            data-coreui-toggle="tooltip"
+            data-coreui-placement="top"
+          ></span>
+          <span
             class="fa fa-info-circle text-info"
             :title="
               __(
@@ -277,6 +288,10 @@
     providers: {
       type: Object,
       default: () => window.aiProviders || {},
+    },
+    aiProcessingEnabled: {
+      type: Boolean,
+      default: true,
     },
   });
 </script>
