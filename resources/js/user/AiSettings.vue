@@ -1,57 +1,66 @@
 <template>
-  <div class="card mb-3">
-    <div class="card-header">
+  <div class="card border-info border-top-3 mb-3">
+    <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        <i class="fa fa-circle-info text-info me-1"></i>
         {{ __('AI Processing Environment') }}
+      </div>
+      <div>
+        <span
+          class="fa fa-info-circle text-info"
+          :title="
+            __(
+              'These settings are provided by the system administrator, and displayed for informational purposes only.',
+            )
+          "
+          data-coreui-toggle="tooltip"
+          data-coreui-placement="top"
+        ></span>
       </div>
     </div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-12 col-lg-6">
-          <h6 class="mb-2">{{ __('Incoming Receipt Emails') }}</h6>
-          <div class="small mb-1">
-            <strong>{{ __('Enabled') }}:</strong>
+          <h4 class="mb-2">{{ __('Store Incoming Emails') }}</h4>
+          <div class="mb-1">
+            <strong>{{ __('Enabled') }}: </strong>
             <span
-              :class="incomingEmail.enabled ? 'text-success' : 'text-muted'"
+              :class="incomingEmail.enabled ? 'text-success' : 'text-danger'"
             >
               {{ incomingEmail.enabled ? __('Yes') : __('No') }}
             </span>
           </div>
-          <div class="small mb-1">
-            <strong>{{ __('Configured') }}:</strong>
+          <div class="mb-1">
+            <strong>{{ __('Configured') }}: </strong>
             <span
-              :class="
-                incomingEmail.configured ? 'text-success' : 'text-warning'
-              "
+              :class="incomingEmail.configured ? 'text-success' : 'text-danger'"
             >
               {{ incomingEmail.configured ? __('Yes') : __('No') }}
             </span>
           </div>
-          <div class="small">
-            <strong>{{ __('Recipient') }}:</strong>
+          <div>
+            <strong>{{ __('Recipient') }}: </strong>
             <span class="font-monospace">{{ incomingEmailRecipient }}</span>
           </div>
         </div>
 
         <div class="col-12 col-lg-6">
-          <h6 class="mb-2">{{ __('OCR (Tesseract)') }}</h6>
-          <div class="small mb-1">
-            <strong>{{ __('Enabled') }}:</strong>
+          <h4 class="mb-2">{{ __('Local OCR (Tesseract)') }}</h4>
+          <div class="mb-1">
+            <strong>{{ __('Enabled') }}: </strong>
             <span
-              :class="ocr.tesseract_enabled ? 'text-success' : 'text-muted'"
+              :class="ocr.tesseract_enabled ? 'text-success' : 'text-danger'"
             >
               {{ ocr.tesseract_enabled ? __('Yes') : __('No') }}
             </span>
           </div>
-          <div class="small mb-1">
-            <strong>{{ __('Mode') }}:</strong>
+          <div class="mb-1">
+            <strong>{{ __('Mode') }}: </strong>
             <span>{{ ocrModeLabel }}</span>
           </div>
-          <div class="small">
-            <strong>{{ __('Available') }}:</strong>
+          <div>
+            <strong>{{ __('Available') }}: </strong>
             <span
-              :class="ocr.tesseract_available ? 'text-success' : 'text-warning'"
+              :class="ocr.tesseract_available ? 'text-success' : 'text-danger'"
             >
               {{ ocr.tesseract_available ? __('Yes') : __('No') }}
             </span>
@@ -87,6 +96,7 @@
   import AiProviderSettings from './AiProviderSettings.vue';
   import GoogleDriveSettings from './GoogleDriveSettings.vue';
   import AiBehaviorSettings from './AiBehaviorSettings.vue';
+  import { initializeBootstrapTooltips } from '@/helpers';
 
   export default {
     name: 'AiSettings',
@@ -120,6 +130,7 @@
     },
     mounted() {
       this.loadAiSettingsState();
+      initializeBootstrapTooltips();
     },
     methods: {
       loadAiSettingsState() {

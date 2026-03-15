@@ -24,11 +24,6 @@ class GoogleDriveMonitorJob implements ShouldQueue
 
     public function handle(): void
     {
-        // Skip if Google Drive feature is disabled
-        if (! config('ai-documents.google_drive.enabled')) {
-            return;
-        }
-
         $now = now();
 
         // Collect all enabled configs and dispatch a job for each

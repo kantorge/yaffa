@@ -45,7 +45,6 @@ class GoogleDriveSettingsTest extends DuskTestCase
     {
         return $browser
             ->waitFor('@button-add-google-drive', 10)
-            ->scrollIntoView('@button-add-google-drive')
             ->click('@button-add-google-drive')
             ->waitFor('#service_account_json', 10);
     }
@@ -73,7 +72,6 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->assertSee('Google Drive Configuration')
                 ->assertSee('No Google Drive configuration yet.')
                 ->assertSeeIn('@button-add-google-drive', 'Add Google Drive')
-                ->scrollIntoView('@button-add-google-drive')
                 ->click('@button-add-google-drive')
                 ->waitFor('#service_account_json', 10)
                 ->assertVisible('#service_account_json')
@@ -210,7 +208,6 @@ class GoogleDriveSettingsTest extends DuskTestCase
             $browser
                 ->type('#service_account_json', self::VALID_SERVICE_ACCOUNT_JSON)
                 ->type('#folder_id', 'invalid-folder-id')
-                ->scrollIntoView('@button-test-google-drive')
                 ->click('@button-test-google-drive')
                 ->waitFor('.alert.alert-danger', 10)
                 ->assertPresent('.alert.alert-danger');
@@ -472,25 +469,5 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->waitFor('.alert.alert-warning', 10)
                 ->assertSee('Test error message');
         });
-    }
-
-    public function test_google_drive_feature_disabled_shows_warning_and_hides_actions(): void
-    {
-        $this->setConfig('ai-documents.google_drive.enabled', false);
-
-        $user = $this->createTestUser();
-
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->loginAs($user);
-            $this->visitSettings($browser)
-                ->assertSee('Google Drive import is disabled by system configuration.')
-                ->assertMissing('@button-add-google-drive')
-                ->assertMissing('@button-save-google-drive')
-                ->assertMissing('@button-test-google-drive')
-                ->assertMissing('@button-sync-google-drive')
-                ->assertMissing('@button-delete-google-drive');
-        });
-
-        $this->setConfig('ai-documents.google_drive.enabled', true);
     }
 }

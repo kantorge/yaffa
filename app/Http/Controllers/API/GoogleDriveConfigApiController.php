@@ -20,8 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 {
-    private const string FEATURE_DISABLED_MESSAGE = 'Google Drive integration is disabled in configuration';
-
     public function __construct(
         private GoogleDriveService $googleDriveService
     ) {
@@ -45,10 +43,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
          * @name("api.v1.google-drive.config.show")
          * @middlewares("api", "auth:sanctum", "verified")
          */
-
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
 
         // For MVP, we assume one config per user
         /** @var User $user */
@@ -79,10 +73,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
          * @name("api.v1.google-drive.config.store")
          * @middlewares("api", "auth:sanctum", "verified")
          */
-
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
 
         Gate::authorize('create', GoogleDriveConfig::class);
 
@@ -116,10 +106,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      */
     public function update(GoogleDriveConfigRequest $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
-
         Gate::authorize('update', $googleDriveConfig);
 
         $validated = $request->validated();
@@ -152,10 +138,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      */
     public function destroy(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
-
         Gate::authorize('delete', $googleDriveConfig);
 
         $googleDriveConfig->delete();
@@ -168,10 +150,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      */
     public function test(GoogleDriveConfigRequest $request): JsonResponse
     {
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
-
         // Basic validation is already done by GoogleDriveConfigRequest
         $validated = $request->validated();
 
@@ -240,10 +218,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      */
     public function sync(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        if ($response = $this->ensureGoogleDriveFeatureEnabled()) {
-            return $response;
-        }
-
         Gate::authorize('sync', $googleDriveConfig);
 
         if (! $googleDriveConfig->enabled) {
@@ -261,19 +235,5 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         return response()->json([
             'message' => __('Google Drive sync has been queued'),
         ], Response::HTTP_ACCEPTED);
-    }
-
-    private function ensureGoogleDriveFeatureEnabled(): ?JsonResponse
-    {
-        if (config('ai-documents.google_drive.enabled')) {
-            return null;
-        }
-
-        return response()->json([
-            'error' => [
-                'code' => 'FEATURE_DISABLED',
-                'message' => __(self::FEATURE_DISABLED_MESSAGE),
-            ],
-        ], Response::HTTP_FORBIDDEN);
     }
 }

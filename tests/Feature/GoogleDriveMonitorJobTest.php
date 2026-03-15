@@ -15,24 +15,8 @@ class GoogleDriveMonitorJobTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_job_skips_execution_when_google_drive_disabled(): void
-    {
-        config(['ai-documents.google_drive.enabled' => false]);
-
-        Queue::fake();
-
-        $user = $this->createUserWithAiEnabled();
-        GoogleDriveConfig::factory()->create(['user_id' => $user->id, 'enabled' => true]);
-
-        (new GoogleDriveMonitorJob())->handle();
-
-        Queue::assertNotPushed(ProcessGoogleDriveConfigJob::class);
-    }
-
     public function test_job_dispatches_config_job_for_each_enabled_config(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         Queue::fake();
 
         $user1 = $this->createUserWithAiEnabled();
@@ -68,8 +52,6 @@ class GoogleDriveMonitorJobTest extends TestCase
 
     public function test_job_handles_no_enabled_configs(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         Queue::fake();
 
         $user = $this->createUserWithAiEnabled();
@@ -85,8 +67,6 @@ class GoogleDriveMonitorJobTest extends TestCase
 
     public function test_job_skips_configs_for_users_with_ai_disabled(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         Queue::fake();
 
         $user = User::factory()->create();
@@ -104,8 +84,6 @@ class GoogleDriveMonitorJobTest extends TestCase
 
     public function test_job_uses_each_configs_sync_interval_for_dispatch_eligibility(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         Queue::fake();
 
         $user = $this->createUserWithAiEnabled();

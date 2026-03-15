@@ -1590,7 +1590,6 @@ This plan also moves Google Drive sync cadence from global env to per-config DB 
 | `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION` / `config('ai-documents.file_upload.max_files_per_submission')`                          | Hard security/abuse limit; no user override                |
 | `AI_DOCUMENT_MAX_FILE_SIZE_MB` / `config('ai-documents.file_upload.max_file_size_mb')`                                          | Hard resource-protection limit; no user override           |
 | `AI_DOCUMENT_ALLOWED_TYPES` / `config('ai-documents.file_upload.allowed_types')`                                                | Strict global allowlist for safety and consistency         |
-| `AI_GOOGLE_DRIVE_ENABLED`                                                                                                       | System-wide feature gate                                   |
 | `TESSERACT_ENABLED`, `TESSERACT_MODE`, `TESSERACT_PATH`, `TESSERACT_HTTP_HOST`, `TESSERACT_HTTP_PORT`, `TESSERACT_HTTP_TIMEOUT` | Infrastructure/deployment concerns                         |
 | `config('ai-documents.providers')`                                                                                              | Server-supported provider/model capability matrix          |
 | `AI_DOCUMENT_FILE_RETENTION_DAYS`                                                                                               | Global lifecycle policy until retention job is implemented |

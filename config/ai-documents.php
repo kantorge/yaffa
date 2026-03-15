@@ -19,13 +19,6 @@ return [
     ],
 
     /*
-     * Google Drive monitoring configuration
-     */
-    'google_drive' => [
-        'enabled' => env('AI_GOOGLE_DRIVE_ENABLED', false),
-    ],
-
-    /*
      * Supported AI providers and models
      */
     'providers' => [

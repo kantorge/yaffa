@@ -49,8 +49,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_show_returns_404_when_no_config(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $response = $this->actingAs($this->user)
             ->getJson(route('api.v1.google-drive.config.show'));
 
@@ -61,8 +59,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_show_returns_config_without_service_account_json(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user)
@@ -75,8 +71,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_store_creates_config(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
@@ -97,8 +91,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_update_modifies_config(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user)
@@ -113,8 +105,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_destroy_deletes_config(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user)
@@ -127,7 +117,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
     public function test_v1_sync_queues_job(): void
     {
         Queue::fake();
-        config(['ai-documents.google_drive.enabled' => true]);
 
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id, 'enabled' => true]);
 
@@ -142,8 +131,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_validation_error_uses_default_validation_contract(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.google-drive.config.store'), []);
 
@@ -151,22 +138,8 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ->assertJsonStructure(['message', 'errors' => ['service_account_json', 'folder_id']]);
     }
 
-    public function test_v1_feature_disabled_uses_error_contract(): void
-    {
-        config(['ai-documents.google_drive.enabled' => false]);
-
-        $response = $this->actingAs($this->user)
-            ->getJson(route('api.v1.google-drive.config.show'));
-
-        $response->assertForbidden()
-            ->assertJsonStructure(['error' => ['code', 'message']])
-            ->assertJsonPath('error.code', 'FEATURE_DISABLED');
-    }
-
     public function test_v1_sync_disabled_config_uses_error_contract(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id, 'enabled' => false]);
 
         $response = $this->actingAs($this->user)
@@ -179,8 +152,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_authorization_error_uses_error_contract(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->otherUser->id]);
 
         $response = $this->actingAs($this->user)
@@ -194,8 +165,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_secret_not_exposed_in_show(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         GoogleDriveConfig::factory()->create([
             'user_id' => $this->user->id,
             'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
@@ -210,8 +179,6 @@ class GoogleDriveConfigApiV1Test extends TestCase
 
     public function test_v1_test_no_existing_config_uses_error_contract(): void
     {
-        config(['ai-documents.google_drive.enabled' => true]);
-
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => '__existing__',
