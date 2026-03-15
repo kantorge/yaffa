@@ -42,7 +42,6 @@ class AiProviderSettingsTest extends DuskTestCase
     {
         return $browser
             ->waitFor('@button-add-ai-provider', 10)
-            ->scrollIntoView('@button-add-ai-provider')
             ->click('@button-add-ai-provider')
             ->waitFor('#provider', 10);
     }
@@ -82,7 +81,6 @@ class AiProviderSettingsTest extends DuskTestCase
                 ->assertSee('No AI provider configured yet.')
                 ->assertSeeIn('@button-add-ai-provider', 'Add AI Provider')
                 // Click to show form
-                ->scrollIntoView('@button-add-ai-provider')
                 ->click('@button-add-ai-provider')
                 ->waitFor('#provider', 10)
                 ->assertVisible('#provider');
@@ -384,10 +382,10 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')
                 ->click('@button-test-connection')
-                ->waitFor('.alert', 10)
+                ->waitFor('#aiProviderConfigForm .alert', 10)
                 ->select('#provider', 'gemini')
-                ->waitUntilMissing('.alert', 10)
-                ->assertNotPresent('.alert-danger');
+                ->waitUntilMissing('#aiProviderConfigForm .alert', 10)
+                ->assertNotPresent('#aiProviderConfigForm .alert-danger');
         });
     }
 }
