@@ -14,12 +14,15 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use JsonException;
+use Prism\Prism\Facades\Prism;
 
 class ProcessDocumentService
 {
     public const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
 
     private AiUserSettingsResolver $aiUserSettingsResolver;
+
+    private bool $promptChatHistoryEnabled = true;
 
     public function __construct(
         private TextExtractionService $textExtractor,
@@ -50,6 +53,7 @@ class ProcessDocumentService
             }
 
             $resolvedSettings = $this->resolveAiUserSettings($user);
+            $this->promptChatHistoryEnabled = (bool) ($resolvedSettings['prompt_chat_history_enabled'] ?? true);
             $autoAcceptThreshold = (float) ($resolvedSettings['match_auto_accept_threshold'] ?? self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH);
 
             // Update status to processing
@@ -729,11 +733,19 @@ class ProcessDocumentService
             }
         }
 
+        $resolvedSettings = $this->resolveAiUserSettings($user);
+        $categoryPromptContext = $matchingService->resolveCategoryPromptContext(
+            $user,
+            (string) ($resolvedSettings['category_matching_mode'] ?? AiUserSettingsResolver::DEFAULT_CATEGORY_MATCHING_MODE)
+        );
+
         // Build AI prompt with all items
         $prompt = $this->aiPromptBuilder->buildCategoryMatchingPrompt(
             $items,
             $learningContext,
-            $this->assetMatchingService->formatCategoriesForPrompt($user)
+            $categoryPromptContext['categories_list'],
+            $categoryPromptContext['applied_category_matching_mode'],
+            $categoryPromptContext['requested_category_matching_mode'],
         );
 
         $response = $this->callAi($config, $document, $prompt, 'category_batch_matching');
@@ -806,13 +818,21 @@ class ProcessDocumentService
     protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
     {
         try {
-            $response = \Prism\Prism\Facades\Prism::text()
+            $pendingRequest = Prism::text()
                 ->using($config->provider, $config->model)
                 ->usingProviderConfig([
                     'api_key' => $config->api_key,
-                ])
-                ->withPrompt($prompt)
-                ->asText();
+                ]);
+
+            if ($this->promptChatHistoryEnabled) {
+                $response = $pendingRequest
+                    ->withMessages($this->aiPromptBuilder->buildPromptMessageChain($prompt, $document->ai_chat_history))
+                    ->asText();
+            } else {
+                $response = $pendingRequest
+                    ->withPrompt($prompt)
+                    ->asText();
+            }
 
             $textResponse = $response->text ?? '';
 
@@ -856,23 +876,98 @@ class ProcessDocumentService
         $this->appendProcessingHistory(
             $document,
             $step,
-            $this->encodeHistoryPayload([
-                'source' => 'local',
-                'context' => $context,
-            ]),
-            $this->encodeHistoryPayload([
-                'source' => 'local',
-                'result' => $result,
-            ])
+            $this->buildLocalHistoryPrompt($step, $context),
+            $this->buildLocalHistoryResponse($result),
         );
     }
 
-    private function encodeHistoryPayload(array $payload): string
+    private function buildLocalHistoryPrompt(string $step, array $context): string
     {
-        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stepLabel = Str::headline(str_replace('_', ' ', $step));
+
+        return implode("\n\n", [
+            "Local {$stepLabel} decision (AI call skipped).",
+            $this->formatLocalHistorySection('Context', $context),
+        ]);
+    }
+
+    private function buildLocalHistoryResponse(array $result): string
+    {
+        return $this->formatLocalHistorySection('Result', $result);
+    }
+
+    private function formatLocalHistorySection(string $title, array $payload): string
+    {
+        $lines = ["{$title}:"];
+        $flattenedPayload = $this->flattenLocalHistoryPayload($payload);
+
+        if ($flattenedPayload === []) {
+            $lines[] = '- None';
+
+            return implode("\n", $lines);
+        }
+
+        foreach ($flattenedPayload as $key => $value) {
+            $label = Str::headline(str_replace('.', ' ', (string) $key));
+            $lines[] = "- {$label}: {$this->formatLocalHistoryValue($value)}";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function flattenLocalHistoryPayload(array $payload, string $prefix = ''): array
+    {
+        $flattenedPayload = [];
+
+        foreach ($payload as $key => $value) {
+            $path = $prefix === '' ? (string) $key : "{$prefix}.{$key}";
+
+            if (is_array($value)) {
+                if ($value === []) {
+                    $flattenedPayload[$path] = [];
+                } else {
+                    $flattenedPayload = [
+                        ...$flattenedPayload,
+                        ...$this->flattenLocalHistoryPayload($value, $path),
+                    ];
+                }
+
+                continue;
+            }
+
+            $flattenedPayload[$path] = $value;
+        }
+
+        return $flattenedPayload;
+    }
+
+    private function formatLocalHistoryValue(mixed $value): string
+    {
+        if ($value === null) {
+            return 'N/A';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_string($value)) {
+            $trimmedValue = mb_trim($value);
+
+            return $trimmedValue === '' ? '(empty)' : $trimmedValue;
+        }
+
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         if ($encoded === false) {
-            return 'Unable to encode local history payload';
+            return '[unavailable]';
         }
 
         return $encoded;

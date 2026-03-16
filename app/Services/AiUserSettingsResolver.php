@@ -12,6 +12,8 @@ class AiUserSettingsResolver
 
     private const bool DEFAULT_AI_ENABLED = false;
 
+    private const bool DEFAULT_PROMPT_CHAT_HISTORY_ENABLED = true;
+
     private const string DEFAULT_OCR_LANGUAGE = 'eng';
 
     private const int DEFAULT_IMAGE_MAX_WIDTH_VISION = 2048;
@@ -78,6 +80,10 @@ class AiUserSettingsResolver
 
         return [
             'ai_enabled' => (bool) $this->resolveSettingValue($settings->ai_enabled, self::DEFAULT_AI_ENABLED),
+            'prompt_chat_history_enabled' => (bool) $this->resolveSettingValue(
+                $settings->prompt_chat_history_enabled,
+                self::DEFAULT_PROMPT_CHAT_HISTORY_ENABLED
+            ),
             'ocr_language' => (string) $this->resolveSettingValue($settings->ocr_language, self::DEFAULT_OCR_LANGUAGE),
             'image_max_width_vision' => (int) $this->resolveSettingValue($settings->image_max_width_vision, self::DEFAULT_IMAGE_MAX_WIDTH_VISION),
             'image_max_height_vision' => (int) $this->resolveSettingValue($settings->image_max_height_vision, self::DEFAULT_IMAGE_MAX_HEIGHT_VISION),
@@ -153,6 +159,7 @@ class AiUserSettingsResolver
     {
         return [
             'ai_enabled' => (bool) $this->resolveSettingValue(null, self::DEFAULT_AI_ENABLED),
+            'prompt_chat_history_enabled' => (bool) $this->resolveSettingValue(null, self::DEFAULT_PROMPT_CHAT_HISTORY_ENABLED),
             'ocr_language' => (string) $this->resolveSettingValue(null, self::DEFAULT_OCR_LANGUAGE),
             'image_max_width_vision' => (int) $this->resolveSettingValue(null, self::DEFAULT_IMAGE_MAX_WIDTH_VISION),
             'image_max_height_vision' => (int) $this->resolveSettingValue(null, self::DEFAULT_IMAGE_MAX_HEIGHT_VISION),

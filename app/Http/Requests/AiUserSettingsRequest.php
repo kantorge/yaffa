@@ -11,6 +11,7 @@ class AiUserSettingsRequest extends FormRequest
     {
         return [
             'ai_enabled' => ['sometimes', 'boolean'],
+            'prompt_chat_history_enabled' => ['sometimes', 'boolean'],
             'ocr_language' => ['sometimes', 'string', 'min:2', 'max:64'],
             'image_max_width_vision' => ['sometimes', 'integer', 'min:1', 'max:65535'],
             'image_max_height_vision' => ['sometimes', 'integer', 'min:1', 'max:65535'],

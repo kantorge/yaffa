@@ -2,8 +2,39 @@
 
 namespace App\Services;
 
+use Prism\Prism\Contracts\Message;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+use Prism\Prism\ValueObjects\Messages\UserMessage;
+
 class AiPromptBuilder
 {
+    /**
+     * @param  array<int, array{prompt?: mixed, response?: mixed}>|null  $history
+     * @return array<int, Message>
+     */
+    public function buildPromptMessageChain(string $prompt, ?array $history = null): array
+    {
+        $messages = [];
+
+        if (is_array($history)) {
+            foreach ($history as $historyEntry) {
+                $historyPrompt = mb_trim((string) data_get($historyEntry, 'prompt', ''));
+                if ($historyPrompt !== '') {
+                    $messages[] = new UserMessage($historyPrompt);
+                }
+
+                $historyResponse = mb_trim((string) data_get($historyEntry, 'response', ''));
+                if ($historyResponse !== '') {
+                    $messages[] = new AssistantMessage($historyResponse);
+                }
+            }
+        }
+
+        $messages[] = new UserMessage($prompt);
+
+        return $messages;
+    }
+
     public function buildAccountMatchingPrompt(string $accountsList, string $accountName): string
     {
         return <<<EOF
@@ -56,7 +87,9 @@ EOF;
     public function buildCategoryMatchingPrompt(
         array $items,
         array $learningContext,
-        string $categoriesList
+        string $categoriesList,
+        string $appliedCategoryMatchingMode = 'best_match',
+        ?string $requestedCategoryMatchingMode = null,
     ): string {
         $learningSection = '';
         if (! empty($learningContext)) {
@@ -75,6 +108,11 @@ EOF;
             $itemsLines[] = "[{$index}] {$item['description']}";
         }
         $itemsList = implode("\n", $itemsLines);
+        $requestedCategoryMatchingMode ??= $appliedCategoryMatchingMode;
+        $modeSection = $this->buildCategoryMatchingModeSection(
+            $requestedCategoryMatchingMode,
+            $appliedCategoryMatchingMode,
+        );
 
         return <<<EOF
 You will be provided with:
@@ -91,13 +129,12 @@ RULES:
 - Treat quantity/unit/packaging tokens as non-semantic noise while matching (examples: "2x", "500g", "1.5l", "pcs", "pack", and localized equivalents in the document language).
 - Match based on the core product or service meaning, not on quantity, size, or package count.
 - Categories can have up to two levels. For example: "Standalone parent", "Parent", "Parent > Child 1", "Parent > Child 2", "Another standalone parent", etc.
-- You will receive both parent and child categories.
-- Prefer a child category whenever the item clearly fits at least one child.
-- Do NOT assign a parent category if any of its child categories are semantically suitable.
-- Assign a parent category only when no child category under that parent is a good fit.
+- Use ONLY the categories listed under AVAILABLE ACTIVE CATEGORIES.
 - Return confidence score 0.0-1.0 for each match (1.0 = certain, <0.5 = uncertain)
 - Return recommended_category_id as null if no reasonable match exists (confidence too low or no semantic match)
 - IMPORTANT: item_index must match the index shown in square brackets [N] in LINE ITEMS list
+
+{$modeSection}
 
 {$learningSection}
 
@@ -113,6 +150,54 @@ Return JSON array ONLY (no markdown, no explanation, no code blocks):
   {"item_index": 1, "recommended_category_id": null, "confidence_score": null}
 ]
 EOF;
+    }
+
+    private function buildCategoryMatchingModeSection(
+        string $requestedCategoryMatchingMode,
+        string $appliedCategoryMatchingMode,
+    ): string {
+        $lines = [
+            'CATEGORY MATCHING RULES:',
+        ];
+
+        return implode("\n", [
+            ...$lines,
+            ...$this->buildCategoryMatchingModeRules($appliedCategoryMatchingMode),
+        ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function buildCategoryMatchingModeRules(string $categoryMatchingMode): array
+    {
+        return match ($categoryMatchingMode) {
+            'parent_only' => [
+                '- Only top-level parent categories are allowed for assignment in this prompt.',
+                '- Do not infer or mention omitted child categories.',
+                '- Return null if no listed parent category is a reasonable fit.',
+            ],
+            'parent_preferred' => [
+                '- The available category list is intentionally parent-oriented for deterministic matching.',
+                '- Choose the best listed parent category instead of inferring omitted child categories.',
+                '- Return null if no listed category is a reasonable fit.',
+            ],
+            'child_only' => [
+                '- Only child categories are allowed for assignment in this prompt.',
+                '- Do not assign or infer omitted parent categories or standalone parents.',
+                '- Return null if no listed child category is a reasonable fit.',
+            ],
+            'child_preferred' => [
+                '- Child categories are preferred whenever they are available for that semantic area.',
+                '- Standalone parent categories may appear only when they have no active child categories.',
+                '- Do not assign an omitted parent category when a listed child category is suitable.',
+            ],
+            default => [
+                '- Choose the best semantic match from the listed categories only.',
+                '- If both a parent and a child category are listed and the child is clearly more specific, choose the child.',
+                '- Return null if no listed category is a reasonable fit.',
+            ],
+        };
     }
 
     public function buildMainExtractionPrompt(string $text, ?string $customPrompt = null): string

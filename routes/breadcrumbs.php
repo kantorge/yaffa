@@ -249,7 +249,7 @@ Breadcrumbs::for('ai-documents.show', function (BreadcrumbTrail $trail, AiDocume
 // User related routes
 Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('My profile'), route('user.settings'));
+    $trail->push(__('User settings'), route('user.settings'));
 });
 Breadcrumbs::for('user.ai-settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');

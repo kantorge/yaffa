@@ -4,6 +4,8 @@ namespace Tests\Unit\Services;
 
 use App\Services\AiPromptBuilder;
 use PHPUnit\Framework\TestCase;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+use Prism\Prism\ValueObjects\Messages\UserMessage;
 
 class AiPromptBuilderTest extends TestCase
 {
@@ -49,6 +51,30 @@ class AiPromptBuilderTest extends TestCase
         $this->assertStringNotContainsString('$12.5', $prompt);
         $this->assertStringNotContainsString('$3.1', $prompt);
         $this->assertStringContainsString('7: Food > Drinks', $prompt);
+        $this->assertStringContainsString('CATEGORY MATCHING RULES:', $prompt);
+    }
+
+    public function test_build_category_matching_prompt_includes_mode_specific_rules(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $expectations = [
+            'parent_only' => 'Only top-level parent categories are allowed for assignment in this prompt.',
+            'parent_preferred' => 'The available category list is intentionally parent-oriented for deterministic matching.',
+            'child_only' => 'Only child categories are allowed for assignment in this prompt.',
+            'child_preferred' => 'Standalone parent categories may appear only when they have no active child categories.',
+        ];
+
+        foreach ($expectations as $mode => $expectedLine) {
+            $prompt = $builder->buildCategoryMatchingPrompt(
+                [0 => ['description' => 'coffee beans', 'amount' => 12.5]],
+                [],
+                '7: Food > Drinks',
+                $mode,
+            );
+
+            $this->assertStringContainsString($expectedLine, $prompt);
+        }
     }
 
     public function test_build_account_matching_prompt_includes_account_list_and_target_name(): void
@@ -73,5 +99,83 @@ class AiPromptBuilderTest extends TestCase
         $this->assertStringContainsString('21: Coffee Shop', $payeePrompt);
         $this->assertStringContainsString('The investment mentioned in the document is: AAPL', $investmentPrompt);
         $this->assertStringContainsString('42: Apple Inc. (AAPL)', $investmentPrompt);
+    }
+
+    public function test_build_prompt_message_chain_includes_history_and_current_prompt(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $messages = $builder->buildPromptMessageChain('Current prompt', [
+            [
+                'prompt' => 'First prompt',
+                'response' => 'First response',
+            ],
+            [
+                'prompt' => 'Second prompt',
+                'response' => 'Second response',
+            ],
+        ]);
+
+        $this->assertCount(5, $messages);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        /** @var UserMessage $firstUserMessage */
+        $firstUserMessage = $messages[0];
+        $this->assertSame('First prompt', $firstUserMessage->content);
+
+        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
+        /** @var AssistantMessage $firstAssistantMessage */
+        $firstAssistantMessage = $messages[1];
+        $this->assertSame('First response', $firstAssistantMessage->content);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[2]);
+        /** @var UserMessage $secondUserMessage */
+        $secondUserMessage = $messages[2];
+        $this->assertSame('Second prompt', $secondUserMessage->content);
+
+        $this->assertInstanceOf(AssistantMessage::class, $messages[3]);
+        /** @var AssistantMessage $secondAssistantMessage */
+        $secondAssistantMessage = $messages[3];
+        $this->assertSame('Second response', $secondAssistantMessage->content);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[4]);
+        /** @var UserMessage $currentPromptMessage */
+        $currentPromptMessage = $messages[4];
+        $this->assertSame('Current prompt', $currentPromptMessage->content);
+    }
+
+    public function test_build_prompt_message_chain_skips_empty_history_values(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $messages = $builder->buildPromptMessageChain('Current prompt', [
+            [
+                'prompt' => ' ',
+                'response' => "\n\t",
+            ],
+            [
+                'prompt' => 'History prompt',
+            ],
+            [
+                'response' => 'History response',
+            ],
+        ]);
+
+        $this->assertCount(3, $messages);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        /** @var UserMessage $historyPromptMessage */
+        $historyPromptMessage = $messages[0];
+        $this->assertSame('History prompt', $historyPromptMessage->content);
+
+        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
+        /** @var AssistantMessage $historyResponseMessage */
+        $historyResponseMessage = $messages[1];
+        $this->assertSame('History response', $historyResponseMessage->content);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[2]);
+        /** @var UserMessage $currentMessage */
+        $currentMessage = $messages[2];
+        $this->assertSame('Current prompt', $currentMessage->content);
     }
 }

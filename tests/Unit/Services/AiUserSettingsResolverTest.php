@@ -29,6 +29,7 @@ class AiUserSettingsResolverTest extends TestCase
             'user_id' => $user->id,
             'ocr_language' => 'fra',
             'asset_similarity_threshold' => 0.777,
+            'prompt_chat_history_enabled' => false,
             'category_matching_mode' => 'parent_only',
         ]);
 
@@ -36,6 +37,7 @@ class AiUserSettingsResolverTest extends TestCase
 
         $this->assertSame('fra', $resolved['ocr_language']);
         $this->assertSame(0.777, $resolved['asset_similarity_threshold']);
+        $this->assertFalse($resolved['prompt_chat_history_enabled']);
         $this->assertSame('parent_only', $resolved['category_matching_mode']);
     }
 
@@ -63,6 +65,7 @@ class AiUserSettingsResolverTest extends TestCase
         $this->assertSame(85, $resolved['image_quality_vision']);
         $this->assertSame(0.5, $resolved['asset_similarity_threshold']);
         $this->assertSame(10, $resolved['asset_max_suggestions']);
+        $this->assertTrue($resolved['prompt_chat_history_enabled']);
         $this->assertSame(3, $resolved['duplicate_date_window_days']);
         $this->assertSame(10.0, $resolved['duplicate_amount_tolerance_percent']);
         $this->assertSame(0.5, $resolved['duplicate_similarity_threshold']);
@@ -120,12 +123,14 @@ class AiUserSettingsResolverTest extends TestCase
 
         $settings = $this->resolver->updateForUser($user, [
             'ai_enabled' => true,
+            'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
             'match_auto_accept_threshold' => 0.88,
             'category_matching_mode' => 'best_match',
         ]);
 
         $this->assertTrue($settings->ai_enabled);
+        $this->assertFalse($settings->prompt_chat_history_enabled);
         $this->assertSame('hun', $settings->ocr_language);
         $this->assertSame(0.88, $settings->match_auto_accept_threshold);
         $this->assertSame('best_match', $settings->category_matching_mode);
@@ -133,6 +138,7 @@ class AiUserSettingsResolverTest extends TestCase
         $this->assertDatabaseHas('ai_user_settings', [
             'user_id' => $user->id,
             'ai_enabled' => true,
+            'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
             'category_matching_mode' => 'best_match',
         ]);

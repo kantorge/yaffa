@@ -73,12 +73,13 @@
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <a class="dropdown-item" href="{{ route('user.settings') }}">
                             <i class="fa-solid fa-user me-2"></i>
-                            {{ __('My profile') }}
+                            {{ __('User settings') }}
                         </a>
                         <a class="dropdown-item" href="{{ route('user.ai-settings') }}">
                             <i class="fa-solid fa-sliders me-2"></i>
                             {{ __('AI document settings') }}
                         </a>
+                        <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"

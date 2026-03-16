@@ -21,6 +21,7 @@ class AiUserSettingsFactory extends Factory
         return [
             'user_id' => User::factory(),
             'ai_enabled' => false,
+            'prompt_chat_history_enabled' => true,
             'ocr_language' => 'eng',
             'image_max_width_vision' => 2048,
             'image_max_height_vision' => 2048,

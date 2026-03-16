@@ -46,6 +46,7 @@ class AiUserSettingsApiV1Test extends TestCase
         AiUserSettings::factory()->create([
             'user_id' => $this->user->id,
             'ai_enabled' => true,
+            'prompt_chat_history_enabled' => false,
             'ocr_language' => 'fra',
             'category_matching_mode' => 'parent_only',
         ]);
@@ -56,6 +57,7 @@ class AiUserSettingsApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonStructure([
                 'ai_enabled',
+                'prompt_chat_history_enabled',
                 'ocr_language',
                 'image_max_width_vision',
                 'image_max_height_vision',
@@ -73,6 +75,7 @@ class AiUserSettingsApiV1Test extends TestCase
             ])
             ->assertJson([
                 'ai_enabled' => true,
+                'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'fra',
                 'category_matching_mode' => 'parent_only',
             ]);
@@ -85,7 +88,8 @@ class AiUserSettingsApiV1Test extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ocr_language', 'eng')
-            ->assertJsonPath('ai_enabled', false);
+            ->assertJsonPath('ai_enabled', false)
+            ->assertJsonPath('prompt_chat_history_enabled', true);
 
         $this->assertDatabaseHas('ai_user_settings', [
             'user_id' => $this->user->id,
@@ -132,6 +136,7 @@ class AiUserSettingsApiV1Test extends TestCase
         AiUserSettings::factory()->create([
             'user_id' => $this->user->id,
             'ai_enabled' => false,
+            'prompt_chat_history_enabled' => true,
             'ocr_language' => 'eng',
             'category_matching_mode' => 'child_preferred',
         ]);
@@ -139,6 +144,7 @@ class AiUserSettingsApiV1Test extends TestCase
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.ai.settings.update'), [
                 'ai_enabled' => true,
+                'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'hun',
                 'category_matching_mode' => 'best_match',
                 'match_auto_accept_threshold' => 0.9,
@@ -147,6 +153,7 @@ class AiUserSettingsApiV1Test extends TestCase
         $response->assertOk()
             ->assertJson([
                 'ai_enabled' => true,
+                'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'hun',
                 'category_matching_mode' => 'best_match',
                 'match_auto_accept_threshold' => 0.9,
@@ -155,6 +162,7 @@ class AiUserSettingsApiV1Test extends TestCase
         $this->assertDatabaseHas('ai_user_settings', [
             'user_id' => $this->user->id,
             'ai_enabled' => true,
+            'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
             'category_matching_mode' => 'best_match',
         ]);
@@ -183,6 +191,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'asset_similarity_threshold' => 1.5,
                 'duplicate_amount_tolerance_percent' => 150,
                 'category_matching_mode' => 'invalid-mode',
+                'prompt_chat_history_enabled' => 'invalid',
             ]);
 
         $response->assertUnprocessable()
@@ -192,6 +201,7 @@ class AiUserSettingsApiV1Test extends TestCase
                     'asset_similarity_threshold',
                     'duplicate_amount_tolerance_percent',
                     'category_matching_mode',
+                    'prompt_chat_history_enabled',
                 ],
             ]);
     }

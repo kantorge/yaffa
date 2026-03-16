@@ -93,7 +93,7 @@ No Tesseract needed - all OCR via Vision API:
 TESSERACT_ENABLED=FALSE
 ```
 
-Requires OpenAI or Gemini API key configured via UX (My Profile). Make sure to select AI Provider and model that support Vision API.
+Requires OpenAI or Gemini API key configured via UX (AI document settings). Make sure to select AI Provider and model that support Vision API.
 
 ## How It Works
 

@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiUserSettings;
+use App\Models\Category;
 use App\Models\Payee;
 use App\Models\User;
 use App\Services\AssetMatchingService;
@@ -98,5 +99,68 @@ class AssetMatchingServiceTest extends TestCase
 
         $this->assertCount(1, $matches);
         $this->assertSame($expectedTopMatch->id, $matches[0]['id']);
+    }
+
+    public function test_resolve_category_prompt_context_filters_categories_by_matching_mode(): void
+    {
+        $user = User::factory()->create();
+
+        $parentWithChild = Category::factory()->for($user)->create([
+            'name' => 'Food',
+            'active' => true,
+            'parent_id' => null,
+        ]);
+
+        $child = Category::factory()->for($user)->create([
+            'name' => 'Groceries',
+            'active' => true,
+            'parent_id' => $parentWithChild->id,
+        ]);
+
+        $standaloneParent = Category::factory()->for($user)->create([
+            'name' => 'Transport',
+            'active' => true,
+            'parent_id' => null,
+        ]);
+
+        $service = new AssetMatchingService($user);
+
+        $parentOnlyContext = $service->resolveCategoryPromptContext($user, 'parent_only');
+        $parentPreferredContext = $service->resolveCategoryPromptContext($user, 'parent_preferred');
+        $childOnlyContext = $service->resolveCategoryPromptContext($user, 'child_only');
+        $childPreferredContext = $service->resolveCategoryPromptContext($user, 'child_preferred');
+
+        $this->assertStringContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $parentOnlyContext['categories_list']);
+        $this->assertStringContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $parentOnlyContext['categories_list']);
+        $this->assertStringNotContainsString("{$child->id}: {$child->full_name}", $parentOnlyContext['categories_list']);
+
+        $this->assertSame($parentOnlyContext['categories_list'], $parentPreferredContext['categories_list']);
+
+        $this->assertStringContainsString("{$child->id}: {$child->full_name}", $childOnlyContext['categories_list']);
+        $this->assertStringNotContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $childOnlyContext['categories_list']);
+        $this->assertStringNotContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $childOnlyContext['categories_list']);
+
+        $this->assertStringContainsString("{$child->id}: {$child->full_name}", $childPreferredContext['categories_list']);
+        $this->assertStringContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $childPreferredContext['categories_list']);
+        $this->assertStringNotContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $childPreferredContext['categories_list']);
+    }
+
+    public function test_resolve_category_prompt_context_falls_back_when_strict_mode_has_no_categories(): void
+    {
+        $user = User::factory()->create();
+
+        $parent = Category::factory()->for($user)->create([
+            'name' => 'Utilities',
+            'active' => true,
+            'parent_id' => null,
+        ]);
+
+        $service = new AssetMatchingService($user);
+        $context = $service->resolveCategoryPromptContext($user, 'child_only');
+
+        $this->assertSame('child_only', $context['requested_category_matching_mode']);
+        $this->assertSame('best_match', $context['applied_category_matching_mode']);
+        $this->assertTrue($context['used_mode_fallback']);
+        $this->assertStringContainsString("{$parent->id}: {$parent->full_name}", $context['categories_list']);
     }
 }

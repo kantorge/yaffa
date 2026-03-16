@@ -23,7 +23,7 @@
           ></span>
         </div>
       </div>
-      <div class="card-body">
+      <div class="card-body" v-if="!sandbox_mode">
         <div v-if="loading" class="text-center py-3">
           <i class="fa fa-spinner fa-spin"></i>
           {{ __('Loading settings...') }}
@@ -53,6 +53,35 @@
                 {{
                   __(
                     'When disabled, no new documents will be created or processed by AI.',
+                  )
+                }}
+              </small>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-form-label col-sm-4">
+              {{ __('Prompt Context') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="prompt_chat_history_enabled"
+                  v-model="form.prompt_chat_history_enabled"
+                />
+                <label
+                  class="form-check-label"
+                  for="prompt_chat_history_enabled"
+                >
+                  {{ __('Use previous document prompt/response history') }}
+                </label>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'When enabled, each AI step uses prior prompt/response pairs from this document as conversation context. This can improve accuracy for complex documents but increases processing time and token usage.',
                   )
                 }}
               </small>
@@ -556,6 +585,13 @@
           </div>
         </template>
       </div>
+      <div class="card-body" v-else>
+        <div class="alert alert-warning">
+          {{
+            __('You are in sandbox mode. You cannot change the AI settings.')
+          }}
+        </div>
+      </div>
 
       <div class="card-footer" v-if="!loading">
         <Button
@@ -594,6 +630,7 @@
     data: () => ({
       form: new Form({
         ai_enabled: false,
+        prompt_chat_history_enabled: true,
         ocr_language: '',
         image_max_width_vision: null,
         image_max_height_vision: null,
@@ -610,6 +647,7 @@
       }),
       loading: true,
       warnings: [],
+      sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
       categoryWarning() {
@@ -632,6 +670,8 @@
           .then((response) => {
             const data = response.data;
             this.form.ai_enabled = data.ai_enabled ?? false;
+            this.form.prompt_chat_history_enabled =
+              data.prompt_chat_history_enabled ?? true;
             this.form.ocr_language = data.ocr_language ?? '';
             this.form.image_max_width_vision =
               data.image_max_width_vision ?? null;
@@ -689,6 +729,10 @@
           .then((response) => {
             this.form.ai_enabled = Boolean(
               response.data?.ai_enabled ?? this.form.ai_enabled,
+            );
+            this.form.prompt_chat_history_enabled = Boolean(
+              response.data?.prompt_chat_history_enabled ??
+              this.form.prompt_chat_history_enabled,
             );
             this.warnings = this.normalizeWarnings(
               response.data?.warnings ?? [],

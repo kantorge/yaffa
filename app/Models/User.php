@@ -213,11 +213,6 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(Transaction::class)->count();
     }
 
-    public function receivedMails(): HasMany
-    {
-        return $this->hasMany(ReceivedMail::class);
-    }
-
     public function aiDocuments(): HasMany
     {
         return $this->hasMany(AiDocument::class);

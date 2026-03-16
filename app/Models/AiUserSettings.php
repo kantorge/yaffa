@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $user_id
  * @property bool $ai_enabled
+ * @property bool $prompt_chat_history_enabled
  * @property string $ocr_language
  * @property int $image_max_width_vision
  * @property int $image_max_height_vision
@@ -47,6 +48,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereImageQualityVision($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereMatchAutoAcceptThreshold($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereOcrLanguage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings wherePromptChatHistoryEnabled($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereUserId($value)
  * @mixin \Eloquent
@@ -60,6 +62,7 @@ class AiUserSettings extends Model
 
     protected $fillable = [
         'ai_enabled',
+        'prompt_chat_history_enabled',
         'ocr_language',
         'image_max_width_vision',
         'image_max_height_vision',
@@ -79,6 +82,7 @@ class AiUserSettings extends Model
     {
         return [
             'ai_enabled' => 'boolean',
+            'prompt_chat_history_enabled' => 'boolean',
             'image_max_width_vision' => 'integer',
             'image_max_height_vision' => 'integer',
             'image_quality_vision' => 'integer',

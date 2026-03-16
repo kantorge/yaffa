@@ -226,14 +226,17 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertCount(1, $result['history']);
         $this->assertSame('category_batch_matching', $result['history'][0]['step']);
 
-        $promptPayload = json_decode($result['history'][0]['prompt'], true, 512, JSON_THROW_ON_ERROR);
-        $responsePayload = json_decode($result['history'][0]['response'], true, 512, JSON_THROW_ON_ERROR);
+        $historyPrompt = $result['history'][0]['prompt'];
+        $historyResponse = $result['history'][0]['response'];
 
-        $this->assertSame('local', $promptPayload['source']);
-        $this->assertSame('exact_learning_match', $promptPayload['context']['path']);
-        $this->assertSame(0, $promptPayload['context']['item_index']);
-        $this->assertSame('local', $responsePayload['source']);
-        $this->assertSame($category->id, $responsePayload['result']['recommended_category_id']);
+        $this->assertStringContainsString('Local Category Batch Matching decision (AI call skipped).', $historyPrompt);
+        $this->assertStringContainsString('Context:', $historyPrompt);
+        $this->assertStringContainsString('- Path: exact_learning_match', $historyPrompt);
+        $this->assertStringContainsString('- Item Index: 0', $historyPrompt);
+        $this->assertStringContainsString('Result:', $historyResponse);
+        $this->assertStringContainsString('- Recommended Category Id: ' . $category->id, $historyResponse);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $historyPrompt);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $historyResponse);
     }
 
     public function test_mixed_exact_and_ai_category_matching_uses_ai_for_remaining_items_and_normalizes_descriptions(): void
@@ -590,8 +593,15 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertCount(1, $document->ai_chat_history);
         $this->assertSame('category_batch_matching', $document->ai_chat_history[0]['step']);
 
-        $shortcutPromptPayload = json_decode($document->ai_chat_history[0]['prompt'], true, 512, JSON_THROW_ON_ERROR);
-        $this->assertSame('single_payee_category_shortcut', $shortcutPromptPayload['context']['path']);
+        $shortcutPrompt = $document->ai_chat_history[0]['prompt'];
+        $shortcutResponse = $document->ai_chat_history[0]['response'];
+
+        $this->assertStringContainsString('Local Category Batch Matching decision (AI call skipped).', $shortcutPrompt);
+        $this->assertStringContainsString('- Path: single_payee_category_shortcut', $shortcutPrompt);
+        $this->assertStringContainsString('- Payee Name: Coffee Shop', $shortcutPrompt);
+        $this->assertStringContainsString('- Recommended Category Id: ' . $category->id, $shortcutResponse);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $shortcutPrompt);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $shortcutResponse);
     }
 
     private function createTransactionWithCategory(

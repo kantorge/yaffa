@@ -1520,7 +1520,6 @@ Bugs, issues - detailed planning needed
 - As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
 - The Google Drive sync is not picking up documents, and there's no UI to indicate any issues or logs.
 - Item category detection still prefers parent category over child category. Should there be a flag that prevents passing parent categories to the AI when a child category is available? Does this also mean, that a group of AI-based settings should be introduced?
-- Should the Google Drive sync frequency be configurable by the user? Should this be moved to the drive config model from .env?
 - The AI-based payee matching is poor. Probably the local similarity matching is filtering out the best results. E.g.
   - The list of payees is:
   - 488: Spar (SPAR Magyarország Kereskedelmi Kft.)

@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
+use App\Services\AiUserSettingsResolver;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -70,9 +71,10 @@ class ResetDemoDatabase extends Command
             'locale' => 'en-US',
         ]);
         $demoUser->markEmailAsVerified();
+        app(AiUserSettingsResolver::class)->getOrCreateForUser($demoUser);
 
         // There are assets in the database for a test user with ID 2
-        User::create([
+        $testUser = User::create([
             'id' => 2,
             'name' => 'Test User',
             'email' => 'test@yaffa.cc',
@@ -80,7 +82,9 @@ class ResetDemoDatabase extends Command
             'language' => 'en',
             'locale' => 'en-US',
             'email_verified_at' => Carbon::now(),
-        ])->markEmailAsVerified();
+        ]);
+        $testUser->markEmailAsVerified();
+        app(AiUserSettingsResolver::class)->getOrCreateForUser($testUser);
 
         // Now we need to load the demo.sql file into the database.
         // We assume the database to be empty in terms of users and user related data, except the demo user (1).

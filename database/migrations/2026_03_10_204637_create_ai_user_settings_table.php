@@ -20,6 +20,7 @@ return new class () extends Migration {
                 ->constrained('users')
                 ->cascadeOnDelete();
             $table->boolean('ai_enabled')->default($defaultSettings['ai_enabled']);
+            $table->boolean('prompt_chat_history_enabled')->default($defaultSettings['prompt_chat_history_enabled']);
             $table->string('ocr_language', 64)->default($defaultSettings['ocr_language']);
             $table->unsignedSmallInteger('image_max_width_vision')->default($defaultSettings['image_max_width_vision']);
             $table->unsignedSmallInteger('image_max_height_vision')->default($defaultSettings['image_max_height_vision']);
@@ -73,6 +74,7 @@ return new class () extends Migration {
     {
         return [
             'ai_enabled' => false,
+            'prompt_chat_history_enabled' => true,
             'ocr_language' => 'eng',
             'image_max_width_vision' => 2048,
             'image_max_height_vision' => 2048,

@@ -62,7 +62,10 @@ class ProcessAiDocuments extends Command
                     continue;
                 }
 
-                if (! $settingsResolver->isEnabledForUser($document->user)) {
+                $resolvedSettings = $settingsResolver->resolveForUser($document->user);
+                $categoryMatchingMode = (string) ($resolvedSettings['category_matching_mode'] ?? AiUserSettingsResolver::DEFAULT_CATEGORY_MATCHING_MODE);
+
+                if (! (bool) ($resolvedSettings['ai_enabled'] ?? false)) {
                     $this->line("Skipped document #{$document->id} because AI processing is disabled for the user");
 
                     continue;
@@ -77,7 +80,9 @@ class ProcessAiDocuments extends Command
                     continue;
                 }
 
-                $document = AiDocument::query()->find($documentId);
+                $document = AiDocument::query()
+                    ->with(['user.aiUserSettings'])
+                    ->find($documentId);
 
                 if (! $document) {
                     continue;
@@ -87,7 +92,7 @@ class ProcessAiDocuments extends Command
                 AiProcessingJob::dispatch($document);
                 $dispatched++;
 
-                $this->line("✓ Dispatched processing job for document #{$document->id}");
+                $this->line("✓ Dispatched processing job for document #{$document->id} using category matching mode {$categoryMatchingMode}");
             } catch (Exception $e) {
                 $failedDocumentId = $document->id ?? $documentId;
                 $this->error("✗ Failed to dispatch job for document #{$failedDocumentId}: {$e->getMessage()}");

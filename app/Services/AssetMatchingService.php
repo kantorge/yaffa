@@ -262,21 +262,55 @@ class AssetMatchingService
     /**
      * Format active categories for AI prompt (ID: Full Name)
      */
-    public function formatCategoriesForPrompt(User $user): string
+    public function formatCategoriesForPrompt(User $user, string $categoryMatchingMode = 'best_match'): string
     {
+        return $this->resolveCategoryPromptContext($user, $categoryMatchingMode)['categories_list'];
+    }
+
+    /**
+     * @return array{categories_list: string, requested_category_matching_mode: string, applied_category_matching_mode: string, used_mode_fallback: bool}
+     */
+    public function resolveCategoryPromptContext(User $user, string $categoryMatchingMode = 'best_match'): array
+    {
+        $requestedCategoryMatchingMode = $this->normalizeCategoryMatchingMode($categoryMatchingMode);
+
         $categories = $user->categories()
             ->active()
             ->with('parent')
+            ->withCount([
+                'children as active_children_count' => fn ($query) => $query->where('active', 1),
+            ])
             ->get()
-            ->sortBy('full_name');
+            ->sortBy('full_name')
+            ->values();
 
         if ($categories->isEmpty()) {
-            return 'No active categories configured.';
+            return [
+                'categories_list' => 'No active categories configured.',
+                'requested_category_matching_mode' => $requestedCategoryMatchingMode,
+                'applied_category_matching_mode' => $requestedCategoryMatchingMode,
+                'used_mode_fallback' => false,
+            ];
         }
 
-        return $categories
-            ->map(fn (Category $category): string => "{$category->id}: {$category->full_name}")
-            ->join("\n");
+        $filteredCategories = $this->filterCategoriesForPrompt($categories, $requestedCategoryMatchingMode);
+        $appliedCategoryMatchingMode = $requestedCategoryMatchingMode;
+        $usedModeFallback = false;
+
+        if ($filteredCategories->isEmpty() && $requestedCategoryMatchingMode !== 'best_match') {
+            $filteredCategories = $categories;
+            $appliedCategoryMatchingMode = 'best_match';
+            $usedModeFallback = true;
+        }
+
+        return [
+            'categories_list' => $filteredCategories
+                ->map(fn (Category $category): string => "{$category->id}: {$category->full_name}")
+                ->join("\n"),
+            'requested_category_matching_mode' => $requestedCategoryMatchingMode,
+            'applied_category_matching_mode' => $appliedCategoryMatchingMode,
+            'used_mode_fallback' => $usedModeFallback,
+        ];
     }
 
     /**
@@ -334,6 +368,32 @@ class AssetMatchingService
     private function normalize(string $text): string
     {
         return Str::lower(Str::trim($text));
+    }
+
+    private function normalizeCategoryMatchingMode(string $categoryMatchingMode): string
+    {
+        if (! in_array($categoryMatchingMode, AiUserSettingsResolver::CATEGORY_MATCHING_MODES, true)) {
+            return 'best_match';
+        }
+
+        return $categoryMatchingMode;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Category>  $categories
+     * @return \Illuminate\Database\Eloquent\Collection<int, Category>
+     */
+    private function filterCategoriesForPrompt(\Illuminate\Database\Eloquent\Collection $categories, string $categoryMatchingMode): \Illuminate\Database\Eloquent\Collection
+    {
+        return match ($categoryMatchingMode) {
+            'parent_only' => $categories
+                ->filter(fn (Category $category): bool => $category->parent_id === null)
+                ->values(),
+            'child_only' => $categories
+                ->filter(fn (Category $category): bool => $category->parent_id !== null)
+                ->values(),
+            default => $categories,
+        };
     }
 
     private function resolveSimilarityThreshold(): float
