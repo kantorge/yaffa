@@ -392,6 +392,8 @@ class AssetMatchingService
             'child_only' => $categories
                 ->filter(fn (Category $category): bool => $category->parent_id !== null)
                 ->values(),
+            // 'best_match' mode is handled in the calling method as a fallback, so it doesn't require filtering here
+            // This includes 'parent_preferred' and 'child_preferred' modes, where we want to keep all categories but prefer matches from the specified group in the matching logic
             default => $categories,
         };
     }

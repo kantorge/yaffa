@@ -26,7 +26,6 @@ class ProcessDocumentService
 
     public function __construct(
         private TextExtractionService $textExtractor,
-        private AssetMatchingService $assetMatchingService,
         private CategoryLearningService $categoryLearningService,
         private PayeeCategoryStatsService $payeeCategoryStatsService,
         private AiExtractionSchemaValidator $aiExtractionSchemaValidator,

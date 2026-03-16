@@ -16,7 +16,6 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
-use App\Services\AssetMatchingService;
 use App\Services\AiExtractionSchemaValidator;
 use App\Services\AiPromptBuilder;
 use App\Services\CategoryLearningService;
@@ -39,7 +38,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $this->createMock(CategoryLearningService::class),
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -71,7 +69,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $this->createMock(CategoryLearningService::class),
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -115,7 +112,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $this->createMock(CategoryLearningService::class),
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -124,7 +120,6 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public function __construct(
                 TextExtractionService $textExtractor,
-                AssetMatchingService $assetMatchingService,
                 CategoryLearningService $categoryLearningService,
                 PayeeCategoryStatsService $payeeCategoryStatsService,
                 AiExtractionSchemaValidator $aiExtractionSchemaValidator,
@@ -133,7 +128,6 @@ class ProcessDocumentServiceTest extends TestCase
             ) {
                 parent::__construct(
                     $textExtractor,
-                    $assetMatchingService,
                     $categoryLearningService,
                     $payeeCategoryStatsService,
                     $aiExtractionSchemaValidator,
@@ -189,7 +183,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $categoryLearningService,
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -255,7 +248,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $categoryLearningService,
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -264,7 +256,6 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public function __construct(
                 TextExtractionService $textExtractor,
-                AssetMatchingService $assetMatchingService,
                 CategoryLearningService $categoryLearningService,
                 PayeeCategoryStatsService $payeeCategoryStatsService,
                 AiExtractionSchemaValidator $aiExtractionSchemaValidator,
@@ -273,7 +264,6 @@ class ProcessDocumentServiceTest extends TestCase
             ) {
                 parent::__construct(
                     $textExtractor,
-                    $assetMatchingService,
                     $categoryLearningService,
                     $payeeCategoryStatsService,
                     $aiExtractionSchemaValidator,
@@ -371,7 +361,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $textExtractor,
-            new AssetMatchingService($user),
             new CategoryLearningService(),
             new PayeeCategoryStatsService(),
             new AiExtractionSchemaValidator(),
@@ -381,7 +370,6 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public function __construct(
                 TextExtractionService $textExtractor,
-                AssetMatchingService $assetMatchingService,
                 CategoryLearningService $categoryLearningService,
                 PayeeCategoryStatsService $payeeCategoryStatsService,
                 AiExtractionSchemaValidator $aiExtractionSchemaValidator,
@@ -391,7 +379,6 @@ class ProcessDocumentServiceTest extends TestCase
             ) {
                 parent::__construct(
                     $textExtractor,
-                    $assetMatchingService,
                     $categoryLearningService,
                     $payeeCategoryStatsService,
                     $aiExtractionSchemaValidator,
@@ -500,7 +487,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $textExtractor,
-            $this->createMock(AssetMatchingService::class),
             new CategoryLearningService(),
             $this->createMock(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
@@ -557,7 +543,6 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $this->createMock(TextExtractionService::class),
-            $this->createMock(AssetMatchingService::class),
             $this->createMock(CategoryLearningService::class),
             new PayeeCategoryStatsService(),
             new AiExtractionSchemaValidator(),

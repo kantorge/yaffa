@@ -134,15 +134,19 @@ class AssetMatchingServiceTest extends TestCase
         $this->assertStringContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $parentOnlyContext['categories_list']);
         $this->assertStringNotContainsString("{$child->id}: {$child->full_name}", $parentOnlyContext['categories_list']);
 
-        $this->assertSame($parentOnlyContext['categories_list'], $parentPreferredContext['categories_list']);
+        // parent_preferred passes all categories
+        $this->assertStringContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $parentPreferredContext['categories_list']);
+        $this->assertStringContainsString("{$child->id}: {$child->full_name}", $parentPreferredContext['categories_list']);
+        $this->assertStringContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $parentPreferredContext['categories_list']);
 
         $this->assertStringContainsString("{$child->id}: {$child->full_name}", $childOnlyContext['categories_list']);
         $this->assertStringNotContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $childOnlyContext['categories_list']);
         $this->assertStringNotContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $childOnlyContext['categories_list']);
 
+        // child_preferred passes all categories
+        $this->assertStringContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $childPreferredContext['categories_list']);
         $this->assertStringContainsString("{$child->id}: {$child->full_name}", $childPreferredContext['categories_list']);
         $this->assertStringContainsString("{$standaloneParent->id}: {$standaloneParent->full_name}", $childPreferredContext['categories_list']);
-        $this->assertStringNotContainsString("{$parentWithChild->id}: {$parentWithChild->full_name}", $childPreferredContext['categories_list']);
     }
 
     public function test_resolve_category_prompt_context_falls_back_when_strict_mode_has_no_categories(): void
