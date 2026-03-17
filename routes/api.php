@@ -167,6 +167,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('payees.category-suggestions.default');
     Route::get('/payees/{accountEntity}', [PayeeApiController::class, 'getItem'])
         ->name('payees.show');
+    Route::patch('/payees/{accountEntity}', [PayeeApiController::class, 'updatePayee'])
+        ->name('payees.update');
     Route::post('/payees/{accountEntity}/category-suggestions/accept/{category}', [PayeeApiController::class, 'acceptPayeeDefaultCategorySuggestion'])
         ->name('payees.category-suggestions.accept');
     Route::post('/payees/{accountEntity}/category-suggestions/dismiss', [PayeeApiController::class, 'dismissPayeeDefaultCategorySuggestion'])

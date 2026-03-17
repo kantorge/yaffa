@@ -65,6 +65,14 @@
                                 label=" {{ __('Active') }}"
                                 property="active"
                         />
+                        <x-tablefilter-sidebar-switch
+                            label=" {{ __('Has default category') }}"
+                            property="default_category"
+                        />
+                        <x-tablefilter-sidebar-switch
+                            label=" {{ __('Has category suggestion') }}"
+                            property="category_suggestion"
+                        />
                         @include('template.components.tablefilter-sidebar-search')
                     </ul>
                 </div>

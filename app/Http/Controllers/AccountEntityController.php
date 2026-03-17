@@ -10,6 +10,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
+use App\Services\PayeeCategoryStatsService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,10 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller implements HasMiddleware
 {
+    public function __construct(private readonly PayeeCategoryStatsService $payeeCategoryStatsService)
+    {
+    }
+
     public static function middleware(): array
     {
         return [
@@ -136,8 +141,10 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     private function indexPayee(): View
     {
+        $user = Auth::user();
+
         // Show all payees of the user from the database and return to view
-        $payees = Auth::user()
+        $payees = $user
             ->payees()
             ->withCount('transactionsStandardFrom as from_count')
             ->withCount('transactionsStandardTo as to_count')
@@ -145,8 +152,23 @@ class AccountEntityController extends Controller implements HasMiddleware
             ->withMax('transactionsStandardFrom as from_max_date', 'date')
             ->withMin('transactionsStandardTo as to_min_date', 'date')
             ->withMax('transactionsStandardTo as to_max_date', 'date')
-            ->with(['config', 'config.category'])
+            ->with(['config', 'config.category', 'config.category.parent'])
             ->get();
+
+        $categorySuggestionsByPayeeId = $this->payeeCategoryStatsService
+            ->getDefaultSuggestionsForAllPayees($user)
+            ->keyBy('payee_id');
+
+        $payees->each(function (AccountEntity $payee) use ($categorySuggestionsByPayeeId): void {
+            $suggestion = $categorySuggestionsByPayeeId->get($payee->id);
+
+            $payee->setAttribute('category_suggestion', $suggestion === null ? null : [
+                'max_category_id' => (int) $suggestion['max_category_id'],
+                'category' => (string) $suggestion['category'],
+                'max' => (int) $suggestion['max'],
+                'sum' => (int) $suggestion['sum'],
+            ]);
+        });
 
         // Pass data for DataTables
         JavaScriptFacade::put([

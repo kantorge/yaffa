@@ -13,6 +13,9 @@ class AccountEntityRequest extends FormRequest
 {
     public function rules(): array
     {
+        /** @var AccountEntity|null $accountEntity */
+        $accountEntity = $this->route('account_entity') ?? $this->route('accountEntity');
+
         $rules = [
             'name' => [
                 'required',
@@ -22,7 +25,7 @@ class AccountEntityRequest extends FormRequest
                 Rule::unique('account_entities')->where(fn ($query) => $query
                     ->where('user_id', $this->user()->id)
                     ->where('config_type', $this->config_type)
-                    ->when($this->account_entity, fn ($query) => $query->where('id', '!=', $this->account_entity->id))),
+                    ->when($accountEntity, fn ($query) => $query->where('id', '!=', $accountEntity->id))),
             ],
             'config_type' => 'required|in:account,payee',
             'active' => 'boolean',

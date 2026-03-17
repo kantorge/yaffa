@@ -1,30 +1,89 @@
 import 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
+import 'datatables.net-select-bs5';
+import 'datatables-contextual-actions';
 import { createApp } from 'vue';
 import PayeeForm from '../components/PayeeForm.vue';
 import Swal from 'sweetalert2';
 
-import {
-    booleanToTableIcon,
-    renderDeleteAssetButton,
-} from '../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '@/i18n';
+import { booleanToTableIcon } from '../components/dataTableHelper';
+import { __, getDataTablesLanguageOptions } from '@/i18n';
 
 import * as toastHelpers from '@/toast';
 
 const dataTableSelector = '#table';
+let ajaxIsBusy = false;
 
-/**
- * Define the conditions for the delete button, as required by the DataTables helper.
- */
-const deleteButtonConditions = [
-    {
-        property: 'transactions_count',
-        value: 0,
-        negate: false,
-        errorMessage: __('It is already used in transactions.'),
-    },
-];
+function toNumericId(value) {
+    const parsedValue = Number(value);
+
+    return Number.isNaN(parsedValue) ? null : parsedValue;
+}
+
+function toDateOrNull(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    const parsedValue = Date.parse(value);
+
+    return Number.isNaN(parsedValue) ? null : new Date(parsedValue);
+}
+
+function normalizePayee(payee) {
+    const fromCount = Number(payee.from_count || 0);
+    const toCount = Number(payee.to_count || 0);
+
+    const fromMinDate = toDateOrNull(payee.from_min_date);
+    const fromMaxDate = toDateOrNull(payee.from_max_date);
+    const toMinDate = toDateOrNull(payee.to_min_date);
+    const toMaxDate = toDateOrNull(payee.to_max_date);
+
+    const transactionsMinDate = fromMinDate && toMinDate
+        ? new Date(Math.min(fromMinDate, toMinDate))
+        : fromMinDate || toMinDate;
+    const transactionsMaxDate = fromMaxDate && toMaxDate
+        ? new Date(Math.max(fromMaxDate, toMaxDate))
+        : fromMaxDate || toMaxDate;
+
+    const hasDefaultCategory = Boolean(payee?.config?.category_id || payee?.config?.category?.id);
+    const hasCategorySuggestion = !hasDefaultCategory && Boolean(payee.category_suggestion);
+
+    return {
+        ...payee,
+        config: payee.config || {
+            category: null,
+            category_id: null,
+        },
+        category_suggestion: hasDefaultCategory ? null : (payee.category_suggestion || null),
+        has_default_category: hasDefaultCategory,
+        has_category_suggestion: hasCategorySuggestion,
+        from_count: fromCount,
+        to_count: toCount,
+        transactions_count: fromCount + toCount,
+        from_min_date: fromMinDate,
+        from_max_date: fromMaxDate,
+        to_min_date: toMinDate,
+        to_max_date: toMaxDate,
+        transactions_min_date: transactionsMinDate,
+        transactions_max_date: transactionsMaxDate,
+    };
+}
+
+function getRowFromEvent(settings, element) {
+    const table = $(settings.nTable).DataTable();
+    let rowElement = $(element).closest('tr');
+
+    if (rowElement.hasClass('child')) {
+        rowElement = rowElement.prev();
+    }
+
+    return table.row(rowElement);
+}
 
 // Initialize Vue app
 const vueApp = createApp({
@@ -33,8 +92,37 @@ const vueApp = createApp({
     },
     methods: {
         onPayeeCreated(payee) {
-            // Add the new payee to the table
-            window.payees.push({
+            const payeeId = toNumericId(payee.id);
+
+            const existingIndex = window.payees.findIndex(
+                (item) => toNumericId(item.id) === payeeId,
+            );
+            if (existingIndex !== -1) {
+                const normalizedPayee = normalizePayee({
+                    ...window.payees[existingIndex],
+                    ...payee,
+                });
+
+                window.payees[existingIndex] = normalizedPayee;
+
+                const row = window.table.row(
+                    (_, data) => toNumericId(data.id) === payeeId,
+                );
+                if (row.any()) {
+                    row.data(normalizedPayee).draw(false);
+                }
+
+                const filtersWereReset = this.focusPayeeInTable(payeeId, payee.name);
+                if (filtersWereReset) {
+                    toastHelpers.showInfoToast(__('Existing payee selected. Filters were reset and the row is highlighted.'));
+                } else {
+                    toastHelpers.showInfoToast(__('Existing payee selected and highlighted in the list.'));
+                }
+
+                return;
+            }
+
+            const normalizedPayee = normalizePayee({
                 ...payee,
                 transactions_count: 0,
                 from_count: 0,
@@ -45,119 +133,334 @@ const vueApp = createApp({
                 to_max_date: null,
                 transactions_min_date: null,
                 transactions_max_date: null,
+                category_suggestion: null,
             });
 
-            window.table.row.add(window.payees[window.payees.length - 1]).draw();
+            window.payees.push(normalizedPayee);
+            window.table.row.add(normalizedPayee).draw(false);
 
-            // Show success notification
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: __('Success'),
-                    body: __('Payee added'),
-                    toastClass: 'bg-success',
-                }
-            });
-            window.dispatchEvent(notificationEvent);
+            toastHelpers.showSuccessToast(__('Payee added'));
         },
         onPayeeUpdated(payee) {
-            // Find and update the payee in the data array
-            const index = window.payees.findIndex(p => p.id === payee.id);
+            const payeeId = toNumericId(payee.id);
+            const index = window.payees.findIndex(
+                (item) => toNumericId(item.id) === payeeId,
+            );
             if (index !== -1) {
-                // Preserve transaction counts and dates
-                window.payees[index] = {
+                const mergedPayee = {
                     ...window.payees[index],
                     ...payee,
                 };
+                const normalizedPayee = normalizePayee(mergedPayee);
 
-                // Redraw the table
-                window.table.row((idx, data) => data.id === payee.id).invalidate().draw();
+                window.payees[index] = normalizedPayee;
+
+                const row = window.table.row(
+                    (_, data) => toNumericId(data.id) === payeeId,
+                );
+                if (row.any()) {
+                    row.data(normalizedPayee).draw(false);
+                }
             }
 
-            // Show success notification
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: __('Success'),
-                    body: __('Payee updated'),
-                    toastClass: 'bg-success',
+            toastHelpers.showSuccessToast(__('Payee updated'));
+        },
+        onPayeeSuggestionAccepted(payeeId, categorySuggestion) {
+            const normalizedPayeeId = toNumericId(payeeId);
+            const index = window.payees.findIndex(
+                (item) => toNumericId(item.id) === normalizedPayeeId,
+            );
+            if (index === -1) {
+                return;
+            }
+
+            const updatedPayee = {
+                ...window.payees[index],
+                config: {
+                    ...(window.payees[index].config || {}),
+                    category_id: categorySuggestion.max_category_id,
+                    category: {
+                        id: categorySuggestion.max_category_id,
+                        full_name: categorySuggestion.category,
+                    },
+                },
+                category_suggestion: null,
+            };
+
+            const normalizedPayee = normalizePayee(updatedPayee);
+            window.payees[index] = normalizedPayee;
+
+            const row = window.table.row(
+                (_, data) => toNumericId(data.id) === normalizedPayeeId,
+            );
+            if (row.any()) {
+                row.data(normalizedPayee).draw(false);
+            }
+
+            toastHelpers.showSuccessToast(__('Default category updated'));
+        },
+        acceptCategorySuggestion(payee, buttonElement) {
+            if (!payee.category_suggestion) {
+                return;
+            }
+
+            const button = $(buttonElement);
+            button.addClass('busy').prop('disabled', true);
+            button.find('.fa-check').addClass('d-none');
+            button.find('.fa-spinner').removeClass('d-none');
+
+            window.axios
+                .post(
+                    window.route('api.v1.payees.category-suggestions.accept', {
+                        accountEntity: payee.id,
+                        category: payee.category_suggestion.max_category_id,
+                    }),
+                )
+                .then(() => {
+                    this.onPayeeSuggestionAccepted(payee.id, payee.category_suggestion);
+                })
+                .catch(() => {
+                    toastHelpers.showErrorToast(__('Error while updating default category'));
+                })
+                .finally(() => {
+                    button.find('.fa-spinner').addClass('d-none');
+                    button.find('.fa-check').removeClass('d-none');
+                    button.removeClass('busy').prop('disabled', false);
+                });
+        },
+        resetPayeeTableFilters() {
+            $('input[name=table_filter_active][value=""]').prop('checked', true);
+            $('input[name=table_filter_default_category][value=""]').prop('checked', true);
+            $('input[name=table_filter_category_suggestion][value=""]').prop('checked', true);
+            $('#table_filter_search_text').val('');
+
+            window.table.column(1).search('');
+            window.table.column(7).search('');
+            window.table.column(8).search('');
+            window.table.search('');
+            window.table.draw(false);
+        },
+        focusPayeeInTable(payeeId, payeeName = null) {
+            const normalizedPayeeId = toNumericId(payeeId);
+            if (normalizedPayeeId === null) {
+                return false;
+            }
+
+            const isVisibleInFilteredRows = window.table
+                .rows({ search: 'applied' })
+                .data()
+                .toArray()
+                .some((row) => toNumericId(row.id) === normalizedPayeeId);
+
+            let filtersWereReset = false;
+
+            if (!isVisibleInFilteredRows) {
+                this.resetPayeeTableFilters();
+
+                if (payeeName) {
+                    $('#table_filter_search_text').val(payeeName);
+                    window.table.search(payeeName).draw(false);
                 }
+
+                filtersWereReset = true;
+            }
+
+            setTimeout(() => {
+                const row = window.table.row(
+                    (_, data) => toNumericId(data.id) === normalizedPayeeId,
+                );
+                if (!row.any()) {
+                    return;
+                }
+
+                const rowNode = row.node();
+                if (!rowNode) {
+                    return;
+                }
+
+                const scrollBody = $(window.table.table().container()).find('.dt-scroll-body');
+                if (scrollBody.length > 0) {
+                    const rowPosition = $(rowNode).position();
+                    if (rowPosition) {
+                        const targetScrollTop = scrollBody.scrollTop() + rowPosition.top - (scrollBody.height() / 2);
+                        scrollBody.stop(true).animate({ scrollTop: targetScrollTop }, 200);
+                    }
+                } else {
+                    rowNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                $(rowNode).addClass('table-warning');
+                setTimeout(() => {
+                    $(rowNode).removeClass('table-warning');
+                }, 2000);
+            }, 50);
+
+            return filtersWereReset;
+        },
+        deletePayee(payee) {
+            if (payee.transactions_count > 0 || ajaxIsBusy) {
+                return;
+            }
+
+            ajaxIsBusy = true;
+
+            Swal.fire({
+                animation: false,
+                text: __('Are you sure to want to delete this item?'),
+                icon: 'warning',
+                showCancelButton: true,
+                cancelButtonText: __('Cancel'),
+                confirmButtonText: __('Confirm'),
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-danger',
+                    cancelButton: 'btn btn-outline-secondary ms-3',
+                },
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    ajaxIsBusy = false;
+                    return;
+                }
+
+                window.axios
+                    .delete(window.route('api.v1.account-entities.destroy', payee.id))
+                    .then((response) => {
+                        const deletedPayeeId = response.data.accountEntity.id;
+
+                        window.payees = window.payees.filter((item) => item.id !== deletedPayeeId);
+
+                        window.table
+                            .row((_, data) => data.id === deletedPayeeId)
+                            .remove()
+                            .draw(false);
+
+                        toastHelpers.showSuccessToast(__('Payee deleted'));
+                    })
+                    .catch(() => {
+                        toastHelpers.showErrorToast(__('Error while trying to delete payee'));
+                    })
+                    .finally(() => {
+                        ajaxIsBusy = false;
+                    });
             });
-            window.dispatchEvent(notificationEvent);
+        },
+        openMergeForm(payeeId) {
+            window.location.href = window.route('payees.merge.form', {
+                payeeSource: payeeId,
+            });
+        },
+        openTransactions(payeeId) {
+            window.location.href = window.route('reports.transactions', {
+                payees: [payeeId],
+            });
+        },
+        getDefaultCategoryCellContent(category, row, type) {
+            const defaultCategoryName = category?.full_name || null;
+            const suggestion = row.category_suggestion;
+
+            if (type !== 'display') {
+                return defaultCategoryName || suggestion?.category || __('Not set');
+            }
+
+            if (defaultCategoryName) {
+                return defaultCategoryName;
+            }
+
+            if (suggestion) {
+                return `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-info" title="${__('Suggested category')}">💡 ${suggestion.category}</span>
+                        <button
+                            class="btn btn-xs btn-success accept-payee-category-suggestion"
+                            data-payee-id="${row.id}"
+                            type="button"
+                            title="${__('Accept suggestion')}"
+                        >
+                            <i class="fa fa-fw fa-spinner fa-spin d-none"></i>
+                            <i class="fa fa-fw fa-check"></i>
+                        </button>
+                    </div>`;
+            }
+
+            return __('Not set');
         },
         showNewPayeeModal() {
             this.$refs.payeeFormNew.show();
         },
         showEditPayeeModal(payeeId) {
             this.$refs.payeeFormEdit.show(payeeId);
-        }
-    }
+        },
+    },
 });
 
 const app = vueApp.mount('#payeeIndex');
 
-// Loop payees and prepare data for datatable
-window.payees = window.payees.map(function(payee) {
-    // Summarize all transactions
-    payee.transactions_count = payee.from_count + payee.to_count;
-
-    // Parse various dates, if they exist
-    payee.from_min_date = payee.from_min_date ? new Date(Date.parse(payee.from_min_date)) : null;
-    payee.from_max_date = payee.from_max_date ? new Date(Date.parse(payee.from_max_date)) : null;
-    payee.to_min_date = payee.to_min_date ? new Date(Date.parse(payee.to_min_date)) : null;
-    payee.to_max_date = payee.to_max_date ? new Date(Date.parse(payee.to_max_date)) : null;
-
-    // Calculate min and max dates, based on the two from and to dates
-    payee.transactions_min_date = payee.from_min_date && payee.to_min_date
-        ? new Date(Math.min(payee.from_min_date, payee.to_min_date))
-        : payee.from_min_date || payee.to_min_date;
-    payee.transactions_max_date = payee.from_max_date && payee.to_max_date
-        ? new Date(Math.max(payee.from_max_date, payee.to_max_date))
-        : payee.from_max_date || payee.to_max_date;
-
-    return payee;
-});
+// Prepare payee data for datatable
+window.payees = window.payees.map((payee) => normalizePayee(payee));
 
 window.table = $(dataTableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
-    data: payees,
+    data: window.payees,
     columns: [
         {
-            data: "name",
-            title: __('Name')
+            data: 'name',
+            title: __('Name'),
+            render: function (data, type) {
+                if (type === 'display') {
+                    return `<div class="d-flex justify-content-start align-items-center">
+                        <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
+                        <span>${data}</span>
+                    </div>`;
+                }
+
+                return data;
+            },
         },
         {
-            data: "active",
-            title: __("Active"),
+            data: 'active',
+            title: __('Active'),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
-            className: "text-center activeIcon",
+            className: 'text-center activeIcon',
         },
         {
-            data: "config.category",
-            title: __("Default category"),
-            render: function(data) {
-                return (data ? data.full_name : __('Not set'));
-            }
+            data: 'config.category',
+            title: __('Default category'),
+            render: function (data, type, row) {
+                return app.getDefaultCategoryCellContent(data, row, type);
+            },
+            type: 'html',
         },
         {
-            // Display count of associated transactions
-            data: "transactions_count",
-            title: __("Transactions"),
-            render: function(data, type) {
+            data: 'transactions_count',
+            title: __('Transactions'),
+            render: function (data, type, row) {
                 if (type === 'display') {
-                    return (data > 0 ? data : __('Never used'));
+                    if (data > 0) {
+                        const formattedCount = data.toLocaleString(window.YAFFA.userSettings.locale, {
+                            maximumFractionDigits: 0,
+                            useGrouping: true,
+                        });
+
+                        return `<a href="${window.route('reports.transactions', { payees: [row.id] })}" title="${__('Show transactions')}">${formattedCount}</a>`;
+                    }
+
+                    return __('Never used');
                 }
+
                 return data;
             },
             type: 'num',
         },
         {
-            // Display first transaction date
-            data: "transactions_min_date",
-            title: __("First transaction"),
-            render: function(data, type) {
+            data: 'transactions_min_date',
+            title: __('First transaction'),
+            render: function (data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString(window.YAFFA.userSettings.locale) : __('Never used'));
+                    return data
+                        ? data.toLocaleDateString(window.YAFFA.userSettings.locale)
+                        : __('Never used');
                 }
 
                 return data || null;
@@ -165,12 +468,13 @@ window.table = $(dataTableSelector).DataTable({
             type: 'date',
         },
         {
-            // Display last transaction date
-            data: "transactions_max_date",
-            title: __("Last transaction"),
-            render: function(data, type) {
+            data: 'transactions_max_date',
+            title: __('Last transaction'),
+            render: function (data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString(window.YAFFA.userSettings.locale) : __('Never used'));
+                    return data
+                        ? data.toLocaleDateString(window.YAFFA.userSettings.locale)
+                        : __('Never used');
                 }
 
                 return data || null;
@@ -180,46 +484,59 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: 'alias',
             title: __('Import alias'),
-            render: function(data, type) {
+            render: function (data, type) {
                 if (type === 'display') {
-                    return (data ? data.replace('\n', '<br>') : __('Not set'));
+                    return data ? data.replace(/\n/g, '<br>') : __('Not set');
                 }
+
                 return data;
-            }
+            },
         },
         {
-            data: "id",
-            title: __("Actions"),
-            render: function(data, _type, row) {
-                return  '<button class="btn btn-xs btn-primary edit-payee-btn" data-payee-id="' + data + '" title="' + __('Edit') + '"><i class="fa fa-edit"></i></button> ' +
-                         renderDeleteAssetButton(row, deleteButtonConditions, __("This payee cannot be deleted.")) +
-                        '<a href="' + window.route('payees.merge.form', {payeeSource: data}) + '" class="btn btn-xs btn-primary" title="' + __('Merge into an other payee') + '"><i class="fa fa-random"></i></a> ';
+            data: 'has_default_category',
+            title: __('Has default category'),
+            visible: false,
+            render: function (data, type) {
+                if (type === 'filter') {
+                    return data ? __('Yes') : __('No');
+                }
+
+                return data ? 1 : 0;
             },
-            className: "dt-nowrap",
-            orderable: false,
-            searchable: false,
-        }
+            searchable: true,
+        },
+        {
+            data: 'has_category_suggestion',
+            title: __('Has category suggestion'),
+            visible: false,
+            render: function (data, type) {
+                if (type === 'filter') {
+                    return data ? __('Yes') : __('No');
+                }
+
+                return data ? 1 : 0;
+            },
+            searchable: true,
+        },
     ],
-    createdRow: function(row, data) {
-        if (!data.config.category) {
-            $('td:eq(2)', row).addClass("text-muted text-italic");
+    createdRow: function (row, data) {
+        if (!data.config?.category && !data.category_suggestion) {
+            $('td:eq(2)', row).addClass('text-muted text-italic');
         }
         if (data.transactions_count === 0) {
-            $('td:eq(3)', row).addClass("text-muted text-italic");
+            $('td:eq(3)', row).addClass('text-muted text-italic');
         }
         if (!data.transactions_min_date) {
-            $('td:eq(4)', row).addClass("text-muted text-italic");
+            $('td:eq(4)', row).addClass('text-muted text-italic');
         }
         if (!data.transactions_max_date) {
-            $('td:eq(5)', row).addClass("text-muted text-italic");
+            $('td:eq(5)', row).addClass('text-muted text-italic');
         }
         if (!data.alias) {
-            $('td:eq(6)', row).addClass("text-muted text-italic");
+            $('td:eq(6)', row).addClass('text-muted text-italic');
         }
     },
-    order: [
-        [ 0, 'asc' ]
-    ],
+    order: [[0, 'asc']],
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
@@ -227,12 +544,17 @@ window.table = $(dataTableSelector).DataTable({
     processing: true,
     paging: false,
     responsive: true,
-    initComplete : function(settings) {
-        $(settings.nTable).on("click", "td.activeIcon > i", function() {
-            var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+    select: {
+        select: true,
+        info: false,
+        style: 'os',
+    },
+    initComplete: function (settings) {
+        $(settings.nTable).on('click', 'td.activeIcon > i', function () {
+            const row = getRowFromEvent(settings, this);
 
             // Do not request change if previous request is still in progress
-            if ($(this).hasClass("fa-spinner")) {
+            if ($(this).hasClass('fa-spinner')) {
                 return false;
             }
 
@@ -240,94 +562,120 @@ window.table = $(dataTableSelector).DataTable({
             $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
             // Send request to change payee active state
-            $.ajax ({
+            $.ajax({
                 type: 'PATCH',
-                url: window.route('api.v1.account-entities.patch-active', {accountEntity: row.data().id}),
+                url: window.route('api.v1.account-entities.patch-active', {
+                    accountEntity: row.data().id,
+                }),
                 data: JSON.stringify({
-                    "_token": csrfToken,
-                    "active": !row.data().active,
+                    _token: csrfToken,
+                    active: !row.data().active,
                 }),
                 contentType: 'application/json',
                 success: function (data) {
-                    // Update row in table data source
-                    payees.filter(payee => payee.id === data.id)[0].active = data.active;
+                    const normalizedPayeeId = toNumericId(data.id);
+                    const payee = window.payees.find(
+                        (item) => toNumericId(item.id) === normalizedPayeeId,
+                    );
+                    if (payee) {
+                        payee.active = data.active;
+                    }
                 },
-                error: function (_data) {
-                    alert('Error changing payee active state');
+                error: function () {
+                    toastHelpers.showErrorToast(__('Error while changing payee active state'));
                 },
-                complete: function(_data) {
-                    // Re-render row
-                    row.invalidate();
-                }
+                complete: function () {
+                    row.invalidate().draw(false);
+                },
             });
         });
 
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-            let element = $(this);
+        $(settings.nTable).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
+            const row = getRowFromEvent(settings, this);
+            const payee = row.data();
 
-            // Confirm the action with the user using Sweetalert2
-            Swal.fire({
-                title: __('Are you sure?'),
-                text: __('Are you sure to want to delete this item?'),
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: __('Yes, delete it!'),
-                cancelButtonText: __('Cancel')
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Change icon to spinner
-                    element.addClass('busy');
+            if (!payee) {
+                return;
+            }
 
-                    // Send request to delete payee
-                    $.ajax({
-                        type: 'DELETE',
-                        url: window.route('api.v1.account-entities.destroy', row.data().id),
-                        data: {
-                            "_token": csrfToken,
-                        },
-                        dataType: "json",
-                        context: this,
-                        success: function (data) {
-                            // Update row in table data source
-                            window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
-
-                            row.remove().draw();
-
-                            toastHelpers.showSuccessToast(__('Payee deleted'));
-                        },
-                        error: function (_data) {
-                            toastHelpers.showErrorToast(__('Error while trying to delete payee'));
-                        },
-                        complete: function (_data) {
-                            // Restore button icon
-                            element.removeClass('busy');
-                        }
-                    });
-                }
-            });
+            app.acceptCategorySuggestion(payee, this);
         });
+    },
+});
 
-        // Listener for edit button
-        $(settings.nTable).on("click", "button.edit-payee-btn", function () {
-            const payeeId = $(this).data('payee-id');
-            app.showEditPayeeModal(payeeId);
-        });
-    }
+window.table.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false,
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            action: function (selectedRows) {
+                app.showEditPayeeModal(selectedRows[0].id);
+            },
+        },
+        {
+            type: 'option',
+            title: __('Show transactions'),
+            iconClass: 'fa fa-list',
+            action: function (selectedRows) {
+                app.openTransactions(selectedRows[0].id);
+            },
+        },
+        {
+            type: 'option',
+            title: __('Merge into an other payee'),
+            iconClass: 'fa fa-random',
+            action: function (selectedRows) {
+                app.openMergeForm(selectedRows[0].id);
+            },
+        },
+        {
+            type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            isDisabled: function (row) {
+                return ajaxIsBusy || row.transactions_count > 0;
+            },
+            action: function (selectedRows) {
+                app.deletePayee(selectedRows[0]);
+            },
+        },
+    ],
 });
 
 // Listeners for filters
-$('input[name=table_filter_active]').on("change", function() {
-    table.column(1).search(this.value).draw();
+$('input[name=table_filter_active]').on('change', function () {
+    window.table.column(1).search(this.value).draw();
 });
-$('#table_filter_search_text').keyup(function(){
-    table.search($(this).val()).draw() ;
-})
+
+$('input[name=table_filter_default_category]').on('change', function () {
+    window.table.column(7).search(this.value).draw();
+});
+
+$('input[name=table_filter_category_suggestion]').on('change', function () {
+    window.table.column(8).search(this.value).draw();
+});
+
+$('#table_filter_search_text').on('input', function () {
+    window.table.search($(this).val()).draw();
+});
 
 // Listener for new payee button
-$('#button-new-payee').on('click', function() {
+$('#button-new-payee').on('click', function () {
     app.showNewPayeeModal();
 });

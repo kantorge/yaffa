@@ -71,10 +71,59 @@
                   id="category_id"
                   class="form-select category"
                   style="width: 100%"
-                  v-model.number="form.config.category_id"
                 ></select>
               </div>
             </div>
+
+            <template v-if="!simplified">
+              <div class="row mb-3">
+                <label for="alias" class="form-label col-sm-3">
+                  {{ __('Import alias') }}
+                </label>
+                <div class="col-sm-9">
+                  <textarea
+                    id="alias"
+                    class="form-control"
+                    rows="3"
+                    v-model="form.alias"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label for="preferred_categories" class="form-label col-sm-3">
+                  {{ __('Preferred categories') }}
+                </label>
+                <div class="col-sm-9">
+                  <select
+                    id="preferred_categories"
+                    class="form-select preferred"
+                    style="width: 100%"
+                    multiple="multiple"
+                    data-other-select=".not-preferred"
+                  ></select>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label
+                  for="not_preferred_categories"
+                  class="form-label col-sm-3"
+                >
+                  {{ __('Excluded categories') }}
+                </label>
+                <div class="col-sm-9">
+                  <select
+                    id="not_preferred_categories"
+                    class="form-select not-preferred"
+                    style="width: 100%"
+                    multiple="multiple"
+                    data-other-select=".preferred"
+                  ></select>
+                </div>
+              </div>
+            </template>
+
             <div class="row mb-3" v-show="similarPayees.length > 0">
               <hr />
               <span class="form-label col-sm-3">
@@ -145,6 +194,10 @@
         type: String,
         default: 'newPayeeModal',
       },
+      simplified: {
+        type: Boolean,
+        default: false,
+      },
     },
 
     data() {
@@ -155,56 +208,41 @@
         config_type: 'payee',
         name: '',
         active: true,
+        alias: '',
         config: {
           category_id: null,
+          preferred: [],
+          not_preferred: [],
         },
       });
 
       data.similarPayees = [];
       data.payeeId = null;
+      data.categorySelect = null;
+      data.preferredSelect = null;
+      data.notPreferredSelect = null;
 
       return data;
     },
 
-    mounted() {
-      // Add select2 functionality to category
-      let elementCategory = $(this.$el).find('select.category');
+    computed: {
+      formUrl() {
+        if (this.payeeId === null) {
+          return null;
+        }
 
-      elementCategory
-        .select2({
-          ajax: {
-            url: '/api/v1/categories',
-            dataType: 'json',
-            delay: 150,
-            data: function (params) {
-              return {
-                q: params.term,
-              };
-            },
-            processResults: function (data) {
-              return {
-                results: data.map(function (item) {
-                  return {
-                    id: item.id,
-                    text: item.full_name,
-                  };
-                }),
-              };
-            },
-            cache: true,
-          },
-          selectOnClose: true,
-          placeholder: __('Select category'),
-          allowClear: true,
-          dropdownParent: $('#' + this.id),
-        })
-        .on('select2:select', function (e) {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
+        return route('api.v1.payees.update', {
+          accountEntity: this.payeeId,
         });
+      },
+    },
+
+    mounted() {
+      this.initializeCategorySelect();
+
+      if (!this.simplified) {
+        this.initializeCategoryPreferenceSelects();
+      }
 
       // Initialize modal
       this.modal = new coreui.Modal(document.getElementById(this.id));
@@ -212,18 +250,158 @@
 
     methods: {
       show(payeeId = null) {
-        if (payeeId) {
+        this.resetForm();
+
+        if (payeeId !== null) {
           // Load payee data for editing
           this.loadPayeeData(payeeId);
         }
+
         this.modal.show();
+      },
+
+      initializeCategorySelect() {
+        this.categorySelect = $(this.$el).find('select.category');
+
+        this.categorySelect
+          .select2({
+            theme: 'bootstrap-5',
+            ajax: {
+              url: '/api/v1/categories',
+              dataType: 'json',
+              delay: 150,
+              data: function (params) {
+                return {
+                  _token: csrfToken,
+                  q: params.term || '*',
+                  withInactive: true,
+                };
+              },
+              processResults: function (data) {
+                const results = Array.isArray(data) ? data : data.data || [];
+
+                return {
+                  results: results.map(function (item) {
+                    return {
+                      id: item.id,
+                      text: item.full_name,
+                    };
+                  }),
+                };
+              },
+              cache: true,
+            },
+            selectOnClose: true,
+            placeholder: __('Select category'),
+            allowClear: true,
+            dropdownParent: $('#' + this.id),
+          })
+          .on('change', () => {
+            const selectedValue = this.categorySelect.val();
+
+            this.form.config.category_id =
+              selectedValue === null || selectedValue === ''
+                ? null
+                : Number(selectedValue);
+          });
+      },
+
+      initializeCategoryPreferenceSelects() {
+        this.preferredSelect = $(this.$el).find('select.preferred');
+        this.notPreferredSelect = $(this.$el).find('select.not-preferred');
+
+        const baseConfig = {
+          theme: 'bootstrap-5',
+          multiple: true,
+          ajax: {
+            url: '/api/v1/categories',
+            dataType: 'json',
+            delay: 150,
+            data: function (params) {
+              return {
+                _token: csrfToken,
+                q: params.term || '*',
+                withInactive: true,
+              };
+            },
+            processResults: function (data) {
+              const thisSelect = $(this.$element[0]);
+              const otherSelect = $(
+                thisSelect.data('other-select'),
+                thisSelect.closest('.modal'),
+              );
+              const otherItems = otherSelect.select2('val') || [];
+              const results = Array.isArray(data) ? data : data.data || [];
+
+              return {
+                results: results
+                  .filter(function (item) {
+                    return !otherItems.includes(item.id.toString());
+                  })
+                  .map(function (item) {
+                    return {
+                      id: item.id,
+                      text: item.full_name,
+                    };
+                  }),
+              };
+            },
+            cache: true,
+          },
+          selectOnClose: true,
+          placeholder: __('Select category'),
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#' + this.id),
+        };
+
+        this.preferredSelect.select2(baseConfig).on('change', () => {
+          this.form.config.preferred = (this.preferredSelect.val() || []).map(
+            (item) => Number(item),
+          );
+        });
+
+        this.notPreferredSelect.select2(baseConfig).on('change', () => {
+          this.form.config.not_preferred = (
+            this.notPreferredSelect.val() || []
+          ).map((item) => Number(item));
+        });
+      },
+
+      setSelectValue(selectElement, category) {
+        if (!selectElement || !category) {
+          return;
+        }
+
+        const option = new Option(category.full_name, category.id, true, true);
+        selectElement.append(option).trigger('change');
+      },
+
+      setMultiSelectValues(selectElement, categories) {
+        if (!selectElement) {
+          return;
+        }
+
+        selectElement.empty();
+
+        categories.forEach((category) => {
+          const option = new Option(
+            category.full_name,
+            category.id,
+            true,
+            true,
+          );
+          selectElement.append(option);
+        });
+
+        selectElement.trigger('change');
       },
 
       loadPayeeData(payeeId) {
         this.payeeId = payeeId;
 
         // Fetch payee data from API
-        fetch(route('api.payee.show', { accountEntity: payeeId }))
+        fetch(route('api.v1.payees.show', { accountEntity: payeeId }))
           .then((response) => {
             if (!response.ok) {
               throw new Error('Failed to load payee data');
@@ -232,22 +410,34 @@
           })
           .then((data) => {
             this.form.name = data.name;
-            this.form.active = data.active;
+            this.form.active = Boolean(data.active);
+            this.form.alias = data.alias || '';
             this.form.config.category_id = data.config?.category_id || null;
+            this.form.config.preferred = (data.preferred_categories || []).map(
+              (category) => Number(category.id),
+            );
+            this.form.config.not_preferred = (
+              data.deferred_categories || []
+            ).map((category) => Number(category.id));
 
             // Update Select2 with the current category
-            let elementCategory = $(this.$el).find('select.category');
+            this.categorySelect.empty();
+
             if (data.config?.category) {
-              // Add the option and select it
-              let option = new Option(
-                data.config.category.full_name,
-                data.config.category.id,
-                true,
-                true,
-              );
-              elementCategory.append(option).trigger('change');
+              this.setSelectValue(this.categorySelect, data.config.category);
             } else {
-              elementCategory.val(null).trigger('change');
+              this.categorySelect.val(null).trigger('change');
+            }
+
+            if (!this.simplified) {
+              this.setMultiSelectValues(
+                this.preferredSelect,
+                data.preferred_categories || [],
+              );
+              this.setMultiSelectValues(
+                this.notPreferredSelect,
+                data.deferred_categories || [],
+              );
             }
           })
           .catch((error) => {
@@ -259,26 +449,45 @@
       },
 
       resetForm() {
-        // Clear form data
-        this.form.name = '';
+        this.form.reset();
+        this.form.errors.clear();
+
         this.form.active = true;
+        this.form.alias = '';
         this.form.config.category_id = null;
-        $(this.$el).find('select.category').val(null).trigger('change');
+        this.form.config.preferred = [];
+        this.form.config.not_preferred = [];
+
+        if (this.categorySelect) {
+          this.categorySelect.empty().val(null).trigger('change');
+        }
+
+        if (!this.simplified) {
+          if (this.preferredSelect) {
+            this.preferredSelect.empty().trigger('change');
+          }
+          if (this.notPreferredSelect) {
+            this.notPreferredSelect.empty().trigger('change');
+          }
+        }
 
         // Reset payee ID
         this.payeeId = null;
 
         // Reset list of similar payees
         this.similarPayees = [];
-
-        // Reset Form status
-        this.form.reset();
-        this.form.successful = false;
       },
 
       onNameChange(event) {
+        const query = event.target.value?.trim();
+
+        if (!query) {
+          this.similarPayees = [];
+          return;
+        }
+
         // Get similar payees from API
-        fetch('/api/v1/payees/similar?query=' + event.target.value)
+        fetch('/api/v1/payees/similar?query=' + encodeURIComponent(query))
           .then((response) => {
             if (!response.ok) {
               throw new Error('Failed to fetch similar payees');
@@ -306,7 +515,7 @@
             )
             .then((response) => this.processAfterSubmit(response));
         } else {
-          this.hideAndReset(this);
+          this.hideAndReset();
 
           // Let parent know about the new item
           this.$emit('payeeSelected', payee);
@@ -314,7 +523,7 @@
       },
 
       processAfterSubmit(response) {
-        setTimeout(this.hideAndReset, 1000);
+        setTimeout(() => this.hideAndReset(), 1000);
 
         // Let parent know about the new item
         this.$emit('payeeSelected', response.data);
@@ -331,6 +540,14 @@
             .post(route('api.v1.payees.store'), this.form)
             .then((response) => this.processAfterSubmit(response));
         } else {
+          if (this.formUrl === null) {
+            this.form.errors.set({
+              general: __('Failed to determine payee update endpoint'),
+            });
+
+            return;
+          }
+
           this.form
             .patch(this.formUrl, this.form)
             .then((response) => this.processAfterSubmit(response));

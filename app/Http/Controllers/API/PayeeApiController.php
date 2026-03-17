@@ -15,6 +15,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -185,7 +186,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     /**
      * Create a new payee.
      */
-    public function storePayee(AccountEntityRequest $request)
+    public function storePayee(AccountEntityRequest $request): JsonResponse
     {
         /**
          * @post("/api/v1/payees")
@@ -199,12 +200,16 @@ class PayeeApiController extends Controller implements HasMiddleware
 
         $newPayee = new AccountEntity($validated);
 
-        $payeeConfig = Payee::create($validated['config']);
+        $payeeConfig = Payee::create(Arr::only((array) data_get($validated, 'config', []), ['category_id']));
         $newPayee->config()->associate($payeeConfig);
 
         $newPayee->push();
 
-        return $newPayee;
+        $this->syncCategoryPreferences($newPayee, (array) data_get($validated, 'config', []));
+
+        $newPayee->load($this->payeeResponseRelations());
+
+        return response()->json($newPayee, Response::HTTP_CREATED);
     }
 
     /**
@@ -261,12 +266,7 @@ class PayeeApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('view', $accountEntity);
 
-        $accountEntity->load([
-            'config',
-            'config.category',
-            'preferredCategories',
-            'deferredCategories',
-        ]);
+        $accountEntity->load($this->payeeResponseRelations());
 
         return response()
             ->json(
@@ -283,11 +283,17 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function updatePayee(AccountEntityRequest $request, AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @patch('/api/assets/payee/{accountEntity}')
-         * @name('api.payee.update')
+         * @patch('/api/v1/payees/{accountEntity}')
+         * @name('api.v1.payees.update')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
         Gate::authorize('update', $accountEntity);
+
+        if (! $accountEntity->isPayee()) {
+            return response()->json([
+                'message' => __('Payee not found'),
+            ], Response::HTTP_NOT_FOUND);
+        }
 
         $validated = $request->validated();
 
@@ -295,22 +301,53 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->fill($validated);
 
         // Update config if provided
-        if (isset($validated['config']) && $accountEntity->config instanceof Payee) {
-            $accountEntity->config->fill($validated['config']);
+        if ($accountEntity->config instanceof Payee) {
+            $accountEntity->config->fill(Arr::only((array) data_get($validated, 'config', []), ['category_id']));
         }
 
         $accountEntity->push();
 
+        $this->syncCategoryPreferences($accountEntity, (array) data_get($validated, 'config', []));
+
         // Reload to get fresh data
-        $accountEntity->load([
-            'config',
-            'config.category',
-        ]);
+        $accountEntity->load($this->payeeResponseRelations());
 
         return response()
             ->json(
                 $accountEntity,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * @param array{preferred?: array<int, int|string>, not_preferred?: array<int, int|string>} $config
+     */
+    private function syncCategoryPreferences(AccountEntity $accountEntity, array $config): void
+    {
+        $preferences = [];
+
+        foreach ((array) data_get($config, 'preferred', []) as $categoryId) {
+            $preferences[(int) $categoryId] = ['preferred' => true];
+        }
+
+        foreach ((array) data_get($config, 'not_preferred', []) as $categoryId) {
+            $preferences[(int) $categoryId] = ['preferred' => false];
+        }
+
+        $accountEntity->categoryPreference()->sync($preferences);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function payeeResponseRelations(): array
+    {
+        return [
+            'config',
+            'config.category',
+            'config.category.parent',
+            'preferredCategories',
+            'deferredCategories',
+        ];
     }
 }

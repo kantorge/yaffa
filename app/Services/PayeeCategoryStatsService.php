@@ -50,66 +50,135 @@ class PayeeCategoryStatsService
     }
 
     /**
+     * Get default category suggestions for all eligible payees.
+     *
+     * @return Collection<int, array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}>
+     */
+    public function getDefaultSuggestionsForAllPayees(User $user, ?int $months = null): Collection
+    {
+        $payees = $this->getEligibleDefaultSuggestions(
+            user: $user,
+            months: $months,
+            onlyActive: false,
+            excludeDismissed: false,
+        );
+
+        if ($payees->isEmpty()) {
+            return collect();
+        }
+
+        $payeeNames = AccountEntity::query()
+            ->whereIn('id', $payees->pluck('payee_id')->all())
+            ->where('user_id', $user->id)
+            ->where('config_type', 'payee')
+            ->pluck('name', 'id');
+
+        $categoryNames = Category::query()
+            ->with('parent')
+            ->whereIn('id', $payees->pluck('max_category_id')->all())
+            ->where('user_id', $user->id)
+            ->get()
+            ->mapWithKeys(fn (Category $category) => [$category->id => $category->full_name]);
+
+        return $payees
+            ->map(function (array $payee) use ($payeeNames, $categoryNames): ?array {
+                $payeeName = $payeeNames->get($payee['payee_id']);
+                $categoryName = $categoryNames->get($payee['max_category_id']);
+
+                if ($payeeName === null || $categoryName === null) {
+                    return null;
+                }
+
+                $payee['payee'] = (string) $payeeName;
+                $payee['category'] = (string) $categoryName;
+
+                return $payee;
+            })
+            ->filter()
+            ->values();
+    }
+
+    /**
      * Get suggestion data for a payee default category recommendation.
      *
      * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
      */
     public function getDefaultSuggestion(User $user): ?array
     {
-        $data = $this->getCategoryStatsForAllPayees($user);
-
-        $eligiblePayeeIds = DB::table('account_entities')
-            ->join('payees', 'payees.id', '=', 'account_entities.config_id')
-            ->where('account_entities.user_id', $user->id)
-            ->where('account_entities.config_type', 'payee')
-            ->where('account_entities.active', true)
-            ->whereNull('payees.category_id')
-            ->whereNull('payees.category_suggestion_dismissed')
-            ->pluck('account_entities.id')
-            ->all();
-
-        $payees = $data
-            ->groupBy('payee_id')
-            ->map(function (Collection $payeeStats) {
-                /** @var object{payee_id: int, category_id: int, usage_count: int} $maxItem */
-                $maxItem = $payeeStats->sortByDesc('usage_count')->first();
-
-                return [
-                    'payee_id' => (int) $payeeStats->first()->payee_id,
-                    'sum' => (int) $payeeStats->sum('usage_count'),
-                    'max' => (int) $maxItem->usage_count,
-                    'max_category_id' => (int) $maxItem->category_id,
-                ];
-            })
-            ->filter(fn ($value) => $value['sum'] > 5)
-            ->filter(fn ($value) => $value['max'] / $value['sum'] > 0.5)
-            ->filter(fn ($value) => in_array($value['payee_id'], $eligiblePayeeIds, true));
+        $payees = $this->getEligibleDefaultSuggestions(
+            user: $user,
+            months: null,
+            onlyActive: true,
+            excludeDismissed: true,
+        );
 
         if ($payees->isEmpty()) {
             return null;
         }
 
-        $payee = $payees->random();
+        $payee = $this->getDefaultSuggestionsForAllPayees($user)
+            ->keyBy('payee_id')
+            ->only($payees->pluck('payee_id')->all())
+            ->values();
 
-        $payeeName = AccountEntity::query()
-            ->where('id', $payee['payee_id'])
-            ->where('user_id', $user->id)
-            ->where('config_type', 'payee')
-            ->value('name');
-
-        $categoryName = Category::with('parent')
-            ->where('id', $payee['max_category_id'])
-            ->where('user_id', $user->id)
-            ->first()?->full_name;
-
-        if ($payeeName === null || $categoryName === null) {
+        if ($payee->isEmpty()) {
             return null;
         }
 
-        $payee['payee'] = $payeeName;
-        $payee['category'] = $categoryName;
+        return $payee->random();
+    }
 
-        return $payee;
+    /**
+     * @return Collection<int, array{payee_id: int, sum: int, max: int, max_category_id: int}>
+     */
+    private function getEligibleDefaultSuggestions(
+        User $user,
+        ?int $months = null,
+        bool $onlyActive = true,
+        bool $excludeDismissed = true,
+    ): Collection {
+        $data = $this->getCategoryStatsForAllPayees($user, $months);
+
+        $eligiblePayeeIds = DB::table('account_entities')
+            ->join('payees', 'payees.id', '=', 'account_entities.config_id')
+            ->where('account_entities.user_id', $user->id)
+            ->where('account_entities.config_type', 'payee')
+            ->when($onlyActive, fn ($query) => $query->where('account_entities.active', true))
+            ->whereNull('payees.category_id')
+            ->when($excludeDismissed, fn ($query) => $query->whereNull('payees.category_suggestion_dismissed'))
+            ->pluck('account_entities.id')
+            ->all();
+
+        return $data
+            ->groupBy('payee_id')
+            ->map(function (Collection $payeeStats): ?array {
+                /** @var object{payee_id: int, category_id: int, usage_count: int}|null $maxItem */
+                $maxItem = $payeeStats->sortByDesc('usage_count')->first();
+                if ($maxItem === null) {
+                    return null;
+                }
+
+                /** @var object{payee_id: int} $firstItem */
+                $firstItem = $payeeStats->first();
+
+                return [
+                    'payee_id' => (int) $firstItem->payee_id,
+                    'sum' => (int) $payeeStats->sum('usage_count'),
+                    'max' => (int) $maxItem->usage_count,
+                    'max_category_id' => (int) $maxItem->category_id,
+                ];
+            })
+            ->filter()
+            ->filter(fn (array $value) => $value['sum'] > 5)
+            ->filter(fn (array $value) => $value['max'] / $value['sum'] > 0.5)
+            ->filter(fn (array $value) => in_array($value['payee_id'], $eligiblePayeeIds, true))
+            ->map(fn (array $value): array => [
+                'payee_id' => (int) $value['payee_id'],
+                'sum' => (int) $value['sum'],
+                'max' => (int) $value['max'],
+                'max_category_id' => (int) $value['max_category_id'],
+            ])
+            ->values();
     }
 
     private function buildAggregatedStatsQuery(User $user, ?int $months = null, ?int $payeeId = null)
