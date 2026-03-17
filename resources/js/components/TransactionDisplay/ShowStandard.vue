@@ -39,7 +39,29 @@
                 "
                 dusk="label-account-from-name"
               >
-                {{ transaction.config.account_from?.name || __('Not set') }}
+                <a
+                  v-if="
+                    entityHasLink(
+                      transaction.config.account_from,
+                      transaction.config.account_from_id,
+                    )
+                  "
+                  :href="
+                    entityLink(
+                      transaction.config.account_from,
+                      transaction.config.account_from_id,
+                      'from',
+                    )
+                  "
+                  :title="
+                    entityLinkTitle(transaction.config.account_from, 'from')
+                  "
+                >
+                  {{ transaction.config.account_from.name }}
+                </a>
+                <span v-else>
+                  {{ transaction.config.account_from?.name || __('Not set') }}
+                </span>
               </dd>
 
               <dt class="col-6">
@@ -50,7 +72,27 @@
                 :class="transaction.config.account_to?.name ? '' : 'text-muted'"
                 dusk="label-account-to-name"
               >
-                {{ transaction.config.account_to?.name || __('Not set') }}
+                <a
+                  v-if="
+                    entityHasLink(
+                      transaction.config.account_to,
+                      transaction.config.account_to_id,
+                    )
+                  "
+                  :href="
+                    entityLink(
+                      transaction.config.account_to,
+                      transaction.config.account_to_id,
+                      'to',
+                    )
+                  "
+                  :title="entityLinkTitle(transaction.config.account_to, 'to')"
+                >
+                  {{ transaction.config.account_to.name }}
+                </a>
+                <span v-else>
+                  {{ transaction.config.account_to?.name || __('Not set') }}
+                </span>
               </dd>
 
               <dt class="col-6">
@@ -290,6 +332,49 @@
       },
     },
     methods: {
+      entityHasLink(entity, entityId) {
+        return Boolean(entityId && entity?.name);
+      },
+
+      entityIsPayee(entity, side) {
+        if (entity?.config_type) {
+          return entity.config_type === 'payee';
+        }
+
+        if (side === 'from') {
+          return !['withdrawal', 'transfer'].includes(
+            this.transaction.transaction_type,
+          );
+        }
+
+        return !['deposit', 'transfer'].includes(
+          this.transaction.transaction_type,
+        );
+      },
+
+      entityLink(entity, entityId, side) {
+        if (this.entityIsPayee(entity, side)) {
+          return route('account-entity.edit', {
+            type: 'payee',
+            account_entity: entityId,
+          });
+        }
+
+        return route('account-entity.show', {
+          account_entity: entityId,
+        });
+      },
+
+      entityLinkTitle(entity, side) {
+        if (this.entityIsPayee(entity, side)) {
+          return __(
+            'Open payee edit form (payees do not have a details view yet)',
+          );
+        }
+
+        return __('Go to account');
+      },
+
       formattedDate(date) {
         if (typeof date === 'undefined') {
           return;
@@ -300,6 +385,7 @@
         return newDate.toLocaleDateString(this.locale);
       },
       toFormattedCurrency,
+      route,
       capitalize(string) {
         return string[0].toUpperCase() + string.slice(1);
       },
