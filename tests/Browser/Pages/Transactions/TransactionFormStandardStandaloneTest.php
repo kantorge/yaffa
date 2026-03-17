@@ -488,10 +488,10 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertVisible('#newPayeeModal')
 
                 // Fill in the payee name
-                ->type('#newPayeeModal #name', 'New Payee From Modal')
+                ->type('#newPayeeModal #newPayeeModal-name', 'New Payee From Modal')
 
                 // Select random default category
-                ->select2ExactSearch('#newPayeeModal #category_id', $category->full_name, 10)
+                ->select2ExactSearch('#newPayeeModal #newPayeeModal-category_id', $category->full_name, 10)
 
                 // Submit the payee form
                 ->click('#newPayeeModal button[type="submit"]')
@@ -550,7 +550,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#account_to_container > button')
 
                 // Fill in the payee name
-                ->type('#newPayeeModal #name', $payee->name)
+                ->type('#newPayeeModal #newPayeeModal-name', $payee->name)
 
                 // Check if the payee was found as existing and is inactive
                 ->waitForTextIn('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"]', $payee->name)
