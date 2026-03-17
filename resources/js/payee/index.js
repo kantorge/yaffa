@@ -140,7 +140,13 @@ const vueApp = createApp({
             window.payees.push(normalizedPayee);
             window.table.row.add(normalizedPayee).draw(false);
 
-            toastHelpers.showSuccessToast(__('Payee added'));
+            const filtersWereReset = this.focusPayeeInTable(payeeId);
+
+            toastHelpers.showSuccessToast(
+                filtersWereReset
+                    ? __('Payee added. Filters were reset and the new row is highlighted.')
+                    : __('Payee added'),
+            );
         },
         onPayeeUpdated(payee) {
             const payeeId = toNumericId(payee.id);

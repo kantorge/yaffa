@@ -11,18 +11,20 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeePersistenceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PayeeApiController extends Controller implements HasMiddleware
 {
-    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
-    {
+    public function __construct(
+        private PayeeCategoryStatsService $payeeCategoryStatsService,
+        private PayeePersistenceService $payeePersistenceService,
+    ) {
     }
 
     public static function middleware(): array
@@ -195,18 +197,7 @@ class PayeeApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('create', AccountEntity::class);
 
-        $validated = $request->validated();
-        $validated['user_id'] = $request->user()->id;
-
-        $newPayee = new AccountEntity($validated);
-
-        $payeeConfig = Payee::create(Arr::only((array) data_get($validated, 'config', []), ['category_id']));
-        $newPayee->config()->associate($payeeConfig);
-
-        $newPayee->push();
-
-        $this->syncCategoryPreferences($newPayee, (array) data_get($validated, 'config', []));
-
+        $newPayee = $this->payeePersistenceService->store($request);
         $newPayee->load($this->payeeResponseRelations());
 
         return response()->json($newPayee, Response::HTTP_CREATED);
@@ -295,25 +286,11 @@ class PayeeApiController extends Controller implements HasMiddleware
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $validated = $request->validated();
-        $config = data_get($validated, 'config');
-        $config = is_array($config) ? $config : [];
-        $shouldSyncCategoryPreferences = array_key_exists('preferred', $config)
-            || array_key_exists('not_preferred', $config);
-
-        $accountEntity->load(['config']);
-        $accountEntity->fill($validated);
-
-        // Update config if provided
-        if ($accountEntity->config instanceof Payee) {
-            $accountEntity->config->fill(Arr::only($config, ['category_id']));
-        }
-
-        $accountEntity->push();
-
-        if ($shouldSyncCategoryPreferences) {
-            $this->syncCategoryPreferences($accountEntity, $config);
-        }
+        $accountEntity = $this->payeePersistenceService->update(
+            $accountEntity,
+            $request,
+            $request->boolean('simplified'),
+        );
 
         // Reload to get fresh data
         $accountEntity->load($this->payeeResponseRelations());
@@ -323,28 +300,6 @@ class PayeeApiController extends Controller implements HasMiddleware
                 $accountEntity,
                 Response::HTTP_OK
             );
-    }
-
-    /**
-     * @param array{preferred?: array<int, int|string>|null, not_preferred?: array<int, int|string>|null} $config
-     */
-    private function syncCategoryPreferences(AccountEntity $accountEntity, array $config): void
-    {
-        if (! array_key_exists('preferred', $config) && ! array_key_exists('not_preferred', $config)) {
-            return;
-        }
-
-        $preferences = [];
-
-        foreach ((array) data_get($config, 'preferred', []) as $categoryId) {
-            $preferences[(int) $categoryId] = ['preferred' => true];
-        }
-
-        foreach ((array) data_get($config, 'not_preferred', []) as $categoryId) {
-            $preferences[(int) $categoryId] = ['preferred' => false];
-        }
-
-        $accountEntity->categoryPreference()->sync($preferences);
     }
 
     /**

@@ -327,7 +327,7 @@ class PayeeApiControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_update_payee_without_preference_keys_and_keep_existing_category_preferences_via_api(): void
+    public function test_user_can_update_payee_in_simplified_mode_and_keep_existing_category_preferences_via_api(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -369,6 +369,7 @@ class PayeeApiControllerTest extends TestCase
                 'name' => 'Editable Payee',
                 'active' => true,
                 'config_type' => 'payee',
+                'simplified' => true,
                 'config' => [
                     'category_id' => $updatedDefaultCategory->id,
                 ],
@@ -387,6 +388,51 @@ class PayeeApiControllerTest extends TestCase
             'account_entity_id' => $payee->id,
             'category_id' => $existingDeferredCategory->id,
             'preferred' => false,
+        ]);
+    }
+
+    public function test_user_can_update_payee_without_preference_keys_and_existing_category_preferences_are_cleared_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $existingPreferredCategory */
+        $existingPreferredCategory = Category::factory()->for($user)->create();
+
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(
+                \App\Models\Payee::factory()
+                    ->withUser($user)
+                    ->create(),
+                'config'
+            )
+            ->create([
+                'name' => 'Editable Payee',
+                'active' => true,
+                'config_type' => 'payee',
+            ]);
+
+        $payee->categoryPreference()->sync([
+            $existingPreferredCategory->id => ['preferred' => true],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson(route('api.v1.payees.update', ['accountEntity' => $payee->id]), [
+                'name' => 'Editable Payee',
+                'active' => true,
+                'config_type' => 'payee',
+                'config' => [
+                    'category_id' => null,
+                ],
+            ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $this->assertDatabaseMissing('account_entity_category_preference', [
+            'account_entity_id' => $payee->id,
+            'category_id' => $existingPreferredCategory->id,
         ]);
     }
 

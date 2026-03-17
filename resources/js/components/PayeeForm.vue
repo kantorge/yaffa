@@ -216,6 +216,7 @@
         name: '',
         active: true,
         alias: '',
+        simplified: this.simplified,
         config: {
           category_id: null,
           preferred: [],

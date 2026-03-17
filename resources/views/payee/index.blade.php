@@ -96,14 +96,14 @@
             ref="payeeFormNew"
             action="new"
             id="newPayeeModal"
-            @payeeSelected="onPayeeCreated"
+            @payee-selected="onPayeeCreated"
         ></payee-form>
 
         <payee-form
             ref="payeeFormEdit"
             action="edit"
             id="editPayeeModal"
-            @payeeSelected="onPayeeUpdated"
+            @payee-selected="onPayeeUpdated"
         ></payee-form>
     </div>
 @stop

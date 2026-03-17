@@ -9,8 +9,8 @@ use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Payee;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeePersistenceService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +23,10 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller implements HasMiddleware
 {
-    public function __construct(private readonly PayeeCategoryStatsService $payeeCategoryStatsService)
-    {
+    public function __construct(
+        private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
+        private readonly PayeePersistenceService $payeePersistenceService,
+    ) {
     }
 
     public static function middleware(): array
@@ -270,28 +272,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         if ($validated['config_type'] === 'payee') {
-            $payeeConfig = Payee::create($validated['config']);
-            $accountEntity->config()->associate($payeeConfig);
-
-            // Sync category preference. First, create a variable.
-            // Set preferred categories to boolean true and not preferred categories to boolean false.
-            $preferences = [];
-            if (array_key_exists('preferred', $validated['config'])) {
-                foreach ($validated['config']['preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => true];
-                }
-            }
-            if (array_key_exists('not_preferred', $validated['config'])) {
-                foreach ($validated['config']['not_preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => false];
-                }
-            }
-
-            $accountEntity->push();
-
-            $accountEntity->categoryPreference()->sync($preferences);
-
-            $accountEntity->push();
+            $this->payeePersistenceService->store($request);
 
             self::addSimpleSuccessMessage(__('Payee added'));
 
@@ -387,28 +368,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         if ($accountEntity->config_type === 'payee') {
-            $accountEntity->load(['config']);
-
-            $accountEntity->fill($validated);
-            $accountEntity->config->fill($validated['config']);
-
-            // Sync category preference. First, create a variable.
-            // Set preferred categories to boolean true and not preferred categories to boolean false.
-            $preferences = [];
-            if (array_key_exists('preferred', $validated['config'])) {
-                foreach ($validated['config']['preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => true];
-                }
-            }
-            if (array_key_exists('not_preferred', $validated['config'])) {
-                foreach ($validated['config']['not_preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => false];
-                }
-            }
-
-            $accountEntity->categoryPreference()->sync($preferences);
-
-            $accountEntity->push();
+            $this->payeePersistenceService->update($accountEntity, $request);
 
             self::addSimpleSuccessMessage(__('Payee updated'));
 
