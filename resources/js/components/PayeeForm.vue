@@ -32,13 +32,13 @@
             />
 
             <div class="row mb-3">
-              <label for="name" class="form-label col-sm-3">
+              <label :for="nameInputId" class="form-label col-sm-3">
                 {{ __('Name') }}
               </label>
               <div class="col-sm-9">
                 <input
                   class="form-control"
-                  id="name"
+                  :id="nameInputId"
                   maxlength="255"
                   type="text"
                   v-model="form.name"
@@ -48,12 +48,12 @@
             </div>
 
             <div class="row mb-3">
-              <label for="active" class="form-label col-sm-3">
+              <label :for="activeInputId" class="form-label col-sm-3">
                 {{ __('Active') }}
               </label>
               <div class="col-sm-9">
                 <input
-                  id="active"
+                  :id="activeInputId"
                   class="checkbox-inline"
                   type="checkbox"
                   value="1"
@@ -63,12 +63,12 @@
             </div>
 
             <div class="row mb-3">
-              <label for="category_id" class="form-label col-sm-3">
+              <label :for="categorySelectId" class="form-label col-sm-3">
                 {{ __('Default category') }}
               </label>
               <div class="col-sm-9">
                 <select
-                  id="category_id"
+                  :id="categorySelectId"
                   class="form-select category"
                   style="width: 100%"
                 ></select>
@@ -77,12 +77,12 @@
 
             <template v-if="!simplified">
               <div class="row mb-3">
-                <label for="alias" class="form-label col-sm-3">
+                <label :for="aliasInputId" class="form-label col-sm-3">
                   {{ __('Import alias') }}
                 </label>
                 <div class="col-sm-9">
                   <textarea
-                    id="alias"
+                    :id="aliasInputId"
                     class="form-control"
                     rows="3"
                     v-model="form.alias"
@@ -91,34 +91,37 @@
               </div>
 
               <div class="row mb-3">
-                <label for="preferred_categories" class="form-label col-sm-3">
+                <label
+                  :for="preferredCategoriesSelectId"
+                  class="form-label col-sm-3"
+                >
                   {{ __('Preferred categories') }}
                 </label>
                 <div class="col-sm-9">
                   <select
-                    id="preferred_categories"
+                    :id="preferredCategoriesSelectId"
                     class="form-select preferred"
                     style="width: 100%"
                     multiple="multiple"
-                    data-other-select=".not-preferred"
+                    :data-other-select="`#${notPreferredCategoriesSelectId}`"
                   ></select>
                 </div>
               </div>
 
               <div class="row mb-3">
                 <label
-                  for="not_preferred_categories"
+                  :for="notPreferredCategoriesSelectId"
                   class="form-label col-sm-3"
                 >
                   {{ __('Excluded categories') }}
                 </label>
                 <div class="col-sm-9">
                   <select
-                    id="not_preferred_categories"
+                    :id="notPreferredCategoriesSelectId"
                     class="form-select not-preferred"
                     style="width: 100%"
                     multiple="multiple"
-                    data-other-select=".preferred"
+                    :data-other-select="`#${preferredCategoriesSelectId}`"
                   ></select>
                 </div>
               </div>
@@ -194,6 +197,10 @@
         type: String,
         default: 'newPayeeModal',
       },
+      instanceId: {
+        type: String,
+        default: null,
+      },
       simplified: {
         type: Boolean,
         default: false,
@@ -226,6 +233,27 @@
     },
 
     computed: {
+      formInstanceId() {
+        return this.instanceId || this.id;
+      },
+      nameInputId() {
+        return `${this.formInstanceId}-name`;
+      },
+      activeInputId() {
+        return `${this.formInstanceId}-active`;
+      },
+      categorySelectId() {
+        return `${this.formInstanceId}-category_id`;
+      },
+      aliasInputId() {
+        return `${this.formInstanceId}-alias`;
+      },
+      preferredCategoriesSelectId() {
+        return `${this.formInstanceId}-preferred_categories`;
+      },
+      notPreferredCategoriesSelectId() {
+        return `${this.formInstanceId}-not_preferred_categories`;
+      },
       formUrl() {
         if (this.payeeId === null) {
           return null;
@@ -261,7 +289,7 @@
       },
 
       initializeCategorySelect() {
-        this.categorySelect = $(this.$el).find('select.category');
+        this.categorySelect = $(this.$el).find(`#${this.categorySelectId}`);
 
         this.categorySelect
           .select2({
@@ -307,8 +335,12 @@
       },
 
       initializeCategoryPreferenceSelects() {
-        this.preferredSelect = $(this.$el).find('select.preferred');
-        this.notPreferredSelect = $(this.$el).find('select.not-preferred');
+        this.preferredSelect = $(this.$el).find(
+          `#${this.preferredCategoriesSelectId}`,
+        );
+        this.notPreferredSelect = $(this.$el).find(
+          `#${this.notPreferredCategoriesSelectId}`,
+        );
 
         const baseConfig = {
           theme: 'bootstrap-5',
@@ -326,10 +358,9 @@
             },
             processResults: function (data) {
               const thisSelect = $(this.$element[0]);
-              const otherSelect = $(
-                thisSelect.data('other-select'),
-                thisSelect.closest('.modal'),
-              );
+              const otherSelect = thisSelect
+                .closest('.modal')
+                .find(thisSelect.data('other-select'));
               const otherItems = otherSelect.select2('val') || [];
               const results = Array.isArray(data) ? data : data.data || [];
 

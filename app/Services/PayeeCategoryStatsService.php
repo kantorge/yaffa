@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class PayeeCategoryStatsService
 {
+    private const MIN_TRANSACTION_COUNT_FOR_SUGGESTION = 5;
+    private const MIN_DOMINANCE_RATIO_FOR_SUGGESTION = 0.5;
+
     /**
      * Get category usage stats for one payee.
      *
@@ -169,9 +172,8 @@ class PayeeCategoryStatsService
                 ];
             })
             ->filter()
-            ->filter(fn (array $value) => $value['sum'] > 5)
-            ->filter(fn (array $value) => $value['max'] / $value['sum'] > 0.5)
-            ->filter(fn (array $value) => in_array($value['payee_id'], $eligiblePayeeIds, true))
+            ->filter(fn (array $value) => $value['sum'] > self::MIN_TRANSACTION_COUNT_FOR_SUGGESTION)
+            ->filter(fn (array $value) => $value['max'] / $value['sum'] > self::MIN_DOMINANCE_RATIO_FOR_SUGGESTION)            ->filter(fn (array $value) => in_array($value['payee_id'], $eligiblePayeeIds, true))
             ->map(fn (array $value): array => [
                 'payee_id' => (int) $value['payee_id'],
                 'sum' => (int) $value['sum'],

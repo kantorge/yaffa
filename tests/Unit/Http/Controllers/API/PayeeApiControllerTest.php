@@ -327,6 +327,69 @@ class PayeeApiControllerTest extends TestCase
         ]);
     }
 
+    public function test_user_can_update_payee_without_preference_keys_and_keep_existing_category_preferences_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $currentDefaultCategory */
+        $currentDefaultCategory = Category::factory()->for($user)->create();
+
+        /** @var Category $updatedDefaultCategory */
+        $updatedDefaultCategory = Category::factory()->for($user)->create();
+
+        /** @var Category $existingPreferredCategory */
+        $existingPreferredCategory = Category::factory()->for($user)->create();
+
+        /** @var Category $existingDeferredCategory */
+        $existingDeferredCategory = Category::factory()->for($user)->create();
+
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(
+                \App\Models\Payee::factory()
+                    ->withUser($user)
+                    ->create(['category_id' => $currentDefaultCategory->id]),
+                'config'
+            )
+            ->create([
+                'name' => 'Editable Payee',
+                'active' => true,
+                'config_type' => 'payee',
+            ]);
+
+        $payee->categoryPreference()->sync([
+            $existingPreferredCategory->id => ['preferred' => true],
+            $existingDeferredCategory->id => ['preferred' => false],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson(route('api.v1.payees.update', ['accountEntity' => $payee->id]), [
+                'name' => 'Editable Payee',
+                'active' => true,
+                'config_type' => 'payee',
+                'config' => [
+                    'category_id' => $updatedDefaultCategory->id,
+                ],
+            ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('config.category_id', $updatedDefaultCategory->id);
+
+        $this->assertDatabaseHas('account_entity_category_preference', [
+            'account_entity_id' => $payee->id,
+            'category_id' => $existingPreferredCategory->id,
+            'preferred' => true,
+        ]);
+
+        $this->assertDatabaseHas('account_entity_category_preference', [
+            'account_entity_id' => $payee->id,
+            'category_id' => $existingDeferredCategory->id,
+            'preferred' => false,
+        ]);
+    }
+
     public function test_user_can_update_payee_active_flag_via_account_entity_api(): void
     {
         /** @var User $user */
@@ -397,10 +460,12 @@ class PayeeApiControllerTest extends TestCase
             ->create();
 
         $response = $this->actingAs($user2)->patchJson(
-            route('api.v1.account-entities.patch-active', [
+            route('api.v1.payees.update', [
                 'accountEntity' => $payee->id,
             ]),
             [
+                'name' => $payee->name,
+                'config_type' => 'payee',
                 'active' => false,
             ]
         );

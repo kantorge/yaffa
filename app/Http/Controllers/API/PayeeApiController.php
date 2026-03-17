@@ -296,18 +296,24 @@ class PayeeApiController extends Controller implements HasMiddleware
         }
 
         $validated = $request->validated();
+        $config = data_get($validated, 'config');
+        $config = is_array($config) ? $config : [];
+        $shouldSyncCategoryPreferences = array_key_exists('preferred', $config)
+            || array_key_exists('not_preferred', $config);
 
         $accountEntity->load(['config']);
         $accountEntity->fill($validated);
 
         // Update config if provided
         if ($accountEntity->config instanceof Payee) {
-            $accountEntity->config->fill(Arr::only((array) data_get($validated, 'config', []), ['category_id']));
+            $accountEntity->config->fill(Arr::only($config, ['category_id']));
         }
 
         $accountEntity->push();
 
-        $this->syncCategoryPreferences($accountEntity, (array) data_get($validated, 'config', []));
+        if ($shouldSyncCategoryPreferences) {
+            $this->syncCategoryPreferences($accountEntity, $config);
+        }
 
         // Reload to get fresh data
         $accountEntity->load($this->payeeResponseRelations());
@@ -320,10 +326,14 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * @param array{preferred?: array<int, int|string>, not_preferred?: array<int, int|string>} $config
+     * @param array{preferred?: array<int, int|string>|null, not_preferred?: array<int, int|string>|null} $config
      */
     private function syncCategoryPreferences(AccountEntity $accountEntity, array $config): void
     {
+        if (! array_key_exists('preferred', $config) && ! array_key_exists('not_preferred', $config)) {
+            return;
+        }
+
         $preferences = [];
 
         foreach ((array) data_get($config, 'preferred', []) as $categoryId) {

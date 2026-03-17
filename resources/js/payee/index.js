@@ -7,6 +7,7 @@ import PayeeForm from '../components/PayeeForm.vue';
 import Swal from 'sweetalert2';
 
 import { booleanToTableIcon } from '../components/dataTableHelper';
+import { escapeHtml, escapeHtmlWithLineBreaks } from '@/helpers';
 import { __, getDataTablesLanguageOptions } from '@/i18n';
 
 import * as toastHelpers from '@/toast';
@@ -357,24 +358,25 @@ const vueApp = createApp({
         getDefaultCategoryCellContent(category, row, type) {
             const defaultCategoryName = category?.full_name || null;
             const suggestion = row.category_suggestion;
+            const notSetLabel = __('Not set');
 
             if (type !== 'display') {
-                return defaultCategoryName || suggestion?.category || __('Not set');
+                return defaultCategoryName || suggestion?.category || notSetLabel;
             }
 
             if (defaultCategoryName) {
-                return defaultCategoryName;
+                return escapeHtml(defaultCategoryName);
             }
 
             if (suggestion) {
                 return `
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-info" title="${__('Suggested category')}">💡 ${suggestion.category}</span>
+                        <span class="text-info" title="${escapeHtml(__('Suggested category'))}">💡 ${escapeHtml(suggestion.category)}</span>
                         <button
                             class="btn btn-xs btn-success accept-payee-category-suggestion"
-                            data-payee-id="${row.id}"
+                            data-payee-id="${escapeHtml(row.id)}"
                             type="button"
-                            title="${__('Accept suggestion')}"
+                            title="${escapeHtml(__('Accept suggestion'))}"
                         >
                             <i class="fa fa-fw fa-spinner fa-spin d-none"></i>
                             <i class="fa fa-fw fa-check"></i>
@@ -382,7 +384,7 @@ const vueApp = createApp({
                     </div>`;
             }
 
-            return __('Not set');
+            return escapeHtml(notSetLabel);
         },
         showNewPayeeModal() {
             this.$refs.payeeFormNew.show();
@@ -409,7 +411,7 @@ window.table = $(dataTableSelector).DataTable({
                 if (type === 'display') {
                     return `<div class="d-flex justify-content-start align-items-center">
                         <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
-                        <span>${data}</span>
+                        <span>${escapeHtml(data)}</span>
                     </div>`;
                 }
 
@@ -443,7 +445,7 @@ window.table = $(dataTableSelector).DataTable({
                             useGrouping: true,
                         });
 
-                        return `<a href="${window.route('reports.transactions', { payees: [row.id] })}" title="${__('Show transactions')}">${formattedCount}</a>`;
+                        return `<a href="${escapeHtml(window.route('reports.transactions', { payees: [row.id] }))}" title="${escapeHtml(__('Show transactions'))}">${escapeHtml(formattedCount)}</a>`;
                     }
 
                     return __('Never used');
@@ -486,7 +488,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Import alias'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data ? data.replace(/\n/g, '<br>') : __('Not set');
+                    return data ? escapeHtmlWithLineBreaks(data) : escapeHtml(__('Not set'));
                 }
 
                 return data;
