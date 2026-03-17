@@ -282,29 +282,31 @@ window.table = $(dataTableSelector).DataTable({
                     // Change icon to spinner
                     element.addClass('busy');
 
-            // Send request to delete payee
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.account-entities.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
+                    // Send request to delete payee
+                    $.ajax({
+                        type: 'DELETE',
+                        url: window.route('api.v1.account-entities.destroy', row.data().id),
+                        data: {
+                            "_token": csrfToken,
+                        },
+                        dataType: "json",
+                        context: this,
+                        success: function (data) {
+                            // Update row in table data source
+                            window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
 
-                    row.remove().draw();
+                            row.remove().draw();
 
-                    toastHelpers.showSuccessToast(__('Payee deleted'));
-                },
-                error: function (_data) {
-                    toastHelpers.showErrorToast(__('Error while trying to delete payee'));
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
+                            toastHelpers.showSuccessToast(__('Payee deleted'));
+                        },
+                        error: function (_data) {
+                            toastHelpers.showErrorToast(__('Error while trying to delete payee'));
+                        },
+                        complete: function (_data) {
+                            // Restore button icon
+                            element.removeClass('busy');
+                        }
+                    });
                 }
             });
         });

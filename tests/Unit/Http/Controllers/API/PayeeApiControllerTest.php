@@ -202,8 +202,8 @@ class PayeeApiControllerTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($user)->postJson('/api/assets/payee', $attributes);
-        $response->assertStatus(Response::HTTP_OK);
+        $response = $this->actingAs($user)->postJson(route('api.v1.payees.store'), $attributes);
+        $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonPath('name', 'Test Payee');
         $response->assertJsonPath('active', true);
 
@@ -219,8 +219,8 @@ class PayeeApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        /** @var \App\Models\Category $category */
-        $category = \App\Models\Category::factory()->for($user)->create();
+        /** @var Category $category */
+        $category = Category::factory()->for($user)->create();
 
         $attributes = [
             'name' => 'Test Payee With Category',
@@ -231,13 +231,13 @@ class PayeeApiControllerTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($user)->postJson('/api/assets/payee', $attributes);
-        $response->assertStatus(Response::HTTP_OK);
+        $response = $this->actingAs($user)->postJson(route('api.v1.payees.store'), $attributes);
+        $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonPath('name', 'Test Payee With Category');
         $response->assertJsonPath('config.category_id', $category->id);
     }
 
-    public function test_user_can_update_payee_via_api(): void
+    public function test_user_can_update_payee_active_flag_via_account_entity_api(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -248,34 +248,32 @@ class PayeeApiControllerTest extends TestCase
             ->for(\App\Models\Payee::factory()->withUser($user), 'config')
             ->create();
 
-        $attributes = [
-            'name' => 'Updated Payee Name',
-            'active' => false,
-            'config_type' => 'payee',
-            'config' => [
-                'category_id' => null,
-            ],
-        ];
+        $response = $this->actingAs($user)->patchJson(
+            route('api.v1.account-entities.patch-active', [
+                'accountEntity' => $payee->id,
+            ]),
+            [
+                'active' => false,
+            ]
+        );
 
-        $response = $this->actingAs($user)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonPath('name', 'Updated Payee Name');
+        $response->assertJsonPath('id', $payee->id);
         $response->assertJsonPath('active', false);
 
         $this->assertDatabaseHas('account_entities', [
             'id' => $payee->id,
-            'name' => 'Updated Payee Name',
             'active' => false,
         ]);
     }
 
-    public function test_user_can_update_payee_category_via_api(): void
+    public function test_user_can_accept_payee_category_suggestion_via_api(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
 
-        /** @var \App\Models\Category $category */
-        $category = \App\Models\Category::factory()->for($user)->create();
+        /** @var Category $category */
+        $category = Category::factory()->for($user)->create();
 
         /** @var AccountEntity $payee */
         $payee = AccountEntity::factory()
@@ -283,18 +281,12 @@ class PayeeApiControllerTest extends TestCase
             ->for(\App\Models\Payee::factory()->withUser($user), 'config')
             ->create();
 
-        $attributes = [
-            'name' => $payee->name,
-            'active' => $payee->active,
-            'config_type' => 'payee',
-            'config' => [
-                'category_id' => $category->id,
-            ],
-        ];
+        $response = $this->actingAs($user)->postJson(route('api.v1.payees.category-suggestions.accept', [
+            'accountEntity' => $payee->id,
+            'category' => $category->id,
+        ]));
 
-        $response = $this->actingAs($user)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonPath('config.category_id', $category->id);
 
         $payee->refresh();
         $this->assertEquals($category->id, $payee->config->category_id);
@@ -314,16 +306,15 @@ class PayeeApiControllerTest extends TestCase
             ->for(\App\Models\Payee::factory()->withUser($user1), 'config')
             ->create();
 
-        $attributes = [
-            'name' => 'Hacked Name',
-            'active' => true,
-            'config_type' => 'payee',
-            'config' => [
-                'category_id' => null,
-            ],
-        ];
+        $response = $this->actingAs($user2)->patchJson(
+            route('api.v1.account-entities.patch-active', [
+                'accountEntity' => $payee->id,
+            ]),
+            [
+                'active' => false,
+            ]
+        );
 
-        $response = $this->actingAs($user2)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 }

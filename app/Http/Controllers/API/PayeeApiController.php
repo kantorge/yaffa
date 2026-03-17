@@ -295,7 +295,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->fill($validated);
 
         // Update config if provided
-        if (isset($validated['config']) && $accountEntity->config) {
+        if (isset($validated['config']) && $accountEntity->config instanceof Payee) {
             $accountEntity->config->fill($validated['config']);
         }
 
