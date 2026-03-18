@@ -299,7 +299,7 @@ const vueApp = createApp({
                 $(rowNode).addClass('table-warning');
                 setTimeout(() => {
                     $(rowNode).removeClass('table-warning');
-                }, 2000);
+                }, 5000);
             }, 50);
 
             return filtersWereReset;
