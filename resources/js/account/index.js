@@ -5,7 +5,7 @@ import 'datatables-contextual-actions';
 import Swal from 'sweetalert2'
 
 import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
-import { transactionLink } from '@/helpers';
+import { escapeHtml, transactionLink } from '@/helpers';
 import * as toastHelpers from '@/toast';
 
 import {
@@ -158,7 +158,10 @@ table.contextualActions({
     contextMenu: {
         enabled: true,
         isMulti: false,
-        headerRenderer: false,
+        headerRenderer: function (selectedRows) {
+            const rowData = selectedRows[0];
+            return escapeHtml(rowData.name);
+        },
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
@@ -169,6 +172,7 @@ table.contextualActions({
             type: 'option',
             title: __('Show details'),
             iconClass: 'fa fa-magnifying-glass',
+            contextMenuClasses: ['text-success'],
             action: function (row) {
                 window
                     .location
@@ -179,6 +183,7 @@ table.contextualActions({
             type: 'option',
             title: __('Edit'),
             iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
             action: function (row) {
                 window
                     .location
@@ -189,6 +194,7 @@ table.contextualActions({
             type: 'option',
             title: __('Show transactions'),
             iconClass: 'fa fa-list',
+            contextMenuClasses: ['text-info'],
             action: function (row) {
                 window
                     .location

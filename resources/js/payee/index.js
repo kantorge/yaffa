@@ -617,7 +617,10 @@ window.table.contextualActions({
     contextMenu: {
         enabled: true,
         isMulti: false,
-        headerRenderer: false,
+        headerRenderer: function (selectedRows) {
+            const rowData = selectedRows[0];
+            return escapeHtml(rowData.name);
+        },
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
@@ -628,6 +631,7 @@ window.table.contextualActions({
             type: 'option',
             title: __('Edit'),
             iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
             action: function (selectedRows) {
                 app.showEditPayeeModal(selectedRows[0].id);
             },
@@ -636,6 +640,7 @@ window.table.contextualActions({
             type: 'option',
             title: __('Show transactions'),
             iconClass: 'fa fa-list',
+            contextMenuClasses: ['text-info'],
             action: function (selectedRows) {
                 app.openTransactions(selectedRows[0].id);
             },
@@ -643,6 +648,7 @@ window.table.contextualActions({
         {
             type: 'option',
             title: __('Merge into an other payee'),
+            contextMenuClasses: ['text-primary'],
             iconClass: 'fa fa-random',
             action: function (selectedRows) {
                 app.openMergeForm(selectedRows[0].id);
