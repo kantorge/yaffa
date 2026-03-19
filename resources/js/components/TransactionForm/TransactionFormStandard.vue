@@ -8,8 +8,9 @@
     <payee-form
       action="new"
       :payee="{}"
+      :simplified="true"
       id="newPayeeModal"
-      @payeeSelected="setPayee"
+      @payee-selected="setPayee"
       v-if="!fromModal"
     ></payee-form>
 

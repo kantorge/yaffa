@@ -68,6 +68,35 @@ export function getCurrencySymbol(locale, iso_code) {
     return symbol[0];
 }
 
+/**
+ * Escapes a value for safe HTML interpolation.
+ *
+ * @param {*} value
+ * @returns {string}
+ */
+export function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Escapes HTML and keeps line breaks for display contexts.
+ *
+ * @param {*} value
+ * @returns {string}
+ */
+export function escapeHtmlWithLineBreaks(value) {
+    return escapeHtml(value).replace(/\r?\n/g, '<br>');
+}
+
 // Function to return just the ISO version of a date.
 export function toIsoDateString(date) {
     // Verify that the date is a Date object

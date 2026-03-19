@@ -203,7 +203,7 @@ table.contextualActions({
             type: 'option',
             title: __('View investment details'),
             iconClass: 'fa fa-fw fa-search',
-            contextMenuClasses: ['text-success fw-bold'],
+            contextMenuClasses: ['text-success'],
             action: function(selectedRows) {
                 window.location.href = window.route('investment.show', {
                     investment: selectedRows[0].id
@@ -214,7 +214,7 @@ table.contextualActions({
             type: 'option',
             title: __('View investment price list'),
             iconClass: 'fa fa-fw fa-dollar',
-            contextMenuClasses: ['text-info fw-bold'],
+            contextMenuClasses: ['text-info'],
             action: function(selectedRows) {
                 window.location.href = window.route('investment-price.list', {
                     investment: selectedRows[0].id
@@ -228,7 +228,7 @@ table.contextualActions({
             type: 'option',
             title: __('New transaction for investment'),
             iconClass: 'fa fa-fw fa-plus',
-            contextMenuClasses: ['text-info fw-bold'],
+            contextMenuClasses: ['text-info'],
             action: function(selectedRows) {
                 window.location.href = window.route('transaction.create', {
                     type: 'investment',
@@ -243,7 +243,7 @@ table.contextualActions({
             type: 'option',
             title: __('Edit investment'),
             iconClass: 'fa fa-fw fa-edit',
-            contextMenuClasses: ['text-primary fw-bold'],
+            contextMenuClasses: ['text-primary'],
             action: function(selectedRows) {
                 window.location.href = window.route('investment.edit', {
                     investment: selectedRows[0].id
@@ -257,7 +257,7 @@ table.contextualActions({
             type: 'option',
             title: __('Delete investment'),
             iconClass: 'fa fa-trash',
-            contextMenuClasses: ['text-danger fw-bold'],
+            contextMenuClasses: ['text-danger'],
             isHidden: function(row) {
                 return row.transactions_count > 0;
             },
@@ -325,7 +325,7 @@ table.contextualActions({
             type: 'option',
             title: __('Cannot be deleted, already in use'),
             iconClass: 'fa fa-fw fa-info-circle',
-            contextMenuClasses: ['text-muted fw-bold'],
+            contextMenuClasses: ['text-muted'],
             isHidden: function(row) {
                 return row.transactions_count === 0;
             },

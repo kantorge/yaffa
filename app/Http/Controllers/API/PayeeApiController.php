@@ -11,6 +11,7 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeePersistenceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,8 +21,10 @@ use Illuminate\Support\Str;
 
 class PayeeApiController extends Controller implements HasMiddleware
 {
-    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
-    {
+    public function __construct(
+        private PayeeCategoryStatsService $payeeCategoryStatsService,
+        private PayeePersistenceService $payeePersistenceService,
+    ) {
     }
 
     public static function middleware(): array
@@ -185,7 +188,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     /**
      * Create a new payee.
      */
-    public function storePayee(AccountEntityRequest $request)
+    public function storePayee(AccountEntityRequest $request): JsonResponse
     {
         /**
          * @post("/api/v1/payees")
@@ -194,17 +197,10 @@ class PayeeApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('create', AccountEntity::class);
 
-        $validated = $request->validated();
-        $validated['user_id'] = $request->user()->id;
+        $newPayee = $this->payeePersistenceService->store($request);
+        $newPayee->load($this->payeeResponseRelations());
 
-        $newPayee = new AccountEntity($validated);
-
-        $payeeConfig = Payee::create($validated['config']);
-        $newPayee->config()->associate($payeeConfig);
-
-        $newPayee->push();
-
-        return $newPayee;
+        return response()->json($newPayee, Response::HTTP_CREATED);
     }
 
     /**
@@ -261,17 +257,62 @@ class PayeeApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('view', $accountEntity);
 
-        $accountEntity->load([
-            'config',
-            'config.category',
-            'preferredCategories',
-            'deferredCategories',
-        ]);
+        $accountEntity->load($this->payeeResponseRelations());
 
         return response()
             ->json(
                 $accountEntity,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Update an existing payee
+     *
+     * @throws AuthorizationException
+     */
+    public function updatePayee(AccountEntityRequest $request, AccountEntity $accountEntity): JsonResponse
+    {
+        /**
+         * @patch('/api/v1/payees/{accountEntity}')
+         * @name('api.v1.payees.update')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        Gate::authorize('update', $accountEntity);
+
+        if (! $accountEntity->isPayee()) {
+            return response()->json([
+                'message' => __('Payee not found'),
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $accountEntity = $this->payeePersistenceService->update(
+            $accountEntity,
+            $request,
+            $request->boolean('simplified'),
+        );
+
+        // Reload to get fresh data
+        $accountEntity->load($this->payeeResponseRelations());
+
+        return response()
+            ->json(
+                $accountEntity,
+                Response::HTTP_OK
+            );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function payeeResponseRelations(): array
+    {
+        return [
+            'config',
+            'config.category',
+            'config.category.parent',
+            'preferredCategories',
+            'deferredCategories',
+        ];
     }
 }
