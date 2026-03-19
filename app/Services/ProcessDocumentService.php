@@ -243,7 +243,7 @@ class ProcessDocumentService
                 'account_matching',
                 [
                     'account_name' => $accountName,
-                    'path' => 'no_candidates',
+                    'reason' => 'No similar accounts found for matching',
                 ],
                 [
                     'matched_id' => null,
@@ -312,7 +312,7 @@ class ProcessDocumentService
                 'payee_matching',
                 [
                     'payee_name' => $payeeName,
-                    'path' => 'no_candidates',
+                    'reason' => 'No similar payees found for matching',
                 ],
                 [
                     'matched_id' => null,
@@ -381,7 +381,7 @@ class ProcessDocumentService
                 'investment_matching',
                 [
                     'investment_name' => $investmentName,
-                    'path' => 'no_candidates',
+                    'reason' => 'No similar investments found for matching',
                 ],
                 [
                     'matched_id' => null,
@@ -644,22 +644,17 @@ class ProcessDocumentService
                     $document,
                     'category_batch_matching',
                     [
-                        'path' => 'exact_learning_match',
-                        'item_index' => $index,
+                        'path' => 'Exact learning found and used',
                         'description' => $description,
-                        'amount' => $amount,
                     ],
                     [
                         'recommended_category_id' => $exactMatch['recommended_category_id'],
-                        'match_type' => $exactMatch['match_type'],
-                        'confidence_score' => $exactMatch['confidence_score'],
                     ]
                 );
             } else {
                 // No exact match, will need AI
                 $aiItemIndex = count($itemsNeedingAi);
                 $itemsNeedingAi[$aiItemIndex] = [
-                    'amount' => $amount,
                     'description' => $description,
                 ];
                 $aiItemIndexMap[$aiItemIndex] = $index;
@@ -851,7 +846,7 @@ class ProcessDocumentService
         }
     }
 
-    private function appendProcessingHistory(AiDocument $document, string $step, string $prompt, string $response): void
+    private function appendProcessingHistory(AiDocument $document, string $step, string $prompt, string $response, bool $includeInPromptHistory = true): void
     {
         $history = $document->ai_chat_history;
 
@@ -859,12 +854,18 @@ class ProcessDocumentService
             $history = [];
         }
 
-        $history[] = [
+        $entry = [
             'timestamp' => now()->toIso8601String(),
             'step' => $step,
             'prompt' => $prompt,
             'response' => $response,
         ];
+
+        if (! $includeInPromptHistory) {
+            $entry['include_in_prompt_history'] = false;
+        }
+
+        $history[] = $entry;
 
         $document->ai_chat_history = $history;
         $document->saveQuietly();
@@ -877,6 +878,7 @@ class ProcessDocumentService
             $step,
             $this->buildLocalHistoryPrompt($step, $context),
             $this->buildLocalHistoryResponse($result),
+            false,
         );
     }
 

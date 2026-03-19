@@ -1509,7 +1509,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 Bugs, issues - quick fix
 
-- If there's at least one exact category match from learning, the rest of the categories does not seem to get passed to the AI for matching.
 - It is not consistent, when the items are returned in full capitals or full lowercase. Even if normalization is applied later for identification, this should be more consistent, using lower case only.
 - The item category matching is still not very accurate. Should the quality of the category matching be improved by translating the prompts to the user's language?
 - Item detection picks up random code from the receipt, e.g. "COO RAGCSALÓLESE" The prompt should be improved to exclude such codes.

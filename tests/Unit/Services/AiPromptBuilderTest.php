@@ -36,9 +36,8 @@ class AiPromptBuilderTest extends TestCase
             [
                 0 => [
                     [
-                        'recommended_category_id' => 7,
+                        'category_id' => 7,
                         'description' => 'coffee',
-                        'similarity' => 0.95,
                     ],
                 ],
             ],
@@ -51,6 +50,8 @@ class AiPromptBuilderTest extends TestCase
         $this->assertStringNotContainsString('$12.5', $prompt);
         $this->assertStringNotContainsString('$3.1', $prompt);
         $this->assertStringContainsString('7: Food > Drinks', $prompt);
+        $this->assertStringContainsString('Recommended Category 7: coffee', $prompt);
+        $this->assertStringNotContainsString('similarity:', $prompt);
         $this->assertStringContainsString('CATEGORY MATCHING RULES:', $prompt);
     }
 
@@ -176,6 +177,54 @@ class AiPromptBuilderTest extends TestCase
         $this->assertInstanceOf(UserMessage::class, $messages[2]);
         /** @var UserMessage $currentMessage */
         $currentMessage = $messages[2];
+        $this->assertSame('Current prompt', $currentMessage->content);
+    }
+
+    public function test_build_prompt_message_chain_skips_entries_with_include_in_prompt_history_false(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $messages = $builder->buildPromptMessageChain('Current prompt', [
+            [
+                'prompt' => 'Normal prompt',
+                'response' => 'Normal response',
+            ],
+            [
+                'prompt' => 'Local audit prompt',
+                'response' => 'Local audit response',
+                'include_in_prompt_history' => false,
+            ],
+            [
+                'prompt' => 'Another normal prompt',
+                'response' => 'Another normal response',
+            ],
+        ]);
+
+        $this->assertCount(5, $messages);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        /** @var UserMessage $firstMessage */
+        $firstMessage = $messages[0];
+        $this->assertSame('Normal prompt', $firstMessage->content);
+
+        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
+        /** @var AssistantMessage $secondMessage */
+        $secondMessage = $messages[1];
+        $this->assertSame('Normal response', $secondMessage->content);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[2]);
+        /** @var UserMessage $thirdMessage */
+        $thirdMessage = $messages[2];
+        $this->assertSame('Another normal prompt', $thirdMessage->content);
+
+        $this->assertInstanceOf(AssistantMessage::class, $messages[3]);
+        /** @var AssistantMessage $fourthMessage */
+        $fourthMessage = $messages[3];
+        $this->assertSame('Another normal response', $fourthMessage->content);
+
+        $this->assertInstanceOf(UserMessage::class, $messages[4]);
+        /** @var UserMessage $currentMessage */
+        $currentMessage = $messages[4];
         $this->assertSame('Current prompt', $currentMessage->content);
     }
 }

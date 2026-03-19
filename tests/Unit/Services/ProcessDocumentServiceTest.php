@@ -218,14 +218,15 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertIsArray($result['history']);
         $this->assertCount(1, $result['history']);
         $this->assertSame('category_batch_matching', $result['history'][0]['step']);
+        $this->assertFalse($result['history'][0]['include_in_prompt_history']);
 
         $historyPrompt = $result['history'][0]['prompt'];
         $historyResponse = $result['history'][0]['response'];
 
         $this->assertStringContainsString('Local Category Batch Matching decision (AI call skipped).', $historyPrompt);
         $this->assertStringContainsString('Context:', $historyPrompt);
-        $this->assertStringContainsString('- Path: exact_learning_match', $historyPrompt);
-        $this->assertStringContainsString('- Item Index: 0', $historyPrompt);
+        $this->assertStringContainsString('- Path: Exact learning found and used', $historyPrompt);
+        $this->assertStringContainsString('- Description: coffee beans', $historyPrompt);
         $this->assertStringContainsString('Result:', $historyResponse);
         $this->assertStringContainsString('- Recommended Category Id: ' . $category->id, $historyResponse);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $historyPrompt);

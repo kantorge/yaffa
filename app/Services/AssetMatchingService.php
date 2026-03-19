@@ -187,7 +187,7 @@ class AssetMatchingService
     /**
      * Find matching category learning records based on similarity
      *
-     * @return array<int, array{id: int, description: string, category_id: int, category_name: string, similarity: float}>
+     * @return array<int, array{id: int, description: string, category_id: int}>
      */
     public function matchCategoryLearning(string $description): array
     {
@@ -198,12 +198,11 @@ class AssetMatchingService
         $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $learningRecords = $this->user->categoryLearning()
-            ->with('category')
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->get();
 
-        /** @var array<int, array{id: int, description: string, category_id: int, category_name: string, similarity: float}> $matches */
-        $matches = [];
+        /** @var array<string, array{id: int, description: string, category_id: int, similarity: float, usage_count: int}> $bestMatchesByCategory */
+        $bestMatchesByCategory = [];
         $normalizedSearch = $this->normalize($description);
 
         foreach ($learningRecords as $learning) {
@@ -217,24 +216,53 @@ class AssetMatchingService
             similar_text($normalizedSearch, $normalizedItem, $similarity);
             $similarity /= 100;
 
-            if ($similarity >= $similarityThreshold) {
-                $matches[] = [
-                    'id' => $learning->id,
-                    'description' => $learning->item_description,
-                    'category_id' => $learning->category_id,
-                    'category_name' => $learning->category->full_name,
-                    'similarity' => round($similarity, 3),
-                ];
+            if ($similarity < $similarityThreshold) {
+                continue;
+            }
+
+            $categoryKey = (string) $learning->category_id;
+            $candidate = [
+                'id' => $learning->id,
+                'description' => $learning->item_description,
+                'category_id' => $learning->category_id,
+                'similarity' => $similarity,
+                'usage_count' => (int) $learning->usage_count,
+            ];
+
+            $existingCandidate = $bestMatchesByCategory[$categoryKey] ?? null;
+            if (
+                $existingCandidate === null
+                || $candidate['similarity'] > $existingCandidate['similarity']
+                || ($candidate['similarity'] === $existingCandidate['similarity'] && $candidate['usage_count'] > $existingCandidate['usage_count'])
+            ) {
+                $bestMatchesByCategory[$categoryKey] = $candidate;
             }
         }
 
+        $matches = array_values($bestMatchesByCategory);
+
         // Sort by similarity descending
-        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+        usort($matches, function (array $a, array $b): int {
+            $similarityComparison = $b['similarity'] <=> $a['similarity'];
+            if ($similarityComparison !== 0) {
+                return $similarityComparison;
+            }
+
+            return $b['usage_count'] <=> $a['usage_count'];
+        });
 
         // Return top matches
         $maxSuggestions = $this->resolveMaxSuggestions();
+        $selectedMatches = array_slice($matches, 0, $maxSuggestions);
 
-        return array_slice($matches, 0, $maxSuggestions);
+        return array_map(
+            fn (array $match): array => [
+                'id' => (int) $match['id'],
+                'description' => (string) $match['description'],
+                'category_id' => (int) $match['category_id'],
+            ],
+            $selectedMatches,
+        );
     }
 
     /**

@@ -18,6 +18,10 @@ class AiPromptBuilder
 
         if (is_array($history)) {
             foreach ($history as $historyEntry) {
+                if (data_get($historyEntry, 'include_in_prompt_history', true) === false) {
+                    continue;
+                }
+
                 $historyPrompt = mb_trim((string) data_get($historyEntry, 'prompt', ''));
                 if ($historyPrompt !== '') {
                     $messages[] = new UserMessage($historyPrompt);
@@ -97,7 +101,10 @@ EOF;
             foreach ($learningContext as $index => $learningRecords) {
                 $learningLines[] = "Item {$index} similar patterns:";
                 foreach ($learningRecords as $record) {
-                    $learningLines[] = "  - Recommended Category {$record['recommended_category_id']}: {$record['description']} (similarity: {$record['similarity']})";
+                    $categoryId = $record['category_id'] ?? $record['recommended_category_id'] ?? 'N/A';
+                    $description = $record['description'] ?? 'N/A';
+
+                    $learningLines[] = "  - Recommended Category {$categoryId}: {$description}";
                 }
             }
             $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions with categories confirmed by the user):\n" . implode("\n", $learningLines) . "\n\n";
