@@ -1506,6 +1506,8 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
+- As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
+
 
 Bugs, issues - quick fix
 
@@ -1516,8 +1518,6 @@ Bugs, issues - quick fix
 
 Bugs, issues - detailed planning needed
 
-- As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
-- The Google Drive sync is not picking up documents, and there's no UI to indicate any issues or logs.
 - Item category detection still prefers parent category over child category. Should there be a flag that prevents passing parent categories to the AI when a child category is available? Does this also mean, that a group of AI-based settings should be introduced?
 - The AI-based payee matching is poor. Probably the local similarity matching is filtering out the best results. E.g.
   - The list of payees is:

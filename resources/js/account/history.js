@@ -129,7 +129,7 @@ $(selectorHistoryTable).DataTable({
             title: __("Actions"),
             defaultContent: '',
             render: function (_data, _type, row) {
-                if (row.config_type === 'Opening balance') {
+                if (row.transaction_type === 'Opening balance') {
                     return null;
                 }
                 if (row.schedule) {
