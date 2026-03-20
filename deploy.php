@@ -3,7 +3,6 @@
 namespace Deployer;
 
 require 'recipe/laravel.php';
-require 'contrib/php-fpm.php';
 
 set('repository', 'https://github.com/kantorge/yaffa.git');
 set('keep_releases', 5);
@@ -23,7 +22,6 @@ task('deploy:upload_assets', static function () {
 
 before('deploy:prepare', 'build:assets');
 after('deploy:vendors', 'deploy:upload_assets');
-after('deploy:symlink', 'php-fpm:reload');
 
 host('private')
     ->set('hostname', getenv('SSH_HOST'))

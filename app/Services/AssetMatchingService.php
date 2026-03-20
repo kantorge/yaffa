@@ -356,12 +356,7 @@ class AssetMatchingService
 
         // Compare against primary part
         $normalizedPrimary = $this->normalize($primary);
-        $primarySimilarity = 0;
-        similar_text($normalizedSearch, $normalizedPrimary, $primarySimilarity);
-        $primarySimilarity /= 100;
-
-        // For extreme verbose logging
-        //Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedPrimary}' (primary) => similarity: {$primarySimilarity}");
+        $primarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedPrimary);
 
         // If no secondary parts, return primary score
         if (! $secondary) {
@@ -376,18 +371,46 @@ class AssetMatchingService
             }
 
             $normalizedSecondary = $this->normalize($secondaryPart);
-            $secondarySimilarity = 0;
-            similar_text($normalizedSearch, $normalizedSecondary, $secondarySimilarity);
-            $secondarySimilarity /= 100;
-
-            // For extreme verbose logging
-            //Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedSecondary}' (secondary) => similarity: {$secondarySimilarity}");
+            $secondarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedSecondary);
 
             $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
         }
 
         // Return maximum of primary and best secondary match
         return max($primarySimilarity, $maxSecondarySimilarity);
+    }
+
+    /**
+     * Compute similarity between two already-normalized strings.
+     *
+     * The standard similar_text percentage is `2 * matching_chars / (len_a + len_b)`, which
+     * under-scores when a short available name (e.g. "Amazon") is a prefix of a long identified
+     * name from a bank statement (e.g. "amazon marketplace eu sarl").
+     *
+     * To handle that, when the strings differ in length we also compare the shorter string against
+     * the same-length prefix of the longer string and return the maximum of both scores.
+     */
+    private function computeSimilarity(string $a, string $b): float
+    {
+        similar_text($a, $b, $standardPercent);
+        $standardSimilarity = $standardPercent / 100;
+
+        $lenA = mb_strlen($a);
+        $lenB = mb_strlen($b);
+
+        // No length difference — standard score is sufficient
+        if ($lenA === $lenB) {
+            return $standardSimilarity;
+        }
+
+        // Compare the shorter string against the matching-length prefix of the longer string
+        [$shorter, $longer] = $lenA < $lenB ? [$a, $b] : [$b, $a];
+        $longerPrefix = mb_substr($longer, 0, mb_strlen($shorter));
+
+        similar_text($shorter, $longerPrefix, $prefixPercent);
+        $prefixSimilarity = $prefixPercent / 100;
+
+        return max($standardSimilarity, $prefixSimilarity);
     }
 
     /**
