@@ -561,7 +561,7 @@
                 :form="form"
                 id="transactionFormStandard-Save"
               >
-                <span class="fa fa-floppy-disk me-1"></span>
+                <span class="fa fa-floppy-disk me-1" v-show="!form.busy"></span>
                 {{ __('Save') }}
               </Button>
             </div>
