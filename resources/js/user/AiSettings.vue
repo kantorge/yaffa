@@ -96,7 +96,7 @@
   import AiProviderSettings from './AiProviderSettings.vue';
   import GoogleDriveSettings from './GoogleDriveSettings.vue';
   import AiBehaviorSettings from './AiBehaviorSettings.vue';
-  import { initializeBootstrapTooltips } from '@/helpers';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
 
   export default {
     name: 'AiSettings',

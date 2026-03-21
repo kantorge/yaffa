@@ -54,7 +54,7 @@
                     {{ __('New assets') }}
                 </div>
                 <div class="list-group-item border-start-4 border-start-secondary list-group-item-divider">
-                    <a class="nav-link" href="{{ route('investment.create') }}">
+                    <a class="nav-link" href="{{ route('investments.create') }}">
                         <i class="fa fa-2x fa-chart-line text-secondary me-2"></i>
                         {{ __('New investment') }}
                     </a>
@@ -66,7 +66,7 @@
                     </a>
                 </div>
                 <div class="list-group-item border-start-4 border-start-secondary list-group-item-divider">
-                    <a class="nav-link" href="{{ route('tag.create') }}">
+                    <a class="nav-link" href="{{ route('tags.create') }}">
                         <i class="fa fa-2x fa-tags text-secondary me-2"></i>
                         {{ __('New tag') }}
                     </a>

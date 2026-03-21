@@ -16,7 +16,7 @@ class CurrencyTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('currency');
+        $this->setBaseRoute('currencies');
         $this->setBaseModel(Currency::class);
     }
 
@@ -58,7 +58,7 @@ class CurrencyTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.index");
+        $response->assertViewIs('currencies.index');
     }
 
     public function test_user_can_access_create_form(): void
@@ -71,7 +71,7 @@ class CurrencyTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('currencies.form');
     }
 
     public function test_user_cannot_create_a_currency_with_missing_data(): void
@@ -110,7 +110,7 @@ class CurrencyTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $currency));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('currencies.form');
     }
 
     public function test_user_cannot_update_a_currency_with_missing_data(): void

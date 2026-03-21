@@ -18,7 +18,7 @@ class AccountGroupTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('account-group');
+        $this->setBaseRoute('account-groups');
         $this->setBaseModel(AccountGroup::class);
     }
 
@@ -76,7 +76,7 @@ class AccountGroupTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.index");
+        $response->assertViewIs('account-groups.index');
     }
 
     public function test_user_can_access_create_form(): void
@@ -88,7 +88,7 @@ class AccountGroupTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('account-groups.form');
     }
 
     public function test_user_cannot_create_an_account_group_with_missing_data(): void
@@ -123,7 +123,7 @@ class AccountGroupTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $accountGroup));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('account-groups.form');
     }
 
     public function test_user_cannot_update_an_account_group_with_missing_data(): void

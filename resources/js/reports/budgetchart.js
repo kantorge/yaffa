@@ -1,15 +1,15 @@
 // Chart components
-import * as am4core from "@amcharts/amcharts4/core";
-import * as am4charts from "@amcharts/amcharts4/charts";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
+import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 
 // Generic helpers
-import * as dataTableHelpers from './../components/dataTableHelper'
-import * as helpers from "@/helpers";
-import { applyAmChartsLocalization } from '@/i18n/amcharts';
-import { __, getDataTablesLanguageOptions } from '@/i18n';
-import { initializeSelect2 } from '@/select2';
+import * as dataTableHelpers from '@/shared/lib/datatable'
+import * as helpers from '@/shared/lib/helpers';
+import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import { initializeSelect2 } from '@/shared/lib/select2';
 
 // Category tree
 import 'jstree';

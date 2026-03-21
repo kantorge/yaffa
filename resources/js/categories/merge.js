@@ -1,5 +1,5 @@
-import { __ } from '@/i18n';
-import { initializeSelect2 } from '@/select2';
+import { __ } from '@/shared/lib/i18n';
+import { initializeSelect2 } from '@/shared/lib/select2';
 initializeSelect2(window.YAFFA.userSettings.language);
 
 // Add select2 functionality to payee_source select

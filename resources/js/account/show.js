@@ -1,11 +1,11 @@
 import 'datatables.net-bs5';
-import "datatables.net-responsive-bs5";
+import 'datatables.net-responsive-bs5';
 
-import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '@/helpers';
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
-import * as toastHelpers from '@/toast';
-import DateRangeFilterCard from '../components/DateRangeFilterCard.vue';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import * as helpers from '@/shared/lib/helpers';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import * as toastHelpers from '@/shared/lib/toast';
+import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -614,7 +614,7 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 
 // Initialize Vue for the quick view
 import { createApp } from 'vue';
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 const app = createApp({})
 
@@ -622,9 +622,9 @@ const app = createApp({})
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
-import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
+import CreateStandardTransactionModal from '@/transactions/components/form/ModalStandard.vue'
+import CreateInvestmentTransactionModal from '@/transactions/components/form/ModalInvestment.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', CreateStandardTransactionModal)

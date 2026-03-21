@@ -456,11 +456,11 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visitRoute('tag.index');
+                ->visitRoute('tags.index');
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="back"]')
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
-                ->assertRouteIs('tag.index');
+                ->assertRouteIs('tags.index');
         });
     }
 

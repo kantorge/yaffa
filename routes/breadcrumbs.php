@@ -13,17 +13,17 @@ Breadcrumbs::for('home', function (BreadcrumbTrail $trail) {
 });
 
 // Account group resource views (index, create, edit)
-Breadcrumbs::for('account-group.index', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('account-groups.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Account Groups'), route('account-group.index'));
+    $trail->push(__('Account Groups'), route('account-groups.index'));
 });
-Breadcrumbs::for('account-group.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('account-group.index');
-    $trail->push(__('Create'), route('account-group.create'));
+Breadcrumbs::for('account-groups.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('account-groups.index');
+    $trail->push(__('Create'), route('account-groups.create'));
 });
-Breadcrumbs::for('account-group.edit', function (BreadcrumbTrail $trail, $accountGroup) {
-    $trail->parent('account-group.index');
-    $trail->push(__('Edit'), route('account-group.edit', $accountGroup));
+Breadcrumbs::for('account-groups.edit', function (BreadcrumbTrail $trail, $accountGroup) {
+    $trail->parent('account-groups.index');
+    $trail->push(__('Edit'), route('account-groups.edit', $accountGroup));
 });
 
 // Account entity resource views (index, create, edit, show)
@@ -93,56 +93,56 @@ Breadcrumbs::for('categories.merge.form', function (BreadcrumbTrail $trail) {
 });
 
 // Currency resource views (index, create, edit)
-Breadcrumbs::for('currency.index', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('currencies.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Currencies'), route('currency.index'));
+    $trail->push(__('Currencies'), route('currencies.index'));
 });
-Breadcrumbs::for('currency.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('currency.index');
-    $trail->push(__('Create'), route('currency.create'));
+Breadcrumbs::for('currencies.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('currencies.index');
+    $trail->push(__('Create'), route('currencies.create'));
 });
-Breadcrumbs::for('currency.edit', function (BreadcrumbTrail $trail, $currency) {
-    $trail->parent('currency.index');
-    $trail->push(__('Edit'), route('currency.edit', $currency));
+Breadcrumbs::for('currencies.edit', function (BreadcrumbTrail $trail, $currency) {
+    $trail->parent('currencies.index');
+    $trail->push(__('Edit'), route('currencies.edit', $currency));
 });
 
 // Currency rate, only index view
 Breadcrumbs::for('currency-rate.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Currencies'), route('currency.index'));
+    $trail->push(__('Currencies'), route('currencies.index'));
     $trail->push(__('Currency rates'));
 });
 
 // Investment group resource views (index, create, edit)
-Breadcrumbs::for('investment-group.index', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('investment-groups.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Investment Groups'), route('investment-group.index'));
+    $trail->push(__('Investment Groups'), route('investment-groups.index'));
 });
-Breadcrumbs::for('investment-group.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('investment-group.index');
-    $trail->push(__('Create'), route('investment-group.create'));
+Breadcrumbs::for('investment-groups.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('investment-groups.index');
+    $trail->push(__('Create'), route('investment-groups.create'));
 });
-Breadcrumbs::for('investment-group.edit', function (BreadcrumbTrail $trail, InvestmentGroup $investmentGroup) {
-    $trail->parent('investment-group.index');
-    $trail->push(__('Edit'), route('investment-group.edit', $investmentGroup));
+Breadcrumbs::for('investment-groups.edit', function (BreadcrumbTrail $trail, InvestmentGroup $investmentGroup) {
+    $trail->parent('investment-groups.index');
+    $trail->push(__('Edit'), route('investment-groups.edit', $investmentGroup));
 });
 
 // Investment resource views (index, create, edit, show)
-Breadcrumbs::for('investment.index', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('investments.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Investments'), route('investment.index'));
+    $trail->push(__('Investments'), route('investments.index'));
 });
-Breadcrumbs::for('investment.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('investment.index');
-    $trail->push(__('Create'), route('investment.create'));
+Breadcrumbs::for('investments.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('investments.index');
+    $trail->push(__('Create'), route('investments.create'));
 });
-Breadcrumbs::for('investment.edit', function (BreadcrumbTrail $trail, $investment) {
-    $trail->parent('investment.index');
-    $trail->push(__('Edit'), route('investment.edit', $investment));
+Breadcrumbs::for('investments.edit', function (BreadcrumbTrail $trail, $investment) {
+    $trail->parent('investments.index');
+    $trail->push(__('Edit'), route('investments.edit', $investment));
 });
-Breadcrumbs::for('investment.show', function (BreadcrumbTrail $trail, $investment) {
-    $trail->parent('investment.index');
-    $trail->push(__($investment->name), route('investment.show', $investment));
+Breadcrumbs::for('investments.show', function (BreadcrumbTrail $trail, $investment) {
+    $trail->parent('investments.index');
+    $trail->push(__($investment->name), route('investments.show', $investment));
 });
 
 // Investment price resource views (create, edit)
@@ -150,30 +150,30 @@ Breadcrumbs::for('investment-price.create', function (BreadcrumbTrail $trail) {
     // The investment ID is available in the investment query parameter. We need to load the investment to get the name
     $investment = Investment::whereUserId(auth()->id())->findOrFail(request()->query('investment'));
 
-    $trail->parent('investment.show', $investment);
+    $trail->parent('investments.show', $investment);
     $trail->push(__('Create Price'), route('investment-price.create'));
 });
 Breadcrumbs::for('investment-price.edit', function (BreadcrumbTrail $trail, InvestmentPrice $investmentPrice) {
-    $trail->parent('investment.show', $investmentPrice->investment);
+    $trail->parent('investments.show', $investmentPrice->investment);
     $trail->push(__('Edit Price'), route('investment-price.edit', $investmentPrice));
 });
 Breadcrumbs::for('investment-price.list', function (BreadcrumbTrail $trail, Investment $investment) {
-    $trail->parent('investment.show', $investment);
+    $trail->parent('investments.show', $investment);
     $trail->push(__('Prices'), route('investment-price.list', $investment));
 });
 
 // Tag resource views (index, create, edit)
-Breadcrumbs::for('tag.index', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('tags.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Tags'), route('tag.index'));
+    $trail->push(__('Tags'), route('tags.index'));
 });
-Breadcrumbs::for('tag.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('tag.index');
-    $trail->push(__('Create'), route('tag.create'));
+Breadcrumbs::for('tags.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('tags.index');
+    $trail->push(__('Create'), route('tags.create'));
 });
-Breadcrumbs::for('tag.edit', function (BreadcrumbTrail $trail, $tag) {
-    $trail->parent('tag.index');
-    $trail->push(__('Edit'), route('tag.edit', $tag));
+Breadcrumbs::for('tags.edit', function (BreadcrumbTrail $trail, $tag) {
+    $trail->parent('tags.index');
+    $trail->push(__('Edit'), route('tags.edit', $tag));
 });
 
 // Transaction related routes
@@ -218,7 +218,7 @@ Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
 });
 Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Investments'), route('investment.index'));
+    $trail->push(__('Investments'), route('investments.index'));
     $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
 });
 

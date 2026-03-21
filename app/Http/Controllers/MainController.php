@@ -190,7 +190,7 @@ class MainController extends Controller implements HasMiddleware
         ]);
 
         return view(
-            'account.history',
+            'accounts.history',
             [
                 'account' => $account,
                 'withForecast' => $withForecast,

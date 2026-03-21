@@ -297,9 +297,9 @@
 </script>
 
 <script>
-  import { __ } from '@/i18n';
-  import { initializeBootstrapTooltips } from '@/helpers';
-  import * as toastHelpers from '@/toast';
+  import { __ } from '@/shared/lib/i18n';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
   import Swal from 'sweetalert2';

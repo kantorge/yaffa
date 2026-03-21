@@ -48,7 +48,7 @@ class InvestmentGroupListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the investment group list
-                ->visitRoute('investment-group.index')
+                ->visitRoute('investment-groups.index')
                 // Wait for the table to load
                 ->waitFor('@table-investment-groups')
                 // Check that the investment group list is visible
@@ -103,7 +103,7 @@ class InvestmentGroupListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the investment group list
-                ->visitRoute('investment-group.index')
+                ->visitRoute('investment-groups.index')
                 // Wait for the table to load
                 ->waitFor('@table-investment-groups')
                 // Check that the investment group list is visible

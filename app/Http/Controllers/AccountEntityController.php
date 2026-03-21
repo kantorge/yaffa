@@ -86,7 +86,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ]);
 
             return view(
-                'account.show',
+                'accounts.show',
                 [
                     'account' => $accountEntity,
                 ]
@@ -138,7 +138,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             'accounts' => $accounts,
         ]);
 
-        return view('account.index');
+        return view('accounts.index');
     }
 
     private function indexPayee(): View
@@ -177,7 +177,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             'payees' => $payees,
         ]);
 
-        return view('payee.index');
+        return view('payees.index');
     }
 
     /**
@@ -210,7 +210,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('account-group.create');
+            return to_route('account-groups.create');
         }
 
         // Redirect to currency form, if empty
@@ -222,10 +222,10 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('currency.create');
+            return to_route('currencies.create');
         }
 
-        return view('account.form');
+        return view('accounts.form');
     }
 
     private function createPayee(): View
@@ -234,7 +234,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             'categoryPreferences' => [],
         ]);
 
-        return view('payee.form');
+        return view('payees.form');
     }
 
     /**
@@ -310,7 +310,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
 
         return view(
-            'account.form',
+            'accounts.form',
             [
                 'account' => $accountEntity,
                 'allAccountGroups' => $allAccountGroups,
@@ -334,7 +334,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         ]);
 
         return view(
-            'payee.form',
+            'payees.form',
             [
                 'payee' => $accountEntity,
             ]
@@ -395,7 +395,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ]);
         }
 
-        return view('payee.merge');
+        return view('payees.merge');
     }
 
     /**

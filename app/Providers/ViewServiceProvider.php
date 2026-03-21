@@ -40,22 +40,22 @@ class ViewServiceProvider extends ServiceProvider
         View::composer('template.layouts.auth', JavaScriptVariablesComposer::class);
 
         // Account form - all account groups
-        View::composer('account.form', AccountGroupListComposer::class);
+        View::composer('accounts.form', AccountGroupListComposer::class);
 
         // Investment form - all investment groups
-        View::composer('investment.form', InvestmentGroupListComposer::class);
+        View::composer('investments.form', InvestmentGroupListComposer::class);
 
         // Investment form / Account form - all currencies
-        View::composer('investment.form', CurrencyListComposer::class);
-        View::composer('account.form', CurrencyListComposer::class);
+        View::composer('investments.form', CurrencyListComposer::class);
+        View::composer('accounts.form', CurrencyListComposer::class);
 
         // Investment form - all price providers
-        View::composer('investment.form', InvestmentPriceProviderListComposer::class);
+        View::composer('investments.form', InvestmentPriceProviderListComposer::class);
 
         // Category parent list for category forms
         View::composer('categories.form', CategoryParentListComposer::class);
 
         // All categories for payee form
-        View::composer('payee.form', CategoryListComposer::class);
+        View::composer('payees.form', CategoryListComposer::class);
     }
 }

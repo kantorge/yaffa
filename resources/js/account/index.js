@@ -4,13 +4,13 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
-import { escapeHtml, transactionLink } from '@/helpers';
-import * as toastHelpers from '@/toast';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { escapeHtml, transactionLink } from '@/shared/lib/helpers';
+import * as toastHelpers from '@/shared/lib/toast';
 
 import {
     booleanToTableIcon,
-} from '@/components/dataTableHelper';
+} from '@/shared/lib/datatable';
 
 
 const dataTableSelector = '#table';

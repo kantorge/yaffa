@@ -18,7 +18,7 @@ class InvestmentTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('investment');
+        $this->setBaseRoute('investments');
         $this->setBaseModel(Investment::class);
     }
 
@@ -68,7 +68,7 @@ class InvestmentTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.index");
+        $response->assertViewIs('investments.index');
     }
 
     public function test_user_can_access_create_form(): void
@@ -85,7 +85,7 @@ class InvestmentTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('investments.form');
     }
 
     public function test_investment_form_requires_investment_group_and_currency(): void
@@ -98,7 +98,7 @@ class InvestmentTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         // Assert that the user is redirected to the investment group creation page
-        $response->assertRedirectToRoute('investment-group.create');
+        $response->assertRedirectToRoute('investment-groups.create');
 
         // Create the investment group
         InvestmentGroup::factory()->for($user)->create();
@@ -108,7 +108,7 @@ class InvestmentTest extends TestCase
             ->actingAs($user)
             ->get(route("{$this->base_route}.create"));
 
-        $response->assertRedirectToRoute('currency.create');
+        $response->assertRedirectToRoute('currencies.create');
 
         // Create the currency
         Currency::factory()->for($user)->create();
@@ -179,7 +179,7 @@ class InvestmentTest extends TestCase
             );
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('investments.form');
     }
 
     public function test_user_cannot_update_an_investment_with_missing_data(): void
@@ -267,7 +267,7 @@ class InvestmentTest extends TestCase
         $this->assertDestroyWithUser($user);
     }
 
-    private function createPrerequisites(User $user = null): array
+    private function createPrerequisites(?User $user = null): array
     {
         if ($user) {
             $investmentGroup = InvestmentGroup::factory()->for($user)->create();

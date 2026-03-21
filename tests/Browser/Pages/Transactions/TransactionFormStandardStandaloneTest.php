@@ -448,11 +448,11 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visitRoute('tag.index');
+                ->visitRoute('tags.index');
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="back"]')
                 ->clickAndWaitForReload('#transactionFormStandard-Save')
-                ->assertRouteIs('tag.index');
+                ->assertRouteIs('tags.index');
         });
     }
 

@@ -59,7 +59,7 @@ class TransactionController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('investment.create');
+            return to_route('investments.create');
         }
 
         return view('transactions.form', [

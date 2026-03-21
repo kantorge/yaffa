@@ -17,7 +17,7 @@ class TagTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('tag');
+        $this->setBaseRoute('tags');
         $this->setBaseModel(Tag::class);
     }
 
@@ -77,7 +77,7 @@ class TagTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.index");
+        $response->assertViewIs('tags.index');
     }
 
     public function test_user_can_access_create_form(): void
@@ -89,7 +89,7 @@ class TagTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('tags.form');
     }
 
     public function test_user_cannot_create_a_tag_with_missing_data(): void
@@ -121,7 +121,7 @@ class TagTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $tag));
 
         $response->assertStatus(200);
-        $response->assertViewIs("{$this->base_route}.form");
+        $response->assertViewIs('tags.form');
     }
 
     public function test_user_cannot_update_a_tag_with_missing_data(): void
@@ -159,7 +159,7 @@ class TagTest extends TestCase
                 ]
             );
 
-        $response->assertRedirect($this->base_route);
+        $response->assertRedirect(route("{$this->base_route}.index"));
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');

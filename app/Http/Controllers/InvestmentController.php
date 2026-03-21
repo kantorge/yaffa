@@ -75,7 +75,7 @@ class InvestmentController extends Controller implements HasMiddleware
             'investmentGroups' => $request->user()->investmentGroups,
         ]);
 
-        return view('investment.index');
+        return view('investments.index');
     }
 
     /**
@@ -89,7 +89,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         return view(
-            'investment.form',
+            'investments.form',
             [
                 'investment' => $investment,
             ]
@@ -110,7 +110,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment updated'));
 
-        return to_route('investment.index');
+        return to_route('investments.index');
     }
 
     /**
@@ -134,7 +134,7 @@ class InvestmentController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('investment-group.create');
+            return to_route('investment-groups.create');
         }
 
         // Redirect to currency form, if empty
@@ -146,10 +146,10 @@ class InvestmentController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('currency.create');
+            return to_route('currencies.create');
         }
 
-        return view('investment.form');
+        return view('investments.form');
     }
 
     public function store(InvestmentRequest $request): RedirectResponse
@@ -165,7 +165,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment added'));
 
-        return to_route('investment.index');
+        return to_route('investments.index');
     }
 
     /**
@@ -183,7 +183,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         if ($result['success']) {
             self::addSimpleSuccessMessage(__('Investment deleted'));
-            return to_route('investment.index');
+            return to_route('investments.index');
         }
 
         self::addSimpleErrorMessage($result['error']);
@@ -236,7 +236,7 @@ class InvestmentController extends Controller implements HasMiddleware
         $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
         $transactions = $transactions->concat($scheduleInstances);
 
-        return view('investment.show', [
+        return view('investments.show', [
             'investment' => $investment,
             'transactions' => $transactions,
             'prices' => $prices,

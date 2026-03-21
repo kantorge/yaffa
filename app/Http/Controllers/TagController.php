@@ -31,8 +31,8 @@ class TagController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get("/tag")
-         * @name("tag.index")
+         * @get("/tags")
+         * @name("tags.index")
          * @middlewares("web", "auth", "verified")
          */
         // Get all tags of the user from the database and return to view
@@ -47,17 +47,17 @@ class TagController extends Controller implements HasMiddleware
             'tags' => $tags,
         ]);
 
-        return view('tag.index');
+        return view('tags.index');
     }
 
     public function create(): View
     {
         /**
-         * @get("/tag/create")
-         * @name("tag.create")
+         * @get("/tags/create")
+         * @name("tags.create")
          * @middlewares("web", "auth", "verified")
          */
-        return view('tag.form');
+        return view('tags.form');
     }
 
     /**
@@ -66,33 +66,33 @@ class TagController extends Controller implements HasMiddleware
     public function edit(Tag $tag): View
     {
         /**
-         * @get("/tag/{tag}/edit")
-         * @name("tag.edit")
+         * @get("/tags/{tag}/edit")
+         * @name("tags.edit")
          * @middlewares("web", "auth", "verified")
          */
-        return view('tag.form', ['tag' => $tag]);
+        return view('tags.form', ['tag' => $tag]);
     }
 
     public function store(TagRequest $request): RedirectResponse
     {
         /**
-         * @post("/tag")
-         * @name("tag.store")
+         * @post("/tags")
+         * @name("tags.store")
          * @middlewares("web", "auth", "verified")
          */
         $request->user()->tags()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Tag added'));
 
-        return to_route('tag.index');
+        return to_route('tags.index');
     }
 
     public function update(TagRequest $request, Tag $tag): RedirectResponse
     {
         /**
          * @methods("PUT", "PATCH")
-         * @uri("/tag/{tag}")
-         * @name("tag.update")
+         * @uri("/tags/{tag}")
+         * @name("tags.update")
          * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
@@ -103,7 +103,7 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag updated'));
 
-        return to_route('tag.index');
+        return to_route('tags.index');
     }
 
     /**
@@ -112,14 +112,14 @@ class TagController extends Controller implements HasMiddleware
     public function destroy(Tag $tag): RedirectResponse
     {
         /**
-         * @delete("/tag/{tag}")
-         * @name("tag.destroy")
+         * @delete("/tags/{tag}")
+         * @name("tags.destroy")
          * @middlewares("web", "auth", "verified")
          */
         $tag->delete();
 
         self::addSimpleSuccessMessage(__('Tag deleted'));
 
-        return to_route('tag.index');
+        return to_route('tags.index');
     }
 }

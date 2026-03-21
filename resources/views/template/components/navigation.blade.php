@@ -7,7 +7,7 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('investment.index') }}">
+        <a class="nav-link" href="{{ route('investments.index') }}">
             <i class="nav-icon fa-solid fa-chart-line"></i>
             {{ __('Investments') }}
         </a>
@@ -20,12 +20,12 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
-                href="{{ route('currency.index') }}"
+                href="{{ route('currencies.index') }}"
                 iconClasses="fa-solid fa-money-bill"
                 text="{{ __('Currencies') }}"
             />
             <x-nav-link
-                href="{{ route('account-group.index') }}"
+                href="{{ route('account-groups.index') }}"
                 iconClasses="fa-solid fa-layer-group"
                 text="{{ __('Account groups') }}"
             />
@@ -40,7 +40,7 @@
                 text="{{ __('Payees') }}"
             />
             <x-nav-link
-                href="{{ route('investment-group.index') }}"
+                href="{{ route('investment-groups.index') }}"
                 iconClasses="fa-solid fa-layer-group"
                 text="{{ __('Investment groups') }}"
             />
@@ -50,7 +50,7 @@
                 text="{{ __('Categories') }}"
             />
             <x-nav-link
-                href="{{ route('tag.index') }}"
+                href="{{ route('tags.index') }}"
                 iconClasses="fa-solid fa-tags"
                 text="{{ __('Tags') }}"
             />

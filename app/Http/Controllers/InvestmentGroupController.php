@@ -32,8 +32,8 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get("/investment-group")
-         * @name("investment-group.index")
+         * @get("/investment-groups")
+         * @name("investment-groups.index")
          * @middlewares("web", "auth", "verified")
          */
         // Get all investment groups of the user from the database and return to view
@@ -48,17 +48,17 @@ class InvestmentGroupController extends Controller implements HasMiddleware
             'investmentGroups' => $investmentGroups,
         ]);
 
-        return view('investment-group.index');
+        return view('investment-groups.index');
     }
 
     public function create(): View
     {
         /**
-         * @get("/investment-group/create")
-         * @name("investment-group.create")
+         * @get("/investment-groups/create")
+         * @name("investment-groups.create")
          * @middlewares("web", "auth", "verified")
          */
-        return view('investment-group.form');
+        return view('investment-groups.form');
     }
 
     /**
@@ -67,33 +67,33 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function edit(InvestmentGroup $investmentGroup): View
     {
         /**
-         * @get("/investment-group/{investment_group}/edit")
-         * @name("investment-group.edit")
+         * @get("/investment-groups/{investment_group}/edit")
+         * @name("investment-groups.edit")
          * @middlewares("web", "auth", "verified")
          */
-        return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
+        return view('investment-groups.form', ['investmentGroup' => $investmentGroup]);
     }
 
     public function store(InvestmentGroupRequest $request): RedirectResponse
     {
         /**
-         * @post("/investment-group")
-         * @name("investment-group.store")
+         * @post("/investment-groups")
+         * @name("investment-groups.store")
          * @middlewares("web", "auth", "verified")
          */
         $request->user()->investmentGroups()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Investment group added'));
 
-        return to_route('investment-group.index');
+        return to_route('investment-groups.index');
     }
 
     public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
          * @methods("PUT", "PATCH")
-         * @uri("/investment-group/{investment_group}")
-         * @name("investment-group.update")
+         * @uri("/investment-groups/{investment_group}")
+         * @name("investment-groups.update")
          * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
@@ -104,7 +104,7 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment group updated'));
 
-        return to_route('investment-group.index');
+        return to_route('investment-groups.index');
     }
 
     /**
@@ -113,15 +113,15 @@ class InvestmentGroupController extends Controller implements HasMiddleware
     public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
-         * @delete("/investment-group/{investment_group}")
-         * @name("investment-group.destroy")
+         * @delete("/investment-groups/{investment_group}")
+         * @name("investment-groups.destroy")
          * @middlewares("web", "auth", "verified")
          */
         try {
             $investmentGroup->delete();
             self::addSimpleSuccessMessage(__('Investment group deleted'));
 
-            return to_route('investment-group.index');
+            return to_route('investment-groups.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Investment group is in use, cannot be deleted'));

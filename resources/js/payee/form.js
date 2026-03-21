@@ -1,4 +1,4 @@
-import { initializeSelect2 } from '@/select2';
+import { initializeSelect2 } from '@/shared/lib/select2';
 initializeSelect2(window.YAFFA.userSettings.language);
 
 // Common config for preference selects

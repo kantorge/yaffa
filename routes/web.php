@@ -28,7 +28,7 @@ Route::view('/terms', 'pages.sandbox-terms')->name('terms');
 /*********************
  * Account and payee related routes
  ********************/
-Route::resource('account-group', AccountGroupController::class)->except(['show']);
+Route::resource('account-groups', AccountGroupController::class)->except(['show']);
 
 Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
@@ -54,9 +54,9 @@ Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])
 /*********************
  * Currency and currency rate related routes
  ********************/
-Route::resource('currency', CurrencyController::class)->except(['show']);
-Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
-    ->name('currency.setDefault');
+Route::resource('currencies', CurrencyController::class)->except(['show']);
+Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
+    ->name('currencies.setDefault');
 
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
@@ -64,8 +64,8 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 /*********************
  * Investment related routes
  ********************/
-Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
-Route::resource('investment', InvestmentController::class);
+Route::resource('investment-groups', InvestmentGroupController::class)->except(['show']);
+Route::resource('investments', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
@@ -73,7 +73,7 @@ Route::get('/investment-price/list/{investment}', [InvestmentPriceController::cl
 /*********************
  * Tag related routes
  ********************/
-Route::resource('tag', TagController::class)
+Route::resource('tags', TagController::class)
     ->except(['show']);
 
 /*******************

@@ -5,18 +5,18 @@
 
 // Import dataTable helper functions
 import 'datatables.net-bs5';
-import * as dataTableHelpers from './../components/dataTableHelper'
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
-import { toIsoDateString } from '../helpers';
+import * as dataTableHelpers from '@/shared/lib/datatable'
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { toIsoDateString } from '@/shared/lib/helpers';
 
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
 
 // General helper functions
-import { __ } from '@/i18n';
+import { __ } from '@/shared/lib/i18n';
 
 // Select2 for account selection
-import { initializeSelect2 } from '@/select2';
+import { initializeSelect2 } from '@/shared/lib/select2';
 initializeSelect2(window.YAFFA.language);
 
 import 'jquery-csv';
@@ -853,7 +853,7 @@ fetch('/api/v1/transactions/scheduled-items?type=schedule')
 
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 const app = createApp({})
 
@@ -861,8 +861,8 @@ const app = createApp({})
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
+import TransactionCreateModal from '@/transactions/components/form/ModalStandard.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', TransactionCreateModal)

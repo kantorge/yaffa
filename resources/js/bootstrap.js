@@ -23,7 +23,7 @@ import * as coreui from '@coreui/coreui';
 window.coreui = coreui;
 
 // Global fallback function for translations
-import { __ } from './i18n/translate';
+import { __ } from '@/shared/lib/i18n/translate';
 window.__ = __;
 
 // Toasts

@@ -1,15 +1,15 @@
 // Import AmCharts libraries
-import * as am4core from "@amcharts/amcharts4/core";
-import * as am4charts from "@amcharts/amcharts4/charts";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
+import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { __, toFormattedCurrency } from "@/i18n";
-import { applyAmChartsLocalization } from '@/i18n/amcharts';
-import * as toastHelpers from '@/toast';
-import { investmentGroupTree } from "../components/dataTableHelper";
+import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+import * as toastHelpers from '@/shared/lib/toast';
+import { investmentGroupTree } from '@/shared/lib/datatable';
 
 window.chartData = [];
 let chart;

@@ -153,7 +153,7 @@ class TagApiControllerTest extends TestCase
 
         // Delete the category
         $this->actingAs($user);
-        $response = $this->delete(route('tag.destroy', [
+        $response = $this->delete(route('tags.destroy', [
             'tag' => $tag->id,
         ]));
 

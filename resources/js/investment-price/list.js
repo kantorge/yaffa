@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
-import InvestmentPriceManager from '../components/InvestmentPrice/InvestmentPriceManager.vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
+import InvestmentPriceManager from './components/InvestmentPriceManager.vue';
 
 const app = createApp({
   components: {

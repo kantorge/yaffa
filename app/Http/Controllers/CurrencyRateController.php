@@ -53,7 +53,7 @@ class CurrencyRateController extends Controller implements HasMiddleware
 
         JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
-        return view('currency-rate.index', [
+        return view('currency-rates.index', [
             'from' => $from,
             'to' => $to,
             'currencyRates' => $currencyRates,

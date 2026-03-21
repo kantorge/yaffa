@@ -4,10 +4,10 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '@/helpers';
-import * as toastHelpers from '@/toast';
-import { __, getDataTablesLanguageOptions } from '@/i18n';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import * as helpers from '@/shared/lib/helpers';
+import * as toastHelpers from '@/shared/lib/toast';
+import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 
 let ajaxIsBusy = true;
 
@@ -306,9 +306,9 @@ window.onboardingTourSteps = [
 ];
 
 // Initialize the onboarding widget
-import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
+import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
 import { createApp } from 'vue';
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({});
 installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);

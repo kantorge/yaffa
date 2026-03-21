@@ -513,7 +513,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
                     'id' => $investment->id,
                     'name' => $investment->name,
                     'matched' => true,
-                    'url' => route('investment.show', ['investment' => $investment->id]),
+                    'url' => route('investments.show', ['investment' => $investment->id]),
                 ];
             }
         }

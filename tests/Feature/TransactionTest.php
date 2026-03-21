@@ -100,7 +100,7 @@ class TransactionTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get(route('transaction.create', ['type' => 'investment']));
 
-        $response->assertRedirect(route('investment.create'));
+        $response->assertRedirect(route('investments.create'));
     }
 
     /**

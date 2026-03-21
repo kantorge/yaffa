@@ -3,14 +3,14 @@ import 'datatables.net-responsive-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 import { createApp } from 'vue';
-import PayeeForm from '../components/PayeeForm.vue';
+import PayeeForm from './components/PayeeForm.vue';
 import Swal from 'sweetalert2';
 
-import { booleanToTableIcon } from '../components/dataTableHelper';
-import { escapeHtml, escapeHtmlWithLineBreaks } from '@/helpers';
-import { __, getDataTablesLanguageOptions } from '@/i18n';
+import { booleanToTableIcon } from '@/shared/lib/datatable';
+import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
+import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 
-import * as toastHelpers from '@/toast';
+import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 let ajaxIsBusy = false;

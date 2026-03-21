@@ -5,10 +5,10 @@ import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     renderDeleteAssetButton,
-} from '../components/dataTableHelper';
+} from '@/shared/lib/datatable';
 
-import { __, getDataTablesLanguageOptions } from '@/i18n';
-import * as toastHelpers from '@/toast';
+import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 

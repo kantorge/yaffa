@@ -274,9 +274,9 @@
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
-  import { __ } from '@/i18n';
-  import { initializeBootstrapTooltips } from '@/helpers';
-  import * as toastHelpers from '@/toast';
+  import { __ } from '@/shared/lib/i18n';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
 
@@ -296,7 +296,8 @@
         account_details_date_range:
           window.YAFFA.userSettings.account_details_date_range || 'none',
         auto_merge_standard_transaction_items:
-          window.YAFFA.userSettings.auto_merge_standard_transaction_items || false,
+          window.YAFFA.userSettings.auto_merge_standard_transaction_items ||
+          false,
       }),
     }),
     mounted() {

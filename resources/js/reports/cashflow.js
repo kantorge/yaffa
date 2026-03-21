@@ -1,16 +1,16 @@
-import * as am4core from "@amcharts/amcharts4/core";
-import * as am4charts from "@amcharts/amcharts4/charts";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import { applyAmChartsLocalization } from '@/i18n/amcharts';
+import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
+import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
 
 // Select2 for account selection
-import { __ } from '@/i18n';
-import { initializeSelect2 } from '@/select2';
+import { __ } from '@/shared/lib/i18n';
+import { initializeSelect2 } from '@/shared/lib/select2';
 initializeSelect2(window.YAFFA.userSettings.language);
 
-import * as toastHelpers from '../toast';
+import * as toastHelpers from '@/shared/lib/toast';
 
 window.chartData = [];
 let chart;

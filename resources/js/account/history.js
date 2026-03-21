@@ -1,8 +1,8 @@
 import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
-import * as dataTableHelpers from './../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '@/i18n';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import { getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -278,14 +278,14 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
 });
 
 import { createApp } from 'vue'
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
 
 app.mount('#app')

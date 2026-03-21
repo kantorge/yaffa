@@ -1,15 +1,15 @@
 import '../sass/app.scss';
 import './bootstrap';
-import { initializeDataTablesI18n } from './i18n/datatables';
+import { initializeDataTablesI18n } from '@/shared/lib/i18n/datatables';
 
 // One glob map for all .js files under resources/js
 // Exclude files that are statically imported to avoid redundant dynamic imports
 const modules = import.meta.glob([
     './**/*.js',
     '!./bootstrap.js',
-    '!./i18n/**/*.js',
-    '!./vue/installRouteGlobal.js',
-    '!./display_notifications.js'
+    '!./shared/lib/i18n/**/*.js',
+    '!./shared/lib/vue/installRouteGlobal.js',
+    '!./shared/lib/notifications/displayNotifications.js'
 ]);
 
 const dataTablesI18nReady = initializeDataTablesI18n(
@@ -30,19 +30,17 @@ const loadModule = async (path) => {
 };
 
 const routeMap = new Map([
-    ['home', 'dashboard'],
-    ['account-group.index', 'account-group/index'],
+    ['home', 'dashboard/index'],
+    ['account-groups.index', 'account-groups/index'],
     ['payees.merge.form', 'payee/merge'],
     ['account.history', 'account/history'],
     ['categories.index', 'categories/index'],
     ['categories.merge.form', 'categories/merge'],
-    ['currency.index', 'currency/index'],
-    ['currency-rate.index', 'currencyrates/index'],
-    ['investment-group.index', 'investment-group/index'],
-    ['investment.index', 'investment/index'],
-    ['investment.show', 'investment/show'],
-    ['investment-price.create', 'investment-price/form'],
-    ['investment-price.edit', 'investment-price/form'],
+    ['currencies.index', 'currencies/index'],
+    ['currency-rate.index', 'currency-rates/index'],
+    ['investment-groups.index', 'investment-groups/index'],
+    ['investments.index', 'investments/index'],
+    ['investments.show', 'investments/show'],
     ['investment-price.list', 'investment-price/list'],
     ['report.schedules', 'reports/schedules'],
     ['reports.cashflow', 'reports/cashflow'],
@@ -55,7 +53,7 @@ const routeMap = new Map([
     ['ai-documents.show', 'ai-documents/show'],
     ['register', 'auth/register'],
     ['login', 'auth/login'],
-    ['tag.index', 'tag/index'],
+    ['tags.index', 'tags/index'],
     ['user.settings', 'user/settings'],
     ['user.ai-settings', 'user/settings'],
 ]);
@@ -106,7 +104,7 @@ if (current === 'transaction.open' && ['show'].includes(route().params.action)) 
 }
 
 // Notifications
-import './display_notifications';
+import '@/shared/lib/notifications/displayNotifications';
 
 // jQuery handlers...
 $(function () {

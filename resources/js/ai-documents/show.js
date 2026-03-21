@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
-import { installRouteGlobal } from '@/vue/installRouteGlobal';
-import AiDocumentViewer from '../components/AiDocuments/AiDocumentViewer.vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
+import AiDocumentViewer from './components/AiDocumentViewer.vue';
 
 const app = createApp({});
 
