@@ -511,8 +511,16 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 )
                 // Wait for the form and the Select2 elements to load
                 ->waitFor(self::MAIN_FORM_SELECTOR)
-                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
-                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+                ->waitForTextIn(
+                    self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_ACCOUNT_NAME_USD,
+                    10
+                )
+                ->waitForTextIn(
+                    self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_INVESTMENT_NAME_USD,
+                    10
+                )
 
                 // Verify that the account is selected
                 ->assertSeeIn(
