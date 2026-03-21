@@ -433,7 +433,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->first();
 
             $browser->assertRouteIs(
-                'investment.show',
+                'investments.show',
                 ['investment' => $transaction->config->investment_id]
             );
         });

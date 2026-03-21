@@ -57,7 +57,7 @@ jobs:
         run: echo "COMPOSER_CACHE_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
 
       - name: Cache composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.COMPOSER_CACHE_DIR }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -67,7 +67,7 @@ jobs:
         run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
       - name: Cache NPM Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}

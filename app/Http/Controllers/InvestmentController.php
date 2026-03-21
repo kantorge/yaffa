@@ -42,8 +42,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get("/investment")
-         * @name("investment.index")
+         * @get("/investments")
+         * @name("investments.index")
          * @middlewares("web", "auth", "verified")
          */
         // Show all investments from the database and return to view
@@ -84,8 +84,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function edit(Investment $investment): View
     {
         /**
-         * @get("/investment/{investment}/edit")
-         * @name("investment.edit")
+         * @get("/investments/{investment}/edit")
+         * @name("investments.edit")
          * @middlewares("web", "auth", "verified")
          */
         return view(
@@ -99,8 +99,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function update(InvestmentRequest $request, Investment $investment): RedirectResponse
     {
         /**
-         * @uri("/investment/{investment}")
-         * @name("investment.update")
+         * @uri("/investments/{investment}")
+         * @name("investments.update")
          * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
@@ -121,8 +121,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function create(Request $request): View|RedirectResponse
     {
         /**
-         * @get("/investment/create")
-         * @name("investment.create")
+         * @get("/investments/create")
+         * @name("investments.create")
          * @middlewares("web", "auth", "verified")
          */
         // Redirect the user to the investment group form, if no investment groups are available
@@ -155,8 +155,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function store(InvestmentRequest $request): RedirectResponse
     {
         /**
-         * @post("/investment")
-         * @name("investment.store")
+         * @post("/investments")
+         * @name("investments.store")
          * @middlewares("web", "auth", "verified")
          */
         $investment = new Investment($request->validated());
@@ -174,8 +174,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function destroy(Investment $investment): RedirectResponse
     {
         /**
-         * @delete("/investment/{investment}")
-         * @name("investment.destroy")
+         * @delete("/investments/{investment}")
+         * @name("investments.destroy")
          * @middlewares("web", "auth", "verified")
          */
 
@@ -193,8 +193,8 @@ class InvestmentController extends Controller implements HasMiddleware
     public function show(Investment $investment): View
     {
         /**
-         * @get("/investment/{investment}")
-         * @name("investment.show")
+         * @get("/investments/{investment}")
+         * @name("investments.show")
          * @middlewares("web", "auth", "verified")
          */
 
