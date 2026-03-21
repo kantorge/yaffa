@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\User;
@@ -103,5 +104,49 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.id', $matching->id);
+    }
+
+    public function test_index_enriches_matched_entities_for_consistent_table_and_detail_labels(): void
+    {
+        $user = User::factory()->create();
+
+        $accountFrom = AccountEntity::factory()->for($user)->create([
+            'name' => 'Main Checking',
+            'config_type' => 'account',
+            'config_id' => 1001,
+        ]);
+
+        $accountTo = AccountEntity::factory()->for($user)->create([
+            'name' => 'Supermarket Ltd.',
+            'config_type' => 'payee',
+            'config_id' => 1002,
+        ]);
+
+        $document = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_transaction_data' => [
+                'transaction_type' => 'withdrawal',
+                'config_type' => 'standard',
+                'raw' => [
+                    'account' => 'Raw account fallback',
+                    'payee' => 'Raw payee fallback',
+                ],
+                'config' => [
+                    'account_from_id' => $accountFrom->id,
+                    'account_to_id' => $accountTo->id,
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson(route('api.v1.documents.index', ['per_page' => 10]));
+
+        $response->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $document->id)
+            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.account.name', 'Main Checking')
+            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.payee.name', 'Supermarket Ltd.')
+            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.account.matched', true)
+            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.payee.matched', true);
     }
 }

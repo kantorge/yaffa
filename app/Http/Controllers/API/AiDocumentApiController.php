@@ -157,6 +157,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         $perPage = (int) $request->input('per_page', 15);
         $documents = $query->latest()->paginate($perPage);
 
+        $documents->getCollection()->each(function (AiDocument $document): void {
+            $this->enrichProcessedData($document);
+        });
+
         return response()->json([
             'data' => $documents->items(),
             'meta' => [

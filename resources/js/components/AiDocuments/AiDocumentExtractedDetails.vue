@@ -144,7 +144,7 @@
             <dt class="col-6">{{ __('Payee') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.payee) }"
+              :class="{ 'text-muted': isUnidentified(rawData.payee) && !matchedEntities.payee?.matched }"
             >
               <template v-if="matchedEntities.payee?.matched">
                 <span>{{ matchedEntities.payee.name }}</span>

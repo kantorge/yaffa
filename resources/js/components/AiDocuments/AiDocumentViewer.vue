@@ -283,7 +283,7 @@
                 <dd
                   class="col-6"
                   :class="{
-                    'text-muted text-italic': isUnidentified(rawData.payee),
+                    'text-muted text-italic': isUnidentified(rawData.payee) && !matchedEntities.payee?.matched,
                   }"
                 >
                   <template v-if="matchedEntities.payee?.matched">

@@ -177,8 +177,10 @@
     matchedEntity,
     allowLink = true,
   }) => {
-    if (matchedEntity?.matched && matchedEntity?.name) {
-      const name = escapeHtml(matchedEntity.name);
+    if (matchedEntity?.matched) {
+      const name = escapeHtml(
+        matchedEntity?.name || rawValue || __('Not available'),
+      );
       const hint = renderMatchHint({ isMatched: true });
 
       if (allowLink && matchedEntity.url) {
@@ -218,12 +220,21 @@
 
     const rawData = getRawData(row);
     const matchedEntities = getMatchedEntities(row);
+    const matchedPayee = matchedEntities?.payee;
 
-    return renderMatchedEntity({
-      rawValue: rawData.payee,
-      matchedEntity: matchedEntities.payee,
-      allowLink: false,
-    });
+    // If matched entity exists with matched flag
+    if (matchedPayee?.matched) {
+      const name = escapeHtml(matchedPayee?.name || rawData?.payee || __('Not available'));
+      const hint = renderMatchHint({ isMatched: true });
+      return `<span>${name}</span>${hint}`;
+    }
+
+    // No match - fall back to raw value or "Not available"
+    if (isUnidentified(rawData?.payee)) {
+      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+    }
+
+    return `<span>${escapeHtml(rawData.payee)}</span>${renderMatchHint({ isMatched: false })}`;
   };
 
   const getDetectedAmountForSearch = (document) => {
