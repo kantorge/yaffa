@@ -1,0 +1,389 @@
+{
+  "type": "system",
+  "key": "hun_raiffeisen_v1",
+  "name": "Raiffeisen Hungary v1",
+  "delimiter": ";",
+  "has_header_row": true,
+  "mapping_json": {
+    "Értéknap": "value_date",
+    "Összeg": "amount",
+    "Típus": "entry_type",
+    "Közlemény/1": "notice_1",
+    "Közlemény/2": "notice_2",
+    "Közlemény/3": "notice_3"
+  },
+  "options_json": {
+    "metadata": {
+      "country": "HU",
+      "institution": "Raiffeisen",
+      "language": "hu"
+    },
+    "parser_settings": {
+      "header_normalization": "none",
+      "date_parsing_formats": [
+        "Y.m.d.",
+        "Ymd"
+      ],
+      "decimal_separator": ",",
+      "thousand_separator": " ",
+      "trim_strings": true,
+      "skip_empty_rows": true
+    },
+    "matching_rules": [
+      {
+        "name": "Card payment purchase",
+        "conditions": {
+          "all": [
+            {
+              "fact": "entry_type",
+              "operator": "equal",
+              "value": "Kártyatranzakció"
+            },
+            {
+              "fact": "notice_3",
+              "operator": "matches_regex",
+              "value": " Vásárlás$"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "set",
+            "target": "transaction_config_type",
+            "value": "standard"
+          },
+          {
+            "type": "set",
+            "target": "transaction_type.name",
+            "value": "withdrawal"
+          },
+          {
+            "type": "map_transform",
+            "target": "date",
+            "source": "notice_1",
+            "transform": "extract_date_regex",
+            "args": {
+              "pattern": "\\w+ (\\d{4})(\\d{2})(\\d{2}) \\w+",
+              "format": "Y-m-d"
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_from",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_to",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.account_to",
+            "source": "notice_2",
+            "transform": "resolve_payee_by_name_or_alias",
+            "args": {
+              "fallback_payee_name": "Egyéb"
+            }
+          },
+          {
+            "type": "apply_transform",
+            "target": "config.account_from",
+            "transform": "selected_account_context"
+          },
+          {
+            "type": "conditional_copy",
+            "target": "comment",
+            "source": "notice_2",
+            "when": {
+              "fact": "config.account_to.name",
+              "operator": "equal",
+              "value": "Egyéb"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Outgoing wire transfer",
+        "conditions": {
+          "all": [
+            {
+              "fact": "amount",
+              "operator": "matches_regex",
+              "value": "^-\\d+"
+            },
+            {
+              "fact": "entry_type",
+              "operator": "in",
+              "value": [
+                "Elektronikus bankon belüli átutalás",
+                "Elektronikus forint átutalás",
+                "Állandó átutalás",
+                "Csoportos beszedési megbízás",
+                "Forint átutalás"
+              ]
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "set",
+            "target": "transaction_config_type",
+            "value": "standard"
+          },
+          {
+            "type": "set",
+            "target": "transaction_type.name",
+            "value": "withdrawal"
+          },
+          {
+            "type": "map_transform",
+            "target": "date",
+            "source": "value_date",
+            "transform": "parse_date",
+            "args": {
+              "format": "Y.m.d."
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_from",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_to",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.account_to",
+            "source": "notice_2",
+            "transform": "resolve_payee_by_name_or_alias",
+            "args": {
+              "fallback_payee_name": "Egyéb"
+            }
+          },
+          {
+            "type": "apply_transform",
+            "target": "config.account_from",
+            "transform": "selected_account_context"
+          },
+          {
+            "type": "conditional_copy",
+            "target": "comment",
+            "source": "notice_2",
+            "when": {
+              "fact": "config.account_to.name",
+              "operator": "equal",
+              "value": "Egyéb"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Incoming wire transfer",
+        "conditions": {
+          "all": [
+            {
+              "fact": "amount",
+              "operator": "matches_regex",
+              "value": "^\\d+"
+            },
+            {
+              "fact": "entry_type",
+              "operator": "in",
+              "value": [
+                "Forint átutalás",
+                "Deviza átutalás",
+                "Csoportos átutalás jóváírása"
+              ]
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "set",
+            "target": "transaction_config_type",
+            "value": "standard"
+          },
+          {
+            "type": "set",
+            "target": "transaction_type.name",
+            "value": "deposit"
+          },
+          {
+            "type": "map_transform",
+            "target": "date",
+            "source": "value_date",
+            "transform": "parse_date",
+            "args": {
+              "format": "Y.m.d."
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_from",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_to",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.account_from",
+            "source": "notice_2",
+            "transform": "resolve_payee_by_name_or_alias",
+            "args": {
+              "fallback_payee_name": "Egyéb"
+            }
+          },
+          {
+            "type": "apply_transform",
+            "target": "config.account_to",
+            "transform": "selected_account_context"
+          },
+          {
+            "type": "conditional_copy",
+            "target": "comment",
+            "source": "notice_2",
+            "when": {
+              "fact": "config.account_from.name",
+              "operator": "equal",
+              "value": "Egyéb"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Cash withdrawal or internal transfer",
+        "conditions": {
+          "any": [
+            {
+              "all": [
+                {
+                  "fact": "entry_type",
+                  "operator": "equal",
+                  "value": "Elektronik. saját számlás átvezetés"
+                },
+                {
+                  "fact": "notice_3",
+                  "operator": "in",
+                  "value": [
+                    "Hitelkártya feltöltés",
+                    "Pay off credit card"
+                  ]
+                }
+              ]
+            },
+            {
+              "all": [
+                {
+                  "fact": "entry_type",
+                  "operator": "equal",
+                  "value": "Kártyatranzakció"
+                },
+                {
+                  "fact": "notice_3",
+                  "operator": "matches_regex",
+                  "value": " Kp felvét$"
+                }
+              ]
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "set",
+            "target": "transaction_config_type",
+            "value": "standard"
+          },
+          {
+            "type": "set",
+            "target": "transaction_type.name",
+            "value": "transfer"
+          },
+          {
+            "type": "map_transform",
+            "target": "date",
+            "source": "value_date",
+            "transform": "parse_date",
+            "args": {
+              "format": "Y.m.d."
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_from",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "map_transform",
+            "target": "config.amount_to",
+            "source": "amount",
+            "transform": "parse_localized_amount",
+            "args": {
+              "absolute_value": true
+            }
+          },
+          {
+            "type": "apply_transform",
+            "target": "config.account_from",
+            "transform": "selected_account_context"
+          },
+          {
+            "type": "set",
+            "target": "config.account_to",
+            "value": null
+          },
+          {
+            "type": "copy",
+            "target": "comment",
+            "source": "notice_3"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      {
+        "id": "fallback-payee-used",
+        "level": "info",
+        "message": "Fallback payee used; source notice copied to comment where applicable."
+      }
+    ],
+    "defaults": {
+      "transaction_config_type": "standard"
+    }
+  },
+  "active": true
+}
