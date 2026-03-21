@@ -60,8 +60,8 @@ class AiUserSettingsResolverTest extends TestCase
         $resolved = $this->resolver->resolveForUser($user);
 
         $this->assertSame('eng', $resolved['ocr_language']);
-        $this->assertSame(2048, $resolved['image_max_width_vision']);
-        $this->assertSame(2048, $resolved['image_max_height_vision']);
+        $this->assertNull($resolved['image_max_width_vision']);
+        $this->assertNull($resolved['image_max_height_vision']);
         $this->assertSame(85, $resolved['image_quality_vision']);
         $this->assertSame(0.5, $resolved['asset_similarity_threshold']);
         $this->assertSame(10, $resolved['asset_max_suggestions']);

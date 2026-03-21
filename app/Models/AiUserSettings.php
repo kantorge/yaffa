@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $ai_enabled
  * @property bool $prompt_chat_history_enabled
  * @property string $ocr_language
- * @property int $image_max_width_vision
- * @property int $image_max_height_vision
+ * @property int|null $image_max_width_vision
+ * @property int|null $image_max_height_vision
  * @property int $image_quality_vision
  * @property int|null $image_max_width_tesseract
  * @property int|null $image_max_height_tesseract

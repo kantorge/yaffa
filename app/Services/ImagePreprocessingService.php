@@ -10,10 +10,6 @@ use Intervention\Image\ImageManager;
 
 class ImagePreprocessingService
 {
-    private const DEFAULT_VISION_MAX_WIDTH = 2048;
-
-    private const DEFAULT_VISION_MAX_HEIGHT = 2048;
-
     private const DEFAULT_IMAGE_QUALITY = 85;
 
     private ImageManager $imageManager;
@@ -32,14 +28,16 @@ class ImagePreprocessingService
      */
     public function resizeForVisionApi(string $filePath, ?int $maxWidth = null, ?int $maxHeight = null, ?int $quality = null): string
     {
-        $resolvedMaxWidth = $maxWidth ?? self::DEFAULT_VISION_MAX_WIDTH;
-        $resolvedMaxHeight = $maxHeight ?? self::DEFAULT_VISION_MAX_HEIGHT;
+        if ($maxWidth === null && $maxHeight === null) {
+            return $filePath;
+        }
+
         $resolvedQuality = $quality ?? self::DEFAULT_IMAGE_QUALITY;
 
         return $this->resizeWithConstraints(
             filePath: $filePath,
-            maxWidth: $resolvedMaxWidth,
-            maxHeight: $resolvedMaxHeight,
+            maxWidth: $maxWidth,
+            maxHeight: $maxHeight,
             quality: $resolvedQuality,
             target: 'Vision API',
         );

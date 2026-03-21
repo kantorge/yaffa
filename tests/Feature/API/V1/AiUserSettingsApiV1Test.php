@@ -217,4 +217,37 @@ class AiUserSettingsApiV1Test extends TestCase
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['image_quality_vision', 'image_max_width_tesseract']);
     }
+
+    public function test_v1_update_accepts_null_image_dimensions(): void
+    {
+        AiUserSettings::factory()->create([
+            'user_id' => $this->user->id,
+            'image_max_width_vision' => 2048,
+            'image_max_height_vision' => 2048,
+            'image_max_width_tesseract' => 1024,
+            'image_max_height_tesseract' => 1024,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.settings.update'), [
+                'image_max_width_vision' => null,
+                'image_max_height_vision' => null,
+                'image_max_width_tesseract' => null,
+                'image_max_height_tesseract' => null,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('image_max_width_vision', null)
+            ->assertJsonPath('image_max_height_vision', null)
+            ->assertJsonPath('image_max_width_tesseract', null)
+            ->assertJsonPath('image_max_height_tesseract', null);
+
+        $this->assertDatabaseHas('ai_user_settings', [
+            'user_id' => $this->user->id,
+            'image_max_width_vision' => null,
+            'image_max_height_vision' => null,
+            'image_max_width_tesseract' => null,
+            'image_max_height_tesseract' => null,
+        ]);
+    }
 }

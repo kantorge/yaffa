@@ -424,9 +424,10 @@
                   class="form-control"
                   id="image_max_width_vision"
                   name="image_max_width_vision"
-                  v-model.number="form.image_max_width_vision"
+                  v-model="form.image_max_width_vision"
                   min="1"
                   max="65535"
+                  :placeholder="__('No limit')"
                 />
                 <span
                   class="input-group-text btn btn-outline-input-info"
@@ -441,6 +442,14 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
+              <small class="form-text text-warning">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                {{
+                  __(
+                    'Optional. Leaving this empty disables Vision width downscaling and can increase token usage.',
+                  )
+                }}
+              </small>
               <HasError field="image_max_width_vision" :form="form" />
             </div>
           </div>
@@ -459,9 +468,10 @@
                   class="form-control"
                   id="image_max_height_vision"
                   name="image_max_height_vision"
-                  v-model.number="form.image_max_height_vision"
+                  v-model="form.image_max_height_vision"
                   min="1"
                   max="65535"
+                  :placeholder="__('No limit')"
                 />
                 <span
                   class="input-group-text btn btn-outline-input-info"
@@ -476,6 +486,14 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
+              <small class="form-text text-warning">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                {{
+                  __(
+                    'Optional. Leaving this empty disables Vision height downscaling and can increase token usage.',
+                  )
+                }}
+              </small>
               <HasError field="image_max_height_vision" :form="form" />
             </div>
           </div>
@@ -717,6 +735,12 @@
         const payload = { ...this.form.data() };
 
         // Normalize null for optional Tesseract image limit fields
+        if (payload.image_max_width_vision === '') {
+          payload.image_max_width_vision = null;
+        }
+        if (payload.image_max_height_vision === '') {
+          payload.image_max_height_vision = null;
+        }
         if (payload.image_max_width_tesseract === '') {
           payload.image_max_width_tesseract = null;
         }

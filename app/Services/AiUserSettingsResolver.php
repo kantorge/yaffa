@@ -16,10 +16,6 @@ class AiUserSettingsResolver
 
     private const string DEFAULT_OCR_LANGUAGE = 'eng';
 
-    private const int DEFAULT_IMAGE_MAX_WIDTH_VISION = 2048;
-
-    private const int DEFAULT_IMAGE_MAX_HEIGHT_VISION = 2048;
-
     private const int DEFAULT_IMAGE_QUALITY_VISION = 85;
 
     private const float DEFAULT_ASSET_SIMILARITY_THRESHOLD = 0.5;
@@ -85,8 +81,8 @@ class AiUserSettingsResolver
                 self::DEFAULT_PROMPT_CHAT_HISTORY_ENABLED
             ),
             'ocr_language' => (string) $this->resolveSettingValue($settings->ocr_language, self::DEFAULT_OCR_LANGUAGE),
-            'image_max_width_vision' => (int) $this->resolveSettingValue($settings->image_max_width_vision, self::DEFAULT_IMAGE_MAX_WIDTH_VISION),
-            'image_max_height_vision' => (int) $this->resolveSettingValue($settings->image_max_height_vision, self::DEFAULT_IMAGE_MAX_HEIGHT_VISION),
+            'image_max_width_vision' => $this->resolveSettingValue($settings->image_max_width_vision, null),
+            'image_max_height_vision' => $this->resolveSettingValue($settings->image_max_height_vision, null),
             'image_quality_vision' => (int) $this->resolveSettingValue($settings->image_quality_vision, self::DEFAULT_IMAGE_QUALITY_VISION),
             'image_max_width_tesseract' => $this->resolveSettingValue($settings->image_max_width_tesseract, null),
             'image_max_height_tesseract' => $this->resolveSettingValue($settings->image_max_height_tesseract, null),
@@ -161,8 +157,8 @@ class AiUserSettingsResolver
             'ai_enabled' => (bool) $this->resolveSettingValue(null, self::DEFAULT_AI_ENABLED),
             'prompt_chat_history_enabled' => (bool) $this->resolveSettingValue(null, self::DEFAULT_PROMPT_CHAT_HISTORY_ENABLED),
             'ocr_language' => (string) $this->resolveSettingValue(null, self::DEFAULT_OCR_LANGUAGE),
-            'image_max_width_vision' => (int) $this->resolveSettingValue(null, self::DEFAULT_IMAGE_MAX_WIDTH_VISION),
-            'image_max_height_vision' => (int) $this->resolveSettingValue(null, self::DEFAULT_IMAGE_MAX_HEIGHT_VISION),
+            'image_max_width_vision' => $this->resolveSettingValue(null, null),
+            'image_max_height_vision' => $this->resolveSettingValue(null, null),
             'image_quality_vision' => (int) $this->resolveSettingValue(null, self::DEFAULT_IMAGE_QUALITY_VISION),
             'image_max_width_tesseract' => $this->resolveSettingValue(null, null),
             'image_max_height_tesseract' => $this->resolveSettingValue(null, null),
