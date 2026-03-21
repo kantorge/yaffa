@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\TransactionType;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use App\Services\PayeeCategoryStatsService;
@@ -32,6 +33,10 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
      */
     public function categoryStats(Request $request, AccountEntity $accountEntity): JsonResponse
     {
+        $validated = $request->validate([
+            'transaction_type' => ['nullable', 'in:withdrawal,deposit'],
+        ]);
+
         $user = $request->user();
 
         if (! $accountEntity->isPayee() || $accountEntity->user_id !== $user->id) {
@@ -40,12 +45,22 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $categories = $this->payeeCategoryStatsService->getCategoryStatsForPayee($user, $accountEntity, 6);
+        $transactionType = isset($validated['transaction_type'])
+            ? TransactionType::from($validated['transaction_type'])
+            : null;
+
+        $categories = $this->payeeCategoryStatsService
+            ->getCategoryStatsForPayee($user, $accountEntity, 6, $transactionType);
+        $deferredCategoryIds = $accountEntity->deferredCategories()
+            ->pluck('categories.id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
 
         return response()->json([
             'payee_id' => $accountEntity->id,
             'payee_name' => $accountEntity->name,
             'categories' => $categories,
+            'deferred_category_ids' => $deferredCategoryIds,
             'period_months' => 6,
         ], Response::HTTP_OK);
     }

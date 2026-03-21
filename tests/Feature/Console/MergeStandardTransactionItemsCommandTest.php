@@ -18,7 +18,9 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create([
+            'auto_merge_standard_transaction_items' => true,
+        ]);
     }
 
     /**

@@ -486,6 +486,8 @@
             :transactionItems="form.items"
             :currencySymbol="ammountFromCurrencyLabel"
             :payee="payeeId"
+            :transactionType="form.transaction_type"
+            :amountFrom="form.config.amount_from"
             :remainingAmount="
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "

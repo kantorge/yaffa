@@ -69,6 +69,7 @@ class ResetDemoDatabase extends Command
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
+            'auto_merge_standard_transaction_items' => true,
         ]);
         $demoUser->markEmailAsVerified();
         app(AiUserSettingsResolver::class)->getOrCreateForUser($demoUser);

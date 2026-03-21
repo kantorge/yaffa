@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TransactionType;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\User;
@@ -16,20 +17,43 @@ class PayeeCategoryStatsService
     /**
      * Get category usage stats for one payee.
      *
-     * @return Collection<int, array{category_id: int, usage_count: int}>
+     * @return Collection<int, array{category_id: int, usage_count: int, category_full_name: string}>
      */
-    public function getCategoryStatsForPayee(User $user, AccountEntity $payee, int $months = 6): Collection
-    {
+    public function getCategoryStatsForPayee(
+        User $user,
+        AccountEntity $payee,
+        int $months = 6,
+        ?TransactionType $transactionType = null,
+    ): Collection {
         if (! $payee->isPayee() || $payee->user_id !== $user->id) {
             return collect();
         }
 
-        return $this->buildAggregatedStatsQuery($user, $months, $payee->id)
+        $stats = $this->buildAggregatedStatsQuery($user, $months, $payee->id, $transactionType)
             ->get()
             ->map(fn ($row) => [
                 'category_id' => (int) $row->category_id,
                 'usage_count' => (int) $row->usage_count,
             ])
+            ->values();
+
+        if ($stats->isEmpty()) {
+            return $stats;
+        }
+
+        $categoryNames = Category::query()
+            ->with('parent')
+            ->whereIn('id', $stats->pluck('category_id')->all())
+            ->where('user_id', $user->id)
+            ->get()
+            ->mapWithKeys(fn (Category $category) => [$category->id => $category->full_name]);
+
+        return $stats
+            ->map(function (array $stat) use ($categoryNames): array {
+                $stat['category_full_name'] = (string) $categoryNames->get($stat['category_id'], '');
+
+                return $stat;
+            })
             ->values();
     }
 
@@ -184,10 +208,26 @@ class PayeeCategoryStatsService
             ->values();
     }
 
-    private function buildAggregatedStatsQuery(User $user, ?int $months = null, ?int $payeeId = null)
-    {
-        $toQuery = $this->buildDirectionalBaseQuery($user, 'account_to_id', $months, $payeeId);
-        $fromQuery = $this->buildDirectionalBaseQuery($user, 'account_from_id', $months, $payeeId);
+    private function buildAggregatedStatsQuery(
+        User $user,
+        ?int $months = null,
+        ?int $payeeId = null,
+        ?TransactionType $transactionType = null,
+    ) {
+        $toQuery = $this->buildDirectionalBaseQuery(
+            $user,
+            'account_to_id',
+            $months,
+            $payeeId,
+            $transactionType,
+        );
+        $fromQuery = $this->buildDirectionalBaseQuery(
+            $user,
+            'account_from_id',
+            $months,
+            $payeeId,
+            $transactionType,
+        );
 
         $baseQuery = $toQuery->unionAll($fromQuery);
 
@@ -199,8 +239,13 @@ class PayeeCategoryStatsService
             ->orderByDesc('usage_count');
     }
 
-    private function buildDirectionalBaseQuery(User $user, string $payeeColumn, ?int $months = null, ?int $payeeId = null)
-    {
+    private function buildDirectionalBaseQuery(
+        User $user,
+        string $payeeColumn,
+        ?int $months = null,
+        ?int $payeeId = null,
+        ?TransactionType $transactionType = null,
+    ) {
         $query = DB::table('transaction_items')
             ->join(
                 'transactions',
@@ -230,6 +275,10 @@ class PayeeCategoryStatsService
             ->where('transactions.config_type', 'standard')
             ->where('transactions.schedule', false)
             ->where('transactions.budget', false)
+            ->when(
+                $transactionType !== null,
+                fn ($query) => $query->where('transactions.transaction_type', $transactionType->value),
+            )
             ->where('payee_entities.user_id', $user->id)
             ->where('payee_entities.config_type', 'payee')
             ->where('categories.user_id', $user->id)
