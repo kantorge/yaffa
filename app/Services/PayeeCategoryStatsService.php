@@ -173,7 +173,8 @@ class PayeeCategoryStatsService
             })
             ->filter()
             ->filter(fn (array $value) => $value['sum'] > self::MIN_TRANSACTION_COUNT_FOR_SUGGESTION)
-            ->filter(fn (array $value) => $value['max'] / $value['sum'] > self::MIN_DOMINANCE_RATIO_FOR_SUGGESTION)            ->filter(fn (array $value) => in_array($value['payee_id'], $eligiblePayeeIds, true))
+            ->filter(fn (array $value) => $value['max'] / $value['sum'] > self::MIN_DOMINANCE_RATIO_FOR_SUGGESTION)
+            ->filter(fn (array $value) => in_array($value['payee_id'], $eligiblePayeeIds, true))
             ->map(fn (array $value): array => [
                 'payee_id' => (int) $value['payee_id'],
                 'sum' => (int) $value['sum'],

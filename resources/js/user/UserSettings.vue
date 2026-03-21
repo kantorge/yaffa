@@ -206,6 +206,43 @@
             <HasError field="account_details_date_range" :form="form" />
           </div>
         </div>
+        <div class="row">
+          <label
+            for="auto_merge_standard_transaction_items"
+            class="col-form-label col-sm-3"
+          >
+            {{ __('Auto-merge standard transaction items') }}
+          </label>
+          <div class="col-sm-9">
+            <div class="input-group">
+              <div class="input-group-text">
+                <input
+                  class="form-check-input mt-0"
+                  type="checkbox"
+                  id="auto_merge_standard_transaction_items"
+                  name="auto_merge_standard_transaction_items"
+                  v-model="form.auto_merge_standard_transaction_items"
+                />
+              </div>
+              <span
+                class="input-group-text btn btn-outline-input-info"
+                data-coreui-toggle="tooltip"
+                data-coreui-placement="top"
+                :title="
+                  __(
+                    'When enabled, YAFFA automatically merges transaction items that share the same category and tags (or no tags) and have no comment into a single item, summing their amounts.',
+                  )
+                "
+              >
+                <i class="fa fa-info-circle"></i>
+              </span>
+            </div>
+            <HasError
+              field="auto_merge_standard_transaction_items"
+              :form="form"
+            />
+          </div>
+        </div>
       </div>
       <div class="card-footer">
         <Button
@@ -258,6 +295,8 @@
         start_date: window.YAFFA.userSettings.start_date,
         account_details_date_range:
           window.YAFFA.userSettings.account_details_date_range || 'none',
+        auto_merge_standard_transaction_items:
+          window.YAFFA.userSettings.auto_merge_standard_transaction_items || false,
       }),
     }),
     mounted() {
@@ -282,6 +321,8 @@
               window.YAFFA.userSettings.end_date = response.data.data.end_date;
               window.YAFFA.userSettings.account_details_date_range =
                 response.data.data.account_details_date_range;
+              window.YAFFA.userSettings.auto_merge_standard_transaction_items =
+                response.data.data.auto_merge_standard_transaction_items;
 
               // Emit a custom event to global scope about the result
               toastHelpers.showSuccessToast(__('User settings updated'));

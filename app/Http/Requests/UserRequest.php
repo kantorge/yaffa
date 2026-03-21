@@ -43,6 +43,10 @@ class UserRequest extends FormRequest
                         ->all()
                 )
             ],
+            'auto_merge_standard_transaction_items' => [
+                'required',
+                'boolean',
+            ],
         ];
     }
 }

@@ -1508,24 +1508,12 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
 - As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
 
-
 Bugs, issues - quick fix
 
 - It is not consistent, when the items are returned in full capitals or full lowercase. Even if normalization is applied later for identification, this should be more consistent, using lower case only.
 - The item category matching is still not very accurate. Should the quality of the category matching be improved by translating the prompts to the user's language?
 - Item detection picks up random code from the receipt, e.g. "COO RAGCSALÓLESE" The prompt should be improved to exclude such codes.
 - When extracting the account, the prompt should refer to a potential case of last 4 digits of a card number, which can be used for idenification.
-
-Bugs, issues - detailed planning needed
-
-- Item category detection still prefers parent category over child category. Should there be a flag that prevents passing parent categories to the AI when a child category is available? Does this also mean, that a group of AI-based settings should be introduced?
-- The AI-based payee matching is poor. Probably the local similarity matching is filtering out the best results. E.g.
-  - The list of payees is:
-  - 488: Spar (SPAR Magyarország Kereskedelmi Kft.)
-  - 851: Fitness Five (Angel Warriors Kft.)
-  - 659: Gate and Alarm Kft.
-  - 377: Magyaros Kenyér
-  - The payee mentioned in the document is: AUCHAN MAGYARORSZAG KFT => Auchan is not even passed to the AI
 
 ## AI User Settings Expansion Plan (Implementation-Ready)
 

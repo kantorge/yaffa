@@ -29,6 +29,7 @@ class UserApiControllerTest extends TestCase
             'start_date' => '2021-01-01',
             'end_date' => '2021-12-31',
             'account_details_date_range' => 'yesterday',
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -66,6 +67,7 @@ class UserApiControllerTest extends TestCase
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->start_date->addYear()->format('Y-m-d'),
             'account_details_date_range' => $user->account_details_date_range,
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -87,6 +89,7 @@ class UserApiControllerTest extends TestCase
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->end_date->format('Y-m-d'),
             'account_details_date_range' => $user->account_details_date_range,
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -108,6 +111,7 @@ class UserApiControllerTest extends TestCase
             'start_date' => $user->start_date->format('Y-m-d'), // same as current
             'end_date' => $user->end_date->format('Y-m-d'), // same as current
             'account_details_date_range' => $user->account_details_date_range, // same as current
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)

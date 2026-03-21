@@ -30,7 +30,7 @@ UNLOCK TABLES;
 LOCK TABLES `tags` WRITE;
 /*!40000 ALTER TABLE `tags` DISABLE KEYS */;
 INSERT INTO `tags` (`id`, `user_id`, `name`, `active`) VALUES
-(1,1,'Vacation 2022',0),(4,1,'Home',0);
+(1,1,'Vacation 2022',0),(4,1,'Home',1);
 /*!40000 ALTER TABLE `tags` ENABLE KEYS */;
 UNLOCK TABLES;
 

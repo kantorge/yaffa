@@ -38,6 +38,9 @@ class TransactionService
         // Save the new transaction
         $newTransaction->save();
 
+        // Merge transaction items if the user's setting is enabled
+        (new TransactionItemMergeService())->mergeIfEnabled($newTransaction);
+
         // Adjust the next date of the original transaction
         $transaction->transactionSchedule->skipNextInstance();
     }

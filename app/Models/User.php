@@ -36,6 +36,7 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property Carbon $start_date
  * @property Carbon $end_date
  * @property string $account_details_date_range
+ * @property bool $auto_merge_standard_transaction_items
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, AccountGroup> $accountGroups
@@ -118,6 +119,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'start_date',
         'end_date',
         'account_details_date_range',
+        'auto_merge_standard_transaction_items',
     ];
 
     /**
@@ -141,6 +143,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
             'email_verified_at' => 'datetime',
             'start_date' => 'datetime',
             'end_date' => 'datetime',
+            'auto_merge_standard_transaction_items' => 'boolean',
         ];
     }
 

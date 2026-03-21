@@ -22,6 +22,7 @@ use App\Models\TransactionSchedule;
 use App\Models\User;
 use App\Services\CategoryService;
 use App\Services\CategoryLearningService;
+use App\Services\TransactionItemMergeService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -37,9 +38,9 @@ class TransactionApiController extends Controller implements HasMiddleware
 
     private CategoryService $categoryService;
 
-    public function __construct()
-    {
-
+    public function __construct(
+        private TransactionItemMergeService $mergeService,
+    ) {
         $this->categoryService = new CategoryService();
     }
 
@@ -461,6 +462,8 @@ class TransactionApiController extends Controller implements HasMiddleware
             return $transaction;
         });
 
+        $this->mergeService->mergeIfEnabled($transaction);
+
         $this->handleSourceTransactionUpdates($validated);
 
         $this->finalizeAiDocument($validated, $transaction, $request->user());
@@ -599,6 +602,8 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Save entire transaction
         $transaction->push();
+
+        $this->mergeService->mergeIfEnabled($transaction);
 
         // Generate an event for the updated transaction
         event(new TransactionUpdated($transaction, $attributeChanges));

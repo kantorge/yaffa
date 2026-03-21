@@ -62,6 +62,7 @@ class UserApiController extends Controller implements HasMiddleware
                 'start_date' => $user->start_date,
                 'end_date' => $user->end_date,
                 'account_details_date_range' => $user->account_details_date_range,
+                'auto_merge_standard_transaction_items' => $user->auto_merge_standard_transaction_items,
             ]
         ]);
     }

@@ -3,6 +3,17 @@
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('Transaction items') }}
+        <span
+          v-if="autoMergeEnabled"
+          class="ms-1 text-muted"
+          :title="
+            __(
+              'Auto-merge is enabled: items with the same category, same tags, and no comment will be merged automatically.',
+            )
+          "
+        >
+          <i class="fa fa-compress-alt fa-sm"></i>
+        </span>
       </div>
       <div>
         <div class="btn-group d-sm-none">
@@ -155,6 +166,13 @@
     },
 
     emits: ['addTransactionItem'],
+
+    computed: {
+      autoMergeEnabled() {
+        return !!window.YAFFA?.userSettings
+          ?.auto_merge_standard_transaction_items;
+      },
+    },
 
     data() {
       return {};
