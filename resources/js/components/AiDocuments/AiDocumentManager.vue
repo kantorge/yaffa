@@ -15,6 +15,8 @@
 
       <ai-document-filters
         :initial-status="initialStatus"
+        :initial-source="initialSource"
+        :initial-search="initialSearch"
         :status-options="statusLabels"
         :source-options="sourceLabels"
         @update="onFiltersUpdated"
@@ -23,12 +25,25 @@
       <date-range-filter-card
         :expanded="true"
         :show-update-button="false"
+        :title="__('Received date')"
         component-id="aiDocumentDate"
         :initial-date-from="initialDateFrom"
         :initial-date-to="initialDateTo"
         :initial-preset="initialPreset"
-        :update-url="true"
+        :update-url="false"
         @update="onDateRangeUpdated"
+      ></date-range-filter-card>
+
+      <date-range-filter-card
+        :expanded="false"
+        :show-update-button="false"
+        :title="__('Detected transaction date')"
+        component-id="aiDocumentDetectedDate"
+        :initial-date-from="initialDetectedDateFrom"
+        :initial-date-to="initialDetectedDateTo"
+        :initial-preset="initialDetectedDatePreset"
+        :update-url="false"
+        @update="onDetectedDateRangeUpdated"
       ></date-range-filter-card>
     </div>
     <div class="col-12 col-lg-9">
@@ -99,6 +114,8 @@
   const initialDateFrom = ref(urlParams.get('date_from') || null);
   const initialDateTo = ref(urlParams.get('date_to') || null);
   const initialStatus = ref(urlParams.get('status') || 'ready_for_review');
+  const initialSource = ref(urlParams.get('source') || '');
+  const initialSearch = ref(urlParams.get('search') || '');
   const hasExplicitDateFilter = Boolean(
     initialDateFrom.value || initialDateTo.value,
   );
@@ -106,14 +123,72 @@
     urlParams.get('date_preset') ||
       (hasExplicitDateFilter ? null : 'previous90Days'),
   );
+  const initialDetectedDateFrom = ref(
+    urlParams.get('detected_date_from') || null,
+  );
+  const initialDetectedDateTo = ref(urlParams.get('detected_date_to') || null);
+  const initialDetectedDatePreset = ref(
+    urlParams.get('detected_date_preset') || null,
+  );
 
   const currentFilters = ref({
     status: initialStatus.value,
-    source: '',
-    search: '',
+    source: initialSource.value,
+    search: initialSearch.value,
     dateFrom: initialDateFrom.value,
     dateTo: initialDateTo.value,
+    datePreset: initialPreset.value,
+    detectedDateFrom: initialDetectedDateFrom.value,
+    detectedDateTo: initialDetectedDateTo.value,
+    detectedDatePreset: initialDetectedDatePreset.value,
   });
+
+  const rebuildUrl = () => {
+    const params = new URLSearchParams();
+
+    if (currentFilters.value.status) {
+      params.set('status', currentFilters.value.status);
+    }
+
+    if (currentFilters.value.source) {
+      params.set('source', currentFilters.value.source);
+    }
+
+    if (currentFilters.value.search) {
+      params.set('search', currentFilters.value.search);
+    }
+
+    if (currentFilters.value.datePreset) {
+      params.set('date_preset', currentFilters.value.datePreset);
+    } else {
+      if (currentFilters.value.dateFrom) {
+        params.set('date_from', currentFilters.value.dateFrom);
+      }
+
+      if (currentFilters.value.dateTo) {
+        params.set('date_to', currentFilters.value.dateTo);
+      }
+    }
+
+    if (currentFilters.value.detectedDatePreset) {
+      params.set(
+        'detected_date_preset',
+        currentFilters.value.detectedDatePreset,
+      );
+    } else {
+      if (currentFilters.value.detectedDateFrom) {
+        params.set('detected_date_from', currentFilters.value.detectedDateFrom);
+      }
+
+      if (currentFilters.value.detectedDateTo) {
+        params.set('detected_date_to', currentFilters.value.detectedDateTo);
+      }
+    }
+
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
+    window.history.pushState('', '', nextUrl);
+  };
 
   const onFiltersUpdated = (filters) => {
     currentFilters.value = { ...currentFilters.value, ...filters };
@@ -121,7 +196,10 @@
       status: currentFilters.value.status,
       source: currentFilters.value.source,
       search: currentFilters.value.search,
+      detectedDateFrom: currentFilters.value.detectedDateFrom,
+      detectedDateTo: currentFilters.value.detectedDateTo,
     });
+    rebuildUrl();
   };
 
   const normalizeDocuments = (apiDocuments) =>
@@ -168,6 +246,8 @@
         status: currentFilters.value.status,
         source: currentFilters.value.source,
         search: currentFilters.value.search,
+        detectedDateFrom: currentFilters.value.detectedDateFrom,
+        detectedDateTo: currentFilters.value.detectedDateTo,
       });
     } catch (error) {
       documents.value = [];
@@ -181,11 +261,29 @@
     }
   };
 
-  const onDateRangeUpdated = async ({ dateFrom, dateTo }) => {
+  const onDateRangeUpdated = async ({ dateFrom, dateTo, preset }) => {
     currentFilters.value.dateFrom = dateFrom;
     currentFilters.value.dateTo = dateTo;
+    currentFilters.value.datePreset = preset || null;
+    rebuildUrl();
 
     await fetchDocuments({ dateFrom, dateTo });
+  };
+
+  const onDetectedDateRangeUpdated = ({ dateFrom, dateTo, preset }) => {
+    currentFilters.value.detectedDateFrom = dateFrom;
+    currentFilters.value.detectedDateTo = dateTo;
+    currentFilters.value.detectedDatePreset = preset || null;
+
+    tableRef.value?.applyFilters({
+      status: currentFilters.value.status,
+      source: currentFilters.value.source,
+      search: currentFilters.value.search,
+      detectedDateFrom: currentFilters.value.detectedDateFrom,
+      detectedDateTo: currentFilters.value.detectedDateTo,
+    });
+
+    rebuildUrl();
   };
 
   const openUploadForm = () => {

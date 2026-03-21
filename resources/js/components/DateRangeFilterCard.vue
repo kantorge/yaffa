@@ -8,7 +8,7 @@
         :data-coreui-target="'#' + cardId"
       >
         <i class="fa fa-angle-down"></i>
-        {{ __('Date') }}
+        {{ title }}
       </div>
     </div>
     <div
@@ -119,6 +119,10 @@
     updateUrl: {
       type: Boolean,
       default: false,
+    },
+    title: {
+      type: String,
+      default: () => __('Date'),
     },
   });
 

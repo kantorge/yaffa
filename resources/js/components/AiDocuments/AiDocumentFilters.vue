@@ -98,14 +98,22 @@
       type: Object,
       default: () => ({}),
     },
+    initialSource: {
+      type: String,
+      default: '',
+    },
+    initialSearch: {
+      type: String,
+      default: '',
+    },
   });
 
   const emit = defineEmits(['update']);
 
   const filters = reactive({
     status: props.initialStatus || '',
-    source: '',
-    search: '',
+    source: props.initialSource || '',
+    search: props.initialSearch || '',
   });
 
   const emitFilters = () => {
