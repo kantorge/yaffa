@@ -219,6 +219,7 @@ External QIF library may be reconsidered later only if:
 - CSV parsing:
   - Use a maintained parsing library for low-level CSV reading/tokenization.
   - Recommended package: `league/csv`.
+  - The parser library must correctly support multiline field values, quoted fields, delimiter characters inside quoted fields, and escaped quotes / doubled quotes inside quoted fields.
   - Keep import-domain behavior (mapping, normalization, matching, warnings) in application services.
 
 - QIF parsing:
@@ -285,6 +286,7 @@ External QIF library may be reconsidered later only if:
 ### MVP Baseline
 
 - Backend CSV parser normalizes rows using CSV import profiles.
+- CSV parsing must preserve valid multiline text fields and correctly parse standard CSV quoting variants handled by the underlying library.
 - Provide one system profile equivalent to current CSV import behavior.
 
 ### Advanced User Support
@@ -381,6 +383,8 @@ Each system profile should have:
   - whether model is selectable
 
 Currency is not a profile setting. Imported amounts are always interpreted in the selected account's currency as a global import behavior.
+
+- For future versions, it can be an extension to parse the currency from the input file, and compare it to the currency of the selected account, but this is not required for MVP.
 
 For `type = system`, these profiles are maintained programmatically or seeded and not exposed to user CRUD.
 For `type = user`, the same structure is reused, but only safe editable fields are exposed to the user.
@@ -804,6 +808,7 @@ Notes:
 - QIF amount contains locale-specific separators.
 - CSV with missing header or duplicate columns.
 - CSV with empty rows and partial malformed lines.
+- CSV with multiline quoted fields, embedded delimiters, and escaped quotes inside quoted values.
 - Duplicate check with insufficient fields.
 - Finalize called for already finalized/ignored draft.
 - Unauthorized access to import and profile endpoints.
