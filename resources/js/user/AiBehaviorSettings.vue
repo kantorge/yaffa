@@ -442,14 +442,6 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
-              <small class="form-text text-warning">
-                <i class="fa fa-exclamation-triangle me-1"></i>
-                {{
-                  __(
-                    'Optional. Leaving this empty disables Vision width downscaling and can increase token usage.',
-                  )
-                }}
-              </small>
               <HasError field="image_max_width_vision" :form="form" />
             </div>
           </div>
@@ -486,14 +478,6 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
-              <small class="form-text text-warning">
-                <i class="fa fa-exclamation-triangle me-1"></i>
-                {{
-                  __(
-                    'Optional. Leaving this empty disables Vision height downscaling and can increase token usage.',
-                  )
-                }}
-              </small>
               <HasError field="image_max_height_vision" :form="form" />
             </div>
           </div>
