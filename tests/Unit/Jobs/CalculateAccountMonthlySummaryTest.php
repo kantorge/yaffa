@@ -221,4 +221,100 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         Carbon::resetMonthsOverflow();
     }
+
+    /**
+     * Regression test: a partial (single-month) account_balance-fact recalculation must not duplicate
+     * records for months that fall outside the targeted date range, and must not duplicate the opening
+     * balance entry that was written during the initial full recalculation.
+     */
+    public function test_partial_account_balance_fact_recalculation_does_not_create_duplicate_records(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(['opening_balance' => 1000]), 'config')
+            ->create();
+
+        // Create one non-scheduled withdrawal per month for three consecutive months
+        $monthMinus2 = now()->startOfMonth()->subMonths(2);
+        $monthMinus1 = now()->startOfMonth()->subMonths(1);
+        $monthCurrent = now()->startOfMonth();
+
+        foreach ([$monthMinus2, $monthMinus1, $monthCurrent] as $month) {
+            Transaction::factory()
+                ->for($user)
+                ->for(
+                    \App\Models\TransactionDetailStandard::factory()->create([
+                        'amount_from' => 100,
+                        'amount_to' => 100,
+                        'account_from_id' => $account->id,
+                        'account_to_id' => $payee->id,
+                    ]),
+                    'config'
+                )
+                ->make([
+                    'date' => $month,
+                    'transaction_type' => \App\Enums\TransactionType::WITHDRAWAL->value,
+                    'schedule' => false,
+                    'budget' => false,
+                ])
+                ->save();
+        }
+
+        // --- Step 1: full recalculation to establish baseline ---
+        $fullJob = new CalculateAccountMonthlySummary($user, 'account_balance-fact', $account);
+        $fullJob->handle($this->app->make(InvestmentService::class));
+
+        $recordsAfterFull = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'fact',
+        ])->orderBy('date')->get();
+
+        // Expect: opening balance record + one record per transaction month = 4 records total
+        $this->assertCount(4, $recordsAfterFull);
+        $this->assertEquals(1000, $recordsAfterFull->first()->amount); // opening balance
+        $this->assertEquals(-100, $recordsAfterFull->get(1)->amount);
+        $this->assertEquals(-100, $recordsAfterFull->get(2)->amount);
+        $this->assertEquals(-100, $recordsAfterFull->get(3)->amount);
+
+        // --- Step 2: partial recalculation for just the earliest month ---
+        $partialJob = new CalculateAccountMonthlySummary(
+            $user,
+            'account_balance-fact',
+            $account,
+            $monthMinus2->clone()->startOfMonth(),
+            $monthMinus2->clone()->endOfMonth()
+        );
+        $partialJob->handle($this->app->make(InvestmentService::class));
+
+        $recordsAfterPartial = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'fact',
+        ])->orderBy('date')->get();
+
+        // Record count must not grow: months outside the targeted range must NOT be duplicated,
+        // and the opening balance must NOT be re-inserted.
+        $this->assertCount(4, $recordsAfterPartial);
+
+        // Values must match the baseline — no doubling
+        $this->assertEquals(1000, $recordsAfterPartial->first()->amount); // opening balance unchanged
+        $this->assertEquals(-100, $recordsAfterPartial->get(1)->amount);
+        $this->assertEquals(-100, $recordsAfterPartial->get(2)->amount);
+        $this->assertEquals(-100, $recordsAfterPartial->get(3)->amount);
+
+        Carbon::resetMonthsOverflow();
+    }
 }

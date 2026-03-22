@@ -180,13 +180,19 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * Get the monthly summary data for standard transactions for the account (accountEntity) provided at class level.
      * The function loops through all months between the first and last transaction associated with the account.
      * and also prepends the opening balance as the first available month.
+     *
+     * When dateFrom and dateTo are both provided (partial recalculation), only data within that range is generated
+     * and the opening balance is not added again (it was already stored during a previous full recalculation).
      */
     private function getAccountBalanceFactData(): Collection
     {
-        // Get the dates of the first and last transaction for this account
+        // Get the dates of the first and last transaction for this account.
+        // When dateTo is set, the period is capped at that date to avoid regenerating and duplicating
+        // records for months that are outside the targeted recalculation range.
         $firstTransactionDate = $this->dateFrom ??
             Carbon::parse($this->accountEntity->allTransactionDates()->min('date'));
-        $lastTransactionDate = Carbon::parse($this->accountEntity->allTransactionDates()->max('date'));
+        $lastTransactionDate = $this->dateTo ??
+            Carbon::parse($this->accountEntity->allTransactionDates()->max('date'));
 
         // Loop through all months between the first and last transaction, using the first day of the month
         $period = CarbonPeriod::between(
@@ -222,23 +228,27 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             ]);
         }
 
-        // Add the opening balance before the first known month
-        if (count($results) > 0) {
-            $newDate = $firstTransactionDate->subMonth();
-        } else {
-            $newDate = Carbon::now()->startOfMonth();
-        }
+        // Only add the opening balance for a full (non-partial) recalculation.
+        // When dateFrom is set (partial recalculation), the opening balance already exists from a prior
+        // full recalculation and must not be inserted again to avoid duplicating it.
+        if ($this->dateFrom === null) {
+            if (count($results) > 0) {
+                $newDate = $firstTransactionDate->subMonth();
+            } else {
+                $newDate = Carbon::now()->startOfMonth();
+            }
 
-        $results->prepend([
-            'date' => $newDate,
-            'user_id' => $this->accountEntity->user_id,
-            'account_entity_id' => $this->accountEntity->id,
-            'transaction_type' => 'account_balance',
-            'data_type' => 'fact',
-            'amount' => $this->accountEntity->config instanceof Account
-                ? $this->accountEntity->config->opening_balance
-                : 0,
-        ]);
+            $results->prepend([
+                'date' => $newDate,
+                'user_id' => $this->accountEntity->user_id,
+                'account_entity_id' => $this->accountEntity->id,
+                'transaction_type' => 'account_balance',
+                'data_type' => 'fact',
+                'amount' => $this->accountEntity->config instanceof Account
+                    ? $this->accountEntity->config->opening_balance
+                    : 0,
+            ]);
+        }
 
         return $results;
     }

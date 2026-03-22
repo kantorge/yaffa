@@ -167,7 +167,7 @@ class TransactionService
     }
 
     /**
-     * This function can be used to initiate the recalculation of the monthly summaries,
+     * This function is used to initiate the recalculation of the monthly summaries,
      * based on the creation or any change of a transaction.
      * The function will trigger the relevant job or jobs to recalculate the summaries.
      */
@@ -324,6 +324,28 @@ class TransactionService
                 'investment_value-fact',
                 $account
             );
+            dispatch($job);
+
+            // As the change probably affects the balance of the account, we also need to recalculate the standard summaries for the account
+            $job = new CalculateAccountMonthlySummary(
+                $transaction->user,
+                'account_balance-fact',
+                $account,
+                $transaction->date->clone()->startOfMonth(),
+                $transaction->date->clone()->endOfMonth()
+            );
+            dispatch($job);
+        }
+
+        if ($transaction->schedule) {
+            // This is a scheduled transaction, we need to recalculate the entire forecast for the account, as the baseline changes
+            $job = new CalculateAccountMonthlySummary(
+                $transaction->user,
+                'account_balance-forecast',
+                $account
+            );
+
+            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
             dispatch($job);
         }
 

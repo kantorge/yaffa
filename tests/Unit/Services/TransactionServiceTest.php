@@ -354,7 +354,8 @@ class TransactionServiceTest extends TestCase
 
         $this->service->recalculateMonthlySummaries($transaction);
 
-        // For investment transactions, jobs are dispatched
-        Queue::assertPushed(CalculateAccountMonthlySummary::class, 2);
+        // For non-scheduled investment transactions, three jobs are dispatched:
+        // investment_value-fact, account_balance-fact, and investment_value-forecast
+        Queue::assertPushed(CalculateAccountMonthlySummary::class, 3);
     }
 }
