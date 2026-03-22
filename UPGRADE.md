@@ -104,7 +104,6 @@ TESSERACT_LANGUAGE=eng
 | `TESSERACT_ENABLED`      | `false`              | Enable Tesseract OCR           |
 | `TESSERACT_MODE`         | `binary`             | Mode: `binary` or `http`       |
 | `TESSERACT_PATH`         | `/usr/bin/tesseract` | Binary path (binary mode)      |
-| `TESSERACT_HTTP_ENABLED` | `true`               | Enable HTTP mode               |
 | `TESSERACT_HTTP_HOST`    | `tesseract`          | HTTP service hostname          |
 | `TESSERACT_HTTP_PORT`    | `8888`               | HTTP service port              |
 | `TESSERACT_HTTP_TIMEOUT` | `30`                 | HTTP request timeout (seconds) |
