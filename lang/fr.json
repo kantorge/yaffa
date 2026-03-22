@@ -995,5 +995,6 @@
     "widget.scheduleCalendar.transactionLabel": ":type :amount de :fromAccount à :toAccount",
     "Matched database entity": "Entité de base de données correspondante",
     "Processing details": "Détails du traitement",
-    "Monthly spending and income": "Dépenses et revenus mensuels"
+    "Monthly spending and income": "Dépenses et revenus mensuels",
+    "Store price": "Enregistrer le prix"
 }

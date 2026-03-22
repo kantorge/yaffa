@@ -58,7 +58,7 @@
                         title="{{ __('This page can load slowly based on the number of transactions.') }}"></i>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
-                    <a class="nav-link" href="{{ route('reports.cashflow', ['account' => $account->id]) }}">
+                    <a class="nav-link" href="{{ route('reports.cashflow', ['accountEntity' => $account->config->id]) }}">
                         {{ __('Show account monthly history') }}
                     </a>
                 </li>

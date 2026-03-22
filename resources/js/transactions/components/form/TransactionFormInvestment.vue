@@ -298,7 +298,7 @@
                           existingPriceForDate === null
                         "
                       >
-                        {{ __('Store') }}
+                        {{ __('Store price') }}
                       </label>
                     </div>
                   </div>
