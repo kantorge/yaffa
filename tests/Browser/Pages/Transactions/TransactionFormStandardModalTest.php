@@ -128,6 +128,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Wait for the modal to load
                 ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormStandard')
+                ->waitFor('#account_to', 10)
 
                 // Fill the form
                 // Account (account from) is pre-selected (account_entity 1)
@@ -138,6 +139,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Allocate the same amount to a random category by adding one new item
                 ->click('@button-add-transaction-item')
                 // Set the first category input
+                ->waitFor('#transaction_item_container .transaction_item_row select.category', 10)
                 ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
                 // Set the first amount to the same amount as the transaction
                 ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
