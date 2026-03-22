@@ -566,6 +566,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitUntilMissing('#newPayeeModal.show', 10)
 
                 // Verify that the payee is added to the transaction
+                ->waitForTextIn('#account_to + .select2', $payee->name, 10)
                 ->assertSeeIn('#account_to + .select2', $payee->name);
         });
 
