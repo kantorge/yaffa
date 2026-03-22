@@ -32,7 +32,7 @@
       },
       title: {
         type: String,
-        default: 'Monthly spending and income',
+        default: __('Monthly spending and income'),
       },
       busy: {
         type: Boolean,

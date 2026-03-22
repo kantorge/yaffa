@@ -994,5 +994,6 @@
     "widget.scheduleCalendar.cardTitle": "Instances de transaction planifiées",
     "widget.scheduleCalendar.transactionLabel": ":type :amount de :fromAccount à :toAccount",
     "Matched database entity": "Entité de base de données correspondante",
-    "Processing details": "Détails du traitement"
+    "Processing details": "Détails du traitement",
+    "Monthly spending and income": "Dépenses et revenus mensuels"
 }

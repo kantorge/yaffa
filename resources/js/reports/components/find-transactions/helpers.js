@@ -59,23 +59,19 @@ export function round2(num) {
  * Helps distinguish between deposit, withdrawal, and transfer types
  * with fallback to transaction_type_id constants.
  *
- * @param {Object} tx - Transaction object
+ * @param {Object} transaction - Transaction object
  * @returns {{isDeposit: boolean, isWithdrawal: boolean, isTransfer: boolean, isInvestment: boolean}}
  */
-export function getTransactionTypeFlags(tx) {
-  if (!tx || !tx.transaction_type) {
+export function getTransactionTypeFlags(transaction) {
+  if (!transaction || !transaction.transaction_type) {
     return { isDeposit: false, isWithdrawal: false, isTransfer: false, isInvestment: false };
   }
 
-  const txTypeName = tx.transaction_type?.name || tx.transaction_type?.type;
-  const txTypeId = tx.transaction_type_id;
-  const txTypeBase = tx.transaction_type?.type;
-
   return {
-    isDeposit: txTypeName === 'deposit' || txTypeId === 2,
-    isWithdrawal: txTypeName === 'withdrawal' || txTypeId === 1,
-    isTransfer: txTypeName === 'transfer' || txTypeId === 3,
-    isInvestment: txTypeBase === 'investment',
+    isDeposit: transaction.transaction_type === 'deposit',
+    isWithdrawal: transaction.transaction_type === 'withdrawal',
+    isTransfer: transaction.transaction_type === 'transfer',
+    isInvestment: transaction.config_type === 'investment',
   };
 }
 
@@ -94,54 +90,66 @@ export function aggregateTransactionsByCategory(transactions) {
   const data = {};
 
   transactions.forEach((transaction) => {
+    // Sanity check for date
     if (!transaction.date || !(transaction.date instanceof Date)) return;
 
     const typeFlags = getTransactionTypeFlags(transaction);
+
+    // For the category level breakdown, transfers and investments are not relevant, as they are not associated with a category
     if (typeFlags.isTransfer || typeFlags.isInvestment) return;
 
     const month = transaction.year_month;
 
-    if (transaction.transaction_items) {
-      transaction.transaction_items.forEach((item) => {
-        if (!item.category) return;
-
-        // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
-        const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
-        const categoryId = item.category.id;
-        let rawAmount = Number(item.amount_in_base || 0);
-        if (!isFinite(rawAmount)) rawAmount = 0;
-        const amountAbs = Math.abs(rawAmount);
-        const parentName = item.category.parent?.name || null;
-        const parentId = item.category.parent?.id || null;
-
-        if (!data[categoryName]) {
-          data[categoryName] = {
-            values: {},
-            depositValues: {},
-            withdrawalValues: {},
-            categoryIds: new Set(),
-            depositTotal: 0,
-            withdrawalTotal: 0,
-            rawName: item.category.name || categoryName,
-            parentName,
-            parentId,
-          };
-        }
-
-        data[categoryName].categoryIds.add(categoryId);
-        const isDepositTx = typeFlags.isDeposit || (!typeFlags.isWithdrawal && rawAmount < 0);
-
-        if (isDepositTx) {
-          data[categoryName].depositTotal += amountAbs;
-          data[categoryName].depositValues[month] =
-            (data[categoryName].depositValues[month] || 0) + amountAbs;
-        } else {
-          data[categoryName].withdrawalTotal += amountAbs;
-          data[categoryName].withdrawalValues[month] =
-            (data[categoryName].withdrawalValues[month] || 0) + amountAbs;
-        }
-      });
+    // Skip transactions without items, as they cannot be categorized
+    if (!transaction.transaction_items) {
+      return;
     }
+
+    transaction.transaction_items.forEach((item) => {
+      // Theoretically, all transaction items should have a category due to database constraints, but we add a safety check here just in case of data issues
+      if (!item.category) {
+        return;
+      }
+
+      // Category ID is mandatory on a database level, but we add an untranslated fallback name for safety in case of data issues
+      const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
+      const categoryId = item.category.id;
+
+      const amount = Number(item.amount_in_base || 0);
+
+      if (!isFinite(amount)) {
+        amount = 0;
+      }
+
+      const parentName = item.category.parent?.name || null;
+      const parentId = item.category.parent?.id || null;
+
+      if (!data[categoryName]) {
+        data[categoryName] = {
+          values: {},
+          depositValues: {},
+          withdrawalValues: {},
+          categoryIds: new Set(),
+          depositTotal: 0,
+          withdrawalTotal: 0,
+          rawName: item.category.name || categoryName,
+          parentName,
+          parentId,
+        };
+      }
+
+      data[categoryName].categoryIds.add(categoryId);
+
+      if (typeFlags.isDeposit) {
+        data[categoryName].depositTotal += amount;
+        data[categoryName].depositValues[month] =
+          (data[categoryName].depositValues[month] || 0) + amount;
+      } else {
+        data[categoryName].withdrawalTotal += amount;
+        data[categoryName].withdrawalValues[month] =
+          (data[categoryName].withdrawalValues[month] || 0) + amount;
+      }
+    });
   });
 
   // Calculate net values per month: income = deposits - withdrawals
@@ -191,7 +199,7 @@ export function processCategoryGroup(categoryNames, catData, months, monthCount)
       values,
       total: round2(total),
       avg: round2(avg),
-      nonZeroAvg,
+      nonZeroAvg: round2(nonZeroAvg),
       nonZeroCount,
       categoryIds: Array.from(entry.categoryIds),
       isIncome: entry.depositTotal > entry.withdrawalTotal,

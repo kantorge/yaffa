@@ -273,7 +273,7 @@
                     <span class="badge bg-info me-2">
                       <i class="fa fa-robot"></i>
                     </span>
-                    <span class="text-muted">
+                    <span>
                       {{ item.recommended_category_full_name }}
                     </span>
                   </div>

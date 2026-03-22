@@ -994,5 +994,6 @@
     "widget.scheduleCalendar.cardTitle": "Ütemezett tranzakciós példányok",
     "widget.scheduleCalendar.transactionLabel": ":type :amount innen: :fromAccount ide: :toAccount",
     "Matched database entity": "Egyező adatbázis-elem",
-    "Processing details": "Feldolgozás részletei"
+    "Processing details": "Feldolgozás részletei",
+    "Monthly spending and income": "Havi kiadások és bevételek"
 }

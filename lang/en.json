@@ -994,5 +994,6 @@
     "widget.scheduleCalendar.cardTitle": "Scheduled transaction instances",
     "widget.scheduleCalendar.transactionLabel": ":type :amount from :fromAccount to :toAccount",
     "Matched database entity": "Matched database entity",
-    "Processing details": "Processing details"
+    "Processing details": "Processing details",
+    "Monthly spending and income": "Monthly spending and income"
 }

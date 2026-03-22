@@ -148,6 +148,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10)
 
                 // Verify that the investment dropdown is cleared (shows placeholder)
                 ->assertDontSeeIn('#investment + .select2 .select2-selection__rendered', $selectedInvestment)
@@ -191,6 +192,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10)
 
                 // Verify that the investment dropdown is cleared (shows placeholder)
                 ->assertDontSeeIn('#investment + .select2 .select2-selection__rendered', $selectedInvestment)
