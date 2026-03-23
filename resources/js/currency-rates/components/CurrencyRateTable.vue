@@ -49,20 +49,17 @@
       };
     },
     watch: {
-      filteredRates: {
-        handler(newRates) {
-          if (this.table) {
-            this.table.clear();
-            if (newRates) {
-              this.table.rows.add(newRates);
-            } else {
-              // If no filtered rates, show all rates
-              this.table.rows.add(this.currencyRates);
-            }
-            this.table.draw();
+      filteredRates(newRates) {
+        if (this.table) {
+          this.table.clear();
+          if (newRates) {
+            this.table.rows.add(newRates);
+          } else {
+            // If no filtered rates, show all rates
+            this.table.rows.add(this.currencyRates);
           }
-        },
-        deep: true,
+          this.table.draw();
+        }
       },
     },
     mounted() {

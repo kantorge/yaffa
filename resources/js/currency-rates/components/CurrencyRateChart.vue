@@ -4,6 +4,9 @@
       <div v-if="hasData">
         <div ref="chartRate" style="width: 100%; height: 500px"></div>
       </div>
+      <div v-else-if="isLoading">
+        <div class="text-center text-muted">{{ __('Loading...') }}</div>
+      </div>
       <div v-else>
         <div class="text-center text-muted">{{ __('No data available') }}</div>
       </div>
@@ -34,6 +37,10 @@
         default: () =>
           window.YAFFA ? window.YAFFA.userSettings.locale : navigator.language,
       },
+      isLoading: {
+        type: Boolean,
+        default: false,
+      },
     },
     computed: {
       hasData() {
@@ -41,26 +48,21 @@
       },
     },
     watch: {
-      currencyRates: {
-        handler(newRates) {
-          if (newRates && newRates.length > 0) {
-            if (this.chart) {
-              this.chart.data = newRates;
-            } else {
-              // Chart wasn't initialized yet (mounted with no data) or was disposed
-              this.$nextTick(() => {
-                this.initializeChart();
-              });
-            }
+      currencyRates(newRates) {
+        if (newRates && newRates.length > 0) {
+          if (this.chart) {
+            this.chart.data = newRates;
           } else {
-            // No data - dispose chart if it exists
-            if (this.chart) {
-              this.chart.dispose();
-              this.chart = null;
-            }
+            // Chart wasn't initialized yet (mounted with no data) or was disposed
+            this.$nextTick(() => {
+              this.initializeChart();
+            });
           }
-        },
-        deep: true,
+        } else if (this.chart) {
+          // No data - dispose chart if it exists
+          this.chart.dispose();
+          this.chart = null;
+        }
       },
     },
     mounted() {
@@ -113,6 +115,7 @@
         series.dataFields.valueY = 'rate';
         series.dataFields.dateX = 'date';
         series.strokeWidth = 3;
+        series.minBulletDistance = 15;
 
         const bullet = series.bullets.push(new am4charts.Bullet());
         const square = bullet.createChild(am4core.Rectangle);
@@ -133,8 +136,18 @@
         this.chart = chart;
       },
       updateChart(rates) {
-        if (this.chart && rates && rates.length > 0) {
-          this.chart.data = rates;
+        if (rates && rates.length > 0) {
+          if (this.chart) {
+            this.chart.data = rates;
+            return;
+          }
+
+          this.$nextTick(() => {
+            this.initializeChart();
+          });
+        } else if (this.chart) {
+          this.chart.dispose();
+          this.chart = null;
         }
       },
       __,

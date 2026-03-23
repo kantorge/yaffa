@@ -6,22 +6,12 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
-use App\Models\CurrencyRate;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\View\View;
-use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyRateController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
-
-    protected CurrencyRate $currencyRate;
-
-    public function __construct(CurrencyRate $currencyRate)
-    {
-
-        $this->currencyRate = $currencyRate;
-    }
 
     public static function middleware(): array
     {
@@ -45,18 +35,9 @@ class CurrencyRateController extends Controller implements HasMiddleware
         Gate::authorize('view', $from);
         Gate::authorize('view', $to);
 
-        $currencyRates = $this->currencyRate
-            ->where('from_id', $from->id)
-            ->where('to_id', $to->id)
-            ->orderBy('date')
-            ->get();
-
-        JavaScriptFacade::put(['currencyRates' => $currencyRates]);
-
         return view('currency-rates.index', [
             'from' => $from,
             'to' => $to,
-            'currencyRates' => $currencyRates,
         ]);
     }
 }

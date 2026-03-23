@@ -10,7 +10,6 @@
 
 @section('content')
 <div id="currencyRateApp">
-    <currency-rate-manager :from="{{ json_encode($from) }}" :to="{{ json_encode($to) }}"
-        :initial-rates="{{ json_encode($currencyRates) }}"></currency-rate-manager>
+    <currency-rate-manager :from="{{ json_encode($from) }}" :to="{{ json_encode($to) }}"></currency-rate-manager>
 </div>
 @stop

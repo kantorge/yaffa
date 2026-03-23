@@ -39,6 +39,7 @@
           ref="rateChart"
           :currency-rates="allRates"
           :to-currency="toCurrency"
+          :is-loading="isLoadingRates"
         />
       </div>
     </div>
@@ -85,20 +86,26 @@
       },
       initialRates: {
         type: Array,
-        required: true,
+        default: () => [],
       },
     },
     data() {
       return {
         fromCurrency: this.from,
         toCurrency: this.to,
-        allRates: JSON.parse(JSON.stringify(this.initialRates)),
+        allRates: this.normalizeRates(this.initialRates),
         displayRates: null,
         dateFrom: null,
         dateTo: null,
         editingRate: null,
+        isLoadingRates: false,
         isUpdatingFromChart: false,
       };
+    },
+    async mounted() {
+      if (this.initialRates.length === 0) {
+        await this.reloadData();
+      }
     },
     watch: {
       dateFrom() {
@@ -127,20 +134,29 @@
           return;
         }
 
+        const fromTimestamp = this.dateFrom
+          ? new Date(this.dateFrom).getTime()
+          : null;
+        const toTimestamp = this.dateTo
+          ? new Date(this.dateTo).getTime()
+          : null;
+
         // Filter rates by date range
         const filtered = this.allRates.filter((rate) => {
-          const rateDate = new Date(rate.date);
+          const rateTimestamp = rate.dateTs;
 
-          if (this.dateFrom && this.dateTo) {
-            const fromDate = new Date(this.dateFrom);
-            const toDate = new Date(this.dateTo);
-            return rateDate >= fromDate && rateDate <= toDate;
-          } else if (this.dateFrom) {
-            const fromDate = new Date(this.dateFrom);
-            return rateDate >= fromDate;
-          } else if (this.dateTo) {
-            const toDate = new Date(this.dateTo);
-            return rateDate <= toDate;
+          if (fromTimestamp !== null && toTimestamp !== null) {
+            return (
+              rateTimestamp >= fromTimestamp && rateTimestamp <= toTimestamp
+            );
+          }
+
+          if (fromTimestamp !== null) {
+            return rateTimestamp >= fromTimestamp;
+          }
+
+          if (toTimestamp !== null) {
+            return rateTimestamp <= toTimestamp;
           }
 
           return true;
@@ -165,17 +181,21 @@
         toastHelpers.showSuccessToast(message);
 
         // Update or add the rate in allRates
-        const existingIndex = this.allRates.findIndex((r) => r.id === rate.id);
+        const normalizedRate = this.normalizeRate(rate);
+        const existingIndex = this.allRates.findIndex(
+          (r) => r.id === normalizedRate.id,
+        );
         if (existingIndex !== -1) {
           // Update existing rate
-          this.allRates.splice(existingIndex, 1, rate);
+          this.allRates.splice(existingIndex, 1, normalizedRate);
         } else {
           // Add new rate
-          this.allRates.push(rate);
+          this.allRates.push(normalizedRate);
         }
 
         // Sort rates by date
         this.allRates.sort((a, b) => new Date(a.date) - new Date(b.date));
+        this.allRates = [...this.allRates];
 
         // Update display
         this.updateDisplayRates();
@@ -184,6 +204,7 @@
         this.$refs.rateTable.updateTableData(
           this.displayRates || this.allRates,
         );
+        this.$refs.rateChart.updateChart(this.allRates);
       },
       onRateDeleted(rateId) {
         // Remove the rate from allRates
@@ -199,6 +220,8 @@
         this.$refs.rateChart.updateChart(this.allRates);
       },
       async reloadData() {
+        this.isLoadingRates = true;
+
         try {
           // Fetch all rates from the API
           const response = await window.axios.get(
@@ -208,7 +231,7 @@
             }),
           );
 
-          this.allRates = response.data.rates;
+          this.allRates = this.normalizeRates(response.data.rates);
 
           // Update display
           this.updateDisplayRates();
@@ -220,7 +243,18 @@
           this.$refs.rateChart.updateChart(this.allRates);
         } catch (error) {
           console.error('Failed to reload rates:', error);
+        } finally {
+          this.isLoadingRates = false;
         }
+      },
+      normalizeRates(rates) {
+        return rates.map((rate) => this.normalizeRate(rate));
+      },
+      normalizeRate(rate) {
+        return {
+          ...rate,
+          dateTs: new Date(rate.date).getTime(),
+        };
       },
       __,
     },

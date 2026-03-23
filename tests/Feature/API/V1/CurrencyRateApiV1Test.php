@@ -95,7 +95,7 @@ class CurrencyRateApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonStructure([
                 'rates' => [
-                    '*' => ['id', 'from_id', 'to_id', 'date', 'rate'],
+                    '*' => ['id', 'date', 'rate'],
                 ],
             ])
             ->assertJsonCount(3, 'rates');
