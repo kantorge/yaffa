@@ -521,9 +521,6 @@
     "New payee": "Nowy odbiorca",
     "New scheduled investment transaction": "Nowa zaplanowana transakcja inwestycyjna",
     "New scheduled transaction": "Nowa zaplanowana transakcja",
-    "New scheduled, investment transaction": "Nowa zaplanowana transakcja inwestycyjna",
-    "New scheduled, standard transaction": "Nowa zaplanowana transakcja standardowa",
-    "New standard transaction": "Nowa transakcja standardowa",
     "New tag": "Nowy tag",
     "New transaction": "Nowa transakcja",
     "New transaction for investment": "Nowa transakcja inwestycyjna",
@@ -995,5 +992,7 @@
     "Matched database entity": "Zgodna jednostka bazy danych",
     "Processing details": "Szczegóły przetwarzania",
     "Monthly spending and income": "Miesięczne wydatki i przychody",
-    "Store price": "Zapisz cenę"
+    "Store price": "Zapisz cenę",
+    "Has default category": "Ma domyślną kategorię",
+    "Has category suggestion": "Ma sugestię kategorii"
 }

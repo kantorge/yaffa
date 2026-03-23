@@ -126,13 +126,13 @@
                 </div>
                 <div class="d-lg-none">
                     <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'standard', 'callback' => 'back']) }}"
-                        title="{{ __('New standard transaction') }}"><i class="fa fa-cart-plus"></i></a>
+                        title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
                     <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'investment', 'callback' => 'back']) }}"
                         title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
                 </div>
                 <div class="d-none d-lg-block">
                     <button type="button" id="create-standard-transaction-button" class="btn btn-sm btn-success"
-                        title="{{ __('New standard transaction') }}"><i class="fa fa-cart-plus"></i></button>
+                        title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></button>
                     <button type="button" id="create-investment-transaction-button" class="btn btn-sm btn-success"
                         title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></button>
                 </div>
@@ -148,18 +148,28 @@
                     {{ __('Scheduled transactions') }}
                 </div>
                 <div>
-                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', [
-    'type' => 'standard',
-    'account_from' => $account->id,
-    'schedule' => 1,
-    'callback' => 'back'
-]) }}" title="{{ __('New scheduled transaction') }}"><i class="fa fa-cart-plus"></i></a>
-                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', [
-    'type' => 'investment',
-    'account' => $account->id,
-    'schedule' => 1,
-    'callback' => 'back'
-]) }}" title="{{ __('New scheduled investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                    <a class="btn btn-sm btn-success"
+                        href="{{ route('transaction.create', [
+                            'type' => 'standard',
+                            'account_from' => $account->id,
+                            'schedule' => 1,
+                            'callback' => 'back'
+                        ]) }}"
+                        title="{{ __('New scheduled transaction') }}"
+                    >
+                        <i class="fa fa-cart-plus"></i>
+                    </a>
+                    <a class="btn btn-sm btn-success"
+                        href="{{ route('transaction.create', [
+                            'type' => 'investment',
+                            'account' => $account->id,
+                            'schedule' => 1,
+                            'callback' => 'back'
+                        ]) }}"
+                        title="{{ __('New scheduled investment transaction') }}"
+                    >
+                        <i class="fa fa-line-chart"></i>
+                    </a>
                 </div>
             </div>
             <div class="card-body">

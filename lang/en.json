@@ -521,9 +521,6 @@
     "New payee": "New payee",
     "New scheduled investment transaction": "New scheduled investment transaction",
     "New scheduled transaction": "New scheduled transaction",
-    "New scheduled, investment transaction": "New scheduled, investment transaction",
-    "New scheduled, standard transaction": "New scheduled, standard transaction",
-    "New standard transaction": "New standard transaction",
     "New tag": "New tag",
     "New transaction": "New transaction",
     "New transaction for investment": "New transaction for investment",
@@ -995,5 +992,7 @@
     "Matched database entity": "Matched database entity",
     "Processing details": "Processing details",
     "Monthly spending and income": "Monthly spending and income",
-    "Store price": "Store price"
+    "Store price": "Store price",
+    "Has default category": "Has default category",
+    "Has category suggestion": "Has category suggestion"
 }

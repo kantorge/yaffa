@@ -11,7 +11,7 @@
         <div class="tab-pane active" id="quick-actions" role="tabpanel">
             <div class="list-group list-group-flush">
                 <div class="list-group-item border-start-4 border-start-dark bg-light text-center fw-bold text-medium-emphasis text-uppercase small">
-                    {{ __('New standard transaction') }}
+                    {{ __('New transaction') }}
                 </div>
                 <div class="list-group-item border-start-4 border-start-danger list-group-item-divider">
                     <a
