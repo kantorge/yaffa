@@ -83,7 +83,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
-                'model' => 'gemini-1.5-flash',
+                'model' => 'gemini-2.5-flash',
             ]);
 
         // Should not find the resource since it's not the user's
@@ -167,7 +167,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'gemini',
-                'model' => 'gemini-1.5-flash',
+                'model' => 'gemini-2.5-flash',
                 'api_key' => 'test-key-1234567890abcdefghij',
             ]);
 
@@ -225,19 +225,19 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
-                'model' => 'gemini-1.5-flash',
+                'model' => 'gemini-2.5-flash',
                 'api_key' => '',
             ]);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([
             'provider' => 'gemini',
-            'model' => 'gemini-1.5-flash',
+            'model' => 'gemini-2.5-flash',
         ]);
 
         $config->refresh();
         $this->assertEquals('gemini', $config->provider);
-        $this->assertEquals('gemini-1.5-flash', $config->model);
+        $this->assertEquals('gemini-2.5-flash', $config->model);
     }
 
     public function test_update_changes_vision_enabled(): void

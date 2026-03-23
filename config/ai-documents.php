@@ -24,26 +24,29 @@ return [
     'providers' => [
         'openai' => [
             'name' => 'OpenAI',
+            'supported' => true,
             'models' => [
-                'gpt-4o' => [
-                    'vision' => true,
-                ],
                 'gpt-4o-mini' => [
                     'vision' => true,
+                    'supported' => true,
                 ],
-                'gpt-5-mini' => [
-                    'vision' => false,
+                'gpt-4o' => [
+                    'vision' => true,
+                    'supported' => true,
                 ],
             ],
         ],
         'gemini' => [
             'name' => 'Google Gemini',
+            'supported' => true,
             'models' => [
-                'gemini-1.5-pro' => [
+                'gemini-2.5-flash' => [
                     'vision' => true,
+                    'supported' => true,
                 ],
-                'gemini-1.5-flash' => [
+                'gemini-2.5-pro' => [
                     'vision' => true,
+                    'supported' => false,
                 ],
             ],
         ],

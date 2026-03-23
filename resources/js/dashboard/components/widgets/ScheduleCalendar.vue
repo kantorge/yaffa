@@ -102,7 +102,7 @@
             transaction.transaction_type.slice(1);
           // Return constructed label
           return this.__('widget.scheduleCalendar.transactionLabel', {
-            type,
+            type: __(type), // Type itself is also translated before being inserted into the label
             amount: toFormattedCurrency(
               transaction.config.amount_to,
               this.locale,

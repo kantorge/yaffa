@@ -90,6 +90,19 @@ class AiProviderConfigApiV1Test extends TestCase
         ]);
     }
 
+    public function test_v1_store_rejects_unsupported_model(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson(route('api.v1.ai.config.store'), [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-pro',
+                'api_key' => 'sk-test-1234567890abcdefghij',
+            ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['model']);
+    }
+
     public function test_v1_update_modifies_config(): void
     {
         $config = AiProviderConfig::factory()->create([
@@ -107,6 +120,24 @@ class AiProviderConfigApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonMissing(['api_key'])
             ->assertJson(['model' => 'gpt-4o']);
+    }
+
+    public function test_v1_update_allows_keeping_existing_unsupported_model(): void
+    {
+        $config = AiProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider' => 'gemini',
+            'model' => 'gemini-2.5-pro',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.config.update', $config), [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-pro',
+            ]);
+
+        $response->assertOk()
+            ->assertJson(['provider' => 'gemini', 'model' => 'gemini-2.5-pro']);
     }
 
     public function test_v1_destroy_deletes_config(): void

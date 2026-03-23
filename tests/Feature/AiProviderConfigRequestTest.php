@@ -85,6 +85,19 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['model']);
     }
 
+    public function test_create_rejects_unsupported_model_for_provider(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.ai.config.store'), [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-pro',
+                'api_key' => 'sk-test-1234567890abcdefghij',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['model']);
+    }
+
     public function test_create_rejects_short_api_key(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
@@ -273,6 +286,41 @@ class AiProviderConfigRequestTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['vision_enabled']);
+    }
+
+    public function test_update_allows_keeping_existing_unsupported_model(): void
+    {
+        $config = AiProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider' => 'gemini',
+            'model' => 'gemini-2.5-pro',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.ai.config.update', $config), [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-pro',
+            ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_update_rejects_switching_to_unsupported_model(): void
+    {
+        $config = AiProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider' => 'gemini',
+            'model' => 'gemini-2.5-flash',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.ai.config.update', $config), [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-pro',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['model']);
     }
 
     // ===== TEST CONNECTION (POST /api/v1/ai/test) =====

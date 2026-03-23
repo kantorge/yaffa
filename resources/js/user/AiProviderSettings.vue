@@ -64,11 +64,12 @@
                 >
                   <option value="">{{ __('Select provider...') }}</option>
                   <option
-                    v-for="(providerData, key) in providers"
-                    :key="key"
-                    :value="key"
+                    v-for="providerOption in providerOptions"
+                    :key="providerOption.key"
+                    :value="providerOption.key"
+                    :disabled="!providerOption.selectable"
                   >
-                    {{ providerData.name }}
+                    {{ providerOption.label }}
                   </option>
                 </select>
                 <span
@@ -80,6 +81,13 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Deprecated providers cannot be selected for new configurations.',
+                  )
+                }}
+              </small>
               <HasError field="provider" :form="form" />
             </div>
           </div>
@@ -102,8 +110,9 @@
                     v-for="model in availableModels"
                     :key="model.name"
                     :value="model.name"
+                    :disabled="!model.selectable"
                   >
-                    {{ model.name }}
+                    {{ model.label }}
                   </option>
                 </select>
                 <span
@@ -119,7 +128,23 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Deprecated models remain available only for unchanged existing configurations.',
+                  )
+                }}
+              </small>
               <HasError field="model" :form="form" />
+            </div>
+          </div>
+
+          <div v-if="showLegacySelectionNotice" class="row mb-3">
+            <div class="col-sm-9 offset-sm-3">
+              <div class="alert alert-warning mb-0" role="alert">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                {{ legacySelectionNoticeText }}
+              </div>
             </div>
           </div>
 
@@ -325,21 +350,99 @@
       sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
+      providerOptions() {
+        return Object.entries(this.providers || {}).map(
+          ([key, providerData]) => {
+            const supported = this.isProviderSupported(providerData);
+            const selectable =
+              supported || (this.hasConfig && this.form.provider === key);
+
+            return {
+              key,
+              supported,
+              selectable,
+              label: supported
+                ? providerData.name
+                : `${providerData.name} (${__('Deprecated')})`,
+            };
+          },
+        );
+      },
       availableModels() {
         if (!this.form.provider || !this.providers[this.form.provider]) {
           return [];
         }
+
+        const isCurrentProvider = this.hasConfig;
         const models = this.providers[this.form.provider].models || [];
+
         if (Array.isArray(models)) {
           return models.map((model) => ({
             name: model,
             vision: false,
+            supported: true,
+            selectable: true,
+            label: model,
           }));
         }
+
         return Object.entries(models).map(([name, meta]) => ({
           name,
           vision: Boolean(meta?.vision),
+          supported: this.isModelSupported(meta),
+          selectable:
+            this.isModelSupported(meta) ||
+            (isCurrentProvider && this.form.model === name),
+          label: this.isModelSupported(meta)
+            ? name
+            : `${name} (${__('Deprecated')})`,
         }));
+      },
+      selectedProviderSupported() {
+        if (!this.form.provider) {
+          return true;
+        }
+
+        return this.isProviderSupported(this.providers[this.form.provider]);
+      },
+      selectedModel() {
+        if (!this.form.model) {
+          return null;
+        }
+
+        return (
+          this.availableModels.find(
+            (model) => model.name === this.form.model,
+          ) || null
+        );
+      },
+      selectedModelSupported() {
+        if (!this.form.model) {
+          return true;
+        }
+
+        return Boolean(this.selectedModel?.supported);
+      },
+      showLegacySelectionNotice() {
+        if (!this.hasConfig) {
+          return false;
+        }
+
+        return (
+          !this.selectedProviderSupported ||
+          (this.form.model && !this.selectedModelSupported)
+        );
+      },
+      legacySelectionNoticeText() {
+        if (!this.selectedProviderSupported) {
+          return __(
+            'Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.',
+          );
+        }
+
+        return __(
+          'Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.',
+        );
       },
       modelSupportsVision() {
         if (!this.form.provider || !this.form.model) {
@@ -366,6 +469,20 @@
       initializeBootstrapTooltips(this.$el);
     },
     methods: {
+      isProviderSupported(providerData) {
+        if (!providerData || typeof providerData !== 'object') {
+          return false;
+        }
+
+        return providerData.supported !== false;
+      },
+      isModelSupported(modelMeta) {
+        if (!modelMeta || typeof modelMeta !== 'object') {
+          return true;
+        }
+
+        return modelMeta.supported !== false;
+      },
       loadConfig() {
         // Fetch existing config from API
         axios
