@@ -90,12 +90,28 @@ class AiProviderConfigApiV1Test extends TestCase
         ]);
     }
 
-    public function test_v1_store_rejects_unsupported_model(): void
+    public function test_v1_store_rejects_nonexistent_model(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.ai.config.store'), [
-                'provider' => 'gemini',
-                'model' => 'gemini-2.5-pro',
+                'provider' => 'openai',
+                'model' => 'this-model-should-never-exist',
+                'api_key' => 'sk-test-1234567890abcdefghij',
+            ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['model']);
+    }
+
+    public function test_v1_store_rejects_outdated_model(): void
+    {
+        // For this test, extend the config with an unsupported model, then attempt to create a new config with that model which should fail validation
+        config(['ai-documents.providers.openai.models.gpt-3.5-turbo' => ['supported' => false]]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('api.v1.ai.config.store'), [
+                'provider' => 'openai',
+                'model' => 'gpt-3.5-turbo',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
 
@@ -120,6 +136,12 @@ class AiProviderConfigApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonMissing(['api_key'])
             ->assertJson(['model' => 'gpt-4o']);
+
+        $this->assertDatabaseHas('ai_provider_configs', [
+            'id' => $config->id,
+            'provider' => 'openai',
+            'model' => 'gpt-4o',
+        ]);
     }
 
     public function test_v1_update_allows_keeping_existing_unsupported_model(): void
@@ -138,6 +160,12 @@ class AiProviderConfigApiV1Test extends TestCase
 
         $response->assertOk()
             ->assertJson(['provider' => 'gemini', 'model' => 'gemini-2.5-pro']);
+
+        $this->assertDatabaseHas('ai_provider_configs', [
+            'id' => $config->id,
+            'provider' => 'gemini',
+            'model' => 'gemini-2.5-pro',
+        ]);
     }
 
     public function test_v1_destroy_deletes_config(): void
