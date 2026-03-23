@@ -109,12 +109,15 @@ class CurrencyRateManagementTest extends DuskTestCase
             ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency, $rate) {
+            $editSelector = '.edit-rate[data-id="' . $rate->id . '"]';
+
             $browser
                 ->loginAs($user)
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
+                ->waitFor($editSelector, 10)
                 // Click edit button
-                ->click('.edit-rate[data-id="' . $rate->id . '"]')
+                ->click($editSelector)
                 ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
                         ->assertSee('Edit Currency Rate')
@@ -153,12 +156,15 @@ class CurrencyRateManagementTest extends DuskTestCase
             ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency, $rate) {
+            $deleteSelector = '.delete-rate[data-id="' . $rate->id . '"]';
+
             $browser
                 ->loginAs($user)
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
+                ->waitFor($deleteSelector, 10)
                 // Click delete button
-                ->click('.delete-rate[data-id="' . $rate->id . '"]')
+                ->click($deleteSelector)
                 // Wait for SweetAlert2 confirmation
                 ->waitFor('.swal2-popup', 5)
                 ->assertSee('Are you sure to want to delete this item?')
