@@ -46,7 +46,7 @@ return [
                 ],
                 'gemini-2.5-pro' => [
                     'vision' => true,
-                    'supported' => false,
+                    'supported' => true,
                 ],
             ],
         ],

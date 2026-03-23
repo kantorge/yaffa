@@ -30,7 +30,7 @@ class AiProcessingJobTest extends TestCase
         $this->assertSame((string) $document->id, $job->uniqueId());
     }
 
-    public function test_dispatches_failure_event_with_serializable_error_fields(): void
+    public function test_retryable_exception_does_not_dispatch_failure_event_in_handle(): void
     {
         Event::fake([AiDocumentProcessingFailedEvent::class]);
 
@@ -42,22 +42,36 @@ class AiProcessingJobTest extends TestCase
         $service->shouldReceive('process')
             ->once()
             ->with(Mockery::on(fn (AiDocument $jobDocument): bool => $jobDocument->is($document)))
-            ->andThrow(new Exception('No AI provider configured for user', 401));
+            ->andThrow(new Exception('Temporary API timeout', 0));
 
         $settingsResolver = app(AiUserSettingsResolver::class);
 
         $job = new AiProcessingJob($document);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('No AI provider configured for user');
+        $this->expectExceptionMessage('Temporary API timeout');
 
-        try {
-            $job->handle($service, $settingsResolver);
-        } finally {
-            Event::assertDispatched(AiDocumentProcessingFailedEvent::class, fn (AiDocumentProcessingFailedEvent $event): bool => $event->document->is($document)
-                    && $event->errorMessage === 'No AI provider configured for user'
-                    && $event->exceptionClass === Exception::class
-                    && $event->errorCode === 401);
-        }
+        $job->handle($service, $settingsResolver);
+
+        Event::assertNotDispatched(AiDocumentProcessingFailedEvent::class);
+    }
+
+    public function test_failed_dispatches_failure_event_with_serializable_error_fields(): void
+    {
+        Event::fake([AiDocumentProcessingFailedEvent::class]);
+
+        /** @var AiDocument $document */
+        $document = AiDocument::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $document->user_id]);
+
+        $job = new AiProcessingJob($document);
+        $exception = new Exception('No AI provider configured for user', 401);
+
+        $job->failed($exception);
+
+        Event::assertDispatched(AiDocumentProcessingFailedEvent::class, fn (AiDocumentProcessingFailedEvent $event): bool => $event->document->is($document)
+                && $event->errorMessage === 'No AI provider configured for user'
+                && $event->exceptionClass === Exception::class
+                && $event->errorCode === 401);
     }
 }

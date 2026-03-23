@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 use Log;
 
 class AiProcessingJob implements ShouldQueue, ShouldBeUnique
@@ -77,22 +78,39 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
         } catch (Exception $e) {
             Log::error("Document {$document->id} processing failed: {$e->getMessage()}");
 
-            // Dispatch failure event
-            AiDocumentProcessingFailedEvent::dispatch(
-                $document,
-                $e->getMessage(),
-                $e::class,
-                (int) $e->getCode(),
-            );
-
             // Don't retry on auth/quota errors
             if ($this->shouldNotRetry($e->getMessage())) {
                 $this->fail($e);
+
+                return;
             }
 
             // Otherwise, allow automatic retry
             throw $e;
         }
+    }
+
+    /**
+     * Handle a terminal job failure (max attempts exceeded, timeout, or manual fail).
+     */
+    public function failed(?Throwable $exception): void
+    {
+        if (! $exception) {
+            return;
+        }
+
+        $document = $this->document->fresh(['user']);
+
+        if (! $document) {
+            return;
+        }
+
+        AiDocumentProcessingFailedEvent::dispatch(
+            $document,
+            $exception->getMessage(),
+            $exception::class,
+            (int) $exception->getCode(),
+        );
     }
 
     /**
