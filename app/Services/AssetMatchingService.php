@@ -278,7 +278,6 @@ class AssetMatchingService
         }
 
         return $learningRecords
-            ->filter(fn ($learning): bool => $learning instanceof CategoryLearning)
             ->map(fn (CategoryLearning $learning): string => "{$learning->category_id}: {$learning->item_description} ({$learning->usage_count} uses)")
             ->join("\n");
     }

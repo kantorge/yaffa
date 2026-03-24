@@ -179,8 +179,8 @@ EOF;
 
         $lines = [];
         foreach ($categories as $category) {
-            $id = (int) ($category['id'] ?? 0);
-            $fullName = (string) ($category['full_name'] ?? '');
+            $id = (int) $category['id'];
+            $fullName = (string) $category['full_name'];
             if ($id <= 0 || $fullName === '') {
                 continue;
             }
