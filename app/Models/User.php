@@ -245,6 +245,9 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(GoogleDriveConfig::class);
     }
 
+    /**
+     * @return HasMany<CategoryLearning, $this>
+     */
     public function categoryLearning(): HasMany
     {
         return $this->hasMany(CategoryLearning::class);

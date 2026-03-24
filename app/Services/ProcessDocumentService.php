@@ -67,7 +67,13 @@ class ProcessDocumentService
             }
 
             // Step 2: Extract core transaction data
-            $rawData = $this->extractTransactionData($config, $document, $extractedText, $document->custom_prompt);
+            $rawData = $this->extractTransactionData(
+                $config,
+                $document,
+                $extractedText,
+                $document->custom_prompt,
+                data_get($resolvedSettings, 'generic_document_language'),
+            );
 
             Log::debug('AI extracted raw transaction data', ['raw_data' => $rawData]);
 
@@ -197,9 +203,14 @@ class ProcessDocumentService
     /**
      * Extract basic transaction data from text using AI
      */
-    protected function extractTransactionData(AiProviderConfig $config, AiDocument $document, string $text, ?string $customPrompt = null): array
-    {
-        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt);
+    protected function extractTransactionData(
+        AiProviderConfig $config,
+        AiDocument $document,
+        string $text,
+        ?string $customPrompt = null,
+        ?string $genericDocumentLanguage = null,
+    ): array {
+        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage);
 
         $response = $this->callAi($config, $document, $prompt, 'main_extraction');
 
@@ -739,7 +750,7 @@ class ProcessDocumentService
             $learningContext,
             $categoryPromptContext['categories_list'],
             $categoryPromptContext['applied_category_matching_mode'],
-            $categoryPromptContext['requested_category_matching_mode'],
+            $categoryPromptContext['categories'],
         );
 
         $response = $this->callAi($config, $document, $prompt, 'category_batch_matching');

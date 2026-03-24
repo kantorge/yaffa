@@ -1507,13 +1507,12 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
 - As the original item descriptions are not saved with the finalized transactions, there should be a generic toggle, that allows the merging of items with the same category/tag(s)/comment into one item with the total amount. This should probably be added to the backend as a capability, so that the frontend data and form structure does not have tobe changed while saving the transaction. Note, that this is a save (store) only feature, not available during editing (update) a transaction.
+- When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
+- The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
 
 Bugs, issues - quick fix
 
-- It is not consistent, when the items are returned in full capitals or full lowercase. Even if normalization is applied later for identification, this should be more consistent, using lower case only.
-- The item category matching is still not very accurate. Should the quality of the category matching be improved by translating the prompts to the user's language?
-- Item detection picks up random code from the receipt, e.g. "COO RAGCSALÓLESE" The prompt should be improved to exclude such codes.
-- When extracting the account, the prompt should refer to a potential case of last 4 digits of a card number, which can be used for idenification.
+- Categories are poorly selected locally (probably string length issue, like earlier with payees)
 
 ## AI User Settings Expansion Plan (Implementation-Ready)
 

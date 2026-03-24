@@ -88,6 +88,45 @@
             </div>
           </div>
 
+          <div class="row mb-3">
+            <label for="generic_document_language" class="col-form-label col-sm-4">
+              {{ __('Document Language') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="generic_document_language"
+                  name="generic_document_language"
+                  v-model="form.generic_document_language"
+                  maxlength="128"
+                  :placeholder="__('English')"
+                />
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __(
+                      'Optional free-text document language hint. Use the full language name, such as English or Hungarian, to help AI match and extract document content more precisely.',
+                    )
+                  "
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Optional. Use the full language name (for example English or Hungarian) to make AI matching and extraction more precise.',
+                  )
+                }}
+              </small>
+              <HasError field="generic_document_language" :form="form" />
+            </div>
+          </div>
+
           <hr class="my-3" />
 
           <!-- Category matching -->
@@ -634,6 +673,7 @@
         ai_enabled: false,
         prompt_chat_history_enabled: true,
         ocr_language: '',
+        generic_document_language: '',
         image_max_width_vision: null,
         image_max_height_vision: null,
         image_quality_vision: null,
@@ -675,6 +715,8 @@
             this.form.prompt_chat_history_enabled =
               data.prompt_chat_history_enabled ?? true;
             this.form.ocr_language = data.ocr_language ?? '';
+            this.form.generic_document_language =
+              data.generic_document_language ?? '';
             this.form.image_max_width_vision =
               data.image_max_width_vision ?? null;
             this.form.image_max_height_vision =
@@ -731,6 +773,10 @@
         if (payload.image_max_height_tesseract === '') {
           payload.image_max_height_tesseract = null;
         }
+        if (typeof payload.generic_document_language === 'string') {
+          payload.generic_document_language =
+            payload.generic_document_language.trim() || null;
+        }
 
         this.form
           .patch(this.route('api.v1.ai.settings.update'), payload)
@@ -742,6 +788,8 @@
               response.data?.prompt_chat_history_enabled ??
               this.form.prompt_chat_history_enabled,
             );
+            this.form.generic_document_language =
+              response.data?.generic_document_language ?? '';
             this.warnings = this.normalizeWarnings(
               response.data?.warnings ?? [],
             );

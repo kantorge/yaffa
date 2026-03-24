@@ -16,6 +16,7 @@
         "bkwld/cloner": "^3.14",
         "dedoc/scramble": "^0.13.14",
         "diglactic/laravel-breadcrumbs": "^10.0",
+        "edgaras/strsim": "^1.1",
         "google/apiclient": "^2.19",
         "guzzlehttp/guzzle": "^7.10",
         "intervention/image": "^3.11",

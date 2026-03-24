@@ -516,6 +516,78 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame('ready_for_review', $document->status);
     }
 
+    public function test_process_uses_generic_document_language_in_main_extraction_prompt(): void
+    {
+        $user = User::factory()->create();
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'generic_document_language' => 'Hungarian',
+        ]);
+
+        AiProviderConfig::factory()->for($user)->create();
+
+        $document = AiDocument::factory()
+            ->for($user)
+            ->create([
+                'status' => 'ready_for_processing',
+                'source_type' => 'manual_upload',
+            ]);
+
+        AiDocumentFile::factory()->create([
+            'ai_document_id' => $document->id,
+            'file_path' => 'ai_documents/test/input.txt',
+            'file_name' => 'input.txt',
+            'file_type' => 'txt',
+        ]);
+
+        $textExtractor = $this->createMock(TextExtractionService::class);
+        $textExtractor
+            ->expects($this->once())
+            ->method('extractFromFile')
+            ->willReturn('Receipt text');
+
+        $service = new class (
+            $textExtractor,
+            $this->createMock(CategoryLearningService::class),
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+        ) extends ProcessDocumentService {
+            public string $capturedPrompt = '';
+
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                if ($step === 'main_extraction') {
+                    $this->capturedPrompt = $prompt;
+                }
+
+                return json_encode([
+                    'transaction_type' => 'withdrawal',
+                    'account' => null,
+                    'account_from' => null,
+                    'account_to' => null,
+                    'payee' => null,
+                    'date' => '2026-03-01',
+                    'amount' => 12.5,
+                    'currency' => 'HUF',
+                    'transaction_items' => [],
+                ]) ?: '';
+            }
+        };
+
+        $result = $service->process($document);
+
+        $this->assertTrue($result['success']);
+        $this->assertStringContainsString(
+            'The document provided is expected to be in Hungarian.',
+            $service->capturedPrompt,
+        );
+        $this->assertStringNotContainsString(
+            'The language of the document may vary.',
+            $service->capturedPrompt,
+        );
+    }
+
     public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void
     {
         $user = User::factory()->create();

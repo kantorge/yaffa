@@ -18,6 +18,7 @@ class AiUserSettingsResource extends JsonResource
             'ai_enabled' => (bool) data_get($this->resource, 'ai_enabled', false),
             'prompt_chat_history_enabled' => (bool) data_get($this->resource, 'prompt_chat_history_enabled', true),
             'ocr_language' => data_get($this->resource, 'ocr_language'),
+            'generic_document_language' => data_get($this->resource, 'generic_document_language'),
             'image_max_width_vision' => data_get($this->resource, 'image_max_width_vision'),
             'image_max_height_vision' => data_get($this->resource, 'image_max_height_vision'),
             'image_quality_vision' => data_get($this->resource, 'image_quality_vision'),

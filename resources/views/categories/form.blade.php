@@ -59,6 +59,34 @@
             </div>
 
             <div class="row mb-3">
+                <label for="description" class="col-form-label col-sm-3">
+                    {{ __('Description') }}
+                </label>
+                <div class="col-sm-9">
+                    <div class="position-relative">
+                        <textarea
+                            class="form-control"
+                            id="description"
+                            name="description"
+                            rows="3"
+                            style="padding-right: 40px;"
+                        >{{ old('description', $category->description ?? '') }}</textarea>
+                        <div class="position-absolute" style="top: 8px; right: 8px;">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                title="{{ __('The description helps AI to better match transactions to this category during document processing.') }}"
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="active" class="col-form-label col-sm-3">
                     {{ __('Active') }}
                 </label>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "04de2530fd3b7725e578ad838b592ea3",
+    "content-hash": "899bd593781174a5a223538ee515fe17",
     "packages": [
         {
             "name": "beyondcode/laravel-mailbox",
@@ -935,6 +935,64 @@
                 }
             ],
             "time": "2025-10-31T18:51:33+00:00"
+        },
+        {
+            "name": "edgaras/strsim",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Edgaras0x4E/StrSim.git",
+                "reference": "5e08d18c1eeb5cc1bec28083a98ff47a8c451cc4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Edgaras0x4E/StrSim/zipball/5e08d18c1eeb5cc1bec28083a98ff47a8c451cc4",
+                "reference": "5e08d18c1eeb5cc1bec28083a98ff47a8c451cc4",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.3.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^11.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Edgaras\\StrSim\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Collection of string similarity and distance algorithms in PHP including Levenshtein, Damerau-Levenshtein, Jaro-Winkler, and more",
+            "homepage": "https://github.com/Edgaras0x4E/StrSim",
+            "keywords": [
+                "Algorithm",
+                "Jaccard",
+                "Jaro",
+                "comparison",
+                "cosine",
+                "damerau-levenshtein",
+                "distance",
+                "fuzzy",
+                "jaro-winkler",
+                "lcs",
+                "levenshtein",
+                "monge-elkan",
+                "multibyte",
+                "needleman-wunsch",
+                "similarity",
+                "smith-waterman",
+                "string",
+                "text"
+            ],
+            "support": {
+                "issues": "https://github.com/Edgaras0x4E/StrSim/issues",
+                "source": "https://github.com/Edgaras0x4E/StrSim/tree/v1.1.1"
+            },
+            "time": "2025-10-24T21:50:02+00:00"
         },
         {
             "name": "egulias/email-validator",
@@ -13533,5 +13591,5 @@
         "php": "^8.4"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

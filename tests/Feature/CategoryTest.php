@@ -99,6 +99,31 @@ class CategoryTest extends TestCase
         $this->assertCreateForUser($user);
     }
 
+    public function test_user_can_create_a_category_with_optional_description(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => 'Category with description',
+                    'active' => 1,
+                    'parent_id' => null,
+                    'default_aggregation' => 'month',
+                    'description' => "line one\nline two",
+                ]
+            );
+
+        $response->assertRedirectToRoute("{$this->base_route}.index");
+        $this->assertDatabaseHas('categories', [
+            'user_id' => $user->id,
+            'name' => 'Category with description',
+            'description' => "line one\nline two",
+        ]);
+    }
+
     public function test_user_can_edit_an_existing_category(): void
     {
         $user = User::factory()->create();
@@ -167,6 +192,33 @@ class CategoryTest extends TestCase
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
+    }
+
+    public function test_user_can_update_a_category_description(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create([
+            'description' => null,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route("{$this->base_route}.update", $category->id),
+                [
+                    'name' => $category->name,
+                    'active' => $category->active,
+                    'parent_id' => $category->parent_id,
+                    'default_aggregation' => 'month',
+                    'description' => "updated description\nsecond line",
+                ]
+            );
+
+        $response->assertRedirectToRoute("{$this->base_route}.index");
+        $this->assertDatabaseHas('categories', [
+            'id' => $category->id,
+            'description' => "updated description\nsecond line",
+        ]);
     }
 
     public function test_user_can_delete_an_existing_category(): void

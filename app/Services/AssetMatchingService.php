@@ -6,7 +6,9 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\CategoryLearning;
 use App\Models\Investment;
+use Edgaras\StrSim\JaroWinkler;
 use Illuminate\Support\Str;
+use Normalizer;
 
 class AssetMatchingService
 {
@@ -191,6 +193,7 @@ class AssetMatchingService
      */
     public function matchCategoryLearning(string $description): array
     {
+        // These values should be available, but let's be defensive to avoid potential issues in edge cases
         if (! $description || ! $this->user) {
             return [];
         }
@@ -203,18 +206,11 @@ class AssetMatchingService
 
         /** @var array<string, array{id: int, description: string, category_id: int, similarity: float, usage_count: int}> $bestMatchesByCategory */
         $bestMatchesByCategory = [];
-        $normalizedSearch = $this->normalize($description);
+        $normalizedSearch = $this->normalizeForMatching($description);
 
         foreach ($learningRecords as $learning) {
-            if (! $learning instanceof CategoryLearning) {
-                continue;
-            }
-
-            $normalizedItem = $this->normalize($learning->item_description);
-
-            $similarity = 0;
-            similar_text($normalizedSearch, $normalizedItem, $similarity);
-            $similarity /= 100;
+            $normalizedItem = $this->normalizeForMatching($learning->item_description);
+            $similarity = $this->computeSimilarity($normalizedSearch, $normalizedItem);
 
             if ($similarity < $similarityThreshold) {
                 continue;
@@ -296,12 +292,21 @@ class AssetMatchingService
     }
 
     /**
-     * @return array{categories_list: string, requested_category_matching_mode: string, applied_category_matching_mode: string, used_mode_fallback: bool}
+     * Resolve category prompt context for AI category matching.
+     *
+     * The method normalizes the requested mode, loads active categories, applies mode-based
+     * filtering, and falls back to `best_match` if strict filtering would produce an empty
+     * category list. It returns both a flat prompt-friendly category list and a structured
+     * category payload that can include optional descriptions.
+     *
+     * @return array{categories_list: string, categories: array<int, array{id: int, full_name: string, description: string|null}>, applied_category_matching_mode: string, used_mode_fallback: bool}
      */
     public function resolveCategoryPromptContext(User $user, string $categoryMatchingMode = 'best_match'): array
     {
-        $requestedCategoryMatchingMode = $this->normalizeCategoryMatchingMode($categoryMatchingMode);
+        // 1) Normalize input mode to a supported category matching mode.
+        $normalizedCategoryMatchingMode = $this->normalizeCategoryMatchingMode($categoryMatchingMode);
 
+        // 2) Load active categories with parent and active child count metadata.
         $categories = $user->categories()
             ->active()
             ->with('parent')
@@ -312,30 +317,40 @@ class AssetMatchingService
             ->sortBy('full_name')
             ->values();
 
+        // 3) Return an explicit empty-state context when no active categories exist.
         if ($categories->isEmpty()) {
             return [
                 'categories_list' => 'No active categories configured.',
-                'requested_category_matching_mode' => $requestedCategoryMatchingMode,
-                'applied_category_matching_mode' => $requestedCategoryMatchingMode,
+                'categories' => [],
+                'applied_category_matching_mode' => $normalizedCategoryMatchingMode,
                 'used_mode_fallback' => false,
             ];
         }
 
-        $filteredCategories = $this->filterCategoriesForPrompt($categories, $requestedCategoryMatchingMode);
-        $appliedCategoryMatchingMode = $requestedCategoryMatchingMode;
+        // 4) Apply mode-based filtering and decide whether a best_match fallback is needed.
+        $filteredCategories = $this->filterCategoriesForPrompt($categories, $normalizedCategoryMatchingMode);
+        $appliedCategoryMatchingMode = $normalizedCategoryMatchingMode;
         $usedModeFallback = false;
 
-        if ($filteredCategories->isEmpty() && $requestedCategoryMatchingMode !== 'best_match') {
+        if ($filteredCategories->isEmpty() && $normalizedCategoryMatchingMode !== 'best_match') {
             $filteredCategories = $categories;
             $appliedCategoryMatchingMode = 'best_match';
             $usedModeFallback = true;
         }
 
+        // 5) Build both prompt text and structured payload for downstream prompt construction.
         return [
             'categories_list' => $filteredCategories
                 ->map(fn (Category $category): string => "{$category->id}: {$category->full_name}")
                 ->join("\n"),
-            'requested_category_matching_mode' => $requestedCategoryMatchingMode,
+            'categories' => $filteredCategories
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'full_name' => $category->full_name,
+                    'description' => $category->description,
+                ])
+                ->values()
+                ->all(),
             'applied_category_matching_mode' => $appliedCategoryMatchingMode,
             'used_mode_fallback' => $usedModeFallback,
         ];
@@ -352,10 +367,10 @@ class AssetMatchingService
      */
     private function calculatePartialSimilarity(string $searchText, string $primary, ?array $secondary = null): float
     {
-        $normalizedSearch = $this->normalize($searchText);
+        $normalizedSearch = $this->normalizeForMatching($searchText);
 
         // Compare against primary part
-        $normalizedPrimary = $this->normalize($primary);
+        $normalizedPrimary = $this->normalizeForMatching($primary);
         $primarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedPrimary);
 
         // If no secondary parts, return primary score
@@ -370,7 +385,7 @@ class AssetMatchingService
                 continue;
             }
 
-            $normalizedSecondary = $this->normalize($secondaryPart);
+            $normalizedSecondary = $this->normalizeForMatching($secondaryPart);
             $secondarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedSecondary);
 
             $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
@@ -381,44 +396,31 @@ class AssetMatchingService
     }
 
     /**
-     * Compute similarity between two already-normalized strings.
-     *
-     * The standard similar_text percentage is `2 * matching_chars / (len_a + len_b)`, which
-     * under-scores when a short available name (e.g. "Amazon") is a prefix of a long identified
-     * name from a bank statement (e.g. "amazon marketplace eu sarl").
-     *
-     * To handle that, when the strings differ in length we also compare the shorter string against
-     * the same-length prefix of the longer string and return the maximum of both scores.
+     * Compute similarity between two already-normalized strings using Jaro-Winkler.
      */
     private function computeSimilarity(string $a, string $b): float
     {
-        similar_text($a, $b, $standardPercent);
-        $standardSimilarity = $standardPercent / 100;
-
-        $lenA = mb_strlen($a);
-        $lenB = mb_strlen($b);
-
-        // No length difference — standard score is sufficient
-        if ($lenA === $lenB) {
-            return $standardSimilarity;
+        if ($a === '' || $b === '') {
+            return 0.0;
         }
 
-        // Compare the shorter string against the matching-length prefix of the longer string
-        [$shorter, $longer] = $lenA < $lenB ? [$a, $b] : [$b, $a];
-        $longerPrefix = mb_substr($longer, 0, mb_strlen($shorter));
-
-        similar_text($shorter, $longerPrefix, $prefixPercent);
-        $prefixSimilarity = $prefixPercent / 100;
-
-        return max($standardSimilarity, $prefixSimilarity);
+        return JaroWinkler::similarity($a, $b);
     }
 
     /**
-     * Normalize text for comparison
+     * Normalize text for robust fuzzy matching.
      */
-    private function normalize(string $text): string
+    private function normalizeForMatching(string $value): string
     {
-        return Str::lower(Str::trim($text));
+        if (class_exists(Normalizer::class)) {
+            $value = Normalizer::normalize($value, Normalizer::FORM_C) ?: $value;
+        }
+
+        $value = Str::lower($value);
+        $value = Str::transliterate($value);
+        $value = preg_replace('/[^\pL\pN\s]+/u', ' ', $value) ?? $value;
+
+        return Str::squish($value);
     }
 
     private function normalizeCategoryMatchingMode(string $categoryMatchingMode): string

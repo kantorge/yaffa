@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $description
  * @property bool $active
  * @property int|null $parent_id
  * @property Carbon|null $created_at
@@ -71,6 +72,7 @@ class Category extends Model
      */
     protected $fillable = [
         'name',
+        'description',
         'active',
         'parent_id',
         'default_aggregation',

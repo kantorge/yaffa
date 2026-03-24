@@ -205,11 +205,22 @@ export function transactionLink(id, text) {
     return `<a href="${url}">${text}</a>`;
 }
 
+/**
+ * Initialises Bootstrap/CoreUI tooltips within the given parent element,
+ * disposing any existing tooltip instances first to avoid duplicates
+ * (e.g. after a DataTables redraw).
+ *
+ * @param {Document|Element} parent - The parent element to search within.
+ */
 export function initializeBootstrapTooltips(parent = document) {
     const tooltipTriggerList = parent.querySelectorAll(
-      '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
+        '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
     );
-    [...tooltipTriggerList].map(
-      (tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl),
-    );
+    tooltipTriggerList.forEach((tooltipTriggerEl) => {
+        const existing = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+        if (existing) {
+            existing.dispose();
+        }
+        new window.bootstrap.Tooltip(tooltipTriggerEl);
+    });
 }

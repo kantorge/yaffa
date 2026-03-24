@@ -8,6 +8,7 @@ import {
 } from '@/shared/lib/datatable';
 
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import { escapeHtml, initializeBootstrapTooltips } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
@@ -88,7 +89,18 @@ window.table = $(dataTableSelector).DataTable({
     columns: [
         {
             data: "name",
-            title: __("Name")
+            title: __("Name"),
+            render: function(data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+
+                if (!row.description) {
+                    return escapeHtml(data);
+                }
+
+                return `${escapeHtml(data)} <i class="fa fa-info-circle text-muted ms-1" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-trigger="hover focus" title="${escapeHtml(row.description)}"></i>`;
+            },
         },
         {
             data: "parent",
@@ -183,7 +195,12 @@ window.table = $(dataTableSelector).DataTable({
     processing: true,
     paging: false,
     responsive: true,
+    drawCallback: function () {
+        initializeBootstrapTooltips(document.querySelector(dataTableSelector));
+    },
     initComplete : function(settings) {
+        initializeBootstrapTooltips(document.querySelector(dataTableSelector));
+
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
 

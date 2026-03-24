@@ -23,6 +23,7 @@ class AiUserSettingsFactory extends Factory
             'ai_enabled' => false,
             'prompt_chat_history_enabled' => true,
             'ocr_language' => 'eng',
+            'generic_document_language' => null,
             'image_max_width_vision' => null,
             'image_max_height_vision' => null,
             'image_quality_vision' => 85,

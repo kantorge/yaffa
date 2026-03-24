@@ -28,6 +28,7 @@ class AiUserSettingsResolverTest extends TestCase
         AiUserSettings::factory()->create([
             'user_id' => $user->id,
             'ocr_language' => 'fra',
+            'generic_document_language' => 'French',
             'asset_similarity_threshold' => 0.777,
             'prompt_chat_history_enabled' => false,
             'category_matching_mode' => 'parent_only',
@@ -36,6 +37,7 @@ class AiUserSettingsResolverTest extends TestCase
         $resolved = $this->resolver->resolveForUser($user);
 
         $this->assertSame('fra', $resolved['ocr_language']);
+        $this->assertSame('French', $resolved['generic_document_language']);
         $this->assertSame(0.777, $resolved['asset_similarity_threshold']);
         $this->assertFalse($resolved['prompt_chat_history_enabled']);
         $this->assertSame('parent_only', $resolved['category_matching_mode']);
@@ -60,6 +62,7 @@ class AiUserSettingsResolverTest extends TestCase
         $resolved = $this->resolver->resolveForUser($user);
 
         $this->assertSame('eng', $resolved['ocr_language']);
+        $this->assertNull($resolved['generic_document_language']);
         $this->assertNull($resolved['image_max_width_vision']);
         $this->assertNull($resolved['image_max_height_vision']);
         $this->assertSame(85, $resolved['image_quality_vision']);
@@ -125,6 +128,7 @@ class AiUserSettingsResolverTest extends TestCase
             'ai_enabled' => true,
             'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
+            'generic_document_language' => 'Hungarian',
             'match_auto_accept_threshold' => 0.88,
             'category_matching_mode' => 'best_match',
         ]);
@@ -132,6 +136,7 @@ class AiUserSettingsResolverTest extends TestCase
         $this->assertTrue($settings->ai_enabled);
         $this->assertFalse($settings->prompt_chat_history_enabled);
         $this->assertSame('hun', $settings->ocr_language);
+        $this->assertSame('Hungarian', $settings->generic_document_language);
         $this->assertSame(0.88, $settings->match_auto_accept_threshold);
         $this->assertSame('best_match', $settings->category_matching_mode);
 
@@ -140,6 +145,7 @@ class AiUserSettingsResolverTest extends TestCase
             'ai_enabled' => true,
             'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
+            'generic_document_language' => 'Hungarian',
             'category_matching_mode' => 'best_match',
         ]);
     }

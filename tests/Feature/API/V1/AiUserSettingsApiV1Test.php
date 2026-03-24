@@ -48,6 +48,7 @@ class AiUserSettingsApiV1Test extends TestCase
             'ai_enabled' => true,
             'prompt_chat_history_enabled' => false,
             'ocr_language' => 'fra',
+            'generic_document_language' => 'French',
             'category_matching_mode' => 'parent_only',
         ]);
 
@@ -59,6 +60,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'ai_enabled',
                 'prompt_chat_history_enabled',
                 'ocr_language',
+                'generic_document_language',
                 'image_max_width_vision',
                 'image_max_height_vision',
                 'image_quality_vision',
@@ -77,6 +79,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'ai_enabled' => true,
                 'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'fra',
+                'generic_document_language' => 'French',
                 'category_matching_mode' => 'parent_only',
             ]);
     }
@@ -88,6 +91,7 @@ class AiUserSettingsApiV1Test extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ocr_language', 'eng')
+            ->assertJsonPath('generic_document_language', null)
             ->assertJsonPath('ai_enabled', false)
             ->assertJsonPath('prompt_chat_history_enabled', true);
 
@@ -138,6 +142,7 @@ class AiUserSettingsApiV1Test extends TestCase
             'ai_enabled' => false,
             'prompt_chat_history_enabled' => true,
             'ocr_language' => 'eng',
+            'generic_document_language' => null,
             'category_matching_mode' => 'child_preferred',
         ]);
 
@@ -146,6 +151,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'ai_enabled' => true,
                 'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'hun',
+                'generic_document_language' => 'Hungarian',
                 'category_matching_mode' => 'best_match',
                 'match_auto_accept_threshold' => 0.9,
             ]);
@@ -155,6 +161,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'ai_enabled' => true,
                 'prompt_chat_history_enabled' => false,
                 'ocr_language' => 'hun',
+                'generic_document_language' => 'Hungarian',
                 'category_matching_mode' => 'best_match',
                 'match_auto_accept_threshold' => 0.9,
             ]);
@@ -164,8 +171,20 @@ class AiUserSettingsApiV1Test extends TestCase
             'ai_enabled' => true,
             'prompt_chat_history_enabled' => false,
             'ocr_language' => 'hun',
+            'generic_document_language' => 'Hungarian',
             'category_matching_mode' => 'best_match',
         ]);
+    }
+
+    public function test_v1_update_validation_rejects_too_short_generic_document_language(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.settings.update'), [
+                'generic_document_language' => 'A',
+            ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['generic_document_language']);
     }
 
     public function test_v1_update_creates_missing_row_before_persisting(): void

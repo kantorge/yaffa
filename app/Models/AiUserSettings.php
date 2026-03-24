@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $ai_enabled
  * @property bool $prompt_chat_history_enabled
  * @property string $ocr_language
+ * @property string|null $generic_document_language
  * @property int|null $image_max_width_vision
  * @property int|null $image_max_height_vision
  * @property int $image_quality_vision
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereDuplicateAmountTolerancePercent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereDuplicateDateWindowDays($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereDuplicateSimilarityThreshold($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereGenericDocumentLanguage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereImageMaxHeightTesseract($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereImageMaxHeightVision($value)
@@ -64,6 +66,7 @@ class AiUserSettings extends Model
         'ai_enabled',
         'prompt_chat_history_enabled',
         'ocr_language',
+        'generic_document_language',
         'image_max_width_vision',
         'image_max_height_vision',
         'image_quality_vision',

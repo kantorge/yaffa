@@ -20,8 +20,23 @@ class AiPromptBuilderTest extends TestCase
 
         $this->assertStringContainsString('Receipt total: 4.50 USD', $prompt);
         $this->assertStringContainsString('Prefer merchant name from header', $prompt);
+        $this->assertStringContainsString('The language of the document may vary.', $prompt);
         $this->assertStringContainsString('FOR STANDARD TRANSACTIONS', $prompt);
         $this->assertStringContainsString('FOR INVESTMENT TRANSACTIONS', $prompt);
+    }
+
+    public function test_build_main_extraction_prompt_uses_expected_document_language_when_provided(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $prompt = $builder->buildMainExtractionPrompt(
+            'Receipt total: 4.50 USD',
+            null,
+            'Hungarian'
+        );
+
+        $this->assertStringContainsString('The document provided is expected to be in Hungarian.', $prompt);
+        $this->assertStringNotContainsString('The language of the document may vary.', $prompt);
     }
 
     public function test_build_category_matching_prompt_includes_items_learning_and_categories(): void
@@ -78,6 +93,34 @@ class AiPromptBuilderTest extends TestCase
         }
     }
 
+    public function test_build_category_matching_prompt_includes_optional_category_description_and_normalizes_multiline_values(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $prompt = $builder->buildCategoryMatchingPrompt(
+            [0 => ['description' => 'milk', 'amount' => 2.3]],
+            [],
+            "11: Groceries",
+            'best_match',
+            [
+                [
+                    'id' => 11,
+                    'full_name' => 'Groceries',
+                    'description' => "everyday shopping\nfood and household",
+                ],
+                [
+                    'id' => 12,
+                    'full_name' => 'Transport',
+                    'description' => null,
+                ],
+            ],
+        );
+
+        $this->assertStringContainsString('11: Groceries (description: everyday shopping | food and household)', $prompt);
+        $this->assertStringContainsString('12: Transport', $prompt);
+        $this->assertStringNotContainsString('12: Transport (description:', $prompt);
+    }
+
     public function test_build_account_matching_prompt_includes_account_list_and_target_name(): void
     {
         $builder = new AiPromptBuilder();
@@ -85,8 +128,8 @@ class AiPromptBuilderTest extends TestCase
         $prompt = $builder->buildAccountMatchingPrompt('11: Visa Card', 'visa');
 
         $this->assertStringContainsString('11: Visa Card', $prompt);
-        $this->assertStringContainsString('The account mentioned in the document is: visa', $prompt);
-        $this->assertStringContainsString('Please provide ONLY the numeric ID, or N/A', $prompt);
+        $this->assertStringContainsString('The account to be identified is: visa', $prompt);
+        $this->assertStringContainsString('Return ONLY the numeric ID, or N/A if there is no match.', $prompt);
     }
 
     public function test_build_payee_and_investment_prompts_include_target_values(): void
@@ -96,9 +139,9 @@ class AiPromptBuilderTest extends TestCase
         $payeePrompt = $builder->buildPayeeMatchingPrompt('21: Coffee Shop', 'coffee shop');
         $investmentPrompt = $builder->buildInvestmentMatchingPrompt('42: Apple Inc. (AAPL)', 'AAPL');
 
-        $this->assertStringContainsString('The payee mentioned in the document is: coffee shop', $payeePrompt);
+        $this->assertStringContainsString('The payee to be identified is: coffee shop', $payeePrompt);
         $this->assertStringContainsString('21: Coffee Shop', $payeePrompt);
-        $this->assertStringContainsString('The investment mentioned in the document is: AAPL', $investmentPrompt);
+        $this->assertStringContainsString('The investment to be identified is: AAPL', $investmentPrompt);
         $this->assertStringContainsString('42: Apple Inc. (AAPL)', $investmentPrompt);
     }
 

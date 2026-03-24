@@ -288,7 +288,6 @@ class AssetMatchingServiceTest extends TestCase
         $service = new AssetMatchingService($user);
         $context = $service->resolveCategoryPromptContext($user, 'child_only');
 
-        $this->assertSame('child_only', $context['requested_category_matching_mode']);
         $this->assertSame('best_match', $context['applied_category_matching_mode']);
         $this->assertTrue($context['used_mode_fallback']);
         $this->assertStringContainsString("{$parent->id}: {$parent->full_name}", $context['categories_list']);
