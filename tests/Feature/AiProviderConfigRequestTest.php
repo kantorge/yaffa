@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AiProviderConfig;
 use App\Models\User;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -87,6 +88,17 @@ class AiProviderConfigRequestTest extends TestCase
 
     public function test_create_rejects_unsupported_model_for_provider(): void
     {
+        Config::set('ai-documents.providers.gemini.models', [
+            'gemini-2.5-flash' => [
+                'vision' => true,
+                'supported' => true,
+            ],
+            'gemini-2.5-pro' => [
+                'vision' => true,
+                'supported' => false,
+            ],
+        ]);
+
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'gemini',
@@ -307,6 +319,17 @@ class AiProviderConfigRequestTest extends TestCase
 
     public function test_update_rejects_switching_to_unsupported_model(): void
     {
+        Config::set('ai-documents.providers.gemini.models', [
+            'gemini-2.5-flash' => [
+                'vision' => true,
+                'supported' => true,
+            ],
+            'gemini-2.5-pro' => [
+                'vision' => true,
+                'supported' => false,
+            ],
+        ]);
+
         $config = AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'gemini',
@@ -321,6 +344,9 @@ class AiProviderConfigRequestTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['model']);
+
+        $config->refresh();
+        $this->assertSame('gemini-2.5-flash', $config->model);
     }
 
     // ===== TEST CONNECTION (POST /api/v1/ai/test) =====
