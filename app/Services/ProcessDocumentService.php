@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use JsonException;
 use Prism\Prism\Facades\Prism;
+use Prism\Prism\Schema\ArraySchema;
+use Prism\Prism\Schema\EnumSchema;
+use Prism\Prism\Schema\NumberSchema;
+use Prism\Prism\Schema\ObjectSchema;
+use Prism\Prism\Schema\StringSchema;
 
 class ProcessDocumentService
 {
@@ -216,6 +221,7 @@ class ProcessDocumentService
 
         try {
             $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+            $data = $this->normalizeMainExtractionPayload($data);
 
             $this->aiExtractionSchemaValidator->validate($data);
 
@@ -233,6 +239,57 @@ class ProcessDocumentService
 
             throw InvalidAiResponseSchemaException::invalidJson($e);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeMainExtractionPayload(array $data): array
+    {
+        $transactionType = Str::lower((string) ($data['transaction_type'] ?? 'withdrawal'));
+
+        $standardKeys = [
+            'transaction_type',
+            'account',
+            'account_from',
+            'account_to',
+            'payee',
+            'date',
+            'amount',
+            'currency',
+            'transaction_items',
+        ];
+
+        $investmentKeys = [
+            'transaction_type',
+            'account',
+            'investment',
+            'date',
+            'amount',
+            'quantity',
+            'price',
+            'commission',
+            'tax',
+            'dividend',
+            'currency',
+        ];
+
+        $keys = in_array($transactionType, TransactionTypeEnum::investmentTypeValues(), true)
+            ? $investmentKeys
+            : $standardKeys;
+
+        $normalized = [];
+
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
+
+            $normalized[$key] = $data[$key];
+        }
+
+        return $normalized;
     }
 
     /**
@@ -823,21 +880,31 @@ class ProcessDocumentService
     protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
     {
         try {
+            if ($step === 'main_extraction') {
+                $mainExtractionResponse = $this->callStructuredAiForMainExtraction($config, $document, $prompt);
+                $structuredPayload = $mainExtractionResponse['structured'] ?? null;
+                $textResponse = is_array($structuredPayload)
+                    ? (json_encode($structuredPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '')
+                    : 'null';
+
+                $this->appendProcessingHistory($document, $step, $prompt, $textResponse);
+
+                return $textResponse;
+            }
+
             $pendingRequest = Prism::text()
                 ->using($config->provider, $config->model)
                 ->usingProviderConfig([
                     'api_key' => $config->api_key,
                 ]);
 
-            if ($this->promptChatHistoryEnabled) {
-                $response = $pendingRequest
+            $response = $this->promptChatHistoryEnabled
+                ? $pendingRequest
                     ->withMessages($this->aiPromptBuilder->buildPromptMessageChain($prompt, $document->ai_chat_history))
-                    ->asText();
-            } else {
-                $response = $pendingRequest
+                    ->asText()
+                : $pendingRequest
                     ->withPrompt($prompt)
                     ->asText();
-            }
 
             $textResponse = $response->text ?? '';
 
@@ -855,6 +922,109 @@ class ProcessDocumentService
 
             throw new Exception("AI provider error: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * @return array{structured: mixed, text: string}
+     */
+    protected function callStructuredAiForMainExtraction(AiProviderConfig $config, AiDocument $document, string $prompt): array
+    {
+        $pendingRequest = Prism::structured()
+            ->using($config->provider, $config->model)
+            ->usingProviderConfig([
+                'api_key' => $config->api_key,
+            ])
+            ->withSchema($this->buildMainExtractionSchema());
+
+        if ($config->provider === 'openai') {
+            $pendingRequest = $pendingRequest->withProviderOptions([
+                'schema' => [
+                    'strict' => true,
+                ],
+            ]);
+        }
+
+        $response = $this->promptChatHistoryEnabled
+            ? $pendingRequest
+                ->withMessages($this->aiPromptBuilder->buildPromptMessageChain($prompt, $document->ai_chat_history))
+                ->asStructured()
+            : $pendingRequest
+                ->withPrompt($prompt)
+                ->asStructured();
+
+        return [
+            'structured' => $response->structured,
+            'text' => $response->text,
+        ];
+    }
+
+    private function buildMainExtractionSchema(): ObjectSchema
+    {
+        return new ObjectSchema(
+            name: 'transaction_extraction',
+            description: 'Extracted transaction payload from financial document.',
+            properties: [
+                new EnumSchema(
+                    name: 'transaction_type',
+                    description: 'Detected transaction type.',
+                    options: [
+                        'withdrawal',
+                        'deposit',
+                        'transfer',
+                        'buy',
+                        'sell',
+                        'dividend',
+                        'interest',
+                        'add_shares',
+                        'remove_shares',
+                    ]
+                ),
+                new StringSchema('account', 'Account name for standard/investment transaction.', nullable: true),
+                new StringSchema('account_from', 'Source account name for transfer.', nullable: true),
+                new StringSchema('account_to', 'Destination account name for transfer.', nullable: true),
+                new StringSchema('payee', 'Payee or merchant name for standard transaction.', nullable: true),
+                new StringSchema('date', 'Transaction date in YYYY-MM-DD format.', nullable: true),
+                new NumberSchema('amount', 'Transaction amount.', nullable: true),
+                new StringSchema('currency', 'ISO currency code.', nullable: true),
+                new ArraySchema(
+                    name: 'transaction_items',
+                    description: 'Line items for standard transaction receipts.',
+                    items: new ObjectSchema(
+                        name: 'transaction_item',
+                        description: 'Single line item extracted from the document.',
+                        properties: [
+                            new StringSchema('description', 'Normalized item description.', nullable: true),
+                            new NumberSchema('amount', 'Item amount.', nullable: true),
+                        ],
+                        requiredFields: ['description', 'amount']
+                    ),
+                    nullable: true
+                ),
+                new StringSchema('investment', 'Investment name, ticker, or ISIN.', nullable: true),
+                new NumberSchema('quantity', 'Number of shares/units.', nullable: true),
+                new NumberSchema('price', 'Price per share/unit.', nullable: true),
+                new NumberSchema('commission', 'Commission or fee amount.', nullable: true),
+                new NumberSchema('tax', 'Tax amount.', nullable: true),
+                new NumberSchema('dividend', 'Dividend amount.', nullable: true),
+            ],
+            requiredFields: [
+                'transaction_type',
+                'account',
+                'account_from',
+                'account_to',
+                'payee',
+                'date',
+                'amount',
+                'currency',
+                'transaction_items',
+                'investment',
+                'quantity',
+                'price',
+                'commission',
+                'tax',
+                'dividend',
+            ]
+        );
     }
 
     private function appendProcessingHistory(AiDocument $document, string $step, string $prompt, string $response, bool $includeInPromptHistory = true): void

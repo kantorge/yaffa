@@ -343,6 +343,8 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
 
 * Additional rules for date extraction:
   * While it is not a definitive rule, the dates mentioned in the document are more likely to be in the present, rather than the future or back in the past.
+  * The date format found in the document might not be in yyyy-mm-dd format, but you should convert it to this format in the output.
+  * Look for other possible date format, especially based on the localization of the document, if provided, or can be inferred from the language.
   * If you are uncertain about the date, it is safer to set it to null rather than risk extracting an incorrect, irrelevant date.
 
 * Additional rules for STANDARD TRANSACTIONS with transaction_type transfer:

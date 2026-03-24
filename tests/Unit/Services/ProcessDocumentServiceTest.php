@@ -102,6 +102,60 @@ class ProcessDocumentServiceTest extends TestCase
         $service->extractData($config, 'Receipt text');
     }
 
+    public function test_extract_transaction_data_uses_structured_main_extraction_payload(): void
+    {
+        $user = User::factory()->create();
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            $this->createMock(CategoryLearningService::class),
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder()
+        ) extends ProcessDocumentService {
+            public function extractData(AiProviderConfig $config, string $text): array
+            {
+                $document = AiDocument::factory()->for($config->user)->create();
+
+                return $this->extractTransactionData($config, $document, $text);
+            }
+
+            protected function callStructuredAiForMainExtraction(AiProviderConfig $config, AiDocument $document, string $prompt): array
+            {
+                return [
+                    'structured' => [
+                        'transaction_type' => 'withdrawal',
+                        'account' => 'Main account',
+                        'account_from' => null,
+                        'account_to' => null,
+                        'payee' => 'Coffee shop',
+                        'date' => '2026-03-01',
+                        'amount' => 12.5,
+                        'currency' => 'USD',
+                        'transaction_items' => [
+                            ['description' => 'coffee', 'amount' => 12.5],
+                        ],
+                        'investment' => null,
+                        'quantity' => null,
+                        'price' => null,
+                        'commission' => null,
+                        'tax' => null,
+                        'dividend' => null,
+                    ],
+                    'text' => "```json\n{\"ignored\":true}\n```",
+                ];
+            }
+        };
+
+        $result = $service->extractData($config, 'Receipt text');
+
+        $this->assertSame('withdrawal', $result['transaction_type']);
+        $this->assertSame('Main account', $result['account']);
+        $this->assertSame(12.5, $result['amount']);
+        $this->assertSame('coffee', $result['transaction_items'][0]['description']);
+    }
+
     public function test_ai_category_matches_are_stored_as_recommendations(): void
     {
         $user = User::factory()->create();
