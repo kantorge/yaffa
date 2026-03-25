@@ -35,6 +35,7 @@ There are several features **planned** to be implemented:
 - Handling multiple users as a family in one app instance.
 - Better onboarding experience, or a tutorial.
 - Flexible or universal QIF/CSV file imports
+- YAFFA is not using dedicated libraries for precise decimal calculations for monetary values. As it is not an accounting software, but a personal finance application, this should not be a real problem. It is planned to be implemented in the future, to avoid any potential issues with calculations and currency conversions. In the meantime, be aware, if this is a concern for you.
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
 If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the best choice for you.
