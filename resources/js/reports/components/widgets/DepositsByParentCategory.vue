@@ -183,8 +183,8 @@
       let chart = am4core.create(this.$refs.chartContainer, am4charts.PieChart);
       applyAmChartsLocalization(
         chart,
-        window.YAFFA.locale,
-        window.YAFFA.language,
+        window.YAFFA.userSettings.locale,
+        window.YAFFA.userSettings.language,
       );
       chart.data = null;
 

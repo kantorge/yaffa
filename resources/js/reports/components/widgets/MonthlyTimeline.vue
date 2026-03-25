@@ -151,7 +151,11 @@
     },
     mounted() {
       let chart = am4core.create(this.$refs.chartContainer, am4charts.XYChart);
-      applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
+      applyAmChartsLocalization(
+        chart,
+        this.locale,
+        window.YAFFA.userSettings.language,
+      );
 
       // Data is empty initially
       chart.data = null;
@@ -209,7 +213,7 @@
 
       this.chart = chart;
     },
-    beforeDestroy() {
+    beforeUnmount() {
       if (this.chart) {
         this.chart.dispose();
       }

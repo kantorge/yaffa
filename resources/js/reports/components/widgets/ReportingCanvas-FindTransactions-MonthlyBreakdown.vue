@@ -332,7 +332,7 @@
       return {
         showPercentages: false,
         baseCurrency: window.YAFFA.baseCurrency,
-        locale: window.YAFFA.locale,
+        locale: window.YAFFA.userSettings.locale,
         cachedCategoryData: null,
       };
     },

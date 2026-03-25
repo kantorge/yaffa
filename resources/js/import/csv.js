@@ -17,7 +17,7 @@ import { __ } from '@/shared/lib/i18n';
 
 // Select2 for account selection
 import { initializeSelect2 } from '@/shared/lib/select2';
-initializeSelect2(window.YAFFA.language);
+initializeSelect2(window.YAFFA.userSettings.language);
 
 import 'jquery-csv';
 

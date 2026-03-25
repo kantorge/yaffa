@@ -43,7 +43,11 @@
       am4core.useTheme(am4themes_animated);
       // Chart setup
       let chart = am4core.create(this.$refs.chartQuantity, am4charts.XYChart);
-      applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
+      applyAmChartsLocalization(
+        chart,
+        this.locale,
+        window.YAFFA.userSettings.language,
+      );
       chart.data = this.quantities;
       chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
       let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());

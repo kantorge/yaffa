@@ -20,12 +20,12 @@ function initializeChart() {
     }
 
     chart = am4core.create("chart", am4charts.XYChart);
-    applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
+    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
     chart.hiddenState.properties.opacity = 0;
     chart.paddingRight = 30;
     chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
-    chart.numberFormatter.intlLocales = window.YAFFA.locale;
-    chart.dateFormatter.intlLocales = window.YAFFA.locale;
+    chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
     var colorSet = new am4core.ColorSet();
     colorSet.saturation = 0.4;

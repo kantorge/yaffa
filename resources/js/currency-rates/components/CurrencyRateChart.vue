@@ -81,7 +81,11 @@
 
         // Chart setup using ref instead of ID
         const chart = am4core.create(this.$refs.chartRate, am4charts.XYChart);
-        applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
         chart.data = this.currencyRates;
         chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
 

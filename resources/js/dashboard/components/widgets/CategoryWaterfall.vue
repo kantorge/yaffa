@@ -141,7 +141,11 @@
       }
 
       let chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart);
-      applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
+      applyAmChartsLocalization(
+        chart,
+        this.locale,
+        window.YAFFA.userSettings.language,
+      );
       chart.hiddenState.properties.opacity = 0;
 
       // Set up number formatting
@@ -352,13 +356,6 @@
         return data;
       },
 
-      dateLabel() {
-        const date = new Date(this.year, this.month - 1, 1);
-        return date.toLocaleDateString(window.YAFFA.locale, {
-          year: 'numeric',
-          month: 'long',
-        });
-      },
       dateLabel() {
         const date = new Date(this.year, this.month - 1, 1);
         return date.toLocaleDateString(window.YAFFA.userSettings.locale, {

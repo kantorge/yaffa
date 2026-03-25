@@ -69,7 +69,7 @@
       },
       language: {
         type: String,
-        default: window.YAFFA.language,
+        default: window.YAFFA.userSettings.language,
       },
     },
 

@@ -82,7 +82,7 @@ const elementRefreshButton = document.getElementById('reload');
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
-applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
+applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
 
 chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
 chart.numberFormatter.numberFormat = {
