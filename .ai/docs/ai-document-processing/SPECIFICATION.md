@@ -4,7 +4,7 @@
 
 Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
 
-**Current Implementation Status:** This feature is **near MVP completion**. Core functionality is complete including document upload, AI processing, transaction finalization, category learning, and Google Drive sync; the remaining MVP gap is scanned-PDF OCR fallback.
+**Current Implementation Status:** This feature is **MVP complete**. Core functionality is complete including document upload, AI processing, transaction finalization, category learning, and Google Drive sync.
 
 ## Goals / Non-Goals
 
@@ -1510,11 +1510,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
 - The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
 
-Bugs, issues - quick fix
-
-- Categories are poorly selected locally (probably string length issue, like earlier with payees)
-
-## AI User Settings Expansion Plan (Implementation-Ready)
+## AI User Settings
 
 ### Feature Summary
 
@@ -1526,9 +1522,9 @@ This plan also moves Google Drive sync cadence from global env to per-config DB 
 
 - Implementation scope: full end-to-end in one milestone (DB, API, Vue, runtime consumers, tests).
 - Storage model: new `ai_user_settings` table (one row per user).
-- Google Drive sync cadence: store per config (`google_drive_configs.sync_interval_minutes`).
+- Google Drive sync cadence: store per config (`google_drive_configs.sync_interval_minutes`) including future multi-config scenarios.
 - Category matching default mode: `child_preferred`.
-- AI off behavior: hard block processing actions.
+- AI off behavior: hard block new processing actions.
 - Backfill strategy: eager backfill for all existing users.
 - Upload limits and allowed file types remain global hard limits (no user override).
 - Out of scope for this milestone: Prism conversation-chain migration.
@@ -1641,6 +1637,10 @@ Validation baseline (to be finalized before coding):
 - `category_matching_mode` in: `parent_only`, `parent_preferred`, `child_only`, `child_preferred`.
 - Upload limits and allowed types are validated exclusively from global config (not user settings).
 
+API ergonomics decision:
+
+- AI settings updates are PATCH-only; no dedicated "reset to defaults" endpoint is provided.
+
 ### Frontend Scope (Vue + Bootstrap)
 
 - New component: `resources/js/user/AiBehaviorSettings.vue`
@@ -1651,13 +1651,14 @@ Validation baseline (to be finalized before coding):
 - Optional navigation tweak:
   - Keep `AiDocumentActions.vue` links pointing to `/user/settings`; no route split required.
 - UX warning:
-  - Show non-blocking warning in settings UI when child-only/child-preferred is selected but user has no active child categories.
+  - Show non-blocking warning in settings UI when child-only/child-preferred is selected but user has no active child categories; save/update remains allowed.
 
 ### Runtime Consumer Changes (Downstream Usage)
 
 - Hard AI-off enforcement:
   - Block manual upload and reprocess endpoints with clear API error.
-  - Ensure queued processors avoid processing when AI is disabled.
+  - For non-manual sources (email, Google Drive), skip creation of new `AiDocument` records when AI is disabled.
+  - Let already claimed/in-flight jobs finish; block new jobs from starting when AI is disabled.
 - Upload constraints:
   - Keep file count, file size, and allowed types as global hard limits in validation and import paths.
 - Matching and thresholds:
@@ -1667,13 +1668,15 @@ Validation baseline (to be finalized before coding):
 - OCR/image behavior:
   - Use per-user OCR language.
   - Use per-user Vision resize dimensions/quality.
-  - Support per-user optional Tesseract image limits.
+  - Support per-user optional Tesseract image limits; when configured limits are exceeded, downscale automatically and emit warning logs (optional UI warning where applicable).
 - Category matching mode:
-  - Shape category list and prompt guidance according to selected mode.
+  - Shape category list and prompt behavior according to selected mode.
+  - `parent_preferred` and `child_preferred` are strict deterministic modes, not soft guidance.
   - Preserve default as `child_preferred`.
 - Google Drive cadence:
   - `GoogleDriveMonitorJob` keeps every-minute scheduler trigger.
   - Eligibility check uses each config's `sync_interval_minutes`.
+  - Granularity remains per config (now and in future multi-config scenarios).
 
 ### Data Backfill and Precedence
 
@@ -1683,6 +1686,10 @@ Validation baseline (to be finalized before coding):
   1. User DB value
   2. Global config fallback
   3. Safe hardcoded fallback
+
+### Rollback Policy
+
+- On rollback, drop AI settings schema additions (`ai_user_settings` and AI-settings-related schema changes) without back-migrating previous values.
 
 ### Work Breakdown (Recommended Order)
 
@@ -1711,18 +1718,3 @@ Validation baseline (to be finalized before coding):
   - Extend upload/import tests to confirm global hard-limit behavior remains enforced.
 - Browser/Dusk:
   - New coverage for `AiBehaviorSettings.vue` and updated `GoogleDriveSettings.vue` sync interval field.
-
-## Finalized Decisions (From Review Inputs)
-
-1. AI-off behavior for non-manual sources: If AI is disabled, skip creation of new `AiDocument` records from email and Google Drive sources.
-2. Existing queued/in-flight documents when AI is turned off: Let already claimed jobs finish; block new jobs from starting.
-3. Upload bounds ownership: Keep upload max file count and max file size as global hard limits only.
-4. Allowed file types ownership: Keep allowed file types as global allowlist only (no user override).
-5. Tesseract image limits behavior: If limits are configured and exceeded, downscale automatically; add warning logs (and optional UI warning where available).
-6. Category mode semantics: `parent_preferred` and `child_preferred` must be strict, deterministic behavior (not soft guidance).
-7. Child-only mode without child categories: Warning only; do not block save/update.
-8. Google Drive sync interval granularity: Keep `sync_interval_minutes` per config now and in future multi-config scenarios.
-9. AI settings API ergonomics: PATCH-only updates; no dedicated reset-to-default endpoint.
-10. Rollback policy: On rollback, drop AI settings schema additions without back-migrating values.
-11. UI placement: Keep editing on `/user/settings`; keep/discover via links from `/ai-documents`.
-12. Conversation-chain migration: Explicitly out of scope for this settings implementation milestone.

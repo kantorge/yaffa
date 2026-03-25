@@ -102,13 +102,16 @@ EOF;
         string $categoriesList,
         string $appliedCategoryMatchingMode = 'best_match',
         array $categories = [],
+        ?string $genericDocumentLanguage = null,
     ): string {
 
         $learningSection = '';
         if (! empty($learningContext)) {
             $learningLines = [];
             foreach ($learningContext as $index => $learningRecords) {
-                $learningLines[] = "Item {$index} similar patterns:";
+                $itemDescription = $items[$index]['description'] ?? '';
+                $itemLabel = $itemDescription !== '' ? "Similar patterns for Item {$index} (\"{$itemDescription}\"):" : "Similar patterns for Item {$index}:";
+                $learningLines[] = $itemLabel;
                 foreach ($learningRecords as $record) {
                     $categoryId = $record['category_id'] ?? $record['recommended_category_id'] ?? 'N/A';
                     $description = $record['description'] ?? 'N/A';
@@ -126,6 +129,12 @@ EOF;
         $itemsList = implode("\n", $itemsLines);
         $categoriesSection = $this->buildCategorySection($categoriesList, $categories);
         $modeSection = $this->buildCategoryMatchingModeSection($appliedCategoryMatchingMode);
+        $normalizedGenericDocumentLanguage = $genericDocumentLanguage !== null
+            ? mb_trim($genericDocumentLanguage)
+            : null;
+        $documentLanguageLine = $normalizedGenericDocumentLanguage
+            ? "The document provided is expected to be in {$normalizedGenericDocumentLanguage}."
+            : 'The language of the document may vary.';
 
         return <<<EOF
 In this task, you will be given a list of line items extracted from a financial document, and your goal is to assign the most appropriate category to each item based on the provided information.
@@ -137,6 +146,7 @@ You will be provided with:
 GENERAL RULES:
 - Prioritize learning patterns if item description closely matches past patterns
 - Use category list to find best semantic match if no learning patterns match
+- {$documentLanguageLine}
 - Item descriptions and categories can be in different languages. If this is the case, do semantic matching across languages.
 - Treat quantity/unit/packaging tokens as non-semantic noise while matching (examples: "2x", "500g", "1.5l", "pcs", "pack", and localized equivalents in the document language).
 - Match based on the core product or service meaning, not on quantity, size, or package count.

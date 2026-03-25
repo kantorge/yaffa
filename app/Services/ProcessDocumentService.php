@@ -808,6 +808,7 @@ class ProcessDocumentService
             $categoryPromptContext['categories_list'],
             $categoryPromptContext['applied_category_matching_mode'],
             $categoryPromptContext['categories'],
+            data_get($resolvedSettings, 'generic_document_language'),
         );
 
         $response = $this->callAi($config, $document, $prompt, 'category_batch_matching');

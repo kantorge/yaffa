@@ -68,6 +68,24 @@ class AiPromptBuilderTest extends TestCase
         $this->assertStringContainsString('Recommended Category 7: coffee', $prompt);
         $this->assertStringNotContainsString('similarity:', $prompt);
         $this->assertStringContainsString('CATEGORY MATCHING RULES:', $prompt);
+        $this->assertStringContainsString('The language of the document may vary.', $prompt);
+    }
+
+    public function test_build_category_matching_prompt_uses_expected_document_language_when_provided(): void
+    {
+        $builder = new AiPromptBuilder();
+
+        $prompt = $builder->buildCategoryMatchingPrompt(
+            [0 => ['description' => 'tej', 'amount' => 2.3]],
+            [],
+            '11: Groceries',
+            'best_match',
+            [],
+            'Hungarian'
+        );
+
+        $this->assertStringContainsString('The document provided is expected to be in Hungarian.', $prompt);
+        $this->assertStringNotContainsString('The language of the document may vary.', $prompt);
     }
 
     public function test_build_category_matching_prompt_includes_mode_specific_rules(): void

@@ -12,6 +12,7 @@ return [
     ],
 
     'available_locales' => [
+        'en-GB' => 'English (United Kingdom)',
         'en-US' => 'English (United States)',
         'fr-FR' => 'French (France)',
         'hu-HU' => 'Hungarian',
