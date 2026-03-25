@@ -762,6 +762,15 @@ class ProcessDocumentService
                 }
             }
         } catch (Exception $e) {
+            if (! $this->hasAiFailureFallbackHistory($document, 'category_batch_matching')) {
+                $this->appendAiFallbackHistoryAfterFailure(
+                    $document,
+                    'category_batch_matching',
+                    'Category batch matching call failed before a full AI response was produced.',
+                    $e,
+                );
+            }
+
             Log::error('Category batch matching failed, items will have no category', [
                 'error' => $e->getMessage(),
                 'item_count' => count($itemsNeedingAi),
@@ -913,16 +922,73 @@ class ProcessDocumentService
 
             return $textResponse;
         } catch (Exception $e) {
-            $this->appendProcessingHistory($document, $step, $prompt, 'ERROR: ' . $e->getMessage());
+            if ($step === 'main_extraction') {
+                $this->appendProcessingHistory($document, $step, $prompt, 'ERROR: ' . $e->getMessage());
+            } else {
+                $this->appendAiFallbackHistoryAfterFailure($document, $step, $prompt, $e);
+            }
 
             Log::error('AI provider call failed', [
                 'provider' => $config->provider,
                 'model' => $config->model,
+                'step' => $step,
+                'timeout' => $this->isAiCallTimeout($e),
                 'error' => $e->getMessage(),
             ]);
 
             throw new Exception("AI provider error: {$e->getMessage()}");
         }
+    }
+
+    private function appendAiFallbackHistoryAfterFailure(AiDocument $document, string $step, string $prompt, Exception $exception): void
+    {
+        $stepLabel = Str::headline(str_replace('_', ' ', $step));
+        $errorMessage = mb_trim($exception->getMessage());
+
+        $historyPrompt = implode("\n\n", [
+            "Local {$stepLabel} fallback (AI call failed).",
+            $this->formatLocalHistorySection('Context', [
+                'reason' => $this->isAiCallTimeout($exception)
+                    ? 'AI request timed out; fallback applied to keep document processing reviewable'
+                    : 'AI request failed; fallback applied to keep document processing reviewable',
+                'error_message' => $errorMessage,
+                'original_prompt' => $prompt,
+            ]),
+        ]);
+
+        $historyResponse = $this->formatLocalHistorySection('Result', [
+            'matched_id' => null,
+            'recommended_category_id' => null,
+        ]);
+
+        $this->appendProcessingHistory($document, $step, $historyPrompt, $historyResponse, false);
+    }
+
+    private function isAiCallTimeout(Exception $exception): bool
+    {
+        $message = Str::lower($exception->getMessage());
+
+        return Str::contains($message, ['curl error 28', 'operation timed out', 'timed out']);
+    }
+
+    private function hasAiFailureFallbackHistory(AiDocument $document, string $step): bool
+    {
+        $history = $document->ai_chat_history;
+        if (! is_array($history)) {
+            return false;
+        }
+
+        foreach (array_reverse($history) as $entry) {
+            if (($entry['step'] ?? null) !== $step) {
+                continue;
+            }
+
+            $prompt = (string) ($entry['prompt'] ?? '');
+
+            return Str::contains($prompt, 'fallback (AI call failed)');
+        }
+
+        return false;
     }
 
     /**

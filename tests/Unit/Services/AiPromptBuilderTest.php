@@ -59,13 +59,14 @@ class AiPromptBuilderTest extends TestCase
             "7: Food > Drinks\n8: Food > Groceries"
         );
 
-        $this->assertStringContainsString('CATEGORY LEARNING PATTERNS', $prompt);
         $this->assertStringContainsString('[0] Coffee beans', $prompt);
+        $this->assertStringContainsString('Recent similar learnings:', $prompt);
+        $this->assertStringContainsString('Category 7: coffee', $prompt);
         $this->assertStringContainsString('[1] Milk', $prompt);
+        $this->assertStringContainsString('ITEMS TO MATCH (with optional recent similar learnings):', $prompt);
         $this->assertStringNotContainsString('$12.5', $prompt);
         $this->assertStringNotContainsString('$3.1', $prompt);
         $this->assertStringContainsString('7: Food > Drinks', $prompt);
-        $this->assertStringContainsString('Recommended Category 7: coffee', $prompt);
         $this->assertStringNotContainsString('similarity:', $prompt);
         $this->assertStringContainsString('CATEGORY MATCHING RULES:', $prompt);
         $this->assertStringContainsString('The language of the document may vary.', $prompt);

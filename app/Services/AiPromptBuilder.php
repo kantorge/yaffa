@@ -104,29 +104,7 @@ EOF;
         array $categories = [],
         ?string $genericDocumentLanguage = null,
     ): string {
-
-        $learningSection = '';
-        if (! empty($learningContext)) {
-            $learningLines = [];
-            foreach ($learningContext as $index => $learningRecords) {
-                $itemDescription = $items[$index]['description'] ?? '';
-                $itemLabel = $itemDescription !== '' ? "Similar patterns for Item {$index} (\"{$itemDescription}\"):" : "Similar patterns for Item {$index}:";
-                $learningLines[] = $itemLabel;
-                foreach ($learningRecords as $record) {
-                    $categoryId = $record['category_id'] ?? $record['recommended_category_id'] ?? 'N/A';
-                    $description = $record['description'] ?? 'N/A';
-
-                    $learningLines[] = "  - Recommended Category {$categoryId}: {$description}";
-                }
-            }
-            $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions with categories confirmed by the user):\n" . implode("\n", $learningLines) . "\n\n";
-        }
-
-        $itemsLines = [];
-        foreach ($items as $index => $item) {
-            $itemsLines[] = "[{$index}] {$item['description']}";
-        }
-        $itemsList = implode("\n", $itemsLines);
+        $itemsToMatchSection = $this->buildCategoryItemsToMatchSection($items, $learningContext);
         $categoriesSection = $this->buildCategorySection($categoriesList, $categories);
         $modeSection = $this->buildCategoryMatchingModeSection($appliedCategoryMatchingMode);
         $normalizedGenericDocumentLanguage = $genericDocumentLanguage !== null
@@ -141,7 +119,7 @@ In this task, you will be given a list of line items extracted from a financial 
 You will be provided with:
 1. Multiple line items from a receipt that need category assignment
 2. Full list of active categories available for this user
-3. Optionally, earlier category learning patterns (past transaction descriptions matched to categories)
+3. Optionally, recent similar category learnings for each item (past transaction descriptions matched to categories)
 
 GENERAL RULES:
 - Prioritize learning patterns if item description closely matches past patterns
@@ -162,13 +140,11 @@ RULES FOR HANDLING CATEGORY HIERARCHY:
 
 {$modeSection}
 
-{$learningSection}
-
 AVAILABLE ACTIVE CATEGORIES:
 {$categoriesSection}
 
-LINE ITEMS TO MATCH:
-{$itemsList}
+ITEMS TO MATCH (with optional recent similar learnings):
+{$itemsToMatchSection}
 
 Return JSON array ONLY (no markdown, no explanation, no code blocks), in the following format:
 [
@@ -176,6 +152,35 @@ Return JSON array ONLY (no markdown, no explanation, no code blocks), in the fol
   {"item_index": 1, "recommended_category_id": null, "confidence_score": null}
 ]
 EOF;
+    }
+
+    /**
+     * @param  array<int, array{description?: string}>  $items
+     * @param  array<int, array<int, array{category_id?: int, recommended_category_id?: int, description?: string}>>  $learningContext
+     */
+    private function buildCategoryItemsToMatchSection(array $items, array $learningContext): string
+    {
+        $lines = [];
+
+        foreach ($items as $index => $item) {
+            $description = (string) ($item['description'] ?? '');
+            $lines[] = "[{$index}] {$description}";
+
+            $learningRecords = $learningContext[$index] ?? [];
+            if (empty($learningRecords)) {
+                continue;
+            }
+
+            $lines[] = '  Recent similar learnings:';
+
+            foreach ($learningRecords as $record) {
+                $categoryId = $record['category_id'] ?? $record['recommended_category_id'] ?? 'N/A';
+                $learningDescription = $record['description'] ?? 'N/A';
+                $lines[] = "    - Category {$categoryId}: {$learningDescription}";
+            }
+        }
+
+        return implode("\n", $lines);
     }
 
     /**

@@ -362,6 +362,61 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame(0.77, $result[1]['confidence_score']);
     }
 
+    public function test_category_matching_ai_timeout_is_recorded_as_local_fallback_history(): void
+    {
+        $user = User::factory()->create();
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            new CategoryLearningService(),
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+        ) extends ProcessDocumentService {
+            public function matchCategoriesWithHistory(array $items, User $user, AiProviderConfig $config): array
+            {
+                $document = AiDocument::factory()->for($user)->create();
+
+                $matchedItems = $this->matchCategoriesForItems($items, $user, $config, $document);
+
+                $document->refresh();
+
+                return [
+                    'items' => $matchedItems,
+                    'history' => $document->ai_chat_history,
+                ];
+            }
+
+            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            {
+                if ($step === 'category_batch_matching') {
+                    throw new RuntimeException('cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received');
+                }
+
+                return '[]';
+            }
+        };
+
+        $result = $service->matchCategoriesWithHistory([
+            ['description' => 'Coffee beans', 'amount' => 12.5],
+        ], $user, $config);
+
+        $this->assertCount(1, $result['items']);
+        $this->assertNull($result['items'][0]['recommended_category_id']);
+        $this->assertNull($result['items'][0]['match_type']);
+        $this->assertNull($result['items'][0]['confidence_score']);
+
+        $this->assertIsArray($result['history']);
+        $this->assertCount(1, $result['history']);
+        $this->assertSame('category_batch_matching', $result['history'][0]['step']);
+        $this->assertFalse($result['history'][0]['include_in_prompt_history']);
+        $this->assertStringContainsString('Local Category Batch Matching fallback (AI call failed).', $result['history'][0]['prompt']);
+        $this->assertStringContainsString('Operation timed out', $result['history'][0]['prompt']);
+        $this->assertStringContainsString('- Recommended Category Id: N/A', $result['history'][0]['response']);
+        $this->assertStringNotContainsString('ERROR:', $result['history'][0]['response']);
+    }
+
     public function test_high_confidence_account_and_payee_matches_are_logged_with_readable_history(): void
     {
         $user = User::factory()->create();
