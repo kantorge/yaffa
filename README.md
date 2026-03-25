@@ -20,7 +20,7 @@ Read more about YAFFA at https://yaffa.cc
   - Transactions can be split into categories. This helps to better understand spending patterns and budget planning.
   - Yaffa can process documents with AI and prefill transaction details automatically.
     - Supported sources include manual uploads (text/PDF/images), received emails, and Google Drive imports.
-    - This feature is optional and supports OpenAI or Gemini providers. You need to provide your own API key and billing setup.
+    - This feature is optional and currently supports OpenAI or Gemini providers. You need to provide your own API key and billing setup.
     - OCR for images is available via Tesseract (self-hosted) or Vision-capable AI models.
 - Scheduled and recurring transactions, and budgets (plans) can be created.
   - This can be used to calculate forecasted data.
@@ -75,7 +75,7 @@ When upgrading between major versions, please see the details and follow the ins
 
 Thanks to these people for helping improve this project:
 
-- @WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
+- WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
 
 ## License
 
