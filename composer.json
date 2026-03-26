@@ -22,7 +22,7 @@
         "intervention/image": "^3.11",
         "kantorge/laravel-currency-exchange-rates": "^0.0.3",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^12.48",
+        "laravel/framework": "^12.56",
         "laravel/sanctum": "^4.2",
         "laravel/telescope": "^5.16",
         "laravel/ui": "^4.6",
