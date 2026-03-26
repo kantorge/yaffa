@@ -10,8 +10,7 @@ use App\Http\View\Composers\CurrencyListComposer;
 use App\Http\View\Composers\DataLayerEventComposer;
 use App\Http\View\Composers\InvestmentGroupListComposer;
 use App\Http\View\Composers\InvestmentPriceProviderListComposer;
-use App\Http\View\Composers\JavaScriptConfigVariablesComposer;
-use App\Http\View\Composers\JavaScriptUserVariablesComposer;
+use App\Http\View\Composers\JavaScriptVariablesComposer;
 use App\Http\View\Composers\NotificationMessageComposer;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -36,30 +35,27 @@ class ViewServiceProvider extends ServiceProvider
         // Account list for quick jump
         View::composer('template.layouts.page', AccountListComposer::class);
 
-        // Generic JavaScript variables
-        View::composer('template.layouts.page', JavaScriptConfigVariablesComposer::class);
-        View::composer('template.layouts.auth', JavaScriptConfigVariablesComposer::class);
-
-        // User-related JavaScript variables
-        View::composer('template.layouts.page', JavaScriptUserVariablesComposer::class);
+        // JavaScript variables
+        View::composer('template.layouts.page', JavaScriptVariablesComposer::class);
+        View::composer('template.layouts.auth', JavaScriptVariablesComposer::class);
 
         // Account form - all account groups
-        View::composer('account.form', AccountGroupListComposer::class);
+        View::composer('accounts.form', AccountGroupListComposer::class);
 
         // Investment form - all investment groups
-        View::composer('investment.form', InvestmentGroupListComposer::class);
+        View::composer('investments.form', InvestmentGroupListComposer::class);
 
         // Investment form / Account form - all currencies
-        View::composer('investment.form', CurrencyListComposer::class);
-        View::composer('account.form', CurrencyListComposer::class);
+        View::composer('investments.form', CurrencyListComposer::class);
+        View::composer('accounts.form', CurrencyListComposer::class);
 
         // Investment form - all price providers
-        View::composer('investment.form', InvestmentPriceProviderListComposer::class);
+        View::composer('investments.form', InvestmentPriceProviderListComposer::class);
 
         // Category parent list for category forms
         View::composer('categories.form', CategoryParentListComposer::class);
 
         // All categories for payee form
-        View::composer('payee.form', CategoryListComposer::class);
+        View::composer('payees.form', CategoryListComposer::class);
     }
 }

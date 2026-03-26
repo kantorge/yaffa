@@ -8,7 +8,9 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\Payee;
+use App\Models\Category;
+use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeePersistenceService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,15 +23,20 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller implements HasMiddleware
 {
+    public function __construct(
+        private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
+        private readonly PayeePersistenceService $payeePersistenceService,
+    ) {
+    }
+
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\AccountEntity', only: ['index']),
+            'auth',
+            'verified',
             new Middleware('can:view,account_entity', only: ['show']),
-            new Middleware('can:create,App\Models\AccountEntity', only: ['create', 'store']),
+            new Middleware('can:create,' . AccountEntity::class, only: ['create', 'store']),
             new Middleware('can:update,account_entity', only: ['edit', 'update']),
-            new Middleware('can:delete,account_entity', only: ['destroy']),
         ];
     }
 
@@ -79,7 +86,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ]);
 
             return view(
-                'account.show',
+                'accounts.show',
                 [
                     'account' => $accountEntity,
                 ]
@@ -99,9 +106,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/account-entity')
-         * @name('account-entity.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountEntity')
+         * @get("/account-entity")
+         * @name("account-entity.index")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -131,13 +138,15 @@ class AccountEntityController extends Controller implements HasMiddleware
             'accounts' => $accounts,
         ]);
 
-        return view('account.index');
+        return view('accounts.index');
     }
 
     private function indexPayee(): View
     {
+        $user = Auth::user();
+
         // Show all payees of the user from the database and return to view
-        $payees = Auth::user()
+        $payees = $user
             ->payees()
             ->withCount('transactionsStandardFrom as from_count')
             ->withCount('transactionsStandardTo as to_count')
@@ -145,15 +154,30 @@ class AccountEntityController extends Controller implements HasMiddleware
             ->withMax('transactionsStandardFrom as from_max_date', 'date')
             ->withMin('transactionsStandardTo as to_min_date', 'date')
             ->withMax('transactionsStandardTo as to_max_date', 'date')
-            ->with(['config', 'config.category'])
+            ->with(['config', 'config.category', 'config.category.parent'])
             ->get();
+
+        $categorySuggestionsByPayeeId = $this->payeeCategoryStatsService
+            ->getDefaultSuggestionsForAllPayees($user)
+            ->keyBy('payee_id');
+
+        $payees->each(function (AccountEntity $payee) use ($categorySuggestionsByPayeeId): void {
+            $suggestion = $categorySuggestionsByPayeeId->get($payee->id);
+
+            $payee->setAttribute('category_suggestion', $suggestion === null ? null : [
+                'max_category_id' => (int) $suggestion['max_category_id'],
+                'category' => (string) $suggestion['category'],
+                'max' => (int) $suggestion['max'],
+                'sum' => (int) $suggestion['sum'],
+            ]);
+        });
 
         // Pass data for DataTables
         JavaScriptFacade::put([
             'payees' => $payees,
         ]);
 
-        return view('payee.index');
+        return view('payees.index');
     }
 
     /**
@@ -166,9 +190,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function create(Request $request): View|RedirectResponse
     {
         /**
-         * @get('/account-entity/create')
-         * @name('account-entity.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
+         * @get("/account-entity/create")
+         * @name("account-entity.create")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -186,7 +210,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('account-group.create');
+            return to_route('account-groups.create');
         }
 
         // Redirect to currency form, if empty
@@ -198,10 +222,10 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return to_route('currency.create');
+            return to_route('currencies.create');
         }
 
-        return view('account.form');
+        return view('accounts.form');
     }
 
     private function createPayee(): View
@@ -210,7 +234,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             'categoryPreferences' => [],
         ]);
 
-        return view('payee.form');
+        return view('payees.form');
     }
 
     /**
@@ -219,9 +243,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function store(AccountEntityRequest $request): RedirectResponse
     {
         /**
-         * @post('/account-entity')
-         * @name('account-entity.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
+         * @post("/account-entity")
+         * @name("account-entity.store")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -248,28 +272,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         if ($validated['config_type'] === 'payee') {
-            $payeeConfig = Payee::create($validated['config']);
-            $accountEntity->config()->associate($payeeConfig);
-
-            // Sync category preference. First, create a variable.
-            // Set preferred categories to boolean true and not preferred categories to boolean false.
-            $preferences = [];
-            if (array_key_exists('preferred', $validated['config'])) {
-                foreach ($validated['config']['preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => true];
-                }
-            }
-            if (array_key_exists('not_preferred', $validated['config'])) {
-                foreach ($validated['config']['not_preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => false];
-                }
-            }
-
-            $accountEntity->push();
-
-            $accountEntity->categoryPreference()->sync($preferences);
-
-            $accountEntity->push();
+            $this->payeePersistenceService->store($request);
 
             self::addSimpleSuccessMessage(__('Payee added'));
 
@@ -289,9 +292,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function edit(AccountEntity $accountEntity): View
     {
         /**
-         * @get('/account-entity/{account_entity}/edit')
-         * @name('account-entity.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
+         * @get("/account-entity/{account_entity}/edit")
+         * @name("account-entity.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return $this->{'edit' . Str::ucfirst($accountEntity->config_type)}($accountEntity);
     }
@@ -307,7 +310,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
 
         return view(
-            'account.form',
+            'accounts.form',
             [
                 'account' => $accountEntity,
                 'allAccountGroups' => $allAccountGroups,
@@ -321,17 +324,17 @@ class AccountEntityController extends Controller implements HasMiddleware
         $accountEntity->load(['config', 'categoryPreference.parent']);
 
         // Simplify the category preference structure and pass it as JavaScript variable
-        $categoryPreference = $accountEntity->categoryPreference->map(fn ($item) => [
+        $categoryPreference = $accountEntity->categoryPreference->map(fn (Category $item): array => [
             'id' => $item->id,
             'full_name' => $item->full_name,
-            'preferred' => $item->pivot->preferred,
+            'preferred' => (bool) data_get($item, 'pivot.preferred', false),
         ]);
         JavaScriptFacade::put([
             'categoryPreferences' => $categoryPreference->toArray(),
         ]);
 
         return view(
-            'payee.form',
+            'payees.form',
             [
                 'payee' => $accountEntity,
             ]
@@ -344,10 +347,10 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
-         * @method('PUT', PATCH')
-         * @uri('/account-entity/{account_entity}')
-         * @name('account-entity.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
+         * @methods("PUT", "PATCH")
+         * @uri("/account-entity/{account_entity}")
+         * @name("account-entity.update")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 
@@ -365,28 +368,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         if ($accountEntity->config_type === 'payee') {
-            $accountEntity->load(['config']);
-
-            $accountEntity->fill($validated);
-            $accountEntity->config->fill($validated['config']);
-
-            // Sync category preference. First, create a variable.
-            // Set preferred categories to boolean true and not preferred categories to boolean false.
-            $preferences = [];
-            if (array_key_exists('preferred', $validated['config'])) {
-                foreach ($validated['config']['preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => true];
-                }
-            }
-            if (array_key_exists('not_preferred', $validated['config'])) {
-                foreach ($validated['config']['not_preferred'] as $categoryId) {
-                    $preferences[$categoryId] = ['preferred' => false];
-                }
-            }
-
-            $accountEntity->categoryPreference()->sync($preferences);
-
-            $accountEntity->push();
+            $this->payeePersistenceService->update($accountEntity, $request);
 
             self::addSimpleSuccessMessage(__('Payee updated'));
 
@@ -403,9 +385,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function mergePayeesForm(?AccountEntity $payeeSource): View
     {
         /**
-         * @get('/payees/merge/{payeeSource?}')
-         * @name('payees.merge.form')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/payees/merge/{payeeSource?}")
+         * @name("payees.merge.form")
+         * @middlewares("web", "auth", "verified")
          */
         if ($payeeSource) {
             JavaScriptFacade::put([
@@ -413,7 +395,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ]);
         }
 
-        return view('payee.merge');
+        return view('payees.merge');
     }
 
     /**
@@ -422,9 +404,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function mergePayees(MergePayeesRequest $request): RedirectResponse
     {
         /**
-         * @post('/payees/merge')
-         * @name('payees.merge.submit')
-         * @middlewares('web', 'auth', 'verified')
+         * @post("/payees/merge")
+         * @name("payees.merge.submit")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 

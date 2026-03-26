@@ -1,59 +1,25 @@
 import 'datatables.net-bs5';
-import "datatables.net-responsive-bs5";
+import 'datatables.net-responsive-bs5';
 
-import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '../helpers';
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
-import * as toastHelpers from '../toast';
-
-import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
-
-import presetCalculators from '../presetDates';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import * as helpers from '@/shared/lib/helpers';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import * as toastHelpers from '@/shared/lib/toast';
+import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
 
-// Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
-let presetFilters = {
-    ready: function () {
-        for (let key in presetFilters) {
-            if (presetFilters[key] === false) {
-                return false;
-            }
-        }
-        return true;
-    }
+let currentDateFilters = {
+    dateFrom: window.filters?.date_from || null,
+    dateTo: window.filters?.date_to || null,
+    preset: window.filters?.date_preset || null,
 };
 
-// Loop filter object keys and populate presetFilters array
-for (let key in window.filters) {
-    // For the date range preset, treat 'none' as not preset
-    if (key === 'date_preset' && window.filters[key] === 'none') {
-        continue;
-    }
-    presetFilters[key] = false;
-}
-
-// Disable table refresh, if any filters are preset
-if (!presetFilters.ready()) {
-    document.getElementById('reload').setAttribute('disabled', 'disabled');
-}
-
-// Initialize date range picker
-const dateRangePicker = new DateRangePicker(
-    document.getElementById('dateRangePicker'),
-    {
-        allowOneSidedRange: true,
-        weekStart: 1,
-        todayBtn: true,
-        todayBtnMode: 1,
-        todayHighlight: true,
-        language: window.YAFFA.language,
-        format: 'yyyy-mm-dd',
-        autohide: true,
-        buttonClass: 'btn',
-    }
-);
+const hasInitialFilters =
+    !!currentDateFilters.dateFrom ||
+    !!currentDateFilters.dateTo ||
+    (!!currentDateFilters.preset && currentDateFilters.preset !== 'none');
 
 /**
  * Helper function to get adjusted cash flow in the context of the current account
@@ -82,7 +48,6 @@ const processTransaction = function (transaction) {
 };
 
 let initialLoad = true;
-let isPresetChange = false;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
@@ -93,19 +58,18 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             return;
         }
 
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
         const params = new URLSearchParams();
-        if (dates[0]) {
-            params.append('date_from', dates[0]);
+        if (currentDateFilters.dateFrom) {
+            params.append('date_from', currentDateFilters.dateFrom);
         }
-        if (dates[1]) {
-            params.append('date_to', dates[1]);
+        if (currentDateFilters.dateTo) {
+            params.append('date_to', currentDateFilters.dateTo);
         }
         params.append('accounts[]', account.id);
 
         // Ajax will now only fire programmatically, via ajax.reload()
         fetch(
-            '/api/transactions?' + params,
+            '/api/v1/transactions?' + params,
             {
                 method: 'GET',
                 headers: {
@@ -124,7 +88,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             });
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -132,13 +96,13 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             render: function (_data, type, row) {
                 if (type === 'filter') {
                     return (!row.schedule
-                        && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                        && (row.config_type === 'standard' || row.config_type === 'investment')
                             ? (row.reconciled ? __('Reconciled') : __('Uncleared'))
                             : __('Unavailable')
                     );
                 }
                 return (!row.schedule
-                    && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                    && (row.config_type === 'standard' || row.config_type === 'investment')
                         ? (row.reconciled
                                 ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                 : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -211,8 +175,8 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 let dtSchedule = $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/transactions/get_scheduled_items/schedule' +
-            '?accountEntity=' + window.account.id +
+        url: '/api/v1/transactions/scheduled-items?type=schedule' +
+            '&accountEntity=' + window.account.id +
             '&accountSelection=selected',
         type: 'GET',
         dataSrc: function (data) {
@@ -224,7 +188,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amountCustom,
@@ -311,7 +275,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
 
     $(this).addClass('busy');
 
-    axios.patch('/api/transactions/' + id + '/skip')
+    axios.patch('/api/v1/transactions/' + id + '/skip')
         .then(function (response) {
             // Find and update original row in schedule table
             let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
@@ -362,7 +326,7 @@ let getAccountBalance = function () {
             elementCurrentBalance.innerHTML =
                 '<i class="fa fa-fw fa-spinner fa-spin"></i>';
 
-    axios.get('/api/account/balance/' + window.account.id)
+    axios.get('/api/v1/accounts/' + window.account.id + '/balance')
         .then(function (response) {
             // Check if the response is valid data
             if (response.data.result === 'busy') {
@@ -381,34 +345,34 @@ let getAccountBalance = function () {
 
             elementOpeningBalance.innerText = toFormattedCurrency(
                 balance.config.opening_balance,
-                window.YAFFA.locale,
+                window.YAFFA.userSettings.locale,
                 balance.config.currency
             );
 
             elementCurrentCash.innerText = toFormattedCurrency(
                 balance.cash,
-                window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                window.YAFFA.userSettings.locale,
+                window.YAFFA.userSettings.baseCurrency
             );
 
             if (balance.hasOwnProperty('cash_foreign')) {
                 elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
                     balance.cash_foreign,
-                    window.YAFFA.locale,
+                    window.YAFFA.userSettings.locale,
                     balance.config.currency
                 );
             }
 
             elementCurrentBalance.innerText = toFormattedCurrency(
                 balance.sum,
-                window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                window.YAFFA.userSettings.locale,
+                window.YAFFA.userSettings.baseCurrency
             );
 
             if (balance.hasOwnProperty('sum_foreign')) {
                 elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
                     balance.sum_foreign,
-                    window.YAFFA.locale,
+                    window.YAFFA.userSettings.locale,
                     balance.config.currency
                 );
             }
@@ -443,13 +407,13 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
-        type: 'PUT',
-        url: '/api/transaction/' + currentId + '/reconciled/' + (currentState ? 0 : 1),
-        data: {
-            "_token": csrfToken,
-        },
-        dataType: "json",
-        context: this,
+        type: 'PATCH',
+        url: '/api/v1/transactions/' + currentId + '/reconciliation',
+        data: JSON.stringify({
+            "reconciled": currentState ? false : true,
+        }),
+        contentType: 'application/json',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             let row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
                 return data.id === currentId
@@ -470,123 +434,47 @@ $('input[name=reconciled]').on("change", function () {
 
 // Function to reload table data
 function reloadTable() {
-    document.getElementById('reload').setAttribute('disabled', 'disabled');
     dtHistory.ajax.reload(function () {
-        document.getElementById('reload').removeAttribute('disabled');
-
         // (Re-)Initialize tooltips in table
         helpers.initializeBootstrapTooltips();
     });
 }
 
-// Reload button functionality
-$("#reload").on('click', reloadTable);
+const handleDateRangeUpdated = ({dateFrom, dateTo, preset}) => {
+    currentDateFilters = {
+        dateFrom: dateFrom || null,
+        dateTo: dateTo || null,
+        preset: preset || null,
+    };
 
-$("#clear_dates").on('click', function () {
-    dateRangePicker.setDates(
-        {clear: true},
-        {clear: true}
-    );
-})
+    reloadTable();
+};
 
-// Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
-    isPresetChange = true;
-    const preset = this.options[this.selectedIndex].value;
-    const date = new Date();
-    let start;
-    let end;
-
-    // Get the start and end dates based on the selected preset and the external calculator functions
-    const calculator = presetCalculators[preset];
-    if (calculator) {
-        const dates = calculator(date);
-        start = dates.start;
-        end = dates.end;
-    } else {
-        start = {clear: true};
-        end = {clear: true};
-    }
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-    isPresetChange = false;
+const dateRangeApp = createApp({
+    components: {
+        DateRangeFilterCard,
+    },
+    data() {
+        return {
+            initialDateFrom: currentDateFilters.dateFrom,
+            initialDateTo: currentDateFilters.dateTo,
+            initialPreset: currentDateFilters.preset,
+        };
+    },
+    methods: {
+        onDateRangeUpdated(payload) {
+            handleDateRangeUpdated(payload);
+        },
+    },
+    mounted() {
+        if (hasInitialFilters && this.$refs.dateFilter?.emitDates) {
+            this.$refs.dateFilter.emitDates();
+        }
+    },
 });
 
-let rebuildUrl = function () {
-    let params = [];
-
-    if (isPresetChange) {
-        const preset = document.getElementById('dateRangePickerPresets').value;
-        if (preset && preset !== 'none') {
-            params.push('date_preset=' + preset);
-        }
-    } else {
-
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
-        // Date from
-        if (dates[0]) {
-            params.push('date_from=' + dates[0]);
-        }
-
-        // Date to
-        if (dates[1]) {
-            params.push('date_to=' + dates[1]);
-        }
-    }
-
-    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
-}
-
-// Attach event listener to date pickers
-document.getElementById('date_from').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-document.getElementById('date_to').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-
-// Set initial dates
-if (filters.date_from || filters.date_to) {
-    const start = (filters.date_from ? filters.date_from : {clear: true});
-    const end = (filters.date_to ? filters.date_to : {clear: true});
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-    presetFilters.date_from = true;
-    presetFilters.date_to = true;
-
-    // If all preset filters are ready, reload table data
-    if (presetFilters.ready()) {
-        reloadTable();
-    }
-} else if (filters.date_preset && filters.date_preset !== 'none') {
-    // If date preset is set, apply it
-    document.getElementById('dateRangePickerPresets').value = filters.date_preset;
-    const event = new Event('change');
-    document.getElementById('dateRangePickerPresets').dispatchEvent(event);
-
-    presetFilters.date_preset = true;
-    // If all preset filters are ready, reload table data
-    if (presetFilters.ready()) {
-        reloadTable();
-    }
-} else if (filters.date_preset && filters.date_preset === 'none') {
-    presetFilters.date_preset = true;
-    // At the moment we don't expect any other filters, and the table does not need to be reloaded
-}
+installRouteGlobal(dateRangeApp);
+dateRangeApp.mount('#account-date-range-filter');
 
 // Set up event listener for new standard transaction button
 $('#create-standard-transaction-button').on('click', function () {
@@ -595,9 +483,7 @@ $('#create-standard-transaction-button').on('click', function () {
 
     // Create transaction daft
     const transaction = {
-        transaction_type: {
-            name: 'withdrawal'
-        },
+        transaction_type: 'withdrawal',
         schedule: false,
         budget: false,
         date: new Date(),
@@ -626,9 +512,7 @@ $('#create-investment-transaction-button').on('click', function () {
 
     // Create transaction daft
     const transaction = {
-        transaction_type: {
-            name: 'Buy',
-        },
+        transaction_type: 'buy',
         schedule: false,
         budget: false,
         date: new Date(),
@@ -709,8 +593,8 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
     this.classList.add('busy');
     const button = this;
 
-    axios.put(window.route(
-        'api.account.updateMonthlySummary',
+    axios.post(window.route(
+        'api.v1.accounts.monthly-summary',
         {accountEntity: window.account.id}
     ))
         .then(function (response) {
@@ -729,16 +613,18 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 });
 
 // Initialize Vue for the quick view
-import {createApp} from 'vue'
+import { createApp } from 'vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
-import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
+import CreateStandardTransactionModal from '@/transactions/components/form/ModalStandard.vue'
+import CreateInvestmentTransactionModal from '@/transactions/components/form/ModalInvestment.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', CreateStandardTransactionModal)

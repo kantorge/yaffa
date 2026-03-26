@@ -1,10 +1,10 @@
 @extends('template.layouts.page')
 
-@section('title_postfix',  __('My profile'))
+@section('title_postfix',  __('User settings'))
 
 @section('content_container_classes', 'container-md')
 
-@section('content_header', __('My profile'))
+@section('content_header', __('User settings'))
 
 @section('content')
     <div id="app">

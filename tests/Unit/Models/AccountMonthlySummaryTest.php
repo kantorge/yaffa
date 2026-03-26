@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountGroup;
 use App\Models\AccountMonthlySummary;
 use App\Models\Currency;
@@ -13,7 +14,6 @@ use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -109,7 +109,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
 
             ])
             ->save();
@@ -134,7 +134,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'deposit')->first()->id,
+                'transaction_type' => TransactionTypeEnum::DEPOSIT->value,
             ])
             ->save();
 
@@ -158,7 +158,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'transaction_type' => TransactionTypeEnum::TRANSFER->value,
             ])
             ->save();
 
@@ -182,7 +182,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'transaction_type' => TransactionTypeEnum::TRANSFER->value,
             ])
             ->save();
 
@@ -208,7 +208,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'transaction_type' => TransactionTypeEnum::BUY->value,
                 // By default this would be calculated by the ProcessTransactionCreated listener
                 'cashflow_value' => -70,
             ])
@@ -234,7 +234,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ])
             ->save();
 
@@ -259,7 +259,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $dateNextMonth,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ])
             ->save();
 
@@ -296,7 +296,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'transaction_type' => TransactionTypeEnum::BUY->value,
             ])
             ->save();
 
@@ -322,7 +322,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'transaction_type' => TransactionTypeEnum::BUY->value,
             ])
             ->save();
 
@@ -348,7 +348,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $date,
-                'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
+                'transaction_type' => TransactionTypeEnum::SELL->value,
             ])
             ->save();
 
@@ -375,7 +375,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->make([
                 'date' => $dateNextMonth,
-                'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
+                'transaction_type' => TransactionTypeEnum::SELL->value,
             ])
             ->save();
 

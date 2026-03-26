@@ -4,8 +4,10 @@ namespace Tests\Browser\Pages\Tags;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('extended')]
 class TagListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -42,7 +44,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags')
                 // Check that the tag list is visible
@@ -101,7 +103,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Click the "Add" button
                 ->click('@button-new-tag')
                 // Wait for the form to load
@@ -123,14 +125,14 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags');
 
             // Click the "Edit" button for the first tag
             $browser->with('@table-tags', function ($table) use ($tagToEdit) {
                 // After save option "return to selected account" should be always visible
-                $table->click('a[href="' . route('tag.edit', $tagToEdit) . '"]');
+                $table->click('a[href="' . route('tags.edit', $tagToEdit) . '"]');
             });
             // Wait for the form to load
             $browser->waitFor('@form-tag')
@@ -154,7 +156,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags');
 

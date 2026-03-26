@@ -4,8 +4,10 @@ namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionFormStandardModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -37,7 +39,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 // The modal should be visible
                 ->assertVisible('#modal-transaction-form-standard')
                 // The form should be visible
@@ -60,7 +62,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
 
                 // Verify that the add new payee button is visible next to the account to dropdown
                 ->assertNotPresent('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
@@ -91,7 +93,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormStandard')
 
                 // Test the reconciled checkbox with prefixed ID
@@ -117,18 +119,19 @@ class TransactionFormStandardModalTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                // Load the view for a random account
+                // Load the view for an account of the user
                 ->visitRoute('account-entity.show', ['account_entity' => 1])
                 // Wait for the page to load
                 ->waitForText('Account details')
                 // Click the "new transaction" button
                 ->click('#create-standard-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormStandard')
+                ->waitFor('#account_to', 10)
 
                 // Fill the form
-                // Account from is pre-selected (account_entity 1)
+                // Account (account from) is pre-selected (account_entity 1)
                 // Select payee (account to), random from dropdown
                 ->select2('#account_to', null, 10)
                 // Add amount
@@ -136,6 +139,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Allocate the same amount to a random category by adding one new item
                 ->click('@button-add-transaction-item')
                 // Set the first category input
+                ->waitFor('#transaction_item_container .transaction_item_row select.category', 10)
                 ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
                 // Set the first amount to the same amount as the transaction
                 ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')

@@ -52,6 +52,9 @@ use Exception;
  * @method static Builder|TransactionSchedule whereTransactionId($value)
  * @method static Builder|TransactionSchedule whereUpdatedAt($value)
  * @mixin Eloquent
+ * @method static Builder<static>|TransactionSchedule whereActive($value)
+ * @method static Builder<static>|TransactionSchedule whereAutomaticRecording($value)
+ * @mixin \Eloquent
  */
 class TransactionSchedule extends Model
 {
@@ -60,7 +63,7 @@ class TransactionSchedule extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'transaction_id',

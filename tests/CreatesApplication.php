@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 
 trait CreatesApplication
@@ -13,6 +15,17 @@ trait CreatesApplication
      */
     protected static bool $createApplicationHasRunOnce = false;
 
+    /**
+     * Creates the application.
+     */
+    public function createApplication(): Application
+    {
+        $app = require __DIR__ . '/../bootstrap/app.php';
+
+        $app->make(Kernel::class)->bootstrap();
+
+        return $app;
+    }
 
     /**
      * Clears Laravel Cache.

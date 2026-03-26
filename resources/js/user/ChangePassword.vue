@@ -83,10 +83,10 @@
 </template>
 
 <script>
-  import { __ } from '../i18n';
+  import { __ } from '@/shared/lib/i18n';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
-  import * as toastHelpers from '../toast';
+  import * as toastHelpers from '@/shared/lib/toast';
 
   export default {
     name: 'ChangePassword',
@@ -100,7 +100,7 @@
         password: '',
         password_confirmation: '',
       }),
-      sandbox_mode: window.sandbox_mode,
+      sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     methods: {
       onSubmit() {
@@ -109,7 +109,7 @@
 
         // Make the API call
         this.form
-          .patch(window.route('user.change_password'), this.form)
+          .patch(this.route('api.v1.users.me.password'), this.form)
           .then(function () {
             toastHelpers.showSuccessToast(__('Password changed successfully.'));
 

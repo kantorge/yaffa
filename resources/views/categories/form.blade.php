@@ -7,7 +7,7 @@
 @section('content_header', __('Categories'))
 
 @section('content')
-@if(isset($category))
+@isset($category)
 <form
     accept-charset="UTF-8"
     action="{{ route('categories.update', $category->id) }}"
@@ -22,7 +22,7 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
 @php
     $previousUrl = url()->previous();
@@ -35,11 +35,11 @@
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($category->id))
+                @isset($category->id)
                     {{ __('Modify category') }}
                 @else
                     {{ __('Add new category') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">
@@ -55,6 +55,34 @@
                         type="text"
                         value="{{old('name', $category->name ?? '' )}}"
                     >
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="description" class="col-form-label col-sm-3">
+                    {{ __('Description') }}
+                </label>
+                <div class="col-sm-9">
+                    <div class="position-relative">
+                        <textarea
+                            class="form-control"
+                            id="description"
+                            name="description"
+                            rows="3"
+                            style="padding-right: 40px;"
+                        >{{ old('description', $category->description ?? '') }}</textarea>
+                        <div class="position-absolute" style="top: 8px; right: 8px;">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                title="{{ __('The description helps AI to better match transactions to this category during document processing.') }}"
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

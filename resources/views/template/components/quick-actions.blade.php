@@ -1,4 +1,4 @@
-<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar" dusk="quick-action-bar">
+<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar">
     <div class="sidebar-header bg-transparent">
         <span class="sidebar-title">
             {{ __('Quick actions') }}
@@ -11,7 +11,7 @@
         <div class="tab-pane active" id="quick-actions" role="tabpanel">
             <div class="list-group list-group-flush">
                 <div class="list-group-item border-start-4 border-start-dark bg-light text-center fw-bold text-medium-emphasis text-uppercase small">
-                    {{ __('New standard transaction') }}
+                    {{ __('New transaction') }}
                 </div>
                 <div class="list-group-item border-start-4 border-start-danger list-group-item-divider">
                     <a
@@ -54,7 +54,7 @@
                     {{ __('New assets') }}
                 </div>
                 <div class="list-group-item border-start-4 border-start-secondary list-group-item-divider">
-                    <a class="nav-link" href="{{ route('investment.create') }}">
+                    <a class="nav-link" href="{{ route('investments.create') }}">
                         <i class="fa fa-2x fa-chart-line text-secondary me-2"></i>
                         {{ __('New investment') }}
                     </a>
@@ -66,7 +66,7 @@
                     </a>
                 </div>
                 <div class="list-group-item border-start-4 border-start-secondary list-group-item-divider">
-                    <a class="nav-link" href="{{ route('tag.create') }}">
+                    <a class="nav-link" href="{{ route('tags.create') }}">
                         <i class="fa fa-2x fa-tags text-secondary me-2"></i>
                         {{ __('New tag') }}
                     </a>

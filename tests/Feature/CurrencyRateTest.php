@@ -102,6 +102,6 @@ class CurrencyRateTest extends TestCase
                 'to' => $baseCurrency
             ]))
             ->assertStatus(200)
-            ->assertViewIs("currency-rate.index");
+            ->assertViewIs('currency-rates.index');
     }
 }

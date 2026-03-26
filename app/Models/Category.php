@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $description
  * @property bool $active
  * @property int|null $parent_id
  * @property Carbon|null $created_at
@@ -46,6 +47,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder|Category whereParentId($value)
  * @method static Builder|Category whereUpdatedAt($value)
  * @method static Builder|Category whereUserId($value)
+ * @property string $default_aggregation
+ * @property-read Collection<int, Category> $children
+ * @property-read int|null $children_count
+ * @property-read Collection<int, AccountEntity> $payeesDefaulting
+ * @property-read int|null $payees_defaulting_count
+ * @property-read Collection<int, AccountEntity> $payeesPreferring
+ * @property-read int|null $payees_preferring_count
+ * @property-read \Illuminate\Database\Eloquent\Relations\Pivot|null $pivot
+ * @method static Builder<static>|Category childCategory()
+ * @method static Builder<static>|Category parentCategory()
+ * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
 class Category extends Model
@@ -56,10 +68,11 @@ class Category extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
+        'description',
         'active',
         'parent_id',
         'default_aggregation',
@@ -88,6 +101,7 @@ class Category extends Model
 
     public function getFullNameAttribute(): string
     {
+        $this->loadMissing('parent');
         $parent = $this->relationLoaded('parent') ? $this->getRelation('parent') : null;
         $hasValidParent = $parent && $parent->getKey() !== $this->getKey();
 

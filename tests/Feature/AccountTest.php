@@ -50,7 +50,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         // User is redirected to create an account group first
-        $response->assertRedirectToRoute('account-group.create');
+        $response->assertRedirectToRoute('account-groups.create');
     }
 
     public function test_user_cannot_create_new_account_without_a_currency(): void
@@ -63,7 +63,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         // User is redirected to create a currency first
-        $response->assertRedirectToRoute('currency.create');
+        $response->assertRedirectToRoute('currencies.create');
     }
 
     public function test_guest_cannot_access_resource(): void
@@ -117,7 +117,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'account']));
 
         $response->assertStatus(200);
-        $response->assertViewIs('account.index');
+        $response->assertViewIs('accounts.index');
     }
 
     public function test_user_can_access_create_form(): void
@@ -133,7 +133,7 @@ class AccountTest extends TestCase
             ->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs('account.form');
+        $response->assertViewIs('accounts.form');
     }
 
     public function test_user_cannot_create_an_account_with_missing_data(): void
@@ -200,7 +200,7 @@ class AccountTest extends TestCase
             );
 
         $response->assertStatus(200);
-        $response->assertViewIs('account.form');
+        $response->assertViewIs('accounts.form');
     }
 
     public function test_user_cannot_update_an_account_with_missing_data(): void

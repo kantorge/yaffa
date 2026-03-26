@@ -4,11 +4,13 @@ namespace Tests\Browser\Pages\Partials;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 use Throwable;
 
-const QUICK_ACTION_BAR_SELECTOR = '@quick-action-bar';
+const QUICK_ACTION_BAR_SELECTOR = '#quick-action-bar';
 
+#[Group('extended')]
 class QuickActionBarTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

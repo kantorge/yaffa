@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
 use App\Models\Investment;
@@ -10,6 +12,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Batchable;
@@ -30,10 +33,11 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     use SerializesModels;
 
     private User $user;
-    private AccountEntity|null $accountEntity;
+    private ?AccountEntity $accountEntity;
     private string $task;
-    private Carbon|null $dateFrom;
-    private Carbon|null $dateTo;
+    private ?Carbon $dateFrom;
+    private ?Carbon $dateTo;
+    private InvestmentService $investmentService;
 
     public int $timeout = 240;
 
@@ -43,9 +47,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     public function __construct(
         User $user,
         string $task,
-        AccountEntity $accountEntity = null,
-        Carbon $dateFrom = null,
-        Carbon $dateTo = null
+        ?AccountEntity $accountEntity = null,
+        ?Carbon $dateFrom = null,
+        ?Carbon $dateTo = null
     ) {
         // The user is always required, but used only for the budget task, where no account is provided
         $this->user = $user;
@@ -58,8 +62,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(InvestmentService $investmentService): void
     {
+        $this->investmentService = $investmentService;
+
         switch ($this->task) {
             case 'account_balance-fact':
                 $this->handleAccountBalanceFact();
@@ -174,13 +180,19 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * Get the monthly summary data for standard transactions for the account (accountEntity) provided at class level.
      * The function loops through all months between the first and last transaction associated with the account.
      * and also prepends the opening balance as the first available month.
+     *
+     * When dateFrom and dateTo are both provided (partial recalculation), only data within that range is generated
+     * and the opening balance is not added again (it was already stored during a previous full recalculation).
      */
     private function getAccountBalanceFactData(): Collection
     {
-        // Get the dates of the first and last transaction for this account
+        // Get the dates of the first and last transaction for this account.
+        // When dateTo is set, the period is capped at that date to avoid regenerating and duplicating
+        // records for months that are outside the targeted recalculation range.
         $firstTransactionDate = $this->dateFrom ??
             Carbon::parse($this->accountEntity->allTransactionDates()->min('date'));
-        $lastTransactionDate = Carbon::parse($this->accountEntity->allTransactionDates()->max('date'));
+        $lastTransactionDate = $this->dateTo ??
+            Carbon::parse($this->accountEntity->allTransactionDates()->max('date'));
 
         // Loop through all months between the first and last transaction, using the first day of the month
         $period = CarbonPeriod::between(
@@ -216,21 +228,27 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             ]);
         }
 
-        // Add the opening balance before the first known month
-        if (count($results) > 0) {
-            $newDate = $firstTransactionDate->subMonth();
-        } else {
-            $newDate = Carbon::now()->startOfMonth();
-        }
+        // Only add the opening balance for a full (non-partial) recalculation.
+        // When dateFrom is set (partial recalculation), the opening balance already exists from a prior
+        // full recalculation and must not be inserted again to avoid duplicating it.
+        if ($this->dateFrom === null) {
+            if (count($results) > 0) {
+                $newDate = $firstTransactionDate->subMonth();
+            } else {
+                $newDate = Carbon::now()->startOfMonth();
+            }
 
-        $results->prepend([
-            'date' => $newDate,
-            'user_id' => $this->accountEntity->user_id,
-            'account_entity_id' => $this->accountEntity->id,
-            'transaction_type' => 'account_balance',
-            'data_type' => 'fact',
-            'amount' => $this->accountEntity->config->opening_balance,
-        ]);
+            $results->prepend([
+                'date' => $newDate,
+                'user_id' => $this->accountEntity->user_id,
+                'account_entity_id' => $this->accountEntity->id,
+                'transaction_type' => 'account_balance',
+                'data_type' => 'fact',
+                'amount' => $this->accountEntity->config instanceof Account
+                    ? $this->accountEntity->config->opening_balance
+                    : 0,
+            ]);
+        }
 
         return $results;
     }
@@ -314,7 +332,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Split the transactions into from and to transactions
             [$transactionsFrom, $transactionsTo] = ($scheduledStandardTransactionInstances[$month] ?? collect())->partition(
                 fn (Transaction $transaction) =>
-                    $transaction->config->account_from_id === $this->accountEntity->id
+                    $transaction->config instanceof TransactionDetailStandard
+                    && $transaction->config->account_from_id === $this->accountEntity->id
             );
 
             $amountFrom = $transactionsFrom->sum('config.amount_from');
@@ -399,7 +418,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         // Get all active scheduled investment transactions for this account
         $scheduledTransactions = Transaction::with([
             'config',
-            'transactionType',
             'transactionSchedule',
         ])
             ->byType('investment')
@@ -413,17 +431,13 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            // Additionally, exclude items where the transactiontype is not associated with a quantity operator
-            ->whereHas(
-                'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_multiplier')
-            )
+            // Filter items where the transaction type has a quantity operator
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->get();
 
         // Get all fact transactions for this account, as it is used as a baseline for the forecast
         $factTransactions = Transaction::with([
             'config',
-            'transactionType',
             'transactionSchedule',
         ])
             ->byType('investment')
@@ -433,11 +447,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            // Additionally, exclude items where the transactiontype is not associated with a quantity operator
-            ->whereHas(
-                'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_multiplier')
-            )
+            // Filter items where the transaction type has a quantity operator
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->get();
 
         // Get all instances of the schedules, added to a new transactions collection
@@ -460,6 +471,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
         $results = new Collection();
         $currentTransactionCount = 0;
+        $quantities = collect();
 
         foreach ($period as $month) {
             // Create a Carbon instance of the month
@@ -481,15 +493,15 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 $quantities = $groupedTransactions->map(
                     fn ($group) => $group->sum(
                         fn ($transaction) => $transaction->config->quantity *
-                            $transaction->transactionType->quantity_multiplier
+                            $transaction->transaction_type->quantityMultiplier()
                     )
                 );
             }
 
             $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth) {
                 // Get the latest known price up to this date
-                $latestPrice = Investment::find($investmentId)
-                    ->getLatestPrice('combined', $carbonEndOfMonth);
+                $investment = Investment::find($investmentId);
+                $latestPrice = $this->investmentService->getLatestPrice($investment, 'combined', $carbonEndOfMonth);
 
                 return $quantity * $latestPrice;
             })
@@ -555,7 +567,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                         fn ($query) => $query->where(
                             // Withdrawals without an account_from_id
                             fn ($query) => $query
-                                ->whereHas('transactionType', fn ($query) => $query->where('name', 'withdrawal'))
+                                ->where('transaction_type', 'withdrawal')
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -566,7 +578,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                             // Deposits without an account_to_id
                             ->orWhere(
                                 fn ($query) => $query
-                                    ->whereHas('transactionType', fn ($query) => $query->where('name', 'deposit'))
+                                    ->where('transaction_type', 'deposit')
                                     ->orWhereHasMorph(
                                         'config',
                                         TransactionDetailStandard::class,

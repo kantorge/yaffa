@@ -15,6 +15,7 @@ class CurrencyRateService
     {
         $query = CurrencyRate::where('from_id', $fromId)
             ->where('to_id', $toId)
+            ->select(['id', 'date', 'rate'])
             ->orderBy('date');
 
         if ($dateFrom) {
@@ -35,6 +36,7 @@ class CurrencyRateService
     {
         return CurrencyRate::where('from_id', $fromId)
             ->where('to_id', $toId)
+            ->select(['id', 'date', 'rate'])
             ->orderBy('date')
             ->get();
     }

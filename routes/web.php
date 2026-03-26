@@ -5,20 +5,18 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\AiDocumentController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
-use App\Http\Controllers\ReceivedMailController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
-use App\Mail\TransactionCreatedFromEmail;
-use App\Models\ReceivedMail;
 use Illuminate\Support\Facades\Route;
 
 /*********************
@@ -30,7 +28,7 @@ Route::view('/terms', 'pages.sandbox-terms')->name('terms');
 /*********************
  * Account and payee related routes
  ********************/
-Route::resource('account-group', AccountGroupController::class)->except(['show']);
+Route::resource('account-groups', AccountGroupController::class)->except(['show']);
 
 Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
@@ -56,9 +54,9 @@ Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])
 /*********************
  * Currency and currency rate related routes
  ********************/
-Route::resource('currency', CurrencyController::class)->except(['show']);
-Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
-    ->name('currency.setDefault');
+Route::resource('currencies', CurrencyController::class)->except(['show']);
+Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
+    ->name('currencies.setDefault');
 
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
@@ -66,8 +64,8 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 /*********************
  * Investment related routes
  ********************/
-Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
-Route::resource('investment', InvestmentController::class);
+Route::resource('investment-groups', InvestmentGroupController::class)->except(['show']);
+Route::resource('investments', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
@@ -75,7 +73,7 @@ Route::get('/investment-price/list/{investment}', [InvestmentPriceController::cl
 /*********************
  * Tag related routes
  ********************/
-Route::resource('tag', TagController::class)
+Route::resource('tags', TagController::class)
     ->except(['show']);
 
 /*******************
@@ -106,13 +104,9 @@ Route::get('/reports/transactions', [ReportController::class, 'transactionsByCri
     ->name('reports.transactions');
 Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
 
-/*******************
+/**
  * Miscellanous routes
- *******************/
-
-// Received emails
-Route::resource('received-mail', ReceivedMailController::class)
-    ->only(['index', 'show', 'destroy']);
+ */
 
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');
@@ -120,8 +114,17 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 // Route for the CSV import functionality
 Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
 
+// AI document routes
+Route::get('/ai-documents', [AiDocumentController::class, 'index'])
+    ->name('ai-documents.index');
+Route::get('/ai-documents/{aiDocument}', [AiDocumentController::class, 'show'])
+    ->name('ai-documents.show');
+Route::get('/ai-documents/{aiDocument}/files/{aiDocumentFile}', [AiDocumentController::class, 'file'])
+    ->name('ai-documents.files.show');
+
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
+Route::get('/user/ai-settings', [UserController::class, 'aiSettings'])->name('user.ai-settings');
 
 /*******************
  * Authentication and verification routes
@@ -136,22 +139,3 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::post('/email/verification-notification', [VerificationController::class, 'send'])
     ->middleware(['auth', 'throttle:6,1'])
     ->name('verification.send');
-
-/********************
- * Test routes, only available if environment is local
- ********************/
-if (app()->environment('local')) {
-    Route::get('/test/email/transactioncreatedbyai', function () {
-        /** @var ReceivedMail $mail */
-        $mail = ReceivedMail::factory()->withTransaction()->create();
-        $message = (new TransactionCreatedFromEmail($mail));
-        return $message->render();
-    });
-
-    Route::get('/test/email/transactionerrorfromemail', function () {
-        /** @var ReceivedMail $mail */
-        $mail = ReceivedMail::factory()->create();
-        $message = (new App\Mail\TransactionErrorFromEmail($mail, 'This is a test error'));
-        return $message->render();
-    });
-}

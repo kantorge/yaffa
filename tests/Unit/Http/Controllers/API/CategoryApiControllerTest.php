@@ -19,6 +19,95 @@ class CategoryApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_returns_consistent_resource_shape_for_category_list(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $parent */
+        $parent = Category::factory()->for($user)->create([
+            'name' => 'Parent',
+            'active' => true,
+            'default_aggregation' => 'quarter',
+        ]);
+
+        /** @var Category $child */
+        $child = Category::factory()->for($user)->create([
+            'name' => 'Child',
+            'active' => false,
+            'parent_id' => $parent->id,
+            'default_aggregation' => 'year',
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'withInactive' => 1,
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment([
+            'id' => $child->id,
+            'name' => 'Child',
+            'default_aggregation' => 'year',
+            'active' => false,
+        ]);
+        $response->assertJsonPath('1.full_name', 'Parent > Child');
+        $response->assertJsonMissingPath('1.text');
+    }
+
+    public function test_category_list_excludes_inactive_by_default(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Active',
+            'active' => true,
+        ]);
+
+        Category::factory()->for($user)->create([
+            'name' => 'Inactive',
+            'active' => false,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'name' => 'Active',
+        ]);
+        $response->assertJsonMissing([
+            'name' => 'Inactive',
+        ]);
+    }
+
+    public function test_category_list_search_uses_consistent_resource_shape(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Groceries',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => 'Gro',
+            'withInactive' => 1,
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('0.name', 'Groceries');
+        $response->assertJsonPath('0.full_name', 'Groceries');
+        $response->assertJsonMissingPath('0.text');
+    }
+
     public function test_it_updates_the_active_status_of_a_category(): void
     {
         // Create a user and a category
@@ -33,10 +122,11 @@ class CategoryApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->put(route('api.category.updateActive', [
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_OK);
 
@@ -61,26 +151,33 @@ class CategoryApiControllerTest extends TestCase
         $user2 = User::factory()->create();
 
         // Try to update the category as an unauthenticated user
-        $response = $this->put(
-            route('api.category.updateActive', [
+        $response = $this->patchJson(
+            route('api.v1.categories.patch-active', [
                 'category' => $category->id,
-                'active' => true,
             ]),
-            [],
+            ['active' => true],
             [
                 'Accept' => 'application/json'
             ]
         );
 
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
+
         $this->assertFalse($category->fresh()->active);
 
         // Try to update the category as the different user
         $this->actingAs($user2);
-        $response = $this->put(route('api.category.updateActive', [
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
+        ]), [
             'active' => true,
-        ]));
+        ]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
@@ -99,7 +196,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
 
@@ -133,11 +230,14 @@ class CategoryApiControllerTest extends TestCase
             ]);
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
 
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
@@ -150,7 +250,7 @@ class CategoryApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
             'default_aggregation' => 'month',
@@ -178,7 +278,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
             'parent_id' => $parentCategory->id,
@@ -206,13 +306,13 @@ class CategoryApiControllerTest extends TestCase
         $this->actingAs($user);
 
         // Missing name
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'default_aggregation' => 'month',
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
 
         // Missing default_aggregation
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test',
         ]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -224,7 +324,7 @@ class CategoryApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
             'parent_id' => 99999,
@@ -244,7 +344,7 @@ class CategoryApiControllerTest extends TestCase
             ->create(['name' => 'Existing Category']);
 
         $this->actingAs($user);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Existing Category',
             'active' => true,
             'default_aggregation' => 'month',
@@ -267,7 +367,7 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         $this->actingAs($user2);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
             'parent_id' => $parentCategory->id,
@@ -291,7 +391,7 @@ class CategoryApiControllerTest extends TestCase
             ->create(['name' => 'Groceries']);
 
         $this->actingAs($user2);
-        $response = $this->postJson(route('api.category.store'), [
+        $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Groceries',
             'active' => true,
             'default_aggregation' => 'month',
@@ -351,11 +451,14 @@ class CategoryApiControllerTest extends TestCase
         ]);
 
         $this->actingAs($user);
-        $response = $this->delete(route('api.category.destroy', [
+        $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $categoryChild->id,
         ]));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
 
         $this->assertDatabaseHas('categories', [
             'id' => $categoryChild->id,

@@ -26,17 +26,17 @@ jobs:
         environment: ${{ github.event_name == 'release' && fromJSON('["Private", "Sandbox"]') || fromJSON(format('["{0}"]', github.event.inputs.environment)) }}
     environment: ${{ matrix.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.release.tag_name || github.event.inputs.ref_name }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
@@ -66,7 +66,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_REF: ${{ github.event.release.tag_name }}
+          DEPLOY_REF: ${{ github.event.release.tag_name || github.event.inputs.ref_name }}
         uses: deployphp/action@master
         with:
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}

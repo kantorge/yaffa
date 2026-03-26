@@ -1,8 +1,8 @@
 import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
-import * as dataTableHelpers from './../components/dataTableHelper';
-import { getDataTablesLanguageOptions } from '../i18n';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import { getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -29,14 +29,14 @@ var dtColumnSettingPayee = {
     title: __('Payee'),
     defaultContent: '',
     render: function (_data, _type, row) {
-        if (row.transaction_type.type === 'standard') {
-            if (row.transaction_type.name === 'withdrawal') {
+        if (row.config_type === 'standard') {
+            if (row.transaction_type === 'withdrawal') {
                 return row.account_to_name;
             }
-            if (row.transaction_type.name === 'deposit') {
+            if (row.transaction_type === 'deposit') {
                 return row.account_from_name;
             }
-            if (row.transaction_type.name === 'transfer') {
+            if (row.transaction_type === 'transfer') {
                 if (row.transactionOperator === -1) {
                     return __('Transfer to :account', {account: row.account_to_name});
                 } else {
@@ -44,10 +44,10 @@ var dtColumnSettingPayee = {
                 }
             }
         }
-        if (row.transaction_type.type === 'investment') {
+        if (row.config_type === 'investment') {
             return row.account_to_name;
         }
-        if (row.transaction_type.type === 'Opening balance') {
+        if (row.transaction_type === 'Opening balance') {
             return __('Opening balance');
         }
         return '';
@@ -58,7 +58,7 @@ $(selectorHistoryTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: transactionData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -66,7 +66,7 @@ $(selectorHistoryTable).DataTable({
             render: function (_data, type, row) {
                 if (type === 'filter') {
                     return (!row.schedule
-                        && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                        && (row.config_type === 'standard' || row.config_type === 'investment')
                         ? (row.reconciled
                             ? __('Reconciled')
                             : __('Uncleared')
@@ -75,7 +75,7 @@ $(selectorHistoryTable).DataTable({
                     );
                 }
                 return (!row.schedule
-                    && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                    && (row.config_type === 'standard' || row.config_type === 'investment')
                     ? (row.reconciled
                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -94,7 +94,7 @@ $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
         },
@@ -105,7 +105,7 @@ $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
         },
@@ -114,7 +114,7 @@ $(selectorHistoryTable).DataTable({
             title: __('Running total'),
             defaultContent: '',
             render: function (data, type) {
-                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
             createdCell: function (td, cellData) {
@@ -129,7 +129,7 @@ $(selectorHistoryTable).DataTable({
             title: __("Actions"),
             defaultContent: '',
             render: function (_data, _type, row) {
-                if (row.transaction_type.type === 'Opening balance') {
+                if (row.transaction_type === 'Opening balance') {
                     return null;
                 }
                 if (row.schedule) {
@@ -179,7 +179,7 @@ $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: scheduleData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dtColumnSettingPayee,
         dataTableHelpers.transactionColumnDefinition.category,
         {
@@ -189,7 +189,7 @@ $(selectorScheduleTable).DataTable({
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap'
         },
@@ -200,7 +200,7 @@ $(selectorScheduleTable).DataTable({
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap'
         },
@@ -259,13 +259,13 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
-        type: 'PUT',
-        url: '/api/transaction/' + $(this).data("id") + '/reconciled/' + (!currentState ? 1 : 0),
-        data: {
-            "_token": csrfToken,
-        },
-        dataType: "json",
-        context: this,
+        type: 'PATCH',
+        url: '/api/v1/transactions/' + $(this).data("id") + '/reconciliation',
+        data: JSON.stringify({
+            "reconciled": !currentState ? true : false,
+        }),
+        contentType: 'application/json',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             currentState = !currentState;
 
@@ -278,12 +278,14 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
 });
 
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
 
 app.mount('#app')

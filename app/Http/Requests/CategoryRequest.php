@@ -27,6 +27,10 @@ class CategoryRequest extends FormRequest
                     return $query->where('parent_id', $this->parent_id);
                 })->ignore($this->category),
             ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
             'active' => [
                 'boolean',
             ],
@@ -52,6 +56,9 @@ class CategoryRequest extends FormRequest
         $this->merge([
             'active' => $this->active ?? 0,
             'parent_id' => $this->parent_id ?? null,
+            'description' => is_string($this->description) && mb_trim($this->description) === ''
+                ? null
+                : $this->description,
         ]);
     }
 

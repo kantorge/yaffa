@@ -1,0 +1,483 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use App\Models\Category;
+use App\Models\CategoryLearning;
+use App\Models\Investment;
+use Edgaras\StrSim\JaroWinkler;
+use Illuminate\Support\Str;
+use Normalizer;
+
+class AssetMatchingService
+{
+    public const SIMILARITY_THRESHOLD = 0.5;
+
+    public const MAX_SUGGESTIONS = 10;
+
+    private ?User $user = null;
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $resolvedSettings = null;
+
+    private ?int $resolvedSettingsUserId = null;
+
+    private ?AiUserSettingsResolver $settingsResolver = null;
+
+    public function __construct(?User $user = null, ?AiUserSettingsResolver $settingsResolver = null)
+    {
+        $this->user = $user;
+        $this->settingsResolver = $settingsResolver;
+    }
+
+    /**
+     * Find matching accounts based on similarity
+     *
+     * @return array<int, array{id: int, name: string, similarity: float}>
+     */
+    public function matchAccounts(string $accountName): array
+    {
+        if (! $accountName || ! $this->user) {
+            return [];
+        }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
+
+        $accounts = $this->user
+            ->accounts()
+            ->select('id', 'name', 'alias')
+            ->get();
+
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
+        $matches = [];
+
+        foreach ($accounts as $account) {
+            // Split alias by newline to handle multiple alias values
+            $secondaryParts = $account->alias ? array_filter(array_map('trim', explode("\n", $account->alias))) : [];
+
+            $similarity = $this->calculatePartialSimilarity(
+                $accountName,
+                $account->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= $similarityThreshold) {
+                $matches[] = [
+                    'id' => $account->id,
+                    'name' => $account->name . ($account->alias ? ' (' . $account->alias . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = $this->resolveMaxSuggestions();
+
+        return array_slice($matches, 0, $maxSuggestions);
+    }
+
+    /**
+     * Find matching payees based on similarity
+     *
+     * @return array<int, array{id: int, name: string, similarity: float}>
+     */
+    public function matchPayees(string $payeeName): array
+    {
+        if (! $payeeName || ! $this->user) {
+            return [];
+        }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
+
+        $payees = $this->user
+            ->payees()
+            ->select('id', 'name', 'alias')
+            ->get();
+
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
+        $matches = [];
+
+        foreach ($payees as $payee) {
+            // Split alias by newline to handle multiple alias values
+            $secondaryParts = $payee->alias ? array_filter(array_map('trim', explode("\n", $payee->alias))) : [];
+
+            $similarity = $this->calculatePartialSimilarity(
+                $payeeName,
+                $payee->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= $similarityThreshold) {
+                $matches[] = [
+                    'id' => $payee->id,
+                    'name' => $payee->name . ($payee->alias ? ' (' . $payee->alias . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = $this->resolveMaxSuggestions();
+
+        return array_slice($matches, 0, $maxSuggestions);
+    }
+
+    /**
+     * Find matching investments based on similarity
+     *
+     * @return array<int, array{id: int, name: string, similarity: float}>
+     */
+    public function matchInvestments(string $investmentName): array
+    {
+        if (! $investmentName || ! $this->user) {
+            return [];
+        }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
+
+        $investments = $this->user->investments()->get();
+
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
+        $matches = [];
+
+        foreach ($investments as $investment) {
+            if (! $investment instanceof Investment) {
+                continue;
+            }
+
+            // Create array with symbol and ISIN as separate secondary parts
+            $secondaryParts = array_filter([
+                $investment->symbol,
+                $investment->isin,
+            ]);
+
+            $similarity = $this->calculatePartialSimilarity(
+                $investmentName,
+                $investment->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= $similarityThreshold) {
+                $matches[] = [
+                    'id' => $investment->id,
+                    'name' => $investment->name .
+                        ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') .
+                        ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = $this->resolveMaxSuggestions();
+
+        return array_slice($matches, 0, $maxSuggestions);
+    }
+
+    /**
+     * Find matching category learning records based on similarity
+     *
+     * @return array<int, array{id: int, description: string, category_id: int}>
+     */
+    public function matchCategoryLearning(string $description): array
+    {
+        // These values should be available, but let's be defensive to avoid potential issues in edge cases
+        if (! $description || ! $this->user) {
+            return [];
+        }
+
+        $similarityThreshold = $this->resolveSimilarityThreshold();
+
+        $learningRecords = $this->user->categoryLearning()
+            ->whereHas('category', fn ($q) => $q->where('active', 1))
+            ->get();
+
+        /** @var array<string, array{id: int, description: string, category_id: int, similarity: float, usage_count: int}> $bestMatchesByCategory */
+        $bestMatchesByCategory = [];
+        $normalizedSearch = $this->normalizeForMatching($description);
+
+        foreach ($learningRecords as $learning) {
+            $normalizedItem = $this->normalizeForMatching($learning->item_description);
+            $similarity = $this->computeSimilarity($normalizedSearch, $normalizedItem);
+
+            if ($similarity < $similarityThreshold) {
+                continue;
+            }
+
+            $categoryKey = (string) $learning->category_id;
+            $candidate = [
+                'id' => $learning->id,
+                'description' => $learning->item_description,
+                'category_id' => $learning->category_id,
+                'similarity' => $similarity,
+                'usage_count' => (int) $learning->usage_count,
+            ];
+
+            $existingCandidate = $bestMatchesByCategory[$categoryKey] ?? null;
+            if (
+                $existingCandidate === null
+                || $candidate['similarity'] > $existingCandidate['similarity']
+                || ($candidate['similarity'] === $existingCandidate['similarity'] && $candidate['usage_count'] > $existingCandidate['usage_count'])
+            ) {
+                $bestMatchesByCategory[$categoryKey] = $candidate;
+            }
+        }
+
+        $matches = array_values($bestMatchesByCategory);
+
+        // Sort by similarity descending
+        usort($matches, function (array $a, array $b): int {
+            $similarityComparison = $b['similarity'] <=> $a['similarity'];
+            if ($similarityComparison !== 0) {
+                return $similarityComparison;
+            }
+
+            return $b['usage_count'] <=> $a['usage_count'];
+        });
+
+        // Return top matches
+        $maxSuggestions = $this->resolveMaxSuggestions();
+        $selectedMatches = array_slice($matches, 0, $maxSuggestions);
+
+        return array_map(
+            fn (array $match): array => [
+                'id' => (int) $match['id'],
+                'description' => (string) $match['description'],
+                'category_id' => (int) $match['category_id'],
+            ],
+            $selectedMatches,
+        );
+    }
+
+    /**
+     * Format category learning records for AI prompt (ID: Description [usage_count uses])
+     */
+    public function formatCategoryLearningForPrompt(User $user): string
+    {
+        $learningRecords = $user->categoryLearning()
+            ->with('category')
+            ->whereHas('category', fn ($q) => $q->where('active', 1))
+            ->orderByDesc('usage_count')
+            ->limit(50)
+            ->get();
+
+        if ($learningRecords->isEmpty()) {
+            return 'No category learning data available.';
+        }
+
+        return $learningRecords
+            ->map(fn (CategoryLearning $learning): string => "{$learning->category_id}: {$learning->item_description} ({$learning->usage_count} uses)")
+            ->join("\n");
+    }
+
+    /**
+     * Format active categories for AI prompt (ID: Full Name)
+     */
+    public function formatCategoriesForPrompt(User $user, string $categoryMatchingMode = 'best_match'): string
+    {
+        return $this->resolveCategoryPromptContext($user, $categoryMatchingMode)['categories_list'];
+    }
+
+    /**
+     * Resolve category prompt context for AI category matching.
+     *
+     * The method normalizes the requested mode, loads active categories, applies mode-based
+     * filtering, and falls back to `best_match` if strict filtering would produce an empty
+     * category list. It returns both a flat prompt-friendly category list and a structured
+     * category payload that can include optional descriptions.
+     *
+     * @return array{categories_list: string, categories: array<int, array{id: int, full_name: string, description: string|null}>, applied_category_matching_mode: string, used_mode_fallback: bool}
+     */
+    public function resolveCategoryPromptContext(User $user, string $categoryMatchingMode = 'best_match'): array
+    {
+        // 1) Normalize input mode to a supported category matching mode.
+        $normalizedCategoryMatchingMode = $this->normalizeCategoryMatchingMode($categoryMatchingMode);
+
+        // 2) Load active categories with parent and active child count metadata.
+        $categories = $user->categories()
+            ->active()
+            ->with('parent')
+            ->withCount([
+                'children as active_children_count' => fn ($query) => $query->where('active', 1),
+            ])
+            ->get()
+            ->sortBy('full_name')
+            ->values();
+
+        // 3) Return an explicit empty-state context when no active categories exist.
+        if ($categories->isEmpty()) {
+            return [
+                'categories_list' => 'No active categories configured.',
+                'categories' => [],
+                'applied_category_matching_mode' => $normalizedCategoryMatchingMode,
+                'used_mode_fallback' => false,
+            ];
+        }
+
+        // 4) Apply mode-based filtering and decide whether a best_match fallback is needed.
+        $filteredCategories = $this->filterCategoriesForPrompt($categories, $normalizedCategoryMatchingMode);
+        $appliedCategoryMatchingMode = $normalizedCategoryMatchingMode;
+        $usedModeFallback = false;
+
+        if ($filteredCategories->isEmpty() && $normalizedCategoryMatchingMode !== 'best_match') {
+            $filteredCategories = $categories;
+            $appliedCategoryMatchingMode = 'best_match';
+            $usedModeFallback = true;
+        }
+
+        // 5) Build both prompt text and structured payload for downstream prompt construction.
+        return [
+            'categories_list' => $filteredCategories
+                ->map(fn (Category $category): string => "{$category->id}: {$category->full_name}")
+                ->join("\n"),
+            'categories' => $filteredCategories
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'full_name' => $category->full_name,
+                    'description' => $category->description,
+                ])
+                ->values()
+                ->all(),
+            'applied_category_matching_mode' => $appliedCategoryMatchingMode,
+            'used_mode_fallback' => $usedModeFallback,
+        ];
+    }
+
+    /**
+     * Calculate similarity against primary and optional secondary parts
+     *
+     * Compares search text against primary part first, then against each secondary part separately.
+     * Returns the maximum similarity score. This prevents dilution of scores when
+     * full strings include additional metadata.
+     *
+     * @param  array<string>|null  $secondary  Optional array of secondary strings to compare against
+     */
+    private function calculatePartialSimilarity(string $searchText, string $primary, ?array $secondary = null): float
+    {
+        $normalizedSearch = $this->normalizeForMatching($searchText);
+
+        // Compare against primary part
+        $normalizedPrimary = $this->normalizeForMatching($primary);
+        $primarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedPrimary);
+
+        // If no secondary parts, return primary score
+        if (! $secondary) {
+            return $primarySimilarity;
+        }
+
+        // Compare against each secondary part and find the maximum
+        $maxSecondarySimilarity = 0;
+        foreach ($secondary as $secondaryPart) {
+            if (! $secondaryPart) {
+                continue;
+            }
+
+            $normalizedSecondary = $this->normalizeForMatching($secondaryPart);
+            $secondarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedSecondary);
+
+            $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
+        }
+
+        // Return maximum of primary and best secondary match
+        return max($primarySimilarity, $maxSecondarySimilarity);
+    }
+
+    /**
+     * Compute similarity between two already-normalized strings using Jaro-Winkler.
+     */
+    private function computeSimilarity(string $a, string $b): float
+    {
+        if ($a === '' || $b === '') {
+            return 0.0;
+        }
+
+        return JaroWinkler::similarity($a, $b);
+    }
+
+    /**
+     * Normalize text for robust fuzzy matching.
+     */
+    private function normalizeForMatching(string $value): string
+    {
+        if (class_exists(Normalizer::class)) {
+            $value = Normalizer::normalize($value, Normalizer::FORM_C) ?: $value;
+        }
+
+        $value = Str::lower($value);
+        $value = Str::transliterate($value);
+        $value = preg_replace('/[^\pL\pN\s]+/u', ' ', $value) ?? $value;
+
+        return Str::squish($value);
+    }
+
+    private function normalizeCategoryMatchingMode(string $categoryMatchingMode): string
+    {
+        if (! in_array($categoryMatchingMode, AiUserSettingsResolver::CATEGORY_MATCHING_MODES, true)) {
+            return 'best_match';
+        }
+
+        return $categoryMatchingMode;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Category>  $categories
+     * @return \Illuminate\Database\Eloquent\Collection<int, Category>
+     */
+    private function filterCategoriesForPrompt(\Illuminate\Database\Eloquent\Collection $categories, string $categoryMatchingMode): \Illuminate\Database\Eloquent\Collection
+    {
+        return match ($categoryMatchingMode) {
+            'parent_only' => $categories
+                ->filter(fn (Category $category): bool => $category->parent_id === null)
+                ->values(),
+            'child_only' => $categories
+                ->filter(fn (Category $category): bool => $category->parent_id !== null)
+                ->values(),
+            // 'best_match' mode is handled in the calling method as a fallback, so it doesn't require filtering here
+            // This includes 'parent_preferred' and 'child_preferred' modes, where we want to keep all categories but prefer matches from the specified group in the matching logic
+            default => $categories,
+        };
+    }
+
+    private function resolveSimilarityThreshold(): float
+    {
+        return (float) $this->resolveUserSetting('asset_similarity_threshold', self::SIMILARITY_THRESHOLD);
+    }
+
+    private function resolveMaxSuggestions(): int
+    {
+        return max(1, (int) $this->resolveUserSetting('asset_max_suggestions', self::MAX_SUGGESTIONS));
+    }
+
+    private function resolveUserSetting(string $key, int|float $fallback): int|float
+    {
+        if (! $this->user) {
+            return $fallback;
+        }
+
+        if ($this->resolvedSettingsUserId !== $this->user->id || $this->resolvedSettings === null) {
+            $resolver = $this->settingsResolver ?? app(AiUserSettingsResolver::class);
+            $this->resolvedSettings = $resolver->resolveForUser($this->user);
+            $this->resolvedSettingsUserId = $this->user->id;
+        }
+
+        $value = $this->resolvedSettings[$key] ?? null;
+
+        if ($value === null) {
+            return $fallback;
+        }
+
+        return $value;
+    }
+}

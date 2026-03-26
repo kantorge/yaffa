@@ -2,32 +2,46 @@
 
 namespace Tests\Browser\Pages\Accounts;
 
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
+use App\Models\Currency;
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
+
+#[Group('extended')]
 class AccountListTest extends DuskTestCase
 {
-    protected static bool $migrationRun = false;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Migrate and seed only once for this file
-        if (!static::$migrationRun) {
-            $this->artisan('migrate:fresh');
-            $this->artisan('db:seed');
-            static::$migrationRun = true;
-        }
-    }
+    use DatabaseMigrations;
 
     public function test_user_can_load_the_account_list_and_use_filters(): void
     {
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL)
-            ->load('accounts');
+        // Create a user with accounts, which also needs one currency and one accoun group
+        /** @var User $user */
+        $user = User::factory()->create();
+        Currency::factory()->for($user)->create(['base' => true]);
+        AccountGroup::factory()->for($user)->create();
+
+        // Create 5 active accounts and 3 inactive accounts for the user
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(), 'config')
+            ->count(5)
+            ->create([
+                'active' => true,
+            ]);
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(), 'config')
+            ->count(3)
+            ->create([
+                'active' => false,
+            ]);
 
         // Get the first account of the user.
         $accountToSearch = $user->accounts()->first();

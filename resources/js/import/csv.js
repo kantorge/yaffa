@@ -3,20 +3,22 @@
  * The array of objects is then run throug a rule engine, to create a list of possible transactions.
  */
 
-import 'datatables.net-bs5';
 // Import dataTable helper functions
-import * as dataTableHelpers from './../components/dataTableHelper'
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
-import { toIsoDateString } from '../helpers';
+import 'datatables.net-bs5';
+import * as dataTableHelpers from '@/shared/lib/datatable'
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { toIsoDateString } from '@/shared/lib/helpers';
 
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
 
+// General helper functions
+import { __ } from '@/shared/lib/i18n';
+
 // Select2 for account selection
-import { loadSelect2Language } from '../i18n/select2';
-import select2 from 'select2';
-select2();
-loadSelect2Language(window.YAFFA.language);
+import { initializeSelect2 } from '@/shared/lib/select2';
+initializeSelect2(window.YAFFA.userSettings.language);
+
 import 'jquery-csv';
 
 window.transactions = [];
@@ -150,7 +152,7 @@ function collectSimilarTransactions() {
     })));
 
     // Get all standard transactions in the range of min and max date
-    let url = new URL(window.location.origin + '/api/transactions');
+    let url = new URL(window.location.origin + '/api/v1/transactions');
     url.searchParams.append('date_from', toIsoDateString(minDate));
     url.searchParams.append('date_to', toIsoDateString(maxDate));
 
@@ -283,7 +285,7 @@ function refillUnmatchedRows(data) {
 $('#account').select2({
     multiple: false,
     ajax: {
-        url: '/api/assets/account',
+        url: '/api/v1/accounts',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -309,7 +311,7 @@ $('#account').select2({
 })
     .on('select2:select', function (e) {
         $.ajax({
-            url: '/api/assets/account/' + e.params.data.id,
+            url: '/api/v1/accounts/' + e.params.data.id,
             data: {
                 _token: csrfToken,
             }
@@ -341,14 +343,14 @@ window.table = $(tableSelector).DataTable({
                 if (!data) {
                     return data;
                 }
-                return data.toLocaleDateString(window.YAFFA.locale);
+                return data.toLocaleDateString(window.YAFFA.userSettings.locale);
             },
             className: "dt-nowrap",
         },
         {
             title: 'Type',
             render: function (_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type.name);
+                return dataTableHelpers.transactionTypeIcon(row.transaction_type);
             },
             className: "text-center",
         },
@@ -409,7 +411,7 @@ window.table = $(tableSelector).DataTable({
                 if (row.transaction_type.amount_multiplier === 1) {
                     prefix = '+ ';
                 }
-                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);
+                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.userSettings.locale, window.account_currency);
             },
             className: "dt-nowrap",
         },
@@ -562,7 +564,7 @@ $(tableSelector).on('click', 'button.transaction-similar.transaction-basic.trans
     const originalIconClass = icon.className;
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
-    fetch('/api/transaction/' + this.dataset.id)
+    fetch('/api/v1/transactions/' + this.dataset.id)
         .then(function (response) {
             if (!response.ok) {
                 throw Error(response.statusText);
@@ -627,7 +629,7 @@ $(tableSelector).on('click', 'button.transaction-related.transaction-quickview',
     const originalIconClass = icon.className;
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
-    fetch('/api/transaction/' + this.dataset.id)
+    fetch('/api/v1/transactions/' + this.dataset.id)
         .then(function (response) {
             if (!response.ok) {
                 throw Error(response.statusText);
@@ -712,7 +714,7 @@ $(tableSelector).on('click', 'button.record', function () {
     }
 
     // Call the backend to create the transaction
-    const url = route('api.transactions.storeStandard');
+    const url = route('api.v1.transactions.store-standard');
     fetch(url, {
         method: 'POST',
         headers: {
@@ -812,7 +814,7 @@ $('#reset').on('click', function () {
 });
 
 // Load active schedules via API
-fetch('/api/transactions/get_scheduled_items/schedule')
+fetch('/api/v1/transactions/scheduled-items?type=schedule')
     .then(response => response.json())
     .then(data => {
         window.schedules = data.transactions
@@ -851,14 +853,16 @@ fetch('/api/transactions/get_scheduled_items/schedule')
 
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue'
+import TransactionCreateModal from '@/transactions/components/form/ModalStandard.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', TransactionCreateModal)

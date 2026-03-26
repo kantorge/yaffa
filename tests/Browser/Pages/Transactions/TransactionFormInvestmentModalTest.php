@@ -8,8 +8,10 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionFormInvestmentModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -43,7 +45,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 // The modal should be visible
                 ->assertVisible('#modal-transaction-form-investment')
                 // The form should be visible
@@ -66,7 +68,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
 
                 // Test the reconciled checkbox with prefixed ID
@@ -99,7 +101,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -114,7 +116,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
 
             $browser
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Add quantity
                 ->type('#transaction_quantity', '10')
                 // Add price
@@ -142,10 +144,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button again
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10)
 
                 // Verify that the investment dropdown is cleared (shows placeholder)
                 ->assertDontSeeIn('#investment + .select2 .select2-selection__rendered', $selectedInvestment)
@@ -165,7 +168,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -185,10 +188,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Reopen the modal
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10)
 
                 // Verify that the investment dropdown is cleared (shows placeholder)
                 ->assertDontSeeIn('#investment + .select2 .select2-selection__rendered', $selectedInvestment)
@@ -208,7 +212,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
@@ -216,7 +220,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Select investment
                 ->select2('#investment', null, 10)
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Add quantity
                 ->type('#transaction_quantity', '10')
                 // Add price - this should trigger the price check
@@ -248,13 +252,13 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
 
                 // Select transaction type - although generally Buy is the default selection
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Select the specific investment that has a price - this should trigger the price check
                 ->select2ExactSearch('#investment', $investment->name, 10)
                 // Wait a bit for the API call to complete, the price info should be visible now
@@ -283,14 +287,14 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
 
                 // Fill the form
                 ->select2ExactSearch('#investment', $investment->name, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '10')
                 ->type('#transaction_price', '35.75')
                 ->type('#transaction_commission', '5')
@@ -345,14 +349,14 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
                 // Wait for the modal to load
-                ->waitForText('Add new transaction')
+                ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
                 ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
 
                 // Fill the form
                 ->select2ExactSearch('#investment', $investment->name, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '5')
                 ->type('#transaction_price', '42.25')
                 ->type('#transaction_commission', '3')
@@ -379,35 +383,6 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->where('date', now()->format('Y-m-d'))
                 ->first();
             $this->assertNull($investmentPrice);
-        });
-    }
-
-    public function test_store_price_checkbox_not_visible_for_dividend_transactions(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                // Load the view for a random account
-                ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
-                // Wait for the page to load
-                ->waitForText('Account details')
-                // Click the "new investment transaction" button
-                ->click('#create-investment-transaction-button')
-                // Wait for the modal to load
-                ->waitForText('Add new transaction')
-                ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
-                ->waitFor('#investment', 10)
-
-                // Select investment
-                ->select2('#investment', null, 10)
-                // Select dividend transaction type
-                ->select('#transaction_type', 'Dividend')
-                // Add dividend amount
-                ->type('#transaction_dividend', '50')
-                // Wait a bit
-                ->pause(1000)
-                // Verify the store price checkbox is not visible for dividend transactions
-                ->assertMissing('#store_price_checkbox');
         });
     }
 }

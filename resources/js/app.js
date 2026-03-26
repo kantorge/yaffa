@@ -1,11 +1,21 @@
 import '../sass/app.scss';
 import './bootstrap';
-import { initializeDataTablesI18n } from './i18n/datatables';
+import { initializeDataTablesI18n } from '@/shared/lib/i18n/datatables';
 
 // One glob map for all .js files under resources/js
-const modules = import.meta.glob('./**/*.js');
+// Exclude files that are statically imported to avoid redundant dynamic imports
+const modules = import.meta.glob([
+    './**/*.js',
+    '!./bootstrap.js',
+    '!./shared/lib/i18n/**/*.js',
+    '!./shared/lib/vue/installRouteGlobal.js',
+    '!./shared/lib/notifications/displayNotifications.js'
+]);
 
-const dataTablesI18nReady = initializeDataTablesI18n(window.YAFFA?.locale, window.YAFFA?.language)
+const dataTablesI18nReady = initializeDataTablesI18n(
+    window.YAFFA?.userSettings?.locale || window.YAFFA?.locale,
+    window.YAFFA?.userSettings?.language || window.YAFFA?.language,
+)
     .catch(() => null);
 
 const loadModule = async (path) => {
@@ -20,22 +30,20 @@ const loadModule = async (path) => {
 };
 
 const routeMap = new Map([
-    ['home', 'dashboard'],
-    ['account-group.index', 'account-group/index'],
+    ['home', 'dashboard/index'],
+    ['account-groups.index', 'account-groups/index'],
     ['payees.merge.form', 'payee/merge'],
     ['account.history', 'account/history'],
     ['categories.index', 'categories/index'],
+    ['categories.create', 'categories/form'],
+    ['categories.edit', 'categories/form'],
     ['categories.merge.form', 'categories/merge'],
-    ['currency.index', 'currency/index'],
-    ['currency-rate.index', 'currencyrates/index'],
-    ['investment-group.index', 'investment-group/index'],
-    ['investment.index', 'investment/index'],
-    ['investment.show', 'investment/show'],
-    ['investment-price.create', 'investment-price/form'],
-    ['investment-price.edit', 'investment-price/form'],
+    ['currencies.index', 'currencies/index'],
+    ['currency-rate.index', 'currency-rates/index'],
+    ['investment-groups.index', 'investment-groups/index'],
+    ['investments.index', 'investments/index'],
+    ['investments.show', 'investments/show'],
     ['investment-price.list', 'investment-price/list'],
-    ['received-mail.index', 'received-mail/index'],
-    ['received-mail.show', 'received-mail/show'],
     ['report.schedules', 'reports/schedules'],
     ['reports.cashflow', 'reports/cashflow'],
     ['reports.budgetchart', 'reports/budgetchart'],
@@ -43,10 +51,13 @@ const routeMap = new Map([
     ['reports.investment_timeline', 'reports/investment-timeline'],
     ['search', 'search/search'],
     ['import.csv', 'import/csv'],
+    ['ai-documents.index', 'ai-documents/index'],
+    ['ai-documents.show', 'ai-documents/show'],
     ['register', 'auth/register'],
     ['login', 'auth/login'],
-    ['tag.index', 'tag/index'],
+    ['tags.index', 'tags/index'],
     ['user.settings', 'user/settings'],
+    ['user.ai-settings', 'user/settings'],
 ]);
 
 // Generic loader
@@ -56,8 +67,18 @@ if (routeMap.has(current)) {
 }
 
 // More specific loaders
-if (route('transactions.createFromDraft') === window.location.href) {
-    loadModule('transactions/standard');
+const createFromDraftPath = new URL(
+    route('transactions.createFromDraft'),
+    window.location.origin,
+).pathname;
+const currentPath = window.location.pathname;
+
+if (currentPath === createFromDraftPath) {
+    if (document.querySelector('transaction-container-investment')) {
+        loadModule('transactions/investment');
+    } else {
+        loadModule('transactions/standard');
+    }
 }
 
 if (current === 'account-entity.index' && ['account', 'payee'].includes(route().params.type)) {
@@ -77,7 +98,7 @@ if (current === 'transaction.create' && ['standard', 'investment'].includes(rout
 }
 
 if (current === 'transaction.open' && ['edit', 'clone', 'enter', 'replace'].includes(route().params.action)) {
-    loadModule(`transactions/${window.transaction.transaction_type.type}`);
+    loadModule(`transactions/${window.transaction.config_type}`);
 }
 
 if (current === 'transaction.open' && ['show'].includes(route().params.action)) {
@@ -85,7 +106,7 @@ if (current === 'transaction.open' && ['show'].includes(route().params.action)) 
 }
 
 // Notifications
-import './display_notifications';
+import '@/shared/lib/notifications/displayNotifications';
 
 // jQuery handlers...
 $(function () {
@@ -135,7 +156,7 @@ if (import.meta.env.DEV) {
 /**
  * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
  */
-if (window.sandbox_mode) {
+if (window.YAFFA.config.sandbox_mode) {
     if (current !== 'login') {
         loadModule('sandbox-components/reset-timer');
     } else {

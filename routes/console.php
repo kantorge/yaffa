@@ -4,7 +4,10 @@ use App\Console\Commands\CalculateAccountMonthlySummaries;
 use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
 use App\Console\Commands\GetCurrencyRates;
 use App\Console\Commands\GetInvestmentPrices;
+use App\Console\Commands\MergeStandardTransactionItems;
+use App\Console\Commands\ProcessAiDocuments;
 use App\Console\Commands\RecordScheduledTransactions;
+use App\Jobs\GoogleDriveMonitorJob;
 use Illuminate\Support\Facades\Schedule;
 
 // Potentially, the app can be separated into a main container and a worker container
@@ -24,6 +27,10 @@ if (config('yaffa.runs_scheduler')) {
     // Run the investment price retrieval command
     Schedule::command(GetInvestmentPrices::class)->dailyAt('04:15');
 
+    // Merge standard transaction items for users with the auto-merge setting enabled
+    // Run daily at 03:00 to consolidate any items that may have been missed
+    Schedule::command(MergeStandardTransactionItems::class)->dailyAt('03:00');
+
     // Recalculate account monthly summaries daily
     // TODO: chain this command with the investment price retrieval command
     Schedule::command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00');
@@ -36,6 +43,12 @@ if (config('yaffa.runs_scheduler')) {
 
     // Redis cache cleanup
     Schedule::command('cache:prune-stale-tags')->hourly();
+
+    // Google Drive monitoring job - schedule will be determined by the job itself
+    Schedule::job(new GoogleDriveMonitorJob())->everyMinute();
+
+    // Process AI documents ready for processing
+    Schedule::command(ProcessAiDocuments::class)->everyMinute();
 
     // Batch job cleanup
     Schedule::command('queue:prune-batches')->daily();

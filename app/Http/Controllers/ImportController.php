@@ -14,9 +14,9 @@ class ImportController extends Controller
     public function importCsv(Request $request): View
     {
         /**
-         * @get('/import/csv')
-         * @name('import.csv')
-         * @middlewares('web')
+         * @get("/import/csv")
+         * @name("import.csv")
+         * @middlewares("web")
          */
         // Load all active payees of user with config and pass to view as JavaScript variable.
         $payees = $request->user()

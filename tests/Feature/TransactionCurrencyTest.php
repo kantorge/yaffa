@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
@@ -47,15 +46,17 @@ class TransactionCurrencyTest extends TestCase
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
             ->for($this->user)
-            ->for(TransactionDetailStandard::factory()->create([
-                'account_from_id' => $account->id,
-                'account_to_id' => $payee->id,
-                'amount_from' => 1000,
-                'amount_to' => 1000,
-            ]),
-            'config')
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                    'amount_from' => 1000,
+                    'amount_to' => 1000,
+                ]),
+                'config'
+            )
             ->create([
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
                 'currency_id' => null,
             ]);
 

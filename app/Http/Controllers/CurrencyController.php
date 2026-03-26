@@ -14,7 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -25,11 +24,10 @@ class CurrencyController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\Currency', only: ['index']),
-            new Middleware('can:view,currency', only: ['show']),
-            new Middleware('can:create,App\Models\Currency', only: ['create', 'store']),
-            new Middleware('can:update,currency', only: ['edit', 'update']),
+            'auth',
+            'verified',
+            new Middleware('can:create,' . Currency::class, only: ['create', 'store']),
+            new Middleware('can:update,currency', only: ['edit', 'update', 'setDefault']),
             new Middleware('can:delete,currency', only: ['destroy']),
         ];
     }
@@ -40,9 +38,9 @@ class CurrencyController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/currency')
-         * @name('currency.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
+         * @get("/currencies")
+         * @name("currencies.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Show all currencies of user from the database and return to view
         $currencies = $request->user()
@@ -50,6 +48,10 @@ class CurrencyController extends Controller implements HasMiddleware
             ->get();
 
         $currencies->map(function ($currency) {
+            if (! $currency instanceof Currency) {
+                return $currency;
+            }
+
             $currency['latest_rate'] = $currency->rate();
 
             return $currency;
@@ -60,26 +62,27 @@ class CurrencyController extends Controller implements HasMiddleware
             'currencies' => $currencies,
         ]);
 
-        return view('currency.index');
+        return view('currencies.index');
     }
 
     public function create(): View
     {
         /**
-         * @get('/currency/create')
-         * @name('currency.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
+         * @get("/currencies/create")
+         * @name("currencies.create")
+         * @middlewares("web", "auth", "verified")
          */
-        return view('currency.form');
+        return view('currencies.form');
     }
 
     public function store(CurrencyRequest $request): RedirectResponse
     {
         /**
-         * @post('/currency')
-         * @name('currency.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
+         * @post("/currencies")
+         * @name("currencies.store")
+         * @middlewares("web", "auth", "verified")
          */
+        /** @var Currency $currency */
         $currency = $request->user()->currencies()->create($request->validated());
 
         // The first currency created will be automatically set as the base currency
@@ -90,7 +93,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
-        return to_route('currency.index');
+        return to_route('currencies.index');
     }
 
     /**
@@ -99,17 +102,17 @@ class CurrencyController extends Controller implements HasMiddleware
     public function edit(Request $request, Currency $currency): View
     {
         /**
-         * @get('/currency/{currency}/edit')
-         * @name('currency.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
+         * @get("/currencies/{currency}/edit")
+         * @get("/currencies/{currency}/edit")
+         * @name("currencies.edit")
+         * @middlewares("web", "auth", "verified")
          */
-
         // Get all currencies, as base currency setting is defined based on this
         $currencies = $request->user()
             ->currencies()
             ->get();
 
-        return view('currency.form')
+        return view('currencies.form')
             ->with('currency', $currency)
             ->with('currencies', $currencies);
     }
@@ -117,10 +120,10 @@ class CurrencyController extends Controller implements HasMiddleware
     public function update(CurrencyRequest $request, Currency $currency): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
-         * @uri('/currency/{currency}')
-         * @name('currency.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
+         * @methods("PUT", "PATCH")
+         * @uri("/currencies/{currency}")
+         * @name("currencies.update")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 
@@ -129,7 +132,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency updated'));
 
-        return to_route('currency.index');
+        return to_route('currencies.index');
     }
 
     /**
@@ -140,9 +143,9 @@ class CurrencyController extends Controller implements HasMiddleware
     public function destroy(Currency $currency): Response|RedirectResponse
     {
         /**
-         * @delete('/currency/{currency}')
-         * @name('currency.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,currency')
+         * @delete("/currencies/{currency}")
+         * @name("currencies.destroy")
+         * @middlewares("web", "auth", "verified")
          */
         // Base currency cannot be deleted
         if ($currency->base) {
@@ -155,7 +158,7 @@ class CurrencyController extends Controller implements HasMiddleware
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));
 
-            return to_route('currency.index');
+            return to_route('currencies.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));
@@ -173,9 +176,9 @@ class CurrencyController extends Controller implements HasMiddleware
     public function setDefault(Currency $currency): RedirectResponse
     {
         /**
-         * @get('/currency/{currency}/setDefault')
-         * @name('currency.setDefault')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/currencies/{currency}/setDefault")
+         * @name("currencies.setDefault")
+         * @middlewares("web", "auth", "verified")
          */
         // Authenticate the user against the currency using CurrencyPolicy
         Gate::authorize('update', $currency);
@@ -184,8 +187,8 @@ class CurrencyController extends Controller implements HasMiddleware
             self::addSimpleSuccessMessage(__('Base currency changed'));
 
             // Get all non-base, updatable currencies of the user, and dispatch the currency rate retrieval job
-            $currencies = $currency->user
-                ->currencies()
+            $currencies = Currency::query()
+                ->where('user_id', $currency->user_id)
                 ->notBase()
                 ->autoUpdate()
                 ->get();

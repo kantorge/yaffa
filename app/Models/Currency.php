@@ -47,17 +47,18 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @method static Builder|Currency whereUpdatedAt($value)
  * @method static Builder|Currency whereUserId($value)
  * @mixin Eloquent
+ * @mixin \Eloquent
  */
 class Currency extends Model
 {
+    use CurrencyTrait;
     use HasFactory;
     use ModelOwnedByUserTrait;
-    use CurrencyTrait;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
@@ -254,7 +255,7 @@ class Currency extends Model
             ->first();
 
         $this->retrieveCurrencyRateToBase(
-            $rate?->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
+            $rate->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
         );
     }
 

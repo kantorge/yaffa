@@ -6,6 +6,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -25,15 +26,20 @@ class AccountApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
+    /**
+     * Get a list of accounts with optional search and filters.
+     */
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/account')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/accounts")
+         * @name("api.v1.accounts.index")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $parameters = [
             'user' => $request->user(),
@@ -52,7 +58,7 @@ class AccountApiController extends Controller implements HasMiddleware
 
         $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
         $transactionType = $request->get('transaction_type', null);
-        if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+        if ($transactionType !== null && TransactionTypeEnum::tryFrom($transactionType) === null) {
             // If transaction type is provided but not valid, return a bad request response
             return response()->json(
                 [
@@ -83,9 +89,9 @@ class AccountApiController extends Controller implements HasMiddleware
             })
             // Optionally limit the search for specific transaction types
             ->when($transactionType !== null, fn ($query) => $query->where(
-                'transaction_type_id',
+                'transaction_type',
                 '=',
-                config('transaction_types')[$transactionType]['id']
+                $transactionType
             ))
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
@@ -97,7 +103,6 @@ class AccountApiController extends Controller implements HasMiddleware
             ->when($parameters['limit'] !== 0, function ($query) use ($parameters) {
                 $query->limit($parameters['limit']);
             })
-            ->get()
             ->pluck('id');
 
         if ($accountIds->count() > 0) {
@@ -127,7 +132,7 @@ class AccountApiController extends Controller implements HasMiddleware
     {
         $parameters = array_merge(
             [
-                'user' => Auth::user(),
+                'user' => request()->user(),
                 'query' => '',
                 'limit' => 10,
                 'withInactive' => false,
@@ -160,11 +165,15 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
     }
 
+    /**
+     * Get a list of accounts for investment transactions.
+     */
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/account/investment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/accounts/investment")
+         * @name("api.v1.accounts.investment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $user = $request->user();
 
@@ -218,9 +227,9 @@ class AccountApiController extends Controller implements HasMiddleware
                         $request->get('currency_id')
                     ))
                 ->where(
-                    'transaction_type_id',
+                    'transaction_type',
                     '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
+                    $request->get('transaction_type')
                 )
                 ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')
@@ -240,8 +249,8 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @get('/api/assets/account/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/accounts/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $accountEntity);
 
@@ -264,8 +273,9 @@ class AccountApiController extends Controller implements HasMiddleware
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
         /**
-         * @get('/api/account/balance/{accountEntity?}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/accounts/balance/{accountEntity?}")
+         * @get("/api/v1/accounts/balance")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         $user = $request->user();
@@ -298,9 +308,11 @@ class AccountApiController extends Controller implements HasMiddleware
         $baseCurrency = $this->getBaseCurrency();
 
         // Get all currencies for rate calculation
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Currency> $currencies */
         $currencies = $user->currencies()->get();
 
         // Load all accounts or the selected one
+        /** @var \Illuminate\Database\Eloquent\Collection<int, AccountEntity> $accounts */
         $accounts = $user
             ->accounts()
             ->when($accountEntity, fn ($query) => $query->where('id', $accountEntity->id))
@@ -362,7 +374,11 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
 
         $accounts
-            ->map(function ($account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+            ->map(function (AccountEntity $account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+                if (! $account->config instanceof Account) {
+                    return $account;
+                }
+
                 // Get the account group name for later grouping
                 $account['account_group_name'] = $account->config->accountGroup->name;
                 $account['account_group_id'] = $account->config->accountGroup->id;
@@ -415,11 +431,11 @@ class AccountApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function updateMonthlySummary(AccountEntity $accountEntity): JsonResponse
+    public function recalculateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @put('/api/account/monthlySummary/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/v1/accounts/{accountEntity}/monthly-summary")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 
@@ -446,7 +462,7 @@ class AccountApiController extends Controller implements HasMiddleware
                 [
                     'message' => __('The monthly summary for this account is being updated.'),
                 ],
-                Response::HTTP_OK
+                Response::HTTP_ACCEPTED
             );
     }
 }

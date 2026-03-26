@@ -4,10 +4,10 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import * as dataTableHelpers from '../components/dataTableHelper';
-import * as helpers from '../helpers';
-import * as toastHelpers from '../toast';
-import { __, getDataTablesLanguageOptions } from '../i18n';
+import * as dataTableHelpers from '@/shared/lib/datatable';
+import * as helpers from '@/shared/lib/helpers';
+import * as toastHelpers from '@/shared/lib/toast';
+import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 
 let ajaxIsBusy = true;
 
@@ -15,7 +15,7 @@ const tableSelector = '#table';
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/transactions/get_scheduled_items/any',
+        url: '/api/v1/transactions/scheduled-items?type=any',
         type: 'GET',
         dataSrc: function(data) {
             ajaxIsBusy = false;
@@ -38,12 +38,12 @@ let table = $(tableSelector).DataTable({
                 </div>`;
             }
         },
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.locale),
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.userSettings.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        dataTableHelpers.transactionColumnDefinition.type,
+        dataTableHelpers.transactionColumnDefinition.type(true),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,
@@ -131,7 +131,7 @@ table.contextualActions({
                     `toast-transaction-${id}`
                 );
 
-                window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
+                window.axios.patch(window.route('api.v1.transactions.skip', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
                         let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
@@ -243,7 +243,7 @@ table.contextualActions({
                         `toast-transaction-${id}`
                     );
 
-                    window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+                    window.axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
                         .then(function () {
                             // Find and remove original row in schedule table
                             let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
@@ -306,8 +306,10 @@ window.onboardingTourSteps = [
 ];
 
 // Initialize the onboarding widget
-import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
+import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
 import { createApp } from 'vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({});
+installRouteGlobal(app);
 app.component('onboarding-card', OnboardingCard);
 app.mount('#onboarding-card');

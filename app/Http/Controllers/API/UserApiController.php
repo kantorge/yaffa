@@ -18,9 +18,14 @@ class UserApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
+
+    /**
+     * Update user profile settings.
+     */
     public function updateSettings(UserRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -57,10 +62,14 @@ class UserApiController extends Controller implements HasMiddleware
                 'start_date' => $user->start_date,
                 'end_date' => $user->end_date,
                 'account_details_date_range' => $user->account_details_date_range,
+                'auto_merge_standard_transaction_items' => $user->auto_merge_standard_transaction_items,
             ]
         ]);
     }
 
+    /**
+     * Change the authenticated user's password.
+     */
     public function changePassword(Request $request): JsonResponse
     {
         // This endpoint is not allowed in sandbox mode
@@ -87,6 +96,30 @@ class UserApiController extends Controller implements HasMiddleware
         return Validator::make($data, [
             'current_password' => ['current_password'],
             'password' => ['required', Password::defaults(), 'confirmed'],
+        ]);
+    }
+
+    /**
+     * Get a user preference flag
+     */
+    public function getPreference(Request $request, string $key): JsonResponse
+    {
+        $hasFlag = $request->user()->hasFlag($key);
+
+        return response()->json([
+            'value' => $hasFlag,
+        ]);
+    }
+
+    /**
+     * Set a user preference flag
+     */
+    public function setPreference(Request $request, string $key): JsonResponse
+    {
+        $request->user()->flag($key);
+
+        return response()->json([
+            'value' => true,
         ]);
     }
 }
