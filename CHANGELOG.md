@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/kantorge/yaffa/compare/v2.3.0...v2.3.1) (2026-03-26)
+
+
+### 🐛 Bug Fixes
+
+* added Artisan command to check V3 compatibility ([7760f3f](https://github.com/kantorge/yaffa/commit/7760f3f959fb4afb4978fb05456bbaac7ba1d748))
+
 ## [2.3.0](https://github.com/kantorge/yaffa/compare/v2.2.0...v2.3.0) (2026-01-25)
 
 
