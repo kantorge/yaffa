@@ -153,6 +153,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
       - normalized_transaction (follows existing transaction form payload contract; key fields: date, amount, payee, comment, account_id, transaction_type; optional fields populated where source data permits)
       - warnings[]
       - duplicate_candidates[]
+      - related_ai_documents[] (optional candidate list of AI Documents in state ready_for_review that likely represent the same purchase/receipt)
   - CsvImportProfile (persisted entity)
     - id
     - type (`system` or `user`)
@@ -714,6 +715,41 @@ Use existing DuplicateDetectionService for import drafts.
 
 This replaces frontend-only similarity heuristics as source of truth.
 
+### Related AI Document Matching (ready_for_review)
+
+In addition to transaction duplicate detection, parse response enrichment should include a lightweight candidate list of related AI Documents that are currently in state `ready_for_review`.
+
+Purpose:
+
+- If a receipt is already uploaded and AI-processed, finalizing the AI Document can be the preferred user action instead of creating a new manual transaction from import draft.
+
+Scope for MVP extension:
+
+- Query only AI Documents owned by the current user and in state `ready_for_review`.
+- Match candidates against each normalized draft using deterministic heuristics.
+- Return top candidates per draft in `related_ai_documents[]` with a confidence score and compact summary fields.
+
+Recommended matching signals (weighted):
+
+- amount proximity (exact or within a small tolerance),
+- date proximity (same day or small window),
+- payee/merchant similarity,
+- optional memo or receipt text token overlap.
+
+Suggested response shape for each candidate:
+
+- ai_document_id
+- status
+- confidence_score
+- matched_on (array of signals such as amount/date/payee)
+- summary (merchant, total_amount, document_date)
+
+Behavior notes:
+
+- Candidate discovery is advisory only; no automatic linking or finalization is performed.
+- Candidate search must be bounded (for example recent time window, capped candidate count) to avoid parse-time latency spikes.
+- If no candidate is found, `related_ai_documents[]` is empty.
+
 ## Processing Flow
 
 1. User uploads QIF or CSV file.
@@ -725,7 +761,10 @@ This replaces frontend-only similarity heuristics as source of truth.
 7. User can:
    - ignore draft,
    - check/view duplicates,
+   - inspect related AI Document candidates in state ready_for_review,
    - open draft in existing transaction form modal.
+   - when a high-confidence related AI Document exists, choose AI Document finalization flow instead of import draft finalization.
+
 8. On save/finalize:
    - existing transaction endpoint validates and creates transaction,
    - frontend marks reviewed item as finalized in session state.
@@ -791,12 +830,14 @@ Notes:
   - ImportApiParseTest
   - ImportTransactionCreateFromDraftTest (tests finalization via existing transaction endpoint from import context)
   - ImportDuplicateDetectionTest
+  - ImportRelatedAiDocumentsTest
   - ImportAuthorizationTest
 
 - Frontend component tests:
   - ImportUploadCard.spec.js
   - ImportDraftTable.spec.js
   - DuplicateCandidatesPanel.spec.js
+  - RelatedAiDocumentsPanel.spec.js
 
 - Regression tests:
   - Ensure current transaction create/finalize flow still works from import context.
@@ -810,6 +851,8 @@ Notes:
 - CSV with empty rows and partial malformed lines.
 - CSV with multiline quoted fields, embedded delimiters, and escaped quotes inside quoted values.
 - Duplicate check with insufficient fields.
+- Multiple AI Documents in ready_for_review matching the same draft with close scores.
+- AI Document exists but belongs to another user (must never be returned).
 - Finalize called for already finalized/ignored draft.
 - Unauthorized access to import and profile endpoints.
 - Re-upload of identical file intentionally (allowed and re-parsed as new one-off session).
@@ -838,6 +881,7 @@ Notes:
 - Given a valid CSV file and selected/default import profile, when user uploads it, then drafts are generated consistently via backend parser.
 - Given parsed drafts, when user opens review, then duplicates can be checked using backend duplicate detection logic.
 - Given duplicate candidates, when user chooses to ignore or proceed, then no transaction is created unless user explicitly finalizes.
+- Given an import draft and related AI Documents in state ready_for_review, when parse completes, then related candidates are shown with confidence metadata and user can choose AI Document finalization path.
 - Given a finalized draft, when save succeeds, then exactly one transaction is created and draft status becomes finalized.
 - Given malformed entries, when parsing completes, then warnings and unmatched entries are visible without losing valid drafts.
 - Given unauthorized access, when import and profile endpoints are requested without proper auth, then access is denied.
