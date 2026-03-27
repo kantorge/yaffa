@@ -12,6 +12,7 @@ use App\Models\TransactionItem;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -251,6 +252,7 @@ class ReportApiController extends Controller implements HasMiddleware
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
+        [$rangeStart, $rangeEnd] = $this->resolveDateRangeForYearMonth($year, $month);
 
         // Final result placeholder
         $dataByCategory = [];
@@ -264,11 +266,9 @@ class ReportApiController extends Controller implements HasMiddleware
                 'transaction.config.accountFrom.config',
                 'transaction.config.accountTo.config',
             ])
-                ->whereHas('transaction', function ($query) use ($year, $month, $request) {
+                ->whereHas('transaction', function ($query) use ($request, $rangeStart, $rangeEnd) {
                     $query->where('user_id', $request->user()->id)
-                        ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                        ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
-                            ->whereRaw('MONTH(date) = ?', [$month]))
+                        ->whereBetween('date', [$rangeStart, $rangeEnd])
                         ->where('schedule', false)
                         ->where('budget', false)
                         ->where('config_type', 'standard')
@@ -315,9 +315,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->byType('investment')
                 ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithAmountValues())
                 ->where('user_id', $request->user()->id)
-                ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
-                    ->whereRaw('MONTH(date) = ?', [$month]))
+                ->whereBetween('date', [$rangeStart, $rangeEnd])
                 ->get();
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
@@ -359,6 +357,26 @@ class ReportApiController extends Controller implements HasMiddleware
             ],
             Response::HTTP_OK
         );
+    }
+
+    /**
+     * Resolve inclusive date range boundaries for a year or a specific year-month period.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
+     */
+    private function resolveDateRangeForYearMonth(int $year, ?int $month): array
+    {
+        if ($month === null) {
+            $start = CarbonImmutable::create($year, 1, 1)->startOfDay();
+            $end = CarbonImmutable::create($year, 12, 31)->endOfDay();
+
+            return [$start, $end];
+        }
+
+        $start = CarbonImmutable::create($year, $month, 1)->startOfMonth()->startOfDay();
+        $end = $start->endOfMonth()->endOfDay();
+
+        return [$start, $end];
     }
 
     /**
