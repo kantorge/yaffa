@@ -20,6 +20,10 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
     private const string MAIN_FORM_SELECTOR = '#transactionFormStandard';
 
+    private const string TRANSACTION_ITEM_ROW_SELECTOR = '#transaction_item_container .transaction_item_row';
+
+    private const string TRANSACTION_ITEM_CATEGORY_SELECTOR = '#transaction_item_container .transaction_item_row select.category';
+
     protected User $user;
 
     protected function setUp(): void
@@ -51,12 +55,20 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
             ->click('@button-add-transaction-item')
-            // Wait for the transaction item row to be visible
-            ->waitFor('#transaction_item_container .transaction_item_row', 10)
+                // Wait for the transaction item category select2 to become ready
+            ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
             // Set the first category input
-            ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
+            ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, null, 10)
             // Set the first amount to the same amount as the transaction
-            ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100');
+            ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100');
+    }
+
+    private function waitForTransactionItemCategorySelect2(Browser $browser, int $timeout = 10): Browser
+    {
+        return $browser
+            ->waitFor(self::TRANSACTION_ITEM_ROW_SELECTOR, $timeout)
+            ->waitFor(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, $timeout)
+            ->waitFor(self::TRANSACTION_ITEM_CATEGORY_SELECTOR . ' + .select2', $timeout);
     }
 
     public function test_user_can_load_the_standard_transaction_form(): void
@@ -211,10 +223,12 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->type('#transaction_amount_from', '100')
                 // Allocate the same amount to a random category by adding one new item
                 ->click('@button-add-transaction-item')
+                // Wait for the transaction item category select2 to become ready
+                ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
                 // Set the first category input
-                ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
+                ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, null, 10)
                 // Set the first amount to the same amount as the transaction
-                ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
+                ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100')
                 // Submit form
                 ->clickAndWaitForReload('#transactionFormStandard-Save')
                 // A success message should be available in a Vue component
@@ -505,11 +519,14 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Add a new transaction item
                 ->click('@button-add-transaction-item')
 
+                // Wait for the transaction item category select2 to become ready
+                ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
+
                 // Set the first category input to the random category
-                ->select2('#transaction_item_container .transaction_item_row select.category', $category->name, 10)
+                ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, $category->name, 10)
 
                 // Set the first amount to the same amount as the transaction
-                ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
+                ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100')
 
                 // Set the callback to show the transaction
                 ->click('button[value="show"]')
