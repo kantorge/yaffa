@@ -12,12 +12,6 @@ class TagListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    // Helper function to read the number of tags in a DataTable
-    private function getTagCount(Browser $browser, string $tableSelector): int
-    {
-        return $browser->script("return $('{$tableSelector}').DataTable().rows({search:'applied'}).count()")[0];
-    }
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,28 +47,28 @@ class TagListTest extends DuskTestCase
             // Get the number of tags in the table using JavaScript
             $this->assertEquals(
                 $user->tags()->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show only inactive tags
             $browser->click('label[for=table_filter_active_no]');
             $this->assertEquals(
                 $user->tags()->where('active', false)->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show only active tags
             $browser->click('label[for=table_filter_active_yes]');
             $this->assertEquals(
                 $user->tags()->where('active', true)->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show all tags
             $browser->click('label[for=table_filter_active_any]');
             $this->assertEquals(
                 $user->tags()->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the search field
@@ -82,7 +76,7 @@ class TagListTest extends DuskTestCase
             // The number of filtered tags should be 1
             $this->assertEquals(
                 1,
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Clear the search field
@@ -90,7 +84,7 @@ class TagListTest extends DuskTestCase
             // Enter a dummy search string
             $browser->type('@input-table-filter-search', 'dummy');
             // The number of filtered tags should be 0
-            $this->assertEquals(0, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(0, $this->getTableRowCount($browser, '#table'));
         });
     }
 

@@ -143,6 +143,58 @@ class TransactionApiControllerTest extends TestCase
         $this->assertFalse($transaction->fresh()->reconciled);
     }
 
+    public function test_cannot_update_other_users_standard_transaction(): void
+    {
+        $otherUser = User::factory()->create();
+        $transaction = Transaction::factory()
+            ->withdrawal($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        Sanctum::actingAs($otherUser);
+
+        $response = $this->patchJson(
+            route('api.v1.transactions.update-standard', $transaction),
+            $this->standardTransactionPayload($transaction)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors([
+            'config.account_from_id',
+            'config.account_to_id',
+        ]);
+
+        $this->assertSame(
+            $transaction->comment,
+            $transaction->fresh()->comment
+        );
+    }
+
+    public function test_cannot_update_other_users_investment_transaction(): void
+    {
+        $otherUser = User::factory()->create();
+        $transaction = Transaction::factory()
+            ->buy($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        Sanctum::actingAs($otherUser);
+
+        $response = $this->patchJson(
+            route('api.v1.transactions.update-investment', $transaction),
+            $this->investmentTransactionPayload($transaction)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors([
+            'config.account_id',
+            'config.investment_id',
+        ]);
+
+        $this->assertSame(
+            $transaction->comment,
+            $transaction->fresh()->comment
+        );
+    }
+
     /**
      * Test that user cannot reconcile other user's transaction
      */
@@ -164,6 +216,275 @@ class TransactionApiControllerTest extends TestCase
 
         // Verify transaction was not reconciled
         $this->assertFalse($transaction->fresh()->reconciled);
+    }
+
+    /**
+     * Test deleting a transaction owned by the authenticated user
+     */
+    public function test_can_delete_own_transaction(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $transaction = Transaction::factory()
+            ->withdrawal($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->deleteJson(route('api.v1.transactions.destroy', $transaction));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([
+            'transaction' => [
+                'id' => $transaction->id,
+            ],
+        ]);
+
+        $this->assertDatabaseMissing('transactions', [
+            'id' => $transaction->id,
+        ]);
+    }
+
+    /**
+     * Test that user cannot delete other user's transaction
+     */
+    public function test_cannot_delete_other_users_transaction(): void
+    {
+        $otherUser = User::factory()->create();
+        Sanctum::actingAs($otherUser);
+
+        $transaction = Transaction::factory()
+            ->withdrawal($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->deleteJson(route('api.v1.transactions.destroy', $transaction));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'user_id' => $this->user->id,
+        ]);
+    }
+
+    public function test_cannot_skip_other_users_scheduled_transaction(): void
+    {
+        $otherUser = User::factory()->create();
+        $transaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+        $originalNextDate = $transaction->transactionSchedule->next_date;
+
+        Sanctum::actingAs($otherUser);
+
+        $response = $this->patchJson(route('api.v1.transactions.skip', $transaction));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $this->assertEquals(
+            optional($originalNextDate)?->toDateString(),
+            optional($transaction->fresh()->transactionSchedule->next_date)?->toDateString()
+        );
+    }
+
+    public function test_store_standard_rejects_other_users_source_transaction_id(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $otherUser = User::factory()->create();
+        $sourceTransaction = Transaction::factory()
+            ->withdrawal_schedule($otherUser)
+            ->create(['user_id' => $otherUser->id]);
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $payee = Payee::factory()->withUser($this->user)->create();
+        $category = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+        $payeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $payee->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'enter',
+            'id' => $sourceTransaction->id,
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                [
+                    'amount' => 10,
+                    'category_id' => $category->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['id']);
+    }
+
+    public function test_store_standard_rejects_other_users_category_id(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $otherUser = User::factory()->create();
+        $foreignCategory = Category::factory()->create([
+            'active' => true,
+        ]);
+        $foreignCategory->user_id = $otherUser->id;
+        $foreignCategory->save();
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $payee = Payee::factory()->withUser($this->user)->create();
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+        $payeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $payee->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                [
+                    'amount' => 10,
+                    'category_id' => $foreignCategory->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['items.0.category_id']);
+    }
+
+    public function test_store_standard_rejects_other_users_account_entity_id(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $otherUser = User::factory()->create();
+        $foreignAccount = Account::factory()->withUser($otherUser)->create();
+        $foreignAccountEntity = AccountEntity::factory()->create([
+            'user_id' => $otherUser->id,
+            'config_type' => 'account',
+            'config_id' => $foreignAccount->id,
+            'active' => true,
+        ]);
+
+        $ownPayee = Payee::factory()->withUser($this->user)->create();
+        $ownCategory = Category::factory()->for($this->user)->create(['active' => true]);
+        $ownPayeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $ownPayee->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $foreignAccountEntity->id,
+                'account_to_id' => $ownPayeeEntity->id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                [
+                    'amount' => 10,
+                    'category_id' => $ownCategory->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.account_from_id']);
+    }
+
+    public function test_store_investment_rejects_other_users_investment_id(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $otherUser = User::factory()->create();
+        $currency = Currency::factory()->for($otherUser)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($otherUser)->create();
+        $foreignInvestment = Investment::factory()->create([
+            'user_id' => $otherUser->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $foreignInvestment->user_id = $otherUser->id;
+        $foreignInvestment->save();
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $foreignInvestment->id,
+                'price' => 10,
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.investment_id']);
     }
 
     /**
@@ -520,5 +841,57 @@ class TransactionApiControllerTest extends TestCase
 
         $aiDocument->refresh();
         $this->assertSame('finalized', $aiDocument->status);
+    }
+
+    private function standardTransactionPayload(Transaction $transaction): array
+    {
+        $transaction->loadMissing(['config', 'transactionItems']);
+
+        return [
+            'action' => 'edit',
+            'transaction_type' => $transaction->transaction_type->value,
+            'config_type' => $transaction->config_type,
+            'date' => $transaction->date?->format('Y-m-d'),
+            'comment' => $transaction->comment,
+            'reconciled' => $transaction->reconciled,
+            'schedule' => $transaction->schedule,
+            'budget' => $transaction->budget,
+            'config' => [
+                'account_from_id' => $transaction->config->account_from_id,
+                'account_to_id' => $transaction->config->account_to_id,
+                'amount_from' => $transaction->config->amount_from,
+                'amount_to' => $transaction->config->amount_to,
+            ],
+            'items' => $transaction->transactionItems->map(fn ($item) => [
+                'amount' => $item->amount,
+                'category_id' => $item->category_id,
+                'comment' => $item->comment,
+                'tags' => [],
+            ])->values()->all(),
+        ];
+    }
+
+    private function investmentTransactionPayload(Transaction $transaction): array
+    {
+        $transaction->loadMissing(['config']);
+
+        return [
+            'action' => 'edit',
+            'transaction_type' => $transaction->transaction_type->value,
+            'config_type' => $transaction->config_type,
+            'date' => $transaction->date?->format('Y-m-d'),
+            'comment' => $transaction->comment,
+            'reconciled' => $transaction->reconciled,
+            'schedule' => $transaction->schedule,
+            'budget' => $transaction->budget,
+            'config' => [
+                'account_id' => $transaction->config->account_id,
+                'investment_id' => $transaction->config->investment_id,
+                'price' => $transaction->config->price,
+                'quantity' => $transaction->config->quantity,
+                'commission' => $transaction->config->commission,
+                'tax' => $transaction->config->tax,
+            ],
+        ];
     }
 }

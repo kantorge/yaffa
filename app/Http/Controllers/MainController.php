@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
@@ -39,6 +40,8 @@ class MainController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         $user = $request->user();
+
+        Gate::authorize('view', $account);
 
         // Get account details and load to class variable
         $this->currentAccount = $account->load([

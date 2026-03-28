@@ -240,7 +240,7 @@
     "Dismiss": "Eltűntet",
     "Dividend": "Osztalék",
     "Do you have an account?": "Van már fiókod?",
-    "Document #:id": "Dokumentumszám: azonosító",
+    "Document #:id": "Dokumentum #:id",
     "Document Processed - Ready for Review": "Dokumentum feldolgozva - Felülvizsgálatra kész",
     "Document Processing Failed": "Dokumentumfeldolgozás sikertelen",
     "Document cannot be reprocessed from current status": "A dokumentum jelenlegi állapotából nem dolgozható fel újra",

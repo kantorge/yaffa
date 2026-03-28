@@ -228,6 +228,36 @@ class CategoryTest extends TestCase
         $this->assertDestroyWithUser($user);
     }
 
+    public function test_user_cannot_open_merge_form_for_other_users_category(): void
+    {
+        $sourceOwner = User::factory()->create();
+        $category = Category::factory()->for($sourceOwner)->create();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)
+            ->get(route('categories.merge.form', ['categorySource' => $category->id]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function test_user_cannot_merge_other_users_category(): void
+    {
+        $sourceOwner = User::factory()->create();
+        $targetOwner = User::factory()->create();
+
+        $foreignCategory = Category::factory()->for($sourceOwner)->create();
+        $ownCategory = Category::factory()->for($targetOwner)->create();
+
+        $response = $this->actingAs($targetOwner)
+            ->postJson(route('categories.merge.submit'), [
+                'category_source' => $foreignCategory->id,
+                'category_target' => $ownCategory->id,
+                'action' => 'close',
+            ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['category_source']);
+    }
+
     /**
      * Various tests to validate the CategoryRequest
      */

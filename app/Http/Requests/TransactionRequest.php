@@ -36,10 +36,32 @@ class TransactionRequest extends FormRequest
 
     public function rules(): array
     {
+        $ownedTransactionRule = Rule::exists('transactions', 'id')->where(function ($query) {
+            $query->where('user_id', $this->user()->id);
+        });
+
+        $ownedCategoryRule = Rule::exists('categories', 'id')->where(function ($query) {
+            $query->where('user_id', $this->user()->id);
+        });
+
+        $ownedAccountRule = Rule::exists('account_entities', 'id')->where(function ($query) {
+            $query->where('user_id', $this->user()->id)
+                ->where('config_type', 'account');
+        });
+
+        $ownedPayeeRule = Rule::exists('account_entities', 'id')->where(function ($query) {
+            $query->where('user_id', $this->user()->id)
+                ->where('config_type', 'payee');
+        });
+
+        $ownedInvestmentRule = Rule::exists('investments', 'id')->where(function ($query) {
+            $query->where('user_id', $this->user()->id);
+        });
+
         $rules = [
             'action' => 'required|in:create,edit,clone,enter,replace,finalize',
 
-            'id' => 'nullable|exists:transactions,id',
+            'id' => ['nullable', $ownedTransactionRule],
             'transaction_type' => [
                 'required',
                 'string',
@@ -156,7 +178,7 @@ class TransactionRequest extends FormRequest
                 ],
                 'items.*.category_id' => [
                     'required',
-                    'exists:categories,id',
+                    $ownedCategoryRule,
                 ],
                 'items.*.comment' => 'nullable|max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 'items.*.tags' => 'array',
@@ -174,47 +196,47 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account',
+                        $ownedAccountRule,
                     ],
                     'config.account_to_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee',
+                        $ownedPayeeRule,
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
                     // Technical field, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
-                    'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
+                    'remaining_payee_default_category_id' => ['nullable', $ownedCategoryRule],
 
                 ]);
             } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee',
+                        $ownedPayeeRule,
                     ],
                     'config.account_to_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account',
+                        $ownedAccountRule,
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
                     // Technical fields, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
-                    'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
+                    'remaining_payee_default_category_id' => ['nullable', $ownedCategoryRule],
 
                 ]);
             } elseif ($this->get('transaction_type') === 'transfer') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
-                        'exists:account_entities,id,config_type,account',
+                        $ownedAccountRule,
                     ],
                     'config.account_to_id' => [
                         'required',
-                        'exists:account_entities,id,config_type,account',
+                        $ownedAccountRule,
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
@@ -225,11 +247,11 @@ class TransactionRequest extends FormRequest
             $rules = array_merge($rules, [
                 'config.account_id' => [
                     'required',
-                    'exists:account_entities,id,config_type,account',
+                    $ownedAccountRule,
                 ],
                 'config.investment_id' => [
                     'required',
-                    'exists:investments,id',
+                    $ownedInvestmentRule,
                 ],
                 'config.commission' => 'nullable|numeric|gte:0',
                 'config.tax' => 'nullable|numeric|gte:0',

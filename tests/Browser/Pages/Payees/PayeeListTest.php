@@ -33,7 +33,7 @@ class PayeeListTest extends DuskTestCase
 
             $browser->waitUsing(10, 100, fn () => $browser->script("return $.fn.DataTable.isDataTable('#table');")[0] === true);
 
-            $initialTotalCount = (int) $browser->script("return $('#table').DataTable().rows().count();")[0];
+            $initialTotalCount = $this->getTableRowCount($browser, '#table');
 
             $browser->type('@input-table-filter-search', 'zzzz-no-payee-match');
 
@@ -47,7 +47,7 @@ class PayeeListTest extends DuskTestCase
                 ->click('#newPayeeModal button[type="submit"]')
                 ->waitUntilMissing('#newPayeeModal.show', 10);
 
-            $browser->waitUsing(10, 100, fn () => (int) $browser->script("return $('#table').DataTable().rows().count();")[0] === $initialTotalCount + 1);
+            $browser->waitUsing(10, 100, fn () => $this->getTableRowCount($browser, '#table') === $initialTotalCount + 1);
 
             $browser->waitUsing(
                 10,

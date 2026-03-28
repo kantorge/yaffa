@@ -158,6 +158,8 @@ class TransactionController extends Controller implements HasMiddleware
          * @name("transactions.skipScheduleInstance")
          * @middlewares("web", "auth", "verified")
          */
+        Gate::authorize('update', $transaction);
+
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
 

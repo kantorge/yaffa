@@ -209,4 +209,45 @@ class PayeeTest extends TestCase
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
+
+    public function test_user_cannot_open_merge_form_for_other_users_payee(): void
+    {
+        $sourceOwner = User::factory()->create();
+        $payee = AccountEntity::factory()
+            ->for($sourceOwner)
+            ->for(Payee::factory()->withUser($sourceOwner), 'config')
+            ->create();
+
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)
+            ->get(route('payees.merge.form', ['payeeSource' => $payee->id]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function test_user_cannot_merge_other_users_payee(): void
+    {
+        $sourceOwner = User::factory()->create();
+        $targetOwner = User::factory()->create();
+
+        $foreignPayee = AccountEntity::factory()
+            ->for($sourceOwner)
+            ->for(Payee::factory()->withUser($sourceOwner), 'config')
+            ->create();
+
+        $ownPayee = AccountEntity::factory()
+            ->for($targetOwner)
+            ->for(Payee::factory()->withUser($targetOwner), 'config')
+            ->create();
+
+        $response = $this->actingAs($targetOwner)
+            ->postJson(route('payees.merge.submit'), [
+                'payee_source' => $foreignPayee->id,
+                'payee_target' => $ownPayee->id,
+                'action' => 'close',
+            ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['payee_source']);
+    }
 }

@@ -68,7 +68,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     public function store(InvestmentPriceRequest $request): JsonResponse
     {
         $investment = Investment::findOrFail($request->investment_id);
-        Gate::authorize('view', $investment);
+        Gate::authorize('update', $investment);
 
         $validated = $request->validated();
 
@@ -90,7 +90,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      */
     public function update(InvestmentPriceRequest $request, InvestmentPrice $investmentPrice): JsonResponse
     {
-        Gate::authorize('view', $investmentPrice->investment);
+        Gate::authorize('update', $investmentPrice->investment);
 
         $validated = $request->validated();
 
@@ -112,7 +112,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      */
     public function destroy(InvestmentPrice $investmentPrice): JsonResponse
     {
-        Gate::authorize('view', $investmentPrice->investment);
+        Gate::authorize('delete', $investmentPrice->investment);
 
         $investment = $investmentPrice->investment;
         $investmentPrice->delete();

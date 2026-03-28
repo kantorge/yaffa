@@ -464,7 +464,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->mergeService->mergeIfEnabled($transaction);
 
-        $this->handleSourceTransactionUpdates($validated);
+        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -514,7 +514,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             return $transaction;
         });
 
-        $this->handleSourceTransactionUpdates($validated);
+        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -539,6 +539,8 @@ class TransactionApiController extends Controller implements HasMiddleware
          * @name("api.v1.transactions.update-standard")
          * @middlewares("api", "auth:sanctum", "verified")
          */
+        Gate::authorize('update', $transaction);
+
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -626,6 +628,8 @@ class TransactionApiController extends Controller implements HasMiddleware
          * @name("api.v1.transactions.update-investment")
          * @middlewares("api", "auth:sanctum", "verified")
          */
+        Gate::authorize('update', $transaction);
+
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -723,6 +727,8 @@ class TransactionApiController extends Controller implements HasMiddleware
          * @name("api.v1.transactions.skip")
          * @middlewares("api", "auth:sanctum", "verified")
          */
+        Gate::authorize('update', $transaction);
+
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
@@ -745,6 +751,9 @@ class TransactionApiController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
 
+        // Authorize the deletion of the transaction for the owner
+        Gate::authorize('delete', $transaction);
+
         // Load the details of the transaction for the event
         $transaction->loadDetails();
 
@@ -763,13 +772,18 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Handle additional updates to a source transaction
      */
-    private function handleSourceTransactionUpdates(array $validated): void
+    private function handleSourceTransactionUpdates(array $validated, User $user): void
     {
         // Adjust source transaction schedule, if entering schedule instance
         // The reference is passed as the ID
         if ($validated['action'] === 'enter') {
-            $sourceTransaction = Transaction::find($validated['id'])
+            $sourceTransaction = Transaction::query()
+                ->where('id', $validated['id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail()
                 ->load(['transactionSchedule']);
+
+            Gate::authorize('update', $sourceTransaction);
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
@@ -785,8 +799,13 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Adjust source transaction schedule, if creating a new schedule clone
         if ($validated['action'] === 'replace') {
-            $sourceTransaction = Transaction::find($validated['id'])
+            $sourceTransaction = Transaction::query()
+                ->where('id', $validated['id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail()
                 ->load(['transactionSchedule']);
+
+            Gate::authorize('update', $sourceTransaction);
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
