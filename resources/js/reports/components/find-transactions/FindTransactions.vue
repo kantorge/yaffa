@@ -263,6 +263,9 @@
   import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
 
+  const TRANSACTIONS_CACHE_KEY = 'yaffa_transactions_cache';
+  const BREAKDOWN_CACHE_KEY = 'yaffa_breakdown_cache';
+
   export default {
     name: 'FindTransactions',
     components: {
@@ -439,7 +442,7 @@
 
       loadFromCache() {
         try {
-          const cached = sessionStorage.getItem('yaffa_transactions_cache');
+          const cached = sessionStorage.getItem(TRANSACTIONS_CACHE_KEY);
           if (!cached) return false;
           const { key, data } = JSON.parse(cached);
           if (key !== this.getCacheKey()) return false;
@@ -454,7 +457,7 @@
       saveToCache(data) {
         try {
           sessionStorage.setItem(
-            'yaffa_transactions_cache',
+            TRANSACTIONS_CACHE_KEY,
             JSON.stringify({
               key: this.getCacheKey(),
               data: data,
@@ -467,7 +470,7 @@
 
       hasBreakdownCache() {
         try {
-          const cached = sessionStorage.getItem('yaffa_breakdown_cache');
+          const cached = sessionStorage.getItem(BREAKDOWN_CACHE_KEY);
           if (!cached) return false;
           const { key } = JSON.parse(cached);
           return key === buildBreakdownCacheKey();
@@ -479,7 +482,7 @@
 
       removeTransactionFromCache(transactionId) {
         try {
-          const cached = sessionStorage.getItem('yaffa_transactions_cache');
+          const cached = sessionStorage.getItem(TRANSACTIONS_CACHE_KEY);
           if (!cached) {
             return;
           }
@@ -494,7 +497,7 @@
           );
 
           sessionStorage.setItem(
-            'yaffa_transactions_cache',
+            TRANSACTIONS_CACHE_KEY,
             JSON.stringify(payload),
           );
         } catch (e) {
@@ -504,7 +507,7 @@
 
       invalidateBreakdownCache() {
         try {
-          sessionStorage.removeItem('yaffa_breakdown_cache');
+          sessionStorage.removeItem(BREAKDOWN_CACHE_KEY);
         } catch (e) {
           console.warn('Failed to invalidate breakdown cache:', e);
         }
