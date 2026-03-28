@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Exceptions\AiResponseParseException;
 use App\Exceptions\InvalidAiResponseSchemaException;
 use App\Exceptions\OcrUnavailableException;
 use App\Models\AiDocument;
@@ -14,18 +15,16 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use JsonException;
-use Prism\Prism\Facades\Prism;
-use Prism\Prism\Schema\ArraySchema;
-use Prism\Prism\Schema\EnumSchema;
-use Prism\Prism\Schema\NumberSchema;
-use Prism\Prism\Schema\ObjectSchema;
-use Prism\Prism\Schema\StringSchema;
 
 class ProcessDocumentService
 {
     public const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
 
     private AiUserSettingsResolver $aiUserSettingsResolver;
+
+    private AiStepGateway $aiStepGateway;
+
+    private ProcessingHistoryRecorder $processingHistoryRecorder;
 
     private bool $promptChatHistoryEnabled = true;
 
@@ -36,8 +35,12 @@ class ProcessDocumentService
         private AiExtractionSchemaValidator $aiExtractionSchemaValidator,
         private AiPromptBuilder $aiPromptBuilder,
         ?AiUserSettingsResolver $aiUserSettingsResolver = null,
+        ?AiStepGateway $aiStepGateway = null,
+        ?ProcessingHistoryRecorder $processingHistoryRecorder = null,
     ) {
         $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
+        $this->processingHistoryRecorder = $processingHistoryRecorder ?? app(ProcessingHistoryRecorder::class);
+        $this->aiStepGateway = $aiStepGateway ?? app(AiStepGateway::class);
     }
 
     /**
@@ -216,11 +219,8 @@ class ProcessDocumentService
         ?string $genericDocumentLanguage = null,
     ): array {
         $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage);
-
-        $response = $this->callAi($config, $document, $prompt, 'main_extraction');
-
         try {
-            $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+            $data = $this->requestMainExtractionPayload($config, $document, $prompt);
             $data = $this->normalizeMainExtractionPayload($data);
 
             $this->aiExtractionSchemaValidator->validate($data);
@@ -231,13 +231,13 @@ class ProcessDocumentService
             ]);
 
             return $data;
-        } catch (JsonException $e) {
+        } catch (AiResponseParseException $e) {
             Log::error('Failed to parse main AI response', [
-                'response' => $response,
+                'response' => null,
                 'error' => $e->getMessage(),
             ]);
 
-            throw InvalidAiResponseSchemaException::invalidJson($e);
+            throw InvalidAiResponseSchemaException::invalidJson(new JsonException($e->getMessage(), 0, $e));
         }
     }
 
@@ -348,7 +348,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildAccountMatchingPrompt($accountsList, $accountName);
 
-        $response = $this->callAi($config, $document, $prompt, 'account_matching');
+        $response = $this->requestAccountMatchResult($config, $document, $prompt);
 
         $result = mb_trim($response);
 
@@ -417,7 +417,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildPayeeMatchingPrompt($payeesList, $payeeName);
 
-        $response = $this->callAi($config, $document, $prompt, 'payee_matching');
+        $response = $this->requestPayeeMatchResult($config, $document, $prompt);
 
         $result = mb_trim($response);
 
@@ -494,7 +494,7 @@ class ProcessDocumentService
 
         $prompt = $this->aiPromptBuilder->buildInvestmentMatchingPrompt($investmentsList, $investmentName);
 
-        $response = $this->callAi($config, $document, $prompt, 'investment_matching');
+        $response = $this->requestInvestmentMatchResult($config, $document, $prompt);
 
         $result = mb_trim($response);
 
@@ -771,11 +771,12 @@ class ProcessDocumentService
                 );
             }
 
-            Log::error('Category batch matching failed, items will have no category', [
+            Log::error('Category batch matching failed; document processing will fail', [
                 'error' => $e->getMessage(),
                 'item_count' => count($itemsNeedingAi),
             ]);
-            // Items already have null recommended_category_id, so no changes needed
+
+            throw $e;
         }
 
         return array_values($enrichedItems);
@@ -820,63 +821,46 @@ class ProcessDocumentService
             data_get($resolvedSettings, 'generic_document_language'),
         );
 
-        $response = $this->callAi($config, $document, $prompt, 'category_batch_matching');
+        $aiResults = $this->requestCategoryBatchMatches($config, $document, $prompt);
 
-        Log::debug('Category matching AI response', [
-            'prompt' => $prompt,
-            'result' => $response,
-        ]);
+        Log::debug('Parsed category matching AI response', ['results' => $aiResults]);
 
-        // Parse AI response
-        try {
-            $aiResults = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+        // Validate and format results
+        $matches = [];
+        foreach ($aiResults as $result) {
+            $itemIndex = $result['item_index'] ?? null;
+            $categoryId = $result['recommended_category_id'] ?? null;
+            $confidenceScore = $result['confidence_score'] ?? null;
 
-            Log::debug('Parsed category matching AI response', ['results' => $aiResults]);
-
-            // Validate and format results
-            $matches = [];
-            foreach ($aiResults as $result) {
-                $itemIndex = $result['item_index'] ?? null;
-                $categoryId = $result['recommended_category_id'] ?? null;
-                $confidenceScore = $result['confidence_score'] ?? null;
-
-                if ($itemIndex === null || ! isset($items[$itemIndex])) {
-                    continue;
-                }
-
-                // Validate category exists and is active
-                if ($categoryId !== null) {
-                    $categoryExists = $user->categories()
-                        ->active()
-                        ->where('id', $categoryId)
-                        ->exists();
-
-                    if (! $categoryExists) {
-                        Log::warning('AI suggested invalid/inactive category', [
-                            'recommended_category_id' => $categoryId,
-                            'item_index' => $itemIndex,
-                        ]);
-                        $categoryId = null;
-                        $confidenceScore = null;
-                    }
-                }
-
-                $matches[$itemIndex] = [
-                    'recommended_category_id' => $categoryId,
-                    'match_type' => $categoryId !== null ? 'ai' : null,
-                    'confidence_score' => $confidenceScore,
-                ];
+            if ($itemIndex === null || ! isset($items[$itemIndex])) {
+                continue;
             }
 
-            return $matches;
-        } catch (JsonException $e) {
-            Log::error('Failed to parse category matching AI response', [
-                'response' => $response,
-                'error' => $e->getMessage(),
-            ]);
+            // Validate category exists and is active
+            if ($categoryId !== null) {
+                $categoryExists = $user->categories()
+                    ->active()
+                    ->where('id', $categoryId)
+                    ->exists();
 
-            throw new Exception('Failed to parse category matching AI response as JSON');
+                if (! $categoryExists) {
+                    Log::warning('AI suggested invalid/inactive category', [
+                        'recommended_category_id' => $categoryId,
+                        'item_index' => $itemIndex,
+                    ]);
+                    $categoryId = null;
+                    $confidenceScore = null;
+                }
+            }
+
+            $matches[$itemIndex] = [
+                'recommended_category_id' => $categoryId,
+                'match_type' => $categoryId !== null ? 'ai' : null,
+                'confidence_score' => $confidenceScore,
+            ];
         }
+
+        return $matches;
     }
 
     private function normalizeTransactionItemDescription(?string $description): string
@@ -884,342 +868,63 @@ class ProcessDocumentService
         return Str::lower(Str::trim((string) $description));
     }
 
-    /**
-     * Call AI provider and get text response
-     */
-    protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+    protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
     {
-        try {
-            if ($step === 'main_extraction') {
-                $mainExtractionResponse = $this->callStructuredAiForMainExtraction($config, $document, $prompt);
-                $structuredPayload = $mainExtractionResponse['structured'] ?? null;
-                $textResponse = is_array($structuredPayload)
-                    ? (json_encode($structuredPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '')
-                    : 'null';
+        return $this->aiStepGateway->extractMainData($config, $document, $prompt, $this->promptChatHistoryEnabled);
+    }
 
-                $this->appendProcessingHistory($document, $step, $prompt, $textResponse);
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
+    {
+        return $this->aiStepGateway->matchCategoriesBatch($config, $document, $prompt, $this->promptChatHistoryEnabled);
+    }
 
-                return $textResponse;
-            }
+    protected function requestAccountMatchResult(AiProviderConfig $config, AiDocument $document, string $prompt): string
+    {
+        return $this->aiStepGateway->matchAccountId($config, $document, $prompt, $this->promptChatHistoryEnabled);
+    }
 
-            $pendingRequest = Prism::text()
-                ->using($config->provider, $config->model)
-                ->usingProviderConfig([
-                    'api_key' => $config->api_key,
-                ]);
+    protected function requestPayeeMatchResult(AiProviderConfig $config, AiDocument $document, string $prompt): string
+    {
+        return $this->aiStepGateway->matchPayeeId($config, $document, $prompt, $this->promptChatHistoryEnabled);
+    }
 
-            $response = $this->promptChatHistoryEnabled
-                ? $pendingRequest
-                    ->withMessages($this->aiPromptBuilder->buildPromptMessageChain($prompt, $document->ai_chat_history))
-                    ->asText()
-                : $pendingRequest
-                    ->withPrompt($prompt)
-                    ->asText();
-
-            $textResponse = $response->text ?? '';
-
-            $this->appendProcessingHistory($document, $step, $prompt, $textResponse);
-
-            return $textResponse;
-        } catch (Exception $e) {
-            if ($step === 'main_extraction') {
-                $this->appendProcessingHistory($document, $step, $prompt, 'ERROR: ' . $e->getMessage());
-            } else {
-                $this->appendAiFallbackHistoryAfterFailure($document, $step, $prompt, $e);
-            }
-
-            Log::error('AI provider call failed', [
-                'provider' => $config->provider,
-                'model' => $config->model,
-                'step' => $step,
-                'timeout' => $this->isAiCallTimeout($e),
-                'error' => $e->getMessage(),
-            ]);
-
-            throw new Exception("AI provider error: {$e->getMessage()}");
-        }
+    protected function requestInvestmentMatchResult(AiProviderConfig $config, AiDocument $document, string $prompt): string
+    {
+        return $this->aiStepGateway->matchInvestmentId($config, $document, $prompt, $this->promptChatHistoryEnabled);
     }
 
     private function appendAiFallbackHistoryAfterFailure(AiDocument $document, string $step, string $prompt, Exception $exception): void
     {
-        $stepLabel = Str::headline(str_replace('_', ' ', $step));
-        $errorMessage = mb_trim($exception->getMessage());
-
-        $historyPrompt = implode("\n\n", [
-            "Local {$stepLabel} fallback (AI call failed).",
-            $this->formatLocalHistorySection('Context', [
-                'reason' => $this->isAiCallTimeout($exception)
-                    ? 'AI request timed out; fallback applied to keep document processing reviewable'
-                    : 'AI request failed; fallback applied to keep document processing reviewable',
-                'error_message' => $errorMessage,
-                'original_prompt' => $prompt,
-            ]),
-        ]);
-
-        $historyResponse = $this->formatLocalHistorySection('Result', [
-            'matched_id' => null,
-            'recommended_category_id' => null,
-        ]);
-
-        $this->appendProcessingHistory($document, $step, $historyPrompt, $historyResponse, false);
-    }
-
-    private function isAiCallTimeout(Exception $exception): bool
-    {
-        $message = Str::lower($exception->getMessage());
-
-        return Str::contains($message, ['curl error 28', 'operation timed out', 'timed out']);
+        $this->processingHistoryRecorder->appendAiFallbackHistoryAfterFailure($document, $step, $prompt, $exception);
     }
 
     private function hasAiFailureFallbackHistory(AiDocument $document, string $step): bool
     {
-        $history = $document->ai_chat_history;
-        if (! is_array($history)) {
-            return false;
-        }
-
-        foreach (array_reverse($history) as $entry) {
-            if (($entry['step'] ?? null) !== $step) {
-                continue;
-            }
-
-            $prompt = (string) ($entry['prompt'] ?? '');
-
-            return Str::contains($prompt, 'fallback (AI call failed)');
-        }
-
-        return false;
-    }
-
-    /**
-     * @return array{structured: mixed, text: string}
-     */
-    protected function callStructuredAiForMainExtraction(AiProviderConfig $config, AiDocument $document, string $prompt): array
-    {
-        $pendingRequest = Prism::structured()
-            ->using($config->provider, $config->model)
-            ->usingProviderConfig([
-                'api_key' => $config->api_key,
-            ])
-            ->withSchema($this->buildMainExtractionSchema());
-
-        if ($config->provider === 'openai') {
-            $pendingRequest = $pendingRequest->withProviderOptions([
-                'schema' => [
-                    'strict' => true,
-                ],
-            ]);
-        }
-
-        $response = $this->promptChatHistoryEnabled
-            ? $pendingRequest
-                ->withMessages($this->aiPromptBuilder->buildPromptMessageChain($prompt, $document->ai_chat_history))
-                ->asStructured()
-            : $pendingRequest
-                ->withPrompt($prompt)
-                ->asStructured();
-
-        return [
-            'structured' => $response->structured,
-            'text' => $response->text,
-        ];
-    }
-
-    private function buildMainExtractionSchema(): ObjectSchema
-    {
-        return new ObjectSchema(
-            name: 'transaction_extraction',
-            description: 'Extracted transaction payload from financial document.',
-            properties: [
-                new EnumSchema(
-                    name: 'transaction_type',
-                    description: 'Detected transaction type.',
-                    options: [
-                        'withdrawal',
-                        'deposit',
-                        'transfer',
-                        'buy',
-                        'sell',
-                        'dividend',
-                        'interest',
-                        'add_shares',
-                        'remove_shares',
-                    ]
-                ),
-                new StringSchema('account', 'Account name for standard/investment transaction.', nullable: true),
-                new StringSchema('account_from', 'Source account name for transfer.', nullable: true),
-                new StringSchema('account_to', 'Destination account name for transfer.', nullable: true),
-                new StringSchema('payee', 'Payee or merchant name for standard transaction.', nullable: true),
-                new StringSchema('date', 'Transaction date in YYYY-MM-DD format.', nullable: true),
-                new NumberSchema('amount', 'Transaction amount.', nullable: true),
-                new StringSchema('currency', 'ISO currency code.', nullable: true),
-                new ArraySchema(
-                    name: 'transaction_items',
-                    description: 'Line items for standard transaction receipts.',
-                    items: new ObjectSchema(
-                        name: 'transaction_item',
-                        description: 'Single line item extracted from the document.',
-                        properties: [
-                            new StringSchema('description', 'Normalized item description.', nullable: true),
-                            new NumberSchema('amount', 'Item amount.', nullable: true),
-                        ],
-                        requiredFields: ['description', 'amount']
-                    ),
-                    nullable: true
-                ),
-                new StringSchema('investment', 'Investment name, ticker, or ISIN.', nullable: true),
-                new NumberSchema('quantity', 'Number of shares/units.', nullable: true),
-                new NumberSchema('price', 'Price per share/unit.', nullable: true),
-                new NumberSchema('commission', 'Commission or fee amount.', nullable: true),
-                new NumberSchema('tax', 'Tax amount.', nullable: true),
-                new NumberSchema('dividend', 'Dividend amount.', nullable: true),
-            ],
-            requiredFields: [
-                'transaction_type',
-                'account',
-                'account_from',
-                'account_to',
-                'payee',
-                'date',
-                'amount',
-                'currency',
-                'transaction_items',
-                'investment',
-                'quantity',
-                'price',
-                'commission',
-                'tax',
-                'dividend',
-            ]
-        );
-    }
-
-    private function appendProcessingHistory(AiDocument $document, string $step, string $prompt, string $response, bool $includeInPromptHistory = true): void
-    {
-        $history = $document->ai_chat_history;
-
-        if (! is_array($history)) {
-            $history = [];
-        }
-
-        $entry = [
-            'timestamp' => now()->toIso8601String(),
-            'step' => $step,
-            'prompt' => $prompt,
-            'response' => $response,
-        ];
-
-        if (! $includeInPromptHistory) {
-            $entry['include_in_prompt_history'] = false;
-        }
-
-        $history[] = $entry;
-
-        $document->ai_chat_history = $history;
-        $document->saveQuietly();
+        return $this->processingHistoryRecorder->hasAiFailureFallbackHistory($document, $step);
     }
 
     private function appendLocalProcessingHistory(AiDocument $document, string $step, array $context, array $result): void
     {
-        $this->appendProcessingHistory(
+        $this->processingHistoryRecorder->appendLocalProcessingHistory($document, $step, $context, $result);
+    }
+
+    private function appendProcessingHistory(
+        AiDocument $document,
+        string $step,
+        string $prompt,
+        string $response,
+        bool $includeInPromptHistory = true,
+    ): void {
+        $this->processingHistoryRecorder->appendProcessingHistory(
             $document,
             $step,
-            $this->buildLocalHistoryPrompt($step, $context),
-            $this->buildLocalHistoryResponse($result),
-            false,
+            $prompt,
+            $response,
+            $includeInPromptHistory,
         );
-    }
-
-    private function buildLocalHistoryPrompt(string $step, array $context): string
-    {
-        $stepLabel = Str::headline(str_replace('_', ' ', $step));
-
-        return implode("\n\n", [
-            "Local {$stepLabel} decision (AI call skipped).",
-            $this->formatLocalHistorySection('Context', $context),
-        ]);
-    }
-
-    private function buildLocalHistoryResponse(array $result): string
-    {
-        return $this->formatLocalHistorySection('Result', $result);
-    }
-
-    private function formatLocalHistorySection(string $title, array $payload): string
-    {
-        $lines = ["{$title}:"];
-        $flattenedPayload = $this->flattenLocalHistoryPayload($payload);
-
-        if ($flattenedPayload === []) {
-            $lines[] = '- None';
-
-            return implode("\n", $lines);
-        }
-
-        foreach ($flattenedPayload as $key => $value) {
-            $label = Str::headline(str_replace('.', ' ', (string) $key));
-            $lines[] = "- {$label}: {$this->formatLocalHistoryValue($value)}";
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function flattenLocalHistoryPayload(array $payload, string $prefix = ''): array
-    {
-        $flattenedPayload = [];
-
-        foreach ($payload as $key => $value) {
-            $path = $prefix === '' ? (string) $key : "{$prefix}.{$key}";
-
-            if (is_array($value)) {
-                if ($value === []) {
-                    $flattenedPayload[$path] = [];
-                } else {
-                    $flattenedPayload = [
-                        ...$flattenedPayload,
-                        ...$this->flattenLocalHistoryPayload($value, $path),
-                    ];
-                }
-
-                continue;
-            }
-
-            $flattenedPayload[$path] = $value;
-        }
-
-        return $flattenedPayload;
-    }
-
-    private function formatLocalHistoryValue(mixed $value): string
-    {
-        if ($value === null) {
-            return 'N/A';
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if (is_string($value)) {
-            $trimmedValue = mb_trim($value);
-
-            return $trimmedValue === '' ? '(empty)' : $trimmedValue;
-        }
-
-        if (is_scalar($value)) {
-            return (string) $value;
-        }
-
-        $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        if ($encoded === false) {
-            return '[unavailable]';
-        }
-
-        return $encoded;
     }
 
     /**
