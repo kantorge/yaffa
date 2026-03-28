@@ -314,6 +314,34 @@ class TransactionTest extends TestCase
         );
     }
 
+    public function test_user_cannot_skip_other_users_scheduled_transaction_instance(): void
+    {
+        $otherUser = User::factory()->create();
+        $transaction = Transaction::factory()
+            ->withdrawal_schedule($otherUser)
+            ->create(['user_id' => $otherUser->id]);
+
+        $originalNextDate = now()->addDays(7);
+        $transaction->transactionSchedule->update([
+            'start_date' => now()->subWeek(),
+            'next_date' => $originalNextDate,
+            'end_date' => null,
+            'frequency' => 'WEEKLY',
+            'interval' => 1,
+            'count' => null,
+        ]);
+
+        $this->actingAs($this->user)
+            ->patch(route('transactions.skipScheduleInstance', ['transaction' => $transaction->id]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $transaction->transactionSchedule->refresh();
+        $this->assertEquals(
+            $originalNextDate->format('Y-m-d'),
+            $transaction->transactionSchedule->next_date->format('Y-m-d')
+        );
+    }
+
     /**
      * Test that user can create transaction from draft
      */

@@ -101,6 +101,18 @@ class AccountTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    public function test_user_cannot_view_other_users_account_history(): void
+    {
+        $account = $this->createAccountAndUser();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        $this->actingAs($user2)
+            ->get(route('account.history', ['account' => $account->id]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
     public function test_user_can_view_list_of_accounts(): void
     {
         /** @var User $user */
