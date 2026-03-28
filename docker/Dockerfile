@@ -27,6 +27,10 @@ RUN apt-get update && apt-get install -y \
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
+# Stream Apache logs to container stdout/stderr for centralized collection.
+RUN sed -i 's|ErrorLog ${APACHE_LOG_DIR}/error.log|ErrorLog /dev/stderr|g' /etc/apache2/apache2.conf /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's|CustomLog ${APACHE_LOG_DIR}/access.log combined|CustomLog /dev/stdout combined|g' /etc/apache2/sites-available/000-default.conf
+
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -43,6 +47,9 @@ COPY --from=assets /app/public/build /var/www/html/public/build
 # Set environment variables to force production mode
 ENV APP_ENV=production \
     APP_DEBUG=false
+
+# Production-safe PHP error logging to stderr (visible in container logs).
+COPY ./docker/php-logging.ini /usr/local/etc/php/conf.d/zz-php-logging.ini
 
 # Install dependencies via Composer
 RUN composer install --no-dev --no-interaction --no-progress
