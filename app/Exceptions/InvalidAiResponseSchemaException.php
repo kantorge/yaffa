@@ -21,6 +21,11 @@ class InvalidAiResponseSchemaException extends Exception
         return new self('AI response must be a JSON object.');
     }
 
+    public static function invalidPayloadStructure(string $message, ?Exception $previous = null): self
+    {
+        return new self("Invalid AI response payload structure: {$message}", 0, $previous);
+    }
+
     public static function missingKeys(array $keys, string $context = 'root'): self
     {
         $missingKeys = implode(', ', $keys);

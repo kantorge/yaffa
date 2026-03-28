@@ -14,7 +14,6 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use JsonException;
 
 class ProcessDocumentService
 {
@@ -237,7 +236,7 @@ class ProcessDocumentService
                 'error' => $e->getMessage(),
             ]);
 
-            throw InvalidAiResponseSchemaException::invalidJson(new JsonException($e->getMessage(), 0, $e));
+            throw InvalidAiResponseSchemaException::invalidPayloadStructure($e->getMessage(), $e);
         }
     }
 

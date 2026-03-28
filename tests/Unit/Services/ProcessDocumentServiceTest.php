@@ -59,7 +59,7 @@ class ProcessDocumentServiceTest extends TestCase
         };
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('AI response is not valid JSON');
+        $this->expectExceptionMessage('Invalid AI response payload structure');
 
         $service->extractData($config, 'Receipt text');
     }
