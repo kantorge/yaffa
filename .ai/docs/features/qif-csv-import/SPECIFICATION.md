@@ -166,8 +166,13 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - decimal_separator nullable (user profiles only)
     - thousand_separator nullable (user profiles only)
     - sign_handling nullable (user profiles only)
-    - mapping_json (raw header aliases to canonical field names consumed by matching rules and actions)
-    - options_json (system profiles: matching_rules, transforms, defaults, warnings, metadata, parser_settings; user profiles: normalization flags and parser options)
+    - mapping_json
+      - for `type = system`: raw header aliases to canonical field names consumed by matching rules and actions
+      - for `type = user`: direct source header aliases to canonical transaction fields used in mapping-only normalization
+    - options_json
+      - for `type = system`: matching_rules, action arguments, transforms, defaults, warnings, metadata, parser_settings
+      - for `type = user`: normalization flags and parser options only
+      - user profiles MUST NOT define `matching_rules`, `actions`, or custom transform catalogs
     - active
     - created_at, updated_at
 
@@ -268,8 +273,7 @@ External QIF library may be reconsidered later only if:
     - `MM/DD/YY`
     - `D MMM YYYY` (e.g., `1 Jan 2025`)
     - `D MMM YY` (e.g., `1 Jan 25`)
-  - If the format is ambiguous (e.g., `01/02/2025` could be 1 Feb or 2 Jan), apply user-selected or import-level date format preference and record a warning on affected entries.
-  - If no preference is declared and ambiguity remains, default to `DD/MM/YYYY` and warn.
+  - If the format is ambiguous (e.g., `01/02/2025` could be 1 Feb or 2 Jan), apply the first matching pattern and record a warning on affected entries.
 
 - Amount handling:
   - Normalize sign and decimal format.
@@ -350,6 +354,12 @@ Therefore, the recommended design is:
 - full system rule definitions are application-managed,
 - user customization is limited to constrained user-owned profile entries.
 
+MVP capability boundary:
+
+- `type = system` profiles execute declarative rule matching and action pipelines.
+- `type = user` profiles are mapping-oriented only and do not execute rule conditions/actions.
+- Runtime parsing must branch by profile type.
+
 ### System CSV Import Profile Structure
 
 Each system profile should have:
@@ -389,6 +399,12 @@ Currency is not a profile setting. Imported amounts are always interpreted in th
 
 For `type = system`, these profiles are maintained programmatically or seeded and not exposed to user CRUD.
 For `type = user`, the same structure is reused, but only safe editable fields are exposed to the user.
+
+Normative capability rules:
+
+- System profiles may include and execute `options_json.matching_rules`.
+- User profiles must not include executable rule definitions.
+- User profiles are limited to direct field mapping plus safe parser/normalization options.
 
 ### Recommended Rule DSL for System Profiles
 
@@ -445,21 +461,27 @@ Processing stages and component usage:
 
 3. Rule matching
 
-- `options_json.matching_rules` is evaluated in array order.
-- First matching rule wins.
-- Each rule uses:
-  - `conditions` to decide applicability,
-  - `actions` to build `normalized_transaction` fields.
+- For `type = system` profiles:
+  - `options_json.matching_rules` is evaluated in array order.
+  - First matching rule wins.
+  - Each rule uses:
+    - `conditions` to decide applicability,
+    - `actions` to build `normalized_transaction` fields.
+- For `type = user` profiles:
+  - this stage is skipped and direct mapping is used.
 
 4. Action execution
 
-- Action list is applied in-order inside the matched rule.
-- Supported action types in MVP:
-  - `set`: assign static value to a target path.
-  - `copy`: copy canonical fact value to a target path.
-  - `map_transform`: read canonical fact, apply transform, assign result.
-  - `apply_transform`: apply transform without direct source fact (context-driven).
-  - `conditional_copy`: copy source only when condition is true.
+- For `type = system` profiles:
+  - Action list is applied in-order inside the matched rule.
+  - Supported action types in MVP:
+    - `set`: assign static value to a target path.
+    - `copy`: copy canonical fact value to a target path.
+    - `map_transform`: read canonical fact, apply transform, assign result.
+    - `apply_transform`: apply transform without direct source fact (context-driven).
+    - `conditional_copy`: copy source only when condition is true.
+- For `type = user` profiles:
+  - no action execution stage exists in MVP.
 
 5. Default and warning enrichment
 
@@ -553,13 +575,14 @@ Recommended persisted fields:
 - thousand_separator nullable
 - sign_handling nullable
 - mapping_json
-  - source column/header alias -> canonical field name used by matching rules and actions
+  - source column/header alias -> canonical field name used for direct mapping into normalized transaction fields
 - options_json
   - trim strings
   - skip empty rows
   - lowercase/uppercase normalization where allowed
   - sign inversion toggle
   - comment concatenation options
+  - must not include `matching_rules`, `actions`, or transform registry overrides
 - active
 
 User-owned profiles should support:
@@ -569,6 +592,13 @@ User-owned profiles should support:
 - editing parser options,
 - editing column mappings,
 - deleting when no longer needed.
+
+Runtime behavior for user profiles:
+
+- Apply header canonicalization from `mapping_json`.
+- Map canonical fields directly to normalized transaction fields.
+- Apply only allowed built-in normalization transforms when configured in safe options.
+- Do not evaluate rule conditions or action lists.
 
 ### Minimal CRUD Required for MVP
 
@@ -581,10 +611,12 @@ Minimal profile behavior:
 2. Create user profile
 
 - from scratch or cloned from a system profile
+- reject payload keys `options_json.matching_rules`, `options_json.actions`, and transform catalog overrides
 
 3. Update user profile
 
 - parser settings and mappings
+- reject payload keys `options_json.matching_rules`, `options_json.actions`, and transform catalog overrides
 
 4. Delete user profile
 
@@ -601,6 +633,13 @@ Those are read-only to users.
 - User CSV import profiles:
   - fully CRUD within ownership scope
   - no shared/community profiles in MVP
+  - no rule DSL editing in MVP
+
+Clone behavior from system profile to user profile:
+
+- Allowed to copy: parser settings, mapping aliases, safe normalization options, and display metadata.
+- Not allowed to copy: `matching_rules`, action pipelines, or any executable DSL sections.
+- Clone output is always a mapping-oriented `type = user` profile.
 
 ### System Profile Definition and Maintenance
 
@@ -637,12 +676,6 @@ Accounts should gain a new preference for CSV import defaults.
 Recommended account-level field:
 
 - `preferred_csv_import_profile_id` nullable
-
-Selection precedence during import:
-
-1. account preferred CSV import profile
-2. user last-used profile for the current browser session or user preference
-3. application default system profile
 
 Expected behavior:
 
@@ -734,7 +767,6 @@ Recommended matching signals (weighted):
 - amount proximity (exact or within a small tolerance),
 - date proximity (same day or small window),
 - payee/merchant similarity,
-- optional memo or receipt text token overlap.
 
 Suggested response shape for each candidate:
 
@@ -806,15 +838,13 @@ Notes:
   - No import history/log retention is required.
 
 - Transaction linkage:
-  - No persistent linkage is recorded between finalized transactions and their source import file or draft. Finalized transactions are recorded normally via the existing transaction creation endpoint.
-  - This is acceptable because import files are not persisted and import sessions are one-off (users do not expect to revisit or re-import the same file).
+  - No persistent linkage is recorded between finalized transactions and their source import file or draft. Finalized transactions are recorded normally via the existing transaction creation UI and endpoint that is used by AI Document processing and finalization flow.
+  - This is acceptable because import files are not persisted and import sessions are one-off (users do not expect to revisit or re-import the same file). However, during the review session, the frontend maintains in-memory linkage between drafts and their source file for display and troubleshooting purposes.
 
 ## Concurrency and Idempotency
 
 - Multiple imports by same user are allowed as independent one-off sessions.
-- Finalization must be idempotency-safe:
-  - prevent duplicate transaction creation on repeated click,
-  - prevent race conditions if multiple finalize requests are sent for the same draft payload.
+- Finalization must be idempotency-safe with a best effor approach. This means, that reasonable safeguards should be in place to prevent duplicate transaction creation if the user clicks finalize multiple times rapidly, but no complex locking or de-duplication logic is required. The frontend should disable the finalize button after the first click until a response is received. If the user is working in parallel in multiple tabs or windows, then this is not a common scenario to be handled.
 
 ## Testing Strategy
 
@@ -853,9 +883,8 @@ Notes:
 - Duplicate check with insufficient fields.
 - Multiple AI Documents in ready_for_review matching the same draft with close scores.
 - AI Document exists but belongs to another user (must never be returned).
-- Finalize called for already finalized/ignored draft.
-- Unauthorized access to import and profile endpoints.
-- Re-upload of identical file intentionally (allowed and re-parsed as new one-off session).
+- Finalize called for already finalized/ignored draft should not be allowed by the UI
+- Unauthorized access to import and profile endpoints should be denied.
 
 ## Open Questions for Post-MVP
 
@@ -890,17 +919,279 @@ Notes:
 
 ## Suggested Delivery Milestones
 
-- Milestone 1:
-  - QIF parser baseline
-  - Parse API + in-memory draft response
-- Milestone 2:
-  - CSV backend parser with default mapping
-  - Duplicate detection integration
-  - Frontend review table wired to parser response
-- Milestone 3:
-  - Finalize/ignore actions
-  - CSV import profile CRUD support
-  - Full test coverage and legacy flow migration
-- Milestone 4:
-  - Create documentation and release notes
-  - Create documentation for CSV import profile format and usage
+### Milestone 1: QIF Parser & Parse API Baseline
+
+**Objective**: Establish end-to-end QIF parsing and response contract.
+
+**Backend Tasks**:
+
+- Implement `QifParserService`
+  - Line-based QIF parser supporting Bank/Cash/CCard types
+  - Marker parsing (D, T, P, M, L, N, ^)
+  - Non-blocking warnings for unsupported sections and split lines
+  - Date pattern matching with fallback to DD/MM/YYYY
+  - Amount normalization (sign, decimal)
+- Implement `ImportNormalizationService`
+  - Convert parsed QIF entries to draft transaction DTOs
+  - Populate mandatory fields (date, amount, account_id, transaction_type)
+  - Attach warnings to drafts
+- Create `CsvImportProfile` migration and model
+- Implement `ImportApiController::parse` endpoint
+  - Accepts multipart `file`, `source_type=qif`, `account_id`
+  - Returns Runtime Import Parse Result DTO
+  - Enforce file size limits from env variables
+- Implement `ImportPolicy` for auth/ownership checks
+- Create `CsvImportProfileFactory` for testing
+
+**Frontend Tasks**:
+
+- Create `ImportSourceSelector` component (radio: QIF or CSV)
+- Create `ImportUploadCard` component
+  - File input + upload handler
+  - Display upload progress and errors
+  - Call `/api/v1/imports/parse`
+- Create `ImportDraftTable` component
+  - Display parsed drafts with draft_index, date, amount, payee columns
+  - Show draft status (pending_review, ignored, finalized, failed_validation)
+  - Display warnings per draft inline or in expandable section
+  - Show raw_entry preview on click
+- Basic page layout: ImportSourceSelector → ImportUploadCard → ImportDraftTable
+
+**Testing Tasks** (Backend Agent):
+
+- Unit test: `QifParserServiceTest`
+  - Valid QIF with all markers, mixed date formats, localized amounts
+  - Missing terminators, unsupported sections, split lines
+  - EOF handling, malformed entries
+- Unit test: `ImportNormalizationServiceTest`
+  - Parser output → DTO conversion
+  - Warning accumulation
+  - Field mapping correctness
+- Feature test: `ImportApiParseTest::qif_parse_valid`
+  - Parse valid QIF file
+  - Validate response DTO shape
+  - Assert auth check blocks unauthorized access
+
+**Testing Tasks** (Frontend Agent):
+
+- Component test: `ImportUploadCard.spec.js`
+  - File selection and upload
+  - Error display
+  - API call on submit
+- Component test: `ImportDraftTable.spec.js`
+  - Render drafts from parsed response
+  - Display status indicators
+  - Show warnings
+
+**Deliverable**: QIF files can be uploaded, parsed, and displayed in review table. Finalization not yet wired.
+
+---
+
+### Milestone 2: CSV Parser, Profile Model, Duplicate Detection & Frontend Review Integration
+
+**Objective**: CSV parsing with profile system and duplicate detection enrichment.
+
+**Backend Tasks**:
+
+- Create `SystemCsvImportProfileRegistry` with one system profile (hun_raiffeisen_v1 equivalent)
+  - Define parser_settings (delimiter, has_header_row, date format)
+  - Define mapping_json (source columns → canonical fields)
+  - Define matching_rules[] with conditions/actions for transaction type classification
+  - Define defaults and warnings
+- Implement `SyncSystemCsvImportProfilesCommand`
+  - Idempotent `updateOrCreate` keyed on `key`
+  - Add to `docker/entrypoint.sh`
+- Implement `CsvParserService`
+  - Use `league/csv` for tokenization
+  - Apply charset detection and encoding conversion (UTF-8 fallback)
+  - Header canonicalization via mapping_json
+  - Rule matching and action execution (for system profiles only)
+  - Collect unmatched rows with warnings
+- Implement `ImportDuplicateDetectionService` adapter
+  - Map normalized draft fields to existing DuplicateDetectionService input
+  - Execute duplicate check eagerly at parse completion
+  - Attach duplicate_candidates[] to each draft
+- Extend `ImportApiController::parse` to support CSV
+  - Accept `source_type=csv` and optional `csv_import_profile_id`
+  - Default resolution: account preferred → application default system profile
+  - Return drafts with duplicate_candidates populated
+- Implement `CsvImportProfile` CRUD endpoints (GET, POST for user profiles)
+  - GET `/api/v1/imports/csv-profiles` returns system + user profiles
+  - POST `/api/v1/imports/csv-profiles` creates user profile
+  - Validate request: reject `options_json.matching_rules`, `options_json.actions`
+
+**Frontend Tasks**:
+
+- Enhance `ImportUploadCard` to support CSV profile selection
+  - Dropdown: display system + user profiles
+  - Remember last-used profile in localStorage
+  - Apply account default on account selection
+- Create `DuplicateCandidatesPanel` component
+  - Display similar transaction list per draft
+  - Show confidence score and matched_on summary
+  - Link to view similar transaction details
+- Enhance `ImportDraftTable` to show duplicate badge/warning
+  - Highlight drafts with high-confidence duplicates
+- Add profile management UI (basic form)
+  - List user profiles
+  - Create new profile (from scratch or clone from system)
+  - Edit mapping_json and parser options
+  - Delete user profile
+
+**Testing Tasks** (Backend Agent):
+
+- Component integration test: `SystemCsvImportProfileRegistry`
+  - Registry contains expected system profile structure
+  - `SyncSystemCsvImportProfilesCommand` loads profiles correctly
+- Unit test: `CsvParserServiceTest`
+  - Parse valid CSV with system profile
+  - Header canonicalization via mapping_json
+  - Rule matching and action execution
+  - Multiline fields, embedded delimiters, localized amounts
+  - Charset detection (UTF-8, Windows-1252, ISO-8859-1)
+  - Parse errors and warnings emitted without failing full import
+- Feature test: `ImportApiParseTest::csv_parse_valid`
+  - Parse CSV with system profile
+  - Parse CSV with user profile (mapping-only, no rules)
+  - Validate profile selection precedence
+  - Assert forbidden keys rejected on profile create/update
+- Feature test: `ImportDuplicateDetectionTest`
+  - Drafts enriched with duplicate_candidates
+  - Similarity scores populated
+  - Candidate search bounded (time window, count)
+
+**Testing Tasks** (Frontend Agent):
+
+- Component test: `ImportUploadCard.spec.js` (profile selection UX)
+- Component test: `DuplicateCandidatesPanel.spec.js`
+  - Display candidates with confidence and signals
+  - Link interaction
+- Component test: CSV profile management form
+
+**Deliverable**: CSV files parsed via backend profiles. Duplicates detected and displayed. Profile CRUD available. Finalization still via existing modal flow.
+
+---
+
+### Milestone 3: Finalize/Ignore Actions, Profile Ownership, Full Coverage & Legacy Migration
+
+**Objective**: Enable user finalization workflow and migrate from legacy CSV import.
+
+**Backend Tasks**:
+
+- Extend `CsvImportProfile` model
+  - Add `user_id` for user profiles
+  - Add `key` for system profiles
+  - Add validation: type=system requires key, type=user requires user_id
+  - Add relationship: User hasMany CsvImportProfile(type=user)
+- Implement `CsvImportProfilePolicy`
+  - Only user owner can read/edit/delete user profiles
+  - Everyone can read system profiles
+- Implement `AccountEntity` model update
+  - Add `preferred_csv_import_profile_id` nullable foreign key
+  - Add `PATCH /api/v1/accounts/{accountEntity}` endpoint
+  - Whitelist `preferred_csv_import_profile_id` in update validation
+- Implement profile clone endpoint
+  - POST `/api/v1/imports/csv-profiles/{profile}/clone`
+  - Strip DSL fields when cloning system → user
+  - Validate user ownership of target user profile
+- Document expected parse response error format for partial success
+  - 200 with mixed valid/invalid drafts (same payload, warnings per draft)
+  - 422 for structural errors (bad profile, missing required fields)
+- Add comprehensive error handling tests
+  - Parser recovers from malformed entries
+  - Drafts with warnings still finalize
+  - Failed finalization does not auto-retry
+
+**Frontend Tasks**:
+
+- Implement `ImportDraftTable` actions
+  - Ignore button: mark draft status = ignored, hide row (or gray out)
+  - Finalize button: open existing transaction form modal
+    - Pre-populate draft fields into modal
+    - On save, call existing `/api/v1/transactions` endpoint
+    - Mark draft status = finalized
+    - Disable button on click until response received
+- Implement `RelatedAiDocumentsPanel` component (if AI docs exist in ready_for_review state)
+  - Display candidate AI documents with merchant, amount, date, confidence
+  - Link to open AI Document finalization modal instead of transaction form
+- Update navigation: replace legacy CSV import page with unified import page
+- Migrate existing CSV import rule file logic into first system profile
+- Add profile preference UI to account settings
+  - Select preferred import profile per account
+  - Auto-select on import page based on account
+
+**Testing Tasks** (Backend Agent):
+
+- Feature test: `ImportAuthorizationTest`
+  - User can CRUD own profiles
+  - User cannot edit other user profiles
+  - User cannot delete system profiles
+  - Unauthorized requests denied
+- Feature test: `ImportTransactionCreateFromDraftTest`
+  - Finalize draft → creates exactly one transaction via existing endpoint
+  - Transaction fields match normalized draft
+  - Repeated finalize on same draft does not create duplicate (frontend protection)
+- Unit test: `ImportNormalizationServiceTest` (expanded)
+  - Related AI document candidate matching heuristics
+  - Confidence scoring
+  - Bounded search (time window, candidate count)
+- Regression test: existing transaction create/update flow still works with import context
+- Command test: `SyncSystemCsvImportProfilesCommand`
+  - Idempotent: re-run produces same database state
+  - Migration of hun_raiffeisen_v1 rule file into profile
+
+**Testing Tasks** (Frontend Agent):
+
+- Component test: `ImportDraftTable.spec.js` (finalize/ignore interaction)
+- Component test: `RelatedAiDocumentsPanel.spec.js`
+- E2E flow test: complete import workflow
+  - Upload QIF/CSV
+  - Review drafts with duplicates
+  - Finalize selected drafts
+  - Confirm transactions created
+- Regression: legacy CSV import UI removed; all functionality in new page
+
+**Deliverable**: End-to-end import workflow functional. Users can upload QIF/CSV, review drafts with duplicates, finalize transactions. Legacy import page removed. Full test coverage passing.
+
+---
+
+### Milestone 4: Documentation & Polish
+
+**Objective**: Complete documentation and release preparation.
+
+**Backend Tasks**:
+
+- Document system CSV import profile format
+  - Explain parser_settings, mapping_json, matching_rules[], defaults, warnings
+  - Walkthrough of hun_raiffeisen_v1 profile
+  - How to add new system profile (registry + test)
+- Document API payloads (request/response schemas)
+  - POST `/api/v1/imports/parse`
+  - Profile CRUD endpoints
+  - Error response format
+- Add API documentation comments (PHPDoc) to controllers and services
+- Generate OpenAPI/Swagger spec (if project uses it)
+
+**Frontend Tasks**:
+
+- Document Vue components (props, events)
+- Update application user guide with import workflow
+- Add tooltips/help text to profile management UI
+- Write brief migration guide for users familiar with legacy import
+
+**Testing/DevOps Tasks**:
+
+- Verify `docker/entrypoint.sh` runs sync command correctly
+- Test deployment with docker build
+- Update deployment documentation (Deployer recipe if needed)
+- Create example QIF and CSV test files for manual testing
+- Verify all tests pass on CI
+
+**Release Tasks**:
+
+- Create release notes summarizing feature
+- Update CHANGELOG.md
+- Tag release version
+- Deploy to staging and verify with user acceptance testing
+
+**Deliverable**: Feature release-ready with complete documentation and passing all tests.
