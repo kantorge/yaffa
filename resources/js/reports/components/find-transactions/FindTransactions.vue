@@ -192,39 +192,15 @@
               aria-labelledby="nav-transaction-list"
               tabindex="1"
             >
-              <div
-                v-if="drillDownFilter"
-                class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2"
-                role="alert"
-              >
-                <span>
-                  {{
-                    __(
-                      'Showing a filtered subset of transactions from monthly breakdown drill-down.',
-                    )
-                  }}
-                </span>
-                <div class="d-flex gap-2">
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-secondary"
-                    @click="returnToMonthlyBreakdown"
-                  >
-                    {{ __('Return to monthly breakdown') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-warning"
-                    @click="clearDrillDownFilter"
-                  >
-                    {{ __('Clear additional filtering') }}
-                  </button>
-                </div>
-              </div>
-              <table
-                class="table table-bordered table-hover no-footer"
-                ref="dataTable"
-              ></table>
+              <reporting-canvas-transaction-list
+                :transactions="transactions"
+                :busy="busy"
+                :drill-down-filter="drillDownFilter"
+                :is-active="activeTab === 'transaction-list'"
+                @return-to-monthly-breakdown="returnToMonthlyBreakdown"
+                @clear-drill-down-filter="clearDrillDownFilter"
+                @transaction-deleted="onTransactionDeleted"
+              ></reporting-canvas-transaction-list>
             </div>
             <div
               class="tab-pane fade"
@@ -274,20 +250,18 @@
 </template>
 
 <script>
-  import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+  import { __ } from '@/shared/lib/i18n';
   import { processTransaction } from '@/shared/lib/helpers';
   import { buildFilterCacheKey, buildBreakdownCacheKey } from './helpers';
   import * as toastHelpers from '@/shared/lib/toast';
-  import * as dataTableHelpers from '@/shared/lib/datatable';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
   import DateRangeSelector from '@/shared/ui/date/DateRangeSelector.vue';
   import ReportingCanvasFindTransactionsCategoryDetails from '../widgets/ReportingCanvas-FindTransactions-CategoryDetails.vue';
   import ReportingCanvasFindTransactionsSummary from '../widgets/ReportingCanvas-FindTransactions-Summary.vue';
   import ReportingCanvasFindTransactionsTimeline from '../widgets/ReportingCanvas-FindTransactions-Timeline.vue';
   import ReportingCanvasFindTransactionsMonthlyBreakdown from '../widgets/ReportingCanvas-FindTransactions-MonthlyBreakdown.vue';
+  import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
-
-  import 'datatables.net-bs5';
 
   export default {
     name: 'FindTransactions',
@@ -301,6 +275,8 @@
       'reporting-canvas-timeline': ReportingCanvasFindTransactionsTimeline,
       'reporting-canvas-monthly-breakdown':
         ReportingCanvasFindTransactionsMonthlyBreakdown,
+      'reporting-canvas-transaction-list':
+        ReportingCanvasFindTransactionsTransactionList,
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -308,7 +284,7 @@
         busy: false,
         ready: false,
         sidebarCollapsed: false,
-        dataTable: null,
+        activeTab: 'summary',
         dateFrom: urlParams.get('date_from') || null,
         dateTo: urlParams.get('date_to') || null,
         selectedAccounts: this.getUrlParams('accounts'),
@@ -317,7 +293,6 @@
         selectedTags: this.getUrlParams('tags'),
         returnTo: this.sanitizeReturnTo(urlParams.get('return_to')),
         initialTab: urlParams.get('tab') || null,
-        cachedDataPending: false,
         skippedTransactionLoad: false,
         drillDownFilter: null,
         presetsReady: {
@@ -375,8 +350,6 @@
         if (this.skippedTransactionLoad && this.transactions.length === 0) {
           this.skippedTransactionLoad = false;
           this.getTransactions({ keepDrillDown: true });
-        } else {
-          this.cachedDataPending = true;
         }
 
         this.$nextTick(() => {
@@ -401,7 +374,6 @@
 
         this.drillDownFilter = null;
         this.rebuildUrl('transaction-list', this.returnTo);
-        this.redrawDataTable();
       },
       rebuildUrl(tab = null, returnTo = null) {
         let params = [];
@@ -472,55 +444,11 @@
           const { key, data } = JSON.parse(cached);
           if (key !== this.getCacheKey()) return false;
           this.transactions = data.map(processTransaction);
-          this.cachedDataPending = true;
           return true;
         } catch (e) {
           console.warn('Failed to load transactions from cache:', e);
           return false;
         }
-      },
-
-      getListTransactions() {
-        if (!this.drillDownFilter) {
-          return this.transactions;
-        }
-
-        const month = this.drillDownFilter.month;
-        const categorySet = new Set(this.drillDownFilter.categories);
-
-        return this.transactions.filter((transaction) => {
-          if (!(transaction.date instanceof Date)) return false;
-          const txMonth = transaction.year_month;
-          if (txMonth !== month) return false;
-          const txCategories = transaction.categories || [];
-          return txCategories.some(
-            (category) => category && categorySet.has(String(category.id)),
-          );
-        });
-      },
-
-      redrawDataTable() {
-        if (!this.dataTable) return;
-        this.dataTable.clear();
-        this.dataTable.rows.add(this.getListTransactions());
-        this.dataTable.draw();
-      },
-
-      populateDataTable(force = false) {
-        if (!force && !this.cachedDataPending) return;
-        this.cachedDataPending = false;
-        this.redrawDataTable();
-      },
-
-      isTransactionListActive() {
-        if (!this.$el) return false;
-        const transactionListTab = this.$el.querySelector(
-          '#tab-transaction-list',
-        );
-        return (
-          !!transactionListTab &&
-          transactionListTab.classList.contains('active')
-        );
       },
 
       saveToCache(data) {
@@ -549,6 +477,53 @@
         }
       },
 
+      removeTransactionFromCache(transactionId) {
+        try {
+          const cached = sessionStorage.getItem('yaffa_transactions_cache');
+          if (!cached) {
+            return;
+          }
+
+          const payload = JSON.parse(cached);
+          if (!Array.isArray(payload?.data)) {
+            return;
+          }
+
+          payload.data = payload.data.filter(
+            (transaction) => Number(transaction.id) !== Number(transactionId),
+          );
+
+          sessionStorage.setItem(
+            'yaffa_transactions_cache',
+            JSON.stringify(payload),
+          );
+        } catch (e) {
+          console.warn('Failed to update transactions cache:', e);
+        }
+      },
+
+      invalidateBreakdownCache() {
+        try {
+          sessionStorage.removeItem('yaffa_breakdown_cache');
+        } catch (e) {
+          console.warn('Failed to invalidate breakdown cache:', e);
+        }
+      },
+
+      onTransactionDeleted(transactionId) {
+        const previousCount = this.transactions.length;
+        this.transactions = this.transactions.filter(
+          (transaction) => Number(transaction.id) !== Number(transactionId),
+        );
+
+        if (this.transactions.length === previousCount) {
+          return;
+        }
+
+        this.removeTransactionFromCache(transactionId);
+        this.invalidateBreakdownCache();
+      },
+
       getTransactions(options = null) {
         const keepDrillDown = !!(options && options.keepDrillDown === true);
         this.busy = true;
@@ -573,13 +548,6 @@
               this.saveToCache(response.data.data);
             }
             this.transactions = response.data.data.map(processTransaction);
-          })
-          .then(() => {
-            if (this.isTransactionListActive()) {
-              this.redrawDataTable();
-            } else {
-              this.cachedDataPending = true;
-            }
           })
           .catch((error) => {
             toastHelpers.showErrorToast(
@@ -643,65 +611,10 @@
           this.getTransactions();
         }
       },
-      busy: function (newBusy) {
-        if (!this.dataTable) {
-          return;
-        }
-        this.dataTable.processing(newBusy);
-      },
     },
 
     mounted() {
-      this.dataTable = $(this.$refs.dataTable).DataTable({
-        language: getDataTablesLanguageOptions() || undefined,
-        data: this.transactions,
-        processing: true,
-        columns: [
-          dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
-            'date',
-            __('Date'),
-            window.YAFFA.userSettings.locale,
-          ),
-          dataTableHelpers.transactionColumnDefinition.type(true),
-          {
-            title: __('From'),
-            defaultContent: '',
-            data: 'config.account_from.name',
-          },
-          {
-            title: __('To'),
-            defaultContent: '',
-            data: 'config.account_to.name',
-          },
-          dataTableHelpers.transactionColumnDefinition.category,
-          dataTableHelpers.transactionColumnDefinition.amount,
-          dataTableHelpers.transactionColumnDefinition.extra,
-          {
-            data: 'id',
-            defaultContent: '',
-            title: __('Actions'),
-            render: function (data, _type) {
-              return (
-                dataTableHelpers.dataTablesActionButton(data, 'quickView') +
-                dataTableHelpers.dataTablesActionButton(data, 'show') +
-                dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                dataTableHelpers.dataTablesActionButton(data, 'delete')
-              );
-            },
-            className: 'dt-nowrap',
-            orderable: false,
-            searchable: false,
-          },
-        ],
-        order: [[0, 'asc']],
-      });
-
-      // Delete transaction icon functionality
-      dataTableHelpers.initializeAjaxDeleteButton(this.$refs.dataTable);
-      dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
-
-      // Handle tab switching for lazy loading data
+      // Handle tab switching to keep tab state in sync with URL and loading behavior
       this._allTabs = Array.from(
         this.$el.querySelectorAll('[data-coreui-toggle="tab"]'),
       );
@@ -710,15 +623,11 @@
           /^nav-/,
           '',
         );
+        this.activeTab = tabId || 'summary';
         const targetId = event.target.getAttribute('data-coreui-target');
 
         // Keep tab selection reflected in URL
         this.rebuildUrl(tabId || null, this.returnTo);
-
-        // Lazily populate DataTable when transaction list tab is shown
-        if (targetId === '#tab-transaction-list') {
-          this.populateDataTable(true);
-        }
 
         // Lazily load all transactions if they were skipped for the breakdown tab
         if (targetId !== '#tab-monthly-breakdown') {
@@ -743,6 +652,8 @@
             tabButton.click();
           }
         });
+      } else {
+        this.activeTab = 'summary';
       }
 
       this.ready = true;

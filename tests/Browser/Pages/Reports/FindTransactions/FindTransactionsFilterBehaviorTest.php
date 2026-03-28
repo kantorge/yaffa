@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Pages\Reports\FindTransactions;
 
+use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
@@ -259,6 +260,62 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->assertScript("return $('#select_payee').select2('val').includes('" . $payee1->id . "')", true)
                 ->assertScript("return $('#select_payee').select2('val').includes('" . $payee2->id . "')", true)
                 ->assertScript("return $('#select_payee').select2('val').length === 2", true);
+        });
+    }
+
+    public function test_transaction_delete_requires_confirmation_and_stays_deleted_across_tab_switches(): void
+    {
+        $transactionDate = now()->format('Y-m-d');
+
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->deposit($this->user)
+            ->create([
+                'date' => $transactionDate,
+            ]);
+
+        $this->browse(function (Browser $browser) use ($transaction, $transactionDate) {
+            $deleteSelector = '#tab-transaction-list table button[data-delete][data-id="' . $transaction->id . '"]';
+
+            $browser->loginAs($this->user)
+                ->visitRoute('reports.transactions', [
+                    'date_from' => $transactionDate,
+                    'date_to' => $transactionDate,
+                ])
+                ->waitFor('#nav-transaction-list', 10)
+                ->click('#nav-transaction-list')
+                ->waitFor('#tab-transaction-list table', 10)
+                ->waitFor($deleteSelector, 30);
+
+            $initialCount = (int) $browser->script("return $('#tab-transaction-list table').DataTable().rows().count();")[0];
+            $this->assertGreaterThan(0, $initialCount);
+
+            $browser->click($deleteSelector)
+                ->waitFor('.swal2-container', 10)
+                ->click('.swal2-cancel')
+                ->waitUntilMissing('.swal2-container', 10)
+                ->pause(250);
+
+            $countAfterCancel = (int) $browser->script("return $('#tab-transaction-list table').DataTable().rows().count();")[0];
+            $this->assertSame($initialCount, $countAfterCancel);
+
+            $browser->click($deleteSelector)
+                ->waitFor('.swal2-container', 10)
+                ->click('.swal2-confirm')
+                ->waitUntilMissing($deleteSelector, 10)
+                ->waitUsing(
+                    10,
+                    100,
+                    fn () => (int) $browser->script("return $('#tab-transaction-list table').DataTable().rows().count();")[0] === ($initialCount - 1)
+                )
+                ->click('#nav-summary')
+                ->waitFor('#tab-summary', 10)
+                ->click('#nav-transaction-list')
+                ->waitFor('#tab-transaction-list table', 10)
+                ->waitUntilMissing($deleteSelector, 10);
+
+            $countAfterTabSwitch = (int) $browser->script("return $('#tab-transaction-list table').DataTable().rows().count();")[0];
+            $this->assertSame($initialCount - 1, $countAfterTabSwitch);
         });
     }
 }
