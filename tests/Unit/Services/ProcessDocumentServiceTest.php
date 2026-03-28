@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Exceptions\AiResponseParseException;
 use App\Exceptions\InvalidAiResponseSchemaException;
 use App\Models\Account;
 use App\Models\AccountEntity;
@@ -26,6 +27,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use RuntimeException;
+use Exception;
 
 class ProcessDocumentServiceTest extends TestCase
 {
@@ -50,14 +52,14 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->extractTransactionData($config, $document, $text);
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                return '{"transaction_type":"withdrawal"';
+                throw new AiResponseParseException('main_extraction', 'Unexpected non-JSON response');
             }
         };
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('AI response is not valid JSON');
+        $this->expectExceptionMessage('Invalid AI response payload structure');
 
         $service->extractData($config, 'Receipt text');
     }
@@ -81,9 +83,9 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->extractTransactionData($config, $document, $text);
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                return json_encode([
+                return [
                     'transaction_type' => 'withdrawal',
                     'account' => 'Main account',
                     'account_from' => null,
@@ -92,7 +94,7 @@ class ProcessDocumentServiceTest extends TestCase
                     'date' => '2026-02-25',
                     'amount' => 4.5,
                     'currency' => 'USD',
-                ]) ?: '';
+                ];
             }
         };
 
@@ -121,29 +123,26 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->extractTransactionData($config, $document, $text);
             }
 
-            protected function callStructuredAiForMainExtraction(AiProviderConfig $config, AiDocument $document, string $prompt): array
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
                 return [
-                    'structured' => [
-                        'transaction_type' => 'withdrawal',
-                        'account' => 'Main account',
-                        'account_from' => null,
-                        'account_to' => null,
-                        'payee' => 'Coffee shop',
-                        'date' => '2026-03-01',
-                        'amount' => 12.5,
-                        'currency' => 'USD',
-                        'transaction_items' => [
-                            ['description' => 'coffee', 'amount' => 12.5],
-                        ],
-                        'investment' => null,
-                        'quantity' => null,
-                        'price' => null,
-                        'commission' => null,
-                        'tax' => null,
-                        'dividend' => null,
+                    'transaction_type' => 'withdrawal',
+                    'account' => 'Main account',
+                    'account_from' => null,
+                    'account_to' => null,
+                    'payee' => 'Coffee shop',
+                    'date' => '2026-03-01',
+                    'amount' => 12.5,
+                    'currency' => 'USD',
+                    'transaction_items' => [
+                        ['description' => 'coffee', 'amount' => 12.5],
                     ],
-                    'text' => "```json\n{\"ignored\":true}\n```",
+                    'investment' => null,
+                    'quantity' => null,
+                    'price' => null,
+                    'commission' => null,
+                    'tax' => null,
+                    'dividend' => null,
                 ];
             }
         };
@@ -196,15 +195,15 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->matchCategoriesForItems($items, $user, $config, $document);
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                return json_encode([
+                return [
                     [
                         'item_index' => 0,
                         'recommended_category_id' => $this->categoryId,
                         'confidence_score' => 0.4,
                     ],
-                ]);
+                ];
             }
         };
 
@@ -256,7 +255,7 @@ class ProcessDocumentServiceTest extends TestCase
                 ];
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
                 throw new RuntimeException('AI should not be called for exact category matches');
             }
@@ -333,15 +332,15 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->matchCategoriesForItems($items, $user, $config, $document);
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                return json_encode([
+                return [
                     [
                         'item_index' => 0,
                         'recommended_category_id' => $this->aiCategoryId,
                         'confidence_score' => 0.77,
                     ],
-                ]) ?: '[]';
+                ];
             }
         };
 
@@ -362,7 +361,7 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame(0.77, $result[1]['confidence_score']);
     }
 
-    public function test_category_matching_ai_timeout_is_recorded_as_local_fallback_history(): void
+    public function test_category_matching_ai_failure_propagates_and_records_fallback_history(): void
     {
         $user = User::factory()->create();
         $config = AiProviderConfig::factory()->for($user)->create();
@@ -378,23 +377,24 @@ class ProcessDocumentServiceTest extends TestCase
             {
                 $document = AiDocument::factory()->for($user)->create();
 
-                $matchedItems = $this->matchCategoriesForItems($items, $user, $config, $document);
+                $thrownException = null;
+                try {
+                    $this->matchCategoriesForItems($items, $user, $config, $document);
+                } catch (Exception $e) {
+                    $thrownException = $e;
+                }
 
                 $document->refresh();
 
                 return [
-                    'items' => $matchedItems,
+                    'exception' => $thrownException,
                     'history' => $document->ai_chat_history,
                 ];
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                if ($step === 'category_batch_matching') {
-                    throw new RuntimeException('cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received');
-                }
-
-                return '[]';
+                throw new RuntimeException('cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received');
             }
         };
 
@@ -402,10 +402,8 @@ class ProcessDocumentServiceTest extends TestCase
             ['description' => 'Coffee beans', 'amount' => 12.5],
         ], $user, $config);
 
-        $this->assertCount(1, $result['items']);
-        $this->assertNull($result['items'][0]['recommended_category_id']);
-        $this->assertNull($result['items'][0]['match_type']);
-        $this->assertNull($result['items'][0]['confidence_score']);
+        $this->assertNotNull($result['exception']);
+        $this->assertStringContainsString('Operation timed out', $result['exception']->getMessage());
 
         $this->assertIsArray($result['history']);
         $this->assertCount(1, $result['history']);
@@ -496,13 +494,9 @@ class ProcessDocumentServiceTest extends TestCase
                 );
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                if ($step !== 'main_extraction') {
-                    throw new RuntimeException("Unexpected AI call for step {$step}");
-                }
-
-                return json_encode([
+                return [
                     'transaction_type' => 'withdrawal',
                     'account' => $this->accountName,
                     'account_from' => null,
@@ -512,7 +506,7 @@ class ProcessDocumentServiceTest extends TestCase
                     'amount' => 9.99,
                     'currency' => 'USD',
                     'transaction_items' => [],
-                ]) ?: '';
+                ];
             }
         };
 
@@ -602,9 +596,9 @@ class ProcessDocumentServiceTest extends TestCase
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
         ) extends ProcessDocumentService {
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                return json_encode([
+                return [
                     'transaction_type' => 'withdrawal',
                     'account' => null,
                     'account_from' => null,
@@ -614,7 +608,7 @@ class ProcessDocumentServiceTest extends TestCase
                     'amount' => 12.5,
                     'currency' => 'HUF',
                     'transaction_items' => [],
-                ]) ?: '';
+                ];
             }
         };
 
@@ -664,13 +658,11 @@ class ProcessDocumentServiceTest extends TestCase
         ) extends ProcessDocumentService {
             public string $capturedPrompt = '';
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
+            protected function requestMainExtractionPayload(AiProviderConfig $config, AiDocument $document, string $prompt): array
             {
-                if ($step === 'main_extraction') {
-                    $this->capturedPrompt = $prompt;
-                }
+                $this->capturedPrompt = $prompt;
 
-                return json_encode([
+                return [
                     'transaction_type' => 'withdrawal',
                     'account' => null,
                     'account_from' => null,
@@ -680,7 +672,7 @@ class ProcessDocumentServiceTest extends TestCase
                     'amount' => 12.5,
                     'currency' => 'HUF',
                     'transaction_items' => [],
-                ]) ?: '';
+                ];
             }
         };
 
@@ -735,10 +727,6 @@ class ProcessDocumentServiceTest extends TestCase
                 return $this->resolvePayeeCategoryShortcutItem($user, $transactionType, $payeeId, $rawData, $document);
             }
 
-            protected function callAi(AiProviderConfig $config, AiDocument $document, string $prompt, string $step): string
-            {
-                return '[]';
-            }
         };
 
         $document = AiDocument::factory()->for($user)->create();
@@ -769,6 +757,66 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertStringContainsString('- Recommended Category Id: ' . $category->id, $shortcutResponse);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $shortcutPrompt);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $shortcutResponse);
+    }
+
+    public function test_category_matching_uses_structured_output_ignores_fenced_text_response(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create(['active' => 1]);
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            new CategoryLearningService(),
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+            $category->id,
+        ) extends ProcessDocumentService {
+            public function __construct(
+                TextExtractionService $textExtractor,
+                CategoryLearningService $categoryLearningService,
+                PayeeCategoryStatsService $payeeCategoryStatsService,
+                AiExtractionSchemaValidator $aiExtractionSchemaValidator,
+                AiPromptBuilder $aiPromptBuilder,
+                private int $aiCategoryId,
+            ) {
+                parent::__construct(
+                    $textExtractor,
+                    $categoryLearningService,
+                    $payeeCategoryStatsService,
+                    $aiExtractionSchemaValidator,
+                    $aiPromptBuilder,
+                );
+            }
+
+            public function matchCategories(array $items, User $user, AiProviderConfig $config): array
+            {
+                $document = AiDocument::factory()->for($user)->create();
+
+                return $this->matchCategoriesForItems($items, $user, $config, $document);
+            }
+
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
+            {
+                return [
+                    [
+                        'item_index' => 0,
+                        'recommended_category_id' => $this->aiCategoryId,
+                        'confidence_score' => 0.9,
+                    ],
+                ];
+            }
+        };
+
+        $result = $service->matchCategories([
+            ['description' => 'Coffee beans', 'amount' => 12.5],
+        ], $user, $config);
+
+        $this->assertCount(1, $result);
+        $this->assertSame($category->id, $result[0]['recommended_category_id']);
+        $this->assertSame('ai', $result[0]['match_type']);
+        $this->assertSame(0.9, $result[0]['confidence_score']);
     }
 
     private function createTransactionWithCategory(
