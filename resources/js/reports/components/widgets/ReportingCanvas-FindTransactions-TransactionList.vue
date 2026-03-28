@@ -247,7 +247,10 @@
               toastHelpers.showErrorToast(
                 __('Error deleting transaction (#:transactionId): :error', {
                   transactionId,
-                  error,
+                  error:
+                    error.response?.data?.message ||
+                    error.message ||
+                    __('Unknown error'),
                 }),
               );
             })
