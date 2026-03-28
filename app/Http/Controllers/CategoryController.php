@@ -11,6 +11,7 @@ use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -185,6 +186,8 @@ class CategoryController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         if ($categorySource) {
+            Gate::authorize('view', $categorySource);
+
             JavaScriptFacade::put([
                 'categorySource' => $categorySource,
             ]);
@@ -208,6 +211,11 @@ class CategoryController extends Controller implements HasMiddleware
          */
         // Retrieve the validated input data
         $validated = $request->validated();
+        $categorySource = Category::query()->findOrFail($validated['category_source']);
+        $categoryTarget = Category::query()->findOrFail($validated['category_target']);
+
+        Gate::authorize($request->action === 'delete' ? 'delete' : 'update', $categorySource);
+        Gate::authorize('update', $categoryTarget);
 
         // Wrap database transaction
         DB::beginTransaction();
@@ -221,10 +229,6 @@ class CategoryController extends Controller implements HasMiddleware
             DB::table('categories')
                 ->where('parent_id', $validated['category_source'])
                 ->update(['parent_id' => $validated['category_target']]);
-
-            // Hydrate the source category
-            $categorySource = Category::find($validated['category_source']);
-
             // Delete or set active to false the source category model, based on value of action field
             if ($request->action === 'delete') {
                 $categorySource->delete();

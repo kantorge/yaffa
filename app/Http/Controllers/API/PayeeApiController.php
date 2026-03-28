@@ -150,6 +150,7 @@ class PayeeApiController extends Controller implements HasMiddleware
          * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
+        Gate::authorize('view', $category);
 
         $accountEntity->load(['config']);
         if (! $accountEntity->config instanceof Payee) {

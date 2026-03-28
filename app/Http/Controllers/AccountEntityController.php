@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -390,6 +391,8 @@ class AccountEntityController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         if ($payeeSource) {
+            Gate::authorize('view', $payeeSource);
+
             JavaScriptFacade::put([
                 'payeeSource' => $payeeSource->toArray(),
             ]);
@@ -409,6 +412,11 @@ class AccountEntityController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
+        $payeeSource = AccountEntity::query()->findOrFail($validated['payee_source']);
+        $payeeTarget = AccountEntity::query()->findOrFail($validated['payee_target']);
+
+        Gate::authorize($request->action === 'delete' ? 'forceDelete' : 'update', $payeeSource);
+        Gate::authorize('update', $payeeTarget);
 
         // Wrap database transaction
         DB::beginTransaction();
@@ -421,10 +429,6 @@ class AccountEntityController extends Controller implements HasMiddleware
             DB::table('transaction_details_standard')
                 ->where('account_to_id', $validated['payee_source'])
                 ->update(['account_to_id' => $validated['payee_target']]);
-
-            // Hydrate the source payee
-            $payeeSource = AccountEntity::find($validated['payee_source']);
-
             // Delete or set active to false the source payee model, based on value of action field
             if ($request->action === 'delete') {
                 $payeeSource->delete();

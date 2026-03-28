@@ -250,6 +250,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
          * @name("api.v1.investments.destroy")
          * @middlewares("web", "auth", "verified")
          */
+        Gate::authorize('delete', $investment);
+
         $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {
