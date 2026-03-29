@@ -234,7 +234,7 @@
           <transaction-schedule
             v-if="(form.schedule || form.budget) && action === 'replace'"
             :withCheckbox="true"
-            title="Update base schedule"
+            :title="__('Update base schedule')"
             :allowCustomization="false"
             :isSchedule="form.schedule"
             :isBudget="form.budget"

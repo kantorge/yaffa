@@ -100,7 +100,9 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
   import { __ } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { im } from 'mathjs';
 
   export default {
     props: {
@@ -294,7 +296,7 @@
           })
           .finally(() => (this.busy = false))
           .catch((error) => {
-            console.log(error);
+            toastHelpers.showErrorToast(error.message);
           });
       },
 

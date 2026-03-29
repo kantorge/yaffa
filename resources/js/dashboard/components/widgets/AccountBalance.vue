@@ -208,7 +208,7 @@
               this.state = 'data-not-available';
               this.errorMessage = response.data.message;
 
-              // Retry after 15 seconds
+              // Retry after current interval
               setTimeout(() => {
                 this.getAccountBalanceData();
               }, this.retryInterval);
