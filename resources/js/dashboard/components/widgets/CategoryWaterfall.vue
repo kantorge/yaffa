@@ -102,7 +102,6 @@
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { im } from 'mathjs';
 
   export default {
     props: {
