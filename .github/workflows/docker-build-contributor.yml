@@ -16,9 +16,10 @@ on:
         required: false
         default: ''
       publish_latest:
-        description: 'Publish latest tag (true/false)'
+        description: 'Publish latest tag'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
 
 jobs:
   docker:
@@ -26,6 +27,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      SOURCE_BRANCH_INPUT: ${{ github.event.inputs.source_branch }}
+      PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
+      IMAGE_NAME_INPUT: ${{ github.event.inputs.image_name }}
+      PUBLISH_LATEST_INPUT: ${{ github.event.inputs.publish_latest }}
+      REPO_OWNER_INPUT: ${{ github.repository_owner }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -34,19 +41,29 @@ jobs:
 
       - name: Prepare build metadata
         run: |
-          BRANCH=$(echo "${{ github.event.inputs.source_branch }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          BRANCH=$(printf '%s' "$SOURCE_BRANCH_INPUT" | sed 's/[^a-zA-Z0-9._-]/-/g')
           DATE=$(date +%Y%m%d-%H%M)
-          echo "DOCKER_VERSION_TAG=${BRANCH}-${DATE}" >> $GITHUB_ENV
-          echo "SOURCE_BRANCH=${{ github.event.inputs.source_branch }}" >> $GITHUB_ENV
-          echo "BUILD_PLATFORMS=${{ github.event.inputs.platforms }}" >> $GITHUB_ENV
-          echo "PUBLISH_LATEST=${{ github.event.inputs.publish_latest }}" >> $GITHUB_ENV
+          DOCKER_VERSION_TAG="${BRANCH}-${DATE}"
+          echo "DOCKER_VERSION_TAG=${DOCKER_VERSION_TAG}" >> "$GITHUB_ENV"
+          echo "SOURCE_BRANCH=${SOURCE_BRANCH_INPUT}" >> "$GITHUB_ENV"
+          echo "SOURCE_BRANCH_SAFE=${BRANCH}" >> "$GITHUB_ENV"
+          echo "BUILD_PLATFORMS=${PLATFORMS_INPUT}" >> "$GITHUB_ENV"
+          echo "PUBLISH_LATEST=${PUBLISH_LATEST_INPUT}" >> "$GITHUB_ENV"
 
-          if [ -n "${{ github.event.inputs.image_name }}" ]; then
-            echo "IMAGE_NAME=${{ github.event.inputs.image_name }}" >> $GITHUB_ENV
+          if [ -n "$IMAGE_NAME_INPUT" ]; then
+            IMAGE_NAME="${IMAGE_NAME_INPUT}"
           else
-            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            echo "IMAGE_NAME=ghcr.io/${OWNER}/yaffa" >> $GITHUB_ENV
+            OWNER=$(printf '%s' "$REPO_OWNER_INPUT" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="ghcr.io/${OWNER}/yaffa"
           fi
+
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
+
+          IMAGE_TAGS="${IMAGE_NAME}:${DOCKER_VERSION_TAG}"
+          if [ "$PUBLISH_LATEST_INPUT" = "true" ]; then
+            IMAGE_TAGS="${IMAGE_TAGS},${IMAGE_NAME}:latest"
+          fi
+          echo "IMAGE_TAGS=${IMAGE_TAGS}" >> "$GITHUB_ENV"
 
       - name: Print build info
         run: |
@@ -74,9 +91,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: buildx-${{ github.ref_name }}-${{ github.sha }}
+          key: buildx-${{ env.SOURCE_BRANCH_SAFE }}-${{ github.sha }}
           restore-keys: |
-            buildx-${{ github.ref_name }}-
+            buildx-${{ env.SOURCE_BRANCH_SAFE }}-
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -85,9 +102,7 @@ jobs:
           file: ./docker/Dockerfile
           platforms: ${{ env.BUILD_PLATFORMS }}
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.DOCKER_VERSION_TAG }}
-            ${{ env.PUBLISH_LATEST == 'true' && format('{0}:latest', env.IMAGE_NAME) || '' }}
+          tags: ${{ env.IMAGE_TAGS }}
           build-args: |
             BRANCH=${{ env.SOURCE_BRANCH }}
           cache-from: type=local,src=/tmp/.buildx-cache
