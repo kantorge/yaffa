@@ -540,6 +540,15 @@
       }
     },
 
+    beforeUnmount() {
+      $('#transaction_item_' + this.id + ' select.category')
+        .off()
+        .select2('destroy');
+      $('#transaction_item_' + this.id + ' select.tag')
+        .off()
+        .select2('destroy');
+    },
+
     methods: {
       __,
       updateItemAmount: function (event) {

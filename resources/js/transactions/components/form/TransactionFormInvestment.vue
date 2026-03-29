@@ -883,6 +883,11 @@
       initializeBootstrapTooltips();
     },
 
+    beforeUnmount() {
+      $('#account').off().select2('destroy');
+      $('#investment').off().select2('destroy');
+    },
+
     methods: {
       getDefaultAccountDetails(account_id) {
         if (!account_id) {

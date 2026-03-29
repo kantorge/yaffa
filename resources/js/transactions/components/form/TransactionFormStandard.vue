@@ -1000,6 +1000,11 @@
       initializeBootstrapTooltips(this.$el);
     },
 
+    beforeUnmount() {
+      $('#account_from').off().select2('destroy');
+      $('#account_to').off().select2('destroy');
+    },
+
     methods: {
       getCurrencySymbol,
       toFormattedCurrency,
