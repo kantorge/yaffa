@@ -121,9 +121,9 @@
                         class="form-control"
                         id="parent_id"
                         name="parent_id"
-                        placeholder="Parent category"
+                        placeholder="{{ __('Parent category') }}"
                     >
-                        <option value=''> < No parent category ></option>
+                        <option value=''>{{ __('< No parent category >') }}</option>
                         @foreach($parents as $id => $name)
                             <option
                                 value="{{ $id }}"
