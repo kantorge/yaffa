@@ -121,26 +121,24 @@
       },
     },
     mounted() {
-      let $vm = this;
-
       // Set up event listener for global scope about new schedule instance to be opened in modal editor
-      window.addEventListener('initiateEnterInstance', function (event) {
+      window.addEventListener('initiateEnterInstance', (event) => {
         // Validate that transaction type is standard
         if (event.detail.transaction.config_type !== 'standard') {
           return;
         }
 
-        $vm.onInitiateEnterInstance(event.detail.transaction);
+        this.onInitiateEnterInstance(event.detail.transaction);
       });
 
       // Set up event listener for global scope about new transaction draft to be opened in modal editor
-      window.addEventListener('initiateCreateFromDraft', function (event) {
+      window.addEventListener('initiateCreateFromDraft', (event) => {
         // Validate that transaction type is standard
         if (event.detail.type !== 'standard') {
           return;
         }
 
-        $vm.onInitiateCreateDraft(event.detail.transaction);
+        this.onInitiateCreateDraft(event.detail.transaction);
       });
 
       // Initialize modal

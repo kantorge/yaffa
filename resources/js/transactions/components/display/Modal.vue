@@ -90,15 +90,10 @@
       __,
     },
     mounted() {
-      let $vm = this;
-
       // Set up global event listener for displaying a transaction in the modal
-      window.addEventListener(
-        'showTransactionQuickViewModal',
-        function (event) {
-          $vm.showTransaction(event.detail.transaction, event.detail.controls);
-        },
-      );
+      window.addEventListener('showTransactionQuickViewModal', (event) => {
+        this.showTransaction(event.detail.transaction, event.detail.controls);
+      });
 
       // Initialize modal
       this.modal = new coreui.Modal(document.getElementById('modal-quickview'));

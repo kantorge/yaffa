@@ -263,7 +263,6 @@
 
         this.busy = true;
         this.ready = false;
-        let $vm = this;
 
         let url =
           '/api/v1/reports/waterfall/' +
@@ -283,18 +282,18 @@
         fetch(url, options)
           .then((response) => response.json())
           .then((data) => {
-            $vm.rawData = data.chartData;
+            this.rawData = data.chartData;
 
-            if (!$vm.rawData || $vm.rawData.length === 0) {
-              $vm.noDataMessagecontainer.show();
+            if (!this.rawData || this.rawData.length === 0) {
+              this.noDataMessagecontainer.show();
             } else {
-              $vm.noDataMessagecontainer.hide();
+              this.noDataMessagecontainer.hide();
             }
 
-            $vm.ready = true;
+            this.ready = true;
           })
-          .finally(() => ($vm.busy = false))
-          .catch(function (error) {
+          .finally(() => (this.busy = false))
+          .catch((error) => {
             console.log(error);
           });
       },

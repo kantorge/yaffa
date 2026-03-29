@@ -137,7 +137,7 @@
         // Expected values: loading, data-loaded, data-not-available, error
         state: 'loading',
         errorMessage: null,
-        retryInterval: 15000,
+        retryInterval: 5000,
       };
     },
 
@@ -148,7 +148,6 @@
     computed: {
       accountBalanceDataByGroups() {
         let groups = {};
-        let $vm = this;
 
         /**
          * Group accounts by account group and return a new object.
@@ -159,9 +158,9 @@
          * @property {String} account.account_group_name
          * @returns {Object}
          */
-        this.accountBalanceData.forEach(function (account) {
+        this.accountBalanceData.forEach((account) => {
           // Skip closed accounts, if needed
-          if (!$vm.withClosed && !account.active) {
+          if (!this.withClosed && !account.active) {
             return;
           }
 
@@ -199,34 +198,33 @@
           return;
         }
 
-        let $vm = this;
         this.state = 'loading';
 
         axios
           .get(this.route('api.v1.accounts.balance'))
-          .then(function (response) {
+          .then((response) => {
             // Check if the response is valid data
             if (response.data.result === 'busy') {
-              $vm.state = 'data-not-available';
-              $vm.errorMessage = response.data.message;
+              this.state = 'data-not-available';
+              this.errorMessage = response.data.message;
 
               // Retry after 15 seconds
-              setTimeout(function () {
-                $vm.getAccountBalanceData();
-              }, $vm.retryInterval);
+              setTimeout(() => {
+                this.getAccountBalanceData();
+              }, this.retryInterval);
 
               // Increase retry interval
-              $vm.retryInterval *= 2;
+              this.retryInterval *= 2;
 
               return;
             }
 
-            $vm.accountBalanceData = response.data.accountBalanceData;
-            $vm.state = 'data-available';
+            this.accountBalanceData = response.data.accountBalanceData;
+            this.state = 'data-available';
           })
-          .catch(function (error) {
-            $vm.state = 'error';
-            $vm.errorMessage = error.message;
+          .catch((error) => {
+            this.state = 'error';
+            this.errorMessage = error.message;
 
             toastHelpers.showErrorToast(error.message);
           });
