@@ -87,16 +87,27 @@
       transactionUpdated: function (transaction) {
         this.transaction = Object.assign({}, transaction);
       },
+      handleQuickView(event) {
+        this.showTransaction(event.detail.transaction, event.detail.controls);
+      },
       __,
     },
     mounted() {
       // Set up global event listener for displaying a transaction in the modal
-      window.addEventListener('showTransactionQuickViewModal', (event) => {
-        this.showTransaction(event.detail.transaction, event.detail.controls);
-      });
+      window.addEventListener(
+        'showTransactionQuickViewModal',
+        this.handleQuickView,
+      );
 
       // Initialize modal
       this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
+    },
+    beforeUnmount() {
+      // Clean up event listener when component is destroyed
+      window.removeEventListener(
+        'showTransactionQuickViewModal',
+        this.handleQuickView,
+      );
     },
   };
 </script>

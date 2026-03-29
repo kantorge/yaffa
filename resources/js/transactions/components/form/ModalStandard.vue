@@ -119,31 +119,50 @@
 
         this.modal.show();
       },
-    },
-    mounted() {
-      // Set up event listener for global scope about new schedule instance to be opened in modal editor
-      window.addEventListener('initiateEnterInstance', (event) => {
+      handleInitiateEnterInstance(event) {
         // Validate that transaction type is standard
         if (event.detail.transaction.config_type !== 'standard') {
           return;
         }
 
         this.onInitiateEnterInstance(event.detail.transaction);
-      });
-
-      // Set up event listener for global scope about new transaction draft to be opened in modal editor
-      window.addEventListener('initiateCreateFromDraft', (event) => {
+      },
+      handleInitiateCreateFromDraft(event) {
         // Validate that transaction type is standard
         if (event.detail.type !== 'standard') {
           return;
         }
 
         this.onInitiateCreateDraft(event.detail.transaction);
-      });
+      },
+    },
+    mounted() {
+      // Set up event listener for global scope about new schedule instance to be opened in modal editor
+      window.addEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+
+      // Set up event listener for global scope about new transaction draft to be opened in modal editor
+      window.addEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
+      );
 
       // Initialize modal
       this.modal = new coreui.Modal(
         document.getElementById('modal-transaction-form-standard'),
+      );
+    },
+    beforeUnmount() {
+      // Clean up event listeners when component is destroyed
+      window.removeEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+      window.removeEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
       );
     },
     computed: {
