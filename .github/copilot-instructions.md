@@ -278,7 +278,7 @@ Before submitting changes:
 - [ ] Run `./vendor/bin/phpstan analyse` to catch type errors
 - [ ] Run `npx eslint resources/js --ext .js,.vue` for frontend linting
 - [ ] Build assets: `npm run build` or `npm run dev`
-- [ ] Run PHPUnit tests: `vendor/bin/phpunit --testsuite AllNonDusk`
+- [ ] Run PHPUnit tests: `vendor/bin/phpunit --testsuite Unit,Feature`
 - [ ] If UI changes, consider running Dusk tests: `php artisan dusk`
 - [ ] Check `.gitignore` - don't commit `vendor/`, `node_modules/`, `.env`, or `storage/` (except structure)
 - [ ] Verify build artifacts in `public/js/` and `public/css/` are updated and committed
