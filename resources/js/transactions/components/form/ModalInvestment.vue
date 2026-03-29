@@ -129,33 +129,50 @@
 
         this.modal.show();
       },
-    },
-    mounted() {
-      let $vm = this;
-
-      // Set up event listener for global scope about new schedule instance to be opened in modal editor
-      window.addEventListener('initiateEnterInstance', function (event) {
+      handleInitiateEnterInstance(event) {
         // Validate that transaction type is investment
         if (event.detail.transaction.config_type !== 'investment') {
           return;
         }
 
-        $vm.onInitiateEnterInstance(event.detail.transaction);
-      });
-
-      // Set up event listener for global scope about new transaction draft to be opened in modal editor
-      window.addEventListener('initiateCreateFromDraft', function (event) {
+        this.onInitiateEnterInstance(event.detail.transaction);
+      },
+      handleInitiateCreateFromDraft(event) {
         // Validate that transaction type is investment
         if (event.detail.type !== 'investment') {
           return;
         }
 
-        $vm.onInitiateCreateDraft(event.detail.transaction);
-      });
+        this.onInitiateCreateDraft(event.detail.transaction);
+      },
+    },
+    mounted() {
+      // Set up event listener for global scope about new schedule instance to be opened in modal editor
+      window.addEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+
+      // Set up event listener for global scope about new transaction draft to be opened in modal editor
+      window.addEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
+      );
 
       // Initialize modal
       this.modal = new coreui.Modal(
         document.getElementById('modal-transaction-form-investment'),
+      );
+    },
+    beforeUnmount() {
+      // Clean up event listeners when component is destroyed
+      window.removeEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+      window.removeEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
       );
     },
     computed: {

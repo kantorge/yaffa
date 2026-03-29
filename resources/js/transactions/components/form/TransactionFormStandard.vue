@@ -234,7 +234,7 @@
           <transaction-schedule
             v-if="(form.schedule || form.budget) && action === 'replace'"
             :withCheckbox="true"
-            title="Update base schedule"
+            :title="__('Update base schedule')"
             :allowCustomization="false"
             :isSchedule="form.schedule"
             :isBudget="form.budget"
@@ -901,45 +901,43 @@
     },
 
     mounted() {
-      let $vm = this;
-
       // Account FROM dropdown functionality
       $('#account_from')
         .select2(this.getAccountSelectConfig('from'))
-        .on('select2:select', function (e) {
+        .on('select2:select', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
           });
           e.target.dispatchEvent(event);
 
-          if ($vm.getAccountType('from') === 'account') {
+          if (this.getAccountType('from') === 'account') {
             $.ajax({
               url: '/api/v1/accounts/' + e.params.data.id,
               data: {
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
               },
             }).done((data) => {
-              $vm.from.account_currency = data.config.currency;
+              this.from.account_currency = data.config.currency;
             });
           } else {
             $.ajax({
               url: '/api/v1/payees/' + e.params.data.id,
               data: {
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
               },
-            }).done(function (data) {
+            }).done((data) => {
               if (data.config.category) {
-                $vm.payeeCategory.id = data.config.category.id;
-                $vm.payeeCategory.text = data.config.category.full_name;
+                this.payeeCategory.id = data.config.category.id;
+                this.payeeCategory.text = data.config.category.full_name;
               }
             });
           }
         })
-        .on('select2:unselect', function () {
-          $vm.resetAccount('from');
-          if ($vm.getAccountType('from') === 'payee') {
-            $vm.resetPayee();
+        .on('select2:unselect', () => {
+          this.resetAccount('from');
+          if (this.getAccountType('from') === 'payee') {
+            this.resetPayee();
           }
         });
 
@@ -952,40 +950,40 @@
       // Account TO dropdown functionality
       $('#account_to')
         .select2(this.getAccountSelectConfig('to'))
-        .on('select2:select', function (e) {
+        .on('select2:select', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
           });
           e.target.dispatchEvent(event);
 
-          if ($vm.getAccountType('to') === 'account') {
+          if (this.getAccountType('to') === 'account') {
             $.ajax({
               url: '/api/v1/accounts/' + e.params.data.id,
               data: {
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
               },
             }).done((data) => {
-              $vm.to.account_currency = data.config.currency;
+              this.to.account_currency = data.config.currency;
             });
-          } else if ($vm.getAccountType('to') === 'payee') {
+          } else if (this.getAccountType('to') === 'payee') {
             $.ajax({
               url: '/api/v1/payees/' + e.params.data.id,
               data: {
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
               },
-            }).done(function (data) {
+            }).done((data) => {
               if (data.config.category) {
-                $vm.payeeCategory.id = data.config.category.id;
-                $vm.payeeCategory.text = data.config.category.full_name;
+                this.payeeCategory.id = data.config.category.id;
+                this.payeeCategory.text = data.config.category.full_name;
               }
             });
           }
         })
-        .on('select2:unselect', function () {
-          $vm.resetAccount('to');
-          if ($vm.getAccountType('to') === 'payee') {
-            $vm.resetPayee();
+        .on('select2:unselect', () => {
+          this.resetAccount('to');
+          if (this.getAccountType('to') === 'payee') {
+            this.resetPayee();
           }
         });
 
@@ -1000,6 +998,11 @@
 
       // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
+    },
+
+    beforeUnmount() {
+      $('#account_from').off().select2('destroy');
+      $('#account_to').off().select2('destroy');
     },
 
     methods: {
@@ -1285,35 +1288,34 @@
       },
 
       getAccountSelectConfig(type) {
-        let $vm = this;
         let otherType = type === 'from' ? 'to' : 'from';
 
         return {
           theme: 'bootstrap-5',
           language: window.YAFFA.userSettings.language,
           ajax: {
-            url: $vm.getAccountApiUrl(type),
+            url: this.getAccountApiUrl(type),
             dataType: 'json',
             delay: 150,
-            data: function (params) {
+            data: (params) => {
               return {
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
                 q: params.term,
-                transaction_type: $vm.form.transaction_type,
+                transaction_type: this.form.transaction_type,
                 account_type: type,
-                account_entity_id: $vm.accountId,
+                account_entity_id: this.accountId,
               };
             },
-            processResults: function (data) {
+            processResults: (data) => {
               // Exclude account that is selected in other account select
               let otherAccountId =
-                $vm.form.config['account_' + otherType + '_id'];
+                this.form.config['account_' + otherType + '_id'];
               if (otherAccountId) {
                 data = data.filter((item) => item.id != otherAccountId);
               }
 
               return {
-                results: data.map(function (account) {
+                results: data.map((account) => {
                   return {
                     id: account.id,
                     text: account.name,
@@ -1342,17 +1344,16 @@
           return;
         }
 
-        const $vm = this;
         const selector = '#account_' + type;
 
         $.ajax({
           url: this.getAccountApiUrl(type) + '/' + account_entity_id,
           data: {
-            _token: $vm.csrfToken,
+            _token: this.csrfToken,
           },
         }).done((data) => {
           // Create the option and append to Select2
-          $vm.addNewItemToSelect(selector, data.id, data.name);
+          this.addNewItemToSelect(selector, data.id, data.name);
         });
       },
 

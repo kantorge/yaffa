@@ -362,8 +362,6 @@
     },
 
     mounted() {
-      let $vm = this;
-
       // Add select2 functionality to category
       let elementCategory = $(
         '#transaction_item_' + this.id + ' select.category',
@@ -377,10 +375,10 @@
             url: '/api/v1/categories',
             dataType: 'json',
             delay: 150,
-            data: function (params) {
+            data: (params) => {
               return {
                 q: params.term,
-                payee: $vm.payee,
+                payee: this.payee,
               };
             },
             processResults: (data) => ({
@@ -394,9 +392,9 @@
           selectOnClose: true,
           placeholder: __('Select category'),
           allowClear: true,
-          dropdownParent: $($vm.dropdownParentSelector),
+          dropdownParent: $(this.dropdownParentSelector),
         })
-        .on('select2:select select2:unselect', function (e) {
+        .on('select2:select select2:unselect', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
@@ -405,17 +403,17 @@
 
           // Track if user is changing from recommendation
           const newValue = event.target.value;
-          if ($vm.recommended_category_id) {
-            $vm.isRecommendationAccepted =
-              newValue == $vm.recommended_category_id;
+          if (this.recommended_category_id) {
+            this.isRecommendationAccepted =
+              newValue == this.recommended_category_id;
           }
 
           if (!newValue) {
-            $vm.learnRecommendation = false;
-            $vm.onLearnRecommendationChange();
+            this.learnRecommendation = false;
+            this.onLearnRecommendationChange();
           }
 
-          $vm.$emit('update:category_id', event.target.value);
+          this.$emit('update:category_id', event.target.value);
         });
 
       // Load selected item for category select2
@@ -507,16 +505,16 @@
           },
           placeholder: __('Select tag(s)'),
           allowClear: true,
-          dropdownParent: $($vm.dropdownParentSelector),
+          dropdownParent: $(this.dropdownParentSelector),
         })
-        .on('select2:select select2:unselect', function (e) {
+        .on('select2:select select2:unselect', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
           });
           e.target.dispatchEvent(event);
 
-          $vm.$emit('update:tags', $(e.target).select2('val'));
+          this.$emit('update:tags', $(e.target).select2('val'));
         });
 
       // Add already existing tags as labels
@@ -540,6 +538,15 @@
           },
         });
       }
+    },
+
+    beforeUnmount() {
+      $('#transaction_item_' + this.id + ' select.category')
+        .off()
+        .select2('destroy');
+      $('#transaction_item_' + this.id + ' select.tag')
+        .off()
+        .select2('destroy');
     },
 
     methods: {

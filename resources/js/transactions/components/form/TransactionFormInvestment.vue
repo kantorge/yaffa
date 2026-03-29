@@ -721,8 +721,6 @@
     },
 
     mounted() {
-      let $vm = this;
-
       // Account dropdown functionality
       $('#account')
         .select2({
@@ -730,15 +728,15 @@
             url: '/api/v1/accounts/investment',
             dataType: 'json',
             delay: 150,
-            data: function (params) {
+            data: (params) => {
               return {
                 q: params.term,
-                transaction_type: $vm.form.transaction_type,
-                currency_id: $vm.investment_currency?.id,
-                _token: $vm.csrfToken,
+                transaction_type: this.form.transaction_type,
+                currency_id: this.investment_currency?.id,
+                _token: this.csrfToken,
               };
             },
-            processResults: function (data) {
+            processResults: (data) => {
               return {
                 results: data,
               };
@@ -753,7 +751,7 @@
           theme: 'bootstrap-5',
           dropdownParent: $(this.dropdownParentSelector),
         })
-        .on('select2:select', function (e) {
+        .on('select2:select', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
@@ -763,21 +761,19 @@
           $.ajax({
             url: '/api/v1/accounts/' + e.params.data.id,
             data: {
-              _token: $vm.csrfToken,
+              _token: this.csrfToken,
             },
           }).done((data) => {
-            $vm.account_currency = data.config.currency;
+            this.account_currency = data.config.currency;
           });
         })
-        .on('select2:unselect', function () {
-          $vm.account_id = null;
-          $vm.account_currency = null;
-          $vm.account_currency_id = null;
+        .on('select2:unselect', () => {
+          this.form.config.account_id = null;
+          this.account_currency = null;
         })
-        .on('select2:clear', function () {
-          $vm.account_id = null;
-          $vm.account_currency = null;
-          $vm.account_currency_id = null;
+        .on('select2:clear', () => {
+          this.form.config.account_id = null;
+          this.account_currency = null;
         });
 
       // Load default value for account
@@ -788,21 +784,21 @@
         .select2({
           ajax: {
             url: '/api/v1/investments',
-            data: function (params) {
+            data: (params) => {
               return {
                 query: params.term,
                 active: 1,
-                currency_id: $vm.account_currency?.id,
+                currency_id: this.account_currency?.id,
                 limit: 10,
                 // We rely on server-side sorting, so let's set it here
                 sort_by: 'name',
                 sort_order: 'asc',
-                _token: $vm.csrfToken,
+                _token: this.csrfToken,
               };
             },
             dataType: 'json',
             delay: 150,
-            processResults: function (data) {
+            processResults: (data) => {
               // Let's format the results to a format used by Select2
               return {
                 results: data.map((item) => ({
@@ -833,7 +829,7 @@
           theme: 'bootstrap-5',
           dropdownParent: $(this.dropdownParentSelector),
         })
-        .on('select2:select', function (e) {
+        .on('select2:select', (e) => {
           const event = new Event('change', {
             bubbles: true,
             cancelable: true,
@@ -842,7 +838,7 @@
 
           // Set currency id immediately to avoid a race condition in account filtering.
           if (e.params.data.currency_id) {
-            $vm.investment_currency = {
+            this.investment_currency = {
               id: e.params.data.currency_id,
             };
           }
@@ -852,27 +848,25 @@
               investment: e.params.data.id,
             }),
             data: {
-              _token: $vm.csrfToken,
+              _token: this.csrfToken,
             },
-          }).done(function (data) {
-            $vm.investment_currency = data.currency;
+          }).done((data) => {
+            this.investment_currency = data.currency;
           });
         })
-        .on('select2:unselect', function () {
-          $vm.investment_id = null;
-          $vm.investment_currency = null;
-          $vm.form.config.investment_id = null;
+        .on('select2:unselect', () => {
+          this.investment_currency = null;
+          this.form.config.investment_id = null;
           // Reset price-related data when investment is cleared
-          $vm.existingPriceForDate = null;
-          $vm.storePriceEnabled = false;
+          this.existingPriceForDate = null;
+          this.storePriceEnabled = false;
         })
-        .on('select2:clear', function () {
-          $vm.investment_id = null;
-          $vm.investment_currency = null;
-          $vm.form.config.investment_id = null;
+        .on('select2:clear', () => {
+          this.investment_currency = null;
+          this.form.config.investment_id = null;
           // Reset price-related data when investment is cleared
-          $vm.existingPriceForDate = null;
-          $vm.storePriceEnabled = false;
+          this.existingPriceForDate = null;
+          this.storePriceEnabled = false;
         });
 
       // Load default value for investment
@@ -885,17 +879,21 @@
       initializeBootstrapTooltips();
     },
 
+    beforeUnmount() {
+      $('#account').off().select2('destroy');
+      $('#investment').off().select2('destroy');
+    },
+
     methods: {
       getDefaultAccountDetails(account_id) {
         if (!account_id) {
           return;
         }
-        const $vm = this;
 
         $.ajax({
           url: '/api/v1/accounts/' + this.form.config.account_id,
           data: {
-            _token: $vm.csrfToken,
+            _token: this.csrfToken,
           },
         }).done((data) => {
           // Create the option and append to Select2
@@ -915,14 +913,13 @@
         if (!investment_id) {
           return;
         }
-        const $vm = this;
 
         $.ajax({
           url: route('api.v1.investments.show', { investment: investment_id }),
           data: {
-            _token: $vm.csrfToken,
+            _token: this.csrfToken,
           },
-        }).done(function (data) {
+        }).done((data) => {
           // Create the option and append to Select2
           $('#investment')
             .append(new Option(data.name, data.id, true, true))

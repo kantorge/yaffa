@@ -100,6 +100,7 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
   import { __ } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 
   export default {
@@ -263,7 +264,6 @@
 
         this.busy = true;
         this.ready = false;
-        let $vm = this;
 
         let url =
           '/api/v1/reports/waterfall/' +
@@ -283,19 +283,19 @@
         fetch(url, options)
           .then((response) => response.json())
           .then((data) => {
-            $vm.rawData = data.chartData;
+            this.rawData = data.chartData;
 
-            if (!$vm.rawData || $vm.rawData.length === 0) {
-              $vm.noDataMessagecontainer.show();
+            if (!this.rawData || this.rawData.length === 0) {
+              this.noDataMessagecontainer.show();
             } else {
-              $vm.noDataMessagecontainer.hide();
+              this.noDataMessagecontainer.hide();
             }
 
-            $vm.ready = true;
+            this.ready = true;
           })
-          .finally(() => ($vm.busy = false))
-          .catch(function (error) {
-            console.log(error);
+          .finally(() => (this.busy = false))
+          .catch((error) => {
+            toastHelpers.showErrorToast(error.message);
           });
       },
 
