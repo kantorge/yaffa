@@ -10,6 +10,7 @@ use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
+use App\Http\Controllers\API\ImportApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
@@ -129,6 +130,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('documents.checkDuplicates');
     Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
         ->name('documents.destroy');
+
+    // Import endpoints
+    Route::post('/imports/parse', [ImportApiController::class, 'parse'])
+        ->name('imports.parse');
 
     // Account endpoints
     Route::get('/accounts', [AccountApiController::class, 'getList'])

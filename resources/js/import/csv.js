@@ -854,17 +854,13 @@ fetch('/api/v1/transactions/scheduled-items?type=schedule')
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
+import ImportPage from './components/ImportPage.vue';
 
-const app = createApp({})
+const app = createApp({});
 
-// Add global translator function
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from '@/transactions/components/display/Modal.vue'
-import TransactionCreateModal from '@/transactions/components/form/ModalStandard.vue'
+app.component('import-page', ImportPage);
 
-app.component('transaction-show-modal', TransactionShowModal)
-app.component('transaction-create-standard-modal', TransactionCreateModal)
-
-app.mount('#app')
+app.mount('#app');
