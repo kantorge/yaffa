@@ -138,6 +138,7 @@
         state: 'loading',
         errorMessage: null,
         retryInterval: 5000,
+        retryTimeoutId: null,
       };
     },
 
@@ -209,7 +210,7 @@
               this.errorMessage = response.data.message;
 
               // Retry after current interval
-              setTimeout(() => {
+              this.retryTimeoutId = setTimeout(() => {
                 this.getAccountBalanceData();
               }, this.retryInterval);
 
@@ -241,6 +242,13 @@
       },
       toFormattedCurrency,
       __,
+    },
+
+    beforeDestroy() {
+      // Clear any pending retry timeout when the component is destroyed
+      if (this.retryTimeoutId) {
+        clearTimeout(this.retryTimeoutId);
+      }
     },
   };
 </script>
