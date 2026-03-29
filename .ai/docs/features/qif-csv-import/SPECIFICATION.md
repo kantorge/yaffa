@@ -923,65 +923,81 @@ Notes:
 
 **Objective**: Establish end-to-end QIF parsing and response contract.
 
+**Implementation Status (2026-03-29)**:
+
+- Milestone 1 backend tasks below are implemented.
+- Milestone 1 frontend tasks below are implemented at the page/UI level.
+- Backend milestone tests listed below are implemented and passing.
+- Frontend component tests listed below are not implemented yet because the repository does not currently have a working Vue component test harness configured.
+
 **Backend Tasks**:
 
-- Implement `QifParserService`
-  - Line-based QIF parser supporting Bank/Cash/CCard types
-  - Marker parsing (D, T, P, M, L, N, ^)
-  - Non-blocking warnings for unsupported sections and split lines
-  - Date pattern matching with fallback to DD/MM/YYYY
-  - Amount normalization (sign, decimal)
-- Implement `ImportNormalizationService`
-  - Convert parsed QIF entries to draft transaction DTOs
-  - Populate mandatory fields (date, amount, account_id, transaction_type)
-  - Attach warnings to drafts
-- Create `CsvImportProfile` migration and model
-- Implement `ImportApiController::parse` endpoint
-  - Accepts multipart `file`, `source_type=qif`, `account_id`
-  - Returns Runtime Import Parse Result DTO
-  - Enforce file size limits from env variables
-- Implement `ImportPolicy` for auth/ownership checks
-- Create `CsvImportProfileFactory` for testing
+- [x] Implement `QifParserService`
+  - [x] Line-based QIF parser supporting Bank/Cash/CCard types
+  - [x] Marker parsing (D, T, P, M, L, N, ^)
+  - [x] Non-blocking warnings for unsupported sections and split lines
+  - [x] Date pattern matching with fallback to DD/MM/YYYY
+  - [x] Amount normalization (sign, decimal)
+- [x] Implement `ImportNormalizationService`
+  - [x] Convert parsed QIF entries to draft transaction DTOs
+  - [x] Populate mandatory fields (date, amount, account_id, transaction_type)
+  - [x] Attach warnings to drafts
+- [x] Create `CsvImportProfile` migration and model
+- [x] Implement `ImportApiController::parse` endpoint
+  - [x] Accepts multipart `file`, `source_type=qif`, `account_id`
+  - [x] Returns Runtime Import Parse Result DTO
+  - [x] Enforce file size limits from env variables
+- [x] Implement `ImportPolicy` for auth/ownership checks
+- [x] Create `CsvImportProfileFactory` for testing
 
 **Frontend Tasks**:
 
-- Create `ImportSourceSelector` component (radio: QIF or CSV)
-- Create `ImportUploadCard` component
-  - File input + upload handler
-  - Display upload progress and errors
-  - Call `/api/v1/imports/parse`
-- Create `ImportDraftTable` component
-  - Display parsed drafts with draft_index, date, amount, payee columns
-  - Show draft status (pending_review, ignored, finalized, failed_validation)
-  - Display warnings per draft inline or in expandable section
-  - Show raw_entry preview on click
-- Basic page layout: ImportSourceSelector → ImportUploadCard → ImportDraftTable
+- [x] Create `ImportSourceSelector` component (radio: QIF or CSV)
+- [x] Create `ImportUploadCard` component
+  - [x] File input + upload handler
+  - [x] Display upload progress and errors
+  - [x] Call `/api/v1/imports/parse`
+- [x] Create `ImportDraftTable` component
+  - [x] Display parsed drafts with draft_index, date, amount, payee columns
+  - [x] Show draft status (pending_review, ignored, finalized, failed_validation)
+  - [x] Display warnings per draft inline or in expandable section
+  - [x] Show raw_entry preview on click
+- [x] Basic page layout: ImportSourceSelector → ImportUploadCard → ImportDraftTable
 
 **Testing Tasks** (Backend Agent):
 
-- Unit test: `QifParserServiceTest`
-  - Valid QIF with all markers, mixed date formats, localized amounts
-  - Missing terminators, unsupported sections, split lines
-  - EOF handling, malformed entries
-- Unit test: `ImportNormalizationServiceTest`
-  - Parser output → DTO conversion
-  - Warning accumulation
-  - Field mapping correctness
-- Feature test: `ImportApiParseTest::qif_parse_valid`
-  - Parse valid QIF file
-  - Validate response DTO shape
-  - Assert auth check blocks unauthorized access
+- [x] Unit test: `QifParserServiceTest`
+  - [x] Valid QIF with all markers, mixed date formats, localized amounts
+  - [x] Missing terminators, unsupported sections, split lines
+  - [x] EOF handling, malformed entries
+- [x] Unit test: `ImportNormalizationServiceTest`
+  - [x] Parser output → DTO conversion
+  - [x] Warning accumulation
+  - [x] Field mapping correctness
+- [x] Feature test: `ImportApiParseTest::qif_parse_valid`
+  - [x] Parse valid QIF file
+  - [x] Validate response DTO shape
+  - [x] Assert auth check blocks unauthorized access
 
 **Testing Tasks** (Frontend Agent):
 
-- Component test: `ImportUploadCard.spec.js`
-  - File selection and upload
-  - Error display
-  - API call on submit
-- Component test: `ImportDraftTable.spec.js`
-  - Render drafts from parsed response
-  - Display status indicators
-  - Show warnings
+- [ ] Component test: `ImportUploadCard.spec.js`
+  - [ ] File selection and upload
+  - [ ] Error display
+  - [ ] API call on submit
+- [ ] Component test: `ImportDraftTable.spec.js`
+  - [ ] Render drafts from parsed response
+  - [ ] Display status indicators
+  - [ ] Show warnings
+
+**Important Notes For Milestone 1**:
+
+- Changed: the implemented parse response currently exposes review-oriented draft fields directly on each draft object instead of nesting them under a `normalized_transaction` object. The frontend currently consumes this flatter draft shape.
+- Missing: `ImportUnmatchedEntriesPanel` is not implemented in Milestone 1. The current QIF flow returns parsed drafts and warnings, but does not yet provide a separate unmatched-entry payload/UI.
+- Missing: `DuplicateCandidatesPanel` is not implemented in Milestone 1. Duplicate enrichment is deferred to Milestone 2 together with the backend duplicate adapter.
+- Changed: the frontend source selector displays both `QIF` and `CSV`, but `CSV` is intentionally disabled with a user-facing note because backend CSV parsing belongs to Milestone 2.
+- Skipped for now: reuse of existing transaction display/create modal interactions is not wired into the Milestone 1 review table. This matches the milestone deliverable, which stops at upload, parse, and review-table display.
+- Missing: frontend component tests were intentionally not added because the repository currently lacks a working Vue component test setup. Backend tests were added and validated instead.
 
 **Deliverable**: QIF files can be uploaded, parsed, and displayed in review table. Finalization not yet wired.
 
