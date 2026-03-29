@@ -768,14 +768,12 @@
           });
         })
         .on('select2:unselect', () => {
-          this.account_id = null;
+          this.form.config.account_id = null;
           this.account_currency = null;
-          this.account_currency_id = null;
         })
         .on('select2:clear', () => {
-          this.account_id = null;
+          this.form.config.account_id = null;
           this.account_currency = null;
-          this.account_currency_id = null;
         });
 
       // Load default value for account
@@ -857,7 +855,6 @@
           });
         })
         .on('select2:unselect', () => {
-          this.investment_id = null;
           this.investment_currency = null;
           this.form.config.investment_id = null;
           // Reset price-related data when investment is cleared
@@ -865,7 +862,6 @@
           this.storePriceEnabled = false;
         })
         .on('select2:clear', () => {
-          this.investment_id = null;
           this.investment_currency = null;
           this.form.config.investment_id = null;
           // Reset price-related data when investment is cleared
