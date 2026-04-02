@@ -211,68 +211,12 @@
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <label for="investment_price_provider" class="col-form-label col-sm-3">
-                    {{ __('Price provider') }}
-                </label>
-                <div class="col-sm-9">
-                    <select
-                        class="form-select"
-                        id="investment_price_provider"
-                        name="investment_price_provider"
-                    >
-                        <option value=''>{{ __(' < No price provider > ') }}</option>
-                        @forelse($allInvestmentPriceProviders as $id => $properties)
-                            <option
-                                value="{{ $id }}"
-                                @if (old())
-                                    @if (old('investment_price_provider') == $id)
-                                        selected="selected"
-                                    @endif
-                                @elseif(isset($investment))
-                                    @if ($investment['investment_price_provider'] == $id)
-                                        selected="selected"
-                                    @endif
-                                @endif
-                            >
-                                {{ $properties['displayName'] }}
-                            </option>
-                        @empty
-
-                        @endforelse
-
-                    </select>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label for="investment_scrape_url" class="col-form-label col-sm-3">
-                    {{ __('URL to scrape for investment price') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="investment_scrape_url"
-                        name="scrape_url"
-                        type="text"
-                        value="{{old('scrape_url', $investment->scrape_url ?? '' )}}"
-                    >
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label for="investment_scrape_selector" class="col-form-label col-sm-3">
-                    {{ __('CSS selector to identify investment price') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="investment_scrape_selector"
-                        name="scrape_selector"
-                        type="text"
-                        value="{{old('scrape_selector', $investment->scrape_selector ?? '' )}}"
-                    >
-                </div>
+            <div id="investmentProviderFormApp">
+                <investment-provider-form
+                    :provider-options='@json($allInvestmentPriceProviders)'
+                    :current-investment='@json($investment ?? null)'
+                    :old-input='@json(session()->getOldInput())'
+                ></investment-provider-form>
             </div>
 
         </div>

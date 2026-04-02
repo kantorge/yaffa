@@ -79,6 +79,10 @@
                             <i class="fa-solid fa-sliders me-2"></i>
                             {{ __('AI document settings') }}
                         </a>
+                        <a class="dropdown-item" href="{{ route('user.investment-provider-settings') }}">
+                            <i class="fa-solid fa-chart-line me-2"></i>
+                            {{ __('Investment provider settings') }}
+                        </a>
                         <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

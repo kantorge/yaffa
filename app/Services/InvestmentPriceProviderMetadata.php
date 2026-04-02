@@ -11,7 +11,7 @@ class InvestmentPriceProviderMetadata
     /**
      * Get metadata for a specific provider
      *
-     * @return array{name: string, displayName: string, refillAvailable: bool, description: string, instructions: string}
+     * @return array<string, mixed>
      *
      * @throws \App\Exceptions\PriceProviderException
      */
@@ -25,7 +25,7 @@ class InvestmentPriceProviderMetadata
     /**
      * Get metadata for all registered providers
      *
-     * @return array<string, array{name: string, displayName: string, refillAvailable: bool, description: string, instructions: string}>
+     * @return array<string, array<string, mixed>>
      */
     public static function all(): array
     {

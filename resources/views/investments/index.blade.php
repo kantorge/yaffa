@@ -53,6 +53,16 @@
                         <i class="fa fa-fw fa-layer-group"></i>
                     </a>
                 </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{ route('user.investment-provider-settings') }}">{{ __('Investment provider settings') }}</a>
+                    <a class="btn btn-sm btn-outline-primary"
+                        id="button-investment-provider-settings"
+                        href="{{ route('user.investment-provider-settings') }}"
+                        title="{{ __('Investment provider settings') }}">
+                        <i class="fa fa-fw fa-chart-line"></i>
+                    </a>
+                </li>
             </ul>
         </div>
 

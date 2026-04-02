@@ -21,7 +21,7 @@ class InvestmentService
     use ScheduleTrait;
 
     public function __construct(
-        private InvestmentPriceProviderRegistry $providerRegistry
+        private InvestmentPriceProviderContextResolver $contextResolver
     ) {
     }
 
@@ -153,25 +153,27 @@ class InvestmentService
      */
     public function fetchAndSavePrices(Investment $investment, ?Carbon $from = null, bool $refill = false): array
     {
-        $providerKey = $investment->investment_price_provider;
+        $context = $this->contextResolver->resolve($investment);
 
-        if (! $providerKey) {
+        $provider = $context['provider'] ?? null;
+        if (! $provider) {
             throw new PriceProviderException(
-                'Investment has no price provider configured',
-                'none',
+                'Unable to resolve investment price provider',
+                (string) ($context['provider_key'] ?? 'unknown'),
                 $investment->symbol
             );
         }
 
-        if (! $this->providerRegistry->has($providerKey)) {
-            throw new PriceProviderException(
-                "Investment has unknown provider: {$providerKey}",
-                $providerKey,
-                $investment->symbol
-            );
-        }
+        $investmentSettings = is_array($context['investment_settings'] ?? null)
+            ? $context['investment_settings']
+            : [];
+        $investment->provider_settings = $investmentSettings;
 
-        $provider = $this->providerRegistry->get($providerKey);
+        $credentials = is_array($context['credentials'] ?? null)
+            ? $context['credentials']
+            : [];
+        $investment->provider_credentials = $credentials;
+
         $prices = $provider->fetchPrices($investment, $from, $refill);
 
         foreach ($prices as $priceData) {
@@ -179,6 +181,31 @@ class InvestmentService
         }
 
         return $prices;
+    }
+
+    public function markPriceFetchAttempted(Investment $investment): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_attempted_at' => now(),
+        ])->save();
+    }
+
+    public function markPriceFetchSucceeded(Investment $investment): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_succeeded_at' => now(),
+            'last_price_fetch_error_at' => null,
+            'last_price_fetch_error_message' => null,
+        ])->save();
+    }
+
+    public function markPriceFetchFailed(Investment $investment, string $errorMessage): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_attempted_at' => now(),
+            'last_price_fetch_error_at' => now(),
+            'last_price_fetch_error_message' => mb_substr($errorMessage, 0, 65000),
+        ])->save();
     }
 
     /**

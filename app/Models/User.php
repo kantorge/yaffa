@@ -91,6 +91,8 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property-read int|null $category_learning_count
  * @property-read Collection<int, GoogleDriveConfig> $googleDriveConfigs
  * @property-read int|null $google_drive_configs_count
+ * @property-read Collection<int, InvestmentProviderConfig> $investmentProviderConfigs
+ * @property-read int|null $investment_provider_configs_count
  * @property-read Collection<int, ReceivedMail> $receivedMails
  * @property-read int|null $received_mails_count
  * @property-read Collection<int, Tag> $tags
@@ -251,5 +253,13 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     public function categoryLearning(): HasMany
     {
         return $this->hasMany(CategoryLearning::class);
+    }
+
+    /**
+     * @return HasMany<InvestmentProviderConfig, $this>
+     */
+    public function investmentProviderConfigs(): HasMany
+    {
+        return $this->hasMany(InvestmentProviderConfig::class);
     }
 }

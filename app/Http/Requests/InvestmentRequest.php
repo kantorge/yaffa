@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Investment;
+use App\Services\InvestmentProviderSettingsResolver;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,9 @@ class InvestmentRequest extends FormRequest
         $investmentPriceProviders = array_keys(
             App::make(Investment::class)->getAllInvestmentPriceProviders()
         );
+
+        $providerKey = $this->input('investment_price_provider');
+        $providerSettingsRules = app(InvestmentProviderSettingsResolver::class)->rules($providerKey);
 
         return [
             'name' => [
@@ -68,18 +72,7 @@ class InvestmentRequest extends FormRequest
                 'required_if_accepted:auto_update',
                 Rule::in($investmentPriceProviders),
             ],
-            'scrape_url' => [
-                'exclude_unless:investment_price_provider,web_scraping',
-                Rule::RequiredIf(fn () => $this->investment_price_provider === 'web_scraping'),
-                'url',
-            ],
-            'scrape_selector' => [
-                'exclude_unless:investment_price_provider,web_scraping',
-                Rule::RequiredIf(fn () => $this->investment_price_provider === 'web_scraping'),
-                'string',
-                'min:1', // It's not likely to qualify as a selector, but let's go with the minimum
-                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-            ],
+            ...$providerSettingsRules,
         ];
     }
 
@@ -88,11 +81,19 @@ class InvestmentRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $resolver = app(InvestmentProviderSettingsResolver::class);
+        $providerKey = $this->investment_price_provider ?? null;
+        $providerSettings = $resolver->normalize(
+            $providerKey,
+            $this->input('provider_settings'),
+        );
+
         // Check for checkboxes and dropdown empty values
         $this->merge([
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
             'investment_price_provider' => $this->investment_price_provider ?? null,
+            'provider_settings' => $providerSettings,
         ]);
     }
 }

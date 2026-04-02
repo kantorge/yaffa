@@ -115,7 +115,7 @@ export function aggregateTransactionsByCategory(transactions) {
       const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
       const categoryId = item.category.id;
 
-      const amount = Number(item.amount_in_base || 0);
+      let amount = Number(item.amount_in_base || 0);
 
       if (!isFinite(amount)) {
         amount = 0;

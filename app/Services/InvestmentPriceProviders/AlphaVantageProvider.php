@@ -25,6 +25,10 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             $from = Carbon::now()->subDays(3);
         }
 
+        $resolvedApiKey = is_array($investment->provider_credentials ?? null)
+            ? (string) ($investment->provider_credentials['api_key'] ?? '')
+            : '';
+
         try {
             $response = $this->httpClient->request(
                 'GET',
@@ -34,7 +38,7 @@ class AlphaVantageProvider implements InvestmentPriceProvider
                         'function' => 'TIME_SERIES_DAILY',
                         'datatype' => 'json',
                         'symbol' => $investment->symbol,
-                        'apikey' => config('yaffa.alpha_vantage_key'),
+                        'apikey' => $resolvedApiKey,
                         'outputsize' => ($refill ? 'full' : 'compact'),
                     ],
                     'timeout' => 30,
@@ -121,11 +125,6 @@ class AlphaVantageProvider implements InvestmentPriceProvider
         return 'alpha_vantage';
     }
 
-    public function supportsRefill(): bool
-    {
-        return true;
-    }
-
     public function getDisplayName(): string
     {
         return __('Alpha Vantage');
@@ -139,5 +138,64 @@ class AlphaVantageProvider implements InvestmentPriceProvider
     public function getInstructions(): string
     {
         return __('To use Alpha Vantage, you need to get an API key. The key is free, but you need to register on their website.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getInvestmentSettingsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => [],
+            'properties' => [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getUserSettingsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['api_key'],
+            'properties' => [
+                'api_key' => [
+                    'type' => 'string',
+                    'label' => __('API key'),
+                    'minLength' => 8,
+                    'maxLength' => 191,
+                    'helpText' => __('Generate your API key in your Alpha Vantage account settings.'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getRateLimitPolicy(): array
+    {
+        return [
+            'perSecond' => null,
+            'perMinute' => 5,
+            'perDay' => 500,
+            'reserve' => 0,
+            'overrideable' => true,
+            'overrideBounds' => [
+                'perMinute' => ['min' => 1, 'max' => 75],
+                'perDay' => ['min' => 1, 'max' => 5000],
+            ],
+            'plans' => [
+                'free' => ['perMinute' => 5, 'perDay' => 500],
+                'pro' => ['perMinute' => 75, 'perDay' => 5000],
+            ],
+        ];
+    }
+
+    public function supportsHistoricalSync(): bool
+    {
+        return true;
     }
 }
