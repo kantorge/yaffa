@@ -49,6 +49,7 @@ class InvestmentProviderConfigRequest extends FormRequest
 
             if ($type === 'string') {
                 $fieldRules[] = 'string';
+                $fieldRules[] = 'nullable';
                 if (isset($fieldSchema['minLength'])) {
                     $fieldRules[] = 'min:' . (int) $fieldSchema['minLength'];
                 }

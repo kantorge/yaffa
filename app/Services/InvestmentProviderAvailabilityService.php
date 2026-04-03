@@ -56,7 +56,17 @@ class InvestmentProviderAvailabilityService
             $requiredFields = [];
         }
 
-        $hasCredentials = $config !== null && ! empty($config->credentials);
+        $hasCredentials = false;
+        if ($config !== null && is_array($config->credentials) && ! empty($config->credentials)) {
+            // Validate that all required fields are present and non-empty
+            $hasCredentials = true;
+            foreach ($requiredFields as $field) {
+                if (empty($config->credentials[$field] ?? null)) {
+                    $hasCredentials = false;
+                    break;
+                }
+            }
+        }
 
         if ($config && ! $config->enabled) {
             return [

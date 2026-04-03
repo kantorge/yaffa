@@ -131,11 +131,13 @@ class ResetDemoDatabase extends Command
                         $this->warn('Skipping Investment Provider Config - DEMO_INVESTMENT_PROVIDER_CREDENTIALS must be valid JSON object');
                     } else {
                         $credentials = $decodedCredentials;
+                        $this->info('Using JSON credentials format from DEMO_INVESTMENT_PROVIDER_CREDENTIALS.');
                     }
                 } elseif (config('demo.investment_provider_api_key')) {
                     $credentials = [
                         'api_key' => config('demo.investment_provider_api_key'),
                     ];
+                    $this->info('Using API key shortcut format from DEMO_INVESTMENT_PROVIDER_API_KEY.');
                 }
 
                 if ($credentials !== []) {

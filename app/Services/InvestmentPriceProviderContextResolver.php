@@ -58,10 +58,7 @@ class InvestmentPriceProviderContextResolver
         }
 
         /** @var InvestmentProviderConfig|null $providerConfig */
-        $providerConfig = $investment->user
-            ->investmentProviderConfigs()
-            ->where('provider_key', $providerKey)
-            ->first();
+        $providerConfig = $this->resolveProviderConfig($investment, $providerKey);
 
         if ($providerConfig && ! $providerConfig->enabled) {
             throw new PriceProviderException(
@@ -86,6 +83,26 @@ class InvestmentPriceProviderContextResolver
             'credentials' => $credentials,
             'rate_limit_policy' => $rateLimitPolicy,
         ];
+    }
+
+    /**
+     * Resolves the user's provider configuration for this investment.
+     * Uses eager-loaded relationship if available, queries otherwise.
+     */
+    private function resolveProviderConfig(Investment $investment, string $providerKey): ?InvestmentProviderConfig
+    {
+        $user = $investment->user;
+
+        // Use eager-loaded relationship if available to prevent N+1 queries
+        if ($user->relationLoaded('investmentProviderConfigs')) {
+            return $user->investmentProviderConfigs
+                ->firstWhere('provider_key', $providerKey);
+        }
+
+        // Fall back to querying if relationship not eager-loaded
+        return $user->investmentProviderConfigs()
+            ->where('provider_key', $providerKey)
+            ->first();
     }
 
     /**

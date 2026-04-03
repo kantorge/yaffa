@@ -77,14 +77,21 @@ class GetInvestmentPrices implements ShouldQueue
         try {
             // Fetch and save investment prices from provider
             $investmentService->fetchAndSavePrices($this->investment);
-            $investmentService->markPriceFetchSucceeded($this->investment);
+        } catch (Throwable $throwable) {
+            $investmentService->markPriceFetchFailed($this->investment, $throwable->getMessage());
 
+            throw $throwable;
+        }
+
+        $investmentService->markPriceFetchSucceeded($this->investment);
+
+        try {
             // Use the InvestmentService to recalculate the related accounts
             // TODO: this should be done once for all accounts
             $investmentService->recalculateRelatedAccounts($this->investment);
         } catch (Throwable $throwable) {
-            $investmentService->markPriceFetchFailed($this->investment, $throwable->getMessage());
-
+            // Log recalculation failure but do not mark fetch as failed
+            // since the price fetch itself succeeded
             throw $throwable;
         }
     }

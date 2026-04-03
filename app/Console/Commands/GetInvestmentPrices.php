@@ -81,7 +81,7 @@ class GetInvestmentPrices extends Command
 
             if (! $result['ok']) {
                 $failedPreflight++;
-                $this->investmentService->markPriceFetchFailed($investment, (string) ($result['reason'] ?? __('Preflight validation failed.')));
+                $this->investmentService->markPreflightValidationFailed($investment, (string) ($result['reason'] ?? __('Preflight validation failed.')));
 
                 if ($this->output->isVerbose()) {
                     $activeLabel = $investment->active ? 'active' : 'inactive';

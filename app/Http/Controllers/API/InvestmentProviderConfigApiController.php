@@ -95,6 +95,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             $incomingCredentials = [];
         }
 
+        // Filter out null credentials to prevent accidental overwrites
+        $incomingCredentials = array_filter($incomingCredentials, fn ($value) => $value !== null);
+
         $attributes = [
             'enabled' => (bool) ($validated['enabled'] ?? ($existing ? $existing->enabled : true)),
             'options' => $validated['options'] ?? $existing?->options,

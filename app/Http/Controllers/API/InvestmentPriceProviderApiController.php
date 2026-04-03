@@ -54,7 +54,7 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
         }
 
         $validated = $request->validated();
-        $providerSettings = is_array($validated['provider_settings'] ?? null)
+        $providerSettings = is_array($validated['provider_settings'])
             ? $validated['provider_settings']
             : [];
 
