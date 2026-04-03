@@ -1,0 +1,114 @@
+name: Optional Docker build for contributors
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch to build (e.g. feat/my-change)'
+        required: true
+        default: 'develop'
+      platforms:
+        description: 'Platforms to build (comma-separated)'
+        required: false
+        default: 'linux/amd64'
+      image_name:
+        description: 'Target image name (default: ghcr.io/<repo-owner>/yaffa)'
+        required: false
+        default: ''
+      publish_latest:
+        description: 'Publish latest tag'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      SOURCE_BRANCH_INPUT: ${{ github.event.inputs.source_branch }}
+      PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
+      IMAGE_NAME_INPUT: ${{ github.event.inputs.image_name }}
+      PUBLISH_LATEST_INPUT: ${{ github.event.inputs.publish_latest }}
+      REPO_OWNER_INPUT: ${{ github.repository_owner }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.source_branch }}
+
+      - name: Prepare build metadata
+        run: |
+          BRANCH=$(printf '%s' "$SOURCE_BRANCH_INPUT" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          DATE=$(date +%Y%m%d-%H%M)
+          DOCKER_VERSION_TAG="${BRANCH}-${DATE}"
+          echo "DOCKER_VERSION_TAG=${DOCKER_VERSION_TAG}" >> "$GITHUB_ENV"
+          echo "SOURCE_BRANCH=${SOURCE_BRANCH_INPUT}" >> "$GITHUB_ENV"
+          echo "SOURCE_BRANCH_SAFE=${BRANCH}" >> "$GITHUB_ENV"
+          echo "BUILD_PLATFORMS=${PLATFORMS_INPUT}" >> "$GITHUB_ENV"
+          echo "PUBLISH_LATEST=${PUBLISH_LATEST_INPUT}" >> "$GITHUB_ENV"
+
+          if [ -n "$IMAGE_NAME_INPUT" ]; then
+            IMAGE_NAME="${IMAGE_NAME_INPUT}"
+          else
+            OWNER=$(printf '%s' "$REPO_OWNER_INPUT" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="ghcr.io/${OWNER}/yaffa"
+          fi
+
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
+
+          IMAGE_TAGS="${IMAGE_NAME}:${DOCKER_VERSION_TAG}"
+          if [ "$PUBLISH_LATEST_INPUT" = "true" ]; then
+            IMAGE_TAGS="${IMAGE_TAGS},${IMAGE_NAME}:latest"
+          fi
+          echo "IMAGE_TAGS=${IMAGE_TAGS}" >> "$GITHUB_ENV"
+
+      - name: Print build info
+        run: |
+          echo "event: ${{ github.event_name }}"
+          echo "source branch: ${{ env.SOURCE_BRANCH }}"
+          echo "version tag: ${{ env.DOCKER_VERSION_TAG }}"
+          echo "platforms: ${{ env.BUILD_PLATFORMS }}"
+          echo "image: ${{ env.IMAGE_NAME }}"
+          echo "publish latest: ${{ env.PUBLISH_LATEST }}"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Docker cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ env.SOURCE_BRANCH_SAFE }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ env.SOURCE_BRANCH_SAFE }}-
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          platforms: ${{ env.BUILD_PLATFORMS }}
+          push: true
+          tags: ${{ env.IMAGE_TAGS }}
+          build-args: |
+            BRANCH=${{ env.SOURCE_BRANCH }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache to current path
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
