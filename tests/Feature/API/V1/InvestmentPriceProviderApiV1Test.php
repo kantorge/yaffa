@@ -116,13 +116,20 @@ class InvestmentPriceProviderApiV1Test extends TestCase
 
     public function test_test_fetch_returns_latest_price_for_web_scraping_provider(): void
     {
+        $olderDate = Carbon::yesterday()->subDay()->format('Y-m-d');
+        $newerDate = Carbon::yesterday()->format('Y-m-d');
+
         $provider = Mockery::mock(InvestmentPriceProvider::class);
         $provider->shouldReceive('fetchPrices')
             ->once()
             ->andReturnUsing(fn () => [
                 [
-                    'date' => Carbon::yesterday()->format('Y-m-d'),
+                    'date' => $newerDate,
                     'price' => 123.45,
+                ],
+                [
+                    'date' => $olderDate,
+                    'price' => 111.11,
                 ],
             ]);
 
@@ -131,6 +138,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             ->once()
             ->andReturn([
                 'provider' => $provider,
+                'credentials' => [],
             ]);
 
         $this->app->instance(InvestmentPriceProviderContextResolver::class, $contextResolver);
@@ -149,11 +157,14 @@ class InvestmentPriceProviderApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonPath('provider_key', 'web_scraping')
             ->assertJsonPath('price', 123.45)
-            ->assertJsonPath('date', Carbon::yesterday()->format('Y-m-d'));
+            ->assertJsonPath('date', $newerDate);
     }
 
     public function test_test_fetch_passes_provider_settings_to_provider_fetch(): void
     {
+        $olderDate = Carbon::yesterday()->subDay()->format('Y-m-d');
+        $newerDate = Carbon::yesterday()->format('Y-m-d');
+
         $provider = Mockery::mock(InvestmentPriceProvider::class);
         $provider->shouldReceive('fetchPrices')
             ->once()
@@ -162,8 +173,12 @@ class InvestmentPriceProviderApiV1Test extends TestCase
                     && ($investment->provider_settings['selector'] ?? null) === '.quote')
             ->andReturnUsing(fn () => [
                 [
-                    'date' => Carbon::yesterday()->format('Y-m-d'),
+                    'date' => $newerDate,
                     'price' => 456.78,
+                ],
+                [
+                    'date' => $olderDate,
+                    'price' => 400.00,
                 ],
             ]);
 
@@ -191,6 +206,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
         $response->assertOk()
             ->assertJsonPath('provider_key', 'web_scraping')
             ->assertJsonPath('price', 456.78)
+            ->assertJsonPath('date', $newerDate)
             ->assertJsonPath('symbol', 'DIS');
     }
 }

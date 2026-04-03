@@ -98,13 +98,24 @@ class GetInvestmentPrices extends Command
             ]);
         });
 
+        /** @var array<string, int> $attemptedTodayCounts */
+        $attemptedTodayCounts = Investment::query()
+            ->whereDate('last_price_fetch_attempted_at', Carbon::today())
+            ->selectRaw('user_id, investment_price_provider, COUNT(*) as count')
+            ->groupBy('user_id', 'investment_price_provider')
+            ->get()
+            ->mapWithKeys(fn (Investment $row) => [
+                "{$row->user_id}:{$row->investment_price_provider}" => (int) ($row->getAttribute('count') ?? 0),
+            ])
+            ->all();
+
         $eligible
             ->groupBy(function (array $item): string {
                 $bucketKey = $item['context']['rate_limit_policy']['bucketKey'] ?? null;
 
                 return is_string($bucketKey) ? $bucketKey : 'unknown';
             })
-            ->each(function (Collection $group) use (&$dispatched, &$skippedBudget): void {
+            ->each(function (Collection $group) use (&$dispatched, &$skippedBudget, $attemptedTodayCounts): void {
                 $first = $group->first();
                 if (! is_array($first)) {
                     return;
@@ -130,7 +141,7 @@ class GetInvestmentPrices extends Command
                     })
                     ->values();
 
-                $budget = $this->resolveDispatchBudget($dispatchable, $policy);
+                $budget = $this->resolveDispatchBudget($dispatchable, $policy, $attemptedTodayCounts);
 
                 if ($this->output->isVeryVerbose()) {
                     $this->line("  <comment>BUCKET</comment> {$bucketKey}: {$dispatchable->count()} eligible, budget={$budget}");
@@ -172,8 +183,9 @@ class GetInvestmentPrices extends Command
     /**
      * @param  Collection<int, array{investment: Investment, context: array<string, mixed>}>  $dispatchable
      * @param  array<string, int|string|null>  $policy
+     * @param  array<string, int>  $attemptedTodayCounts
      */
-    private function resolveDispatchBudget(Collection $dispatchable, array $policy): int
+    private function resolveDispatchBudget(Collection $dispatchable, array $policy, array $attemptedTodayCounts): int
     {
         $groupCount = $dispatchable->count();
         if ($groupCount === 0) {
@@ -197,11 +209,7 @@ class GetInvestmentPrices extends Command
             ? max(0, (int) $policy['reserve'])
             : 0;
 
-        $attemptedToday = Investment::query()
-            ->where('user_id', $firstInvestment->user_id)
-            ->where('investment_price_provider', $firstInvestment->investment_price_provider)
-            ->whereDate('last_price_fetch_attempted_at', Carbon::today())
-            ->count();
+        $attemptedToday = $attemptedTodayCounts["{$firstInvestment->user_id}:{$firstInvestment->investment_price_provider}"] ?? 0;
 
         return max(0, min($groupCount, $perDay - $reserve - $attemptedToday));
     }

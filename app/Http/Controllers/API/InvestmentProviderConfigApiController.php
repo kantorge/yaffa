@@ -77,12 +77,16 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
 
     public function update(InvestmentProviderConfigRequest $request, string $providerKey): JsonResponse
     {
-        Gate::authorize('create', InvestmentProviderConfig::class);
-
         $existing = $request->user()
             ->investmentProviderConfigs()
             ->where('provider_key', $providerKey)
             ->first();
+
+        if ($existing === null) {
+            Gate::authorize('create', InvestmentProviderConfig::class);
+        } else {
+            Gate::authorize('update', $existing);
+        }
 
         $validated = $request->validated();
         $previousCredentials = is_array($existing?->credentials) ? $existing->credentials : [];
@@ -92,7 +96,7 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         }
 
         $attributes = [
-            'enabled' => (bool) ($validated['enabled'] ?? ($existing?->enabled ?? true)),
+            'enabled' => (bool) ($validated['enabled'] ?? ($existing ? $existing->enabled : true)),
             'options' => $validated['options'] ?? $existing?->options,
             'plan' => $validated['plan'] ?? $existing?->plan,
             'rate_limit_overrides' => $validated['rate_limit_overrides'] ?? $existing?->rate_limit_overrides,
@@ -106,15 +110,12 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
                 ...$attributes,
             ]);
 
-            Gate::authorize('view', $config);
-
             return response()->json(
                 (new InvestmentProviderConfigResource($config))->resolve(),
                 Response::HTTP_CREATED
             );
         }
 
-        Gate::authorize('update', $existing);
         $existing->update($attributes);
 
         return response()->json(
@@ -150,7 +151,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         $requiredFields = $this->providerRegistry->getMetadata($providerKey)['userSettingsSchema']['required'] ?? [];
 
         foreach ($requiredFields as $field) {
-            if (empty($effectiveCredentials[$field])) {
+            if (! array_key_exists($field, $effectiveCredentials)
+                || $effectiveCredentials[$field] === null
+                || (is_string($effectiveCredentials[$field]) && mb_trim($effectiveCredentials[$field]) === '')) {
                 return response()->json([
                     'error' => [
                         'code' => 'MISSING_CREDENTIALS',

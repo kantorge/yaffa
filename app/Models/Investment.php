@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property int $investment_group_id
  * @property int $currency_id
  * @property array<string, mixed>|null $provider_settings
+ * @property array<string, mixed>|null $provider_credentials
  * @property \Illuminate\Support\Carbon|null $last_price_fetch_attempted_at
  * @property \Illuminate\Support\Carbon|null $last_price_fetch_succeeded_at
  * @property \Illuminate\Support\Carbon|null $last_price_fetch_error_at
@@ -81,6 +82,9 @@ class Investment extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
+
+    /** @var array<string, mixed> */
+    public array $provider_credentials = [];
 
     protected $guarded = [];
 

@@ -81,19 +81,23 @@ class InvestmentRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $resolver = app(InvestmentProviderSettingsResolver::class);
-        $providerKey = $this->investment_price_provider ?? null;
-        $providerSettings = $resolver->normalize(
-            $providerKey,
-            $this->input('provider_settings'),
-        );
-
         // Check for checkboxes and dropdown empty values
-        $this->merge([
+        $payload = [
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
             'investment_price_provider' => $this->investment_price_provider ?? null,
-            'provider_settings' => $providerSettings,
-        ]);
+        ];
+
+        if ($this->has('provider_settings')) {
+            $resolver = app(InvestmentProviderSettingsResolver::class);
+            $providerKey = $this->investment_price_provider ?? null;
+
+            $payload['provider_settings'] = $resolver->normalize(
+                $providerKey,
+                $this->input('provider_settings'),
+            );
+        }
+
+        $this->merge($payload);
     }
 }

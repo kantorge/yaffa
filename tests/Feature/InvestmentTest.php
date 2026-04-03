@@ -86,8 +86,8 @@ class InvestmentTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertViewIs('investments.form');
-        $response->assertSee('investmentProviderFormApp', false);
-        $response->assertSee('investment-provider-form', false);
+        $response->assertDontSee('investmentProviderFormApp', false);
+        $response->assertDontSee('investment-provider-form', false);
     }
 
     public function test_investment_form_requires_investment_group_and_currency(): void
@@ -216,8 +216,8 @@ class InvestmentTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('investments.form');
-        $response->assertSee('investmentProviderFormApp', false);
-        $response->assertSee('investment-provider-form', false);
+        $response->assertDontSee('investmentProviderFormApp', false);
+        $response->assertDontSee('investment-provider-form', false);
     }
 
     public function test_user_cannot_update_an_investment_with_missing_data(): void
@@ -297,7 +297,7 @@ class InvestmentTest extends TestCase
         $this->assertTrue($successNotificationExists);
     }
 
-    public function test_switching_provider_clears_stale_provider_settings(): void
+    public function test_switching_provider_without_provider_settings_keeps_existing_provider_settings(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -331,7 +331,46 @@ class InvestmentTest extends TestCase
         $investment->refresh();
 
         $this->assertSame('alpha_vantage', $investment->investment_price_provider);
-        $this->assertSame([], $investment->provider_settings);
+        $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
+        $this->assertSame('.price', $investment->provider_settings['selector']);
+    }
+
+    public function test_omitting_provider_settings_preserves_existing_settings(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
+
+        /** @var Investment $investment */
+        $investment = Investment::factory()->for($user)->create([
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+            'investment_price_provider' => 'alpha_vantage',
+            'provider_settings' => [
+                'url' => 'https://example.com/price',
+                'selector' => '.price',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('investments.update', $investment), [
+            'name' => $investment->name,
+            'symbol' => $investment->symbol,
+            'isin' => $investment->isin,
+            'comment' => $investment->comment,
+            'active' => $investment->active,
+            'auto_update' => $investment->auto_update,
+            'investment_group_id' => $investment->investment_group_id,
+            'currency_id' => $investment->currency_id,
+            'investment_price_provider' => 'alpha_vantage',
+        ]);
+
+        $response->assertRedirectToRoute('investments.index');
+
+        $investment->refresh();
+
+        $this->assertSame('alpha_vantage', $investment->investment_price_provider);
+        $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
+        $this->assertSame('.price', $investment->provider_settings['selector']);
     }
 
     public function test_user_can_delete_an_existing_investment(): void

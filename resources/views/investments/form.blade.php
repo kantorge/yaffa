@@ -211,14 +211,6 @@
                 </div>
             </div>
 
-            <div id="investmentProviderFormApp">
-                <investment-provider-form
-                    :provider-options='@json($allInvestmentPriceProviders)'
-                    :current-investment='@json($investment ?? null)'
-                    :old-input='@json(session()->getOldInput())'
-                ></investment-provider-form>
-            </div>
-
         </div>
         <div class="card-footer">
             @csrf

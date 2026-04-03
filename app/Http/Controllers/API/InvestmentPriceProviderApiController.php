@@ -68,9 +68,7 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
 
         try {
             $context = $this->contextResolver->resolve($investment);
-            $investment->provider_credentials = is_array($context['credentials'] ?? null)
-                ? $context['credentials']
-                : [];
+            $investment->provider_credentials = $context['credentials'];
             $prices = $context['provider']->fetchPrices($investment);
 
             $latestPrice = collect($prices)

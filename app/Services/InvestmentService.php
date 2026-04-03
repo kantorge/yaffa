@@ -155,23 +155,12 @@ class InvestmentService
     {
         $context = $this->contextResolver->resolve($investment);
 
-        $provider = $context['provider'] ?? null;
-        if (! $provider) {
-            throw new PriceProviderException(
-                'Unable to resolve investment price provider',
-                (string) ($context['provider_key'] ?? 'unknown'),
-                $investment->symbol
-            );
-        }
+        $provider = $context['provider'];
 
-        $investmentSettings = is_array($context['investment_settings'] ?? null)
-            ? $context['investment_settings']
-            : [];
+        $investmentSettings = $context['investment_settings'];
         $investment->provider_settings = $investmentSettings;
 
-        $credentials = is_array($context['credentials'] ?? null)
-            ? $context['credentials']
-            : [];
+        $credentials = $context['credentials'];
         $investment->provider_credentials = $credentials;
 
         $prices = $provider->fetchPrices($investment, $from, $refill);

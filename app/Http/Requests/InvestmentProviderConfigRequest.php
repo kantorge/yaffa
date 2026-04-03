@@ -152,10 +152,7 @@ class InvestmentProviderConfigRequest extends FormRequest
             $bounds = [];
         }
 
-        $mergedOverrides = $existingConfig?->rate_limit_overrides ?? [];
-        if (! is_array($mergedOverrides)) {
-            $mergedOverrides = [];
-        }
+        $mergedOverrides = $existingConfig->rate_limit_overrides ?? [];
         $mergedOverrides = array_merge($mergedOverrides, $overridesInput);
 
         foreach ($overridesInput as $key => $value) {

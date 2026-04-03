@@ -56,7 +56,7 @@ class InvestmentProviderAvailabilityService
             $requiredFields = [];
         }
 
-        $hasCredentials = (bool) ($config?->credentials);
+        $hasCredentials = $config !== null && ! empty($config->credentials);
 
         if ($config && ! $config->enabled) {
             return [

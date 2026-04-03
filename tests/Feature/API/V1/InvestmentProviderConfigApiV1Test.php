@@ -78,7 +78,7 @@ class InvestmentProviderConfigApiV1Test extends TestCase
         $response->assertCreated()
             ->assertJsonPath('provider_key', 'alpha_vantage')
             ->assertJsonPath('has_credentials', true)
-            ->assertJsonMissing(['credentials']);
+            ->assertJsonMissingPath('credentials');
 
         $this->assertDatabaseHas('investment_provider_configs', [
             'user_id' => $this->user->id,

@@ -59,7 +59,7 @@ class InvestmentPriceProviderContextResolver
 
         /** @var InvestmentProviderConfig|null $providerConfig */
         $providerConfig = $investment->user
-            ?->investmentProviderConfigs()
+            ->investmentProviderConfigs()
             ->where('provider_key', $providerKey)
             ->first();
 
@@ -100,7 +100,7 @@ class InvestmentPriceProviderContextResolver
         $requiredFields = is_array($schema['required'] ?? null) ? $schema['required'] : [];
 
         foreach ($requiredFields as $requiredField) {
-            if (! isset($settings[$requiredField]) || $settings[$requiredField] === null || $settings[$requiredField] === '') {
+            if (! isset($settings[$requiredField]) || $settings[$requiredField] === '') {
                 throw new PriceProviderException(
                     'Missing required investment provider setting: ' . $requiredField,
                     $providerKey,

@@ -63,9 +63,8 @@ class GetInvestmentPrices implements ShouldQueue
         }
 
         $context = $contextResolver->resolve($this->investment);
-        $policy = $context['rate_limit_policy'] ?? [];
 
-        return is_array($policy) ? $policy : [];
+        return $context['rate_limit_policy'];
     }
 
     /**
