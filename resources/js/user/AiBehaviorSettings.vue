@@ -89,7 +89,10 @@
           </div>
 
           <div class="row mb-3">
-            <label for="generic_document_language" class="col-form-label col-sm-4">
+            <label
+              for="generic_document_language"
+              class="col-form-label col-sm-4"
+            >
               {{ __('Document Language') }}
             </label>
             <div class="col-sm-8">
@@ -634,7 +637,7 @@
         </div>
       </div>
 
-      <div class="card-footer" v-if="!loading">
+      <div class="card-footer" v-if="!loading && !sandbox_mode">
         <Button
           class="btn btn-primary"
           :form="form"

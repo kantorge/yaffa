@@ -44,6 +44,13 @@ class AiUserSettingsApiController extends Controller implements HasMiddleware
 
     public function update(AiUserSettingsRequest $request): JsonResponse
     {
+        // This feature is not enabled in sandbox mode
+        if (config('yaffa.sandbox_mode')) {
+            return response()->json([
+                'message' => 'This feature is not available in sandbox mode.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         /** @var User $user */
         $user = $request->user();
 
