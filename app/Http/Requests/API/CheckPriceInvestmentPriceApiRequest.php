@@ -13,8 +13,8 @@ class CheckPriceInvestmentPriceApiRequest extends FormRequest
     public function rules(): array
     {
         return ['date' => [
-                    'required',
-                    Rule::date()->format('Y-m-d'),
-                ],];
+            'required',
+            Rule::date()->format('Y-m-d'),
+        ],];
     }
 }
