@@ -216,6 +216,7 @@
                     :provider-options='@json($allInvestmentPriceProviders)'
                     :current-investment='@json($investment ?? null)'
                     :old-input='@json(session()->getOldInput())'
+                    symbol-field-id="symbol"
                 ></investment-provider-form>
             </div>
 

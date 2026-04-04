@@ -53,7 +53,6 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             'credentials' => [
                 'api_key' => 'alpha-key-12345678',
             ],
-            'enabled' => true,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -96,7 +95,6 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             'credentials' => [
                 'api_key' => 'alpha-key-12345678',
             ],
-            'enabled' => true,
         ]);
 
         $response = $this->actingAs($this->user)

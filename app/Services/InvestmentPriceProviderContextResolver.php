@@ -60,14 +60,6 @@ class InvestmentPriceProviderContextResolver
         /** @var InvestmentProviderConfig|null $providerConfig */
         $providerConfig = $this->resolveProviderConfig($investment, $providerKey);
 
-        if ($providerConfig && ! $providerConfig->enabled) {
-            throw new PriceProviderException(
-                'Provider configuration is disabled for this user',
-                $providerKey,
-                $investment->symbol
-            );
-        }
-
         $investmentSettings = $this->resolveAndValidateInvestmentSettings($investment, $providerMetadata, $providerKey);
         $credentials = is_array($providerConfig?->credentials) ? $providerConfig->credentials : [];
         $this->validateRequiredCredentials($providerMetadata, $credentials, $providerKey, $investment);

@@ -190,17 +190,10 @@ class InvestmentService
 
     public function markPriceFetchFailed(Investment $investment, string $errorMessage): void
     {
-        $data = [
+        $investment->forceFill([
             'last_price_fetch_error_at' => now(),
             'last_price_fetch_error_message' => mb_substr($errorMessage, 0, 65000),
-        ];
-
-        // Only update attempted_at for actual fetch failures, not for preflight validation failures
-        // which are indicated by a method parameter or by checking if this is an explicit preflight context
-        $investment->forceFill(array_merge(
-            $data,
-            ['last_price_fetch_attempted_at' => now()]
-        ))->save();
+        ])->save();
     }
 
     public function markPreflightValidationFailed(Investment $investment, string $errorMessage): void

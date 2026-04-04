@@ -136,6 +136,10 @@
         type: Object,
         default: () => ({}),
       },
+      symbolFieldId: {
+        type: String,
+        required: true,
+      },
     },
     setup(props) {
       const selectedProvider = ref(
@@ -373,7 +377,7 @@
           .replace(/\b\w/g, (char) => char.toUpperCase());
 
       const getSymbolValue = () => {
-        const symbolInput = window.document.getElementById('symbol');
+        const symbolInput = window.document.getElementById(props.symbolFieldId);
 
         return symbolInput?.value?.trim() || '';
       };

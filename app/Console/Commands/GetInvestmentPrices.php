@@ -104,7 +104,7 @@ class GetInvestmentPrices extends Command
             ->selectRaw('user_id, investment_price_provider, COUNT(*) as count')
             ->groupBy('user_id', 'investment_price_provider')
             ->get()
-            ->mapWithKeys(fn (Investment $row) => [
+            ->mapWithKeys(fn ($row) => [
                 "{$row->user_id}:{$row->investment_price_provider}" => (int) ($row->getAttribute('count') ?? 0),
             ])
             ->all();

@@ -75,7 +75,6 @@ class InvestmentProviderConfigApiV1Test extends TestCase
                 'credentials' => [
                     'api_key' => 'alpha-key-12345678',
                 ],
-                'enabled' => true,
             ]);
 
         $response->assertCreated()
@@ -86,7 +85,6 @@ class InvestmentProviderConfigApiV1Test extends TestCase
         $this->assertDatabaseHas('investment_provider_configs', [
             'user_id' => $this->user->id,
             'provider_key' => 'alpha_vantage',
-            'enabled' => true,
         ]);
     }
 
@@ -102,8 +100,9 @@ class InvestmentProviderConfigApiV1Test extends TestCase
 
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'alpha_vantage']), [
-                'enabled' => false,
             ]);
+
+        $response->assertOk();
 
         /** @var InvestmentProviderConfig $config */
         $config = InvestmentProviderConfig::query()
@@ -129,7 +128,6 @@ class InvestmentProviderConfigApiV1Test extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'alpha_vantage']), [
-                'enabled' => true,
             ]);
 
         $response->assertUnprocessable()

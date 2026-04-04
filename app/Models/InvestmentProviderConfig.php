@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $provider_key
  * @property array<string, mixed>|null $credentials
  * @property array<string, mixed>|null $options
- * @property bool $enabled
  * @property string|null $last_error
  * @property array<string, int|float>|null $rate_limit_overrides
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -48,7 +47,6 @@ class InvestmentProviderConfig extends Model
         'provider_key',
         'credentials',
         'options',
-        'enabled',
         'last_error',
         'rate_limit_overrides',
     ];
@@ -58,7 +56,6 @@ class InvestmentProviderConfig extends Model
         return [
             'credentials' => 'encrypted:array',
             'options' => 'array',
-            'enabled' => 'boolean',
             'rate_limit_overrides' => 'array',
         ];
     }

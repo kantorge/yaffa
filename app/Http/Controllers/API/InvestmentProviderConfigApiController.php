@@ -100,7 +100,6 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         $incomingCredentials = array_filter($incomingCredentials, fn ($value) => $value !== null);
 
         $attributes = [
-            'enabled' => (bool) ($validated['enabled'] ?? ($existing ? $existing->enabled : true)),
             'options' => $validated['options'] ?? $existing?->options,
             'rate_limit_overrides' => $validated['rate_limit_overrides'] ?? $existing?->rate_limit_overrides,
             'credentials' => array_merge($previousCredentials, $incomingCredentials),
@@ -168,12 +167,15 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             }
         }
 
+        if ($config) {
+            Gate::authorize('update', $config);
+        }
+
         try {
             $provider = $this->providerRegistry->get($providerKey);
             $provider->validateCredentials($effectiveCredentials);
 
             if ($config) {
-                Gate::authorize('update', $config);
                 $config->update([
                     'credentials' => $effectiveCredentials,
                     'last_error' => null,
@@ -183,7 +185,6 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             $errorMessage = $exception->errorMessage;
 
             if ($config) {
-                Gate::authorize('update', $config);
                 $config->update([
                     'credentials' => $effectiveCredentials,
                     'last_error' => $errorMessage,

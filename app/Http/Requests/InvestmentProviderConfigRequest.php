@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\InvestmentProviderConfig;
 use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class InvestmentProviderConfigRequest extends FormRequest
@@ -21,7 +22,6 @@ class InvestmentProviderConfigRequest extends FormRequest
             : null;
 
         $rules = [
-            'enabled' => ['sometimes', 'boolean'],
             'credentials' => ['sometimes', 'array'],
             'options' => ['nullable', 'array'],
             'rate_limit_overrides' => ['nullable', 'array'],
@@ -76,8 +76,6 @@ class InvestmentProviderConfigRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
-        parent::withValidator($validator);
-
         $validator->after(function (Validator $validator): void {
             $providerKey = (string) $this->route('providerKey');
             $registry = app(InvestmentPriceProviderRegistry::class);

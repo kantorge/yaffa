@@ -20,7 +20,6 @@ class InvestmentProviderConfigResource extends JsonResource
             'id' => $this->id,
             'provider_key' => $this->provider_key,
             'options' => $this->options,
-            'enabled' => $this->enabled,
             'last_error' => $this->last_error,
             'rate_limit_overrides' => $this->rate_limit_overrides,
             'has_credentials' => ! empty($this->credentials),

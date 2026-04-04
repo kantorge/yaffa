@@ -120,8 +120,7 @@ Per-key quota policy:
 
 - The provider list for the investment modification form should show only providers that are usable by the current user by default.
 - Usable means:
-  - provider is globally enabled by the application,
-  - provider is enabled in user's `InvestmentProviderConfig` when credentials are required,
+  - provider is available by the application,
   - required credentials are present and valid enough for scheduling.
 - Optional UX toggle can expose unsupported/unconfigured providers with clear "setup required" badge.
 - This keeps the default form compact and prevents selecting providers that cannot run.
@@ -149,7 +148,6 @@ Per-key quota policy:
 - `provider_key` (string)
 - `credentials` (encrypted JSON)
 - `options` (JSON nullable)
-- `enabled` (bool default true)
 - `last_error` (text nullable)
 - `rate_limit_overrides` (JSON nullable, validated)
 - unique index: (`user_id`, `provider_key`)
@@ -227,10 +225,14 @@ Per-key quota policy:
   - `GET /api/v1/investment-provider-configs`
   - `GET /api/v1/investment-provider-configs/{providerKey}`
   - `PATCH /api/v1/investment-provider-configs/{providerKey}`
+  - `DELETE /api/v1/investment-provider-configs/{providerKey}` (remove provider config and credentials)
   - `POST /api/v1/investment-provider-configs/{providerKey}/test`
 
 - Provider availability endpoint (for compact forms):
   - `GET /api/v1/investment-price-providers/available`
+  - accepts `include_unavailable` (boolean, default `false`):
+    - when `false`: returns only providers the user can currently use (available = true)
+    - when `true`: returns all providers with `available`, `statusLabel`, `statusDescription`, and `reasonFlags` fields
   - returns only selectable providers for current user (with reason flags)
 
 - Provider metadata endpoint enhancement:
@@ -242,7 +244,7 @@ Per-key quota policy:
 2. Frontend fetches provider metadata and renders required fields.
 3. User saves investment; backend validates `provider_settings` against provider schema.
 4. User configures provider credentials once (per user/provider) when needed.
-5. Scheduler preflight checks config availability (provider enabled, credentials available, required settings present).
+5. Scheduler preflight checks config availability (credentials available, required settings present).
 6. Scheduler command groups investments by provider and computes dispatch budget by effective policy (default or user-tier override).
 7. Jobs execute with provider-specific middleware limits and per-investment overlap protection.
 8. Retrieval status fields are updated on attempt/success/failure.

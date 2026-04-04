@@ -345,7 +345,6 @@
         const rateLimitOverrides = currentConfig.rate_limit_overrides || {};
 
         return {
-          enabled: previousForm?.enabled ?? currentConfig.enabled ?? true,
           credentials: this.credentialFields(provider).reduce(
             (carry, field) => {
               carry[field.key] = previousForm?.credentials?.[field.key] || '';
@@ -417,9 +416,7 @@
           {},
         );
 
-        const payload = {
-          enabled: form.enabled,
-        };
+        const payload = {};
 
         if (Object.keys(credentials).length > 0) {
           payload.credentials = credentials;

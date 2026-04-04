@@ -58,7 +58,6 @@ class GetInvestmentPricesCommandTest extends TestCase
             'user_id' => $user->id,
             'provider_key' => 'alpha_vantage',
             'credentials' => ['api_key' => 'alpha-test-key-123456'],
-            'enabled' => true,
             'rate_limit_overrides' => [
                 'perDay' => 2,
             ],

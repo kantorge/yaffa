@@ -18,7 +18,6 @@ return new class () extends Migration {
             $table->string('provider_key');
             $table->text('credentials')->nullable();
             $table->json('options')->nullable();
-            $table->boolean('enabled')->default(true);
             $table->text('last_error')->nullable();
             $table->json('rate_limit_overrides')->nullable();
             $table->timestamps();
