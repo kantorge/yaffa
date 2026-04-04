@@ -69,7 +69,7 @@ class GetInvestmentPrices extends Command
 
         $investments = Investment::where('auto_update', true)
             ->whereNotNull('investment_price_provider')
-            ->with(['user'])
+            ->with(['user.investmentProviderConfigs'])
             ->get();
 
         /** @var Collection<int, array{investment: Investment, context: array<string, mixed>}> $eligible */
@@ -115,7 +115,7 @@ class GetInvestmentPrices extends Command
 
                 return is_string($bucketKey) ? $bucketKey : 'unknown';
             })
-            ->each(function (Collection $group) use (&$dispatched, &$skippedBudget, $attemptedTodayCounts): void {
+            ->each(function (Collection $group) use (&$dispatched, &$skippedBudget, &$attemptedTodayCounts): void {
                 $first = $group->first();
                 if (! is_array($first)) {
                     return;
@@ -155,7 +155,7 @@ class GetInvestmentPrices extends Command
 
                 $skippedBudget += max(0, $dispatchable->count() - $budget);
 
-                $dispatchable->take($budget)->each(function (array $item) use (&$dispatched): void {
+                $dispatchable->take($budget)->each(function (array $item) use (&$dispatched, &$attemptedTodayCounts): void {
                     /** @var Investment $investment */
                     $investment = $item['investment'];
                     /** @var array<string, int|string|null> $rateLimitPolicy */
@@ -165,6 +165,9 @@ class GetInvestmentPrices extends Command
 
                     GetInvestmentPricesJob::dispatch($investment, $rateLimitPolicy);
                     $dispatched++;
+
+                    $attemptedKey = "{$investment->user_id}:{$investment->investment_price_provider}";
+                    $attemptedTodayCounts[$attemptedKey] = ($attemptedTodayCounts[$attemptedKey] ?? 0) + 1;
 
                     if ($this->output->isVerbose()) {
                         $activeLabel = $investment->active ? 'active' : 'inactive';

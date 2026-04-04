@@ -20,6 +20,15 @@ interface InvestmentPriceProvider
     public function fetchPrices(Investment $investment, ?Carbon $from = null, bool $refill = false): array;
 
     /**
+     * Validate provider credentials by performing a lightweight external check.
+     *
+     * @param  array<string, mixed>  $credentials
+     *
+     * @throws \App\Exceptions\PriceProviderException
+     */
+    public function validateCredentials(array $credentials): void;
+
+    /**
      * Get provider name/identifier
      */
     public function getName(): string;

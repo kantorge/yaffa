@@ -24,7 +24,6 @@ class InvestmentProviderConfigRequest extends FormRequest
             'enabled' => ['sometimes', 'boolean'],
             'credentials' => ['sometimes', 'array'],
             'options' => ['nullable', 'array'],
-            'plan' => ['nullable', 'string', 'max:50'],
             'rate_limit_overrides' => ['nullable', 'array'],
         ];
 
@@ -69,12 +68,6 @@ class InvestmentProviderConfigRequest extends FormRequest
             $rules['credentials.' . $field] = $fieldRules;
         }
 
-        $rateLimitPolicy = $providerMetadata['rateLimitPolicy'] ?? [];
-        $plans = $rateLimitPolicy['plans'] ?? [];
-        if (is_array($plans) && $plans !== []) {
-            $rules['plan'][] = Rule::in(array_keys($plans));
-        }
-
         return $rules;
     }
 
@@ -116,7 +109,10 @@ class InvestmentProviderConfigRequest extends FormRequest
                 $currentValue = $credentials[$field] ?? null;
                 $existingValue = $existingConfig?->credentials[$field] ?? null;
 
-                if (empty($currentValue) && empty($existingValue)) {
+                $currentMissing = $currentValue === null || (is_string($currentValue) && mb_trim($currentValue) === '');
+                $existingMissing = $existingValue === null || (is_string($existingValue) && mb_trim($existingValue) === '');
+
+                if ($currentMissing && $existingMissing) {
                     $validator->errors()->add('credentials.' . $field, __('This field is required.'));
                 }
             }
@@ -148,11 +144,6 @@ class InvestmentProviderConfigRequest extends FormRequest
             return;
         }
 
-        $bounds = $policy['overrideBounds'] ?? [];
-        if (! is_array($bounds)) {
-            $bounds = [];
-        }
-
         $mergedOverrides = $existingConfig->rate_limit_overrides ?? [];
         $mergedOverrides = array_merge($mergedOverrides, $overridesInput);
 
@@ -162,23 +153,10 @@ class InvestmentProviderConfigRequest extends FormRequest
 
                 continue;
             }
+            $numericValue = (int) $value;
 
-            if (! isset($bounds[$key]) || ! is_array($bounds[$key])) {
-                $validator->errors()->add('rate_limit_overrides.' . $key, __('This override key is not allowed.'));
-
-                continue;
-            }
-
-            $numericValue = (float) $value;
-            $min = isset($bounds[$key]['min']) ? (float) $bounds[$key]['min'] : null;
-            $max = isset($bounds[$key]['max']) ? (float) $bounds[$key]['max'] : null;
-
-            if ($min !== null && $numericValue < $min) {
-                $validator->errors()->add('rate_limit_overrides.' . $key, __('The value is below the allowed minimum.'));
-            }
-
-            if ($max !== null && $numericValue > $max) {
-                $validator->errors()->add('rate_limit_overrides.' . $key, __('The value exceeds the allowed maximum.'));
+            if ($numericValue < 1) {
+                $validator->errors()->add('rate_limit_overrides.' . $key, __('Override values must be at least 1.'));
             }
         }
 

@@ -87,8 +87,6 @@ class InvestmentServicePriceTest extends TestCase
             'perDay' => null,
             'reserve' => 0,
             'overrideable' => false,
-            'overrideBounds' => [],
-            'plans' => [],
         ]);
         $provider->shouldReceive('supportsHistoricalSync')->andReturn(true);
 

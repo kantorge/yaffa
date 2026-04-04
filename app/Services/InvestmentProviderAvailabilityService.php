@@ -9,6 +9,7 @@ class InvestmentProviderAvailabilityService
 {
     public function __construct(private InvestmentPriceProviderRegistry $providerRegistry)
     {
+
     }
 
     /**
@@ -61,20 +62,12 @@ class InvestmentProviderAvailabilityService
             // Validate that all required fields are present and non-empty
             $hasCredentials = true;
             foreach ($requiredFields as $field) {
-                if (empty($config->credentials[$field] ?? null)) {
+                $value = $config->credentials[$field] ?? null;
+                if (mb_trim((string) $value) === '') {
                     $hasCredentials = false;
                     break;
                 }
             }
-        }
-
-        if ($config && ! $config->enabled) {
-            return [
-                'available' => false,
-                'statusLabel' => __('Disabled'),
-                'statusDescription' => __('This provider is configured but disabled in your account settings.'),
-                'reasonFlags' => ['disabled'],
-            ];
         }
 
         if ($requiredFields === []) {
@@ -125,9 +118,7 @@ class InvestmentProviderAvailabilityService
             'id' => $config->id,
             'provider_key' => $config->provider_key,
             'options' => $config->options,
-            'enabled' => $config->enabled,
             'last_error' => $config->last_error,
-            'plan' => $config->plan,
             'rate_limit_overrides' => $config->rate_limit_overrides,
             'has_credentials' => ! empty($config->credentials),
             'created_at' => $config->created_at,

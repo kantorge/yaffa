@@ -120,6 +120,76 @@ class AlphaVantageProvider implements InvestmentPriceProvider
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    public function validateCredentials(array $credentials): void
+    {
+        $apiKey = isset($credentials['api_key']) && is_string($credentials['api_key'])
+            ? mb_trim($credentials['api_key'])
+            : '';
+
+        if ($apiKey === '') {
+            throw new PriceProviderException(
+                'Missing API key for Alpha Vantage.',
+                'alpha_vantage'
+            );
+        }
+
+        try {
+            $response = $this->httpClient->request(
+                'GET',
+                'https://www.alphavantage.co/query',
+                [
+                    'query' => [
+                        'function' => 'OVERVIEW',
+                        'symbol' => 'IBM',
+                        'apikey' => $apiKey,
+                    ],
+                    'timeout' => 15,
+                ]
+            );
+
+            $body = (string) $response->getBody();
+            $data = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
+
+            if (isset($data->{'Error Message'})) {
+                throw new PriceProviderException(
+                    "Alpha Vantage API error: {$data->{'Error Message'}}",
+                    'alpha_vantage'
+                );
+            }
+
+            if (isset($data->Note)) {
+                throw new PriceProviderException(
+                    "Alpha Vantage rate limit: {$data->Note}",
+                    'alpha_vantage'
+                );
+            }
+
+            if (! isset($data->Symbol) || ! is_string($data->Symbol) || mb_trim($data->Symbol) === '') {
+                throw new PriceProviderException(
+                    'Alpha Vantage validation failed: unexpected response payload.',
+                    'alpha_vantage'
+                );
+            }
+        } catch (GuzzleException $e) {
+            throw new PriceProviderException(
+                "Failed to validate Alpha Vantage credentials: {$e->getMessage()}",
+                'alpha_vantage',
+                null,
+                $e
+            );
+        } catch (JsonException $e) {
+            throw new PriceProviderException(
+                "Invalid JSON response from Alpha Vantage during credential validation: {$e->getMessage()}",
+                'alpha_vantage',
+                null,
+                $e
+            );
+        }
+    }
+
     public function getName(): string
     {
         return 'alpha_vantage';
@@ -166,7 +236,6 @@ class AlphaVantageProvider implements InvestmentPriceProvider
                     'label' => __('API key'),
                     'minLength' => 8,
                     'maxLength' => 191,
-                    'helpText' => __('Generate your API key in your Alpha Vantage account settings.'),
                 ],
             ],
         ];
@@ -179,18 +248,10 @@ class AlphaVantageProvider implements InvestmentPriceProvider
     {
         return [
             'perSecond' => null,
-            'perMinute' => 5,
-            'perDay' => 500,
-            'reserve' => 0,
+            'perMinute' => 1,
+            'perDay' => 20,
+            'reserve' => 5,
             'overrideable' => true,
-            'overrideBounds' => [
-                'perMinute' => ['min' => 1, 'max' => 75],
-                'perDay' => ['min' => 1, 'max' => 5000],
-            ],
-            'plans' => [
-                'free' => ['perMinute' => 5, 'perDay' => 500],
-                'pro' => ['perMinute' => 75, 'perDay' => 5000],
-            ],
         ];
     }
 

@@ -69,11 +69,8 @@
               class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-start gap-3 pb-3 mb-4 border-bottom"
             >
               <div>
-                <h4 class="mb-1">{{ provider.displayName }}</h4>
+                <h3 class="mb-1">{{ provider.displayName }}</h3>
                 <p class="text-muted mb-2">{{ provider.description }}</p>
-                <p class="text-muted mb-0">
-                  {{ provider.statusDescription }}
-                </p>
               </div>
               <span
                 class="badge align-self-start"
@@ -88,32 +85,15 @@
               class="alert alert-info"
               role="alert"
             >
-              {{
-                __('This provider does not require account-level credentials.')
-              }}
+              {{ provider.statusDescription }}
             </div>
 
             <div v-else>
-              <div class="form-check form-switch mb-4">
-                <input
-                  :id="`${provider.key}-enabled`"
-                  v-model="forms[provider.key].enabled"
-                  class="form-check-input"
-                  type="checkbox"
-                />
-                <label
-                  class="form-check-label"
-                  :for="`${provider.key}-enabled`"
-                >
-                  {{ __('Enable this provider for my account') }}
-                </label>
-              </div>
-
               <div class="row g-4">
                 <div
                   v-for="field in credentialFields(provider)"
                   :key="`${provider.key}-${field.key}`"
-                  class="col-12 col-xl-6"
+                  class="col-12 col-lg-6"
                 >
                   <label
                     :for="`${provider.key}-${field.key}`"
@@ -128,82 +108,65 @@
                     class="form-control"
                     :placeholder="credentialPlaceholder(provider, field.key)"
                   />
-                  <div v-if="field.schema.helpText" class="form-text">
-                    {{ field.schema.helpText }}
+                  <div class="form-text mt-2" v-if="provider.instructions">
+                    {{ provider.instructions }}
                   </div>
                 </div>
 
                 <div
-                  v-if="availablePlans(provider).length > 1"
-                  class="col-12 col-xl-6"
-                >
-                  <label :for="`${provider.key}-plan`" class="form-label">
-                    {{ __('Plan') }}
-                  </label>
-                  <select
-                    :id="`${provider.key}-plan`"
-                    v-model="forms[provider.key].plan"
-                    class="form-select"
-                  >
-                    <option
-                      v-for="plan in availablePlans(provider)"
-                      :key="plan"
-                      :value="plan"
-                    >
-                      {{ humanize(plan) }}
-                    </option>
-                  </select>
-                </div>
-
-                <div
                   v-if="provider.rateLimitPolicy?.overrideable"
-                  class="col-12"
+                  class="col-12 col-lg-6"
                 >
-                  <div class="pt-4 mt-2 border-top">
-                    <h5 class="mb-3">{{ __('Advanced rate limits') }}</h5>
-                    <div class="row g-3">
-                      <div class="col-12 col-xl-6">
-                        <label
-                          :for="`${provider.key}-per-minute`"
-                          class="form-label"
-                        >
-                          {{ __('Rate limit per minute') }}
-                        </label>
-                        <input
-                          :id="`${provider.key}-per-minute`"
-                          v-model="
-                            forms[provider.key].rateLimitOverrides.perMinute
-                          "
-                          class="form-control"
-                          min="1"
-                          type="number"
-                        />
-                      </div>
-                      <div class="col-12 col-xl-6">
-                        <label
-                          :for="`${provider.key}-per-day`"
-                          class="form-label"
-                        >
-                          {{ __('Rate limit per day') }}
-                        </label>
-                        <input
-                          :id="`${provider.key}-per-day`"
-                          v-model="
-                            forms[provider.key].rateLimitOverrides.perDay
-                          "
-                          class="form-control"
-                          min="1"
-                          type="number"
-                        />
-                      </div>
+                  <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                      <label
+                        :for="`${provider.key}-per-minute`"
+                        class="form-label"
+                      >
+                        {{ __('Rate limit per minute') }}
+                      </label>
+                      <input
+                        :id="`${provider.key}-per-minute`"
+                        v-model="
+                          forms[provider.key].rateLimitOverrides.perMinute
+                        "
+                        class="form-control"
+                        min="1"
+                        type="number"
+                        :placeholder="
+                          provider.rateLimitPolicy?.perMinute != null
+                            ? String(provider.rateLimitPolicy.perMinute)
+                            : __('No limit')
+                        "
+                      />
                     </div>
-                    <div class="form-text mt-2">
-                      {{
-                        __(
-                          'Leave override fields blank to keep the provider defaults for your plan.',
-                        )
-                      }}
+                    <div class="col-12 col-sm-6">
+                      <label
+                        :for="`${provider.key}-per-day`"
+                        class="form-label"
+                      >
+                        {{ __('Rate limit per day') }}
+                      </label>
+                      <input
+                        :id="`${provider.key}-per-day`"
+                        v-model="forms[provider.key].rateLimitOverrides.perDay"
+                        class="form-control"
+                        min="1"
+                        type="number"
+                        :placeholder="
+                          provider.rateLimitPolicy?.perDay != null
+                            ? String(provider.rateLimitPolicy.perDay)
+                            : __('No limit')
+                        "
+                      />
                     </div>
+                  </div>
+                  <div class="form-text mt-2">
+                    {{
+                      __(
+                        'Leave override fields blank to keep the provider defaults. Placeholder values show the built-in defaults, which may not reflect your current plan.',
+                      )
+                    }}
                   </div>
                 </div>
               </div>
@@ -241,33 +204,27 @@
               </div>
 
               <div
-                class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mt-4 pt-3 border-top"
+                class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
               >
-                <div class="text-muted small">
-                  {{
-                    __(
-                      'Use Test connection to verify your current credentials.',
-                    )
-                  }}
-                </div>
-
                 <div class="d-flex gap-2">
                   <button
-                    v-if="provider.currentConfig"
                     type="button"
-                    class="btn btn-outline-danger"
-                    :disabled="deletingProviderKey === provider.key"
-                    @click="removeProvider(provider)"
+                    class="btn btn-primary me-2"
+                    :disabled="
+                      savingProviderKey === provider.key ||
+                      deletingProviderKey === provider.key
+                    "
+                    @click="saveProvider(provider)"
                   >
                     <i
                       :class="[
                         'fa',
-                        deletingProviderKey === provider.key
+                        savingProviderKey === provider.key
                           ? 'fa-spinner fa-spin'
-                          : 'fa-trash',
+                          : 'fa-save',
                       ]"
                     ></i>
-                    {{ __('Remove') }}
+                    {{ __('Save') }}
                   </button>
                   <button
                     type="button"
@@ -288,26 +245,25 @@
                     ></i>
                     {{ __('Test connection') }}
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    :disabled="
-                      savingProviderKey === provider.key ||
-                      deletingProviderKey === provider.key
-                    "
-                    @click="saveProvider(provider)"
-                  >
-                    <i
-                      :class="[
-                        'fa',
-                        savingProviderKey === provider.key
-                          ? 'fa-spinner fa-spin'
-                          : 'fa-save',
-                      ]"
-                    ></i>
-                    {{ __('Save') }}
-                  </button>
                 </div>
+
+                <button
+                  v-if="provider.currentConfig"
+                  type="button"
+                  class="btn btn-danger"
+                  :disabled="deletingProviderKey === provider.key"
+                  @click="removeProvider(provider)"
+                >
+                  <i
+                    :class="[
+                      'fa',
+                      deletingProviderKey === provider.key
+                        ? 'fa-spinner fa-spin'
+                        : 'fa-trash',
+                    ]"
+                  ></i>
+                  {{ __('Remove') }}
+                </button>
               </div>
             </div>
           </div>
@@ -397,11 +353,7 @@
             },
             {},
           ),
-          plan:
-            previousForm?.plan ||
-            currentConfig.plan ||
-            this.availablePlans(provider)[0] ||
-            '',
+
           rateLimitOverrides: {
             perMinute:
               previousForm?.rateLimitOverrides?.perMinute ??
@@ -417,7 +369,6 @@
       providerSupportsAccountConfig(provider) {
         return (
           this.credentialFields(provider).length > 0 ||
-          this.availablePlans(provider).length > 1 ||
           Boolean(provider.rateLimitPolicy?.overrideable)
         );
       },
@@ -425,9 +376,6 @@
         return Object.entries(
           provider.userSettingsSchema?.properties || {},
         ).map(([key, schema]) => ({ key, schema }));
-      },
-      availablePlans(provider) {
-        return Object.keys(provider.rateLimitPolicy?.plans || {});
       },
       credentialInputType(fieldKey) {
         return /(key|token|secret|password)/i.test(fieldKey)
@@ -475,10 +423,6 @@
 
         if (Object.keys(credentials).length > 0) {
           payload.credentials = credentials;
-        }
-
-        if (this.availablePlans(provider).length > 0 && form.plan) {
-          payload.plan = form.plan;
         }
 
         if (provider.rateLimitPolicy?.overrideable) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentProviderConfigRequest;
 use App\Http\Resources\InvestmentProviderConfigResource;
 use App\Models\InvestmentProviderConfig;
+use App\Exceptions\PriceProviderException;
 use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -101,7 +102,6 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         $attributes = [
             'enabled' => (bool) ($validated['enabled'] ?? ($existing ? $existing->enabled : true)),
             'options' => $validated['options'] ?? $existing?->options,
-            'plan' => $validated['plan'] ?? $existing?->plan,
             'rate_limit_overrides' => $validated['rate_limit_overrides'] ?? $existing?->rate_limit_overrides,
             'credentials' => array_merge($previousCredentials, $incomingCredentials),
         ];
@@ -150,6 +150,8 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             $incomingCredentials = [];
         }
 
+        $incomingCredentials = array_filter($incomingCredentials, fn ($value) => $value !== null);
+
         $effectiveCredentials = array_merge($storedCredentials, $incomingCredentials);
         $requiredFields = $this->providerRegistry->getMetadata($providerKey)['userSettingsSchema']['required'] ?? [];
 
@@ -166,12 +168,34 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             }
         }
 
-        if ($config) {
-            Gate::authorize('update', $config);
-            $config->update([
-                'credentials' => $effectiveCredentials,
-                'last_error' => null,
-            ]);
+        try {
+            $provider = $this->providerRegistry->get($providerKey);
+            $provider->validateCredentials($effectiveCredentials);
+
+            if ($config) {
+                Gate::authorize('update', $config);
+                $config->update([
+                    'credentials' => $effectiveCredentials,
+                    'last_error' => null,
+                ]);
+            }
+        } catch (PriceProviderException $exception) {
+            $errorMessage = $exception->errorMessage;
+
+            if ($config) {
+                Gate::authorize('update', $config);
+                $config->update([
+                    'credentials' => $effectiveCredentials,
+                    'last_error' => $errorMessage,
+                ]);
+            }
+
+            return response()->json([
+                'error' => [
+                    'code' => 'CREDENTIAL_VALIDATION_FAILED',
+                    'message' => $errorMessage,
+                ],
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         return response()->json([

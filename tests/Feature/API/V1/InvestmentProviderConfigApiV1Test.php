@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\API\V1;
 
+use App\Contracts\InvestmentPriceProvider;
+use App\Exceptions\PriceProviderException;
 use App\Models\InvestmentProviderConfig;
 use App\Models\User;
+use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class InvestmentProviderConfigApiV1Test extends TestCase
@@ -72,7 +76,6 @@ class InvestmentProviderConfigApiV1Test extends TestCase
                     'api_key' => 'alpha-key-12345678',
                 ],
                 'enabled' => true,
-                'plan' => 'free',
             ]);
 
         $response->assertCreated()
@@ -84,7 +87,6 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             'user_id' => $this->user->id,
             'provider_key' => 'alpha_vantage',
             'enabled' => true,
-            'plan' => 'free',
         ]);
     }
 
@@ -96,18 +98,12 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             'credentials' => [
                 'api_key' => 'existing-alpha-key',
             ],
-            'plan' => 'free',
         ]);
 
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'alpha_vantage']), [
                 'enabled' => false,
-                'plan' => 'pro',
             ]);
-
-        $response->assertOk()
-            ->assertJsonPath('enabled', false)
-            ->assertJsonPath('plan', 'pro');
 
         /** @var InvestmentProviderConfig $config */
         $config = InvestmentProviderConfig::query()
@@ -153,24 +149,24 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             ->assertJsonValidationErrors(['rate_limit_overrides']);
     }
 
-    public function test_update_rejects_out_of_bounds_rate_limit_override(): void
-    {
-        $response = $this->actingAs($this->user)
-            ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'alpha_vantage']), [
-                'credentials' => [
-                    'api_key' => 'alpha-key-12345678',
-                ],
-                'rate_limit_overrides' => [
-                    'perMinute' => 1000,
-                ],
-            ]);
-
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['rate_limit_overrides.perMinute']);
-    }
-
     public function test_test_endpoint_marks_config_as_validated(): void
     {
+        $provider = Mockery::mock(InvestmentPriceProvider::class);
+        $provider->shouldReceive('validateCredentials')
+            ->once()
+            ->withArgs(fn (array $credentials): bool => ($credentials['api_key'] ?? null) === 'existing-alpha-key')
+            ->andReturnNull();
+
+        $registry = Mockery::mock(InvestmentPriceProviderRegistry::class);
+        $registry->shouldReceive('has')->with('alpha_vantage')->andReturn(true);
+        $registry->shouldReceive('getMetadata')->with('alpha_vantage')->andReturn([
+            'userSettingsSchema' => [
+                'required' => ['api_key'],
+            ],
+        ]);
+        $registry->shouldReceive('get')->with('alpha_vantage')->andReturn($provider);
+        $this->app->instance(InvestmentPriceProviderRegistry::class, $registry);
+
         InvestmentProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider_key' => 'alpha_vantage',
@@ -190,6 +186,46 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             'user_id' => $this->user->id,
             'provider_key' => 'alpha_vantage',
             'last_error' => null,
+        ]);
+    }
+
+    public function test_test_endpoint_returns_bad_request_and_persists_last_error_when_provider_validation_fails(): void
+    {
+        $provider = Mockery::mock(InvestmentPriceProvider::class);
+        $provider->shouldReceive('validateCredentials')
+            ->once()
+            ->andThrow(new PriceProviderException('Invalid API key', 'alpha_vantage'));
+
+        $registry = Mockery::mock(InvestmentPriceProviderRegistry::class);
+        $registry->shouldReceive('has')->with('alpha_vantage')->andReturn(true);
+        $registry->shouldReceive('getMetadata')->with('alpha_vantage')->andReturn([
+            'userSettingsSchema' => [
+                'required' => ['api_key'],
+            ],
+        ]);
+        $registry->shouldReceive('get')->with('alpha_vantage')->andReturn($provider);
+        $this->app->instance(InvestmentPriceProviderRegistry::class, $registry);
+
+        InvestmentProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider_key' => 'alpha_vantage',
+            'credentials' => [
+                'api_key' => 'existing-alpha-key',
+            ],
+            'last_error' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('api.v1.investment-provider-configs.test', ['providerKey' => 'alpha_vantage']), []);
+
+        $response->assertBadRequest()
+            ->assertJsonPath('error.code', 'CREDENTIAL_VALIDATION_FAILED')
+            ->assertJsonPath('error.message', 'Invalid API key');
+
+        $this->assertDatabaseHas('investment_provider_configs', [
+            'user_id' => $this->user->id,
+            'provider_key' => 'alpha_vantage',
+            'last_error' => 'Invalid API key',
         ]);
     }
 

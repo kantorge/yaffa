@@ -86,8 +86,7 @@ class InvestmentTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertViewIs('investments.form');
-        $response->assertDontSee('investmentProviderFormApp', false);
-        $response->assertDontSee('investment-provider-form', false);
+        $response->assertSee('investmentProviderFormApp', false);
     }
 
     public function test_investment_form_requires_investment_group_and_currency(): void
@@ -216,8 +215,7 @@ class InvestmentTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('investments.form');
-        $response->assertDontSee('investmentProviderFormApp', false);
-        $response->assertDontSee('investment-provider-form', false);
+        $response->assertSee('investmentProviderFormApp', false);
     }
 
     public function test_user_cannot_update_an_investment_with_missing_data(): void

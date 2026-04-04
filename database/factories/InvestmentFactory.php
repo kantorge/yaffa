@@ -17,6 +17,7 @@ class InvestmentFactory extends Factory
      */
     public function definition(): array
     {
+        /** @var User $user */
         $user = User::has('investmentGroups')->has('currencies')->inRandomOrder()->first();
 
         $name = $this->faker->unique()->company();

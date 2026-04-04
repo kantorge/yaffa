@@ -19,9 +19,7 @@ class InvestmentProviderConfigFactory extends Factory
                 'api_key' => 'demo-' . fake()->sha1(),
             ],
             'options' => null,
-            'enabled' => true,
             'last_error' => null,
-            'plan' => 'free',
             'rate_limit_overrides' => null,
         ];
     }

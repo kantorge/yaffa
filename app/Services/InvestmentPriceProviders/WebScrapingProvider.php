@@ -108,6 +108,14 @@ class WebScrapingProvider implements InvestmentPriceProvider
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    public function validateCredentials(array $credentials): void
+    {
+        // No account-level credentials are required for this provider.
+    }
+
     public function getName(): string
     {
         return 'web_scraping';
@@ -178,10 +186,6 @@ class WebScrapingProvider implements InvestmentPriceProvider
             'perDay' => 10000,
             'reserve' => 0,
             'overrideable' => false,
-            'overrideBounds' => [],
-            'plans' => [
-                'default' => ['perMinute' => 30, 'perDay' => 10000],
-            ],
         ];
     }
 

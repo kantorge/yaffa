@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array<string, mixed>|null $options
  * @property bool $enabled
  * @property string|null $last_error
- * @property string|null $plan
  * @property array<string, int|float>|null $rate_limit_overrides
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -30,7 +29,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereLastError($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereOptions($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig wherePlan($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereProviderKey($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereRateLimitOverrides($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereUpdatedAt($value)
@@ -52,7 +50,6 @@ class InvestmentProviderConfig extends Model
         'options',
         'enabled',
         'last_error',
-        'plan',
         'rate_limit_overrides',
     ];
 

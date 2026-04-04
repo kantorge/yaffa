@@ -112,7 +112,7 @@ All retrieval flows use this resolver to avoid duplicated branching.
 Per-key quota policy:
 
 - Provider metadata defines safe default rate limits (free-tier defaults).
-- User provider config may optionally include `plan` and `rate_limit_overrides` (e.g. paid key).
+- User provider config may optionally include `rate_limit_overrides` (e.g. when using paid key).
 - Overrides are validated against provider-allowed bounds (prevent impossible or unsafe values).
 - Effective policy is resolved per user+provider config at runtime and used by both dispatch and middleware.
 
@@ -151,7 +151,6 @@ Per-key quota policy:
 - `options` (JSON nullable)
 - `enabled` (bool default true)
 - `last_error` (text nullable)
-- `plan` (string nullable, e.g. `free`, `pro`)
 - `rate_limit_overrides` (JSON nullable, validated)
 - unique index: (`user_id`, `provider_key`)
 
@@ -183,7 +182,7 @@ Per-key quota policy:
 - Validation:
   - investment create/update validates provider_settings against provider schema
   - provider config CRUD validates user settings schema
-  - provider config CRUD validates `plan` and `rate_limit_overrides` against provider policy constraints
+  - provider config CRUD validates `rate_limit_overrides` against provider policy constraints
 
 - Security:
   - credentials encrypted cast
@@ -206,7 +205,6 @@ Per-key quota policy:
 - User settings (or dedicated provider settings section):
   - provider credential forms per provider
   - provider configuration removal action (with confirmation) to delete unused credentials/config
-  - optional plan/tier selector when provider supports it (free/paid)
   - optional advanced rate-limit override fields when allowed by provider policy
 
 - Display and diagnostics:

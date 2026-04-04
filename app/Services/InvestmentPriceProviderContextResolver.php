@@ -169,15 +169,15 @@ class InvestmentPriceProviderContextResolver
         $requiredFields = is_array($schema['required'] ?? null) ? $schema['required'] : [];
 
         foreach ($requiredFields as $requiredField) {
-            if (! empty($credentials[$requiredField])) {
-                continue;
-            }
+            $value = array_key_exists($requiredField, $credentials) ? $credentials[$requiredField] : null;
 
-            throw new PriceProviderException(
-                'Missing required provider credentials: ' . $requiredField,
-                $providerKey,
-                $investment->symbol
-            );
+            if ($value === null || (is_string($value) && mb_trim($value) === '')) {
+                throw new PriceProviderException(
+                    'Missing required provider credentials: ' . $requiredField,
+                    $providerKey,
+                    $investment->symbol
+                );
+            }
         }
     }
 }

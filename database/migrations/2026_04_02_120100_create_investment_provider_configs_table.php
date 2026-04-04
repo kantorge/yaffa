@@ -20,7 +20,6 @@ return new class () extends Migration {
             $table->json('options')->nullable();
             $table->boolean('enabled')->default(true);
             $table->text('last_error')->nullable();
-            $table->string('plan')->nullable();
             $table->json('rate_limit_overrides')->nullable();
             $table->timestamps();
 

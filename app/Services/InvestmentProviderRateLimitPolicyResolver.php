@@ -28,19 +28,10 @@ class InvestmentProviderRateLimitPolicyResolver
             'bucketKey' => 'investment-price-provider:' . $providerKey . ':user:' . $investment->user_id,
         ];
 
-        $plans = is_array($policy['plans'] ?? null) ? $policy['plans'] : [];
-        $selectedPlan = $providerConfig?->plan;
-        if (is_string($selectedPlan) && isset($plans[$selectedPlan]) && is_array($plans[$selectedPlan])) {
-            $planPolicy = $plans[$selectedPlan];
-            $resolved['perSecond'] = $this->normalizeNullableInt($planPolicy['perSecond'] ?? $resolved['perSecond']);
-            $resolved['perMinute'] = $this->normalizeNullableInt($planPolicy['perMinute'] ?? $resolved['perMinute']);
-            $resolved['perDay'] = $this->normalizeNullableInt($planPolicy['perDay'] ?? $resolved['perDay']);
-        }
-
         $overrideable = (bool) ($policy['overrideable'] ?? false);
         $overrides = $providerConfig?->rate_limit_overrides;
         if ($overrideable && is_array($overrides)) {
-            $resolved = $this->applyValidatedOverrides($resolved, $overrides, $policy['overrideBounds'] ?? []);
+            $resolved = $this->applyValidatedOverrides($resolved, $overrides);
         }
 
         return $resolved;
@@ -49,13 +40,10 @@ class InvestmentProviderRateLimitPolicyResolver
     /**
      * @param  array<string, int|string|null>  $resolved
      * @param  array<string, mixed>  $overrides
-     * @param  mixed  $overrideBounds
      * @return array<string, int|string|null>
      */
-    private function applyValidatedOverrides(array $resolved, array $overrides, mixed $overrideBounds): array
+    private function applyValidatedOverrides(array $resolved, array $overrides): array
     {
-        $bounds = is_array($overrideBounds) ? $overrideBounds : [];
-
         foreach ($overrides as $key => $value) {
             if (! in_array($key, ['perSecond', 'perMinute', 'perDay', 'reserve'], true)) {
                 continue;
@@ -65,17 +53,12 @@ class InvestmentProviderRateLimitPolicyResolver
                 continue;
             }
 
-            if (isset($bounds[$key]) && is_array($bounds[$key])) {
-                $min = isset($bounds[$key]['min']) ? (float) $bounds[$key]['min'] : null;
-                $max = isset($bounds[$key]['max']) ? (float) $bounds[$key]['max'] : null;
-                $numericValue = (float) $value;
-
-                if (($min !== null && $numericValue < $min) || ($max !== null && $numericValue > $max)) {
-                    continue;
-                }
+            $numericValue = (int) $value;
+            if ($numericValue < 1) {
+                continue;
             }
 
-            $resolved[$key] = (int) $value;
+            $resolved[$key] = $numericValue;
         }
 
         return $resolved;

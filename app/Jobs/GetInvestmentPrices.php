@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class GetInvestmentPrices implements ShouldQueue
@@ -92,7 +93,10 @@ class GetInvestmentPrices implements ShouldQueue
         } catch (Throwable $throwable) {
             // Log recalculation failure but do not mark fetch as failed
             // since the price fetch itself succeeded
-            throw $throwable;
+            Log::error('Failed to recalculate related accounts after price fetch', [
+                'investment_id' => $this->investment->id,
+                'error' => $throwable->getMessage(),
+            ]);
         }
     }
 

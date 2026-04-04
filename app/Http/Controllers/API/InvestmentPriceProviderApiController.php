@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class InvestmentPriceProviderApiController extends Controller implements HasMiddleware
 {
@@ -93,6 +94,13 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
                 'date' => (string) $latestPrice['date'],
             ], Response::HTTP_OK);
         } catch (PriceProviderException $exception) {
+            return response()->json([
+                'error' => [
+                    'code' => 'FETCH_FAILED',
+                    'message' => $exception->getMessage(),
+                ],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (Throwable $exception) {
             return response()->json([
                 'error' => [
                     'code' => 'FETCH_FAILED',
