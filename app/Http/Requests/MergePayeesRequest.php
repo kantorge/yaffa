@@ -32,7 +32,7 @@ class MergePayeesRequest extends FormRequest
             ],
             'action' => [
                 'required',
-                'in:delete,close',
+                Rule::in(['delete', 'close']),
             ],
         ];
     }

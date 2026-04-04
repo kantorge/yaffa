@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CheckPriceInvestmentPriceApiRequest extends FormRequest
 {
@@ -13,7 +14,7 @@ class CheckPriceInvestmentPriceApiRequest extends FormRequest
     {
         return ['date' => [
             'required',
-            'date_format:Y-m-d',
+            Rule::date()->format('Y-m-d'),
         ],];
     }
 }
