@@ -22,8 +22,17 @@ class WebScrapingProvider implements InvestmentPriceProvider
         // This provider ignores the $from and $refill parameters, as it looks for the latest price,
         // which is assumed to be the one applying to the previous day
 
-        // Validate required configuration
-        if (empty($investment->scrape_url)) {
+        $providerSettings = is_array($investment->provider_settings)
+            ? $investment->provider_settings
+            : [];
+        $scrapeUrl = isset($providerSettings['url']) && is_string($providerSettings['url'])
+            ? $providerSettings['url']
+            : null;
+        $scrapeSelector = isset($providerSettings['selector']) && is_string($providerSettings['selector'])
+            ? $providerSettings['selector']
+            : null;
+
+        if (empty($scrapeUrl)) {
             throw new InvalidPriceDataException(
                 'Missing scrape URL for web scraping',
                 'web_scraping',
@@ -31,7 +40,7 @@ class WebScrapingProvider implements InvestmentPriceProvider
             );
         }
 
-        if (empty($investment->scrape_selector)) {
+        if (empty($scrapeSelector)) {
             throw new InvalidPriceDataException(
                 'Missing scrape selector for web scraping',
                 'web_scraping',
@@ -41,8 +50,8 @@ class WebScrapingProvider implements InvestmentPriceProvider
 
         try {
             $result = $this->scraperService->scrape(
-                $investment->scrape_url,
-                $investment->scrape_selector
+                $scrapeUrl,
+                $scrapeSelector
             );
 
             if (empty($result)) {
@@ -85,8 +94,8 @@ class WebScrapingProvider implements InvestmentPriceProvider
             throw $e;
         } catch (Exception $e) {
             Log::error("Web scraping failed for {$investment->symbol}", [
-                'url' => $investment->scrape_url,
-                'selector' => $investment->scrape_selector,
+                'url' => $scrapeUrl,
+                'selector' => $scrapeSelector,
                 'exception' => $e->getMessage(),
             ]);
 
@@ -99,14 +108,17 @@ class WebScrapingProvider implements InvestmentPriceProvider
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    public function validateCredentials(array $credentials): void
+    {
+        // No account-level credentials are required for this provider.
+    }
+
     public function getName(): string
     {
         return 'web_scraping';
-    }
-
-    public function supportsRefill(): bool
-    {
-        return false;
     }
 
     public function getDisplayName(): string
@@ -122,5 +134,61 @@ class WebScrapingProvider implements InvestmentPriceProvider
     public function getInstructions(): string
     {
         return __('To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getInvestmentSettingsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['url', 'selector'],
+            'properties' => [
+                'url' => [
+                    'type' => 'string',
+                    'format' => 'url',
+                    'label' => __('URL'),
+                    'helpText' => __('Public URL of the page where the latest investment price is shown.'),
+                ],
+                'selector' => [
+                    'type' => 'string',
+                    'label' => __('CSS selector'),
+                    'minLength' => 1,
+                    'helpText' => __('CSS selector that identifies the element containing the price.'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getUserSettingsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => [],
+            'properties' => [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getRateLimitPolicy(): array
+    {
+        return [
+            'perSecond' => null,
+            'perMinute' => 30,
+            'perDay' => 10000,
+            'reserve' => 0,
+            'overrideable' => false,
+        ];
+    }
+
+    public function supportsHistoricalSync(): bool
+    {
+        return false;
     }
 }

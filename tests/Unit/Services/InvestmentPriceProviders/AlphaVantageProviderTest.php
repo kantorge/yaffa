@@ -205,12 +205,12 @@ class AlphaVantageProviderTest extends TestCase
         $this->assertEquals('2024-01-13', $prices[1]['date']);
     }
 
-    public function test_supports_refill(): void
+    public function test_supports_historical_sync(): void
     {
         $client = $this->createMockClient([]);
         $provider = new AlphaVantageProvider($client);
 
-        $this->assertTrue($provider->supportsRefill());
+        $this->assertTrue($provider->supportsHistoricalSync());
     }
 
     public function test_get_name(): void

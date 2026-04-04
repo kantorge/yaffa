@@ -12,6 +12,8 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\User;
 use App\Services\InvestmentPriceProviderRegistry;
+use App\Services\InvestmentPriceProviderContextResolver;
+use App\Services\InvestmentProviderRateLimitPolicyResolver;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +30,7 @@ class InvestmentServicePriceTest extends TestCase
         $investment = Investment::factory()->for($user)->withUser($user)->create();
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $result = $service->delete($investment);
 
@@ -52,7 +54,7 @@ class InvestmentServicePriceTest extends TestCase
             ->create();
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $result = $service->delete($investment);
 
@@ -66,9 +68,37 @@ class InvestmentServicePriceTest extends TestCase
         $provider = Mockery::mock(InvestmentPriceProvider::class);
         $provider->shouldReceive('fetchPrices')->andReturn($prices);
         $provider->shouldReceive('getName')->andReturn('mock_provider');
-        $provider->shouldReceive('supportsRefill')->andReturn(true);
+        $provider->shouldReceive('getDisplayName')->andReturn('Mock provider');
+        $provider->shouldReceive('getDescription')->andReturn('Mock provider description');
+        $provider->shouldReceive('getInstructions')->andReturn('Mock provider instructions');
+        $provider->shouldReceive('getInvestmentSettingsSchema')->andReturn([
+            'type' => 'object',
+            'required' => [],
+            'properties' => [],
+        ]);
+        $provider->shouldReceive('getUserSettingsSchema')->andReturn([
+            'type' => 'object',
+            'required' => [],
+            'properties' => [],
+        ]);
+        $provider->shouldReceive('getRateLimitPolicy')->andReturn([
+            'perSecond' => null,
+            'perMinute' => null,
+            'perDay' => null,
+            'reserve' => 0,
+            'overrideable' => false,
+        ]);
+        $provider->shouldReceive('supportsHistoricalSync')->andReturn(true);
 
         return $provider;
+    }
+
+    private function createService(InvestmentPriceProviderRegistry $registry): InvestmentService
+    {
+        $policyResolver = new InvestmentProviderRateLimitPolicyResolver();
+        $contextResolver = new InvestmentPriceProviderContextResolver($registry, $policyResolver);
+
+        return new InvestmentService($contextResolver);
     }
 
     public function test_fetch_and_save_prices_calls_provider(): void
@@ -88,7 +118,7 @@ class InvestmentServicePriceTest extends TestCase
         $registry = new InvestmentPriceProviderRegistry();
         $registry->register('mock_provider', $provider);
 
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
         $result = $service->fetchAndSavePrices($investment);
 
         $this->assertCount(2, $result);
@@ -112,7 +142,7 @@ class InvestmentServicePriceTest extends TestCase
         $registry = new InvestmentPriceProviderRegistry();
         $registry->register('mock_provider', $provider);
 
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
         $service->fetchAndSavePrices($investment);
 
         $this->assertDatabaseHas('investment_prices', [
@@ -136,7 +166,7 @@ class InvestmentServicePriceTest extends TestCase
         ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
         $this->expectExceptionMessage('unknown provider');
@@ -152,7 +182,7 @@ class InvestmentServicePriceTest extends TestCase
         ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
         $this->expectExceptionMessage('no price provider configured');
@@ -184,7 +214,7 @@ class InvestmentServicePriceTest extends TestCase
             ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $quantity = $service->getCurrentQuantity($investment);
 
@@ -216,7 +246,7 @@ class InvestmentServicePriceTest extends TestCase
             ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $quantity = $service->getCurrentQuantity($investment, $account1);
 
@@ -239,7 +269,7 @@ class InvestmentServicePriceTest extends TestCase
         ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment, 'stored');
 
@@ -262,7 +292,7 @@ class InvestmentServicePriceTest extends TestCase
             ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment, 'transaction');
 
@@ -292,7 +322,7 @@ class InvestmentServicePriceTest extends TestCase
             ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment, 'combined');
 
@@ -322,7 +352,7 @@ class InvestmentServicePriceTest extends TestCase
             ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment, 'combined');
 
@@ -350,7 +380,7 @@ class InvestmentServicePriceTest extends TestCase
         ]);
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment, 'stored', Carbon::parse('2024-01-16'));
 
@@ -363,7 +393,7 @@ class InvestmentServicePriceTest extends TestCase
         $investment = Investment::factory()->for($user)->withUser($user)->create();
 
         $registry = new InvestmentPriceProviderRegistry();
-        $service = new InvestmentService($registry);
+        $service = $this->createService($registry);
 
         $price = $service->getLatestPrice($investment);
 

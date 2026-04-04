@@ -12,6 +12,8 @@ use App\Http\Controllers\API\GoogleDriveConfigApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
+use App\Http\Controllers\API\InvestmentPriceProviderApiController;
+use App\Http\Controllers\API\InvestmentProviderConfigApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\PayeeStatsApiController;
@@ -50,6 +52,24 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('investment-prices.retrieve-missing');
     Route::get('/investment-prices/{investment}/check', [InvestmentPriceApiController::class, 'checkPrice'])
         ->name('investment-prices.check');
+
+    // Investment price provider availability
+    Route::get('/investment-price-providers/available', [InvestmentPriceProviderApiController::class, 'available'])
+        ->name('investment-price-providers.available');
+    Route::post('/investment-price-providers/{providerKey}/test-fetch', [InvestmentPriceProviderApiController::class, 'testFetch'])
+        ->name('investment-price-providers.test-fetch');
+
+    // InvestmentProviderConfig endpoints
+    Route::get('/investment-provider-configs', [InvestmentProviderConfigApiController::class, 'index'])
+        ->name('investment-provider-configs.index');
+    Route::get('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'show'])
+        ->name('investment-provider-configs.show');
+    Route::patch('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'update'])
+        ->name('investment-provider-configs.update');
+    Route::delete('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'destroy'])
+        ->name('investment-provider-configs.destroy');
+    Route::post('/investment-provider-configs/{providerKey}/test', [InvestmentProviderConfigApiController::class, 'test'])
+        ->name('investment-provider-configs.test');
 
     // AiProviderConfig endpoints
     Route::get('/ai/config', [AiProviderConfigApiController::class, 'show'])
@@ -147,6 +167,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('investments.show');
     Route::patch('/investments/{investment}', [InvestmentApiController::class, 'patchActive'])
         ->name('investments.patch-active');
+    Route::patch('/investments/{investment}/provider-settings', [InvestmentApiController::class, 'updateProviderSettings'])
+        ->name('investments.provider-settings.update');
     Route::get('/investments/{investment}/price-history', [InvestmentApiController::class, 'getPriceHistory'])
         ->name('investments.price-history');
     Route::delete('/investments/{investment}', [InvestmentApiController::class, 'destroy'])

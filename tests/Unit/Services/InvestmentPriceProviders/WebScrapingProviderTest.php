@@ -28,7 +28,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([new Item(['price' => 123.45])]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -46,7 +46,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -57,10 +57,13 @@ class WebScrapingProviderTest extends TestCase
         $provider->fetchPrices($investment);
     }
 
-    public function test_handles_missing_scrape_url(): void
+    public function test_handles_missing_provider_settings_url(): void
     {
         $investment = $this->makeInvestment([
-            'scrape_url' => null,
+            'provider_settings' => [
+                'url' => null,
+                'selector' => '.price',
+            ],
         ]);
 
         $scraperService = Mockery::mock(ScraperService::class);
@@ -72,10 +75,13 @@ class WebScrapingProviderTest extends TestCase
         $provider->fetchPrices($investment);
     }
 
-    public function test_handles_missing_scrape_selector(): void
+    public function test_handles_missing_provider_settings_selector(): void
     {
         $investment = $this->makeInvestment([
-            'scrape_selector' => null,
+            'provider_settings' => [
+                'url' => 'https://example.com/price',
+                'selector' => null,
+            ],
         ]);
 
         $scraperService = Mockery::mock(ScraperService::class);
@@ -94,7 +100,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([new Item(['price' => 'not-a-number'])]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -112,7 +118,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([new Item(['price' => -10.5])]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -130,7 +136,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([new Item(['price' => 0])]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -148,7 +154,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andThrow(new Exception('Connection failed'));
 
         $provider = new WebScrapingProvider($scraperService);
@@ -159,12 +165,12 @@ class WebScrapingProviderTest extends TestCase
         $provider->fetchPrices($investment);
     }
 
-    public function test_does_not_support_refill(): void
+    public function test_does_not_support_historical_sync(): void
     {
         $scraperService = Mockery::mock(ScraperService::class);
         $provider = new WebScrapingProvider($scraperService);
 
-        $this->assertFalse($provider->supportsRefill());
+        $this->assertFalse($provider->supportsHistoricalSync());
     }
 
     public function test_get_name(): void
@@ -182,7 +188,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService = Mockery::mock(ScraperService::class);
         $scraperService->shouldReceive('scrape')
             ->once()
-            ->with($investment->scrape_url, $investment->scrape_selector)
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
             ->andReturn([new Item(['price' => 123.45])]);
 
         $provider = new WebScrapingProvider($scraperService);
@@ -226,8 +232,10 @@ class WebScrapingProviderTest extends TestCase
     {
         $attributes = array_merge([
             'symbol' => 'TEST',
-            'scrape_url' => 'https://example.com/price',
-            'scrape_selector' => '.price',
+            'provider_settings' => [
+                'url' => 'https://example.com/price',
+                'selector' => '.price',
+            ],
         ], $overrides);
 
         return new Investment($attributes);

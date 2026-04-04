@@ -28,8 +28,12 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string|null $investment_price_provider
  * @property int $investment_group_id
  * @property int $currency_id
- * @property string|null $scrape_url
- * @property string|null $scrape_selector
+ * @property array<string, mixed>|null $provider_settings
+ * @property array<string, mixed>|null $provider_credentials
+ * @property \Illuminate\Support\Carbon|null $last_price_fetch_attempted_at
+ * @property \Illuminate\Support\Carbon|null $last_price_fetch_succeeded_at
+ * @property \Illuminate\Support\Carbon|null $last_price_fetch_error_at
+ * @property string|null $last_price_fetch_error_message
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Currency $currency
@@ -67,14 +71,20 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property-read int|null $transactions_basic_count
  * @property-read Collection<int, Transaction> $transactionsScheduled
  * @property-read int|null $transactions_scheduled_count
- * @method static Builder<static>|Investment whereScrapeSelector($value)
- * @method static Builder<static>|Investment whereScrapeUrl($value)
+ * @method static Builder<static>|Investment whereProviderSettings($value)
+ * @method static Builder<static>|Investment whereLastPriceFetchAttemptedAt($value)
+ * @method static Builder<static>|Investment whereLastPriceFetchSucceededAt($value)
+ * @method static Builder<static>|Investment whereLastPriceFetchErrorAt($value)
+ * @method static Builder<static>|Investment whereLastPriceFetchErrorMessage($value)
  * @mixin Eloquent
  */
 class Investment extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
+
+    /** @var array<string, mixed> */
+    public array $provider_credentials = [];
 
     protected $guarded = [];
 
@@ -93,8 +103,11 @@ class Investment extends Model
         'investment_group_id',
         'currency_id',
         'investment_price_provider',
-        'scrape_url',
-        'scrape_selector',
+        'provider_settings',
+        'last_price_fetch_attempted_at',
+        'last_price_fetch_succeeded_at',
+        'last_price_fetch_error_at',
+        'last_price_fetch_error_message',
     ];
 
     protected $appends = [
@@ -190,6 +203,10 @@ class Investment extends Model
         return [
             'active' => 'boolean',
             'auto_update' => 'boolean',
+            'provider_settings' => 'array',
+            'last_price_fetch_attempted_at' => 'datetime',
+            'last_price_fetch_succeeded_at' => 'datetime',
+            'last_price_fetch_error_at' => 'datetime',
         ];
     }
 

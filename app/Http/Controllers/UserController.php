@@ -66,4 +66,15 @@ class UserController extends Controller implements HasMiddleware
 
         return view('user.ai-settings');
     }
+
+    public function investmentProviderSettings(): View
+    {
+        /**
+         * @get("/user/investment-provider-settings")
+         * @name("user.investment-provider-settings")
+         * @middlewares("web", "auth", "verified")
+         */
+
+        return view('user.investment-provider-settings');
+    }
 }
