@@ -171,11 +171,13 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
             Gate::authorize('update', $config);
         }
 
+        $persist = $request->boolean('persist', false);
+
         try {
             $provider = $this->providerRegistry->get($providerKey);
             $provider->validateCredentials($effectiveCredentials);
 
-            if ($config) {
+            if ($persist && $config) {
                 $config->update([
                     'credentials' => $effectiveCredentials,
                     'last_error' => null,
@@ -184,7 +186,7 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         } catch (PriceProviderException $exception) {
             $errorMessage = $exception->errorMessage;
 
-            if ($config) {
+            if ($persist && $config) {
                 $config->update([
                     'credentials' => $effectiveCredentials,
                     'last_error' => $errorMessage,

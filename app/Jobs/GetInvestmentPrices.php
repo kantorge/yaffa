@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Middleware\SkipWhenRateLimited;
 use App\Models\Investment;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentService;
@@ -9,10 +10,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class GetInvestmentPrices implements ShouldQueue
@@ -50,7 +49,7 @@ class GetInvestmentPrices implements ShouldQueue
     {
         return [
             (new WithoutOverlapping('investment-price:' . $this->investment->id))->releaseAfter(30),
-            new RateLimited('investment-price-provider'),
+            new SkipWhenRateLimited('investment-price-provider'),
         ];
     }
 
@@ -76,7 +75,9 @@ class GetInvestmentPrices implements ShouldQueue
         $investmentService->markPriceFetchAttempted($this->investment);
 
         try {
-            // Fetch and save investment prices from provider
+            // Fetch and save investment prices from provider.
+            // Recalculation of related account summaries is triggered automatically
+            // via the InvestmentPricesUpdated event fired inside fetchAndSavePrices.
             $investmentService->fetchAndSavePrices($this->investment);
         } catch (Throwable $throwable) {
             $investmentService->markPriceFetchFailed($this->investment, $throwable->getMessage());
@@ -85,19 +86,6 @@ class GetInvestmentPrices implements ShouldQueue
         }
 
         $investmentService->markPriceFetchSucceeded($this->investment);
-
-        try {
-            // Use the InvestmentService to recalculate the related accounts
-            // TODO: this should be done once for all accounts
-            $investmentService->recalculateRelatedAccounts($this->investment);
-        } catch (Throwable $throwable) {
-            // Log recalculation failure but do not mark fetch as failed
-            // since the price fetch itself succeeded
-            Log::error('Failed to recalculate related accounts after price fetch', [
-                'investment_id' => $this->investment->id,
-                'error' => $throwable->getMessage(),
-            ]);
-        }
     }
 
     /**

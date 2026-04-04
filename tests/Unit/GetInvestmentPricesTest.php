@@ -3,8 +3,8 @@
 namespace Tests\Unit;
 
 use App\Jobs\GetInvestmentPrices;
+use App\Jobs\Middleware\SkipWhenRateLimited;
 use App\Models\Investment;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Tests\TestCase;
 
@@ -33,6 +33,6 @@ class GetInvestmentPricesTest extends TestCase
 
         $this->assertCount(2, $middlewares);
         $this->assertInstanceOf(WithoutOverlapping::class, $middlewares[0]);
-        $this->assertInstanceOf(RateLimited::class, $middlewares[1]);
+        $this->assertInstanceOf(SkipWhenRateLimited::class, $middlewares[1]);
     }
 }

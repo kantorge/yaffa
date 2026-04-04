@@ -210,10 +210,7 @@
                   <button
                     type="button"
                     class="btn btn-primary me-2"
-                    :disabled="
-                      savingProviderKey === provider.key ||
-                      deletingProviderKey === provider.key
-                    "
+                    :disabled="isProviderBusy(provider.key)"
                     @click="saveProvider(provider)"
                   >
                     <i
@@ -229,10 +226,7 @@
                   <button
                     type="button"
                     class="btn btn-secondary"
-                    :disabled="
-                      testingProviderKey === provider.key ||
-                      deletingProviderKey === provider.key
-                    "
+                    :disabled="isProviderBusy(provider.key)"
                     @click="testProvider(provider)"
                   >
                     <i
@@ -251,7 +245,7 @@
                   v-if="provider.currentConfig"
                   type="button"
                   class="btn btn-danger"
-                  :disabled="deletingProviderKey === provider.key"
+                  :disabled="isProviderBusy(provider.key)"
                   @click="removeProvider(provider)"
                 >
                   <i
@@ -277,6 +271,7 @@
   import { nextTick } from 'vue';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { __ } from '@/shared/lib/i18n';
   import Swal from 'sweetalert2';
 
   export default {
@@ -295,6 +290,13 @@
       this.loadProviders();
     },
     methods: {
+      isProviderBusy(key) {
+        return (
+          this.savingProviderKey === key ||
+          this.testingProviderKey === key ||
+          this.deletingProviderKey === key
+        );
+      },
       async loadProviders() {
         this.loading = true;
 
@@ -433,14 +435,16 @@
             overrides.perDay = Number(form.rateLimitOverrides.perDay);
           }
 
-          if (Object.keys(overrides).length > 0) {
-            payload.rate_limit_overrides = overrides;
-          }
+          payload.rate_limit_overrides = overrides;
         }
 
         return payload;
       },
       async saveProvider(provider) {
+        if (this.isProviderBusy(provider.key)) {
+          return;
+        }
+
         this.savingProviderKey = provider.key;
         this.actionMessages[provider.key] = null;
 
@@ -467,6 +471,10 @@
         }
       },
       async testProvider(provider) {
+        if (this.isProviderBusy(provider.key)) {
+          return;
+        }
+
         this.testingProviderKey = provider.key;
         this.actionMessages[provider.key] = null;
 
@@ -499,10 +507,7 @@
         }
       },
       async removeProvider(provider) {
-        if (
-          !provider.currentConfig ||
-          this.deletingProviderKey === provider.key
-        ) {
+        if (!provider.currentConfig || this.isProviderBusy(provider.key)) {
           return;
         }
 

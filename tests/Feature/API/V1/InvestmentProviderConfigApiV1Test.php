@@ -175,7 +175,9 @@ class InvestmentProviderConfigApiV1Test extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->postJson(route('api.v1.investment-provider-configs.test', ['providerKey' => 'alpha_vantage']), []);
+            ->postJson(route('api.v1.investment-provider-configs.test', ['providerKey' => 'alpha_vantage']), [
+                'persist' => true,
+            ]);
 
         $response->assertOk()
             ->assertJsonPath('message', __('Provider configuration is valid.'));
@@ -214,7 +216,9 @@ class InvestmentProviderConfigApiV1Test extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->postJson(route('api.v1.investment-provider-configs.test', ['providerKey' => 'alpha_vantage']), []);
+            ->postJson(route('api.v1.investment-provider-configs.test', ['providerKey' => 'alpha_vantage']), [
+                'persist' => true,
+            ]);
 
         $response->assertBadRequest()
             ->assertJsonPath('error.code', 'CREDENTIAL_VALIDATION_FAILED')
@@ -225,6 +229,36 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             'provider_key' => 'alpha_vantage',
             'last_error' => 'Invalid API key',
         ]);
+    }
+
+    public function test_update_clears_rate_limit_overrides_when_sending_empty_overrides(): void
+    {
+        InvestmentProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider_key' => 'alpha_vantage',
+            'credentials' => [
+                'api_key' => 'existing-alpha-key',
+            ],
+            'rate_limit_overrides' => [
+                'perMinute' => 5,
+                'perDay' => 100,
+            ],
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'alpha_vantage']), [
+                'rate_limit_overrides' => [],
+            ]);
+
+        $response->assertOk();
+
+        /** @var InvestmentProviderConfig $config */
+        $config = InvestmentProviderConfig::query()
+            ->where('user_id', $this->user->id)
+            ->where('provider_key', 'alpha_vantage')
+            ->firstOrFail();
+
+        $this->assertEmpty($config->rate_limit_overrides);
     }
 
     public function test_destroy_deletes_existing_provider_config(): void

@@ -3,7 +3,9 @@
 namespace Tests\Unit\Services;
 
 use App\Contracts\InvestmentPriceProvider;
+use App\Events\InvestmentPricesUpdated;
 use App\Exceptions\PriceProviderException;
+use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
@@ -16,7 +18,10 @@ use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderRateLimitPolicyResolver;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
+use Illuminate\Bus\PendingBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 use Mockery;
 
@@ -398,5 +403,106 @@ class InvestmentServicePriceTest extends TestCase
         $price = $service->getLatestPrice($investment);
 
         $this->assertNull($price);
+    }
+
+    public function test_recalculate_related_accounts_dispatches_batch_jobs_for_each_account(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+        $account1 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account2 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+
+        TransactionDetailInvestment::factory()->for($investment)->for($account1, 'account')->create();
+        TransactionDetailInvestment::factory()->for($investment)->for($account2, 'account')->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $service->recalculateRelatedAccounts($investment);
+
+        Bus::assertBatchCount(2);
+        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->jobs->count() === 2
+                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary
+                && $batch->jobs->last() instanceof CalculateAccountMonthlySummary);
+    }
+
+    public function test_recalculate_related_accounts_does_not_include_accounts_holding_other_investments(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create();
+        $investmentA = Investment::factory()->for($user)->withUser($user)->create();
+        $investmentB = Investment::factory()->for($user)->withUser($user)->create();
+        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+
+        // account holds investmentB only
+        TransactionDetailInvestment::factory()->for($investmentB)->for($account, 'account')->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        // investmentA has no account holdings — nothing should be dispatched
+        $service->recalculateRelatedAccounts($investmentA);
+
+        Bus::assertNothingBatched();
+    }
+
+    public function test_recalculate_related_accounts_dispatches_nothing_when_no_transactions(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $service->recalculateRelatedAccounts($investment);
+
+        Bus::assertNothingBatched();
+    }
+
+    public function test_fetch_and_save_prices_fires_event_when_prices_are_returned(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create([
+            'investment_price_provider' => 'mock_provider',
+        ]);
+
+        $provider = $this->createMockProvider([
+            ['date' => '2024-01-15', 'price' => 150.25],
+        ]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $registry->register('mock_provider', $provider);
+
+        $service = $this->createService($registry);
+        $service->fetchAndSavePrices($investment);
+
+        Event::assertDispatched(InvestmentPricesUpdated::class, fn ($e): bool => $e->investment->is($investment));
+    }
+
+    public function test_fetch_and_save_prices_does_not_fire_event_when_no_prices_returned(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create([
+            'investment_price_provider' => 'mock_provider',
+        ]);
+
+        $provider = $this->createMockProvider([]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $registry->register('mock_provider', $provider);
+
+        $service = $this->createService($registry);
+        $service->fetchAndSavePrices($investment);
+
+        Event::assertNotDispatched(InvestmentPricesUpdated::class);
     }
 }
