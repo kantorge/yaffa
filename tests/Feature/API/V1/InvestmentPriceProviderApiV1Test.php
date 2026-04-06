@@ -21,7 +21,9 @@ class InvestmentPriceProviderApiV1Test extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create([
+            'language' => 'en', // Ensure consistent language for test assertions
+        ]);
     }
 
     public function test_unauthenticated_cannot_access_provider_availability_endpoint(): void

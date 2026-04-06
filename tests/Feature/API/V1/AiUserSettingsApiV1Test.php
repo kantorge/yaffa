@@ -137,6 +137,8 @@ class AiUserSettingsApiV1Test extends TestCase
 
     public function test_v1_update_persists_partial_settings_changes(): void
     {
+        config(['yaffa.sandbox_mode' => false]);
+
         AiUserSettings::factory()->create([
             'user_id' => $this->user->id,
             'ai_enabled' => false,
@@ -189,6 +191,8 @@ class AiUserSettingsApiV1Test extends TestCase
 
     public function test_v1_update_creates_missing_row_before_persisting(): void
     {
+        config(['yaffa.sandbox_mode' => false]);
+
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.ai.settings.update'), [
                 'ai_enabled' => true,
@@ -239,6 +243,8 @@ class AiUserSettingsApiV1Test extends TestCase
 
     public function test_v1_update_accepts_null_image_dimensions(): void
     {
+        config(['yaffa.sandbox_mode' => false]);
+
         AiUserSettings::factory()->create([
             'user_id' => $this->user->id,
             'image_max_width_vision' => 2048,
