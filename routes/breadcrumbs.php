@@ -209,7 +209,7 @@ Breadcrumbs::for('reports.budgetchart', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('report.schedules', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Reports'));
-    $trail->push(__('Schedules and Budgets'), route('report.schedules'));
+    $trail->push(__('Schedules and budgets'), route('report.schedules'));
 });
 Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -249,13 +249,16 @@ Breadcrumbs::for('ai-documents.show', function (BreadcrumbTrail $trail, AiDocume
 // User related routes
 Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
+    $trail->push(__('User'));
     $trail->push(__('User settings'), route('user.settings'));
 });
 Breadcrumbs::for('user.ai-settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('AI document settings'), route('user.ai-settings'));
+    $trail->push(__('User'));
+    $trail->push(__('AI provider settings'), route('user.ai-settings'));
 });
 Breadcrumbs::for('user.investment-provider-settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
+    $trail->push(__('User'));
     $trail->push(__('Investment provider settings'), route('user.investment-provider-settings'));
 });

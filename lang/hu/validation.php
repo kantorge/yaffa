@@ -11,6 +11,7 @@ return [
     "alpha_num" => "Az :attribútum csak betűket és számokat tartalmazhat.",
     "any_of" => "A(z) :attribute mező érvénytelen.",
     "array" => "A :attribute-nak tömbnek kell lennie.",
+    "ascii" => "Az :attribute mező csak egybájtos alfanumerikus karaktereket és szimbólumokat tartalmazhat.",
     "attributes" => [
         "config" => [
             "opening_balance" => "nyitó egyenleg"
@@ -31,6 +32,11 @@ return [
     "confirmed" => "A(z) :attribute megerősítése nem egyezik.",
     "contains" => "A(z) :attribute mezőből hiányzik egy kötelező érték.",
     "current_password" => "A jelszó helytelen.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "egyéni üzenet"
+        ]
+    ],
     "date" => "A(z) :attribute nem érvényes dátum.",
     "date_equals" => "A(z) :attribute paraméternek egy :date paraméterrel megegyező dátumnak kell lennie.",
     "date_format" => "A(z) :attribute nem egyezik a(z) :format formátummal.",
@@ -65,11 +71,15 @@ return [
         "numeric" => "A(z) :attribute értékének nagyobbnak vagy egyenlőnek kell lennie, mint a :value.",
         "string" => "A(z) :attribute karakternek nagyobbnak vagy egyenlőnek kell lennie, mint :value karakter."
     ],
+    "hex_color" => "Az :attribute mezőnek érvényes hexadecimális színnek kell lennie.",
     "image" => "A(z) :attribute-nak képnek kell lennie.",
     "in" => "A kiválasztott :attribute érvénytelen.",
     "in_array" => "A(z) :attribute mező nem létezik az :other paraméterben.",
     "in_array_keys" => "Az :attribute mezőnek a következő kulcsok közül legalább egyet tartalmaznia kell: :values.",
     "integer" => "A :attribute-nak egész számnak kell lennie.",
+    "ip" => "Az :attribute mezőnek érvényes IP-címnek kell lennie.",
+    "ipv4" => "Az :attribute mezőnek érvényes IPv4-címnek kell lennie.",
+    "ipv6" => "Az :attribute mezőnek érvényes IPv6-címnek kell lennie.",
     "json" => "A(z) :attribute tulajdonságnak érvényes JSON karakterláncnak kell lennie.",
     "list" => "Az :attribute mezőnek listának kell lennie.",
     "lowercase" => "Az :attribute mezőnek kisbetűsnek kell lennie.",
@@ -85,6 +95,7 @@ return [
         "numeric" => "A(z) :attribute értékének kisebbnek vagy egyenlőnek kell lennie, mint :value.",
         "string" => "A(z) :attribute karakterszámának kisebbnek vagy egyenlőnek kell lennie, mint :value karakter."
     ],
+    "mac_address" => "Az :attribute mezőnek érvényes MAC-címnek kell lennie.",
     "max" => [
         "array" => "Az :attribute nem tartalmazhat :max-nál több elemet.",
         "file" => "Az :attribute nem lehet nagyobb, mint :max kilobájt.",
@@ -143,8 +154,10 @@ return [
     "starts_with" => "A(z) :attribute tulajdonságnak a következők egyikével kell kezdődnie: :values.",
     "string" => "A :attribute-nak karakterláncnak kell lennie.",
     "timezone" => "A(z) :attribute tulajdonságnak érvényes zónának kell lennie.",
+    "ulid" => "Az :attribute mezőnek érvényes ULID-nak kell lennie.",
     "unique" => "A(z) :attribute már foglalt.",
     "uploaded" => "A(z) :attribute feltöltése sikertelen.",
     "uppercase" => "Az :attribute mezőnek nagybetűsnek kell lennie.",
-    "url" => "A(z) :attribute formátuma érvénytelen."
+    "url" => "A(z) :attribute formátuma érvénytelen.",
+    "uuid" => "Az :attribute mezőnek érvényes UUID-nak kell lennie."
 ];

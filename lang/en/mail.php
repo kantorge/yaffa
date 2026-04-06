@@ -1,82 +1,75 @@
 <?php
 
 return [
-    'common' => [
-        'na' => 'N/A',
-        'greeting' => 'Dear :name,',
-        'thanks' => 'Thanks,',
+    "ai_document_processed" => [
+        "button_open_documents" => "Open AI Documents",
+        "button_review_document" => "Review Document",
+        "extracted_summary" => "Extracted summary",
+        "intro" => "Your AI document is ready for review.",
+        "next_action_text" => "Review the extracted values, adjust anything needed, then finalize the transaction.",
+        "next_action_title" => "Next action",
+        "subject" => "Document Processed - Ready for Review",
+        "what_happened" => "What happened"
     ],
-
-    'labels' => [
-        'source_type' => 'Source',
-        'submitted' => 'Submitted',
-        'processed' => 'Processed',
-        'document_id' => 'Document ID',
-        'type' => 'Type',
-        'amount' => 'Amount',
-        'date' => 'Date',
-        'reason' => 'Reason',
+    "ai_document_processing_failed" => [
+        "button_open_settings" => "Open AI Settings",
+        "button_review_reprocess" => "Review & Reprocess",
+        "document_details" => "Document details",
+        "fallback_reason" => "An unknown error occurred during processing.",
+        "intro" => "Your AI document could not be processed.",
+        "next_action_text" => "Open the document, update the custom prompt if needed, and run reprocess again.",
+        "next_action_title" => "Next action",
+        "settings_hint" => "If this keeps failing, verify your AI provider model and credentials.",
+        "subject" => "Document Processing Failed"
     ],
-
-    'source_types' => [
-        'manual_upload' => 'Manual upload',
-        'received_email' => 'Received email',
-        'google_drive' => 'Google Drive',
+    "common" => [
+        "greeting" => "Dear :name,",
+        "na" => "N/A",
+        "thanks" => "Thanks,"
     ],
-
-    'transaction_types' => [
-        'withdrawal' => 'Withdrawal',
-        'deposit' => 'Deposit',
-        'transfer' => 'Transfer',
-        'buy' => 'Buy',
-        'sell' => 'Sell',
-        'dividend' => 'Dividend',
-        'interest' => 'Interest',
-        'add_shares' => 'Add shares',
-        'remove_shares' => 'Remove shares',
+    "google_drive_import_failed" => [
+        "button_open_settings" => "Open Profile Settings",
+        "error" => "Error: :error",
+        "error_count" => "Consecutive errors: :count",
+        "folder" => "Folder: :folder",
+        "intro" => "The Google Drive import process failed.",
+        "subject" => "Google Drive Import Failed"
     ],
-
-    'ai_document_processed' => [
-        'subject' => 'Document Processed - Ready for Review',
-        'intro' => 'Your AI document is ready for review.',
-        'what_happened' => 'What happened',
-        'extracted_summary' => 'Extracted summary',
-        'next_action_title' => 'Next action',
-        'next_action_text' => 'Review the extracted values, adjust anything needed, then finalize the transaction.',
-        'button_review_document' => 'Review Document',
-        'button_open_documents' => 'Open AI Documents',
+    "google_drive_import_success" => [
+        "button_open_documents" => "Open AI Documents",
+        "failed_downloads" => "Download failures: :count",
+        "folder" => "Folder: :folder",
+        "imported" => "Imported documents: :count",
+        "intro" => "Your Google Drive import has completed successfully.",
+        "skipped_existing" => "Skipped (already imported): :count",
+        "skipped_too_large" => "Skipped (too large): :count",
+        "skipped_unsupported" => "Skipped (unsupported type): :count",
+        "subject" => "Google Drive Import Completed"
     ],
-
-    'ai_document_processing_failed' => [
-        'subject' => 'Document Processing Failed',
-        'intro' => 'Your AI document could not be processed.',
-        'document_details' => 'Document details',
-        'next_action_title' => 'Next action',
-        'next_action_text' => 'Open the document, update the custom prompt if needed, and run reprocess again.',
-        'settings_hint' => 'If this keeps failing, verify your AI provider model and credentials.',
-        'fallback_reason' => 'An unknown error occurred during processing.',
-        'button_review_reprocess' => 'Review & Reprocess',
-        'button_open_settings' => 'Open AI Settings',
+    "labels" => [
+        "amount" => "Amount",
+        "date" => "Date",
+        "document_id" => "Document ID",
+        "processed" => "Processed",
+        "reason" => "Reason",
+        "source_type" => "Source",
+        "submitted" => "Submitted",
+        "type" => "Type"
     ],
-
-    'google_drive_import_success' => [
-        'subject' => 'Google Drive Import Completed',
-        'intro' => 'Your Google Drive import has completed successfully.',
-        'folder' => 'Folder: :folder',
-        'imported' => 'Imported documents: :count',
-        'skipped_existing' => 'Skipped (already imported): :count',
-        'skipped_unsupported' => 'Skipped (unsupported type): :count',
-        'skipped_too_large' => 'Skipped (too large): :count',
-        'failed_downloads' => 'Download failures: :count',
-        'button_open_documents' => 'Open AI Documents',
+    "source_types" => [
+        "google_drive" => "Google Drive",
+        "manual_upload" => "Manual upload",
+        "received_email" => "Received email"
     ],
-
-    'google_drive_import_failed' => [
-        'subject' => 'Google Drive Import Failed',
-        'intro' => 'The Google Drive import process failed.',
-        'folder' => 'Folder: :folder',
-        'error' => 'Error: :error',
-        'error_count' => 'Consecutive errors: :count',
-        'button_open_settings' => 'Open Profile Settings',
-    ],
+    "transaction_types" => [
+        "add_shares" => "Add shares",
+        "buy" => "Buy",
+        "deposit" => "Deposit",
+        "dividend" => "Dividend",
+        "interest" => "Interest",
+        "remove_shares" => "Remove shares",
+        "sell" => "Sell",
+        "transfer" => "Transfer",
+        "withdrawal" => "Withdrawal"
+    ]
 ];

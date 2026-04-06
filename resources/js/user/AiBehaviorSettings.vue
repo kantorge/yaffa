@@ -213,7 +213,7 @@
                   data-coreui-placement="top"
                   :title="
                     __(
-                      'Minimum similarity score (0–1) to suggest an asset match.',
+                      'Minimum similarity score (0-1) to suggest an asset match.',
                     )
                   "
                 >
@@ -398,7 +398,7 @@
                   data-coreui-placement="top"
                   :title="
                     __(
-                      'Minimum similarity score (0–1) to flag two documents as duplicates.',
+                      'Minimum similarity score (0-1) to flag two documents as duplicates.',
                     )
                   "
                 >
@@ -545,7 +545,7 @@
                   data-coreui-placement="top"
                   :title="
                     __(
-                      'JPEG quality (1–100) for images sent to Vision AI. Lower values reduce API costs but may impact accuracy.',
+                      'JPEG quality (1-100) for images sent to Vision AI. Lower values reduce API costs but may impact accuracy.',
                     )
                   "
                 >

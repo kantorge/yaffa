@@ -30,11 +30,11 @@
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
-        {{ __('AI document settings') }}
+        {{ __('AI provider settings') }}
         <a
           class="btn btn-sm btn-outline-primary"
           :href="aiSettingsUrl"
-          :title="__('AI document settings')"
+          :title="__('AI provider settings')"
         >
           <i class="fa fa-fw fa-sliders"></i>
         </a>

@@ -11,6 +11,7 @@ return [
     "alpha_num" => ":attribute może zawierać tylko litery i cyfry.",
     "any_of" => "Pole :attribute jest nieprawidłowe.",
     "array" => ":attribute musi być tablicą.",
+    "ascii" => "Pole :attribute może zawierać wyłącznie jednobajtowe znaki alfanumeryczne i symbole.",
     "attributes" => [
         "config" => [
             "opening_balance" => "opening balance"
@@ -31,6 +32,11 @@ return [
     "confirmed" => "Potwierdzenie :attribute nie pasuje.",
     "contains" => "W polu :attribute brakuje wymaganej wartości.",
     "current_password" => "Hasło jest nieprawidłowe.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "niestandardowa wiadomość"
+        ]
+    ],
     "date" => ":attribute nie jest prawidłową datą.",
     "date_equals" => ":attribute musi być datą równą :date.",
     "date_format" => ":attribute nie pasuje do formatu :format.",
@@ -65,11 +71,15 @@ return [
         "numeric" => ":attribute musi być większe lub równe :value.",
         "string" => ":attribute musi zawierać więcej niż lub równo :value znaków."
     ],
+    "hex_color" => "Pole :attribute musi zawierać prawidłowy kod szesnastkowy koloru.",
     "image" => ":attribute musi być obrazem.",
     "in" => "Wybrana wartość :attribute jest nieprawidłowa.",
     "in_array" => "Pole :attribute nie istnieje w :other.",
     "in_array_keys" => "Pole :attribute musi zawierać co najmniej jeden z następujących kluczy: :values.",
     "integer" => ":attribute musi być liczbą całkowitą.",
+    "ip" => "Pole :attribute musi zawierać prawidłowy adres IP.",
+    "ipv4" => "Pole :attribute musi zawierać prawidłowy adres IPv4.",
+    "ipv6" => "Pole :attribute musi zawierać prawidłowy adres IPv6.",
     "json" => ":attribute musi być prawidłowym ciągiem JSON.",
     "list" => "Pole :attribute musi być listą.",
     "lowercase" => "Pole :attribute musi być małymi literami.",
@@ -85,6 +95,7 @@ return [
         "numeric" => ":attribute musi być mniejsze lub równe :value.",
         "string" => ":attribute musi zawierać mniej niż lub równo :value znaków."
     ],
+    "mac_address" => "Pole :attribute musi zawierać prawidłowy adres MAC.",
     "max" => [
         "array" => ":attribute nie może zawierać więcej niż :max elementów.",
         "file" => ":attribute nie może być większe niż :max kilobajtów.",
@@ -143,8 +154,10 @@ return [
     "starts_with" => ":attribute musi zaczynać się jedną z następujących wartości: :values.",
     "string" => ":attribute musi być ciągiem znaków.",
     "timezone" => ":attribute musi być prawidłową strefą.",
+    "ulid" => "Pole :attribute musi być prawidłowym identyfikatorem ULID.",
     "unique" => ":attribute jest już zajęte.",
     "uploaded" => "Przesyłanie :attribute nie powiodło się.",
     "uppercase" => "Pole :attribute musi być wielkimi literami.",
-    "url" => "Format :attribute jest nieprawidłowy."
+    "url" => "Format :attribute jest nieprawidłowy.",
+    "uuid" => "Pole :attribute musi być prawidłowym identyfikatorem UUID."
 ];

@@ -132,7 +132,7 @@
 
   const formatStep = (step) => {
     if (!step) {
-      return __('AI processing');
+      return __('AI Processing');
     }
 
     const map = {

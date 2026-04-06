@@ -77,7 +77,7 @@
                         </a>
                         <a class="dropdown-item" href="{{ route('user.ai-settings') }}">
                             <i class="fa-solid fa-sliders me-2"></i>
-                            {{ __('AI document settings') }}
+                            {{ __('AI provider settings') }}
                         </a>
                         <a class="dropdown-item" href="{{ route('user.investment-provider-settings') }}">
                             <i class="fa-solid fa-chart-line me-2"></i>

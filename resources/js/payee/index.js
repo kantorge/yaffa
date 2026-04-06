@@ -663,12 +663,27 @@ window.table.contextualActions({
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             isDisabled: function (row) {
-                return ajaxIsBusy || row.transactions_count > 0;
+                return ajaxIsBusy;
+            },
+            isHidden: function (row) {
+                return row.transactions_count > 0;
             },
             action: function (selectedRows) {
                 app.deletePayee(selectedRows[0]);
             },
         },
+        {
+            type: 'option',
+            title: __('Cannot be deleted, already in use'),
+            iconClass: 'fa fa-fw fa-info-circle',
+            contextMenuClasses: ['text-muted'],
+            isHidden: function (row) {
+                return row.transactions_count === 0;
+            } ,
+            action: function () {
+                // No action, just info
+            }
+        }
     ],
 });
 

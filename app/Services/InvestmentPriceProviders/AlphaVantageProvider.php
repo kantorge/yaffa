@@ -197,7 +197,7 @@ class AlphaVantageProvider implements InvestmentPriceProvider
 
     public function getDisplayName(): string
     {
-        return __('Alpha Vantage');
+        return 'Alpha Vantage';
     }
 
     public function getDescription(): string
@@ -233,7 +233,7 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             'properties' => [
                 'api_key' => [
                     'type' => 'string',
-                    'label' => __('API key'),
+                    'label' => __('API Key'),
                     'minLength' => 8,
                     'maxLength' => 191,
                 ],

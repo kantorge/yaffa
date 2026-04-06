@@ -1,10 +1,10 @@
 @extends('template.layouts.page')
 
-@section('title_postfix', __('AI document settings'))
+@section('title_postfix', __('AI provider settings'))
 
 @section('content_container_classes', 'container-md')
 
-@section('content_header', __('AI document settings'))
+@section('content_header', __('AI provider settings'))
 
 @section('content')
     <div id="app">

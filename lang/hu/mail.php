@@ -1,82 +1,75 @@
 <?php
 
 return [
-    'common' => [
-        'na' => 'N/A',
-        'greeting' => 'Kedves :name,',
-        'thanks' => 'Köszönettel,',
+    "ai_document_processed" => [
+        "button_open_documents" => "AI dokumentumok megnyitása",
+        "button_review_document" => "Dokumentum ellenőrzése",
+        "extracted_summary" => "Kinyert összefoglaló",
+        "intro" => "Az AI dokumentum feldolgozása elkészült, ellenőrzésre kész.",
+        "next_action_text" => "Ellenőrizd a kinyert adatokat, szükség esetén módosítsd, majd véglegesítsd a tranzakciót.",
+        "next_action_title" => "Következő lépés",
+        "subject" => "Dokumentum feldolgozva - ellenőrzésre kész",
+        "what_happened" => "Mi történt"
     ],
-
-    'labels' => [
-        'source_type' => 'Forrás',
-        'submitted' => 'Beküldve',
-        'processed' => 'Feldolgozva',
-        'document_id' => 'Dokumentum azonosító',
-        'type' => 'Típus',
-        'amount' => 'Összeg',
-        'date' => 'Dátum',
-        'reason' => 'Ok',
+    "ai_document_processing_failed" => [
+        "button_open_settings" => "AI beállítások megnyitása",
+        "button_review_reprocess" => "Ellenőrzés és újrafeldolgozás",
+        "document_details" => "Dokumentum részletei",
+        "fallback_reason" => "Ismeretlen hiba történt a feldolgozás során.",
+        "intro" => "Az AI dokumentum feldolgozása nem sikerült.",
+        "next_action_text" => "Nyisd meg a dokumentumot, szükség esetén módosítsd az egyéni promptot, majd indítsd újra a feldolgozást.",
+        "next_action_title" => "Következő lépés",
+        "settings_hint" => "Ha a hiba továbbra is fennáll, ellenőrizd az AI modell és a szolgáltatói hitelesítő adatok beállítását.",
+        "subject" => "A dokumentum feldolgozása sikertelen"
     ],
-
-    'source_types' => [
-        'manual_upload' => 'Kézi feltöltés',
-        'received_email' => 'Beérkezett e-mail',
-        'google_drive' => 'Google Drive',
+    "common" => [
+        "greeting" => "Kedves :name,",
+        "na" => "N/A",
+        "thanks" => "Köszönettel,"
     ],
-
-    'transaction_types' => [
-        'withdrawal' => 'Kiadás',
-        'deposit' => 'Bevétel',
-        'transfer' => 'Átvezetés',
-        'buy' => 'Vétel',
-        'sell' => 'Eladás',
-        'dividend' => 'Osztalék',
-        'interest' => 'Kamat',
-        'add_shares' => 'Részvény hozzáadása',
-        'remove_shares' => 'Részvény eltávolítása',
+    "google_drive_import_failed" => [
+        "button_open_settings" => "Profilbeállítások megnyitása",
+        "error" => "Hiba: :error",
+        "error_count" => "Egymást követő hibák száma: :count",
+        "folder" => "Mappa: :folder",
+        "intro" => "A Google Drive importálási folyamat sikertelen volt.",
+        "subject" => "Google Drive import sikertelen"
     ],
-
-    'ai_document_processed' => [
-        'subject' => 'Dokumentum feldolgozva - ellenőrzésre kész',
-        'intro' => 'Az AI dokumentum feldolgozása elkészült, ellenőrzésre kész.',
-        'what_happened' => 'Mi történt',
-        'extracted_summary' => 'Kinyert összefoglaló',
-        'next_action_title' => 'Következő lépés',
-        'next_action_text' => 'Ellenőrizd a kinyert adatokat, szükség esetén módosítsd, majd véglegesítsd a tranzakciót.',
-        'button_review_document' => 'Dokumentum ellenőrzése',
-        'button_open_documents' => 'AI dokumentumok megnyitása',
+    "google_drive_import_success" => [
+        "button_open_documents" => "AI dokumentumok megnyitása",
+        "failed_downloads" => "Letöltési hibák: :count",
+        "folder" => "Mappa: :folder",
+        "imported" => "Importált dokumentumok: :count",
+        "intro" => "A Google Drive import sikeresen befejeződött.",
+        "skipped_existing" => "Kihagyva (már importálva): :count",
+        "skipped_too_large" => "Kihagyva (túl nagy fájl): :count",
+        "skipped_unsupported" => "Kihagyva (nem támogatott típus): :count",
+        "subject" => "Google Drive import befejezve"
     ],
-
-    'ai_document_processing_failed' => [
-        'subject' => 'A dokumentum feldolgozása sikertelen',
-        'intro' => 'Az AI dokumentum feldolgozása nem sikerült.',
-        'document_details' => 'Dokumentum részletei',
-        'next_action_title' => 'Következő lépés',
-        'next_action_text' => 'Nyisd meg a dokumentumot, szükség esetén módosítsd az egyéni promptot, majd indítsd újra a feldolgozást.',
-        'settings_hint' => 'Ha a hiba továbbra is fennáll, ellenőrizd az AI modell és a szolgáltatói hitelesítő adatok beállítását.',
-        'fallback_reason' => 'Ismeretlen hiba történt a feldolgozás során.',
-        'button_review_reprocess' => 'Ellenőrzés és újrafeldolgozás',
-        'button_open_settings' => 'AI beállítások megnyitása',
+    "labels" => [
+        "amount" => "Összeg",
+        "date" => "Dátum",
+        "document_id" => "Dokumentum azonosító",
+        "processed" => "Feldolgozva",
+        "reason" => "Ok",
+        "source_type" => "Forrás",
+        "submitted" => "Beküldve",
+        "type" => "Típus"
     ],
-
-    'google_drive_import_success' => [
-        'subject' => 'Google Drive import befejezve',
-        'intro' => 'A Google Drive import sikeresen befejeződött.',
-        'folder' => 'Mappa: :folder',
-        'imported' => 'Importált dokumentumok: :count',
-        'skipped_existing' => 'Kihagyva (már importálva): :count',
-        'skipped_unsupported' => 'Kihagyva (nem támogatott típus): :count',
-        'skipped_too_large' => 'Kihagyva (túl nagy fájl): :count',
-        'failed_downloads' => 'Letöltési hibák: :count',
-        'button_open_documents' => 'AI dokumentumok megnyitása',
+    "source_types" => [
+        "google_drive" => "Google Drive",
+        "manual_upload" => "Kézi feltöltés",
+        "received_email" => "Beérkezett e-mail"
     ],
-
-    'google_drive_import_failed' => [
-        'subject' => 'Google Drive import sikertelen',
-        'intro' => 'A Google Drive importálási folyamat sikertelen volt.',
-        'folder' => 'Mappa: :folder',
-        'error' => 'Hiba: :error',
-        'error_count' => 'Egymást követő hibák száma: :count',
-        'button_open_settings' => 'Profilbeállítások megnyitása',
-    ],
+    "transaction_types" => [
+        "add_shares" => "Részvény hozzáadása",
+        "buy" => "Vétel",
+        "deposit" => "Bevétel",
+        "dividend" => "Osztalék",
+        "interest" => "Kamat",
+        "remove_shares" => "Részvény eltávolítása",
+        "sell" => "Eladás",
+        "transfer" => "Átvezetés",
+        "withdrawal" => "Kiadás"
+    ]
 ];
