@@ -227,6 +227,34 @@ class Transaction extends Model
         };
     }
 
+    /**
+     * Scope to filter transactions that are eligible for item merging.
+     *
+     * A transaction qualifies when it is a standard non-schedule, non-budget
+     * transaction AND has at least two transaction items that share the same
+     * category_id and have an empty (null or blank) comment — i.e. there is
+     * actual merge work to be done.
+     */
+    #[Scope]
+    protected function eligibleForItemMerge(Builder $query): Builder
+    {
+        return $query
+            ->where('config_type', 'standard')
+            ->where('schedule', false)
+            ->where('budget', false)
+            ->whereExists(function ($subquery): void {
+                $subquery->selectRaw('1')
+                    ->from('transaction_items')
+                    ->whereColumn('transaction_id', 'transactions.id')
+                    ->where(function ($q): void {
+                        $q->whereNull('comment')
+                            ->orWhere('comment', '');
+                    })
+                    ->groupBy('transaction_id', 'category_id')
+                    ->havingRaw('COUNT(*) >= 2');
+            });
+    }
+
     // Generic function to load necessary relations, based on transaction type
     public function loadDetails(): void
     {

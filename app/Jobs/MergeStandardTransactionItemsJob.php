@@ -23,7 +23,7 @@ class MergeStandardTransactionItemsJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public readonly Transaction $transaction,
+        public readonly int $transactionId,
     ) {
     }
 
@@ -32,7 +32,16 @@ class MergeStandardTransactionItemsJob implements ShouldQueue
      */
     public function handle(TransactionItemMergeService $mergeService): void
     {
-        $mergeService->mergeTransactionItems($this->transaction);
+        // Re-check eligibility at execution time: the items may have already been
+        // merged since the job was dispatched (e.g. a duplicate run). If the
+        // transaction no longer passes the scope, there is no work to do.
+        $transaction = Transaction::eligibleForItemMerge()->find($this->transactionId);
+
+        if ($transaction === null) {
+            return;
+        }
+
+        $mergeService->mergeTransactionItems($transaction);
     }
 
     /**

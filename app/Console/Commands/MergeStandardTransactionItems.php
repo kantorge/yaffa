@@ -53,15 +53,11 @@ class MergeStandardTransactionItems extends Command
             }
 
             $jobs = Transaction::query()
+                ->eligibleForItemMerge()
                 ->where('user_id', $user->id)
-                ->where('config_type', 'standard')
-                ->where('schedule', false)
-                ->where('budget', false)
                 ->select('id')
                 ->cursor()
-                ->map(fn ($row) => new MergeStandardTransactionItemsJob(
-                    Transaction::findOrFail($row->id)
-                ))
+                ->map(fn ($row) => new MergeStandardTransactionItemsJob($row->id))
                 ->all();
 
             if (empty($jobs)) {
