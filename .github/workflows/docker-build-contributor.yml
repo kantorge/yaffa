@@ -12,7 +12,7 @@ on:
         required: false
         default: 'linux/amd64'
       image_name:
-        description: 'Target image name (default: ghcr.io/<repo-owner>/yaffa)'
+        description: 'Target image name (default: ghcr.io/<repo-owner>/yaffa if empty)'
         required: false
         default: ''
       publish_latest:
@@ -35,7 +35,7 @@ jobs:
       REPO_OWNER_INPUT: ${{ github.repository_owner }}
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.source_branch }}
 
@@ -88,7 +88,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Configure Docker cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /tmp/.buildx-cache
           key: buildx-${{ env.SOURCE_BRANCH_SAFE }}-${{ github.sha }}
