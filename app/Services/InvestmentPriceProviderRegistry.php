@@ -34,7 +34,7 @@ class InvestmentPriceProviderRegistry
     /**
      * Get metadata for a specific provider
      *
-     * @return array{name: string, displayName: string, refillAvailable: bool, description: string, instructions: string}
+     * @return array<string, mixed>
      *
      * @throws PriceProviderException
      */
@@ -43,18 +43,22 @@ class InvestmentPriceProviderRegistry
         $provider = $this->get($key);
 
         return [
+            'key' => $key,
             'name' => $provider->getName(),
             'displayName' => $provider->getDisplayName(),
-            'refillAvailable' => $provider->supportsRefill(),
+            'supportsHistoricalSync' => $provider->supportsHistoricalSync(),
             'description' => $provider->getDescription(),
             'instructions' => $provider->getInstructions(),
+            'investmentSettingsSchema' => $provider->getInvestmentSettingsSchema(),
+            'userSettingsSchema' => $provider->getUserSettingsSchema(),
+            'rateLimitPolicy' => $provider->getRateLimitPolicy(),
         ];
     }
 
     /**
      * Get metadata for all registered providers
      *
-     * @return array<string, array{name: string, displayName: string, refillAvailable: bool, description: string, instructions: string}>
+     * @return array<string, array<string, mixed>>
      */
     public function getAllMetadata(): array
     {
@@ -62,11 +66,15 @@ class InvestmentPriceProviderRegistry
 
         foreach ($this->providers as $key => $provider) {
             $metadata[$key] = [
+                'key' => $key,
                 'name' => $provider->getName(),
                 'displayName' => $provider->getDisplayName(),
-                'refillAvailable' => $provider->supportsRefill(),
+                'supportsHistoricalSync' => $provider->supportsHistoricalSync(),
                 'description' => $provider->getDescription(),
                 'instructions' => $provider->getInstructions(),
+                'investmentSettingsSchema' => $provider->getInvestmentSettingsSchema(),
+                'userSettingsSchema' => $provider->getUserSettingsSchema(),
+                'rateLimitPolicy' => $provider->getRateLimitPolicy(),
             ];
         }
 

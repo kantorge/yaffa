@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
+use App\Services\InvestmentProviderSettingsResolver;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -22,7 +24,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     use ScheduleTrait;
 
     public function __construct(
-        protected InvestmentService $investmentService
+        protected InvestmentService $investmentService,
+        protected InvestmentProviderSettingsResolver $providerSettingsResolver
     ) {
     }
 
@@ -119,7 +122,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
         $investment->load(['currency']);
 
-        return response()->json($investment, Response::HTTP_OK);
+        return response()->json($this->serializeInvestment($investment), Response::HTTP_OK);
     }
 
     /**
@@ -162,6 +165,23 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $investment->save();
 
         return response()->json($investment, Response::HTTP_OK);
+    }
+
+    public function updateProviderSettings(
+        UpdateInvestmentProviderSettingsRequest $request,
+        Investment $investment
+    ): JsonResponse {
+        Gate::authorize('update', $investment);
+
+        $providerSettings = $request->validated('provider_settings');
+
+        $investment->fill([
+            'provider_settings' => $providerSettings,
+        ]);
+        $investment->save();
+        $investment->load(['currency']);
+
+        return response()->json($this->serializeInvestment($investment), Response::HTTP_OK);
     }
 
     /**
@@ -270,5 +290,16 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 ],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeInvestment(Investment $investment): array
+    {
+        $payload = $investment->toArray();
+        $payload['provider_settings'] = $this->providerSettingsResolver->resolveForInvestment($investment);
+
+        return $payload;
     }
 }

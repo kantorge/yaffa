@@ -61,6 +61,77 @@ class InvestmentApiControllerTest extends TestCase
         ]);
     }
 
+    public function test_can_update_provider_settings_for_web_scraping_investment(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        $investment->update([
+            'investment_price_provider' => 'web_scraping',
+        ]);
+
+        $response = $this->patchJson(
+            route('api.v1.investments.provider-settings.update', $investment),
+            [
+                'provider_settings' => [
+                    'url' => 'https://example.com/price',
+                    'selector' => '.price',
+                ],
+            ],
+        );
+
+        $response->assertOk()
+            ->assertJsonPath('provider_settings.url', 'https://example.com/price')
+            ->assertJsonPath('provider_settings.selector', '.price');
+
+        $investment->refresh();
+
+        $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
+        $this->assertSame('.price', $investment->provider_settings['selector']);
+    }
+
+    public function test_provider_settings_update_validates_selected_provider_schema(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        $investment->update([
+            'investment_price_provider' => 'web_scraping',
+        ]);
+
+        $response = $this->patchJson(
+            route('api.v1.investments.provider-settings.update', $investment),
+            [
+                'provider_settings' => [
+                    'url' => 'https://example.com/price',
+                ],
+            ],
+        );
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['provider_settings.selector']);
+    }
+
+    public function test_show_returns_provider_settings_payload(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        $investment->update([
+            'investment_price_provider' => 'web_scraping',
+            'provider_settings' => [
+                'url' => 'https://example.com/price',
+                'selector' => '.price',
+            ],
+        ]);
+
+        $response = $this->getJson(route('api.v1.investments.show', $investment));
+
+        $response->assertOk()
+            ->assertJsonPath('provider_settings.url', 'https://example.com/price')
+            ->assertJsonPath('provider_settings.selector', '.price');
+    }
+
     private function createInvestmentForUser(User $user): Investment
     {
         $currency = $user->currencies()->first() ?? Currency::factory()->for($user)->create();

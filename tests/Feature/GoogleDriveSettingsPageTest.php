@@ -32,9 +32,21 @@ class GoogleDriveSettingsPageTest extends TestCase
         $response->assertSee('ai-settings');
     }
 
+    public function test_investment_provider_settings_page_loads_for_authenticated_user(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('user.investment-provider-settings'));
+
+        $response->assertOk();
+        $response->assertViewIs('user.investment-provider-settings');
+        $response->assertSee('investment-provider-settings');
+    }
+
     public function test_guest_cannot_access_settings_pages(): void
     {
         $this->get(route('user.settings'))->assertRedirectToRoute('login');
         $this->get(route('user.ai-settings'))->assertRedirectToRoute('login');
+        $this->get(route('user.investment-provider-settings'))->assertRedirectToRoute('login');
     }
 }

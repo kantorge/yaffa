@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Events\InvestmentPricesUpdated;
 use App\Exceptions\PriceProviderException;
 use App\Http\Traits\ScheduleTrait;
+use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -12,7 +14,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -21,7 +23,7 @@ class InvestmentService
     use ScheduleTrait;
 
     public function __construct(
-        private InvestmentPriceProviderRegistry $providerRegistry
+        private InvestmentPriceProviderContextResolver $contextResolver
     ) {
     }
 
@@ -63,32 +65,32 @@ class InvestmentService
      * - Monthly summaries show correct investment values based on latest prices
      *
      * The recalculation process:
-     * 1. Finds all transactions associated with this investment
-     * 2. Identifies all unique accounts that hold this investment
-     * 3. Triggers a recalculation of monthly summaries for each account
+     * 1. Finds all accounts holding this investment (via TransactionDetailInvestment)
+     * 2. Dispatches CalculateAccountMonthlySummary jobs for each account directly
      *
-     * This ensures that the 'investment_value' portion of account monthly summaries
-     * is updated to reflect current investment prices, which affects:
-     * - Account balance charts
-     * - Historical value tracking
-     * - Net worth calculations
+     * Dispatching directly (rather than via Artisan) ensures the recalculation is triggered
+     * reliably for every successful price fetch, including rate-limited jobs that retry later.
      *
      * @param Investment $investment The investment whose related accounts need recalculation
      */
     public function recalculateRelatedAccounts(Investment $investment): void
     {
-        // Get all transactions related to this investment
-        $transactionConfigs = TransactionDetailInvestment::where('investment_id', $investment->id)->get();
+        $accountIds = TransactionDetailInvestment::where('investment_id', $investment->id)
+            ->distinct()
+            ->pluck('account_id');
 
-        // Get all distinct accounts related to this investment
-        $accounts = $transactionConfigs->map(fn ($transactionConfig) => $transactionConfig->account_id)->unique();
+        $accountIds->each(function (int $accountId) {
+            /** @var AccountEntity|null $accountEntity */
+            $accountEntity = AccountEntity::with('user')->find($accountId);
 
-        // Recalculate the summaries for each account
-        $accounts->each(function ($accountId) {
-            Artisan::call('app:cache:account-monthly-summaries', [
-                'accountEntityId' => $accountId,
-                'summaryType' => 'investment_value'
-            ]);
+            if ($accountEntity === null) {
+                return;
+            }
+
+            Bus::batch([
+                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-fact', $accountEntity),
+                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-forecast', $accountEntity),
+            ])->dispatch();
         });
     }
 
@@ -153,32 +155,67 @@ class InvestmentService
      */
     public function fetchAndSavePrices(Investment $investment, ?Carbon $from = null, bool $refill = false): array
     {
-        $providerKey = $investment->investment_price_provider;
+        $context = $this->contextResolver->resolve($investment);
 
-        if (! $providerKey) {
-            throw new PriceProviderException(
-                'Investment has no price provider configured',
-                'none',
-                $investment->symbol
-            );
+        $provider = $context['provider'];
+
+        $investmentSettings = $context['investment_settings'];
+        $credentials = $context['credentials'];
+
+        $originalProviderSettings = $investment->provider_settings;
+        $originalProviderCredentials = $investment->provider_credentials;
+
+        $investment->provider_settings = $investmentSettings;
+        $investment->provider_credentials = $credentials;
+
+        try {
+            $prices = $provider->fetchPrices($investment, $from, $refill);
+        } finally {
+            $investment->provider_settings = $originalProviderSettings;
+            $investment->provider_credentials = $originalProviderCredentials;
         }
-
-        if (! $this->providerRegistry->has($providerKey)) {
-            throw new PriceProviderException(
-                "Investment has unknown provider: {$providerKey}",
-                $providerKey,
-                $investment->symbol
-            );
-        }
-
-        $provider = $this->providerRegistry->get($providerKey);
-        $prices = $provider->fetchPrices($investment, $from, $refill);
 
         foreach ($prices as $priceData) {
             $this->savePriceQuietly($investment, $priceData['date'], $priceData['price']);
         }
 
+        if (count($prices) > 0) {
+            event(new InvestmentPricesUpdated($investment));
+        }
+
         return $prices;
+    }
+
+    public function markPriceFetchAttempted(Investment $investment): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_attempted_at' => now(),
+        ])->save();
+    }
+
+    public function markPriceFetchSucceeded(Investment $investment): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_succeeded_at' => now(),
+            'last_price_fetch_error_at' => null,
+            'last_price_fetch_error_message' => null,
+        ])->save();
+    }
+
+    public function markPriceFetchFailed(Investment $investment, string $errorMessage): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_error_at' => now(),
+            'last_price_fetch_error_message' => mb_substr($errorMessage, 0, 65000),
+        ])->save();
+    }
+
+    public function markPreflightValidationFailed(Investment $investment, string $errorMessage): void
+    {
+        $investment->forceFill([
+            'last_price_fetch_error_at' => now(),
+            'last_price_fetch_error_message' => mb_substr($errorMessage, 0, 65000),
+        ])->save();
     }
 
     /**

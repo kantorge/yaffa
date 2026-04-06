@@ -255,3 +255,7 @@ Breadcrumbs::for('user.ai-settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('AI document settings'), route('user.ai-settings'));
 });
+Breadcrumbs::for('user.investment-provider-settings', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Investment provider settings'), route('user.investment-provider-settings'));
+});

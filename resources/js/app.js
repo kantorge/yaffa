@@ -42,6 +42,8 @@ const routeMap = new Map([
     ['currency-rate.index', 'currency-rates/index'],
     ['investment-groups.index', 'investment-groups/index'],
     ['investments.index', 'investments/index'],
+    ['investments.create', 'investments/form'],
+    ['investments.edit', 'investments/form'],
     ['investments.show', 'investments/show'],
     ['investment-price.list', 'investment-price/list'],
     ['report.schedules', 'reports/schedules'],
@@ -58,6 +60,7 @@ const routeMap = new Map([
     ['tags.index', 'tags/index'],
     ['user.settings', 'user/settings'],
     ['user.ai-settings', 'user/settings'],
+    ['user.investment-provider-settings', 'user/settings'],
 ]);
 
 // Generic loader

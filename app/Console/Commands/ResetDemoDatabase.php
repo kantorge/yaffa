@@ -7,6 +7,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
+use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -113,6 +114,48 @@ class ResetDemoDatabase extends Command
             $this->info('AI Provider Config created.');
         } else {
             $this->warn('Skipping AI Provider Config - DEMO_AI_API_KEY not set');
+        }
+
+        // Create Investment Provider Config for demo user, if provided
+        if (config('demo.investment_provider_key')) {
+            $providerKey = (string) config('demo.investment_provider_key');
+
+            if (! app(InvestmentPriceProviderRegistry::class)->has($providerKey)) {
+                $this->warn("Skipping Investment Provider Config - unknown provider key: {$providerKey}");
+            } else {
+                $credentials = [];
+
+                if (config('demo.investment_provider_credentials')) {
+                    $decodedCredentials = json_decode((string) config('demo.investment_provider_credentials'), true);
+                    if (! is_array($decodedCredentials)) {
+                        $this->warn('Skipping Investment Provider Config - DEMO_INVESTMENT_PROVIDER_CREDENTIALS must be valid JSON object');
+                    } else {
+                        $credentials = $decodedCredentials;
+                        $this->info('Using JSON credentials format from DEMO_INVESTMENT_PROVIDER_CREDENTIALS.');
+                    }
+                } elseif (config('demo.investment_provider_api_key')) {
+                    $credentials = [
+                        'api_key' => config('demo.investment_provider_api_key'),
+                    ];
+                    $this->info('Using API key shortcut format from DEMO_INVESTMENT_PROVIDER_API_KEY.');
+                }
+
+                if ($credentials !== []) {
+                    $demoUser->investmentProviderConfigs()->updateOrCreate(
+                        ['provider_key' => $providerKey],
+                        [
+                            'credentials' => $credentials,
+                            'enabled' => (bool) config('demo.investment_provider_enabled', true),
+                        ]
+                    );
+
+                    $this->info("Investment Provider Config created for {$providerKey}.");
+                } else {
+                    $this->warn('Skipping Investment Provider Config - no credentials provided');
+                }
+            }
+        } else {
+            $this->warn('Skipping Investment Provider Config - DEMO_INVESTMENT_PROVIDER_KEY not set');
         }
 
         // Create Google Drive Config for demo user, if provided

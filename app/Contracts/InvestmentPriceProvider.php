@@ -20,14 +20,18 @@ interface InvestmentPriceProvider
     public function fetchPrices(Investment $investment, ?Carbon $from = null, bool $refill = false): array;
 
     /**
+     * Validate provider credentials by performing a lightweight external check.
+     *
+     * @param  array<string, mixed>  $credentials
+     *
+     * @throws \App\Exceptions\PriceProviderException
+     */
+    public function validateCredentials(array $credentials): void;
+
+    /**
      * Get provider name/identifier
      */
     public function getName(): string;
-
-    /**
-     * Whether this provider supports refilling historical data
-     */
-    public function supportsRefill(): bool;
 
     /**
      * Get human-readable display name (localized)
@@ -43,4 +47,30 @@ interface InvestmentPriceProvider
      * Get usage instructions for configuration (localized)
      */
     public function getInstructions(): string;
+
+    /**
+     * Provider-specific investment settings schema metadata.
+     *
+     * @return array<string, mixed>
+     */
+    public function getInvestmentSettingsSchema(): array;
+
+    /**
+     * Provider-specific user settings schema metadata.
+     *
+     * @return array<string, mixed>
+     */
+    public function getUserSettingsSchema(): array;
+
+    /**
+     * Provider-specific rate limit policy metadata.
+     *
+     * @return array<string, mixed>
+     */
+    public function getRateLimitPolicy(): array;
+
+    /**
+     * Whether this provider supports full historical synchronization.
+     */
+    public function supportsHistoricalSync(): bool;
 }

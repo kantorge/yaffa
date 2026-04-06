@@ -33,6 +33,8 @@ This version introduces several significant changes:
   - Unprocessed mails are intentionally not converted and will be discarded.
   - The dedicated email processing pages and routes have been removed; email-sourced receipts are now accessible under **AI Documents**.
 
+- **Investment Price Providers Refactored**: The `investment_provider_configs` table has been introduced to store user-specific credentials and settings for investment price providers. Instead of global .env settings, users can now configure providers individually, and the scheduler checks for config availability before dispatching jobs.
+
 ### Step-by-step Guide
 
 #### 1. Upgrade to the latest YAFFA 2.x release
@@ -114,6 +116,10 @@ After editing your `.env`, clear the config cache:
 php artisan config:clear
 ```
 
+**Alpha Vantage Investment Price Provider (optional — only needed if you use this provider):**
+
+- Take a note of the value of `ALPHA_VANTAGE_KEY` in your `.env` file, and you can remove this obsolete global setting. (You'll need to re-enter it on the updated UI.)
+
 #### 5. Install the new version of YAFFA
 
 - If you're using the source code, pull the latest changes from GitHub and run `composer install` to update dependencies.
@@ -147,6 +153,10 @@ php artisan view:clear
 ```bash
 npm install && npm run build
 ```
+
+#### 9. Configure Alpha Vantage price provider in the UI (if applicable)
+
+If you have investments with automatic price retrieval using the Alpha Vantage provider, you need to re-enter your API key in the new provider configuration UI, and make sure to test the connection. Make this as soon as possible after the upgrade, because the scheduler will stop working for these investments until the provider config is not configured.
 
 ### Note for Docker users
 
