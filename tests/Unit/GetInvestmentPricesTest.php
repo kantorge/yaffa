@@ -14,7 +14,8 @@ class GetInvestmentPricesTest extends TestCase
     {
         $job = new GetInvestmentPrices(new Investment());
 
-        $this->assertSame(3, $job->tries);
+        $this->assertSame(0, $job->tries);
+        $this->assertSame(3, $job->maxExceptions);
         $this->assertSame([10, 30, 60], $job->backoff());
     }
 

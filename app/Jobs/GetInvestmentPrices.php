@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Throwable;
 
 class GetInvestmentPrices implements ShouldQueue
@@ -21,7 +22,9 @@ class GetInvestmentPrices implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 0;
+
+    public int $maxExceptions = 3;
 
     public Investment $investment;
 
@@ -86,6 +89,15 @@ class GetInvestmentPrices implements ShouldQueue
         }
 
         $investmentService->markPriceFetchSucceeded($this->investment);
+    }
+
+    /**
+     * Allow retries until end of day so rate-limited releases never exhaust a finite attempt counter.
+     * Actual provider exceptions are still capped at $maxExceptions.
+     */
+    public function retryUntil(): Carbon
+    {
+        return Carbon::now()->endOfDay();
     }
 
     /**
