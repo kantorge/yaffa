@@ -16,6 +16,7 @@ FROM php:8.4-apache AS base
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     supervisor \
+    default-mysql-client \
     libzip-dev zip unzip git curl libxml2-dev zlib1g-dev libonig-dev \
     libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     && pecl install redis \
