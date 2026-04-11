@@ -17,7 +17,7 @@ class SetLocale
     public function handle(Request $request, Closure $next): \Symfony\Component\HttpFoundation\Response
     {
         // Locale is determined primarily by the user setting
-        if ($request->user() && $request->user()->locale) {
+        if ($request->user() && $request->user()->language && array_key_exists($request->user()->language, config('app.available_languages'))) {
             app()->setLocale($request->user()->language);
             return $next($request);
         }

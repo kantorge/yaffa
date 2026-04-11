@@ -1,7 +1,6 @@
-import { __, loadSelect2Language } from '../helpers';
-import select2 from 'select2';
-select2();
-loadSelect2Language(window.YAFFA.language);
+import { __ } from '@/shared/lib/i18n';
+import { initializeSelect2 } from '@/shared/lib/select2';
+initializeSelect2(window.YAFFA.userSettings.language);
 
 // Add select2 functionality to payee_source select
 const selectorSourceCategory = '#category_source';
@@ -13,7 +12,7 @@ $(selectorSourceCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -34,7 +33,12 @@ $(selectorSourceCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -43,7 +47,7 @@ $(selectorSourceCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }
@@ -77,7 +81,7 @@ $(selectorTargetCategory).select2({
     allowClear: true,
     selectOnClose: false,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -98,7 +102,12 @@ $(selectorTargetCategory).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.full_name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -107,7 +116,7 @@ $(selectorTargetCategory).select2({
 .on('select2:select', function (e) {
     // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
-        url:  '/api/assets/category/' + e.params.data.id,
+        url: '/api/v1/categories/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }

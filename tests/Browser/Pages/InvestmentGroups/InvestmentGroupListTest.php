@@ -6,10 +6,12 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
 
+#[Group('extended')]
 class InvestmentGroupListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -46,7 +48,7 @@ class InvestmentGroupListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the investment group list
-                ->visitRoute('investment-group.index')
+                ->visitRoute('investment-groups.index')
                 // Wait for the table to load
                 ->waitFor('@table-investment-groups')
                 // Check that the investment group list is visible
@@ -101,7 +103,7 @@ class InvestmentGroupListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the investment group list
-                ->visitRoute('investment-group.index')
+                ->visitRoute('investment-groups.index')
                 // Wait for the table to load
                 ->waitFor('@table-investment-groups')
                 // Check that the investment group list is visible

@@ -3,140 +3,259 @@
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
+use App\Http\Controllers\API\AiDocumentApiController;
+use App\Http\Controllers\API\AiProviderConfigApiController;
+use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
+use App\Http\Controllers\API\GoogleDriveConfigApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
+use App\Http\Controllers\API\InvestmentPriceProviderApiController;
+use App\Http\Controllers\API\InvestmentProviderConfigApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
-use App\Http\Controllers\API\ReceivedMailApiController;
+use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/assets/account', [AccountApiController::class, 'getList']);
-Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
-Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
-Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'getAccountBalance']);
-Route::put('/account/monthlySummary/{accountEntity}', [AccountApiController::class, 'updateMonthlySummary'])
-    ->name('api.account.updateMonthlySummary');
+// ============================================================
+// API V1 - Versioned, resource-oriented routes
+// ============================================================
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    // CurrencyRate endpoints
+    Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
+        ->name('currency-rates.index');
+    Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
+        ->name('currency-rates.store');
+    Route::put('/currency-rates/{currencyRate}', [CurrencyRateApiController::class, 'update'])
+        ->name('currency-rates.update');
+    Route::delete('/currency-rates/{currencyRate}', [CurrencyRateApiController::class, 'destroy'])
+        ->name('currency-rates.destroy');
+    Route::post('/currency-rates/{currency}/retrieve-missing', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
+        ->name('currency-rates.retrieve-missing');
 
-Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class, 'updateActive'])
-    ->name('api.accountentity.updateActive');
-Route::delete('/assets/accountentity/{accountEntity}', [AccountEntityApiController::class, 'destroy'])
-    ->name('api.accountentity.destroy');
+    // InvestmentPrice endpoints
+    Route::get('/investment-prices/{investment}', [InvestmentPriceApiController::class, 'index'])
+        ->name('investment-prices.index');
+    Route::post('/investment-prices', [InvestmentPriceApiController::class, 'store'])
+        ->name('investment-prices.store');
+    Route::put('/investment-prices/{investmentPrice}', [InvestmentPriceApiController::class, 'update'])
+        ->name('investment-prices.update');
+    Route::delete('/investment-prices/{investmentPrice}', [InvestmentPriceApiController::class, 'destroy'])
+        ->name('investment-prices.destroy');
+    Route::post('/investment-prices/{investment}/retrieve-missing', [InvestmentPriceApiController::class, 'retrieveMissingPrices'])
+        ->name('investment-prices.retrieve-missing');
+    Route::get('/investment-prices/{investment}/check', [InvestmentPriceApiController::class, 'checkPrice'])
+        ->name('investment-prices.check');
 
-Route::delete('/assets/accountgroup/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
-    ->name('api.accountgroup.destroy');
+    // Investment price provider availability
+    Route::get('/investment-price-providers/available', [InvestmentPriceProviderApiController::class, 'available'])
+        ->name('investment-price-providers.available');
+    Route::post('/investment-price-providers/{providerKey}/test-fetch', [InvestmentPriceProviderApiController::class, 'testFetch'])
+        ->name('investment-price-providers.test-fetch');
 
-Route::get('/assets/category', [CategoryApiController::class, 'getList']);
-Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
-Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])
-    ->name('api.category.updateActive');
-Route::get('/assets/category/{category}', [CategoryApiController::class, 'getItem']);
-Route::delete('/assets/category/{category}', [CategoryApiController::class, 'destroy'])
-    ->name('api.category.destroy');
+    // InvestmentProviderConfig endpoints
+    Route::get('/investment-provider-configs', [InvestmentProviderConfigApiController::class, 'index'])
+        ->name('investment-provider-configs.index');
+    Route::get('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'show'])
+        ->name('investment-provider-configs.show');
+    Route::patch('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'update'])
+        ->name('investment-provider-configs.update');
+    Route::delete('/investment-provider-configs/{providerKey}', [InvestmentProviderConfigApiController::class, 'destroy'])
+        ->name('investment-provider-configs.destroy');
+    Route::post('/investment-provider-configs/{providerKey}/test', [InvestmentProviderConfigApiController::class, 'test'])
+        ->name('investment-provider-configs.test');
 
-Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
-    ->name('api.currency-rate.index');
-Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
-    ->name('api.currency-rate.store');
-Route::put('/currency-rates/{currency_rate}', [CurrencyRateApiController::class, 'update'])
-    ->name('api.currency-rate.update');
-Route::delete('/currency-rates/{currency_rate}', [CurrencyRateApiController::class, 'destroy'])
-    ->name('api.currency-rate.destroy');
-Route::get('/currencyrates/missing/{currency}', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
-    ->name('api.currency-rate.retrieveMissing');
+    // AiProviderConfig endpoints
+    Route::get('/ai/config', [AiProviderConfigApiController::class, 'show'])
+        ->name('ai.config.show');
+    Route::post('/ai/config', [AiProviderConfigApiController::class, 'store'])
+        ->name('ai.config.store');
+    Route::patch('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'update'])
+        ->name('ai.config.update');
+    Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'destroy'])
+        ->name('ai.config.destroy');
+    Route::post('/ai/config/test', [AiProviderConfigApiController::class, 'test'])
+        ->name('ai.config.test');
 
-Route::get('/assets/investment', [InvestmentApiController::class, 'index']);
-Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);
-Route::get('/assets/investment/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])
-    ->name('investment.getDetails');
-Route::delete('/assets/investment/{investment}', [InvestmentApiController::class, 'destroy'])
-    ->name('api.investment.destroy');
-Route::get('/assets/investment/price/{investment}', [InvestmentApiController::class, 'getPriceHistory']);
-Route::put('/assets/investment/{investment}/active/{active}', [InvestmentApiController::class, 'updateActive'])
-    ->name('api.investment.updateActive');
+    // AiUserSettings endpoints
+    Route::get('/ai/settings', [AiUserSettingsApiController::class, 'show'])
+        ->name('ai.settings.show');
+    Route::patch('/ai/settings', [AiUserSettingsApiController::class, 'update'])
+        ->name('ai.settings.update');
 
-Route::delete('/assets/investmentgroup/{investmentGroup}', [InvestmentGroupApiController::class, 'destroy'])
-    ->name('api.investmentgroup.destroy');
+    // GoogleDriveConfig endpoints
+    Route::get('/google-drive/config', [GoogleDriveConfigApiController::class, 'show'])
+        ->name('google-drive.config.show');
+    Route::post('/google-drive/config', [GoogleDriveConfigApiController::class, 'store'])
+        ->name('google-drive.config.store');
+    Route::patch('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'update'])
+        ->name('google-drive.config.update');
+    Route::delete('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'destroy'])
+        ->name('google-drive.config.destroy');
+    Route::post('/google-drive/config/test', [GoogleDriveConfigApiController::class, 'test'])
+        ->name('google-drive.config.test');
+    Route::post('/google-drive/config/{googleDriveConfig}/sync', [GoogleDriveConfigApiController::class, 'sync'])
+        ->name('google-drive.config.sync');
 
-Route::get('/investment-prices/{investment}', [InvestmentPriceApiController::class, 'index'])
-    ->name('api.investment-price.index');
-Route::post('/investment-prices', [InvestmentPriceApiController::class, 'store'])
-    ->name('api.investment-price.store');
-Route::put('/investment-prices/{investment_price}', [InvestmentPriceApiController::class, 'update'])
-    ->name('api.investment-price.update');
-Route::delete('/investment-prices/{investment_price}', [InvestmentPriceApiController::class, 'destroy'])
-    ->name('api.investment-price.destroy');
-Route::get('/investment-prices/missing/{investment}', [InvestmentPriceApiController::class, 'retrieveMissingPrices'])
-    ->name('api.investment-price.retrieveMissing');
-Route::get('/investment-prices/check/{investment}', [InvestmentPriceApiController::class, 'checkPrice'])
-    ->name('api.investment-price.checkPrice');
+    // AI Document endpoints
+    Route::post('/documents', [AiDocumentApiController::class, 'store'])
+        ->name('documents.store');
+    Route::get('/documents', [AiDocumentApiController::class, 'index'])
+        ->name('documents.index');
+    Route::get('/documents/{aiDocument}', [AiDocumentApiController::class, 'show'])
+        ->name('documents.show');
+    Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
+        ->name('documents.update');
+    Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
+        ->name('documents.reprocess');
+    Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
+        ->name('documents.checkDuplicates');
+    Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
+        ->name('documents.destroy');
 
-Route::get('/assets/payee', [PayeeApiController::class, 'getList']);
-Route::post('/assets/payee', [PayeeApiController::class, 'storePayee'])->name('api.payee.store');
-Route::get('/assets/payee/similar', [PayeeApiController::class, 'getSimilarPayees'])->name('api.payee.similar');
-Route::get('/assets/payee/{accountEntity}', [PayeeApiController::class, 'getItem']);
+    // Account endpoints
+    Route::get('/accounts', [AccountApiController::class, 'getList'])
+        ->name('accounts.index');
+    Route::get('/accounts/investment', [AccountApiController::class, 'getAccountListForInvestments'])
+        ->name('accounts.investment');
+    Route::get('/accounts/balance', [AccountApiController::class, 'getAccountBalance'])
+        ->name('accounts.balance');
+    Route::get('/accounts/{accountEntity}/balance', [AccountApiController::class, 'getAccountBalance'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.balance.show');
+    Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.show');
+    Route::post('/accounts/{accountEntity}/monthly-summary', [AccountApiController::class, 'recalculateMonthlySummary'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.monthly-summary');
 
-Route::get('/assets/get_default_category_suggestion', [PayeeApiController::class, 'getPayeeDefaultSuggestion']);
-Route::get(
-    '/assets/dismiss_default_category_suggestion/{accountEntity}',
-    [PayeeApiController::class, 'dismissPayeeDefaultCategorySuggestion']
-);
-Route::get(
-    '/assets/accept_default_category_suggestion/{accountEntity}/{category}',
-    [PayeeApiController::class, 'acceptPayeeDefaultCategorySuggestion']
-);
+    // AccountEntity endpoints
+    Route::patch('/account-entities/{accountEntity}', [AccountEntityApiController::class, 'patchActive'])
+        ->name('account-entities.patch-active');
+    Route::delete('/account-entities/{accountEntity}', [AccountEntityApiController::class, 'destroy'])
+        ->name('account-entities.destroy');
 
-Route::get('/assets/tag', [TagApiController::class, 'getList']);
-Route::get('/assets/tag/{tag}', [TagApiController::class, 'getItem']);
-Route::put('/assets/tag/{tag}/active/{active}', [TagApiController::class, 'updateActive'])
-    ->name('api.tag.updateActive');
+    // AccountGroup endpoints
+    Route::delete('/account-groups/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
+        ->name('account-groups.destroy');
 
-Route::get('/budgetchart', [ReportApiController::class, 'budgetChart'])->name('api.reports.budgetchart');
-Route::get(
-    '/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}',
-    [ReportApiController::class, 'getCategoryWaterfallData']
-)
-    ->where('transactionType', 'standard|investment|all')
-    ->where('type', 'budget|result|all');
-Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])->name('api.reports.cashflow');
+    // Category endpoints
+    Route::get('/categories', [CategoryApiController::class, 'getList'])
+        ->name('categories.index');
+    Route::post('/categories', [CategoryApiController::class, 'store'])
+        ->name('categories.store');
+    Route::get('/categories/{category}', [CategoryApiController::class, 'getItem'])
+        ->name('categories.show');
+    Route::patch('/categories/{category}', [CategoryApiController::class, 'patchActive'])
+        ->name('categories.patch-active');
+    Route::delete('/categories/{category}', [CategoryApiController::class, 'destroy'])
+        ->name('categories.destroy');
 
-Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiController::class, 'resetProcessed'])
-    ->name('api.received-mail.reset-processed');
-Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class, 'destroy'])
-    ->name('api.received-mail.destroy');
+    // Investment endpoints
+    Route::get('/investments', [InvestmentApiController::class, 'index'])
+        ->name('investments.index');
+    Route::get('/investments/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline'])
+        ->name('investments.timeline');
+    Route::get('/investments/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])
+        ->name('investments.show');
+    Route::patch('/investments/{investment}', [InvestmentApiController::class, 'patchActive'])
+        ->name('investments.patch-active');
+    Route::patch('/investments/{investment}/provider-settings', [InvestmentApiController::class, 'updateProviderSettings'])
+        ->name('investments.provider-settings.update');
+    Route::get('/investments/{investment}/price-history', [InvestmentApiController::class, 'getPriceHistory'])
+        ->name('investments.price-history');
+    Route::delete('/investments/{investment}', [InvestmentApiController::class, 'destroy'])
+        ->name('investments.destroy');
 
-Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
+    // InvestmentGroup endpoints
+    Route::delete('/investment-groups/{investmentGroup}', [InvestmentGroupApiController::class, 'destroy'])
+        ->name('investment-groups.destroy');
 
-Route::get('/transactions/get_scheduled_items/{type}', [TransactionApiController::class, 'getScheduledItems'])
-    ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none')
-    ->name('api.transactions.getScheduledItems');
+    // Payee endpoints
+    Route::get('/payees', [PayeeApiController::class, 'getList'])
+        ->name('payees.index');
+    Route::post('/payees', [PayeeApiController::class, 'storePayee'])
+        ->name('payees.store');
+    Route::get('/payees/similar', [PayeeApiController::class, 'getSimilarPayees'])
+        ->name('payees.similar');
+    Route::get('/payees/category-suggestions/default', [PayeeApiController::class, 'getPayeeDefaultSuggestion'])
+        ->name('payees.category-suggestions.default');
+    Route::get('/payees/{accountEntity}', [PayeeApiController::class, 'getItem'])
+        ->name('payees.show');
+    Route::patch('/payees/{accountEntity}', [PayeeApiController::class, 'updatePayee'])
+        ->name('payees.update');
+    Route::post('/payees/{accountEntity}/category-suggestions/accept/{category}', [PayeeApiController::class, 'acceptPayeeDefaultCategorySuggestion'])
+        ->name('payees.category-suggestions.accept');
+    Route::post('/payees/{accountEntity}/category-suggestions/dismiss', [PayeeApiController::class, 'dismissPayeeDefaultCategorySuggestion'])
+        ->name('payees.category-suggestions.dismiss');
+    Route::get('/payees/{accountEntity}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
+        ->name('payees.category-stats');
 
-Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
-    ->name('api.transactions.storeStandard');
-Route::post('/transactions/investment', [TransactionApiController::class, 'storeInvestment'])
-    ->name('api.transactions.storeInvestment');
-Route::patch('/transactions/standard/{transaction}', [TransactionApiController::class, 'updateStandard'])
-    ->name('api.transactions.updateStandard');
-Route::patch('/transactions/investment/{transaction}', [TransactionApiController::class, 'updateInvestment'])
-    ->name('api.transactions.updateInvestment');
-Route::patch('/transactions/{transaction}/skip', [TransactionApiController::class, 'skipScheduleInstance'])
-    ->name('api.transactions.skipScheduleInstance');
-Route::get('/transaction/{transaction}', [TransactionApiController::class, 'getItem']);
-Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiController::class, 'reconcile']);
-Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
-    ->name('api.transactions.destroy');
+    // Tag endpoints
+    Route::get('/tags', [TagApiController::class, 'getList'])
+        ->name('tags.index');
+    Route::get('/tags/{tag}', [TagApiController::class, 'getItem'])
+        ->name('tags.show');
+    Route::patch('/tags/{tag}', [TagApiController::class, 'patchActive'])
+        ->name('tags.patch-active');
 
-Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
-Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
-Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);
+    // Transaction endpoints
+    Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])
+        ->name('transactions.index');
+    Route::get('/transactions/scheduled-items', [TransactionApiController::class, 'getScheduledItems'])
+        ->name('transactions.scheduled-items');
+    Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
+        ->name('transactions.store-standard');
+    Route::post('/transactions/investment', [TransactionApiController::class, 'storeInvestment'])
+        ->name('transactions.store-investment');
+    Route::patch('/transactions/standard/{transaction}', [TransactionApiController::class, 'updateStandard'])
+        ->name('transactions.update-standard');
+    Route::patch('/transactions/investment/{transaction}', [TransactionApiController::class, 'updateInvestment'])
+        ->name('transactions.update-investment');
+    Route::patch('/transactions/{transaction}/skip', [TransactionApiController::class, 'skipScheduleInstance'])
+        ->name('transactions.skip');
+    Route::get('/transactions/{transaction}', [TransactionApiController::class, 'getItem'])
+        ->name('transactions.show');
+    Route::patch('/transactions/{transaction}/reconciliation', [TransactionApiController::class, 'reconcile'])
+        ->name('transactions.reconcile');
+    Route::delete('/transactions/{transaction}', [TransactionApiController::class, 'destroy'])
+        ->name('transactions.destroy');
 
-Route::patch('/user/settings', [UserApiController::class, 'updateSettings'])
-    ->name('user.settings.update');
-Route::patch('/user/change_password', [UserApiController::class, 'changePassword'])
-    ->name('user.change_password');
+    // Report endpoints
+    Route::get('/reports/budget-chart', [ReportApiController::class, 'budgetChart'])
+        ->name('reports.budget-chart');
+    Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])
+        ->name('reports.cashflow');
+    Route::get(
+        '/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}',
+        [ReportApiController::class, 'getCategoryWaterfallData']
+    )
+        ->where('transactionType', 'standard|investment|all')
+        ->where('dataType', 'budget|result|all')
+        ->name('reports.waterfall');
+
+    // Onboarding endpoints
+    Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData'])
+        ->name('onboarding.show');
+    Route::post('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag'])
+        ->name('onboarding.dismiss');
+    Route::post('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag'])
+        ->name('onboarding.complete-tour');
+
+    // User/settings endpoints
+    Route::patch('/users/me/settings', [UserApiController::class, 'updateSettings'])
+        ->name('users.me.settings');
+    Route::patch('/users/me/password', [UserApiController::class, 'changePassword'])
+        ->name('users.me.password');
+    Route::get('/users/me/preferences/{key}', [UserApiController::class, 'getPreference'])
+        ->name('users.me.preferences.get');
+    Route::put('/users/me/preferences/{key}', [UserApiController::class, 'setPreference'])
+        ->name('users.me.preferences.set');
+});

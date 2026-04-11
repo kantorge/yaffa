@@ -1,5 +1,5 @@
 // Import dataTable helper functions, used to display transaction icons
-import * as dataTableHelpers from './../components/dataTableHelper'
+import * as dataTableHelpers from '@/shared/lib/datatable'
 
 const ApiParameterNames = new Map([
   ['account', 'accounts'],
@@ -15,7 +15,7 @@ function getTransactionCount (element) {
   const id = element.dataset.id;
 
   // Get the count from the API
-  fetch(`/api/transactions/?only_count=1&${apiParameterName}=${id}`)
+  fetch(`/api/v1/transactions/?only_count=1&${apiParameterName}=${id}`)
   .then(response => response.json())
   .then(data => {
     if (data.count === 0) {
@@ -57,12 +57,14 @@ dataTableHelpers.initializeQuickViewButton('table');
 
 // Transaction quick view modal
 import { createApp } from 'vue'
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
+installRouteGlobal(app);
 
-import QuickViewTransactionModal from './../components/TransactionDisplay/Modal.vue'
+import QuickViewTransactionModal from '@/transactions/components/display/Modal.vue'
 app.component('transaction-show-modal', QuickViewTransactionModal)
 
 app.mount('#app')

@@ -1,23 +1,29 @@
-import * as am4core from "@amcharts/amcharts4/core";
-import * as am4charts from "@amcharts/amcharts4/charts";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
+import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
-import 'select2';
 
-import * as toastHelpers from '../toast';
+// Select2 for account selection
+import { __ } from '@/shared/lib/i18n';
+import { initializeSelect2 } from '@/shared/lib/select2';
+initializeSelect2(window.YAFFA.userSettings.language);
+
+import * as toastHelpers from '@/shared/lib/toast';
 
 window.chartData = [];
 let chart;
 
 chart = am4core.create("chartdiv", am4charts.XYChart);
+applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
 
-chart.numberFormatter.intlLocales = window.YAFFA.locale;
-chart.dateFormatter.intlLocales = window.YAFFA.locale;
+chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
 chart.numberFormatter.numberFormat = {
     style: 'currency',
-    currency: window.YAFFA.baseCurrency.iso_code,
+    currency: window.YAFFA.userSettings.baseCurrency.iso_code,
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 0
 };
@@ -29,7 +35,7 @@ chart.dateFormatter.dateFormat = {
 
 let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
 dateAxis.dataFields.category = "month";
-dateAxis.dateFormatter.intlLocales = window.YAFFA.locale;
+dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 dateAxis.dateFormats.setKey("year", {"year": "numeric"});
 dateAxis.dateFormats.setKey("month", {"year": "numeric", "month": "short"});
 
@@ -96,7 +102,7 @@ chart.cursor = new am4charts.XYCursor();
 
 
 function reloadData() {
-    const url = window.route('api.reports.cashflow', {
+    const url = window.route('api.v1.reports.cashflow', {
             withForecast: document.getElementById('withForecast').checked,
             accountEntity: $(elementAccountSelector).val() ? $(elementAccountSelector).val() : undefined,
         });
@@ -149,7 +155,7 @@ function rebuildUrl() {
 $(elementAccountSelector).select2({
     theme: "bootstrap-5",
     ajax: {
-        url: '/api/assets/account',
+        url: '/api/v1/accounts',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -194,7 +200,7 @@ document.getElementById('btnReload').addEventListener('click', reloadData);
 // Default account
 if (window.presetAccount) {
     $.ajax({
-        url: '/api/assets/account/' + window.presetAccount,
+        url: '/api/v1/accounts/' + window.presetAccount,
         data: {
             _token: window.csrfToken,
         }

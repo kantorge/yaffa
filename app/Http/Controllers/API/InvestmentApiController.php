@@ -2,43 +2,50 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
+use App\Services\InvestmentProviderSettingsResolver;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
-    protected InvestmentService $investmentService;
-
-    public function __construct()
-    {
-
-        $this->investmentService = new InvestmentService();
+    public function __construct(
+        protected InvestmentService $investmentService,
+        protected InvestmentProviderSettingsResolver $providerSettingsResolver
+    ) {
     }
 
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
+    /**
+     * Get a list of investments with optional filtering and sorting.
+     */
     public function index(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/investment')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/v1/investments")
+         * @name("api.v1.investments.index")
+         * @middlewares("api", "auth:sanctum")
          *
          * Currently supported query parameters:
          * - active: filter by active status (1 or 0)
@@ -59,33 +66,39 @@ class InvestmentApiController extends Controller implements HasMiddleware
         }
 
         // Validate sort_order parameter
-        if (!in_array(strtolower($sortOrder), ['asc', 'desc'], true)) {
+        if (!in_array(Str::lower($sortOrder), ['asc', 'desc'], true)) {
             $sortOrder = 'asc';
         }
 
         $investments = $request->user()
             ->investments()
-            ->when($request->has('active'), fn($query) =>
+            ->when(
+                $request->has('active'),
+                fn ($query) =>
                 $query->where('active', $request->get('active'))
             )
-            ->when($request->get('query'), fn ($query) =>
+            ->when(
+                $request->get('query'),
+                fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
                 $query->where(function ($q) use ($request) {
                     $q->whereRaw(
                         'LOWER(name) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
+                        ['%' . Str::lower($request->get('query')) . '%']
                     )
-                    ->orWhereRaw(
-                        'LOWER(symbol) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
-                    )
-                    ->orWhereRaw(
-                        'LOWER(isin) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
-                    );
+                        ->orWhereRaw(
+                            'LOWER(symbol) LIKE ?',
+                            ['%' . Str::lower($request->get('query')) . '%']
+                        )
+                        ->orWhereRaw(
+                            'LOWER(isin) LIKE ?',
+                            ['%' . Str::lower($request->get('query')) . '%']
+                        );
                 })
             )
-            ->when($request->get('currency_id'), fn ($query) =>
+            ->when(
+                $request->get('currency_id'),
+                fn ($query) =>
                 $query->where('currency_id', '=', $request->get('currency_id'))
             )
             ->orderBy($sortBy, $sortOrder)
@@ -101,22 +114,26 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
         /**
-         * @get('/api/assets/investment/{investment}')
-         * @name('investment.getDetails')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.show")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
 
         $investment->load(['currency']);
 
-        return response()->json($investment, Response::HTTP_OK);
+        return response()->json($this->serializeInvestment($investment), Response::HTTP_OK);
     }
 
+    /**
+     * Get historical price points for an investment.
+     */
     public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**
-         * @get('/api/assets/investment/price/{investment}')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/v1/investments/{investment}/price-history")
+         * @name("api.v1.investments.price-history")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $investment);
 
@@ -132,23 +149,39 @@ class InvestmentApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function updateActive(Investment $investment, $active): JsonResponse
+    /**
+     * V1: PATCH /api/v1/investments/{investment}
+     * Accepts { active: true|false } in request body.
+     *
+     * @throws AuthorizationException
+     */
+    public function patchActive(Request $request, Investment $investment): JsonResponse
     {
-        /**
-         * @put('/api/assets/investment/{investment}/active/{active}')
-         * @name('api.investment.updateActive')
-         * @middlewares('api', 'auth:sanctum')
-         */
         Gate::authorize('update', $investment);
 
-        $investment->active = $active;
+        $validated = $request->validate(['active' => ['required', 'boolean']]);
+
+        $investment->active = $validated['active'];
         $investment->save();
 
-        return response()
-            ->json(
-                $investment,
-                Response::HTTP_OK
-            );
+        return response()->json($investment, Response::HTTP_OK);
+    }
+
+    public function updateProviderSettings(
+        UpdateInvestmentProviderSettingsRequest $request,
+        Investment $investment
+    ): JsonResponse {
+        Gate::authorize('update', $investment);
+
+        $providerSettings = $request->validated('provider_settings');
+
+        $investment->fill([
+            'provider_settings' => $providerSettings,
+        ]);
+        $investment->save();
+        $investment->load(['currency']);
+
+        return response()->json($this->serializeInvestment($investment), Response::HTTP_OK);
     }
 
     /**
@@ -157,11 +190,10 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/investment/timeline')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/v1/investments/timeline")
+         * @name("api.v1.investments.timeline")
+         * @middlewares("api", "auth:sanctum")
          */
-        $investmentService = new InvestmentService();
-
         $investments = $request->user()
             ->investments()
             ->with([
@@ -174,8 +206,11 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
-            ->each(function ($investment) use (&$positions, $request) {
+        $investments->map(fn ($investment) => $investment instanceof Investment
+            ? $this->investmentService->enrichInvestmentWithQuantityHistory($investment)
+            : null)
+            ->filter(fn ($investment) => $investment instanceof Investment)
+            ->each(function (Investment $investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
 
@@ -196,9 +231,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
                         continue;
                     }
 
-                    if (!$start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
+                    if (! $start && $item['schedule'] === 0.0) {
                         $period['end'] = $item['date'];
-                        $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
+                        $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined', new Carbon($item['date']));
                         $positions[] = $period;
                         $period = [];
 
@@ -211,9 +246,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 }
 
                 // If period start was set but the end date is missing, then set it to the app config end date
-                if (array_key_exists('start', $period) && !array_key_exists('end', $period)) {
+                if (Arr::has($period, 'start') && ! Arr::has($period, 'end')) {
                     $period['end'] = $request->user()->end_date;
-                    $period['last_price'] = $investment->getLatestPrice('combined');
+                    $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined');
                     $positions[] = $period;
                 }
             });
@@ -231,10 +266,12 @@ class InvestmentApiController extends Controller implements HasMiddleware
     public function destroy(Investment $investment): JsonResponse
     {
         /**
-         * @delete('/api/investment/{investment}')
-         * @name('api.investment.destroy')
-         * @middlewares('web', 'auth', 'verified')
+         * @delete("/api/v1/investments/{investment}")
+         * @name("api.v1.investments.destroy")
+         * @middlewares("web", "auth", "verified")
          */
+        Gate::authorize('delete', $investment);
+
         $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {
@@ -253,5 +290,16 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 ],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeInvestment(Investment $investment): array
+    {
+        $payload = $investment->toArray();
+        $payload['provider_settings'] = $this->providerSettingsResolver->resolveForInvestment($investment);
+
+        return $payload;
     }
 }

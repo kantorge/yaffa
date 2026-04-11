@@ -9,9 +9,10 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
-use App\Models\TransactionType;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,7 +35,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -44,8 +46,9 @@ class ReportApiController extends Controller implements HasMiddleware
     public function budgetChart(Request $request): JsonResponse
     {
         /**
-         * @get('/api/budgetchart')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/reports/budget-chart")
+         * @name("api.v1.reports.budget-chart")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get list of requested categories
@@ -71,8 +74,9 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->whereIn('category_id', $categories->pluck('id'))
                 ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
                     $query->whereUserId($request->user()->id)
-                        ->byScheduleType('none')
-                        ->byType('standard')
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
                         ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                             'config',
                             TransactionDetailStandard::class,
@@ -89,7 +93,7 @@ class ReportApiController extends Controller implements HasMiddleware
             /** @var TransactionItem $item */
             $period = $item->transaction->date->format('Y-m-01');
             $currency_id = $item->transaction->currency_id;
-            $amount = $item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+            $amount = $item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
                 ? -1 * $item->amount
                 : $item->amount;
 
@@ -142,7 +146,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 return $query->where(function ($query) {
                     // Withdrawal with empty account_from_id
                     return $query->where(function ($query) {
-                        $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                        $query->where('transaction_type', TransactionTypeEnum::WITHDRAWAL)
                             ->whereHasMorph(
                                 'config',
                                 TransactionDetailStandard::class,
@@ -151,7 +155,7 @@ class ReportApiController extends Controller implements HasMiddleware
                     })
                         // Or deposit with empty account_to_id
                         ->orWhere(function ($query) {
-                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                            $query->where('transaction_type', TransactionTypeEnum::DEPOSIT)
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -192,7 +196,7 @@ class ReportApiController extends Controller implements HasMiddleware
             }
 
             $budgetCompact[$period][$currency_id] += $transaction->sum
-                * ($transaction->transaction_type_id === config('transaction_types')['withdrawal']['id'] ? -1 : 1);
+                * ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1);
         });
 
         foreach ($budgetCompact as $period => $periodData) {
@@ -240,13 +244,15 @@ class ReportApiController extends Controller implements HasMiddleware
         int|null $month = null
     ): JsonResponse {
         /**
-         * @get('/api/reports/waterfall/{type}/{year}/{month?}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/v1/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}")
+         * @name("api.v1.reports.waterfall")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
+        [$rangeStart, $rangeEnd] = $this->resolveDateRangeForYearMonth($year, $month);
 
         // Final result placeholder
         $dataByCategory = [];
@@ -254,30 +260,28 @@ class ReportApiController extends Controller implements HasMiddleware
         if ($transactionType === 'all' || $transactionType === 'standard') {
             // Get all standard transactions with related categories
             $standardTransactions = TransactionItem::with([
-                'category',
+                'category.parent',
                 'transaction',
                 'transaction.currency',
                 'transaction.config.accountFrom.config',
                 'transaction.config.accountTo.config',
             ])
-                ->whereHas('transaction', function ($query) use ($year, $month, $request) {
+                ->whereHas('transaction', function ($query) use ($request, $rangeStart, $rangeEnd) {
                     $query->where('user_id', $request->user()->id)
-                        ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                        ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
-                            ->whereRaw('MONTH(date) = ?', [$month]))
-                        ->byScheduleType('none')
-                        ->byType('standard')
-                        ->where(
-                            'transaction_type_id',
-                            '!=',
-                            config('transaction_types')['transfer']['id']
-                        );
+                        ->whereBetween('date', [$rangeStart, $rangeEnd])
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
+                        ->where('transaction_type', '!=', TransactionTypeEnum::TRANSFER);
                 })
                 ->get();
 
             $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = $item->category?->parent?->name ?? $item->category?->name ?? __('No category assigned');
+                // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
+                $category = $item->category->parent
+                    ? $item->category->parent->name
+                    : $item->category->name;
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
@@ -295,7 +299,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 );
 
                 $dataByCategory[$category] +=
-                    ($item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+                    ($item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
                         ? -1
                         : 1)
                     * $item->amount
@@ -307,25 +311,16 @@ class ReportApiController extends Controller implements HasMiddleware
             // Add investment transaction results
             $investmentTransactions = Transaction::with([
                 'currency',
-                'transactionType',
             ])
                 ->byType('investment')
-                ->whereIn(
-                    'transaction_type_id',
-                    TransactionType::where('type', 'investment')
-                        ->whereNotNull('amount_multiplier')
-                        ->get()
-                        ->pluck('id')
-                )
+                ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithAmountValues())
                 ->where('user_id', $request->user()->id)
-                ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
-                    ->whereRaw('MONTH(date) = ?', [$month]))
+                ->whereBetween('date', [$rangeStart, $rangeEnd])
                 ->get();
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = ($transaction->transactionType->amount_multiplier === 1
+                $category = ($transaction->transaction_type->amountMultiplier() === 1
                     ? __('Investment income')
                     : __('Investment payment'));
 
@@ -364,6 +359,29 @@ class ReportApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Resolve inclusive date range boundaries for a year or a specific year-month period.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
+     */
+    private function resolveDateRangeForYearMonth(int $year, ?int $month): array
+    {
+        if ($month === null) {
+            $start = CarbonImmutable::create($year, 1, 1)->startOfDay();
+            $end = CarbonImmutable::create($year, 12, 31)->endOfDay();
+
+            return [$start, $end];
+        }
+
+        $start = CarbonImmutable::create($year, $month, 1)->startOfMonth()->startOfDay();
+        $end = $start->endOfMonth()->endOfDay();
+
+        return [$start, $end];
+    }
+
+    /**
+     * Get monthly cashflow data with optional forecast values.
+     */
     public function getCashflowData(Request $request): JsonResponse
     {
         $user = $request->user();

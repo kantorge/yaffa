@@ -41,8 +41,10 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @property-read TransactionType $transactionType
  * @mixin Eloquent
+ * @property int $account_id
+ * @property-read Transaction|null $transaction
+ * @mixin \Eloquent
  */
 class TransactionDetailInvestment extends Model
 {
@@ -60,7 +62,7 @@ class TransactionDetailInvestment extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'account_id',

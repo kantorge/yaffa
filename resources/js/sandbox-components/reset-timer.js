@@ -38,7 +38,7 @@ function getTimeoutMessage(days, hours) {
     const hoursLabel = hours === 1 ? __('hour') : __('hours');
 
     return __(
-        'The data in this sandbox environment is regularly cleared. Time until next reset: :days :daysLabel and :hours :hoursLabel',
+        'sandbox.reset.timer',
         { days, daysLabel, hours, hoursLabel }
     );
 }

@@ -19,10 +19,14 @@ class OnboardingApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
+    /**
+     * Get onboarding state and steps for a given topic.
+     */
     public function getOnboardingData(Request $request, string $topic): JsonResponse
     {
         $this->loadOnboardingSteps($topic);
@@ -36,6 +40,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Mark the onboarding widget as dismissed for a given topic.
+     */
     public function setDismissedFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('dismissOnboardingWidget' . ucfirst($topic));
@@ -43,6 +50,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
         return response()->noContent(Response::HTTP_OK);
     }
 
+    /**
+     * Mark the guided tour as completed for a given topic.
+     */
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('viewProductTour-' . $topic);
@@ -55,6 +65,7 @@ class OnboardingApiController extends Controller implements HasMiddleware
      * @uses onboardingTopicDataReportsSchedules
      * @uses onboardingTopicDataAccountGroups
      * @uses onboardingTopicDataInvestmentGroups
+     * @uses onboardingTopicDataAiDocuments
      */
     private function loadOnboardingSteps(string $topic): void
     {
@@ -64,17 +75,17 @@ class OnboardingApiController extends Controller implements HasMiddleware
     private function onboardingTopicDataDashboard(): void
     {
         Onboard::addStep(__('Have at least one currency added'))
-            ->link(route('currency.create'))
+            ->link(route('currencies.create'))
             ->cta(__('Add a currency'))
             ->completeIf(fn (User $model) => Currency::whereUserId($model->id)->count() > 0);
 
         Onboard::addStep(__('Have your base currency set'))
-            ->link(route('currency.index'))
+            ->link(route('currencies.index'))
             ->cta(__('Review currency settings'))
             ->completeIf(fn (User $model) => $model->baseCurrency() !== null);
 
         Onboard::addStep(__('Have at least one account group added'))
-            ->link(route('account-group.create'))
+            ->link(route('account-groups.create'))
             ->cta(__('Add an account group'))
             ->completeIf(fn (User $model) => AccountGroup::whereUserId($model->id)->count() > 0);
 
@@ -137,5 +148,15 @@ class OnboardingApiController extends Controller implements HasMiddleware
                 'icon' => 'fa fa-fw fa-info',
             ])
             ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-Investments'));
+    }
+
+    private function onboardingTopicDataAiDocuments(): void
+    {
+        Onboard::addStep(__('View the guided tour for this page'))
+            ->attributes([
+                'tour' => true,
+                'icon' => 'fa fa-fw fa-info',
+            ])
+            ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-AiDocuments'));
     }
 }

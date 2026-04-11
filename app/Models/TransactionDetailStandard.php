@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property int|null $account_to_id
  * @property float $amount_from
  * @property float $amount_to
+ * @property float|null $amount_from_base
+ * @property float|null $amount_to_base
  * @property-read AccountEntity|null $accountFrom
  * @property-read AccountEntity|null $accountTo
  * @property-read Transaction|null $config
@@ -35,8 +37,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @property-read TransactionType $transactionType
  * @mixin Eloquent
+ * @property-read Transaction|null $transaction
+ * @mixin \Eloquent
  */
 class TransactionDetailStandard extends Model
 {
@@ -54,7 +57,7 @@ class TransactionDetailStandard extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'account_from_id',

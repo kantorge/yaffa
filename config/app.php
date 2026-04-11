@@ -6,14 +6,17 @@ return [
 
     'available_languages' => [
         'en' => 'English',
-        'hu' => 'Hungarian',
         'fr' => 'French',
+        'hu' => 'Hungarian',
+        'pl' => 'Polish',
     ],
 
     'available_locales' => [
+        'en-GB' => 'English (United Kingdom)',
         'en-US' => 'English (United States)',
-        'hu-HU' => 'Hungarian',
         'fr-FR' => 'French (France)',
+        'hu-HU' => 'Hungarian',
+        'pl-PL' => 'Polish',
     ],
 
 

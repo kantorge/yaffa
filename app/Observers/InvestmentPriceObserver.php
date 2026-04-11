@@ -36,7 +36,7 @@ class InvestmentPriceObserver
         $investment = $investmentPrice->investment;
 
         // Use the InvestmentService to recalculate the related accounts
-        $investmentService = new InvestmentService();
+        $investmentService = app(InvestmentService::class);
         $investmentService->recalculateRelatedAccounts($investment);
     }
 }

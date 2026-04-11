@@ -1,13 +1,11 @@
-import { loadSelect2Language } from '../helpers';
-import select2 from 'select2';
-select2();
-loadSelect2Language(window.YAFFA.language);
+import { initializeSelect2 } from '@/shared/lib/select2';
+initializeSelect2(window.YAFFA.userSettings.language);
 
 // Common config for preference selects
 const config = {
     multiple: true,
     ajax: {
-        url: '/api/assets/category',
+        url: '/api/v1/categories',
         dataType: 'json',
         delay: 150,
         data: function (params) {
@@ -23,9 +21,16 @@ const config = {
             const otherItems = otherSelect.select2('val');
 
             return {
-                results: data.filter(function(item) {
-                    return !otherItems.includes(item.id.toString());
-                }),
+                results: data
+                    .filter(function(item) {
+                        return !otherItems.includes(item.id.toString());
+                    })
+                    .map(function (item) {
+                        return {
+                            id: item.id,
+                            text: item.full_name,
+                        };
+                    }),
             };
         },
         cache: true

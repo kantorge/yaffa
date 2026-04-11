@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use App\Providers\AppServiceProvider;
 use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Providers\AppServiceProvider;
 use App\Providers\Faker\CurrencyData;
+use App\Services\AiUserSettingsResolver;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -70,9 +71,9 @@ class RegisterController extends Controller implements HasMiddleware
     public function showRegistrationForm(): View|RedirectResponse
     {
         /**
-         * @get('/register')
-         * @name('register')
-         * @middlewares('web', 'guest')
+         * @get("/register")
+         * @name("register")
+         * @middlewares("web", "guest")
          */
         if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
             self::addMessage(
@@ -162,13 +163,17 @@ class RegisterController extends Controller implements HasMiddleware
      */
     protected function create(array $data): User
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'language' => $data['language'],
             'locale' => $data['locale'],
         ]);
+
+        app(AiUserSettingsResolver::class)->getOrCreateForUser($user);
+
+        return $user;
     }
 
     /**

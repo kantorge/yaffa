@@ -5,8 +5,10 @@ namespace Tests\Browser\Pages\Transactions;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionShowStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -36,13 +38,39 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
                 'reconciled' => true,
             ]);
 
+        $transaction->load(['config.accountFrom', 'config.accountTo']);
+
         $this->browse(function (Browser $browser) use ($user, $transaction) {
             $browser->loginAs($user)
                 // Load the transaction page
                 ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
                 ->waitFor('#transactionShowStandard')
 
-                // TODO: Check the details are correct
+                // Account and payee names are visible
+                ->assertSeeIn('@label-account-from-name', $transaction->config->accountFrom->name)
+                ->assertSeeIn('@label-account-to-name', $transaction->config->accountTo->name)
+                // Account and payee names link to their respective screens
+                ->assertPresent('@label-account-from-name a')
+                ->assertPresent('@label-account-to-name a')
+                ->assertAttribute(
+                    '@label-account-from-name a',
+                    'href',
+                    route('account-entity.show', ['account_entity' => $transaction->config->accountFrom->id])
+                )
+                ->assertAttribute('@label-account-from-name a', 'title', __('Go to account'))
+                ->assertAttribute(
+                    '@label-account-to-name a',
+                    'href',
+                    route('account-entity.edit', [
+                        'type' => 'payee',
+                        'account_entity' => $transaction->config->accountTo->id,
+                    ])
+                )
+                ->assertAttribute(
+                    '@label-account-to-name a',
+                    'title',
+                    __('Open payee edit form (payees do not have a details view yet)')
+                )
 
                 // Action button bar is present
                 ->assertPresent('@action-bar')

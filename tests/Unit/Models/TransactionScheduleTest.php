@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -10,7 +11,6 @@ use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionSchedule;
-use App\Models\TransactionType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,7 +65,7 @@ class TransactionScheduleTest extends TestCase
             )
             ->create([
                 'date' => null,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ]);
 
         // Intentionally set the schedule flag later, to avoid the creating closure

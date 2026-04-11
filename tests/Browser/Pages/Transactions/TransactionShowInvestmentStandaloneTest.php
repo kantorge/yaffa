@@ -7,8 +7,10 @@ use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -53,7 +55,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
                 // Load the transaction page
                 ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
                 // Check the details container is present
-                ->assertPresent('#transactionShowInvestment')
+                ->waitFor('#transactionShowInvestment')
                 // Check the details are correct
                 // Transaction type is 'Buy'
                 ->assertSeeIn('@label-transaction-type', 'Buy')
@@ -108,7 +110,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
                 // Load the transaction page
                 ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
                 // Check the details container is present
-                ->assertPresent('#transactionShowInvestment')
+                ->waitFor('#transactionShowInvestment')
                 // Check the details are correct
                 // Transaction type is 'Dividend'
                 ->assertSeeIn('@label-transaction-type', 'Dividend')
@@ -162,7 +164,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
                 // Load the transaction page
                 ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
                 // Check the details container is present
-                ->assertPresent('#transactionShowInvestment')
+                ->waitFor('#transactionShowInvestment')
 
                 // Action button bar is present
                 ->assertPresent('@action-bar')

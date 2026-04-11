@@ -63,13 +63,13 @@ return [
         "array" => "The :attribute must have more than :value items.",
         "file" => "The :attribute must be greater than :value kilobytes.",
         "numeric" => "The :attribute must be greater than :value.",
-        "string" => "The :attribute must be greater than :value characters."
+        "string" => "The :attribute field must be greater than :value characters."
     ],
     "gte" => [
         "array" => "The :attribute must have :value items or more.",
         "file" => "The :attribute must be greater than or equal :value kilobytes.",
         "numeric" => "The :attribute must be greater than or equal :value.",
-        "string" => "The :attribute must be greater than or equal :value characters."
+        "string" => "The :attribute field must be greater than or equal to :value characters."
     ],
     "hex_color" => "The :attribute field must be a valid hexadecimal color.",
     "image" => "The :attribute must be an image.",
@@ -77,9 +77,9 @@ return [
     "in_array" => "The :attribute field does not exist in :other.",
     "in_array_keys" => "The :attribute field must contain at least one of the following keys: :values.",
     "integer" => "The :attribute must be an integer.",
-    "ip" => "The :attribute must be a valid IP address.",
-    "ipv4" => "The :attribute must be a valid IPv4 address.",
-    "ipv6" => "The :attribute must be a valid IPv6 address.",
+    "ip" => "The :attribute field must be a valid IP address.",
+    "ipv4" => "The :attribute field must be a valid IPv4 address.",
+    "ipv6" => "The :attribute field must be a valid IPv6 address.",
     "json" => "The :attribute must be a valid JSON string.",
     "list" => "The :attribute field must be a list.",
     "lowercase" => "The :attribute field must be lowercase.",
@@ -87,20 +87,20 @@ return [
         "array" => "The :attribute must have less than :value items.",
         "file" => "The :attribute must be less than :value kilobytes.",
         "numeric" => "The :attribute must be less than :value.",
-        "string" => "The :attribute must be less than :value characters."
+        "string" => "The :attribute field must be less than :value characters."
     ],
     "lte" => [
         "array" => "The :attribute must not have more than :value items.",
         "file" => "The :attribute must be less than or equal :value kilobytes.",
         "numeric" => "The :attribute must be less than or equal :value.",
-        "string" => "The :attribute must be less than or equal :value characters."
+        "string" => "The :attribute field must be less than or equal to :value characters."
     ],
     "mac_address" => "The :attribute field must be a valid MAC address.",
     "max" => [
         "array" => "The :attribute may not have more than :max items.",
         "file" => "The :attribute may not be greater than :max kilobytes.",
         "numeric" => "The :attribute may not be greater than :max.",
-        "string" => "The :attribute may not be greater than :max characters."
+        "string" => "The :attribute field must not be greater than :max characters."
     ],
     "max_digits" => "The :attribute field must not have more than :max digits.",
     "mimes" => "The :attribute must be a file of type: :values.",
@@ -159,5 +159,5 @@ return [
     "uploaded" => "The :attribute failed to upload.",
     "uppercase" => "The :attribute field must be uppercase.",
     "url" => "The :attribute format is invalid.",
-    "uuid" => "The :attribute must be a valid UUID."
+    "uuid" => "The :attribute field must be a valid UUID."
 ];

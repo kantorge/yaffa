@@ -33,7 +33,7 @@
                     id="cardActions"
             >
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ __('New scheduled, standard transaction') }}
+                    {{ __('New scheduled standard transaction') }}
                     <a class="btn btn-sm btn-success"
                        dusk="button-new-payee"
                        href="{{ route('transaction.create', [
@@ -41,13 +41,13 @@
                             'schedule' => '1',
                             'callback' => 'back'
                             ]) }}"
-                       title="{{ __('New scheduled, standard transaction') }}"
+                       title="{{ __('New scheduled standard transaction') }}"
                     >
                         <i class="fa fa-cart-plus"></i>
                     </a>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ __('New scheduled, investment transaction') }}
+                    {{ __('New scheduled investment transaction') }}
                     <a class="btn btn-sm btn-success"
                        dusk="button-new-payee"
                        href="{{ route('transaction.create', [
@@ -55,7 +55,7 @@
                             'schedule' => '1',
                             'callback' => 'back'
                             ]) }}"
-                       title="{{ __('New scheduled, investment transaction') }}"
+                       title="{{ __('New scheduled investment transaction') }}"
                     >
                         <i class="fa fa-line-chart"></i>
                     </a>

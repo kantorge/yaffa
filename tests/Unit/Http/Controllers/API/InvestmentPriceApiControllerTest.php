@@ -27,43 +27,54 @@ class InvestmentPriceApiControllerTest extends TestCase
         }
     }
 
-    public function test_unauthenticated_users_cannot_access_investment_price_endpoints(): void
+    protected function createUserCurrencyAndInvestment(array $investmentAttributes = []): array
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
 
+        Currency::factory()->for($user)->create();
+
+        /** @var Investment $investment */
         $investment = Investment::factory()
             ->for($user)
             ->withUser($user)
-            ->create();
+            ->create($investmentAttributes);
+
+        return [$user, $investment];
+    }
+
+    public function test_unauthenticated_users_cannot_access_investment_price_endpoints(): void
+    {
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         // Test index endpoint
-        $response = $this->getJson("/api/investment-prices/{$investment->id}");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->getJson(
+            route('api.v1.investment-prices.index', ['investment' => $investment->id])
+        );
+        $this->assertUserNotAuthorized($response);
 
         // Test store endpoint
-        $response = $this->postJson('/api/investment-prices', [
+        $response = $this->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-01',
             'price' => 100,
         ]);
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->assertUserNotAuthorized($response);
 
         // Test checkPrice endpoint
-        $response = $this->getJson("/api/investment-prices/check/{$investment->id}?date=2024-01-01");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->getJson(route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => '2024-01-01']));
+        $this->assertUserNotAuthorized($response);
     }
 
     public function test_users_cannot_access_other_users_investment_prices(): void
     {
         /** @var User $user1 */
         $user1 = User::factory()->create();
-        $this->createForUser($user1, Currency::class);
+        Currency::factory()->for($user1)->create();
 
         /** @var User $user2 */
         $user2 = User::factory()->create();
-        $this->createForUser($user2, Currency::class);
+        Currency::factory()->for($user2)->create();
 
         $investment = Investment::factory()
             ->for($user1)
@@ -78,12 +89,12 @@ class InvestmentPriceApiControllerTest extends TestCase
             ]);
 
         // User2 tries to access user1's investment prices
-        $response = $this->actingAs($user2)->getJson("/api/investment-prices/{$investment->id}");
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
+        $response = $this->actingAs($user2)->getJson(route('api.v1.investment-prices.index', ['investment' => $investment->id]));
+        $this->assertUserNotAuthorized($response);
 
         // User2 tries to update user1's investment price
         // Note: This will fail validation because investment_id must belong to authenticated user
-        $response = $this->actingAs($user2)->putJson("/api/investment-prices/{$price->id}", [
+        $response = $this->actingAs($user2)->putJson(route('api.v1.investment-prices.update', ['investmentPrice' => $price->id]), [
             'investment_id' => $investment->id,
             'date' => '2024-01-02',
             'price' => 200,
@@ -92,20 +103,13 @@ class InvestmentPriceApiControllerTest extends TestCase
         $response->assertJsonValidationErrors(['investment_id']);
 
         // User2 tries to delete user1's investment price
-        $response = $this->actingAs($user2)->deleteJson("/api/investment-prices/{$price->id}");
+        $response = $this->actingAs($user2)->deleteJson(route('api.v1.investment-prices.destroy', ['investmentPrice' => $price->id]));
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_index_returns_all_prices_for_investment(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         // Create multiple prices
         $this->createPricesForInvestment($investment, [
@@ -114,7 +118,7 @@ class InvestmentPriceApiControllerTest extends TestCase
             ['date' => '2024-01-03', 'price' => 120],
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/{$investment->id}");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.index', ['investment' => $investment->id]));
         $response->assertStatus(Response::HTTP_OK);
         $json = $response->json();
 
@@ -127,14 +131,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_index_filters_by_date_from(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         $this->createPricesForInvestment($investment, [
             ['date' => '2024-01-01', 'price' => 100],
@@ -142,7 +139,7 @@ class InvestmentPriceApiControllerTest extends TestCase
             ['date' => '2024-01-30', 'price' => 120],
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/{$investment->id}?date_from=2024-01-15");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.index', ['investment' => $investment->id, 'date_from' => '2024-01-15']));
         $response->assertStatus(Response::HTTP_OK);
         $json = $response->json();
 
@@ -153,14 +150,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_index_filters_by_date_to(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         $this->createPricesForInvestment($investment, [
             ['date' => '2024-01-01', 'price' => 100],
@@ -168,7 +158,7 @@ class InvestmentPriceApiControllerTest extends TestCase
             ['date' => '2024-01-30', 'price' => 120],
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/{$investment->id}?date_to=2024-01-15");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.index', ['investment' => $investment->id, 'date_to' => '2024-01-15']));
         $response->assertStatus(Response::HTTP_OK);
         $json = $response->json();
 
@@ -179,14 +169,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_index_filters_by_date_range(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         $this->createPricesForInvestment($investment, [
             ['date' => '2024-01-01', 'price' => 100],
@@ -194,7 +177,7 @@ class InvestmentPriceApiControllerTest extends TestCase
             ['date' => '2024-01-30', 'price' => 120],
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/{$investment->id}?date_from=2024-01-10&date_to=2024-01-20");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.index', ['investment' => $investment->id, 'date_from' => '2024-01-10', 'date_to' => '2024-01-20']));
         $response->assertStatus(Response::HTTP_OK);
         $json = $response->json();
 
@@ -204,16 +187,9 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_store_creates_new_investment_price(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
-
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
             'price' => 150.50,
@@ -249,7 +225,7 @@ class InvestmentPriceApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'date' => '2024-01-15',
             'price' => 150.50,
         ]);
@@ -260,16 +236,9 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_store_requires_date(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
-
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'price' => 150.50,
         ]);
@@ -280,16 +249,9 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_store_requires_price(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
-
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
         ]);
@@ -300,14 +262,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_update_modifies_existing_investment_price(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         $price = InvestmentPrice::factory()
             ->for($investment)
@@ -316,7 +271,7 @@ class InvestmentPriceApiControllerTest extends TestCase
                 'price' => 100,
             ]);
 
-        $response = $this->actingAs($user)->putJson("/api/investment-prices/{$price->id}", [
+        $response = $this->actingAs($user)->putJson(route('api.v1.investment-prices.update', ['investmentPrice' => $price->id]), [
             'investment_id' => $investment->id,
             'date' => '2024-01-02',
             'price' => 200.75,
@@ -338,14 +293,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_destroy_deletes_investment_price(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         $price = InvestmentPrice::factory()
             ->for($investment)
@@ -354,7 +302,7 @@ class InvestmentPriceApiControllerTest extends TestCase
                 'price' => 100,
             ]);
 
-        $response = $this->actingAs($user)->deleteJson("/api/investment-prices/{$price->id}");
+        $response = $this->actingAs($user)->deleteJson(route('api.v1.investment-prices.destroy', ['investmentPrice' => $price->id]));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('message', __('Investment price deleted'));
@@ -367,46 +315,32 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_check_price_validates_date_format(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         // Missing date parameter
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.check', ['investment' => $investment->id]));
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['date']);
 
         // Invalid date format
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}?date=01/15/2024");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => '01/15/2024']));
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['date']);
 
         // Invalid date format
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}?date=2024-13-01");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => '2024-13-01']));
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['date']);
 
         // Invalid date string
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}?date=not-a-date");
+        $response = $this->actingAs($user)->getJson(route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => 'not-a-date']));
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['date']);
     }
 
     public function test_check_price_returns_true_when_price_exists(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         InvestmentPrice::factory()
             ->for($investment)
@@ -415,7 +349,9 @@ class InvestmentPriceApiControllerTest extends TestCase
                 'price' => 123.45,
             ]);
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}?date=2024-01-15");
+        $response = $this->actingAs($user)->getJson(
+            route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => '2024-01-15'])
+        );
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('exists', true);
         $response->assertJsonPath('price', 123.45);
@@ -423,16 +359,12 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_check_price_returns_false_when_price_does_not_exist(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        $response = $this->actingAs($user)->getJson(
+            route('api.v1.investment-prices.check', ['investment' => $investment->id, 'date' => '2024-01-15'])
+        );
 
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment->id}?date=2024-01-15");
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('exists', false);
         $response->assertJsonPath('price', null);
@@ -440,14 +372,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_check_price_only_checks_specific_investment(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment1 = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment1] = $this->createUserCurrencyAndInvestment();
 
         $investment2 = Investment::factory()
             ->for($user)
@@ -463,26 +388,23 @@ class InvestmentPriceApiControllerTest extends TestCase
             ]);
 
         // Check investment1 - should exist
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment1->id}?date=2024-01-15");
+        $response = $this->actingAs($user)->getJson(
+            route('api.v1.investment-prices.check', ['investment' => $investment1->id, 'date' => '2024-01-15'])
+        );
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('exists', true);
 
         // Check investment2 - should not exist
-        $response = $this->actingAs($user)->getJson("/api/investment-prices/check/{$investment2->id}?date=2024-01-15");
+        $response = $this->actingAs($user)->getJson(
+            route('api.v1.investment-prices.check', ['investment' => $investment2->id, 'date' => '2024-01-15'])
+        );
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('exists', false);
     }
 
     public function test_store_prevents_duplicate_prices_for_same_date(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
-
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
         // Create first price
         InvestmentPrice::factory()
@@ -493,7 +415,7 @@ class InvestmentPriceApiControllerTest extends TestCase
             ]);
 
         // Try to create duplicate
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
             'price' => 200,
@@ -505,16 +427,9 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_price_must_be_numeric(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
-
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
             'price' => 'not-a-number',
@@ -526,16 +441,9 @@ class InvestmentPriceApiControllerTest extends TestCase
 
     public function test_price_must_be_greater_than_zero(): void
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createForUser($user, Currency::class);
+        [$user, $investment] = $this->createUserCurrencyAndInvestment();
 
-        $investment = Investment::factory()
-            ->for($user)
-            ->withUser($user)
-            ->create();
-
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
             'price' => 0,
@@ -544,7 +452,7 @@ class InvestmentPriceApiControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['price']);
 
-        $response = $this->actingAs($user)->postJson('/api/investment-prices', [
+        $response = $this->actingAs($user)->postJson(route('api.v1.investment-prices.store'), [
             'investment_id' => $investment->id,
             'date' => '2024-01-15',
             'price' => -100,

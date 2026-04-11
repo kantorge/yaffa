@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
@@ -27,7 +28,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int $id
  * @property int $user_id
  * @property \Illuminate\Support\Carbon|null $date
- * @property int $transaction_type_id
+ * @property TransactionTypeEnum $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
  * @property bool $budget
@@ -37,11 +38,10 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int|null $currency_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read Model|Eloquent $config
+ * @property-read TransactionDetailInvestment|TransactionDetailStandard|Model|Eloquent|null $config
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @property-read TransactionType $transactionType
  * @method static Builder|Transaction byScheduleType($type)
  * @method static Builder|Transaction byType($type)
  * @method static TransactionFactory factory(...$parameters)
@@ -57,9 +57,33 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereId($value)
  * @method static Builder|Transaction whereReconciled($value)
  * @method static Builder|Transaction whereSchedule($value)
- * @method static Builder|Transaction whereTransactionTypeId($value)
+ * @method static Builder|Transaction whereTransactionType($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
+ * @property int|null $ai_document_id
+ * @property float|null $cashflow_value
+ * @property float|null $currencyRateToBase
+ * @property float|null $sum
+ * @property int|null $originalId
+ * @property string|null $transactionGroup
+ * @property int|null $transactionOperator
+ * @property string|null $account_from_name
+ * @property string|null $account_to_name
+ * @property float|null $amount_from
+ * @property float|null $amount_to
+ * @property mixed $tags
+ * @property mixed $categories
+ * @property float|null $quantity
+ * @property float|null $price
+ * @property float|null $running_total
+ * @property bool|null $schedule_first_instance
+ * @property-read AiDocument|null $aiDocument
+ * @property-read Currency|null $currency
+ * @property-read Currency|null $transaction_currency
+ * @property-read User $user
+ * @method static Builder<static>|Transaction whereAiDocumentId($value)
+ * @method static Builder<static>|Transaction whereCashflowValue($value)
+ * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
 class Transaction extends Model
@@ -71,11 +95,12 @@ class Transaction extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
+        'ai_document_id',
         'date',
-        'transaction_type_id',
+        'transaction_type',
         'reconciled',
         'schedule',
         'budget',
@@ -107,6 +132,7 @@ class Transaction extends Model
     {
         return [
             'date' => 'date',
+            'transaction_type' => TransactionTypeEnum::class,
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
@@ -124,11 +150,6 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function transactionType(): BelongsTo
-    {
-        return $this->belongsTo(TransactionType::class);
-    }
-
     public function transactionItems(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
@@ -142,6 +163,11 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function aiDocument(): BelongsTo
+    {
+        return $this->belongsTo(AiDocument::class);
     }
 
     public function tags()
@@ -201,14 +227,42 @@ class Transaction extends Model
         };
     }
 
+    /**
+     * Scope to filter transactions that are eligible for item merging.
+     *
+     * A transaction qualifies when it is a standard non-schedule, non-budget
+     * transaction AND has at least two transaction items that share the same
+     * category_id and have an empty (null or blank) comment — i.e. there is
+     * actual merge work to be done.
+     */
+    #[Scope]
+    protected function eligibleForItemMerge(Builder $query): Builder
+    {
+        return $query
+            ->where('config_type', 'standard')
+            ->where('schedule', false)
+            ->where('budget', false)
+            ->whereExists(function ($subquery): void {
+                $subquery->selectRaw('1')
+                    ->from('transaction_items')
+                    ->whereColumn('transaction_id', 'transactions.id')
+                    ->where(function ($q): void {
+                        $q->whereNull('comment')
+                            ->orWhere('comment', '');
+                    })
+                    ->groupBy('transaction_id', 'category_id')
+                    ->havingRaw('COUNT(*) >= 2');
+            });
+    }
+
     // Generic function to load necessary relations, based on transaction type
     public function loadDetails(): void
     {
-        if ($this->transactionType->type === 'standard') {
+        if ($this->transaction_type->isStandard()) {
             $this->loadStandardDetails();
             return;
         }
-        if ($this->transactionType->type === 'investment') {
+        if ($this->transaction_type->isInvestment()) {
             $this->loadInvestmentDetails();
             return;
         }
@@ -222,13 +276,12 @@ class Transaction extends Model
             'config.accountTo',
             'currency',
             'transactionSchedule',
-            'transactionType',
             'transactionItems',
             'transactionItems.tags',
             'transactionItems.category',
         ]);
 
-        if ($this->transactionType->name === 'withdrawal') {
+        if ($this->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
             $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
@@ -236,7 +289,7 @@ class Transaction extends Model
             ]);
         }
 
-        if ($this->transactionType->name === 'deposit') {
+        if ($this->transaction_type === TransactionTypeEnum::DEPOSIT) {
             $this->loadMissing([
                 'config.accountTo.config',
                 'config.accountTo.config.currency',
@@ -244,7 +297,7 @@ class Transaction extends Model
             ]);
         }
 
-        if ($this->transactionType->name === 'transfer') {
+        if ($this->transaction_type === TransactionTypeEnum::TRANSFER) {
             $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
@@ -264,7 +317,6 @@ class Transaction extends Model
             'config.investment',
             'currency',
             'transactionSchedule',
-            'transactionType',
         ]);
     }
 
@@ -353,7 +405,7 @@ class Transaction extends Model
             $newTransaction = $this->replicate();
 
             $newTransaction->originalId = $this->id;
-            $newTransaction->date = $instance->getStart();
+            $newTransaction->date = \Illuminate\Support\Carbon::instance($instance->getStart());
             $newTransaction->transactionGroup = 'forecast';
             $newTransaction->schedule_first_instance = $first;
 

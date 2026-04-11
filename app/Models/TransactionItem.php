@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $transaction_id
  * @property int|null $category_id
  * @property float $amount
+ * @property float|null $amount_in_base
  * @property string|null $comment
  * @property-read Category|null $category
  * @property-read Collection|Tag[] $tags
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @method static Builder|TransactionItem whereId($value)
  * @method static Builder|TransactionItem whereTransactionId($value)
  * @mixin Eloquent
+ * @mixin \Eloquent
  */
 class TransactionItem extends Model
 {
@@ -50,7 +52,7 @@ class TransactionItem extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var list<string>
      */
     protected $fillable = [
         'transaction_id',

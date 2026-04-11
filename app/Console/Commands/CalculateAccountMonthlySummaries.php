@@ -19,7 +19,7 @@ class CalculateAccountMonthlySummaries extends Command
     protected $signature = 'app:cache:account-monthly-summaries '
         . '{accountEntityId? : The ID of the account entity to process directly. Takes precedence if set together with the User ID.} '
         . '{userId? : The ID of the user to process all their accounts.}'
-        . '{transactionType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} '
+        . '{summaryType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} '
         . '{dataType? : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.} ';
 
     /**
@@ -45,9 +45,9 @@ class CalculateAccountMonthlySummaries extends Command
             return;
         }
 
-        // Get all accounts of all users (active and inactive)
+        // Get all accounts (active and inactive) of requested / all users
         if ($userId !== null) {
-            $user = User::findOrFail($userId, 'Invalid userId');
+            $user = User::findOrFail($userId);
             $users = collect([$user]);
         } else {
             $users = User::all();
@@ -98,35 +98,33 @@ class CalculateAccountMonthlySummaries extends Command
             );
 
             // Now we need to dispatch the jobs prepared above
-            if (array_key_exists('account_balance-fact', $jobs)) {
+            if (! empty($jobs['account_balance-fact'] ?? [])) {
                 Bus::batch($jobs['account_balance-fact'])
                     ->name('CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('investment_value-fact', $jobs)) {
+            if (! empty($jobs['investment_value-fact'] ?? [])) {
                 Bus::batch($jobs['investment_value-fact'])
                     ->name('CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('account_balance-forecast', $jobs)) {
+            if (! empty($jobs['account_balance-forecast'] ?? [])) {
                 Bus::batch($jobs['account_balance-forecast'])
                     ->name('CalculateAccountMonthlySummariesJob-account_balance-forecast-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('investment_value-forecast', $jobs)) {
+            if (! empty($jobs['investment_value-forecast'] ?? [])) {
                 Bus::batch($jobs['investment_value-forecast'])
                     ->name('CalculateAccountMonthlySummariesJob-investment_value-forecast-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('account_balance-budget', $jobs)) {
-                Bus::batch($jobs['account_balance-budget'])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
-                    ->dispatch();
-            }
+            Bus::batch($jobs['account_balance-budget'])
+                ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
+                ->dispatch();
         });
     }
 
@@ -135,7 +133,7 @@ class CalculateAccountMonthlySummaries extends Command
      */
     public function handleSpecifiedAccountEntity(int $accountEntityId): void
     {
-        /** @var AccountEntity $accountEntity */
+        /** @var AccountEntity|null $accountEntity */
         $accountEntity = AccountEntity::find($accountEntityId);
 
         if ($accountEntity === null) {
@@ -153,11 +151,11 @@ class CalculateAccountMonthlySummaries extends Command
         $user = $accountEntity->user;
 
         // Transaction type and data type are only needed if accountEntity is set
-        $transactionType = $this->argument('transactionType');
+        $summaryType = $this->argument('summaryType');
 
-        // The transactionType must be 'account_balance' or 'investment_value' or null
-        if ($transactionType !== null && !in_array($transactionType, ['account_balance', 'investment_value'])) {
-            $this->error('Invalid transactionType');
+        // The summaryType must be 'account_balance' or 'investment_value' or null
+        if ($summaryType !== null && !in_array($summaryType, ['account_balance', 'investment_value'])) {
+            $this->error('Invalid summaryType');
             return;
         }
 
@@ -169,8 +167,8 @@ class CalculateAccountMonthlySummaries extends Command
             return;
         }
 
-        // Create a job for the given accountEntity, transactionType and dataType
-        if ($transactionType === 'account_balance' || $transactionType === null) {
+        // Create a job for the given accountEntity, summaryType and dataType
+        if ($summaryType === 'account_balance' || $summaryType === null) {
             if ($dataType === 'fact' || $dataType === null) {
                 Bus::batch([
                     new CalculateAccountMonthlySummariesJob($user, 'account_balance-fact', $accountEntity)
@@ -196,7 +194,7 @@ class CalculateAccountMonthlySummaries extends Command
             }
         }
 
-        if ($transactionType === 'investment_value' || $transactionType === null) {
+        if ($summaryType === 'investment_value' || $summaryType === null) {
             if ($dataType === 'fact' || $dataType === null) {
                 Bus::batch([
                     new CalculateAccountMonthlySummariesJob($user, 'investment_value-fact', $accountEntity)

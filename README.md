@@ -18,9 +18,10 @@ Read more about YAFFA at https://yaffa.cc
 - Track your income and spending by recording transactions.
   - Yaffa tries to come up with suggestions while entering transactions to speed up transaction recording process.
   - Transactions can be split into categories. This helps to better understand spending patterns and budget planning.
-  - Yaffa can process receipts from emails and fill in transaction details automatically.
-    - This feature is optional. It is based on OpenAI API. You need to register and pay for the service.
-      Also, you need to be able to receive emails on your own server.
+  - Yaffa can process documents with AI and prefill transaction details automatically.
+    - Supported sources include manual uploads (text/PDF/images), received emails, and Google Drive imports.
+    - This feature is optional and currently supports OpenAI or Gemini providers. You need to provide your own API key and billing setup.
+    - OCR for images is available via Tesseract (self-hosted) or Vision-capable AI models.
 - Scheduled and recurring transactions, and budgets (plans) can be created.
   - This can be used to calculate forecasted data.
   - You can enable the automatic recording of recurring transactions.
@@ -34,7 +35,7 @@ There are several features **planned** to be implemented:
 - Handling multiple users as a family in one app instance.
 - Better onboarding experience, or a tutorial.
 - Flexible or universal QIF/CSV file imports
-- Process receipts from images
+- YAFFA is not using dedicated libraries for precise decimal calculations for monetary values. As it is not an accounting software, but a personal finance application, this should not be a real problem. It is planned to be implemented in the future, to avoid any potential issues with calculations and currency conversions. In the meantime, be aware, if this is a concern for you.
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
 If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the best choice for you.
@@ -70,6 +71,12 @@ and the [Installation instructions](https://yaffa.cc/documentation/resources/cat
 ## Upgrading
 
 When upgrading between major versions, please see the details and follow the instructions listed in the [upgrade guide](UPGRADE.md).
+
+## Contributors
+
+Thanks to these people for helping improve this project:
+
+- WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
 
 ## License
 

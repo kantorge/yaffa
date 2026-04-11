@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Sentinel\Drivers\Driver;
+use Laravel\Sentinel\Sentinel;
 use Laravel\Telescope\EntryType;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -17,6 +21,13 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     public function register(): void
     {
         Telescope::night();
+
+        Sentinel::extend('telescope', fn ($app) => new class (fn () => $app) extends Driver {
+            public function authorize(Request $request): bool
+            {
+                return true;
+            }
+        });
 
         $this->hideSensitiveRequestDetails();
 
@@ -76,7 +87,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     {
         Gate::define(
             'viewTelescope',
-            fn ($user) => in_array($user->email, [
+            fn (User $user) => in_array($user->email, [
                 config('yaffa.admin_email'),
             ])
         );

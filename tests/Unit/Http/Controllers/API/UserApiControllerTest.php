@@ -20,14 +20,16 @@ class UserApiControllerTest extends TestCase
             'end_date' => '2020-12-31',
             'account_details_date_range' => 'none',
         ]);
+
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/settings', [
+        $response = $this->json('PATCH', '/api/v1/users/me/settings', [
             'language' => 'hu',
             'locale' => 'hu-HU',
             'start_date' => '2021-01-01',
             'end_date' => '2021-12-31',
             'account_details_date_range' => 'yesterday',
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -59,12 +61,13 @@ class UserApiControllerTest extends TestCase
         $user->refresh(); // Refresh the model to get the start_date attribute
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/settings', [
+        $response = $this->json('PATCH', '/api/v1/users/me/settings', [
             'language' => $user->language,
             'locale' => $user->locale,
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->start_date->addYear()->format('Y-m-d'),
             'account_details_date_range' => $user->account_details_date_range,
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -80,12 +83,13 @@ class UserApiControllerTest extends TestCase
         $user->refresh(); // Refresh the model to get the locale attribute
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/settings', [
+        $response = $this->json('PATCH', '/api/v1/users/me/settings', [
             'language' => 'hu',
             'locale' => $user->locale,
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->end_date->format('Y-m-d'),
             'account_details_date_range' => $user->account_details_date_range,
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -101,12 +105,13 @@ class UserApiControllerTest extends TestCase
         $user->refresh(); // Refresh the model to get the start_date and end_date attributes
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/settings', [
+        $response = $this->json('PATCH', '/api/v1/users/me/settings', [
             'language' => 'en', // same as current
             'locale' => 'en-US', // same as current
             'start_date' => $user->start_date->format('Y-m-d'), // same as current
             'end_date' => $user->end_date->format('Y-m-d'), // same as current
             'account_details_date_range' => $user->account_details_date_range, // same as current
+            'auto_merge_standard_transaction_items' => false,
         ]);
 
         $response->assertStatus(200)
@@ -124,7 +129,7 @@ class UserApiControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/change_password', [
+        $response = $this->json('PATCH', '/api/v1/users/me/password', [
             'current_password' => 'password', // Assuming the factory sets this as default
             'password' => 'newPassword123',
             'password_confirmation' => 'newPassword123',
@@ -142,7 +147,7 @@ class UserApiControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/change_password', [
+        $response = $this->json('PATCH', '/api/v1/users/me/password', [
             'current_password' => 'wrongPassword',
             'password' => 'newPassword123',
             'password_confirmation' => 'newPassword123',
@@ -160,7 +165,7 @@ class UserApiControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/change_password', [
+        $response = $this->json('PATCH', '/api/v1/users/me/password', [
             'current_password' => 'password',
             'password' => 'newPassword123',
             // No password_confirmation provided
@@ -178,7 +183,7 @@ class UserApiControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/change_password', [
+        $response = $this->json('PATCH', '/api/v1/users/me/password', [
             'current_password' => 'password',
             'password' => 'short',
             'password_confirmation' => 'short',
@@ -196,7 +201,7 @@ class UserApiControllerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->json('PATCH', '/api/user/change_password', [
+        $response = $this->json('PATCH', '/api/v1/users/me/password', [
             'current_password' => 'password',
             'password' => 'newPassword',
             'password_confirmation' => 'newPassword',

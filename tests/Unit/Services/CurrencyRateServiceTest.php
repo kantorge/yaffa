@@ -58,7 +58,7 @@ class CurrencyRateServiceTest extends TestCase
 
     public function test_can_get_all_rates(): void
     {
-        CurrencyRate::factory()->count(3)->create([
+        $expectedRates = CurrencyRate::factory()->count(3)->create([
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
         ]);
@@ -73,10 +73,10 @@ class CurrencyRateServiceTest extends TestCase
         $rates = $this->service->getAllRates($this->fromCurrency->id, $this->toCurrency->id);
 
         $this->assertCount(3, $rates);
-        $rates->each(function ($rate) {
-            $this->assertEquals($this->fromCurrency->id, $rate->from_id);
-            $this->assertEquals($this->toCurrency->id, $rate->to_id);
-        });
+        $this->assertEqualsCanonicalizing(
+            $expectedRates->pluck('id')->all(),
+            $rates->pluck('id')->all()
+        );
     }
 
     public function test_can_get_rates_by_date_range(): void

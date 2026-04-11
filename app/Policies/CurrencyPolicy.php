@@ -5,8 +5,10 @@ namespace App\Policies;
 use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Auth\Access\Response;
 
+/**
+ * Response-based policy results are intentionally not used yet.
+ */
 class CurrencyPolicy
 {
     use HandlesAuthorization;
@@ -18,70 +20,56 @@ class CurrencyPolicy
 
     /**
      * Determine whether the user can view any models.
-     *
-     * @return Response|bool
      */
-    public function viewAny(): Response|bool
+    public function viewAny(): bool
     {
         return true;
     }
 
     /**
      * Determine whether the user can view the model.
-     *
-     * @return Response|bool
      */
-    public function view(User $user, Currency $currency): Response|bool
+    public function view(User $user, Currency $currency): bool
     {
         return $this->isOwnItem($user, $currency);
     }
 
     /**
      * Determine whether the user can create models.
-     *
-     * @return Response|bool
      */
-    public function create(): Response|bool
+    public function create(): bool
     {
         return true;
     }
 
     /**
      * Determine whether the user can update the model.
-     *
-     * @return Response|bool
      */
-    public function update(User $user, Currency $currency): Response|bool
+    public function update(User $user, Currency $currency): bool
     {
         return $this->isOwnItem($user, $currency);
     }
 
     /**
      * Determine whether the user can delete the model.
-     *
-     * @return Response|bool
      */
-    public function delete(User $user, Currency $currency): Response|bool
+    public function delete(User $user, Currency $currency): bool
     {
         return $this->isOwnItem($user, $currency);
     }
 
     /**
      * Determine whether the user can restore the model.
-     *
-     * @return Response|bool
      */
-    public function restore(User $user, Currency $currency): Response|bool
+    public function restore(User $user, Currency $currency): bool
     {
         return $this->isOwnItem($user, $currency);
     }
 
     /**
      * Determine whether the user can permanently delete the model.
-     *
-     * @return Response|bool
      */
-    public function forceDelete(User $user, Currency $currency): Response|bool
+    public function forceDelete(User $user, Currency $currency): bool
     {
         return $this->isOwnItem($user, $currency);
     }

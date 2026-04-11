@@ -4,18 +4,20 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import { __, toFormattedCurrency, transactionLink } from '../helpers';
-import * as toastHelpers from '../toast';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { escapeHtml, transactionLink } from '@/shared/lib/helpers';
+import * as toastHelpers from '@/shared/lib/toast';
 
 import {
     booleanToTableIcon,
-} from '../components/dataTableHelper';
+} from '@/shared/lib/datatable';
 
 
 const dataTableSelector = '#table';
 let ajaxIsBusy = false;
 
 window.table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.accounts,
     columns: [
         {
@@ -51,7 +53,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Opening balance"),
             render: function (data, type, row) {
                 if (type === 'display') {
-                    return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
+                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.config.currency);
                 }
                 return data;
             },
@@ -67,7 +69,7 @@ window.table = $(dataTableSelector).DataTable({
                     if (data > 0) {
                         return `<a href="${window.route('reports.transactions', {accounts: [row.id]})}"
                         title="${__('Show transactions')}"
-                        >${data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
+                        >${data.toLocaleString(window.YAFFA.userSettings.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
                     }
                     return data;
                 }
@@ -119,13 +121,13 @@ window.table = $(dataTableSelector).DataTable({
 
             // Send request to change account active state
             $.ajax ({
-                type: 'PUT',
-                url: window.route('api.accountentity.updateActive', {accountEntity: row.data().id, active: (row.data().active ? 0 : 1)}),
-                data: {
+                type: 'PATCH',
+                url: window.route('api.v1.account-entities.patch-active', {accountEntity: row.data().id}),
+                data: JSON.stringify({
                     "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
+                    "active": !row.data().active,
+                }),
+                contentType: 'application/json',
                 success: function (data) {
                     // Update row in table data source
                     window.accounts.filter(account => account.id === data.id)[0].active = data.active;
@@ -156,7 +158,10 @@ table.contextualActions({
     contextMenu: {
         enabled: true,
         isMulti: false,
-        headerRenderer: false,
+        headerRenderer: function (selectedRows) {
+            const rowData = selectedRows[0];
+            return escapeHtml(rowData.name);
+        },
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
@@ -167,6 +172,7 @@ table.contextualActions({
             type: 'option',
             title: __('Show details'),
             iconClass: 'fa fa-magnifying-glass',
+            contextMenuClasses: ['text-success'],
             action: function (row) {
                 window
                     .location
@@ -177,6 +183,7 @@ table.contextualActions({
             type: 'option',
             title: __('Edit'),
             iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
             action: function (row) {
                 window
                     .location
@@ -187,6 +194,7 @@ table.contextualActions({
             type: 'option',
             title: __('Show transactions'),
             iconClass: 'fa fa-list',
+            contextMenuClasses: ['text-info'],
             action: function (row) {
                 window
                     .location
@@ -229,13 +237,15 @@ table.contextualActions({
                     }
 
                     // Send request to delete account
-                    axios.delete(window.route('api.accountentity.destroy', account.id))
+                    axios.delete(window.route('api.v1.account-entities.destroy', account.id))
                     .then((response) => {
+                        const deletedAccountId = response.data.accountEntity.id;
+
                         // Update row in table data source
-                        window.accounts = window.accounts.filter(account => account.id !== response.data.accountEntity.id);
+                        window.accounts = window.accounts.filter(account => account.id !== deletedAccountId);
 
                         table
-                            .row(account)
+                            .row((_, data) => data.id === deletedAccountId)
                             .remove()
                             .draw();
 

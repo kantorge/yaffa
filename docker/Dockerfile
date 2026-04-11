@@ -11,22 +11,28 @@ RUN npm ci
 RUN npm run build
 
 # Stage 2: Base PHP + Apache setup (this part won't change often)
-FROM php:8.3-apache AS base
+FROM php:8.4-apache AS base
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     supervisor \
+    default-mysql-client \
     libzip-dev zip unzip git curl libxml2-dev zlib1g-dev libonig-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-        pdo pdo_mysql mbstring zip xml
+    pdo pdo_mysql mbstring zip xml gd exif
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Configure MySQL client to skip SSL verification (avoids self-signed cert errors in Docker)
+RUN printf '[client]\nssl=FALSE\n' > /root/.my.cnf && chmod 600 /root/.my.cnf
 
 # Stage 3: Copy application code, PHP dependencies, and built assets
 FROM base AS app

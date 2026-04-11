@@ -4,17 +4,13 @@ namespace Tests\Browser\Pages\Tags;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('extended')]
 class TagListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
-
-    // Helper function to read the number of tags in a DataTable
-    private function getTagCount(Browser $browser, string $tableSelector): int
-    {
-        return $browser->script("return $('{$tableSelector}').DataTable().rows({search:'applied'}).count()")[0];
-    }
 
     protected function setUp(): void
     {
@@ -42,7 +38,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags')
                 // Check that the tag list is visible
@@ -51,28 +47,28 @@ class TagListTest extends DuskTestCase
             // Get the number of tags in the table using JavaScript
             $this->assertEquals(
                 $user->tags()->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show only inactive tags
             $browser->click('label[for=table_filter_active_no]');
             $this->assertEquals(
                 $user->tags()->where('active', false)->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show only active tags
             $browser->click('label[for=table_filter_active_yes]');
             $this->assertEquals(
                 $user->tags()->where('active', true)->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the button bar to show all tags
             $browser->click('label[for=table_filter_active_any]');
             $this->assertEquals(
                 $user->tags()->count(),
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Filter the table using the search field
@@ -80,7 +76,7 @@ class TagListTest extends DuskTestCase
             // The number of filtered tags should be 1
             $this->assertEquals(
                 1,
-                $this->getTagCount($browser, '#table')
+                $this->getTableRowCount($browser, '#table')
             );
 
             // Clear the search field
@@ -88,7 +84,7 @@ class TagListTest extends DuskTestCase
             // Enter a dummy search string
             $browser->type('@input-table-filter-search', 'dummy');
             // The number of filtered tags should be 0
-            $this->assertEquals(0, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(0, $this->getTableRowCount($browser, '#table'));
         });
     }
 
@@ -101,7 +97,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Click the "Add" button
                 ->click('@button-new-tag')
                 // Wait for the form to load
@@ -123,14 +119,14 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags');
 
             // Click the "Edit" button for the first tag
             $browser->with('@table-tags', function ($table) use ($tagToEdit) {
                 // After save option "return to selected account" should be always visible
-                $table->click('a[href="' . route('tag.edit', $tagToEdit) . '"]');
+                $table->click('a[href="' . route('tags.edit', $tagToEdit) . '"]');
             });
             // Wait for the form to load
             $browser->waitFor('@form-tag')
@@ -154,7 +150,7 @@ class TagListTest extends DuskTestCase
                 // Acting as the main user
                 ->loginAs($user)
                 // Load the tag list
-                ->visitRoute('tag.index')
+                ->visitRoute('tags.index')
                 // Wait for the table to load
                 ->waitFor('@table-tags');
 

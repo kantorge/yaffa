@@ -4,10 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Currency;
 use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
@@ -40,26 +37,18 @@ class TransactionCurrencyTest extends TestCase
         /** @var Currency $baseCurrency */
         $baseCurrency = $this->user->currencies()->where('base', true)->first();
 
-        // Get key assets of the already selected test user
-        $account = $this->user->accounts()->with('config')->first();
-        $payee = $this->user->payees()->first();
-
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
             ->for($this->user)
-            ->for(TransactionDetailStandard::factory()->create([
-                'account_from_id' => $account->id,
-                'account_to_id' => $payee->id,
-                'amount_from' => 1000,
-                'amount_to' => 1000,
-            ]),
-            'config')
-            ->create([
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
-                'currency_id' => null,
-            ]);
+            ->withdrawal($this->user)
+            ->create();
 
-        // Should return base currency
-        $this->assertEquals($baseCurrency->id, $transaction->currency->id);
+        // The factory computes currency_id from account config; clear it to test the fallback accessor path.
+        $transaction->forceFill(['currency_id' => null])->saveQuietly();
+        $transaction->refresh();
+        $transaction->unsetRelation('currency');
+
+        $this->assertNull($transaction->currency);
+        $this->assertSame($baseCurrency->id, $transaction->transaction_currency?->id);
     }
 }

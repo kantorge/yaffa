@@ -3,12 +3,17 @@
 namespace App\Providers;
 
 use App\Components\MailHandler;
+use App\Jobs\GetInvestmentPrices;
 use App\Models\Account;
 use App\Models\Payee;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Services\InvestmentPriceProviderContextResolver;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Routing\Router;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -37,7 +42,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Add throttling rule to the API routes, if running in production
         if ($this->app->environment('production')) {
-            $this->app->router->middlewareGroup('api', [
+            $router = $this->app->make(Router::class);
+            $router->middlewareGroup('api', [
                 \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
                 \Illuminate\Routing\Middleware\SubstituteBindings::class,
                 \Illuminate\Routing\Middleware\ThrottleRequests::class . ':60:1',
@@ -58,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
         Password::defaults(function () {
             $rule = Password::min(8);
 
-            return $this->app->isProduction()
+            return $this->app->environment('production')
                 ? $rule->letters()
                     ->mixedCase()
                     ->numbers()
@@ -84,6 +90,37 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Auth\Listeners\SendEmailVerificationNotification::class,
             \App\Listeners\SendEmailVerificationNotification::class
         );
+
+        RateLimiter::for('investment-price-provider', function (object $job) {
+            if (! $job instanceof GetInvestmentPrices) {
+                return Limit::perMinute(10000)->by('investment-price-provider:default');
+            }
+
+            $policy = $job->getRateLimitPolicy(app(InvestmentPriceProviderContextResolver::class));
+            $bucketKey = isset($policy['bucketKey']) && is_string($policy['bucketKey'])
+                ? $policy['bucketKey']
+                : 'investment-price-provider:default';
+
+            $limits = [];
+
+            if (isset($policy['perSecond']) && is_numeric($policy['perSecond'])) {
+                $limits[] = Limit::perMinute(max(1, (int) $policy['perSecond'] * 60))->by($bucketKey . ':second');
+            }
+
+            if (isset($policy['perMinute']) && is_numeric($policy['perMinute'])) {
+                $limits[] = Limit::perMinute(max(1, (int) $policy['perMinute']))->by($bucketKey . ':minute');
+            }
+
+            if (isset($policy['perDay']) && is_numeric($policy['perDay'])) {
+                $limits[] = Limit::perDay(max(1, (int) $policy['perDay']))->by($bucketKey . ':day');
+            }
+
+            if ($limits === []) {
+                return Limit::perMinute(10000)->by($bucketKey . ':fallback');
+            }
+
+            return $limits;
+        });
 
         $this->bootEvent();
     }

@@ -37,6 +37,9 @@ services:
       # Uncomment the following line if you use Caddy as a reverse proxy
       # caddy:
       #   condition: service_started
+      # Uncomment the following lines if you use Tesseract OCR from the Docker sidecar
+      # tesseract:
+      #   condition: service_healthy
       db:
         condition: service_healthy
       redis:
@@ -59,6 +62,8 @@ services:
       - .env
     environment:
       RUNS_SCHEDULER: TRUE
+    volumes:
+      - yaffa_storage:/var/www/html/storage
     depends_on:
       db:
         condition: service_healthy
@@ -118,6 +123,41 @@ services:
   #   container_name: mailhog
   #   networks:
   #     - yaffa-network
+
+  # Tesseract OCR HTTP service
+  # Uncomment the following lines if you use Tesseract OCR from the Docker sidecar
+  # tesseract:
+  #   image: franky1/tesseract-ocr:5.5.2
+  #   container_name: yaffa_tesseract
+  #   ports:
+  #     - '8888:8888'
+  #   environment:
+  #     # Comma-separated list of languages to install (eng, fra, deu, etc.)
+  #     TESSERACT_LANGUAGES: 'eng'
+  #     # HTTP server timeout in seconds
+  #     TESSERACT_TIMEOUT: 30
+  #     PORT: 8888
+  #   volumes:
+  #    # Temporary directory for processing
+  #    - '/tmp:/tmp'
+  #  networks:
+  #     - yaffa-network
+  #   healthcheck:
+  #     test: ['CMD', 'curl', '-f', 'http://localhost:8888/health']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 5s
+  #   restart: unless-stopped
+  #   # Optional: Resource limits for Docker
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '2'
+  #         memory: 1G
+  #       reservations:
+  #         cpus: '1'
+  #         memory: 512M
 
 volumes:
   caddy_data:

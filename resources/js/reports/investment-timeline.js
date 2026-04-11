@@ -1,23 +1,31 @@
 // Import AmCharts libraries
-import * as am4core from "@amcharts/amcharts4/core";
-import * as am4charts from "@amcharts/amcharts4/charts";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
+import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { __, toFormattedCurrency } from "../helpers";
-import * as toastHelpers from '../toast';
-import { investmentGroupTree } from "../components/dataTableHelper";
+import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+import * as toastHelpers from '@/shared/lib/toast';
+import { investmentGroupTree } from '@/shared/lib/datatable';
 
 window.chartData = [];
 let chart;
 
 function initializeChart() {
+    if (chart) {
+        chart.dispose();
+    }
+
     chart = am4core.create("chart", am4charts.XYChart);
+    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
     chart.hiddenState.properties.opacity = 0;
     chart.paddingRight = 30;
     chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+    chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
     var colorSet = new am4core.ColorSet();
     colorSet.saturation = 0.4;
@@ -36,7 +44,7 @@ function initializeChart() {
     dateAxis.dateFormatter.dateFormat = "yyyy-MM-dd";
     dateAxis.renderer.minGridDistance = 70;
     dateAxis.baseInterval = { count: 1, timeUnit: "month" };
-    dateAxis.max = new Date(window.YAFFA.end_date).getTime();
+    dateAxis.max = new Date(window.YAFFA.userSettings.end_date).getTime();
     dateAxis.strictMinMax = true;
     dateAxis.renderer.tooltipLocation = 0;
 
@@ -144,20 +152,20 @@ investmentGroupTree(
 );
 
 // Fetch API and calculate Gantt dates
-fetch('/api/assets/investment/timeline')
+fetch('/api/v1/investments/timeline')
     .then(response => response.json())
     .then(function(data) {
         window.chartData = data.map(function(item) {
             item.value = item.quantity * item.last_price;
 
             item.formatted_quantity = item.quantity.toLocaleString(
-                window.YAFFA.locale,
+                window.YAFFA.userSettings.locale,
                 {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 4,
                 }
             );
-            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.locale, item.currency);
+            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.userSettings.locale, item.currency);
 
             return item;
         });
@@ -165,7 +173,6 @@ fetch('/api/assets/investment/timeline')
         initializeChart();
     })
     .then(() => {
-        initializeChart();
         document.getElementById('chart-placeholder').style.display = 'none';
         document.getElementById('chart').style.display = 'block';
     })

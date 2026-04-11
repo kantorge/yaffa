@@ -6,9 +6,11 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 use Throwable;
 
+#[Group('critical')]
 class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -48,7 +50,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
             ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
             // Select type
-            ->select('#transaction_type', 'Buy')
+            ->select('#transaction_type', 'buy')
             // Add quantity
             ->type('#transaction_quantity', '10')
             // Add price
@@ -238,7 +240,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 // Select type
-                ->select('#transaction_type', 'Sell')
+                ->select('#transaction_type', 'sell')
                 // Verify that dividend field is disabled
                 ->assertDisabled('#transaction_dividend')
                 // Add quantity
@@ -262,13 +264,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 ->waitFor(self::MAIN_FORM_SELECTOR)
-
+                // Select type
+                ->select('#transaction_type', 'dividend')
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                // Select type
-                ->select('#transaction_type', 'Dividend')
                 // Verify that quantity field is disabled
                 ->assertDisabled('#transaction_quantity')
                 // Verify that price field is disabled
@@ -279,6 +280,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->type('#transaction_commission', '30')
                 // Add taxes
                 ->type('#transaction_tax', '40')
+                // Additionally, verify the store price checkbox is not visible for dividend transactions
+                ->assertMissing('#store_price_checkbox')
                 // Submit form
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 10)
                 // A success message should be available in a Vue component
@@ -307,7 +310,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                     // Select investment
                     ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                     // Select type
-                    ->select('#transaction_type', 'Add shares')
+                    ->select('#transaction_type', 'add_shares')
                     // Verify that price field is disabled
                     ->assertDisabled('#transaction_price')
                     // Add quantity
@@ -430,7 +433,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->first();
 
             $browser->assertRouteIs(
-                'investment.show',
+                'investments.show',
                 ['investment' => $transaction->config->investment_id]
             );
         });
@@ -453,11 +456,11 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                ->visitRoute('tag.index');
+                ->visitRoute('tags.index');
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="back"]')
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
-                ->assertRouteIs('tag.index');
+                ->assertRouteIs('tags.index');
         });
     }
 
@@ -508,8 +511,16 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 )
                 // Wait for the form and the Select2 elements to load
                 ->waitFor(self::MAIN_FORM_SELECTOR)
-                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
-                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+                ->waitForTextIn(
+                    self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_ACCOUNT_NAME_USD,
+                    10
+                )
+                ->waitForTextIn(
+                    self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_INVESTMENT_NAME_USD,
+                    10
+                )
 
                 // Verify that the account is selected
                 ->assertSeeIn(
@@ -546,7 +557,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Add quantity
                 ->type('#transaction_quantity', '10')
                 // Add price - this should trigger the price check
@@ -581,7 +592,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
 
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Select account and investment
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
@@ -616,7 +627,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Fill the form
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '10')
                 ->type('#transaction_price', '35.75')
                 ->type('#transaction_commission', '5')
@@ -669,7 +680,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Fill the form
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_EUR, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '5')
                 ->type('#transaction_price', '42.25')
                 ->type('#transaction_commission', '3')
@@ -694,29 +705,6 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->where('date', now()->format('Y-m-d'))
                 ->first();
             $this->assertNull($investmentPrice);
-        });
-    }
-
-    public function test_store_price_checkbox_not_visible_for_dividend_transactions(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
-                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
-
-                // Select account and investment
-                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                // Select dividend transaction type
-                ->select('#transaction_type', 'Dividend')
-                // Add dividend amount
-                ->type('#transaction_dividend', '50')
-                // Wait a bit
-                ->pause(1000)
-                // Verify the store price checkbox is not visible for dividend transactions
-                ->assertMissing('#store_price_checkbox');
         });
     }
 }

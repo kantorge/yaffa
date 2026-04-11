@@ -13,7 +13,8 @@ class SearchController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 
@@ -23,9 +24,9 @@ class SearchController extends Controller implements HasMiddleware
     public function search(Request $request): View
     {
         /**
-         * @get('/search')
-         * @name('search')
-         * @middlewares('web')
+         * @get("/search")
+         * @name("search")
+         * @middlewares("web")
          */
         $searchTerm = $request->get('q');
         $results = [];
@@ -100,6 +101,7 @@ class SearchController extends Controller implements HasMiddleware
     {
         return $user
             ->categories()
+            ->with('parent')
             ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('full_name');
@@ -124,7 +126,6 @@ class SearchController extends Controller implements HasMiddleware
     {
         return $user
             ->transactions()
-            ->with('transactionType')
             ->whereRaw('UPPER(`comment`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->orderBy('date')
             ->get();

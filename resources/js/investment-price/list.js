@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
-import InvestmentPriceManager from '../components/InvestmentPrice/InvestmentPriceManager.vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
+import InvestmentPriceManager from './components/InvestmentPriceManager.vue';
 
 const app = createApp({
   components: {
@@ -7,5 +8,6 @@ const app = createApp({
   },
 });
 
+installRouteGlobal(app);
 app.mount('#investmentPriceApp');
 
