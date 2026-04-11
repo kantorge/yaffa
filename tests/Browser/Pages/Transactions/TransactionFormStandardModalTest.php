@@ -132,8 +132,8 @@ class TransactionFormStandardModalTest extends DuskTestCase
 
                 // Fill the form
                 // Account (account from) is pre-selected (account_entity 1)
-                // Select payee (account to), random from dropdown
-                ->select2('#account_to', null, 10)
+                // Select payee (account to) by searching for a known payee from the fixed seeder
+                ->select2('#account_to', 'Auchan', 10)
                 // Add amount
                 ->type('#transaction_amount_from', '100')
                 // Allocate the same amount to a random category by adding one new item
