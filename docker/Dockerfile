@@ -31,6 +31,9 @@ RUN a2enmod rewrite
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Configure MySQL client to skip SSL verification (avoids self-signed cert errors in Docker)
+RUN printf '[client]\nssl=FALSE\n' > /root/.my.cnf && chmod 600 /root/.my.cnf
+
 # Stage 3: Copy application code, PHP dependencies, and built assets
 FROM base AS app
 
