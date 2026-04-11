@@ -35,12 +35,17 @@ This version introduces several significant changes:
 
 - **Investment Price Providers Refactored**: The `investment_provider_configs` table has been introduced to store user-specific credentials and settings for investment price providers. Instead of global .env settings, users can now configure providers individually, and the scheduler checks for config availability before dispatching jobs.
 
+- **API Changes**: Several API endpoints have been changed or removed with the intent of adopting versioning and a more consistent naming convention. If you have any custom integrations or scripts that interact with the YAFFA API, you will need to review and update them according to the new API structure.
+
+- **Database Changes**: Some database columns were not marked as `signed` in YAFFA 2.x, even though they should be. In YAFFA 3.x, these columns are now `UNSIGNED`, which means that any negative values in these columns will cause the migration to fail. Why the app should have prevented capturing such values, this is still a risk during the migration. The pre-upgrade safety check command (see below) can help identify such issues before running the migration.
+
 ### Step-by-step Guide
 
 #### 1. Upgrade to the latest YAFFA 2.x release
 
-Before installing YAFFA 3.x, first update to the latest available YAFFA 2.x release.
-This ensures the pre-upgrade safety check command is available in your existing installation.
+Before installing YAFFA 3.x, first update to the latest available YAFFA 2.x release. This ensures the pre-upgrade safety check command is available in your existing installation.
+
+It is also needed to be on the latest 2.x release, as all migration files of the 2.x series are moved into a schema file, and the migration path might not be complete if you are on an older 2.x release.
 
 #### 2. Run the pre-upgrade safety check command (optional but recommended)
 
@@ -51,9 +56,9 @@ php artisan app:upgrade:check-3x
 ```
 
 This command is read-only and checks for known data issues that would block the 3.x database migrations.
-At the moment, it validates at least the following:
+At the moment, it validates the following:
 
-- unsupported legacy `transaction_type_id` values (`9` or `10`)
+- presence of unsupported legacy `transaction_type_id` values (`9` or `10`)
 - negative values in decimal columns that will become `UNSIGNED` in YAFFA 3.x
 
 If the command reports any issues, fix them first, then run the command again until it succeeds.
@@ -71,6 +76,13 @@ mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
 
 # On Windows (PowerShell):
 mysqldump -u username -p database_name > "yaffa_backup_$(Get-Date -Format 'yyyyMMdd').sql"
+
+# Example for Docker, backing up a named volume (Windows PowerShell):
+docker run --rm -v yaffa_yaffa_db:/data -v ${PWD}:/backup alpine tar czf /backup/yaffa_db.tar.gz -C /data .
+
+# Example for Docker, backing up YAFFA database from the MySQL container (Windows PowerShell):
+docker exec yaffa-db-1 mysqldump -u<username> -p<password> yaffa_db 2>$null `  | Out-File -FilePath yaffa_sail-mysql.sql -Encoding UTF8
+
 ```
 
 #### 4. Update your `.env` file
@@ -110,63 +122,80 @@ TESSERACT_HTTP_TIMEOUT=30
 | `TESSERACT_HTTP_PORT`    | `8888`               | Tesseract sidecar port (http mode only)                            |
 | `TESSERACT_HTTP_TIMEOUT` | `30`                 | Request timeout in seconds (http mode only)                        |
 
-After editing your `.env`, clear the config cache:
+**Source code users:** After editing your `.env`, clear the config cache before continuing:
 
 ```bash
 php artisan config:clear
 ```
+
+Docker users can skip this — the container entrypoint handles cache clearing automatically on restart.
 
 **Alpha Vantage Investment Price Provider (optional — only needed if you use this provider):**
 
 - Take a note of the value of `ALPHA_VANTAGE_KEY` in your `.env` file, and you can remove this obsolete global setting. (You'll need to re-enter it on the updated UI.)
 
-#### 5. Install the new version of YAFFA
+#### 5. Install the new version of YAFFA and apply all changes
 
-- If you're using the source code, pull the latest changes from GitHub and run `composer install` to update dependencies.
-- If you're using Docker, pull the latest image from Docker Hub. See also the **Note for Docker users** section below before restarting your container.
+From this point, the steps differ depending on your hosting option. Follow only the section that applies to you.
 
-#### 6. Run the migrations
+##### Docker users
 
-```bash
-php artisan migrate
-```
+1. **Update your `docker-compose.yml`** to reflect the infrastructure changes:
+   - Decide whether to use Tesseract OCR as a local service. It is disabled by default and not needed if you only use a Vision AI model for document processing, or if you don't use document processing at all.
+   - If you want to use Tesseract OCR, uncomment the relevant lines in the `depends_on` section of the `app` service and uncomment the entire `tesseract` service definition.
+   - If using Tesseract in `http` mode, set `TESSERACT_HTTP_HOST` to the Docker service name (e.g., `tesseract`) and set `TESSERACT_ENABLED=true`.
 
-This will perform the following changes:
+2. **Pull the latest image and restart your container**:
+   ```bash
+   docker compose pull
+   docker compose up -d
+   ```
+   The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup. No further action is required.
 
-- Add a new `transaction_type` ENUM column to the `transactions` table, migrate all data, and drop the legacy `transaction_type_id` column and `transaction_types` table.
-- Create new tables: `ai_documents`, `ai_document_files`, `ai_provider_configs`, `category_learning`, `google_drive_configs`, `ai_user_settings`.
-- Add an `ai_document_id` column to the `transactions` table.
-- Migrate processed `received_mails` rows into the `ai_documents` table, then drop the legacy `transaction_data`, `processed`, `handled`, and `transaction_id` columns from `received_mails`.
+##### Source code users
 
-**Note**: The transaction type migration is irreversible after the `transaction_types` table is dropped. Ensure you have a backup before proceeding.
+1. **Pull the latest changes** from GitHub:
 
-#### 7. Clear caches
+   ```bash
+   git pull
+   ```
 
-```bash
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-```
+2. **Install updated dependencies**:
 
-#### 8. Rebuild frontend assets (if running from source)
+   ```bash
+   composer install
+   ```
 
-```bash
-npm install && npm run build
-```
+3. **Run the migrations**:
 
-#### 9. Configure Alpha Vantage price provider in the UI (if applicable)
+   ```bash
+   php artisan migrate
+   ```
+
+   This will perform the following changes:
+   - Add a new `transaction_type` ENUM column to the `transactions` table, migrate all data, and drop the legacy `transaction_type_id` column and `transaction_types` table.
+   - Create new tables: `ai_documents`, `ai_document_files`, `ai_provider_configs`, `category_learning`, `google_drive_configs`, `ai_user_settings`.
+   - Add an `ai_document_id` column to the `transactions` table.
+   - Migrate processed `received_mails` rows into the `ai_documents` table, then drop the legacy `transaction_data`, `processed`, `handled`, and `transaction_id` columns from `received_mails`.
+
+   **Note**: The transaction type migration is irreversible after the `transaction_types` table is dropped. Ensure you have a backup before proceeding.
+
+4. **Clear caches**:
+
+   ```bash
+   php artisan config:clear
+   php artisan cache:clear
+   php artisan view:clear
+   ```
+
+5. **Rebuild frontend assets**:
+   ```bash
+   npm install && npm run build
+   ```
+
+#### 6. Configure Alpha Vantage price provider in the UI (if applicable)
 
 If you have investments with automatic price retrieval using the Alpha Vantage provider, you need to re-enter your API key in the new provider configuration UI, and make sure to test the connection. Make this as soon as possible after the upgrade, because the scheduler will stop working for these investments until the provider config is not configured.
-
-### Note for Docker users
-
-You'll need to adjust your `docker-compose.yml` to reflect the changes in the app infrastructure.
-
-- Decide if you want to use Tesseract OCR as a local service or not. Tesseract is disabled by default, and not needed if you only use Vision AI for document processing or if you don't use document processing at all.
-- If you want to use Tesseract OCR, make sure to uncomment the relevant lines in the `depends_on` section of the `app` service, and uncomment the entire `tesseract` service definition as well.
-- If using Tesseract in http mode, set `TESSERACT_HTTP_HOST` to the Docker service name (e.g., `tesseract`) and set `TESSERACT_ENABLED=true`.
-
-Make sure to pull the updated images and rebuild your containers after making these changes.
 
 ## Upgrade from YAFFA 1.x to 2.x
 
