@@ -111,6 +111,12 @@ class ResetDemoDatabase extends Command
                 'api_key' => config('demo.ai_api_key'),
                 'vision_enabled' => true,
             ]);
+
+            // We also need to update or create the AI settings for the demo user, to make sure AI features are enabled
+            app(AiUserSettingsResolver::class)->updateForUser($demoUser, [
+                'ai_enabled' => true,
+            ]);
+
             $this->info('AI Provider Config created.');
         } else {
             $this->warn('Skipping AI Provider Config - DEMO_AI_API_KEY not set');
