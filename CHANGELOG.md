@@ -2,11 +2,11 @@
 
 ## [3.0.1](https://github.com/kantorge/yaffa/compare/v3.0.0...v3.0.1) (2026-04-11)
 
-
 ### 🐛 Bug Fixes
 
-* ability to clear selections on the payee form ([020a17d](https://github.com/kantorge/yaffa/commit/020a17dba010ddaa78bca2892c0b321421a356ac))
-* remove incorrectly applied static label ([652c422](https://github.com/kantorge/yaffa/commit/652c422997f25944c3b58f8776178e87f30a74bd))
+- ability to clear selections on the payee form ([020a17d](https://github.com/kantorge/yaffa/commit/020a17dba010ddaa78bca2892c0b321421a356ac))
+- remove incorrectly applied static label ([652c422](https://github.com/kantorge/yaffa/commit/652c422997f25944c3b58f8776178e87f30a74bd))
+
 
 ## [3.0.0](https://github.com/kantorge/yaffa/compare/v2.3.1...v3.0.0) (2026-04-11)
 
