@@ -489,7 +489,6 @@ A few notes on the statuses
     - `--html=HTML` - HTML email body
     - `--sync` - Process synchronously (skip queue, for debugging)
     - `--create-user` - Auto-create user if sender doesn't exist
-    - `--use-demo` - Shortcut: sets --from=demo@yaffa.cc and enables --create-user
   - Implementation:
     - Builds proper MIME multipart/alternative messages compatible with beyondcode/laravel-mailbox
     - Uses InboundEmail::fromMessage() to create mailbox-compatible objects
