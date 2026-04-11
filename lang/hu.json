@@ -525,7 +525,6 @@
     "Matched database entity": "Egyező adatbázis-elem",
     "Matching Mode": "Egyezési mód",
     "Max Suggestions": "Javaslatok maximális száma",
-    "Maximum 10 files per submission": "Maximum 10 fájl beküldhető",
     "Maximum image height in pixels for Vision AI processing. Images taller than this will be downscaled.": "A Vision AI feldolgozásához szükséges maximális képmagasság pixelben. Az ennél magasabb képek méretezve lesznek.",
     "Maximum image width in pixels for Vision AI processing. Images wider than this will be downscaled.": "Maximális képszélesség pixelben a Vision AI feldolgozásához. Az ennél szélesebb képeket a rendszer lekicsinyíti.",
     "Maximum number of asset match suggestions to return per document.": "Dokumentumonként visszaadható eszközegyeztetési javaslatok maximális száma.",

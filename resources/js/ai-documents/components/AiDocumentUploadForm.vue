@@ -132,9 +132,6 @@
                   }}
                 </button>
               </div>
-              <small class="form-text text-muted d-block mt-2">
-                {{ __('Maximum 10 files per submission') }}
-              </small>
             </div>
 
             <!-- Custom Prompt Section -->

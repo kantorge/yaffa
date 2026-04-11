@@ -95,12 +95,6 @@ class ResetDemoDatabase extends Command
         DB::unprepared(file_get_contents($file));
         $this->info('Demo data loaded.');
 
-        // Create a set of sample received mails for the demo user, which can be used to test the email processing features of the app.
-        // These will be raw incoming mails, which will have to be processed before they can be finalized as a transaction. This allows testing the full flow of incoming mail processing, including the AI parsing features.
-        // Note, that there can be other AI Document records in the demo.sql file, but IDs should not conflict
-        $this->info('Creating sample received mails...');
-        $this->createSampleReceivedMails();
-
         // Create AI Provider Config for demo user, if provided
         if (config('demo.ai_api_key')) {
             // Ensure we don't have multiple configs for the demo user, until this constraint is active
@@ -111,7 +105,19 @@ class ResetDemoDatabase extends Command
                 'api_key' => config('demo.ai_api_key'),
                 'vision_enabled' => true,
             ]);
+
+            // We also need to update or create the AI settings for the demo user, to make sure AI features are enabled
+            app(AiUserSettingsResolver::class)->updateForUser($demoUser, [
+                'ai_enabled' => true,
+            ]);
+
             $this->info('AI Provider Config created.');
+
+            // Create a set of sample received mails for the demo user, which can be used to test the email processing features of the app.
+            // These will be raw incoming mails, which will have to be processed before they can be finalized as a transaction. This allows testing the full flow of incoming mail processing, including the AI parsing features.
+            // Note, that there can be other AI Document records in the demo.sql file, but IDs should not conflict
+            $this->info('Creating sample received mails...');
+            $this->createSampleReceivedMails();
         } else {
             $this->warn('Skipping AI Provider Config - DEMO_AI_API_KEY not set');
         }
