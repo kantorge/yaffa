@@ -103,11 +103,9 @@
   const isLoading = ref(false);
   const route = window.route;
   const aiProcessingEnabled = ref(
-    window.aiDocumentConfig?.aiProcessingEnabled ?? true,
+    window.aiDocumentConfig?.aiProcessingEnabled ?? false,
   );
-  const aiSettingsUrl = ref(
-    window.aiDocumentConfig?.aiSettingsUrl || route('user.ai-settings'),
-  );
+  const aiSettingsUrl = ref(route('user.ai-settings'));
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);

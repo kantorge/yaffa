@@ -57,7 +57,6 @@ class AiDocumentController extends Controller implements HasMiddleware
                 'maxFileSize' => config('ai-documents.file_upload.max_file_size_mb'),
                 'allowedTypes' => config('ai-documents.file_upload.allowed_types'),
                 'aiProcessingEnabled' => $this->aiUserSettingsResolver->isEnabledForUser($user),
-                'aiSettingsUrl' => route('user.ai-settings'),
             ],
         ]);
 
