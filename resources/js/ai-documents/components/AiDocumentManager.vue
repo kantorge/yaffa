@@ -101,11 +101,10 @@
   const tableRef = ref(null);
   const uploadFormRef = ref(null);
   const isLoading = ref(false);
+  const aiProcessingEnabled =
+    window.aiDocumentConfig?.aiProcessingEnabled ?? false;
   const route = window.route;
-  const aiProcessingEnabled = ref(
-    window.aiDocumentConfig?.aiProcessingEnabled ?? false,
-  );
-  const aiSettingsUrl = ref(route('user.ai-settings'));
+  const aiSettingsUrl = route('user.ai-settings');
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
