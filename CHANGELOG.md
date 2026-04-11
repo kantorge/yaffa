@@ -1,5 +1,79 @@
 # Changelog
 
+## [3.0.0](https://github.com/kantorge/yaffa/compare/v2.3.1...v3.0.0) (2026-04-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* 
+
+### 🛠️ Chores
+
+* **deps-dev:** bump minimatch ([#424](https://github.com/kantorge/yaffa/issues/424)) ([1ca35e0](https://github.com/kantorge/yaffa/commit/1ca35e0867762f8eae8888b16574789a464067fb))
+* **deps-dev:** bump vite from 7.3.1 to 7.3.2 in the npm_and_yarn group across 1 directory ([3f78ef0](https://github.com/kantorge/yaffa/commit/3f78ef0e2d2361d55e1938e2b6c5fa40f6524e18))
+* **deps-dev:** bump vite in the npm_and_yarn group across 1 directory ([741a6f2](https://github.com/kantorge/yaffa/commit/741a6f2f1bac5ef433fdbf764d3f94bb0bb2d44a))
+* **deps:** bump axios from 1.13.5 to 1.15.0 in the npm_and_yarn group across 1 directory ([db39122](https://github.com/kantorge/yaffa/commit/db39122938a61636b3a4cf6a79dc678340101231))
+* **deps:** bump axios in the npm_and_yarn group across 1 directory ([ed2cf99](https://github.com/kantorge/yaffa/commit/ed2cf99a715d2e2f9a2e33a6b065901b82d2cb13))
+* **deps:** bump phpseclib/phpseclib ([481c675](https://github.com/kantorge/yaffa/commit/481c675b47a83ed6e5ecc180e367e07728dc7aca))
+* **deps:** bump phpseclib/phpseclib from 3.0.50 to 3.0.51 in the composer group across 1 directory ([2652ba0](https://github.com/kantorge/yaffa/commit/2652ba0f6e30c6eac406bc3666ed9cb10cab04e5))
+* **deps:** bump the npm_and_yarn group across 1 directory with 3 updates ([54eaf9d](https://github.com/kantorge/yaffa/commit/54eaf9d1fab0a91b6e5664bd925b4596dc67a176))
+* **deps:** bump the npm_and_yarn group across 1 directory with 3 updates ([b957124](https://github.com/kantorge/yaffa/commit/b957124050216ecf448a9d5b50f461a9bb4da2e9))
+* **deps:** update mathjs to v15.2.0 and update lockfiles ([225269e](https://github.com/kantorge/yaffa/commit/225269e8db498b2c0382cf2f21abb8d6e1d5466e))
+* **deps:** update peer field handling in package-lock ([4ad63be](https://github.com/kantorge/yaffa/commit/4ad63beb6897511a28120bb415c2f78f420a1fd5))
+* **release:** bump version to 3.0.0 ([bb53ad0](https://github.com/kantorge/yaffa/commit/bb53ad029b546ad5e1445a8552825ce2f45d79dc))
+
+
+### 🎡 Continuous Integration
+
+* add optional contributor docker build workflow ([#419](https://github.com/kantorge/yaffa/issues/419)) ([9d636c3](https://github.com/kantorge/yaffa/commit/9d636c37f0b7749fcffbebc8039f3ee563cbbcdf))
+* minor adjustment to contributor Docker action ([23ee32d](https://github.com/kantorge/yaffa/commit/23ee32d8e27b23511e4559abf3bc9ffea5ba9043))
+
+
+### 📚 Documentation
+
+* added cross-reference between AI Documents and planned CSV/QIF import ([c9ea8ea](https://github.com/kantorge/yaffa/commit/c9ea8eaaf43535426356aca31822d0d6bff65c39))
+* adjust and extend the V3 migration guide ([1ff1160](https://github.com/kantorge/yaffa/commit/1ff1160dab78c2bb3f1f10b3d3caffa8ef8365e9))
+* fix some outdated Copilot instructions ([dc4018f](https://github.com/kantorge/yaffa/commit/dc4018f07eaec01cc93acf1d0ab173478b80fca1))
+
+
+### ✨ Features
+
+* preparations for version 3 ([5973a19](https://github.com/kantorge/yaffa/commit/5973a193fd5b7291432db3ae90166fd2fdb56378))
+
+
+### 🐛 Bug Fixes
+
+* add mysql to the Docker-based installation for the MySQL dump ([c214363](https://github.com/kantorge/yaffa/commit/c2143632af7abd9ce595246a28095961dc4cf87c))
+* auto-merging command performance ([0b90650](https://github.com/kantorge/yaffa/commit/0b906502493604b6d0b31a100f61af46ec554a11))
+* Docker build settings ([52cd878](https://github.com/kantorge/yaffa/commit/52cd878139f362eb0599d9ccb4f2c649c253a8d8))
+* Docker folder permissions ([5f2465a](https://github.com/kantorge/yaffa/commit/5f2465a271b8ef4f9d8d9a27068798324fc3d56d))
+* improvements of Hungarian translation ([90a1c48](https://github.com/kantorge/yaffa/commit/90a1c48e49c49de62b254f37a8a723247f8e7482))
+* investment price retry mechanism ([59f1fb7](https://github.com/kantorge/yaffa/commit/59f1fb78b1d2cd2b5cfdfdde64c9229a16efd567))
+* minor translation issues ([f80ec30](https://github.com/kantorge/yaffa/commit/f80ec30131d4ed7a3c66b50d63dcf17c778f99b9))
+* NPM updates ([4750bb7](https://github.com/kantorge/yaffa/commit/4750bb743c1c80652df033aedd508fb0fc16e980))
+* redesign investment price provider architecture ([#452](https://github.com/kantorge/yaffa/issues/452)) ([9d0cee4](https://github.com/kantorge/yaffa/commit/9d0cee4a7e84bed71496240078dd3f9bee6bce03))
+* restrict AI settings updates in sandbox mode ([84c61e6](https://github.com/kantorge/yaffa/commit/84c61e6d02953586f456590cfe3481aa143408ff))
+* risky tests ([fd3484e](https://github.com/kantorge/yaffa/commit/fd3484e2786f4ae58919a83b62c91d2c3f7f7f2f))
+* transaction deletion behavior ([#447](https://github.com/kantorge/yaffa/issues/447)) ([e99c0ab](https://github.com/kantorge/yaffa/commit/e99c0ab39257201689058974fca04710aea9393b))
+* translation related fixes and improvements ([41615e9](https://github.com/kantorge/yaffa/commit/41615e9c3e093c87a8537ead59f2617dee4684c3))
+
+
+### 🚀 Performance Improvements
+
+* **db:** add composite indexes for query performance ([7d4976d](https://github.com/kantorge/yaffa/commit/7d4976d22b045115982e2315bdd01685c12b92de))
+
+
+### 🔨 Code Refactoring
+
+* **api:** unify date filtering logic for reports ([1b36ae4](https://github.com/kantorge/yaffa/commit/1b36ae435537d3f2a4bc23a7fdc20788717c0f65))
+* move AI step handling into dedicated gateway and recorder ([#448](https://github.com/kantorge/yaffa/issues/448)) ([97689db](https://github.com/kantorge/yaffa/commit/97689db2f18c76d34ef52caa9621574cb8500acd))
+* Vue event handlers to use arrow functions ([#449](https://github.com/kantorge/yaffa/issues/449)) ([e125cf8](https://github.com/kantorge/yaffa/commit/e125cf8611872fda06450cb0cf640c9edd9fed52))
+
+
+### 🧪 Tests
+
+* **browser:** improve payee selection in transaction modal test ([3f277e7](https://github.com/kantorge/yaffa/commit/3f277e72ca60cf8d5a59d7e9239a48f4d4c172ed))
+
 ## [2.3.1](https://github.com/kantorge/yaffa/compare/v2.3.0...v2.3.1) (2026-03-26)
 
 
