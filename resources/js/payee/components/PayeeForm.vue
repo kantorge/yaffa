@@ -294,6 +294,7 @@
 
         this.categorySelect
           .select2({
+            language: window.YAFFA.userSettings.language,
             theme: 'bootstrap-5',
             ajax: {
               url: '/api/v1/categories',
@@ -320,12 +321,12 @@
               },
               cache: true,
             },
-            selectOnClose: true,
+            selectOnClose: false,
             placeholder: __('Select category'),
             allowClear: true,
             dropdownParent: $('#' + this.id),
           })
-          .on('change', () => {
+          .on('select2:select select2:unselect', () => {
             const selectedValue = this.categorySelect.val();
 
             this.form.config.category_id =
@@ -346,6 +347,7 @@
         const baseConfig = {
           theme: 'bootstrap-5',
           multiple: true,
+          language: window.YAFFA.userSettings.language,
           ajax: {
             url: '/api/v1/categories',
             dataType: 'json',
@@ -380,24 +382,28 @@
             },
             cache: true,
           },
-          selectOnClose: true,
+          selectOnClose: false,
           placeholder: __('Select category'),
           allowClear: true,
           width: '100%',
           dropdownParent: $('#' + this.id),
         };
 
-        this.preferredSelect.select2(baseConfig).on('change', () => {
-          this.form.config.preferred = (this.preferredSelect.val() || []).map(
-            (item) => Number(item),
-          );
-        });
+        this.preferredSelect
+          .select2(baseConfig)
+          .on('select2:select select2:unselect', () => {
+            this.form.config.preferred = (this.preferredSelect.val() || []).map(
+              (item) => Number(item),
+            );
+          });
 
-        this.notPreferredSelect.select2(baseConfig).on('change', () => {
-          this.form.config.not_preferred = (
-            this.notPreferredSelect.val() || []
-          ).map((item) => Number(item));
-        });
+        this.notPreferredSelect
+          .select2(baseConfig)
+          .on('select2:select select2:unselect', () => {
+            this.form.config.not_preferred = (
+              this.notPreferredSelect.val() || []
+            ).map((item) => Number(item));
+          });
       },
 
       setSelectValue(selectElement, category) {
