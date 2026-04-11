@@ -525,7 +525,6 @@
     "Matched database entity": "Zgodna jednostka bazy danych",
     "Matching Mode": "Tryb dopasowania",
     "Max Suggestions": "Maksymalne sugestie",
-    "Maximum 10 files per submission": "Maksymalnie 10 plików na jedno zgłoszenie",
     "Maximum image height in pixels for Vision AI processing. Images taller than this will be downscaled.": "Maksymalna wysokość obrazu w pikselach do przetwarzania Vision AI. Obrazy wyższe od tej wartości zostaną zmniejszone.",
     "Maximum image width in pixels for Vision AI processing. Images wider than this will be downscaled.": "Maksymalna szerokość obrazu w pikselach do przetwarzania Vision AI. Obrazy szersze niż ta szerokość zostaną zmniejszone.",
     "Maximum number of asset match suggestions to return per document.": "Maksymalna liczba sugestii dopasowania zasobów zwracanych na dokument.",

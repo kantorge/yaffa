@@ -26,8 +26,7 @@ class SimulateIncomingEmail extends Command
         {--html= : HTML body}
         {--message-id= : Message ID override}
         {--user-id= : User ID to associate the email with}
-        {--sync : Also run the AI document creation listener synchronously}
-        {--use-demo : Use demo@yaffa.cc (user must exist)}';
+        {--sync : Also run the AI document creation listener synchronously}';
 
     /**
      * The console command description.
@@ -49,10 +48,6 @@ class SimulateIncomingEmail extends Command
         if ($text === null && $html === null) {
             $this->error('At least one of --text or --html options must be provided.');
             return self::FAILURE;
-        }
-
-        if ($this->option('use-demo')) {
-            $this->input->setOption('from', 'demo@yaffa.cc');
         }
 
         $user = $this->resolveUser();
