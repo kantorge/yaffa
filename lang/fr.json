@@ -525,7 +525,6 @@
     "Matched database entity": "Entité de base de données correspondante",
     "Matching Mode": "Mode de correspondance",
     "Max Suggestions": "Suggestions maximales",
-    "Maximum 10 files per submission": "Maximum 10 fichiers par soumission",
     "Maximum image height in pixels for Vision AI processing. Images taller than this will be downscaled.": "Hauteur maximale des images (en pixels) pour le traitement par Vision AI. Les images plus hautes seront redimensionnées.",
     "Maximum image width in pixels for Vision AI processing. Images wider than this will be downscaled.": "Largeur maximale des images en pixels pour le traitement par Vision AI. Les images plus larges seront réduites.",
     "Maximum number of asset match suggestions to return per document.": "Nombre maximal de suggestions de correspondance d'actifs à renvoyer par document.",
