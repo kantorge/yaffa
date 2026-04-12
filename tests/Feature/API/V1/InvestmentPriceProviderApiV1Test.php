@@ -61,15 +61,17 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             ->getJson(route('api.v1.investment-price-providers.available'));
 
         $response->assertOk();
-        $response->assertJsonCount(2);
+        $response->assertJsonCount(3);
 
         $providers = collect($response->json())->keyBy('key');
 
         $this->assertTrue($providers->has('alpha_vantage'));
         $this->assertTrue($providers->has('web_scraping'));
+        $this->assertTrue($providers->has('yahoo_finance'));
         $this->assertTrue($providers->get('alpha_vantage')['available']);
         $this->assertSame('Configured', $providers->get('alpha_vantage')['statusLabel']);
         $this->assertTrue($providers->get('web_scraping')['available']);
+        $this->assertTrue($providers->get('yahoo_finance')['available']);
     }
 
     public function test_available_endpoint_can_include_unavailable_providers_with_reason_flags(): void
