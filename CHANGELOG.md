@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0.2](https://github.com/kantorge/yaffa/compare/v3.0.1...v3.0.2) (2026-04-12)
+
+
+### 📚 Documentation
+
+* add and extend agents and guides for  product documentation ([e0cba67](https://github.com/kantorge/yaffa/commit/e0cba6730eb59ea65a6bd8ebf248b5c596ca2d55))
+* add business specification of some basic building blocks ([57f3e7e](https://github.com/kantorge/yaffa/commit/57f3e7e2fe9e9137d71ea0ee5547ef5b2312f1fc))
+
+
+### 🐛 Bug Fixes
+
+* correct transaction type comparisons in ResultsCard after v3 enum migration ([7326018](https://github.com/kantorge/yaffa/commit/7326018dec864e040bd96050968090ad75a6e2a3))
+* correct transaction type comparisons in ResultsCard after v3 enum migration ([10fdd1a](https://github.com/kantorge/yaffa/commit/10fdd1a34d9bdeccc1132a3441b841545ffc97bd))
+* remove obsolate documentation of Payee model ([efedbfa](https://github.com/kantorge/yaffa/commit/efedbfa5d95c39698305daa42bc473efb3fd9925))
+
 ## [3.0.1](https://github.com/kantorge/yaffa/compare/v3.0.0...v3.0.1) (2026-04-11)
 
 ### 🐛 Bug Fixes
