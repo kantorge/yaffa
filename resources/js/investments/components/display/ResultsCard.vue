@@ -116,6 +116,7 @@
 <script>
   import { toFormattedCurrency, __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { getTransactionTypeConfig } from '@/shared/lib/helpers';
 
   export default {
     name: 'ResultsCard',
@@ -272,7 +273,7 @@
           getSum(
             arr,
             (trx) =>
-              (trx.transaction_type.quantity_multiplier || 0) *
+              (getTransactionTypeConfig(trx.transaction_type).quantity_multiplier || 0) *
               (trx.config.quantity || 0),
           );
         let lastPrice = 1;
@@ -286,10 +287,10 @@
         }
         const quantity = getQtyMult(filtered);
         const value = quantity * lastPrice;
-        const buying = getVal(filtered, 'Buy');
-        const selling = getVal(filtered, 'Sell');
-        const added = getQty(filtered, 'Add');
-        const removed = getQty(filtered, 'Remove');
+        const buying = getVal(filtered, 'buy');
+        const selling = getVal(filtered, 'sell');
+        const added = getQty(filtered, 'add_shares');
+        const removed = getQty(filtered, 'remove_shares');
         const dividend = getField(filtered, 'dividend');
         const commission = getField(filtered, 'commission');
         const taxes = getField(filtered, 'tax');
