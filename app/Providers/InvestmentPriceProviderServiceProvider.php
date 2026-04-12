@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviders\AlphaVantageProvider;
 use App\Services\InvestmentPriceProviders\WebScrapingProvider;
+use App\Services\InvestmentPriceProviders\YahooFinanceProvider;
 use App\Services\ScraperService;
 use GuzzleHttp\Client;
 use Illuminate\Contracts\Support\DeferrableProvider;
@@ -31,6 +32,12 @@ class InvestmentPriceProviderServiceProvider extends ServiceProvider implements 
             $registry->register(
                 'web_scraping',
                 new WebScrapingProvider(new ScraperService())
+            );
+
+            // Register Yahoo Finance provider
+            $registry->register(
+                'yahoo_finance',
+                new YahooFinanceProvider(new Client())
             );
 
             return $registry;
