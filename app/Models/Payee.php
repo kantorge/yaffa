@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property \Illuminate\Support\Carbon|null $category_suggestion_dismissed
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property string|null $import_alias
  * @property-read Category|null $category
  * @property-read AccountEntity|null $config
  * @property-read mixed $first_transaction_date
@@ -36,7 +35,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @method static Builder|Payee whereCategorySuggestionDismissed($value)
  * @method static Builder|Payee whereCreatedAt($value)
  * @method static Builder|Payee whereId($value)
- * @method static Builder|Payee whereImportAlias($value)
  * @method static Builder|Payee whereUpdatedAt($value)
  * @property-read \Illuminate\Database\Eloquent\Collection|Category[] $categoryPreference
  * @property-read int|null $category_preference_count
