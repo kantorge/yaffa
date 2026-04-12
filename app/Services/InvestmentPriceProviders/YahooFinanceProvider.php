@@ -22,10 +22,16 @@ class YahooFinanceProvider implements InvestmentPriceProvider
     {
         $range = $refill ? '2y' : '5d';
 
+        // Default cutoff: beginning of today minus 5 days for incremental fetches.
+        // For refill, keep $from as null so all returned data is accepted.
+        $cutoff = $from
+            ? $from->copy()->startOfDay()
+            : ($refill ? null : Carbon::now()->subDays(5)->startOfDay());
+
         try {
             $response = $this->httpClient->request(
                 'GET',
-                "https://query1.finance.yahoo.com/v8/finance/chart/{$investment->symbol}",
+                'https://query1.finance.yahoo.com/v8/finance/chart/' . rawurlencode($investment->symbol),
                 [
                     'query' => [
                         'interval' => '1d',
@@ -64,22 +70,22 @@ class YahooFinanceProvider implements InvestmentPriceProvider
             }
 
             $prices = [];
-            $from = $from ?? Carbon::now()->subDays(5);
 
             foreach ($timestamps as $i => $ts) {
-                $date = Carbon::createFromTimestamp($ts)->format('Y-m-d');
                 $close = $closes[$i] ?? null;
 
                 if ($close === null || $close <= 0) {
                     continue;
                 }
 
-                if (Carbon::createFromFormat('Y-m-d', $date)->lt($from)) {
+                $day = Carbon::createFromTimestamp($ts)->startOfDay();
+
+                if ($cutoff !== null && $day->lt($cutoff)) {
                     continue;
                 }
 
                 $prices[] = [
-                    'date'  => $date,
+                    'date'  => $day->format('Y-m-d'),
                     'price' => (float) $close,
                 ];
             }
@@ -97,12 +103,26 @@ class YahooFinanceProvider implements InvestmentPriceProvider
         } catch (InvalidPriceDataException $e) {
             throw $e;
         } catch (ClientException $e) {
+            $statusCode = $e->getResponse()->getStatusCode();
             $description = null;
+
             try {
                 $body = json_decode((string) $e->getResponse()->getBody(), true, 512, JSON_THROW_ON_ERROR);
                 $description = $body['chart']['error']['description'] ?? null;
             } catch (\Throwable) {
             }
+
+            // 429 (rate limit) and 403 (forbidden/blocked) are transient — caller should retry later.
+            // Only 400/404 indicate a permanently invalid symbol.
+            if ($statusCode === 429 || $statusCode === 403) {
+                throw new PriceProviderException(
+                    $description ?? "Yahoo Finance request blocked (HTTP {$statusCode})",
+                    'yahoo_finance',
+                    $investment->symbol,
+                    $e
+                );
+            }
+
             throw new InvalidPriceDataException(
                 $description ?? 'Yahoo Finance error: symbol not found or invalid',
                 'yahoo_finance',
@@ -125,9 +145,11 @@ class YahooFinanceProvider implements InvestmentPriceProvider
         }
     }
 
+    /**
+     * No credentials are required for Yahoo Finance.
+     */
     public function validateCredentials(array $credentials): void
     {
-        // No credentials needed
     }
 
     public function getName(): string
@@ -137,17 +159,17 @@ class YahooFinanceProvider implements InvestmentPriceProvider
 
     public function getDisplayName(): string
     {
-        return 'Yahoo Finance';
+        return __('Yahoo Finance');
     }
 
     public function getDescription(): string
     {
-        return 'Yahoo Finance provides free price data for stocks and ETFs listed on major world exchanges. No API key required.';
+        return __('Yahoo Finance provides free price data for stocks and ETFs listed on major world exchanges. No API key required.');
     }
 
     public function getInstructions(): string
     {
-        return 'Set the Symbol field to the Yahoo Finance ticker, e.g. AGGG.L for London Stock Exchange or ISAC.MI for Borsa Italiana. No API key required.';
+        return __('Set the Symbol field to the Yahoo Finance ticker, e.g. AGGG.L for London Stock Exchange or ISAC.MI for Borsa Italiana. No API key required.');
     }
 
     /**
