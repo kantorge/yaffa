@@ -23,16 +23,21 @@ class ImportParseRequest extends FormRequest
             'source_type' => [
                 'required',
                 'string',
-                Rule::in(['qif']),
+                Rule::in(['qif', 'csv']),
             ],
             'account_id' => [
                 'required',
                 'integer',
                 'exists:account_entities,id',
             ],
+            'csv_import_profile_id' => [
+                'nullable',
+                'integer',
+                'exists:csv_import_profiles,id',
+            ],
             'file' => [
                 'required',
-                File::types(['qif', 'txt'])->max($maxFileSizeMb . 'mb'),
+                File::types(['qif', 'txt', 'csv'])->max($maxFileSizeMb . 'mb'),
             ],
         ];
     }
@@ -43,7 +48,7 @@ class ImportParseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'source_type.in' => __('Only QIF import is supported at the moment.'),
+            'source_type.in' => __('Only QIF and CSV imports are supported.'),
             'file.max' => __('The import file exceeds the configured maximum size of :size MB.', [
                 'size' => (int) config('yaffa.import_max_file_size_mb', 2),
             ]),

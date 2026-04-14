@@ -2,54 +2,93 @@
   <div>
     <div class="row justify-content-center">
       <div class="col-12 col-xxl-10">
-        <div class="row g-3 align-items-stretch mb-3">
-          <div class="col-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-header">
+            <div class="card-title">{{ __('Import file') }}</div>
+          </div>
+          <div class="card-body">
             <ImportSourceSelector
               v-model="sourceType"
               :accounts="accounts"
               :selected-account-id="selectedAccountId"
               :loading-accounts="loadingAccounts"
+              :disabled="loading"
               @update:selectedAccountId="onAccountChange"
             />
-          </div>
-          <div class="col-12 col-lg-6">
+            <hr class="my-3" />
             <ImportUploadCard
               ref="uploadCard"
               :source-type="sourceType"
               :account-id="selectedAccountId"
+              :profiles="profiles"
+              :loading-profiles="loadingProfiles"
+              :selected-profile-id="selectedProfileId"
               :loading="loading"
               :progress="uploadProgress"
               :error="uploadError"
               @submit="onSubmit"
+              @update:selectedProfileId="onProfileChange"
             />
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="parseWarnings.length" class="alert alert-warning" role="alert">
-      <div class="fw-semibold mb-1">{{ __('Parser warnings') }}</div>
-      <ul class="mb-0 ps-3">
-        <li
-          v-for="(warning, index) in parseWarnings"
-          :key="`parser-warning-${index}`"
+    <div class="row justify-content-center mt-3">
+      <div class="col-12 col-xxl-10">
+        <div
+          v-if="parseWarnings.length"
+          class="alert alert-warning alert-dismissible"
+          role="alert"
         >
-          {{ warning }}
-        </li>
-      </ul>
-    </div>
+          <button
+            type="button"
+            class="btn-close"
+            :aria-label="__('Close')"
+            @click="parseWarnings = []"
+          ></button>
+          <div class="fw-semibold mb-1">{{ __('Parser warnings') }}</div>
+          <ul class="mb-0 ps-3">
+            <li
+              v-for="(warning, index) in parseWarnings"
+              :key="`parser-warning-${index}`"
+            >
+              {{ warning }}
+            </li>
+          </ul>
+        </div>
 
-    <ImportDraftTable :drafts="drafts" />
+        <ImportDraftTable
+          :drafts="drafts"
+          :account-currency="accountCurrency"
+          :class="parseWarnings.length ? 'mt-3' : ''"
+          @ignore-draft="onIgnoreDraft"
+          @finalize-draft="onFinalizeDraft"
+        />
+
+        <CsvImportProfileManager
+          v-if="sourceType === 'csv'"
+          :profiles="profiles"
+          :loading="loadingProfiles"
+          class="mt-3"
+          @profiles-updated="fetchProfiles"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+  import Swal from 'sweetalert2';
   import axios from 'axios';
-  import { onMounted, ref } from 'vue';
+  import { computed, onMounted, ref, watch } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import ImportSourceSelector from './ImportSourceSelector.vue';
   import ImportUploadCard from './ImportUploadCard.vue';
   import ImportDraftTable from './ImportDraftTable.vue';
+  import CsvImportProfileManager from './CsvImportProfileManager.vue';
+
+  const STORAGE_KEY_LAST_PROFILE = 'importLastCsvProfileId';
 
   export default {
     name: 'ImportPage',
@@ -57,12 +96,17 @@
       ImportSourceSelector,
       ImportUploadCard,
       ImportDraftTable,
+      CsvImportProfileManager,
     },
     setup() {
       const sourceType = ref('qif');
       const selectedAccountId = ref('');
       const accounts = ref([]);
       const loadingAccounts = ref(false);
+
+      const profiles = ref([]);
+      const loadingProfiles = ref(false);
+      const selectedProfileId = ref(null);
 
       const loading = ref(false);
       const uploadProgress = ref(0);
@@ -72,6 +116,10 @@
       const parseWarnings = ref([]);
 
       const uploadCard = ref(null);
+
+      const selectedAccountCurrency = ref(null);
+
+      const accountCurrency = computed(() => selectedAccountCurrency.value);
 
       const fetchAccounts = async () => {
         loadingAccounts.value = true;
@@ -93,6 +141,35 @@
         }
       };
 
+      const fetchProfiles = async () => {
+        loadingProfiles.value = true;
+
+        try {
+          const response = await axios.get('/api/v1/imports/csv-profiles');
+          profiles.value = Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        } catch (_error) {
+          // Non-critical; profiles will just be empty
+        } finally {
+          loadingProfiles.value = false;
+        }
+      };
+
+      const autoSelectProfile = (accountId) => {
+        const account = accounts.value.find(
+          (a) => String(a.id) === String(accountId),
+        );
+
+        if (account?.preferred_csv_import_profile_id) {
+          selectedProfileId.value = account.preferred_csv_import_profile_id;
+          return;
+        }
+
+        const stored = localStorage.getItem(STORAGE_KEY_LAST_PROFILE);
+        selectedProfileId.value = stored ? Number(stored) : null;
+      };
+
       const resetParseState = () => {
         drafts.value = [];
         parseWarnings.value = [];
@@ -100,9 +177,51 @@
         uploadProgress.value = 0;
       };
 
-      const onAccountChange = (value) => {
+      const onAccountChange = async (value) => {
+        if (drafts.value.length > 0) {
+          const result = await Swal.fire({
+            text: __(
+              'Changing the account will discard all parsed drafts. Continue?',
+            ),
+            icon: 'warning',
+            showCancelButton: true,
+            cancelButtonText: __('Cancel'),
+            confirmButtonText: __('Continue'),
+            buttonsStyling: false,
+            customClass: {
+              confirmButton: 'btn btn-danger',
+              cancelButton: 'btn btn-outline-secondary ms-3',
+            },
+          });
+
+          if (!result.isConfirmed) {
+            return;
+          }
+        }
+
         selectedAccountId.value = value;
+        selectedAccountCurrency.value = null;
         resetParseState();
+
+        if (value) {
+          try {
+            const accountResponse = await axios.get(
+              `/api/v1/accounts/${value}`,
+            );
+            selectedAccountCurrency.value =
+              accountResponse.data?.config?.currency?.iso_code ?? null;
+          } catch {
+            // Non-critical, amounts will format without currency symbol
+          }
+        }
+
+        if (sourceType.value === 'csv') {
+          autoSelectProfile(value);
+        }
+      };
+
+      const onProfileChange = (value) => {
+        selectedProfileId.value = value;
       };
 
       const onSubmit = async ({ file }) => {
@@ -118,17 +237,14 @@
           return;
         }
 
-        if (sourceType.value === 'csv') {
-          uploadError.value = __(
-            'CSV import is not yet enabled in this milestone. Please upload a QIF file.',
-          );
-          return;
-        }
-
         const formData = new FormData();
         formData.append('file', file);
         formData.append('source_type', sourceType.value);
         formData.append('account_id', selectedAccountId.value);
+
+        if (sourceType.value === 'csv' && selectedProfileId.value) {
+          formData.append('csv_import_profile_id', selectedProfileId.value);
+        }
 
         loading.value = true;
         uploadProgress.value = 0;
@@ -154,6 +270,13 @@
           parseWarnings.value = Array.isArray(response.data?.warnings)
             ? response.data.warnings
             : [];
+
+          if (sourceType.value === 'csv' && selectedProfileId.value) {
+            localStorage.setItem(
+              STORAGE_KEY_LAST_PROFILE,
+              String(selectedProfileId.value),
+            );
+          }
 
           if (
             uploadCard.value &&
@@ -186,8 +309,121 @@
         }
       };
 
+      let isRevertingSourceType = false;
+
+      watch(sourceType, async (newType, oldType) => {
+        if (isRevertingSourceType) {
+          isRevertingSourceType = false;
+          return;
+        }
+
+        if (drafts.value.length > 0) {
+          const result = await Swal.fire({
+            text: __(
+              'Changing the source type will discard all parsed drafts. Continue?',
+            ),
+            icon: 'warning',
+            showCancelButton: true,
+            cancelButtonText: __('Cancel'),
+            confirmButtonText: __('Continue'),
+            buttonsStyling: false,
+            customClass: {
+              confirmButton: 'btn btn-danger',
+              cancelButton: 'btn btn-outline-secondary ms-3',
+            },
+          });
+
+          if (!result.isConfirmed) {
+            isRevertingSourceType = true;
+            sourceType.value = oldType;
+            return;
+          }
+        }
+
+        resetParseState();
+        uploadCard.value?.reset?.();
+
+        if (newType === 'csv') {
+          if (!profiles.value.length) {
+            fetchProfiles();
+          }
+
+          if (selectedAccountId.value) {
+            autoSelectProfile(selectedAccountId.value);
+          }
+        }
+      });
+
+      const onIgnoreDraft = (draftIndex) => {
+        const index = drafts.value.findIndex(
+          (d) => d.draft_index === draftIndex,
+        );
+        if (index !== -1) {
+          drafts.value[index] = {
+            ...drafts.value[index],
+            status: 'ignored',
+          };
+        }
+      };
+
+      const finalizingDraftIndex = ref(null);
+
+      const onFinalizeDraft = (draftIndex) => {
+        const draft = drafts.value.find((d) => d.draft_index === draftIndex);
+        if (!draft) {
+          return;
+        }
+
+        finalizingDraftIndex.value = draftIndex;
+
+        const transaction = {
+          transaction_type: draft.transaction_type || 'withdrawal',
+          date: draft.date,
+          schedule: false,
+          budget: false,
+          reconciled: false,
+          comment: null,
+          config: {
+            account_from_id: draft.config?.account_from_id ?? null,
+            account_to_id: draft.config?.account_to_id ?? null,
+            // For deposits, amount_from is null in normalized data but the form uses
+            // amount_from as the primary visible amount field for all transaction types.
+            amount_from: draft.config?.amount_from ?? draft.amount ?? null,
+            amount_to: draft.config?.amount_to ?? draft.amount ?? null,
+          },
+        };
+
+        window.dispatchEvent(
+          new CustomEvent('initiateCreateFromDraft', {
+            detail: {
+              type: 'standard',
+              transaction,
+            },
+          }),
+        );
+      };
+
+      const onTransactionCreated = () => {
+        if (finalizingDraftIndex.value === null) {
+          return;
+        }
+
+        const index = drafts.value.findIndex(
+          (d) => d.draft_index === finalizingDraftIndex.value,
+        );
+        if (index !== -1) {
+          drafts.value[index] = {
+            ...drafts.value[index],
+            status: 'finalized',
+          };
+        }
+
+        finalizingDraftIndex.value = null;
+      };
+
       onMounted(() => {
         fetchAccounts();
+        window.addEventListener('transaction-created', onTransactionCreated);
       });
 
       return {
@@ -195,14 +431,23 @@
         selectedAccountId,
         accounts,
         loadingAccounts,
+        profiles,
+        loadingProfiles,
+        selectedProfileId,
         loading,
         uploadProgress,
         uploadError,
         drafts,
         parseWarnings,
         uploadCard,
+        accountCurrency,
+        selectedAccountCurrency,
+        fetchProfiles,
         onAccountChange,
+        onProfileChange,
         onSubmit,
+        onIgnoreDraft,
+        onFinalizeDraft,
       };
     },
   };

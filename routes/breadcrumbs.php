@@ -235,10 +235,10 @@ Breadcrumbs::for('search', function (BreadcrumbTrail $trail) {
 });
 
 // Import CSV
-Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('import.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
-    $trail->push(__('Import transactions'), route('import.csv'));
+    $trail->push(__('Import transactions'), route('import.index'));
 });
 
 // AI documents

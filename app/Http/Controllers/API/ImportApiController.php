@@ -5,19 +5,25 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportParseRequest;
 use App\Models\AccountEntity;
+use App\Models\CsvImportProfile;
+use App\Services\Import\CsvParserService;
+use App\Services\Import\ImportDuplicateDetectionService;
 use App\Services\Import\ImportNormalizationService;
 use App\Services\Import\QifParserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class ImportApiController extends Controller implements HasMiddleware
 {
     public function __construct(
         private QifParserService $qifParserService,
+        private CsvParserService $csvParserService,
         private ImportNormalizationService $importNormalizationService,
+        private ImportDuplicateDetectionService $importDuplicateDetectionService,
     ) {
     }
 
@@ -45,8 +51,41 @@ class ImportApiController extends Controller implements HasMiddleware
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $parsed = $this->qifParserService->parseFile($file);
-        $drafts = $this->importNormalizationService->normalizeQifEntries($parsed['entries'], $accountEntity->id);
+        $sourceType = (string) $request->input('source_type');
+        $parsedWarnings = [];
+
+        try {
+            if ($sourceType === 'csv') {
+                $profile = $this->resolveCsvImportProfile($request, $accountEntity);
+
+                if (! $profile instanceof CsvImportProfile) {
+                    return response()->json([
+                        'error' => [
+                            'code' => 'CSV_PROFILE_REQUIRED',
+                            'message' => __('A CSV import profile must be selected or set as the account default.'),
+                        ],
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                $parsed = $this->csvParserService->parseFile($file, $profile, $accountEntity->id, (int) $request->user()->id);
+                $drafts = $parsed['drafts'];
+                $parsedWarnings = $parsed['warnings'];
+            } else {
+                $parsed = $this->qifParserService->parseFile($file);
+                $drafts = $this->importNormalizationService->normalizeQifEntries($parsed['entries'], $accountEntity->id);
+                $parsedWarnings = $parsed['warnings'];
+            }
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'error' => [
+                    'code' => 'IMPORT_PARSE_FAILED',
+                    'message' => __($exception->getMessage()),
+                ],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $drafts = $this->importDuplicateDetectionService->enrichDrafts($request->user(), $drafts);
+        $drafts = $this->importNormalizationService->enrichDraftsWithRelatedAiDocuments($request->user(), $drafts);
 
         $draftWarningCount = 0;
         foreach ($drafts as $draft) {
@@ -54,15 +93,38 @@ class ImportApiController extends Controller implements HasMiddleware
         }
 
         return response()->json([
-            'source_type' => 'qif',
+            'source_type' => $sourceType,
             'account_id' => $accountEntity->id,
             'drafts' => $drafts,
-            'warnings' => $parsed['warnings'],
+            'warnings' => $parsedWarnings,
             'summary' => [
-                'total_entries' => count($parsed['entries']),
+                'total_entries' => count($drafts),
                 'total_drafts' => count($drafts),
-                'warning_count' => count($parsed['warnings']) + $draftWarningCount,
+                'warning_count' => count($parsedWarnings) + $draftWarningCount,
             ],
         ], Response::HTTP_OK);
+    }
+
+    private function resolveCsvImportProfile(ImportParseRequest $request, AccountEntity $accountEntity): ?CsvImportProfile
+    {
+        $selectedProfileId = $request->input('csv_import_profile_id');
+
+        if (is_numeric($selectedProfileId)) {
+            $profile = CsvImportProfile::query()->findOrFail((int) $selectedProfileId);
+            Gate::authorize('view', $profile);
+
+            return $profile;
+        }
+
+        if (is_int($accountEntity->preferred_csv_import_profile_id)) {
+            $profile = CsvImportProfile::query()->find($accountEntity->preferred_csv_import_profile_id);
+            if ($profile instanceof CsvImportProfile) {
+                Gate::authorize('view', $profile);
+
+                return $profile;
+            }
+        }
+
+        return null;
     }
 }

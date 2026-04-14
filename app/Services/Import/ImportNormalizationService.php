@@ -2,11 +2,22 @@
 
 namespace App\Services\Import;
 
+use App\Enums\AiDocumentStatus;
 use App\Enums\TransactionType;
+use App\Models\AiDocument;
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Throwable;
 
 class ImportNormalizationService
 {
+    private const int RELATED_AI_DOCUMENT_LOOKBACK_DAYS = 45;
+
+    private const int RELATED_AI_DOCUMENT_QUERY_LIMIT = 50;
+
+    private const int RELATED_AI_DOCUMENT_RESULTS_PER_DRAFT = 3;
+
     /**
      * @param  list<array<string, mixed>>  $entries
      * @return list<array<string, mixed>>
@@ -62,10 +73,26 @@ class ImportNormalizationService
                 ],
                 'warnings' => $warnings,
                 'duplicate_candidates' => [],
+                'related_ai_documents' => [],
             ];
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $drafts
+     * @return list<array<string, mixed>>
+     */
+    public function enrichDraftsWithRelatedAiDocuments(User $user, array $drafts): array
+    {
+        $candidates = $this->loadRelatedAiDocumentCandidates($user, $drafts);
+
+        foreach ($drafts as $index => $draft) {
+            $drafts[$index]['related_ai_documents'] = $this->matchRelatedAiDocumentsForDraft($draft, $candidates);
+        }
+
+        return $drafts;
     }
 
     /**
@@ -168,5 +195,192 @@ class ImportNormalizationService
                 $value,
             );
         }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $drafts
+     * @return list<array<string, mixed>>
+     */
+    private function loadRelatedAiDocumentCandidates(User $user, array $drafts): array
+    {
+        $draftDates = collect($drafts)
+            ->pluck('date')
+            ->filter(fn (mixed $date): bool => is_string($date) && $date !== '')
+            ->map(fn (string $date): CarbonImmutable => CarbonImmutable::parse($date));
+
+        $fromDate = $draftDates->isNotEmpty()
+            ? $draftDates->min()->subDays(self::RELATED_AI_DOCUMENT_LOOKBACK_DAYS)
+            : now()->subDays(self::RELATED_AI_DOCUMENT_LOOKBACK_DAYS);
+
+        $documents = AiDocument::query()
+            ->where('user_id', $user->id)
+            ->where('status', AiDocumentStatus::ReadyForReview->value)
+            ->where(function ($query) use ($fromDate): void {
+                $query->where('processed_at', '>=', $fromDate)
+                    ->orWhere('created_at', '>=', $fromDate);
+            })
+            ->orderByDesc('processed_at')
+            ->orderByDesc('created_at')
+            ->limit(self::RELATED_AI_DOCUMENT_QUERY_LIMIT)
+            ->get();
+
+        return $documents
+            ->map(function (AiDocument $document): ?array {
+                $payload = is_array($document->processed_transaction_data)
+                    ? $document->processed_transaction_data
+                    : [];
+
+                return [
+                    'document' => $document,
+                    'merchant' => $this->extractDocumentMerchant($payload),
+                    'amount' => $this->extractDocumentAmount($payload),
+                    'date' => $this->extractDocumentDate($payload),
+                ];
+            })
+            ->filter(fn (mixed $candidate): bool => is_array($candidate))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $draft
+     * @param  list<array<string, mixed>>  $candidates
+     * @return list<array<string, mixed>>
+     */
+    private function matchRelatedAiDocumentsForDraft(array $draft, array $candidates): array
+    {
+        $scored = [];
+
+        foreach ($candidates as $candidate) {
+            $score = 0.0;
+            $matchedOn = [];
+
+            $draftAmount = is_numeric($draft['amount'] ?? null) ? (float) $draft['amount'] : null;
+            $candidateAmount = is_numeric($candidate['amount'] ?? null) ? (float) $candidate['amount'] : null;
+            if ($draftAmount !== null && $candidateAmount !== null) {
+                $difference = abs($draftAmount - $candidateAmount);
+                $tolerance = max(0.01, $draftAmount * 0.02);
+
+                if ($difference < 0.01) {
+                    $score += 0.55;
+                    $matchedOn[] = 'amount';
+                } elseif ($difference <= $tolerance) {
+                    $score += 0.35;
+                    $matchedOn[] = 'amount';
+                }
+            }
+
+            $draftDate = is_string($draft['date'] ?? null) ? CarbonImmutable::parse($draft['date']) : null;
+            $candidateDate = is_string($candidate['date'] ?? null) ? CarbonImmutable::parse($candidate['date']) : null;
+            if ($draftDate instanceof CarbonImmutable && $candidateDate instanceof CarbonImmutable) {
+                $daysApart = abs($draftDate->diffInDays($candidateDate, false));
+
+                if ($daysApart === 0) {
+                    $score += 0.25;
+                    $matchedOn[] = 'date';
+                } elseif ($daysApart <= 3) {
+                    $score += 0.18;
+                    $matchedOn[] = 'date';
+                } elseif ($daysApart <= 7) {
+                    $score += 0.1;
+                    $matchedOn[] = 'date';
+                }
+            }
+
+            $draftPayee = $this->normalizeComparableText(is_string($draft['payee'] ?? null) ? $draft['payee'] : null);
+            $candidateMerchant = $this->normalizeComparableText(is_string($candidate['merchant'] ?? null) ? $candidate['merchant'] : null);
+            if ($draftPayee !== null && $candidateMerchant !== null) {
+                similar_text($draftPayee, $candidateMerchant, $similarityPercent);
+
+                if ($draftPayee === $candidateMerchant) {
+                    $score += 0.2;
+                    $matchedOn[] = 'payee';
+                } elseif (str_contains($candidateMerchant, $draftPayee) || str_contains($draftPayee, $candidateMerchant) || $similarityPercent >= 70.0) {
+                    $score += 0.12;
+                    $matchedOn[] = 'payee';
+                }
+            }
+
+            if ($score <= 0.0 || $matchedOn === []) {
+                continue;
+            }
+
+            /** @var AiDocument $document */
+            $document = $candidate['document'];
+            $scored[] = [
+                'ai_document_id' => $document->id,
+                'status' => $document->status,
+                'confidence_score' => round(min(1.0, $score), 3),
+                'matched_on' => array_values(array_unique($matchedOn)),
+                'summary' => [
+                    'merchant' => $candidate['merchant'],
+                    'total_amount' => $candidate['amount'],
+                    'document_date' => $candidate['date'],
+                ],
+            ];
+        }
+
+        usort($scored, fn (array $left, array $right): int => $right['confidence_score'] <=> $left['confidence_score']);
+
+        return array_slice($scored, 0, self::RELATED_AI_DOCUMENT_RESULTS_PER_DRAFT);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractDocumentMerchant(array $payload): ?string
+    {
+        $merchant = $payload['merchant']
+            ?? $payload['payee']
+            ?? data_get($payload, 'raw.merchant')
+            ?? data_get($payload, 'raw.payee')
+            ?? data_get($payload, 'matched_entities.payee.name');
+
+        return is_string($merchant) && mb_trim($merchant) !== ''
+            ? mb_trim($merchant)
+            : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractDocumentAmount(array $payload): ?float
+    {
+        $amount = data_get($payload, 'config.amount_from')
+            ?? data_get($payload, 'config.amount_to')
+            ?? $payload['amount']
+            ?? $payload['total_amount']
+            ?? data_get($payload, 'raw.amount');
+
+        return is_numeric($amount) ? abs((float) $amount) : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractDocumentDate(array $payload): ?string
+    {
+        $date = $payload['date'] ?? $payload['document_date'] ?? data_get($payload, 'raw.date');
+
+        if (! is_string($date) || mb_trim($date) === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse($date)->format('Y-m-d');
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function normalizeComparableText(?string $value): ?string
+    {
+        if ($value === null || mb_trim($value) === '') {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^a-z0-9]+/iu', ' ', mb_strtolower(mb_trim($value)));
+
+        return is_string($normalized) ? mb_trim($normalized) : null;
     }
 }

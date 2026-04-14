@@ -1,0 +1,441 @@
+<template>
+  <div class="card mb-3">
+    <div
+      class="card-header d-flex justify-content-between align-items-center collapse-control"
+      data-coreui-toggle="collapse"
+      data-coreui-target="#csvProfileManagerBody"
+      role="button"
+    >
+      <div class="card-title mb-0">
+        <i class="fa fa-angle-down me-1"></i>
+        {{ __('My CSV import profiles') }}
+      </div>
+    </div>
+
+    <div class="collapse card-body show" id="csvProfileManagerBody">
+      <!-- New profile button -->
+      <div class="mb-3">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary"
+          :disabled="!!editingProfile"
+          @click="startCreate"
+        >
+          <i class="fa fa-plus me-1"></i>{{ __('New profile') }}
+        </button>
+      </div>
+
+      <!-- Error -->
+      <div
+        v-if="error"
+        class="alert alert-danger alert-dismissible mb-3"
+        role="alert"
+      >
+        {{ error }}
+        <button type="button" class="btn-close" @click="error = null"></button>
+      </div>
+
+      <!-- Create / Edit form -->
+      <div v-if="editingProfile" class="border rounded p-3 mb-3 bg-light">
+        <div class="fw-semibold mb-3">
+          {{ editingProfile.id ? __('Edit profile') : __('New profile') }}
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">{{ __('Name') }} *</label>
+            <input
+              v-model="editingProfile.name"
+              type="text"
+              class="form-control form-control-sm"
+              :placeholder="__('e.g. My Bank CSV')"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">{{ __('Delimiter') }}</label>
+            <input
+              v-model="editingProfile.delimiter"
+              type="text"
+              class="form-control form-control-sm"
+              maxlength="5"
+              placeholder=","
+            />
+          </div>
+          <div class="col-md-3 d-flex align-items-end pb-1">
+            <div class="form-check">
+              <input
+                id="profile-has-header"
+                v-model="editingProfile.has_header_row"
+                type="checkbox"
+                class="form-check-input"
+              />
+              <label class="form-check-label small" for="profile-has-header">
+                {{ __('Has header row') }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-md-4">
+            <label class="form-label small">{{ __('Date format') }}</label>
+            <input
+              v-model="editingProfile.date_format"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Y-m-d"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">{{
+              __('Decimal separator')
+            }}</label>
+            <input
+              v-model="editingProfile.decimal_separator"
+              type="text"
+              class="form-control form-control-sm"
+              maxlength="10"
+              placeholder="."
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">{{
+              __('Thousand separator')
+            }}</label>
+            <input
+              v-model="editingProfile.thousand_separator"
+              type="text"
+              class="form-control form-control-sm"
+              maxlength="10"
+              placeholder=","
+            />
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label small">{{ __('Sign handling') }}</label>
+          <select
+            v-model="editingProfile.sign_handling"
+            class="form-select form-select-sm"
+          >
+            <option :value="null">{{ __('— Default (as-is) —') }}</option>
+            <option value="as_is">{{ __('As-is') }}</option>
+            <option value="invert">{{ __('Invert sign') }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small">
+            {{ __('Column mapping (JSON)') }}
+            <span class="text-muted fw-normal">{{
+              __('— source header: canonical field')
+            }}</span>
+          </label>
+          <textarea
+            v-model="editingProfile.mapping_json_text"
+            class="form-control form-control-sm font-monospace"
+            rows="5"
+            :placeholder="mappingJsonPlaceholder"
+            @input="validateMappingJson"
+          ></textarea>
+          <div v-if="mappingJsonError" class="text-danger small mt-1">
+            {{ mappingJsonError }}
+          </div>
+          <div class="form-text">
+            {{
+              __(
+                'Map each source column header to a canonical field: date, amount, payee, memo, reference.',
+              )
+            }}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            :disabled="saving || !!mappingJsonError"
+            @click="saveProfile"
+          >
+            <span
+              v-if="saving"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
+            {{ __('Save') }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            :disabled="saving"
+            @click="cancelEdit"
+          >
+            {{ __('Cancel') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- User profiles list -->
+      <div v-if="loading" class="text-muted small">
+        {{ __('Loading profiles...') }}
+      </div>
+
+      <div
+        v-else-if="userProfiles.length === 0 && !editingProfile"
+        class="text-muted small"
+      >
+        {{
+          __(
+            'No custom profiles yet. Create one to define your own column mappings.',
+          )
+        }}
+      </div>
+
+      <table v-else-if="userProfiles.length > 0" class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{{ __('Name') }}</th>
+            <th>{{ __('Delimiter') }}</th>
+            <th>{{ __('Date format') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="profile in userProfiles"
+            :key="profile.id"
+            :class="{
+              'table-active':
+                editingProfile && editingProfile.id === profile.id,
+            }"
+          >
+            <td>{{ profile.name }}</td>
+            <td class="font-monospace">{{ profile.delimiter || ',' }}</td>
+            <td class="text-muted">{{ profile.date_format || '—' }}</td>
+            <td class="text-end text-nowrap">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary me-1"
+                :disabled="!!editingProfile"
+                @click="startEdit(profile)"
+              >
+                <i class="fa fa-edit"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                :disabled="!!editingProfile || deletingId === profile.id"
+                @click="deleteProfile(profile)"
+              >
+                <span
+                  v-if="deletingId === profile.id"
+                  class="spinner-border spinner-border-sm"
+                ></span>
+                <i v-else class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<script>
+  import axios from 'axios';
+  import { computed, ref } from 'vue';
+  import { __ } from '@/shared/lib/i18n';
+
+  const mappingJsonPlaceholder = JSON.stringify(
+    { Date: 'date', Amount: 'amount', Payee: 'payee', Memo: 'memo' },
+    null,
+    2,
+  );
+
+  export default {
+    name: 'CsvImportProfileManager',
+    props: {
+      profiles: {
+        type: Array,
+        required: true,
+      },
+      loading: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    emits: ['profiles-updated'],
+    setup(props, { emit }) {
+      const editingProfile = ref(null);
+      const saving = ref(false);
+      const deletingId = ref(null);
+      const error = ref(null);
+      const mappingJsonError = ref(null);
+
+      const userProfiles = computed(() =>
+        props.profiles.filter((p) => p.type === 'user'),
+      );
+
+      const buildEditingState = (profile) => ({
+        id: profile?.id || null,
+        name: profile?.name || '',
+        delimiter: profile?.delimiter || ',',
+        has_header_row: profile?.has_header_row !== false,
+        date_format: profile?.date_format || null,
+        decimal_separator: profile?.decimal_separator || null,
+        thousand_separator: profile?.thousand_separator || null,
+        sign_handling: profile?.sign_handling || null,
+        mapping_json_text: JSON.stringify(profile?.mapping_json || {}, null, 2),
+      });
+
+      const startCreate = () => {
+        mappingJsonError.value = null;
+        error.value = null;
+        editingProfile.value = buildEditingState(null);
+      };
+
+      const startEdit = (profile) => {
+        mappingJsonError.value = null;
+        error.value = null;
+        editingProfile.value = buildEditingState(profile);
+      };
+
+      const cancelEdit = () => {
+        editingProfile.value = null;
+        mappingJsonError.value = null;
+        error.value = null;
+      };
+
+      const validateMappingJson = () => {
+        if (!editingProfile.value) {
+          return;
+        }
+
+        const text = editingProfile.value.mapping_json_text.trim();
+        if (!text) {
+          mappingJsonError.value = __('Column mapping is required.');
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(text);
+          if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+            mappingJsonError.value = __(
+              'Must be a JSON object mapping column names to field names.',
+            );
+            return;
+          }
+
+          mappingJsonError.value = null;
+        } catch (_e) {
+          mappingJsonError.value = __('Invalid JSON. Please check the format.');
+        }
+      };
+
+      const saveProfile = async () => {
+        if (!editingProfile.value) {
+          return;
+        }
+
+        validateMappingJson();
+        if (mappingJsonError.value) {
+          return;
+        }
+
+        let mappingJson;
+        try {
+          mappingJson = JSON.parse(editingProfile.value.mapping_json_text);
+        } catch (_e) {
+          mappingJsonError.value = __('Invalid JSON. Please check the format.');
+          return;
+        }
+
+        const payload = {
+          name: editingProfile.value.name,
+          delimiter: editingProfile.value.delimiter || ',',
+          has_header_row: editingProfile.value.has_header_row,
+          date_format: editingProfile.value.date_format || null,
+          decimal_separator: editingProfile.value.decimal_separator || null,
+          thousand_separator: editingProfile.value.thousand_separator || null,
+          sign_handling: editingProfile.value.sign_handling || null,
+          mapping_json: mappingJson,
+        };
+
+        saving.value = true;
+        error.value = null;
+
+        try {
+          if (editingProfile.value.id) {
+            await axios.patch(
+              `/api/v1/imports/csv-profiles/${editingProfile.value.id}`,
+              payload,
+            );
+          } else {
+            await axios.post('/api/v1/imports/csv-profiles', payload);
+          }
+
+          editingProfile.value = null;
+          mappingJsonError.value = null;
+          emit('profiles-updated');
+        } catch (err) {
+          if (err?.response?.data?.errors) {
+            const firstKey = Object.keys(err.response.data.errors)[0];
+            error.value =
+              err.response.data.errors[firstKey]?.[0] ||
+              __('Save failed. Please review your input.');
+          } else if (err?.response?.data?.error?.message) {
+            error.value = err.response.data.error.message;
+          } else {
+            error.value = __('Save failed due to a network or server error.');
+          }
+        } finally {
+          saving.value = false;
+        }
+      };
+
+      const deleteProfile = async (profile) => {
+        if (
+          !window.confirm(
+            __('Delete profile ":name"? This cannot be undone.', {
+              ':name': profile.name,
+            }),
+          )
+        ) {
+          return;
+        }
+
+        deletingId.value = profile.id;
+        error.value = null;
+
+        try {
+          await axios.delete(`/api/v1/imports/csv-profiles/${profile.id}`);
+          emit('profiles-updated');
+        } catch (err) {
+          if (err?.response?.data?.error?.message) {
+            error.value = err.response.data.error.message;
+          } else {
+            error.value = __('Delete failed. Please try again.');
+          }
+        } finally {
+          deletingId.value = null;
+        }
+      };
+
+      return {
+        editingProfile,
+        saving,
+        deletingId,
+        error,
+        mappingJsonError,
+        mappingJsonPlaceholder,
+        userProfiles,
+        startCreate,
+        startEdit,
+        cancelEdit,
+        validateMappingJson,
+        saveProfile,
+        deleteProfile,
+        __,
+      };
+    },
+  };
+</script>
