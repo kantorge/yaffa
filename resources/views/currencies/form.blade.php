@@ -95,6 +95,7 @@
                         name="generic_decimal_precision"
                         type="number"
                         min="0"
+                        max="100"
                         value="{{ old('generic_decimal_precision', $currency->generic_decimal_precision ?? '') }}"
                     >
                 </div>
@@ -111,6 +112,7 @@
                         name="detailed_decimal_precision"
                         type="number"
                         min="0"
+                        max="100"
                         value="{{ old('detailed_decimal_precision', $currency->detailed_decimal_precision ?? '') }}"
                     >
                 </div>

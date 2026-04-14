@@ -26,7 +26,8 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
     }
 
     let minDigits = currencySettings.min_digits || 0;
-    let maxDigits = currencySettings.max_digits;
+    // Allow maxDigits to be 0 if explicitly set, otherwise default to undefined to prevent issues with potential null values
+    let maxDigits = currencySettings.max_digits ?? undefined;
 
     if (precision === 'generic' && currencySettings.generic_decimal_precision != null) {
         minDigits = currencySettings.generic_decimal_precision;
