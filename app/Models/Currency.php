@@ -27,6 +27,8 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @property string $iso_code
  * @property bool|null $base
  * @property bool $auto_update
+ * @property int|null $generic_decimal_precision
+ * @property int|null $detailed_decimal_precision
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read User $user
@@ -65,6 +67,8 @@ class Currency extends Model
         'iso_code',
         'base',
         'auto_update',
+        'generic_decimal_precision',
+        'detailed_decimal_precision',
     ];
 
     /**
@@ -77,6 +81,8 @@ class Currency extends Model
         return [
             'base' => 'boolean',
             'auto_update' => 'boolean',
+            'generic_decimal_precision' => 'integer',
+            'detailed_decimal_precision' => 'integer',
         ];
     }
 

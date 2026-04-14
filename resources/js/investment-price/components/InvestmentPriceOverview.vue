@@ -36,9 +36,8 @@
             toFormattedCurrency(
               investmentPrices[investmentPrices.length - 1].price,
               locale,
-              {
-                iso_code: investment.currency.iso_code,
-              },
+              investment.currency,
+              'detailed',
             )
           }}
         </dd>

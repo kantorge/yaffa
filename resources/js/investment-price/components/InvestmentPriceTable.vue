@@ -88,9 +88,8 @@
                   type,
                   data,
                   window.YAFFA.userSettings.locale,
-                  {
-                    iso_code: self.investment.currency.iso_code,
-                  },
+                  self.investment.currency,
+                  'detailed',
                 );
               },
             },
