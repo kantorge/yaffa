@@ -75,6 +75,13 @@
 
         <h2>{{ __('Transaction filters') }}</h2>
 
+        <div id="account-csv-profile-preference">
+            <csv-profile-preference
+                :account-entity-id="{{ $account->id }}"
+                :initial-profile-id="{{ $account->preferred_csv_import_profile_id ?? 'null' }}"
+            ></csv-profile-preference>
+        </div>
+
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div class="card-title">

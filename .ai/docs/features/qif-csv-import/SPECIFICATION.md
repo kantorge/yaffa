@@ -186,7 +186,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
 
 - Endpoints (draft):
   - POST /api/v1/imports/parse
-    - Request: multipart/form-data; required fields: `file`, `source_type` (`qif` or `csv`), `account_id`; optional: `csv_import_profile_id` (CSV only; omit to use account preferred or application default)
+    - Request: multipart/form-data; required fields: `file`, `source_type` (`qif` or `csv`), `account_id`; optional: `csv_import_profile_id` (CSV only; omit to use account preferred profile; if no profile is available from either source, the request is rejected)
     - Response: Runtime Import Parse Result DTO
   - CSV import profile endpoints:
     - GET /api/v1/imports/csv-profiles
@@ -704,7 +704,9 @@ Recommended endpoints:
 For CSV parse requests, request payload should allow:
 
 - selected CSV import profile id, or
-- no selection, in which case default resolution is applied.
+- no selection, in which case the account's preferred profile is used.
+
+If no profile can be resolved from either source, the request is rejected with a 422 error.
 
 If selected profile is of type `system`, it is read-only.
 If selected profile is of type `user`, ownership validation is required.
@@ -907,7 +909,7 @@ Notes:
 ## Acceptance Criteria
 
 - Given a valid QIF file, when user uploads it, then draft transactions are generated without custom format coding.
-- Given a valid CSV file and selected/default import profile, when user uploads it, then drafts are generated consistently via backend parser.
+- Given a valid CSV file and a selected or account-preferred import profile, when user uploads it, then drafts are generated consistently via backend parser.
 - Given parsed drafts, when user opens review, then duplicates can be checked using backend duplicate detection logic.
 - Given duplicate candidates, when user chooses to ignore or proceed, then no transaction is created unless user explicitly finalizes.
 - Given an import draft and related AI Documents in state ready_for_review, when parse completes, then related candidates are shown with confidence metadata and user can choose AI Document finalization path.
@@ -979,17 +981,6 @@ Notes:
   - [x] Validate response DTO shape
   - [x] Assert auth check blocks unauthorized access
 
-**Testing Tasks** (Frontend Agent):
-
-- [ ] Component test: `ImportUploadCard.spec.js`
-  - [ ] File selection and upload
-  - [ ] Error display
-  - [ ] API call on submit
-- [ ] Component test: `ImportDraftTable.spec.js`
-  - [ ] Render drafts from parsed response
-  - [ ] Display status indicators
-  - [ ] Show warnings
-
 **Important Notes For Milestone 1**:
 
 - Changed: the implemented parse response currently exposes review-oriented draft fields directly on each draft object instead of nesting them under a `normalized_transaction` object. The frontend currently consumes this flatter draft shape.
@@ -1009,50 +1000,50 @@ Notes:
 
 **Backend Tasks**:
 
-- Create `SystemCsvImportProfileRegistry` with one system profile (hun_raiffeisen_v1 equivalent)
-  - Define parser_settings (delimiter, has_header_row, date format)
-  - Define mapping_json (source columns → canonical fields)
-  - Define matching_rules[] with conditions/actions for transaction type classification
-  - Define defaults and warnings
-- Implement `SyncSystemCsvImportProfilesCommand`
-  - Idempotent `updateOrCreate` keyed on `key`
-  - Add to `docker/entrypoint.sh`
-- Implement `CsvParserService`
-  - Use `league/csv` for tokenization
-  - Apply charset detection and encoding conversion (UTF-8 fallback)
-  - Header canonicalization via mapping_json
-  - Rule matching and action execution (for system profiles only)
-  - Collect unmatched rows with warnings
-- Implement `ImportDuplicateDetectionService` adapter
-  - Map normalized draft fields to existing DuplicateDetectionService input
-  - Execute duplicate check eagerly at parse completion
-  - Attach duplicate_candidates[] to each draft
-- Extend `ImportApiController::parse` to support CSV
-  - Accept `source_type=csv` and optional `csv_import_profile_id`
-  - Default resolution: account preferred → application default system profile
-  - Return drafts with duplicate_candidates populated
-- Implement `CsvImportProfile` CRUD endpoints (GET, POST for user profiles)
-  - GET `/api/v1/imports/csv-profiles` returns system + user profiles
-  - POST `/api/v1/imports/csv-profiles` creates user profile
-  - Validate request: reject `options_json.matching_rules`, `options_json.actions`
+- [x] Create `SystemCsvImportProfileRegistry` with one system profile (hun_raiffeisen_v1 equivalent)
+  - [x] Define parser_settings (delimiter, has_header_row, date format)
+  - [x] Define mapping_json (source columns → canonical fields)
+  - [x] Define matching_rules[] with conditions/actions for transaction type classification
+  - [x] Define defaults and warnings
+- [x] Implement `SyncSystemCsvImportProfilesCommand`
+  - [x] Idempotent `updateOrCreate` keyed on `key`
+  - [x] Add to `docker/entrypoint.sh`
+- [x] Implement `CsvParserService`
+  - [x] Use `league/csv` for tokenization
+  - [x] Apply charset detection and encoding conversion (UTF-8 fallback)
+  - [x] Header canonicalization via mapping_json
+  - [x] Rule matching and action execution (for system profiles only)
+  - [x] Collect unmatched rows with warnings
+- [x] Implement `ImportDuplicateDetectionService` adapter
+  - [x] Map normalized draft fields to existing DuplicateDetectionService input
+  - [x] Execute duplicate check eagerly at parse completion
+  - [x] Attach duplicate_candidates[] to each draft
+- [x] Extend `ImportApiController::parse` to support CSV
+  - [x] Accept `source_type=csv` and optional `csv_import_profile_id`
+  - [x] Default resolution: account preferred profile; reject with 422 if neither explicit nor account-preferred profile is available
+  - [x] Return drafts with duplicate_candidates populated
+- [x] Implement `CsvImportProfile` CRUD endpoints (GET, POST for user profiles)
+  - [x] GET `/api/v1/imports/csv-profiles` returns system + user profiles
+  - [x] POST `/api/v1/imports/csv-profiles` creates user profile
+  - [x] Validate request: reject `options_json.matching_rules`, `options_json.actions`
 
 **Frontend Tasks**:
 
-- Enhance `ImportUploadCard` to support CSV profile selection
-  - Dropdown: display system + user profiles
-  - Remember last-used profile in localStorage
-  - Apply account default on account selection
-- Create `DuplicateCandidatesPanel` component
-  - Display similar transaction list per draft
-  - Show confidence score and matched_on summary
-  - Link to view similar transaction details
-- Enhance `ImportDraftTable` to show duplicate badge/warning
-  - Highlight drafts with high-confidence duplicates
-- Add profile management UI (basic form)
-  - List user profiles
-  - Create new profile (from scratch or clone from system)
-  - Edit mapping_json and parser options
-  - Delete user profile
+- [x] Enhance `ImportUploadCard` to support CSV profile selection
+  - [x] Dropdown: display system + user profiles
+  - [x] Remember last-used profile in localStorage
+  - [x] Apply account default on account selection
+- [x] Create `DuplicateCandidatesPanel` component
+  - [x] Display similar transaction list per draft
+  - [x] Show confidence score and matched_on summary
+  - [x] Link to view similar transaction details
+- [x] Enhance `ImportDraftTable` to show duplicate badge/warning
+  - [x] Highlight drafts with high-confidence duplicates
+- [x] Add profile management UI (basic form)
+  - [x] List user profiles
+  - [x] Create new profile (from scratch or clone from system)
+  - [x] Edit mapping_json and parser options
+  - [x] Delete user profile
 
 **Testing Tasks** (Backend Agent):
 
@@ -1092,69 +1083,76 @@ Notes:
 
 **Objective**: Enable user finalization workflow and migrate from legacy CSV import.
 
+**Implementation Status (2026-04-14)**:
+
+- Milestone 3 backend tasks below are implemented.
+- Milestone 3 frontend tasks below are implemented.
+- Backend milestone tests listed below are implemented.
+- Frontend component tests listed below are not implemented yet because the repository does not currently have a working Vue component test harness configured.
+
 **Backend Tasks**:
 
-- Extend `CsvImportProfile` model
-  - Add `user_id` for user profiles
-  - Add `key` for system profiles
-  - Add validation: type=system requires key, type=user requires user_id
-  - Add relationship: User hasMany CsvImportProfile(type=user)
-- Implement `CsvImportProfilePolicy`
-  - Only user owner can read/edit/delete user profiles
-  - Everyone can read system profiles
-- Implement `AccountEntity` model update
-  - Add `preferred_csv_import_profile_id` nullable foreign key
-  - Add `PATCH /api/v1/accounts/{accountEntity}` endpoint
-  - Whitelist `preferred_csv_import_profile_id` in update validation
-- Implement profile clone endpoint
-  - POST `/api/v1/imports/csv-profiles/{profile}/clone`
-  - Strip DSL fields when cloning system → user
-  - Validate user ownership of target user profile
-- Document expected parse response error format for partial success
-  - 200 with mixed valid/invalid drafts (same payload, warnings per draft)
-  - 422 for structural errors (bad profile, missing required fields)
-- Add comprehensive error handling tests
-  - Parser recovers from malformed entries
-  - Drafts with warnings still finalize
-  - Failed finalization does not auto-retry
+- [x] Extend `CsvImportProfile` model
+  - [x] Add `user_id` for user profiles
+  - [x] Add `key` for system profiles
+  - [x] Add validation: type=system requires key, type=user requires user_id
+  - [x] Add relationship: User hasMany CsvImportProfile(type=user)
+- [x] Implement `CsvImportProfilePolicy`
+  - [x] Only user owner can read/edit/delete user profiles
+  - [x] Everyone can read system profiles
+- [x] Implement `AccountEntity` model update
+  - [x] Add `preferred_csv_import_profile_id` nullable foreign key
+  - [x] Add `PATCH /api/v1/accounts/{accountEntity}` endpoint
+  - [x] Whitelist `preferred_csv_import_profile_id` in update validation
+- [x] Implement profile clone endpoint
+  - [x] POST `/api/v1/imports/csv-profiles/{profile}/clone`
+  - [x] Strip DSL fields when cloning system → user
+  - [x] Validate user ownership of target user profile
+- [x] Document expected parse response error format for partial success
+  - [x] 200 with mixed valid/invalid drafts (same payload, warnings per draft)
+  - [x] 422 for structural errors (bad profile, missing required fields)
+- [x] Add comprehensive error handling tests
+  - [x] Parser recovers from malformed entries
+  - [x] Drafts with warnings still finalize
+  - [x] Failed finalization does not auto-retry
 
 **Frontend Tasks**:
 
-- Implement `ImportDraftTable` actions
-  - Ignore button: mark draft status = ignored, hide row (or gray out)
-  - Finalize button: open existing transaction form modal
-    - Pre-populate draft fields into modal
-    - On save, call existing `/api/v1/transactions` endpoint
-    - Mark draft status = finalized
-    - Disable button on click until response received
-- Implement `RelatedAiDocumentsPanel` component (if AI docs exist in ready_for_review state)
-  - Display candidate AI documents with merchant, amount, date, confidence
-  - Link to open AI Document finalization modal instead of transaction form
-- Update navigation: replace legacy CSV import page with unified import page
-- Migrate existing CSV import rule file logic into first system profile
-- Add profile preference UI to account settings
-  - Select preferred import profile per account
-  - Auto-select on import page based on account
+- [x] Implement `ImportDraftTable` actions
+  - [x] Ignore button: mark draft status = ignored, hide row (or gray out)
+  - [x] Finalize button: open existing transaction form modal
+    - [x] Pre-populate draft fields into modal
+    - [x] On save, call existing `/api/v1/transactions` endpoint
+    - [x] Mark draft status = finalized
+    - [x] Disable button on click until response received
+- [x] Implement `RelatedAiDocumentsPanel` component (if AI docs exist in ready_for_review state)
+  - [x] Display candidate AI documents with merchant, amount, date, confidence
+  - [x] Link to open AI Document finalization modal instead of transaction form
+- [x] Update navigation: replace legacy CSV import page with unified import page
+- [x] Migrate existing CSV import rule file logic into first system profile
+- [x] Add profile preference UI to account settings
+  - [x] Select preferred import profile per account
+  - [x] Auto-select on import page based on account
 
 **Testing Tasks** (Backend Agent):
 
-- Feature test: `ImportAuthorizationTest`
-  - User can CRUD own profiles
-  - User cannot edit other user profiles
-  - User cannot delete system profiles
-  - Unauthorized requests denied
-- Feature test: `ImportTransactionCreateFromDraftTest`
-  - Finalize draft → creates exactly one transaction via existing endpoint
-  - Transaction fields match normalized draft
-  - Repeated finalize on same draft does not create duplicate (frontend protection)
-- Unit test: `ImportNormalizationServiceTest` (expanded)
-  - Related AI document candidate matching heuristics
-  - Confidence scoring
-  - Bounded search (time window, candidate count)
-- Regression test: existing transaction create/update flow still works with import context
-- Command test: `SyncSystemCsvImportProfilesCommand`
-  - Idempotent: re-run produces same database state
-  - Migration of hun_raiffeisen_v1 rule file into profile
+- [x] Feature test: `ImportAuthorizationTest`
+  - [x] User can CRUD own profiles
+  - [x] User cannot edit other user profiles
+  - [x] User cannot delete system profiles
+  - [x] Unauthorized requests denied
+- [x] Feature test: `ImportTransactionCreateFromDraftTest`
+  - [x] Finalize draft → creates exactly one transaction via existing endpoint
+  - [x] Transaction fields match normalized draft
+  - [x] Repeated finalize on same draft does not create duplicate (frontend protection)
+- [x] Unit test: `ImportNormalizationServiceTest` (expanded)
+  - [x] Related AI document candidate matching heuristics
+  - [x] Confidence scoring
+  - [x] Bounded search (time window, candidate count)
+- [x] Regression test: existing transaction create/update flow still works with import context
+- [x] Command test: `SyncSystemCsvImportProfilesCommand`
+  - [x] Idempotent: re-run produces same database state
+  - [x] Migration of hun_raiffeisen_v1 rule file into profile
 
 **Testing Tasks** (Frontend Agent):
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
+use App\Http\Controllers\API\CsvImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
 use App\Http\Controllers\API\ImportApiController;
 use App\Http\Controllers\API\InvestmentApiController;
@@ -134,6 +135,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Import endpoints
     Route::post('/imports/parse', [ImportApiController::class, 'parse'])
         ->name('imports.parse');
+    Route::get('/imports/csv-profiles', [CsvImportProfileApiController::class, 'index'])
+        ->name('imports.csv-profiles.index');
+    Route::post('/imports/csv-profiles', [CsvImportProfileApiController::class, 'store'])
+        ->name('imports.csv-profiles.store');
+    Route::post('/imports/csv-profiles/{profile}/clone', [CsvImportProfileApiController::class, 'clone'])
+        ->name('imports.csv-profiles.clone');
+    Route::patch('/imports/csv-profiles/{profile}', [CsvImportProfileApiController::class, 'update'])
+        ->name('imports.csv-profiles.update');
+    Route::delete('/imports/csv-profiles/{profile}', [CsvImportProfileApiController::class, 'destroy'])
+        ->name('imports.csv-profiles.destroy');
 
     // Account endpoints
     Route::get('/accounts', [AccountApiController::class, 'getList'])
@@ -148,6 +159,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
         ->whereNumber('accountEntity')
         ->name('accounts.show');
+    Route::patch('/accounts/{accountEntity}', [AccountApiController::class, 'update'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.update');
     Route::post('/accounts/{accountEntity}/monthly-summary', [AccountApiController::class, 'recalculateMonthlySummary'])
         ->whereNumber('accountEntity')
         ->name('accounts.monthly-summary');

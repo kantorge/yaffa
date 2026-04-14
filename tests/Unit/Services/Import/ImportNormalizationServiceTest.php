@@ -2,11 +2,16 @@
 
 namespace Tests\Unit\Services\Import;
 
+use App\Models\AiDocument;
+use App\Models\User;
 use App\Services\Import\ImportNormalizationService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ImportNormalizationServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_normalizes_qif_entries_into_draft_payloads(): void
     {
         $service = new ImportNormalizationService();
@@ -82,5 +87,99 @@ class ImportNormalizationServiceTest extends TestCase
             'Unsupported QIF marker line "Xunknown" was kept in raw_entry.',
             $drafts[0]['warnings'],
         );
+    }
+
+    public function test_enrichs_drafts_with_related_ai_document_candidates_using_matching_signals(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        $bestMatch = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now(),
+            'processed_transaction_data' => [
+                'date' => '2025-01-05',
+                'payee' => 'Grocery Store',
+                'config' => [
+                    'amount_from' => 123.45,
+                    'amount_to' => 123.45,
+                ],
+            ],
+        ]);
+
+        $secondaryMatch = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now()->subDay(),
+            'processed_transaction_data' => [
+                'date' => '2025-01-06',
+                'merchant' => 'Grocery',
+                'amount' => 123.4,
+            ],
+        ]);
+
+        AiDocument::factory()->create([
+            'status' => 'ready_for_review',
+            'processed_transaction_data' => [
+                'date' => '2025-01-05',
+                'payee' => 'Grocery Store',
+                'amount' => 123.45,
+            ],
+        ]);
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 123.45,
+            'payee' => 'Grocery Store',
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertCount(2, $drafts[0]['related_ai_documents']);
+        $this->assertSame($bestMatch->id, $drafts[0]['related_ai_documents'][0]['ai_document_id']);
+        $this->assertSame(['amount', 'date', 'payee'], $drafts[0]['related_ai_documents'][0]['matched_on']);
+        $this->assertGreaterThan(
+            $drafts[0]['related_ai_documents'][1]['confidence_score'],
+            $drafts[0]['related_ai_documents'][0]['confidence_score'],
+        );
+        $this->assertSame($secondaryMatch->id, $drafts[0]['related_ai_documents'][1]['ai_document_id']);
+    }
+
+    public function test_related_ai_document_matching_is_bounded_by_time_window_and_result_count(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        $oldDocument = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'created_at' => now()->subDays(90),
+            'processed_at' => now()->subDays(90),
+            'processed_transaction_data' => [
+                'date' => '2024-10-01',
+                'payee' => 'Coffee Shop',
+                'amount' => 12.5,
+            ],
+        ]);
+
+        for ($index = 0; $index < 6; $index++) {
+            AiDocument::factory()->for($user)->create([
+                'status' => 'ready_for_review',
+                'created_at' => now()->subDays($index),
+                'processed_at' => now()->subDays($index),
+                'processed_transaction_data' => [
+                    'date' => '2025-01-05',
+                    'payee' => 'Coffee Shop',
+                    'amount' => 12.5,
+                ],
+            ]);
+        }
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 12.5,
+            'payee' => 'Coffee Shop',
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertCount(3, $drafts[0]['related_ai_documents']);
+        $this->assertNotContains($oldDocument->id, array_column($drafts[0]['related_ai_documents'], 'ai_document_id'));
     }
 }

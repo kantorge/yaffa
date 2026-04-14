@@ -117,7 +117,7 @@ Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])
 Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 // Route for the CSV import functionality
-Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
+Route::get('/import', [ImportController::class, 'index'])->middleware(['auth', 'verified'])->name('import.index');
 
 // AI document routes
 Route::get('/ai-documents', [AiDocumentController::class, 'index'])

@@ -9,6 +9,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\CsvImportProfile;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Closure;
 
 class AccountApiController extends Controller implements HasMiddleware
 {
@@ -261,6 +264,50 @@ class AccountApiController extends Controller implements HasMiddleware
                 $accountEntity,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Update allowed account-level preferences for the given account entity.
+     *
+     * @throws AuthorizationException
+     */
+    public function update(Request $request, AccountEntity $accountEntity): JsonResponse
+    {
+        Gate::authorize('update', $accountEntity);
+
+        if (! $accountEntity->isAccount()) {
+            return response()->json([
+                'message' => __('This account entity is not an account.'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $validated = $request->validate([
+            'preferred_csv_import_profile_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('csv_import_profiles', 'id'),
+                function (string $attribute, mixed $value, Closure $fail) use ($request): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $profile = CsvImportProfile::query()->find((int) $value);
+                    if (! $profile instanceof CsvImportProfile) {
+                        return;
+                    }
+
+                    if (Gate::forUser($request->user())->denies('view', $profile)) {
+                        $fail(__('The selected CSV import profile is not accessible.'));
+                    }
+                },
+            ],
+        ]);
+
+        $accountEntity->preferred_csv_import_profile_id = $validated['preferred_csv_import_profile_id'] ?? null;
+        $accountEntity->save();
+        $accountEntity->load('preferredCsvImportProfile');
+
+        return response()->json($accountEntity, Response::HTTP_OK);
     }
 
     /**

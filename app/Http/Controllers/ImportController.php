@@ -9,13 +9,13 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 class ImportController extends Controller
 {
     /**
-     * Display UI for importing and parsing CSV files.
+     * Display UI for importing and parsing files.
      */
-    public function importCsv(Request $request): View
+    public function index(Request $request): View
     {
         /**
-         * @get("/import/csv")
-         * @name("import.csv")
+         * @get("/import")
+         * @name("import.index")
          * @middlewares("web")
          */
         // Load all active payees of user with config and pass to view as JavaScript variable.
@@ -29,6 +29,6 @@ class ImportController extends Controller
             'payees' => $payees,
         ]);
 
-        return view('import.csv');
+        return view('import.index');
     }
 }
