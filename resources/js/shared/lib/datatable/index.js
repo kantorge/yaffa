@@ -159,9 +159,10 @@ export function commentIcon(comment, type) {
  * @param {number} input
  * @param {string} locale
  * @param {Object} currency
+ * @param {'generic'|'detailed'} [precision='generic']
  * @returns {number|string}
  */
-export function toFormattedCurrency(type, input, locale, currency) {
+export function toFormattedCurrency(type, input, locale, currency, precision = 'generic') {
     if (type === 'filter' || type === 'sort') {
         return input;
     }
@@ -170,7 +171,7 @@ export function toFormattedCurrency(type, input, locale, currency) {
         return input;
     }
 
-    return toFormattedCurrencyHelper(input, locale, currency);
+    return toFormattedCurrencyHelper(input, locale, currency, precision);
 }
 
 export function initializeSkipInstanceButton(selector) {

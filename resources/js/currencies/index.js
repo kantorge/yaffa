@@ -63,11 +63,9 @@ $(dataTableSelector).DataTable({
                     return row.latest_rate;
                 }
                 // Formatted text is returned for display in a specific way
-                const targetCurrency = Object.assign({}, window.YAFFA.userSettings.baseCurrency, {max_digits: 4});
-
-                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, row) +
+                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, row, 'detailed') +
                     " = " +
-                    toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.userSettings.locale, targetCurrency);
+                    toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency, 'detailed');
             },
             className: "dt-nowrap",
             searchable: false,
@@ -89,11 +87,9 @@ $(dataTableSelector).DataTable({
                     return 1 / row.latest_rate;
                 }
                 // Formatted text is returned for display in a specific way
-                const targetCurrency = Object.assign({}, row, {max_digits: 4});
-
-                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency) +
+                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency, 'detailed') +
                     " = " +
-                    toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.userSettings.locale, targetCurrency);
+                    toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.userSettings.locale, row, 'detailed');
             },
             className: "dt-nowrap",
             searchable: false,

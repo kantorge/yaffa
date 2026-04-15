@@ -91,7 +91,8 @@
                   type,
                   data,
                   window.YAFFA.userSettings.locale,
-                  Object.assign({}, self.toCurrency, { max_digits: 4 }),
+                  self.toCurrency,
+                  'detailed',
                 );
               },
             },

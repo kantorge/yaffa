@@ -244,6 +244,7 @@
                 data,
                 vm.locale,
                 vm.investment.currency,
+                'detailed',
               );
             },
           },

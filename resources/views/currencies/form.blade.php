@@ -83,6 +83,40 @@
                     >
                 </div>
             </div>
+
+            <div class="row mb-3">
+                <label for="generic_decimal_precision" class="col-form-label col-sm-3">
+                    {{ __('Generic decimal precision') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="generic_decimal_precision"
+                        name="generic_decimal_precision"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value="{{ old('generic_decimal_precision', $currency->generic_decimal_precision ?? '') }}"
+                    >
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="detailed_decimal_precision" class="col-form-label col-sm-3">
+                    {{ __('Detailed decimal precision') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="detailed_decimal_precision"
+                        name="detailed_decimal_precision"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value="{{ old('detailed_decimal_precision', $currency->detailed_decimal_precision ?? '') }}"
+                    >
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             @csrf
