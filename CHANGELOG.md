@@ -1,7 +1,12 @@
 # Changelog
 
-## [2.3.1](https://github.com/kantorge/yaffa/compare/v2.3.0...v2.3.1) (2026-03-26)
+## [2.3.2]
 
+### 🐛 Bug Fixes
+
+- fix: Select2 initialization for several views
+
+## [2.3.1](https://github.com/kantorge/yaffa/compare/v2.3.0...v2.3.1) (2026-03-26)
 
 ### 🛠️ Chores
 
