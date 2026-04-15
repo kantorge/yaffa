@@ -3,7 +3,9 @@ import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 
 am4core.useTheme(am4themes_animated);
-import 'select2';
+import select2 from 'select2';
+
+select2();
 
 import * as toastHelpers from '../toast';
 

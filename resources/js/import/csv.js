@@ -10,8 +10,10 @@ import {toFormattedCurrency, toIsoDateString} from '../helpers';
 
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
-import 'select2';
+import select2 from 'select2';
 import 'jquery-csv';
+
+select2();
 
 window.transactions = [];
 window.account_currency = {};
