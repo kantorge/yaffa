@@ -1,0 +1,52 @@
+## Tech debts, future improvements
+
+- Add an optional title field for AiDocument for user-friendly naming.
+  - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
+- Add camera capture support in upload flow for mobile receipt capture.
+  - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
+- Store and display Google Drive folder name in addition to folder ID.
+  - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
+- Add payee/account-level custom prompt support and optional prompt-learning UX.
+  - Verbose detail: Consider optional per-payee (and maybe per-account) custom prompts to improve extraction on recurring receipt formats, plus optional “save as custom prompt” suggestion after successful extractions.
+- Consider side-by-side receipt vs extracted-values review UI.
+  - Verbose detail: Current tab layout works, but side-by-side could improve review speed; requires careful design for multi-file documents and dense extracted data.
+- [Research] Tune Tesseract parameters for OCR quality.
+  - Verbose detail: Current default OCR results may be weak; investigate concrete parameter combinations that improve practical extraction accuracy.
+- [Research] Define and enforce minimum Tesseract binary version for local mode.
+  - Verbose detail: Add version checks and enforcement strategy so binary mode runs only on supported/minimum versions for compatibility and OCR quality.
+- Add richer live status completion feedback for reprocessing (polling or realtime).
+  - Verbose detail: Reprocessing currently updates status minimally; evaluate if simple polling is enough or if Echo/Reverb realtime would be justified.
+- Allow creating payee from unidentified payee result in AiDocument review flow.
+  - Verbose detail: Add “create payee” action when extraction returns unidentified payee, likely aligned with the modal-based payee management direction in PR 371.
+- Add category-learning management UI (list, delete/archive).
+  - Verbose detail: Once mappings are learned, users currently cannot manage them; add list + cleanup controls in category management.
+- Handle duplicate item descriptions with contextual learning (amount/position aware).
+  - Verbose detail: Current learning key is mostly description-only, which can fail when same item text appears with different categories; consider amount/position/context-sensitive learning.
+- Improve receipt discount handling and optional warning heuristics.
+  - Verbose detail: Test and improve handling of item-level discounts and mixed pricing cases; MVP fallback could warn when same normalized item appears with conflicting category-learning intent.
+- Add payee-level toggle to disable item-level breakdown when desired.
+  - Verbose detail: For some payees (e.g., restaurants), item-level split may be unnecessary; add per-payee preference to collapse to total-category behavior.
+- Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
+  - Verbose detail: System already holds preference data but management is cumbersome; add both per-payee and mass-assignment tooling for preferred/non-preferred categories.
+- Add optional category description and category type constraints for better AI guidance.
+  - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
+- Make item-level editing foldable in finalization UI.
+  - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
+- Explore vector search for AI cost/performance optimization.
+  - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
+- Add learning flow for account/payee/investment overrides during finalization.
+  - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
+- [Tech debt] Revisit AI documents DataTable column width behavior after async refresh.
+  - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
+- Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
+- Add overlap hint for multi-image receipts in extraction prompt.
+  - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
+- Improve failed-processing UX and allow prompt editing directly from AiDocument view.
+  - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing. This could be implemented together with the verbose processing history and AI conversation logging features for better transparency and control.
+  - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
+- Add scanned-PDF fallback to OCR when extracted PDF text is empty.
+  - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
+  - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
+- When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
+- The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
+- File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
