@@ -46,29 +46,31 @@ class CategoryController extends Controller implements HasMiddleware
         $categories = $request->user()
             ->categories()
             ->with(['parent'])
-            // Pass the number of associated standard, regular transactions
             ->withCount([
                 'transaction as transactions_count_regular' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->byScheduleType('none');
+                        ->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
                 },
-            ])
-            // Pass the total number of associated scheduled or budget transactions
-            ->withCount([
                 'transaction as transactions_count_with_schedule' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->byScheduleType('any');
+                        ->where(function (Builder $query): void {
+                            $query->where('transactions.schedule', true)
+                                ->orWhere('transactions.budget', true);
+                        });
                 },
             ])
             ->withCount('children')
             ->withMin([
                 'transaction as transactions_min_date' => function (Builder $query): void {
-                    $query->byScheduleType('none');
+                    $query->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
                 },
             ], 'date')
             ->withMax([
                 'transaction as transactions_max_date' => function (Builder $query): void {
-                    $query->byScheduleType('none');
+                    $query->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
                 },
             ], 'date')
             ->withCount('payeesNotPreferring')

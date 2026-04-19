@@ -27,6 +27,15 @@ class TransactionTest extends TestCase
     public function test_by_schedule_type_scope_filters_transactions_for_each_supported_mode(): void
     {
         $transactions = $this->createTransactionsForScheduleTypeScope();
+        $otherUser = User::factory()->create();
+
+        Transaction::factory()
+            ->deposit($otherUser)
+            ->create([
+                'user_id' => $otherUser->id,
+                'schedule' => false,
+                'budget' => true,
+            ]);
 
         $this->assertSame(
             [$transactions['schedule_only']->id, $transactions['both']->id],
