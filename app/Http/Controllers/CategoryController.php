@@ -46,32 +46,31 @@ class CategoryController extends Controller implements HasMiddleware
         $categories = $request->user()
             ->categories()
             ->with(['parent'])
-            // Also pass the number of associated standard transactions
+            // Pass the number of associated standard, regular transactions
             ->withCount([
-                'transaction as transactions_count' => function (Builder $query) {
-                    $query->select(DB::raw('COUNT(distinct transactions.id)'))
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
-                }
+                'transaction as transactions_count_regular' => function (Builder $query): void {
+                    $query->selectRaw('COUNT(DISTINCT transactions.id)')
+                        ->byScheduleType('none');
+                },
             ])
-            ->withCount('transaction as transactions_count_total')
+            // Pass the total number of associated scheduled or budget transactions
+            ->withCount([
+                'transaction as transactions_count_with_schedule' => function (Builder $query): void {
+                    $query->selectRaw('COUNT(DISTINCT transactions.id)')
+                        ->byScheduleType('any');
+                },
+            ])
             ->withCount('children')
-            // TODO: how should this be solved using withMin?
-            ->withCount([
-                'transaction as transactions_min_date' => function (Builder $query) {
-                    $query->select(DB::raw('MIN(transactions.date)'))
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
-                }
-            ])
-            // TODO: how should this be solved using withMax?
-            ->withCount([
-                'transaction as transactions_max_date' => function (Builder $query) {
-                    $query->select(DB::raw('MAX(transactions.date)'))
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
-                }
-            ])
+            ->withMin([
+                'transaction as transactions_min_date' => function (Builder $query): void {
+                    $query->byScheduleType('none');
+                },
+            ], 'date')
+            ->withMax([
+                'transaction as transactions_max_date' => function (Builder $query): void {
+                    $query->byScheduleType('none');
+                },
+            ], 'date')
             ->withCount('payeesNotPreferring')
             ->withCount('payeesPreferring')
             ->withCount('payeesDefaulting')

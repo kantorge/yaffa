@@ -52,10 +52,16 @@ window.categories = window.categories.map(function(category) {
  */
 const deleteButtonConditions = [
     {
-        property: 'transactions_count_total',
+        property: 'transactions_count_regular',
         value: 0,
         negate: false,
         errorMessage: __('It is already used in transactions.'),
+    },
+    {
+        property: 'transactions_count_with_schedule',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used in scheduled or budget transactions.'),
     },
     {
         property: 'children_count',
@@ -122,7 +128,7 @@ window.table = $(dataTableSelector).DataTable({
         },
         {
             // Display count of associated transactions
-            data: "transactions_count",
+            data: "transactions_count_regular",
             title: __("Transactions"),
             render: function(data, type) {
                 if (type === 'display') {
@@ -175,7 +181,7 @@ window.table = $(dataTableSelector).DataTable({
         if (!data.parent) {
             $('td:eq(1)', row).addClass("text-muted text-italic");
         }
-        if (data.transactions_count === 0) {
+        if (data.transactions_count_regular === 0) {
             $('td:eq(3)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_min_date) {

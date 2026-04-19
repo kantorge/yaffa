@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Transaction;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -60,6 +63,74 @@ class CategoryTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs("{$this->base_route}.index");
+    }
+
+    public function test_category_query_returns_first_and_last_regular_transaction_dates(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $earliestRegularTransaction = Transaction::factory()->deposit($user)->create([
+            'date' => '2024-01-10',
+            'schedule' => false,
+            'budget' => false,
+        ]);
+        $latestRegularTransaction = Transaction::factory()->deposit($user)->create([
+            'date' => '2024-03-15',
+            'schedule' => false,
+            'budget' => false,
+        ]);
+        $scheduledTransaction = Transaction::factory()->deposit($user)->create([
+            'date' => '2023-01-01',
+            'schedule' => true,
+            'budget' => false,
+        ]);
+        $budgetTransaction = Transaction::factory()->deposit($user)->create([
+            'date' => '2025-01-01',
+            'schedule' => false,
+            'budget' => true,
+        ]);
+
+        foreach (
+            [
+                $earliestRegularTransaction,
+                $latestRegularTransaction,
+                $scheduledTransaction,
+                $budgetTransaction,
+            ] as $transaction
+        ) {
+            $transaction->transactionItems()->firstOrFail()->update([
+                'category_id' => $category->id,
+            ]);
+        }
+
+        $categoryWithDates = $user->categories()
+            ->withCount([
+                'transaction as transactions_count_regular' => function (Builder $query): void {
+                    $query->selectRaw('COUNT(DISTINCT transactions.id)')
+                        ->byScheduleType('none');
+                },
+                'transaction as transactions_count_with_schedule' => function (Builder $query): void {
+                    $query->selectRaw('COUNT(DISTINCT transactions.id)')
+                        ->byScheduleType('any');
+                },
+            ])
+            ->withMin([
+                'transaction as transactions_min_date' => function (Builder $query): void {
+                    $query->byScheduleType('none');
+                },
+            ], 'date')
+            ->withMax([
+                'transaction as transactions_max_date' => function (Builder $query): void {
+                    $query->byScheduleType('none');
+                },
+            ], 'date')
+            ->findOrFail($category->id);
+
+        $this->assertSame(2, $categoryWithDates->transactions_count_regular);
+        $this->assertSame(2, $categoryWithDates->transactions_count_with_schedule);
+        $this->assertSame('2024-01-10', Carbon::parse($categoryWithDates->transactions_min_date)->toDateString());
+        $this->assertSame('2024-03-15', Carbon::parse($categoryWithDates->transactions_max_date)->toDateString());
     }
 
     public function test_user_cannot_create_a_category_with_missing_data(): void

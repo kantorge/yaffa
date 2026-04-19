@@ -467,6 +467,7 @@
     "Investments represent your holdings in various financial instruments such as stocks, bonds, or mutual funds.": "A befektetések a különféle pénzügyi instrumentumokban, például részvényekben, kötvényekben vagy befektetési alapokban lévő vagyonodat jelentik.",
     "It has subcategories assigned.": "Hozzárendelt alkategóriákkal rendelkezik.",
     "It is already used in transactions.": "Már használják tranzakciókban.",
+    "It is used in scheduled or budget transactions.": "Ütemezett vagy költségvetési tranzakciókban használják.",
     "It is used as default category by some payees.": "Néhány üzlet alapértelmezett kategóriaként használja.",
     "It is used as not preferred category by some payees.": "Egyes üzletek nem preferált kategóriáként használják.",
     "It is used as preferred category by some payees.": "Egyes üzletek előnyben részesített kategóriáként használják.",
