@@ -89,11 +89,7 @@
           <div
             v-if="testFetchResult.message"
             class="alert mt-3 mb-0"
-            :class="
-              testFetchResult.type === 'success'
-                ? 'alert-success'
-                : 'alert-danger'
-            "
+            :class="'alert-' + testFetchResult.type"
             role="alert"
           >
             {{ testFetchResult.message }}
@@ -118,7 +114,6 @@
 <script>
   import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
-  import * as toastHelpers from '@/shared/lib/toast';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
@@ -393,9 +388,8 @@
           const message = __(
             'Please set the Symbol field before testing this provider.',
           );
-          testFetchResult.type = 'error';
+          testFetchResult.type = 'danger';
           testFetchResult.message = message;
-          toastHelpers.showErrorToast(message);
           return;
         }
 
@@ -413,21 +407,33 @@
             },
           );
 
-          const resultMessage = __('Test fetch successful: :price (:date)', {
-            price: response.data?.price,
-            date: response.data?.date,
-          });
+          let resultMessage =
+            __('Test fetch successful.') +
+            ' ' +
+            __('Retrieved data: :price (:date)', {
+              price: response.data?.price,
+              date: response.data?.date,
+            });
+
           testFetchResult.type = 'success';
+
+          if (response.data?.price === 0) {
+            resultMessage +=
+              ' ' +
+              __(
+                'The API returned a price of 0, which may indicate an issue with the provided symbol, or data availability.',
+              );
+            testFetchResult.type = 'warning';
+          }
+
           testFetchResult.message = resultMessage;
-          toastHelpers.showSuccessToast(resultMessage);
         } catch (error) {
           const message =
             error.response?.data?.error?.message ||
             error.response?.data?.message ||
             __('Test fetch failed.');
-          testFetchResult.type = 'error';
+          testFetchResult.type = 'danger';
           testFetchResult.message = message;
-          toastHelpers.showErrorToast(message);
         } finally {
           testFetchInProgress.value = false;
         }

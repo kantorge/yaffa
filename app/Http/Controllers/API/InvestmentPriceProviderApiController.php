@@ -8,6 +8,7 @@ use App\Models\Investment;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderAvailabilityService;
 use App\Services\InvestmentPriceProviderRegistry;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -69,7 +70,7 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
         try {
             $context = $this->contextResolver->resolve($investment);
             $investment->provider_credentials = $context['credentials'];
-            $prices = $context['provider']->fetchPrices($investment);
+            $prices = $context['provider']->fetchPrices($investment, Carbon::now()->subDays(30), false);
 
             $latestPrice = collect($prices)
                 ->filter(fn ($item) => is_array($item) && isset($item['date'], $item['price']))
