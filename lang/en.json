@@ -467,6 +467,7 @@
     "Investments represent your holdings in various financial instruments such as stocks, bonds, or mutual funds.": "Investments represent your holdings in various financial instruments such as stocks, bonds, or mutual funds.",
     "It has subcategories assigned.": "It has subcategories assigned.",
     "It is already used in transactions.": "It is already used in transactions.",
+    "It is used in scheduled or budget transactions.": "It is used in scheduled or budget transactions.",
     "It is used as default category by some payees.": "It is used as default category by some payees.",
     "It is used as not preferred category by some payees.": "It is used as not preferred category by some payees.",
     "It is used as preferred category by some payees.": "It is used as preferred category by some payees.",

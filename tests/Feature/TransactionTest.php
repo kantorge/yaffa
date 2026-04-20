@@ -24,6 +24,143 @@ class TransactionTest extends TestCase
         $this->user = User::factory()->create();
     }
 
+    public function test_by_schedule_type_scope_filters_transactions_for_each_supported_mode(): void
+    {
+        $transactions = $this->createTransactionsForScheduleTypeScope();
+        $otherUser = User::factory()->create();
+
+        Transaction::factory()
+            ->deposit($otherUser)
+            ->create([
+                'user_id' => $otherUser->id,
+                'schedule' => false,
+                'budget' => true,
+            ]);
+
+        $this->assertSame(
+            [$transactions['schedule_only']->id, $transactions['both']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('schedule')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['schedule_only']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('schedule_only')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['budget_only']->id, $transactions['both']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('budget')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['budget_only']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('budget_only')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['both']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('both')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['schedule_only']->id, $transactions['budget_only']->id, $transactions['both']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('any')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+
+        $this->assertSame(
+            [$transactions['regular']->id],
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('none')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+    }
+
+    public function test_by_schedule_type_scope_returns_unfiltered_query_for_unknown_type(): void
+    {
+        $transactions = $this->createTransactionsForScheduleTypeScope();
+
+        $this->assertSame(
+            collect($transactions)
+                ->pluck('id')
+                ->sort()
+                ->values()
+                ->all(),
+            Transaction::query()
+                ->where('user_id', $this->user->id)
+                ->byScheduleType('unexpected-filter')
+                ->orderBy('id')
+                ->pluck('id')
+                ->all()
+        );
+    }
+
+    private function createTransactionsForScheduleTypeScope(): array
+    {
+        return [
+            'regular' => Transaction::factory()
+                ->deposit($this->user)
+                ->create([
+                    'user_id' => $this->user->id,
+                    'schedule' => false,
+                    'budget' => false,
+                ]),
+            'schedule_only' => Transaction::factory()
+                ->deposit($this->user)
+                ->create([
+                    'user_id' => $this->user->id,
+                    'schedule' => true,
+                    'budget' => false,
+                ]),
+            'budget_only' => Transaction::factory()
+                ->deposit($this->user)
+                ->create([
+                    'user_id' => $this->user->id,
+                    'schedule' => false,
+                    'budget' => true,
+                ]),
+            'both' => Transaction::factory()
+                ->deposit($this->user)
+                ->create([
+                    'user_id' => $this->user->id,
+                    'schedule' => true,
+                    'budget' => true,
+                ]),
+        ];
+    }
+
     /**
      * Test that guest users cannot access transaction pages
      */
