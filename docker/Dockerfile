@@ -28,8 +28,8 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Stream Apache logs to container stdout/stderr for centralized collection.
-RUN sed -i 's|ErrorLog ${APACHE_LOG_DIR}/error.log|ErrorLog /dev/stderr|g' /etc/apache2/apache2.conf /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's|CustomLog ${APACHE_LOG_DIR}/access.log combined|CustomLog /dev/stdout combined|g' /etc/apache2/sites-available/000-default.conf
+COPY ./docker/apache-logging.conf /etc/apache2/conf-available/docker-logging.conf
+RUN a2enconf docker-logging
 
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -58,9 +58,10 @@ RUN composer install --no-dev --no-interaction --no-progress
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Update the Apache configuration to use the new document root
+# Replace the default Apache vhost with one that points at Laravel's public/ directory.
+# ErrorLog/CustomLog are inherited from conf-enabled/docker-logging.conf above.
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf /etc/apache2/apache2.conf
+COPY ./docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 
 # Expose the default HTTP port
 EXPOSE 80
