@@ -124,30 +124,33 @@ trait CurrencyTrait
      * @param int|null $currencyId The ID of the currency for which to get the rate.
      * @param Carbon $date The date for which to get the latest rate.
      * @param array $allRatesMap A map of all rates, indexed by currency ID and date.
-     * @param int $baseCurrencyID The ID of the base currency, for which we look the rate for.
+     * @param int $baseCurrencyId The ID of the base currency, for which we look the rate for.
      * @return float|null The latest rate for the given currency, or null if not found.
      */
-    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
+    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyId): ?float
     {
         // If the currency is the base currency or not present in the rates map, return null
         if (
             $currencyId === null ||
-            $currencyId === $baseCurrencyID ||
+            $currencyId === $baseCurrencyId ||
             !array_key_exists($currencyId, $allRatesMap)
         ) {
             return null;
         }
 
-        // Iterate over the rates for the given currency
+        // Iterate over the rates for the given currency (ordered newest-first).
+        // Return the first rate whose month is on or before the requested date.
+        $oldestRate = null;
         foreach ($allRatesMap[$currencyId] as $rateDate => $rate) {
+            $oldestRate = $rate;
             $rateDateCarbon = Carbon::parse($rateDate);
-            // Return the first rate that is less than or equal to the given date
             if ($rateDateCarbon->lte($date)) {
                 return $rate;
             }
         }
 
-        // If no rate is found, return null
-        return null;
+        // If no rate was found on or before the given date (i.e. all known rates are
+        // newer than the transaction month), fall back to the oldest available rate.
+        return $oldestRate;
     }
 }
