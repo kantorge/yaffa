@@ -241,6 +241,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->where('dataType', 'budget|result|all')
         ->name('reports.waterfall');
 
+    // Maintenance endpoints
+    Route::post('/maintenance/clear-currency-cache', [CurrencyRateApiController::class, 'clearCache'])
+        ->name('maintenance.clear-currency-cache');
+    Route::post('/maintenance/recalculate-account-monthly-summaries', [AccountEntityApiController::class, 'recalculateAccountMonthlySummaries'])
+        ->name('maintenance.recalculate-account-monthly-summaries');
+
     // Onboarding endpoints
     Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData'])
         ->name('onboarding.show');

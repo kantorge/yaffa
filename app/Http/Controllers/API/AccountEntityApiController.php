@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 class AccountEntityApiController extends Controller implements HasMiddleware
@@ -39,6 +40,20 @@ class AccountEntityApiController extends Controller implements HasMiddleware
         $accountEntity->save();
 
         return response()->json($accountEntity, Response::HTTP_OK);
+    }
+
+    /**
+     * Recalculate monthly summaries for all accounts of the current user.
+     */
+    public function recalculateAccountMonthlySummaries(Request $request): JsonResponse
+    {
+        Artisan::call('app:cache:account-monthly-summaries', [
+            'userId' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => __('maintenance.accountMonthlySummaries.queued'),
+        ], Response::HTTP_OK);
     }
 
     /**
