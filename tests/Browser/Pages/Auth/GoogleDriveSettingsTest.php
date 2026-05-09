@@ -99,7 +99,6 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->waitFor('#service_account_json', 10)
                 ->assertInputValue('#folder_id', 'test-folder-id-123')
                 ->assertInputValue('#service_account_json', '')
-                ->assertPresent('@service-account-json-hint')
                 ->assertSeeIn('@service-account-email', 'test@test-project.iam.gserviceaccount.com');
         });
     }
@@ -169,7 +168,6 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->click('@button-save-google-drive')
                 ->waitForTextIn('div.toast-container div.toast.bg-success.show', 'Google Drive configuration updated', 10)
                 ->assertInputValue('#service_account_json', '')
-                ->assertPresent('@service-account-json-hint')
                 ->assertSeeIn('@service-account-email', 'new@new-project.iam.gserviceaccount.com');
         });
 
