@@ -14,7 +14,7 @@
         "beyondcode/laravel-mailbox": "^5.0",
         "biscolab/laravel-recaptcha": "dev-maintenance",
         "bkwld/cloner": "^3.14",
-        "dedoc/scramble": "^0.13.14",
+        "dedoc/scramble": "^0.13.22",
         "diglactic/laravel-breadcrumbs": "^10.0",
         "edgaras/strsim": "^1.1",
         "google/apiclient": "^2.19",
