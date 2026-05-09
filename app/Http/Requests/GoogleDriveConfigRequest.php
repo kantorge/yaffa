@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\GoogleDriveConfig;
+use Illuminate\Validation\Rule;
 
 class GoogleDriveConfigRequest extends FormRequest
 {
@@ -72,34 +73,36 @@ class GoogleDriveConfigRequest extends FormRequest
             ];
         }
 
-        // Folder ID is required for create/test, nullable for update
-        $folderIdRules = $isUpdate ? [
-            'nullable',
-            'string',
-            'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-        ] : [
-            'required',
-            'string',
-            'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-        ];
-
         return [
             'service_account_json' => $serviceAccountJsonRules,
-            'folder_id' => $folderIdRules,
+            'folder_id' => [
+                // Folder ID is required for create/test, nullable for update
+                $isUpdate ? 'nullable' : 'required',
+                'string',
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
+            ],
             'folder_name' => ['nullable', 'string', 'max:255'],
             'post_import_actions' => ['nullable', 'array'],
             'post_import_actions.*' => ['string', 'in:delete,trash,move_to_processed,rename_processed'],
             'processed_folder_id' => [
+                Rule::requiredIf(function () {
+                    $actions = $this->input('post_import_actions', []);
+
+                    return is_array($actions) && in_array('move_to_processed', $actions, true);
+                }),
+                // Generally nullable, but conditionally required if 'move_to_processed' action is selected (see below)
                 'nullable',
                 'string',
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-                'required_if_accepted:post_import_actions',
+                // Validate that processed folder differs from the import folder, if both are provided
                 function ($attribute, $value, $fail) {
                     $actions = $this->input('post_import_actions', []);
-                    if (is_array($actions) && in_array('move_to_processed', $actions, true) && empty($value)) {
-                        $fail(__('The processed folder ID is required when "Move to Processed" is selected.'));
+                    $currentImportFolder = $this->input('folder_id');
+
+                    if (empty($currentImportFolder)) {
+                        $currentImportFolder = optional($this->route('googleDriveConfig'))->folder_id;
                     }
-                    if (! empty($value) && $value === $this->input('folder_id')) {
+                    if (! empty($value) && ! empty($currentImportFolder) && $value === $currentImportFolder) {
                         $fail(__('The processed folder must be different from the import folder.'));
                     }
                 },

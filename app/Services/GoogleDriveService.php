@@ -110,8 +110,19 @@ class GoogleDriveService
      */
     public function deleteFile(GoogleDriveConfig $config, string $fileId): bool
     {
-        $service = new Drive($this->createClient(json_decode($config->service_account_json, true)));
+        $service = $this->createDriveService(json_decode($config->service_account_json, true));
 
+        return $this->deleteFileWithService($service, $fileId);
+    }
+
+    /**
+     * Permanently delete a file from Google Drive.
+     * Returns true on success or if the file is already gone, false on permission failure.
+     *
+     * @throws \Google\Service\Exception On unexpected API errors.
+     */
+    private function deleteFileWithService(Drive $service, string $fileId): bool
+    {
         try {
             $service->files->delete($fileId, ['supportsAllDrives' => true]);
 
@@ -137,8 +148,19 @@ class GoogleDriveService
      */
     public function trashFile(GoogleDriveConfig $config, string $fileId): bool
     {
-        $service = new Drive($this->createClient(json_decode($config->service_account_json, true)));
+        $service = $this->createDriveService(json_decode($config->service_account_json, true));
 
+        return $this->trashFileWithService($service, $fileId);
+    }
+
+    /**
+     * Move a file to the owner's trash.
+     * Returns true on success or if the file is already gone, false on permission failure.
+     *
+     * @throws \Google\Service\Exception On unexpected API errors.
+     */
+    private function trashFileWithService(Drive $service, string $fileId): bool
+    {
         try {
             $service->files->update(
                 $fileId,
@@ -168,8 +190,19 @@ class GoogleDriveService
      */
     public function moveFile(GoogleDriveConfig $config, string $fileId, string $targetFolderId, string $currentParentId): bool
     {
-        $service = new Drive($this->createClient(json_decode($config->service_account_json, true)));
+        $service = $this->createDriveService(json_decode($config->service_account_json, true));
 
+        return $this->moveFileWithService($service, $fileId, $targetFolderId, $currentParentId);
+    }
+
+    /**
+     * Move a file to a different folder by updating its parents.
+     * Returns true on success or if the file is already gone, false on permission failure.
+     *
+     * @throws \Google\Service\Exception On unexpected API errors.
+     */
+    private function moveFileWithService(Drive $service, string $fileId, string $targetFolderId, string $currentParentId): bool
+    {
         try {
             $service->files->update(
                 $fileId,
@@ -203,8 +236,19 @@ class GoogleDriveService
      */
     public function renameFile(GoogleDriveConfig $config, string $fileId, string $newName): bool
     {
-        $service = new Drive($this->createClient(json_decode($config->service_account_json, true)));
+        $service = $this->createDriveService(json_decode($config->service_account_json, true));
 
+        return $this->renameFileWithService($service, $fileId, $newName);
+    }
+
+    /**
+     * Rename a file in Google Drive.
+     * Returns true on success or if the file is already gone, false on permission failure.
+     *
+     * @throws \Google\Service\Exception On unexpected API errors.
+     */
+    private function renameFileWithService(Drive $service, string $fileId, string $newName): bool
+    {
         try {
             $service->files->update(
                 $fileId,
@@ -243,6 +287,7 @@ class GoogleDriveService
         }
 
         $failureReasons = [];
+        $service = $this->createDriveService(json_decode($config->service_account_json, true));
 
         foreach ($actions as $action) {
             if (! in_array($action, self::DISPOSITION_ACTIONS, true)) {
@@ -252,13 +297,13 @@ class GoogleDriveService
 
             try {
                 $success = match ($action) {
-                    'delete' => $this->deleteFile($config, $fileId),
-                    'trash' => $this->trashFile($config, $fileId),
+                    'delete' => $this->deleteFileWithService($service, $fileId),
+                    'trash' => $this->trashFileWithService($service, $fileId),
                     'move_to_processed' => $config->processed_folder_id
-                        ? $this->moveFile($config, $fileId, $config->processed_folder_id, $currentParentId)
+                        ? $this->moveFileWithService($service, $fileId, $config->processed_folder_id, $currentParentId)
                         : false,
-                    'rename_processed' => $this->renameFile(
-                        $config,
+                    'rename_processed' => $this->renameFileWithService(
+                        $service,
                         $fileId,
                         Str::startsWith($originalName, self::PROCESSED_PREFIX)
                             ? $originalName
@@ -304,11 +349,25 @@ class GoogleDriveService
      * List Drive folders accessible to the service account under the given parent.
      * Queries both root-parented folders and folders shared with the service account.
      *
-     * @return array<int, array{id: string, name: string}>
+     * Pagination is intentionally disabled (first page only per query). If Google Drive
+     * indicates additional pages, the result is marked as truncated.
+     *
+     * @return array{folders: array<int, array{id: string, name: string}>, truncated: bool, page_size: int}
      */
     public function listFolders(GoogleDriveConfig $config, ?string $parentId = null): array
     {
         $credentials = json_decode($config->service_account_json, true);
+        return $this->listFoldersByCredentials($credentials, $parentId);
+    }
+
+    /**
+     * List Drive folders accessible with the provided service account credentials.
+     *
+     * @param array<string, mixed> $credentials
+     * @return array{folders: array<int, array{id: string, name: string}>, truncated: bool, page_size: int}
+     */
+    public function listFoldersByCredentials(array $credentials, ?string $parentId = null): array
+    {
         $service = new Drive($this->createClient($credentials));
 
         $mimeTypeFilter = "mimeType = 'application/vnd.google-apps.folder'";
@@ -321,27 +380,47 @@ class GoogleDriveService
             $queries[] = "sharedWithMe = true and {$mimeTypeFilter} and trashed=false";
         }
 
-        $folders = [];
+        // In this logic pagination is intentionally disabled (first page only per query). If Google Drive indicates additional pages, the result is marked as truncated.
+        // Realistically, it's unlikely that users will have more than 10 folders in the root or shared with them, so this is an acceptable trade-off to avoid complexity of handling pagination and merging results from multiple pages.
+        $pageSize = 10;
+        $foldersById = [];
+        $truncated = false;
 
         foreach ($queries as $q) {
             $response = $service->files->listFiles([
                 'q' => $q,
                 'fields' => 'files(id, name)',
-                'pageSize' => 100,
+                'pageSize' => $pageSize,
                 'includeItemsFromAllDrives' => true,
                 'supportsAllDrives' => true,
                 'orderBy' => 'name',
             ]);
 
+            if ($response->getNextPageToken() !== null) {
+                $truncated = true;
+            }
+
             foreach ($response->getFiles() as $folder) {
-                $folders[] = [
-                    'id' => $folder->getId(),
-                    'name' => $folder->getName(),
-                ];
+                $foldersById[$folder->getId()] = $folder->getName();
             }
         }
 
-        return $folders;
+        natcasesort($foldersById);
+
+        $folders = [];
+
+        foreach ($foldersById as $id => $name) {
+            $folders[] = [
+                'id' => $id,
+                'name' => $name,
+            ];
+        }
+
+        return [
+            'folders' => $folders,
+            'truncated' => $truncated,
+            'page_size' => $pageSize,
+        ];
     }
 
     /**
@@ -647,7 +726,7 @@ class GoogleDriveService
         $tempFileId = null;
 
         try {
-            $tempFileName = 'yaffa_cap_' . Str::random(8) . '.tmp';
+            $tempFileName = self::PROCESSED_PREFIX . 'yaffa_cap_' . Str::random(8) . '.tmp';
             $tempFile = $service->files->create(
                 new DriveFile(['name' => $tempFileName, 'parents' => [$folderId]]),
                 [
@@ -699,7 +778,7 @@ class GoogleDriveService
         if ($deleted) {
             try {
                 $newFile = $service->files->create(
-                    new DriveFile(['name' => Str::random(8) . '.tmp', 'parents' => [$folderId]]),
+                    new DriveFile(['name' => self::PROCESSED_PREFIX . 'yaffa_cap_' . Str::random(8) . '.tmp', 'parents' => [$folderId]]),
                     ['data' => '', 'mimeType' => 'text/plain', 'uploadType' => 'multipart', 'fields' => 'id', 'supportsAllDrives' => true]
                 );
                 $tempFileId = $newFile->getId();

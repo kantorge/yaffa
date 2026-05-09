@@ -299,6 +299,35 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
     }
 
+    public function test_job_continues_after_disposition_exception(): void
+    {
+        $user = $this->createUserWithAiEnabled();
+        $config = GoogleDriveConfig::factory()->neverSynced()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+            'post_import_actions' => ['delete'],
+        ]);
+
+        $mock = $this->createMockService([
+            'listNewFiles' => [
+                ['id' => 'file-123', 'name' => 'receipt.pdf', 'mimeType' => 'application/pdf', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+            ],
+            'downloadFile' => function ($fileId, $creds, $dest) {
+                if (!file_exists(dirname($dest))) {
+                    mkdir(dirname($dest), 0755, true);
+                }
+                file_put_contents($dest, 'pdf content');
+            },
+            'attemptDisposition' => fn (...$args) => throw new Exception('Disposition crashed'),
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $this->runJob($config->id);
+
+        // Document should still be created even if disposition throws
+        $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
+    }
+
     public function test_job_handles_api_errors_gracefully(): void
     {
         $user = $this->createUserWithAiEnabled();

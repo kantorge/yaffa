@@ -133,17 +133,26 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
 
                 // Run post-import file disposition if actions are configured
                 if (! empty($config->post_import_actions)) {
-                    $dispositionResult = $driveService->attemptDisposition(
-                        $config,
-                        $file['id'],
-                        $file['name'],
-                        $config->folder_id
-                    );
+                    try {
+                        $dispositionResult = $driveService->attemptDisposition(
+                            $config,
+                            $file['id'],
+                            $file['name'],
+                            $config->folder_id
+                        );
 
-                    if (! $dispositionResult->success) {
+                        if (! $dispositionResult->success) {
+                            $stats['disposition_failures'][] = [
+                                'file' => $file['name'],
+                                'reasons' => $dispositionResult->failureReasons,
+                            ];
+                        }
+                    } catch (Throwable $e) {
                         $stats['disposition_failures'][] = [
                             'file' => $file['name'],
-                            'reasons' => $dispositionResult->failureReasons,
+                            'reasons' => [
+                                'exception' => $e->getMessage(),
+                            ],
                         ];
                     }
                 }

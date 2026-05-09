@@ -218,11 +218,11 @@
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
-                  :disabled="!configId"
+                  :disabled="!canBrowseFolders"
                   data-coreui-toggle="tooltip"
                   data-coreui-placement="top"
                   :title="
-                    configId
+                    canBrowseFolders
                       ? __(
                           'user.googleDriveSettings.fields.folderId.browseEnabledTitle',
                         )
@@ -277,7 +277,9 @@
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
-                  :disabled="!configId || !form.folder_id || fetchingFolderName"
+                  :disabled="
+                    !canBrowseFolders || !form.folder_id || fetchingFolderName
+                  "
                   data-coreui-toggle="tooltip"
                   data-coreui-placement="top"
                   :title="
@@ -480,11 +482,11 @@
                     <button
                       type="button"
                       class="btn btn-outline-secondary"
-                      :disabled="!configId"
+                      :disabled="!canBrowseFolders"
                       data-coreui-toggle="tooltip"
                       data-coreui-placement="top"
                       :title="
-                        configId
+                        canBrowseFolders
                           ? __(
                               'user.googleDriveSettings.fields.folderId.browseEnabledTitle',
                             )
@@ -547,7 +549,7 @@
                       type="button"
                       class="btn btn-outline-secondary"
                       :disabled="
-                        !configId ||
+                        !canBrowseFolders ||
                         !form.processed_folder_id ||
                         fetchingProcessedFolderName
                       "
@@ -804,6 +806,14 @@
                 <i class="fa fa-info-circle me-1"></i>
                 {{ __('user.googleDriveSettings.folderBrowser.sharedHint') }}
               </p>
+              <div
+                v-if="folderBrowserNotice"
+                class="alert alert-warning py-2 mb-3"
+                dusk="folder-browser-notice"
+              >
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                {{ folderBrowserNotice }}
+              </div>
               <input
                 v-model="folderBrowserSearch"
                 type="text"
@@ -956,6 +966,7 @@
       folderBrowserFolders: [],
       folderBrowserLoading: false,
       folderBrowserError: null,
+      folderBrowserNotice: null,
       folderBrowserSearch: '',
       folderBrowserSelectedId: null,
       folderBrowserSelectedName: null,
@@ -964,6 +975,11 @@
       dispositionActions: DISPOSITION_ACTIONS,
     }),
     computed: {
+      canBrowseFolders() {
+        return (
+          this.hasConfig || Boolean(this.form.service_account_json?.trim())
+        );
+      },
       canTest() {
         return (
           this.form.folder_id &&
@@ -1171,7 +1187,7 @@
        * target: 'import' | 'processed'
        */
       async fetchFolderName(target) {
-        if (!this.configId) {
+        if (!this.canBrowseFolders) {
           return;
         }
 
@@ -1194,12 +1210,22 @@
         this[isFetching] = true;
 
         try {
-          const response = await axios.get(
-            this.route('api.v1.google-drive.config.folder-name', {
-              googleDriveConfig: this.configId,
-            }),
-            { params: { folder_id: folderId } },
-          );
+          const response = this.configId
+            ? await axios.get(
+                this.route('api.v1.google-drive.config.folder-name', {
+                  googleDriveConfig: this.configId,
+                }),
+                { params: { folder_id: folderId } },
+              )
+            : await axios.post(
+                this.route(
+                  'api.v1.google-drive.config.folder-name-by-credentials',
+                ),
+                {
+                  folder_id: folderId,
+                  service_account_json: this.form.service_account_json.trim(),
+                },
+              );
 
           const fetchedName = response.data.folder_name;
 
@@ -1486,13 +1512,14 @@
        * Section 4: Folder Browser
        */
       openFolderBrowser(target) {
-        if (!this.configId) {
+        if (!this.canBrowseFolders) {
           return;
         }
 
         this.folderBrowserTarget = target;
         this.folderBrowserFolders = [];
         this.folderBrowserError = null;
+        this.folderBrowserNotice = null;
         this.folderBrowserSearch = '';
         this.folderBrowserSelectedId = null;
         this.folderBrowserSelectedName = null;
@@ -1502,19 +1529,29 @@
           this.folderBrowserModal.show();
         }
 
-        axios
-          .get(
-            this.route('api.v1.google-drive.config.folders', {
-              googleDriveConfig: this.configId,
-            }),
-          )
+        const folderRequest = this.configId
+          ? axios.get(
+              this.route('api.v1.google-drive.config.folders', {
+                googleDriveConfig: this.configId,
+              }),
+            )
+          : axios.post(
+              this.route('api.v1.google-drive.config.folders-by-credentials'),
+              {
+                service_account_json: this.form.service_account_json.trim(),
+              },
+            );
+
+        folderRequest
           .then((response) => {
             this.folderBrowserFolders = response.data.folders || [];
+            this.folderBrowserNotice = response.data.notice || null;
           })
           .catch((error) => {
             this.folderBrowserError =
               error.response?.data?.error?.message ||
               __('user.googleDriveSettings.folderBrowser.loadFailed');
+            this.folderBrowserNotice = null;
           })
           .finally(() => {
             this.folderBrowserLoading = false;

@@ -399,6 +399,23 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_update_rejects_processed_folder_id_equal_to_existing_folder_id_when_folder_id_omitted(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'import-folder-id',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => 'import-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['processed_folder_id']);
+    }
+
     public function test_update_requires_processed_folder_id_when_move_to_processed_selected(): void
     {
         $config = GoogleDriveConfig::factory()->create([

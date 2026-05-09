@@ -424,7 +424,7 @@ A few notes on the statuses
   - Manual trigger: User can request one-time sync via UI button (queues job immediately)
 
 - **File Import Flow:**
-  1. List files from folder (filter by modified date > last*sync_at; skip files named exactly `yaffa.txt`; skip files whose name starts with `processed*`)
+  1. List files from folder (filter by modified date > last_sync_at; skip files named exactly `yaffa.txt`; skip files whose name starts with `processed*`)
   2. For each file:
      - Check if `google_drive_file_id` exists in `ai_documents` (skip if duplicate)
      - **Download file first** to `storage/app/ai_documents/{user_id}/{temp_id}/{filename}`

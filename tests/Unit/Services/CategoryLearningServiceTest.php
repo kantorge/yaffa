@@ -122,8 +122,9 @@ class CategoryLearningServiceTest extends TestCase
 
     public function test_record_does_nothing_when_no_user_set(): void
     {
+        $user = User::factory()->create();
         $service = new CategoryLearningService(null);
-        $category = Category::factory()->create();
+        $category = Category::factory()->create(['user_id' => $user->id]);
 
         $service->recordCategorySelection('Coffee', $category->id);
 

@@ -8,7 +8,7 @@
 {{ __('mail.google_drive_import_failed.error', ['error' => $error]) }}
 
 **{{ __('mail.ai_document_processing_failed.document_details') }}**
-- {{ __('mail.google_drive_import_failed.folder', ['folder' => $config->folder_name ?? $config->folder_id]) }} ({{ $config->folder_id }})
+- {{ $config->folder_name ? __('mail.google_drive_import_failed.folder', ['folder' => $config->folder_name]).' ('.$config->folder_id.')' : $config->folder_id }}
 - {{ __('mail.google_drive_import_failed.error_count', ['count' => (int) $config->error_count]) }}
 
 @component('mail::button', ['url' => route('user.ai-settings')])

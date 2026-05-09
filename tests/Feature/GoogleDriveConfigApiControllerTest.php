@@ -606,6 +606,32 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->assertJson(['folder_name' => 'Custom Folder Name']);
     }
 
+    public function test_folder_name_by_credentials_requires_authentication(): void
+    {
+        $response = $this->postJson(route('api.v1.google-drive.config.folder-name-by-credentials'), [
+            'folder_id' => 'folder-id',
+            'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+        ]);
+
+        $this->assertUserNotAuthorized($response);
+    }
+
+    public function test_folder_name_by_credentials_returns_name_from_service(): void
+    {
+        $mock = $this->createMock(GoogleDriveService::class);
+        $mock->method('getFolderName')->willReturn('My Import Folder');
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.folder-name-by-credentials'), [
+                'folder_id' => 'real-folder-id',
+                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['folder_name' => 'My Import Folder']);
+    }
+
     // ===== FOLDER BROWSER ENDPOINT (GET /api/v1/google-drive/config/{id}/folders) =====
 
     public function test_folders_requires_authentication(): void
@@ -637,14 +663,48 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         ];
 
         $mock = $this->createMock(GoogleDriveService::class);
-        $mock->method('listFolders')->willReturn($folders);
+        $mock->method('listFolders')->willReturn([
+            'folders' => $folders,
+            'truncated' => false,
+            'page_size' => 100,
+        ]);
         $this->instance(GoogleDriveService::class, $mock);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson(route('api.v1.google-drive.config.folders', $config->id));
 
         $response->assertStatus(200)
-            ->assertJson(['folders' => $folders]);
+            ->assertJson([
+                'folders' => $folders,
+                'folders_truncated' => false,
+            ])
+            ->assertJsonMissingPath('notice');
+    }
+
+    public function test_folders_returns_notice_when_folder_list_is_truncated(): void
+    {
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $folders = [
+            ['id' => 'folder-1', 'name' => 'Receipts'],
+        ];
+
+        $mock = $this->createMock(GoogleDriveService::class);
+        $mock->method('listFolders')->willReturn([
+            'folders' => $folders,
+            'truncated' => true,
+            'page_size' => 100,
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson(route('api.v1.google-drive.config.folders', $config->id));
+
+        $response->assertStatus(200)
+            ->assertJsonPath('folders_truncated', true)
+            ->assertJsonPath('folders.0.id', 'folder-1')
+            ->assertJsonPath('folders.0.name', 'Receipts')
+            ->assertJsonPath('notice', __('Folder list is truncated to the first page of Google Drive results. Open a parent folder to narrow results.'));
     }
 
     public function test_folders_returns_403_on_google_auth_error(): void
@@ -684,6 +744,49 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         $this->assertSame('parent-folder-id', $capturedParentId);
     }
 
+    public function test_folders_by_credentials_returns_folder_list_from_service(): void
+    {
+        $folders = [
+            ['id' => 'folder-1', 'name' => 'Receipts'],
+            ['id' => 'folder-2', 'name' => 'Invoices'],
+        ];
+
+        $mock = $this->createMock(GoogleDriveService::class);
+        $mock->method('listFoldersByCredentials')->willReturn([
+            'folders' => $folders,
+            'truncated' => false,
+            'page_size' => 10,
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.folders-by-credentials'), [
+                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'folders' => $folders,
+                'folders_truncated' => false,
+            ]);
+    }
+
+    public function test_folders_by_credentials_returns_400_with_existing_placeholder_and_no_config(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.folders-by-credentials'), [
+                'service_account_json' => '__existing__',
+            ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'error' => [
+                    'code' => 'CONFIG_NOT_FOUND',
+                    'message' => __('No existing Google Drive configuration found'),
+                ],
+            ]);
+    }
+
     // ===== FOLDER NAME IN CONFIG RESPONSES =====
 
     public function test_update_saves_and_returns_folder_name(): void
@@ -706,7 +809,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             'folder_name' => 'My Receipts Folder',
         ]);
 
-        $response->assertJsonPath('config.folder_name', 'My Receipts Folder');
+        $response->assertJsonPath('folder_name', 'My Receipts Folder');
     }
 
     public function test_show_includes_folder_name_in_response(): void
@@ -720,7 +823,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->getJson(route('api.v1.google-drive.config.show'));
 
         $response->assertStatus(200)
-            ->assertJsonPath('config.folder_name', 'Import Inbox');
+            ->assertJsonPath('folder_name', 'Import Inbox');
     }
 
     // ===== FOLDER NAME IN TEST-CONNECTION RESPONSE =====
