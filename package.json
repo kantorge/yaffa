@@ -20,7 +20,7 @@
         "eslint-plugin-vue": "^10.5.0",
         "globals": "^17.3.0",
         "laravel-vite-plugin": "^2.0.1",
-        "postcss": "^8.4.31",
+        "postcss": "^8.5.13",
         "sass": "^1.57.1",
         "vite": "^7.3.2"
     },
