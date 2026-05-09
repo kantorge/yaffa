@@ -598,3 +598,229 @@ All prompts require JSON responses with strict schemas to ensure validation.
 **OCR:**
 
 - Tesseract OCR: No Composer package needed, uses command-line binary via Symfony Process
+
+## Category Learning Management UI (Planned)
+
+### Feature Summary
+
+Add a user-facing management UI for learned item-to-category mappings so users can review, clean up, and safely disable stale mappings. This extends the existing category-learning system from write-only behavior (learn on finalize) to full lifecycle management.
+
+### Goals / Non-Goals
+
+- Goals:
+  - Show the authenticated user's category-learning mappings in a searchable, paginated list.
+  - Support safe cleanup actions: soft archive/unarchive and hard delete.
+  - Support controlled maintenance actions: edit, manual add, merge.
+  - Integrate management entry points into existing category-management UX.
+  - Keep AI processing resilient by ignoring archived/deleted mappings immediately.
+- Non-Goals:
+  - No global/admin cross-user management.
+  - No AI prompt redesign beyond excluding archived mappings.
+  - No bulk import/export in this phase.
+
+### Assumptions
+
+- Category learning rows are user-scoped (directly or by resolvable ownership path via category).
+- Existing `CategoryLearningService` remains the source of normalization and upsert behavior.
+- Soft archive is preferred for reversible cleanup; hard delete remains available for permanent removal.
+- `usage_count` is system-managed and not directly editable by users.
+- This management feature belongs to category management, not the AI document list or review screen.
+
+### Explicit Behavioral Decisions
+
+- Archive semantics:
+  - Yes. Archived learnings are completely ignored during AI processing.
+  - This includes exact local matching and AI prompt context payload generation.
+  - Archive/unarchive takes effect immediately for new processing work.
+- Re-learning an archived mapping:
+  - If finalization tries to store a learning where an archived row already exists for the same normalized description and same category (same user scope), the system revives that row instead of creating a duplicate.
+  - Revive means `archived_at = null`; usage handling follows normal learning rules.
+- Editing:
+  - UI allows editing of `item_description` and `category_id` only.
+  - `usage_count`, timestamps, and lifecycle metadata are read-only.
+  - Server re-normalizes on save and enforces uniqueness constraints.
+- Manual add:
+  - UI allows manually adding learnings.
+  - New manual rows are created as active with `usage_count = 0`.
+  - If manual add matches an archived row key, backend should revive that row instead of creating a duplicate.
+- Merge:
+  - UI supports merge for cleanup/deduplication.
+  - Benefit: reduce duplicate rows and consolidate evidence by summing `usage_count` into one surviving row.
+  - Merge is constrained to safe cases (same normalized key and same category) to avoid semantic data loss.
+
+### Placement in Product / Navigation
+
+- Add a new section under category management, reachable from the categories area:
+  - Primary entry: Category management page adds a `Learned Mappings` tab or sub-section.
+  - Secondary entry: optional quick link from `/user/ai-settings` to category management `Learned Mappings` anchor/tab.
+- Keep this feature out of `/ai-documents` list and `/ai-documents/{id}` to avoid mixing review flow with data-maintenance flow.
+
+### Backend Scope (Laravel)
+
+- Models:
+  - Extend `CategoryLearning` with lifecycle field:
+    - `archived_at` (nullable timestamp, indexed)
+  - Keep existing fields (`item_description`, `category_id`, `usage_count`) unchanged.
+- Migrations:
+  - Add `archived_at` column to `category_learning` table.
+  - Add composite index to support UI filters and prompt fetches efficiently:
+    - `(category_id, archived_at)` and/or ownership + `archived_at` depending on current schema.
+  - Optional: backfill `archived_at = null` for existing rows (implicit default behavior).
+- Controllers / APIs:
+  - New `CategoryLearningApiController` endpoints (under `/api/v1`):
+    - `POST /api/v1/category-learning`
+      - manually create mapping (`item_description`, `category_id`)
+    - `GET /api/v1/category-learning`
+      - list with filters: `search`, `category_id`, `status=active|archived|all`, `min_usage_count`, `sort`, `page`, `per_page`
+    - `PATCH /api/v1/category-learning/{id}`
+      - edit mapping (`item_description`, `category_id`)
+    - `POST /api/v1/category-learning/{id}/archive`
+      - archives a mapping (idempotent)
+    - `POST /api/v1/category-learning/{id}/unarchive`
+      - restores archived mapping (idempotent)
+    - `DELETE /api/v1/category-learning/{id}`
+      - permanently deletes one mapping
+    - `POST /api/v1/category-learning/merge`
+      - merge selected mappings into one target mapping
+    - `POST /api/v1/category-learning/bulk-archive`
+      - archives selected IDs
+    - `POST /api/v1/category-learning/bulk-delete`
+      - deletes selected IDs with confirmation payload
+  - Optional UX helper endpoint:
+    - `GET /api/v1/category-learning/stats`
+      - returns counts by status and top categories for filter chips.
+- Services / Jobs:
+  - Introduce `CategoryLearningManagementService`:
+    - Applies create/edit/archive/unarchive/delete/merge operations with ownership checks.
+    - Performs conflict-safe normalization checks (prevent duplicate active mapping collisions for same normalized description + category rule, if required).
+    - Implements revive-on-relearn behavior for archived duplicates.
+    - Implements merge behavior with deterministic target selection and `usage_count` summation.
+    - Emits lightweight domain events for audit/telemetry hooks.
+  - Update `CategoryLearningService` read paths:
+    - Ensure AI prompt context queries include only active (`archived_at IS NULL`) mappings.
+    - Ensure lookup for exact local matching ignores archived rows.
+    - Ensure write path revives archived exact matches before any insert.
+- Policies / Auth:
+  - Add `CategoryLearningPolicy`:
+    - User can list/manage only own mappings.
+    - No cross-user access via guessed IDs.
+  - Use policy checks in all controller methods.
+- Events / Notifications:
+  - Optional internal events (no user email required):
+    - `CategoryLearningArchived`, `CategoryLearningUnarchived`, `CategoryLearningDeleted`.
+  - No queue requirement for MVP scale; synchronous controller actions are acceptable.
+
+### Frontend Scope (Vue + Bootstrap)
+
+- Pages / Routes:
+  - Reuse existing category management route/page; add `Learned Mappings` tab/panel.
+  - Optional deep-link query param for direct opening (e.g. `?tab=learned-mappings`).
+- Components:
+  - `CategoryLearningTable`:
+    - columns: item description, category, usage count, status, last updated, actions
+    - server-driven pagination/sorting/filtering
+  - `CategoryLearningFilters`:
+    - search input, category dropdown, status dropdown, usage-count threshold
+  - `CategoryLearningRowActions`:
+    - edit, archive/unarchive, delete with confirm modal
+  - `CategoryLearningBulkActionsBar`:
+    - multi-select + bulk archive/delete/merge
+  - `CategoryLearningUpsertModal`:
+    - create/edit form (`item_description`, `category_id`)
+  - `CategoryLearningMergeModal`:
+    - choose target row, show merge preview (`source_count`, `usage_count_sum`), require confirmation
+  - `CategoryLearningDeleteConfirmModal`:
+    - explicit irreversible warning for hard delete
+- State management:
+  - Local page state (filters, pagination, selected rows, loading/error states).
+  - Keep implementation aligned with existing table/data-fetch conventions used in YAFFA (DataTables pattern where applicable).
+- API interactions:
+  - Initial fetch on tab load.
+  - Refetch after create/edit/archive/unarchive/delete/merge actions.
+  - Optimistic UI optional for archive/unarchive; delete should prefer confirmed refresh.
+- UX / validation rules:
+  - Default view shows active mappings only.
+  - Archived rows visually muted and read-only for edit actions except unarchive/delete.
+  - Manual add is available via `Add learning` action.
+  - Edit allows only learning text and category selection; usage count is read-only.
+  - Merge action is available only for merge-eligible selections.
+  - Deleting requires explicit confirmation dialog text.
+  - Empty-state guidance should explain how mappings are learned (through AI document finalization).
+
+### Data & API Design
+
+- Entity:
+  - CategoryLearning (managed lifecycle)
+- Relationship:
+  - belongs to Category; user ownership enforced through category ownership and/or explicit user scope.
+- List response shape (high-level):
+  - `data[]`: `{ id, item_description, normalized_item_description?, category: { id, name }, usage_count, archived_at, updated_at }`
+  - `meta`: pagination + applied filters
+- Mutation response shape:
+  - Return updated row resource for create/edit/archive/unarchive.
+  - Return success summary for delete/bulk/merge operations (including affected IDs and resulting target ID for merge).
+
+### Processing Behavior Changes
+
+- Archive semantics are strict: archived mappings are fully excluded from processing reads.
+- Exact local category matching must query active mappings only.
+- AI-assisted context generation must exclude archived mappings.
+- If a mapping is deleted/archived, subsequent document processing must stop using it immediately (no cache staleness beyond normal request lifecycle).
+- If a matching archived row exists during learning write-back, revive and reuse it.
+
+### Corner Cases
+
+- Archived duplicate exists and user triggers manual add with same key:
+  - Expected behavior: revive archived row, do not create duplicate.
+- Edit changes text to collide with another active row key:
+  - Expected behavior: reject with validation error (422), prompt user to merge/archive instead.
+- Merge selection contains rows with different normalized keys or different categories:
+  - Expected behavior: reject merge (422) and show reason.
+- Merge contains active and archived rows (same key/category):
+  - Expected behavior: valid; resulting row is active, usage counts summed.
+- Category becomes inactive or deleted:
+  - Expected behavior: learning remains visible for audit/history but excluded from matching until category is valid again (or row is cleaned up).
+
+### Test Strategy
+
+- Backend tests:
+  - Feature tests for list endpoint filters, pagination, and ownership isolation.
+  - Feature tests for create/edit validation and ownership constraints.
+  - Feature tests for archive/unarchive/delete (single + bulk).
+  - Feature tests for merge success/failure and `usage_count` summation.
+  - Policy tests for unauthorized access and cross-user ID attempts.
+  - Service tests proving archived mappings are excluded from exact-match and AI-context retrieval.
+  - Service tests for revive-on-relearn behavior.
+- Frontend tests:
+  - Component tests for filters, row actions, upsert modal, merge modal, and confirmation dialogs.
+  - Integration test for tab load, server fetch, and post-action refresh.
+- Edge cases:
+  - Archive already archived row (idempotent success).
+  - Unarchive active row (idempotent success).
+  - Re-learn archived mapping during finalization (revive instead of duplicate).
+  - Manual add matching archived mapping (revive path).
+  - Delete non-existent row (404) and unauthorized row (403).
+  - Category deleted/inactive while mapping exists.
+- Negative paths:
+  - Bulk operation with mixed owned/unowned IDs must be atomic and fail as a whole.
+  - Merge attempt for incompatible rows must return 422.
+
+### Risks / Open Questions
+
+- Ownership model must be explicit in schema if currently only implicit through category relation.
+- Hard-delete vs archive default action may affect user trust; UI copy must be clear.
+- Large mapping tables may need query tuning and indexes validated on production-like datasets.
+- Optional future enhancement: broader semantic merge tooling (fuzzy merge) may be valuable but is intentionally out of scope due higher risk.
+
+### Acceptance Criteria
+
+- Given a user with learned mappings, when they open category management and switch to `Learned Mappings`, then they see a paginated list with search and status filters.
+- Given an active mapping, when the user archives it, then it is hidden from default active view and no longer used by processing.
+- Given an archived mapping, when the user unarchives it, then it becomes active and eligible for future matching.
+- Given a mapping, when the user deletes it and confirms, then it is permanently removed and cannot be returned by list API.
+- Given an archived mapping and a new identical learning event, when finalization stores learning, then the archived row is revived and reused instead of creating a duplicate row.
+- Given the user edits a learning, when they save, then only learning text and category can change and uniqueness validation is enforced.
+- Given the user manually adds a learning, when save succeeds, then it is active and available for subsequent matching.
+- Given merge-eligible learnings, when user confirms merge, then one target row remains and its usage count equals the sum of merged rows.
+- Given user A and user B, when user A queries or mutates user B's mapping ID, then access is denied.
+- Given archived mappings exist, when AI processing builds category-learning context, then archived mappings are excluded.
