@@ -3,6 +3,14 @@
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('widget.categoryWaterfall.cardTitle') }}
+        <i
+          v-if="missingRateCurrencies.length > 0"
+          class="fa fa-triangle-exclamation text-warning ms-2"
+          :title="missingRatesTooltip"
+          data-bs-toggle="tooltip"
+          role="img"
+          :aria-label="missingRatesTooltip"
+        ></i>
       </div>
       <div v-show="ready">
         <button
@@ -100,6 +108,7 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
   import { __ } from '@/shared/lib/i18n';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 
@@ -121,6 +130,7 @@
         baseCurrency: window.YAFFA.userSettings.baseCurrency,
         locale: window.YAFFA.userSettings.locale,
         rawData: [],
+        missingRateCurrencies: [],
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
         transactionTypeData: this.transactionType,
@@ -284,6 +294,8 @@
           .then((response) => response.json())
           .then((data) => {
             this.rawData = data.chartData;
+            this.missingRateCurrencies =
+              data.warnings?.currenciesWithoutRates || [];
 
             if (!this.rawData || this.rawData.length === 0) {
               this.noDataMessagecontainer.show();
@@ -302,6 +314,18 @@
       __,
     },
     computed: {
+      missingRatesTooltip() {
+        const currencyList = this.missingRateCurrencies
+          .map((currency) => `${currency.name} (${currency.iso_code})`)
+          .join(', ');
+
+        return (
+          __('widget.categoryWaterfall.missingRatesTooltipPrefix') +
+          currencyList +
+          '. ' +
+          __('widget.categoryWaterfall.missingRatesTooltipSuffix')
+        );
+      },
       chartData() {
         var openHistory = 0;
 
@@ -377,6 +401,7 @@
       // Update chart based on props
       this.chart.data = this.chartData;
       this.chart.validateData();
+      initializeBootstrapTooltips(this.$el);
     },
   };
 </script>

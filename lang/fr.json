@@ -1119,6 +1119,8 @@
     "widget.categoryWaterfall.onlyInvestment": "Investissement uniquement",
     "widget.categoryWaterfall.onlyStandard": "Standard uniquement",
     "widget.categoryWaterfall.previousMonthTitle": "Le mois précédent",
+    "widget.categoryWaterfall.missingRatesTooltipPrefix": "Certaines devises utilisées dans ce graphique n'ont pas de taux de change : ",
+    "widget.categoryWaterfall.missingRatesTooltipSuffix": "Les valeurs peuvent être inexactes.",
     "widget.categoryWaterfall.result": "Résultat",
     "widget.onboardingCard.dismissButton": "Rejeter",
     "widget.onboardingCard.dismissTitle": "Ne jamais afficher ce widget",

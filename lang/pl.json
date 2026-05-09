@@ -1119,6 +1119,8 @@
     "widget.categoryWaterfall.onlyInvestment": "Tylko inwestycyjne",
     "widget.categoryWaterfall.onlyStandard": "Tylko standardowe",
     "widget.categoryWaterfall.previousMonthTitle": "Poprzedni miesiąc",
+    "widget.categoryWaterfall.missingRatesTooltipPrefix": "Niektóre waluty użyte na tym wykresie nie mają kursów wymiany: ",
+    "widget.categoryWaterfall.missingRatesTooltipSuffix": "Wartości mogą być niedokładne.",
     "widget.categoryWaterfall.result": "Wynik",
     "widget.onboardingCard.dismissButton": "Odrzuć",
     "widget.onboardingCard.dismissTitle": "Nigdy nie pokazuj tego widżetu",

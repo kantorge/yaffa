@@ -1119,6 +1119,8 @@
     "widget.categoryWaterfall.onlyInvestment": "Csak befektetés",
     "widget.categoryWaterfall.onlyStandard": "Csak általános",
     "widget.categoryWaterfall.previousMonthTitle": "Előző hónap",
+    "widget.categoryWaterfall.missingRatesTooltipPrefix": "A diagramban szereplő néhány pénznemhez nincs árfolyam: ",
+    "widget.categoryWaterfall.missingRatesTooltipSuffix": "Az értékek pontatlanok lehetnek.",
     "widget.categoryWaterfall.result": "Eredmény",
     "widget.onboardingCard.dismissButton": "Eltűntet",
     "widget.onboardingCard.dismissTitle": "Ablak végleges elrejtése",

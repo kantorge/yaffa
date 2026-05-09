@@ -126,6 +126,18 @@ function reloadData() {
             chart.invalidateData();
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('chartdiv').classList.remove('hidden');
+
+            // Check for warnings about currencies without rates
+            if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
+                const currencyList = data.warnings.currenciesWithoutRates
+                    .map(c => `${c.name} (${c.iso_code})`)
+                    .join(', ');
+
+                toastHelpers.showWarningToast(
+                    __('reports.cashflow.missingRatesWarningPrefix') + currencyList +
+                    '. ' + __('reports.cashflow.missingRatesWarningSuffix')
+                );
+            }
         })
         .catch(error => console.error(error))
         .finally(() => {
