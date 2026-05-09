@@ -13,8 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $service_account_email
  * @property string $service_account_json
  * @property string $folder_id
+ * @property string|null $folder_name
+ * @property array<int, string>|null $post_import_actions
+ * @property string|null $processed_folder_id
+ * @property string|null $processed_folder_name
  * @property int $sync_interval_minutes
- * @property bool $delete_after_import
  * @property bool $enabled
  * @property \Illuminate\Support\Carbon|null $last_sync_at
  * @property string|null $last_error
@@ -27,13 +30,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereDeleteAfterImport($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereEnabled($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereErrorCount($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereFolderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereFolderName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereLastError($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereLastSyncAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig wherePostImportActions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereProcessedFolderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereProcessedFolderName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereServiceAccountEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereServiceAccountJson($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereSyncIntervalMinutes($value)
@@ -54,8 +60,11 @@ class GoogleDriveConfig extends Model
         'service_account_email',
         'service_account_json',
         'folder_id',
+        'folder_name',
+        'post_import_actions',
+        'processed_folder_id',
+        'processed_folder_name',
         'sync_interval_minutes',
-        'delete_after_import',
         'enabled',
     ];
 
@@ -63,7 +72,7 @@ class GoogleDriveConfig extends Model
     {
         return [
             'service_account_json' => 'encrypted',
-            'delete_after_import' => 'boolean',
+            'post_import_actions' => 'array',
             'enabled' => 'boolean',
             'sync_interval_minutes' => 'integer',
             'last_sync_at' => 'datetime',

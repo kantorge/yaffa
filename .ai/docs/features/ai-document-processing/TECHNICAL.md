@@ -48,7 +48,11 @@ This file contains the implementation-oriented material extracted from the main 
     - `service_account_email` (extracted from JSON, displayed in UI)
     - `service_account_json` (encrypted cast, full JSON credentials)
     - `folder_id` (Google Drive folder ID)
-    - `delete_after_import` (boolean, default false)
+    - `folder_name` (varchar 255, nullable — display name for the import folder) (✅ added in Version 2)
+    - `post_import_actions` (JSON array, nullable — replaces `delete_after_import`) (✅ added in Version 2)
+    - `processed_folder_id` (varchar 255, nullable, indexed) (✅ added in Version 2)
+    - `processed_folder_name` (varchar 255, nullable) (✅ added in Version 2)
+    - ~~`delete_after_import` (boolean, default false)~~ (✅ removed in Version 2, migrated to `post_import_actions`)
     - `enabled` (boolean, default true)
     - `last_sync_at` (timestamp, nullable)
     - `last_error` (text, nullable - stores last error message)
@@ -82,6 +86,14 @@ This file contains the implementation-oriented material extracted from the main 
     - Serves as the main API for managing AI provider configurations.
   - `GoogleDriveConfigApiController`
     - Manages Google Drive configurations and sync operations.
+    - `GET /api/v1/google-drive/config` → show current config
+    - `POST /api/v1/google-drive/config` → create config
+    - `PATCH /api/v1/google-drive/config/{id}` → update config (includes `folder_name`, `processed_folder_id`, `processed_folder_name`, `post_import_actions`)
+    - `DELETE /api/v1/google-drive/config/{id}` → delete config
+    - `POST /api/v1/google-drive/config/test` → test connection; returns `folder_name`, `file_count`, and `capabilities` map per disposition action
+    - `POST /api/v1/google-drive/config/{id}/sync` → manually trigger a one-time sync
+    - `GET /api/v1/google-drive/config/{id}/folder-name` → re-fetch display name for a given folder ID; accepts `?folder_id=` query param to support both import and processed folder
+    - `GET /api/v1/google-drive/config/{id}/folders` → list child folders accessible to the service account (for folder browser UI); returns `[{ id, name }]`
   - `PayeeStatsApiController`
     - New API endpoint to fetch payee category stats for AI prompt optimization, and also used by PayeeApiController for default category suggestion on payee selection.
   - `AiUserSettingsApiController`
@@ -135,9 +147,17 @@ This file contains the implementation-oriented material extracted from the main 
   - `GoogleDriveService`
     - Handles Google Drive API interactions using service account credentials
     - Uses `google/apiclient` package
+    - Key methods:
+      - `getFolderName(string $folderId): string` — fetches the Drive folder `name` field for display purposes
+      - `listFolders(GoogleDriveConfig $config, ?string $parentId = null): array` — lists direct child folders (queries both root-parented and `sharedWithMe` folders); returns `[{ id, name }]`; limited to 100 results per request
+      - `deleteFile(string $fileId): bool` — calls `files.delete`
+      - `trashFile(string $fileId): bool` — calls `files.update` with `trashed = true`
+      - `moveFile(string $fileId, string $targetFolderId, string $currentParentId): bool` — calls `files.update` to add new parent and remove old parent
+      - `renameFile(string $fileId, string $newName): bool` — calls `files.update` with new name
+      - `attemptDisposition(GoogleDriveConfig $config, string $fileId, string $originalName, string $currentParentId): DispositionResult` — tries each action in `post_import_actions` order; returns value object with `success: bool`, `action_used: ?string`, `failure_reasons: array`
     - Error handling:
       - Authentication/permission errors: Throw specific exception (triggers config disable)
-      - Other errors: Log and continue (silent fail for MVP)
+      - Other errors: Log and continue (silent fail)
   - `GoogleDriveMonitorJob`
     - Handles scheduled monitoring of Google Drive folders for new files
     - Runs for all users with `enabled = true` in `google_drive_configs`
@@ -209,12 +229,20 @@ This file contains the implementation-oriented material extracted from the main 
   - `Google Drive Settings` - `/user/ai-settings`
     - Features:
       - Service account email display
-      - Service account JSON input with show/hide toggle
-      - Folder ID input with smart URL parsing
-      - Delete-after-import and enabled toggles
-      - Sync interval field (minutes; per-config cadence, replaces global env var)
-      - Connection test and manual sync actions
+      - Service account JSON upload (file input + existing paste textarea with show/hide toggle)
+        - File input accepts `.json`; browser-side `FileReader` populates the textarea; validation rejects non-JSON and files over 100 KB
+      - Folder name input group (editable, max 255 chars) with re-fetch button; folder ID displayed below in read-only style
+        - Re-fetch overwrites an empty field automatically; prompts confirmation if the field already has content
+      - Folder browser: "Browse" button opens a modal listing Drive folders accessible to the service account; selecting a folder populates the ID and triggers a name re-fetch
+      - Post-import disposition: labelled checkbox group ("After successful import") replacing the old delete toggle
+        - Actions in fixed priority order: Delete permanently → Move to Trash → Move to Processed folder → Rename with `processed_` prefix
+        - Selecting "Move to Processed folder" reveals a sub-form with processed folder ID input (URL-parsing), name input, and re-fetch button
+        - After test connection, each checkbox shows a capability badge (Verified / Warning / Not tested) based on the `capabilities` map returned by the test endpoint
+        - A collapsible tip block explains the `yaffa.txt` real-file testing approach
+      - Sync interval field (minutes; per-config cadence)
+      - Enabled toggle and manual sync button
       - Last sync timestamp display
+      - Connection test button; on success, auto-populates `folder_name` if empty
       - Per-user configuration management within the AI settings page
   - `AI Behavior Settings` - `/user/ai-settings`
     - Features: AI-on/off toggle, OCR language, Vision API and Tesseract image constraints, matching thresholds, duplicate-detection settings, category matching mode
@@ -349,6 +377,18 @@ A few notes on the statuses
     - Example: `https://drive.google.com/drive/folders/1a2b3c4d5e6f` → extracts `1a2b3c4d5e6f`
   - Tooltip with example URL format and extraction instructions
   - Validation during test connection
+  - Each folder ID field is paired with a `folder_name` display-name field (varchar 255, nullable):
+    - Editable text input (max 255 chars) stored in `google_drive_configs.folder_name`
+    - Re-fetch button calls `GET /api/v1/google-drive/config/{id}/folder-name`; overwrites the field only if it is empty, or the user confirms an overwrite
+    - On successful test connection, if the response includes `folder_name` and the local field is empty, auto-populated
+    - Folder ID remains visible below the name field in a read-only style
+    - Folder name is cosmetic only and must never be used as a lookup key; nullable — clearing it is valid
+  - Folder browser button opens a modal listing Drive folders visible to the service account:
+    - Queries both root-parented and `sharedWithMe` folders; limit 100 per request
+    - Selecting a folder populates the ID and triggers a name re-fetch
+    - Button disabled with tooltip when config is not yet saved
+    - UI note: "Only folders shared with the service account are shown"
+  - The same display-name and browser pattern applies to the optional Processed folder (see Post-Import Disposition)
 
 - **Service Account JSON Validation:**
   - Must be valid JSON format
@@ -384,20 +424,33 @@ A few notes on the statuses
   - Manual trigger: User can request one-time sync via UI button (queues job immediately)
 
 - **File Import Flow:**
-  1. List files from folder (filter by modified date > last_sync_at)
+  1. List files from folder (filter by modified date > last*sync_at; skip files named exactly `yaffa.txt`; skip files whose name starts with `processed*`)
   2. For each file:
      - Check if `google_drive_file_id` exists in `ai_documents` (skip if duplicate)
      - **Download file first** to `storage/app/ai_documents/{user_id}/{temp_id}/{filename}`
      - **Only if download succeeds**, create AiDocument record with `google_drive_file_id`
      - Fire `DocumentImported` event (existing listener handles rest)
-     - If `delete_after_import = true`, delete file from Drive
+     - Call `GoogleDriveService::attemptDisposition()` — tries each action in `post_import_actions` order, stops at first success
+     - Attach `DispositionResult` to the import notification payload; a failed disposition does not fail or roll back the completed import
   3. Update `last_sync_at` on config
   4. One file = one AiDocument (no grouping)
-- **Delete After Import:**
-  - User setting: `delete_after_import` (boolean, default false) in `google_drive_configs`
-  - Requires service account to have delete permissions on folder
-  - Test connection checks delete permission (without actually deleting)
-  - Files deleted after successful import and AiDocument creation
+
+- **Post-Import File Disposition:**
+  - Replaces the former `delete_after_import` boolean flag
+  - Stored in `google_drive_configs.post_import_actions` (JSON array of action keys); null/empty means no action — file is left in place
+  - Disposition actions (fixed priority order, cannot be reordered by user):
+
+    | Priority | Key                 | What it does                                        | Required permission                      |
+    | -------- | ------------------- | --------------------------------------------------- | ---------------------------------------- |
+    | 1        | `delete`            | Permanently removes the file from the folder        | `drive` scope + file owner               |
+    | 2        | `trash`             | Moves the file to the owner's Trash                 | Same constraints as delete               |
+    | 3        | `move_to_processed` | Moves the file into a configured "Processed" folder | Write/editor access to the target folder |
+    | 4        | `rename_processed`  | Renames file to `processed_<original_name>`         | Write/editor access to the file itself   |
+
+  - In the common Gmail-owner + service-account-editor model, `delete` and `trash` will fail because the Drive API only lets the file owner permanently delete or trash files they own. `move_to_processed` and `rename_processed` require only editor access and succeed in this model.
+  - `processed_folder_id` (varchar 255, nullable, indexed) and `processed_folder_name` (varchar 255, nullable) stored in `google_drive_configs`; required when `post_import_actions` contains `move_to_processed`; must differ from the import `folder_id`
+  - If all enabled actions fail, the import notification includes a non-blocking warning
+  - Migration note: existing rows with `delete_after_import = true` were converted to `post_import_actions = ["delete", "trash"]`; the column was then dropped
 
 - **Error Handling:**
   - **Authentication/Permission Errors** (fail-fast):
@@ -416,9 +469,34 @@ A few notes on the statuses
   - Endpoint: `POST /api/v1/google-drive/config/test`
   - Tests performed:
     - Authenticate with service account JSON
-    - Access specified folder (verify read permission)
+    - Access specified folder (verify read permission); extract folder `name` for display
     - List files (return count)
-    - Check delete permission (without actually deleting - use Drive API permissions check)
+    - Capability check for all disposition actions (see below)
+  - **Disposition capability check:**
+    - Primary strategy: uses a file named exactly `yaffa.txt` placed by the user in the import folder
+      - Probes actions in priority order; the first success stops the cascade; remaining actions are `null`
+      - If `delete` succeeds, the file is gone; other capabilities cannot be tested in that run
+      - If `move_to_processed` succeeds, `rename_processed` is inferred as `true` (both require editor write access)
+      - If `processed_folder_id` is not yet configured, `move_to_processed` is returned as `null` (unknown), not `false`
+    - Fallback strategy (no `yaffa.txt` found): uses a service-account-owned temp file; results marked `capabilities_source: "estimated"` and a UI notice is shown — these approximate the service account's own permissions, not its ability to modify user-owned files
+    - Response includes `recommended_actions` based on the highest-priority action that returned `true`
+    - `yaffa.txt` is excluded from regular import scans (silently skipped) regardless of other filter conditions
+  - Response example (typical Gmail-owner + editor scenario):
+    ```json
+    {
+      "folder_accessible": true,
+      "folder_name": "YAFFA Import",
+      "file_count": 3,
+      "capabilities_source": "real_file",
+      "capabilities": {
+        "delete": false,
+        "trash": false,
+        "move_to_processed": true,
+        "rename_processed": true
+      },
+      "recommended_actions": ["move_to_processed", "rename_processed"]
+    }
+    ```
 
 - **Service Account Setup Instructions (for users):**
   1. Create Google Cloud Project
@@ -431,10 +509,10 @@ A few notes on the statuses
 
 - **Non-MVP (Future Improvements):**
   - OAuth2 flow for end-user authentication (easier UX, no service account sharing needed)
-  - Google Drive Picker dialog for folder selection
   - Multiple folder monitoring per user (database already supports it)
   - Track consecutive error count, auto-disable after threshold
   - Permanent skip list for user-deleted documents
+  - Pagination for folder browser (currently limited to 100 results per request)
 
 ## Email Content Cleanup
 

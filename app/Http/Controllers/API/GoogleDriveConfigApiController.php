@@ -92,7 +92,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'service_account_email' => $serviceAccountEmail,
             'service_account_json' => $request->input('service_account_json'),
             'folder_id' => $request->input('folder_id'),
-            'delete_after_import' => $request->input('delete_after_import', false),
+            'folder_name' => $request->input('folder_name'),
+            'post_import_actions' => $request->input('post_import_actions'),
+            'processed_folder_id' => $request->input('processed_folder_id'),
+            'processed_folder_name' => $request->input('processed_folder_name'),
             'enabled' => $request->input('enabled', true),
         ]);
 
@@ -113,7 +116,10 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         // Prepare update data
         $updateData = [
             'folder_id' => $validated['folder_id'] ?? $googleDriveConfig->folder_id,
-            'delete_after_import' => $validated['delete_after_import'] ?? false,
+            'folder_name' => array_key_exists('folder_name', $validated) ? $validated['folder_name'] : $googleDriveConfig->folder_name,
+            'post_import_actions' => array_key_exists('post_import_actions', $validated) ? $validated['post_import_actions'] : $googleDriveConfig->post_import_actions,
+            'processed_folder_id' => array_key_exists('processed_folder_id', $validated) ? $validated['processed_folder_id'] : $googleDriveConfig->processed_folder_id,
+            'processed_folder_name' => array_key_exists('processed_folder_name', $validated) ? $validated['processed_folder_name'] : $googleDriveConfig->processed_folder_name,
             'enabled' => $validated['enabled'] ?? true,
         ];
 
@@ -183,13 +189,22 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             }
 
             // Test the connection using the GoogleDriveService
-            $result = $this->googleDriveService->testConnection($credentials, $validated['folder_id']);
+            $result = $this->googleDriveService->testConnection(
+                $credentials,
+                $validated['folder_id'],
+                $validated['processed_folder_id'] ?? null
+            );
 
             if ($result['success']) {
                 return response()->json([
                     'message' => $result['message'],
                     'file_count' => $result['file_count'],
-                    'has_delete_permission' => $result['has_delete_permission'],
+                    'folder_name' => $result['folder_name'] ?? null,
+                    'test_file_found' => $result['test_file_found'] ?? false,
+                    'capabilities_source' => $result['capabilities_source'] ?? null,
+                    'capabilities' => $result['capabilities'] ?? null,
+                    'recommended_actions' => $result['recommended_actions'] ?? [],
+                    'notice' => $result['notice'] ?? null,
                 ], Response::HTTP_OK);
             }
 
@@ -235,5 +250,94 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         return response()->json([
             'message' => __('Google Drive sync has been queued'),
         ], Response::HTTP_ACCEPTED);
+    }
+
+    /**
+     * GET /api/v1/google-drive/config/{googleDriveConfig}/folder-name
+     * Fetch the display name of the config's import folder (or a different folder via ?folder_id=).
+     *
+     * @throws AuthorizationException
+     */
+    public function folderName(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
+    {
+        Gate::authorize('view', $googleDriveConfig);
+
+        $folderId = $request->query('folder_id', $googleDriveConfig->folder_id);
+
+        if (empty($folderId)) {
+            return response()->json([
+                'error' => [
+                    'code' => 'MISSING_FOLDER_ID',
+                    'message' => __('No folder ID provided.'),
+                ],
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $credentials = json_decode($googleDriveConfig->service_account_json, true);
+            $folderName = $this->googleDriveService->getFolderName($folderId, $credentials);
+
+            return response()->json(['folder_name' => $folderName], Response::HTTP_OK);
+        } catch (Exception $e) {
+            Log::warning('Could not fetch Google Drive folder name', [
+                'config_id' => $googleDriveConfig->id,
+                'folder_id' => $folderId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['folder_name' => null], Response::HTTP_OK);
+        }
+    }
+
+    /**
+     * GET /api/v1/google-drive/config/{googleDriveConfig}/folders
+     * List Drive folders accessible to the service account, optionally under a given parent.
+     *
+     * @throws AuthorizationException
+     */
+    public function folders(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
+    {
+        Gate::authorize('view', $googleDriveConfig);
+
+        $parentId = $request->query('parent_id');
+
+        try {
+            $folders = $this->googleDriveService->listFolders($googleDriveConfig, $parentId ?: null);
+
+            return response()->json(['folders' => $folders], Response::HTTP_OK);
+        } catch (\Google\Service\Exception $e) {
+            if (in_array($e->getCode(), [401, 403], true)) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'PERMISSION_DENIED',
+                        'message' => __('Could not access Google Drive. Ensure the service account credentials are valid.'),
+                    ],
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            Log::error('Google Drive folder listing failed', [
+                'config_id' => $googleDriveConfig->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => [
+                    'code' => 'DRIVE_ERROR',
+                    'message' => __('Failed to list folders: :error', ['error' => $e->getMessage()]),
+                ],
+            ], Response::HTTP_BAD_GATEWAY);
+        } catch (Exception $e) {
+            Log::error('Google Drive folder listing failed', [
+                'config_id' => $googleDriveConfig->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => [
+                    'code' => 'UNKNOWN_ERROR',
+                    'message' => __('Failed to list folders: :error', ['error' => $e->getMessage()]),
+                ],
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

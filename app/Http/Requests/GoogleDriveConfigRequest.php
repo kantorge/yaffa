@@ -86,7 +86,25 @@ class GoogleDriveConfigRequest extends FormRequest
         return [
             'service_account_json' => $serviceAccountJsonRules,
             'folder_id' => $folderIdRules,
-            'delete_after_import' => ['boolean'],
+            'folder_name' => ['nullable', 'string', 'max:255'],
+            'post_import_actions' => ['nullable', 'array'],
+            'post_import_actions.*' => ['string', 'in:delete,trash,move_to_processed,rename_processed'],
+            'processed_folder_id' => [
+                'nullable',
+                'string',
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
+                'required_if_accepted:post_import_actions',
+                function ($attribute, $value, $fail) {
+                    $actions = $this->input('post_import_actions', []);
+                    if (is_array($actions) && in_array('move_to_processed', $actions, true) && empty($value)) {
+                        $fail(__('The processed folder ID is required when "Move to Processed" is selected.'));
+                    }
+                    if (! empty($value) && $value === $this->input('folder_id')) {
+                        $fail(__('The processed folder must be different from the import folder.'));
+                    }
+                },
+            ],
+            'processed_folder_name' => ['nullable', 'string', 'max:255'],
             'enabled' => ['boolean'],
             'sync_interval_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
         ];

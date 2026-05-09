@@ -1,11 +1,7 @@
 ## Tech debts, future improvements
 
-- Add an optional title field for AiDocument for user-friendly naming.
-  - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
 - Add camera capture support in upload flow for mobile receipt capture.
   - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
-- Store and display Google Drive folder name in addition to folder ID.
-  - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
 - Add payee/account-level custom prompt support and optional prompt-learning UX.
   - Verbose detail: Consider optional per-payee (and maybe per-account) custom prompts to improve extraction on recurring receipt formats, plus optional “save as custom prompt” suggestion after successful extractions.
 - Consider side-by-side receipt vs extracted-values review UI.
@@ -28,16 +24,14 @@
   - Verbose detail: For some payees (e.g., restaurants), item-level split may be unnecessary; add per-payee preference to collapse to total-category behavior.
 - Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
   - Verbose detail: System already holds preference data but management is cumbersome; add both per-payee and mass-assignment tooling for preferred/non-preferred categories.
-- Add optional category description and category type constraints for better AI guidance.
-  - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
+- Add optional category type constraints for better AI guidance.
+  - Verbose detail: Consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI matching and manual validation.
 - Make item-level editing foldable in finalization UI.
   - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
 - Explore vector search for AI cost/performance optimization.
   - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
 - Add learning flow for account/payee/investment overrides during finalization.
   - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
-- [Tech debt] Revisit AI documents DataTable column width behavior after async refresh.
-  - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
 - Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
 - Add overlap hint for multi-image receipts in extraction prompt.
   - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
@@ -50,3 +44,6 @@
 - When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
 - The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
 - File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+- Add a widget to the dashboard showing recent AI document processing activity and status. (When AI processing is enabled.)
+- When finalizing an AI document, display the number of saved and updated category learnings.
+- Add a DataTables loader/spinner for the AI documents list to improve UX during data refreshes, especially after processing or learning updates.

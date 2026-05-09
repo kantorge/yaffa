@@ -70,6 +70,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 'skipped_unsupported' => 0,
                 'skipped_too_large' => 0,
                 'failed_downloads' => 0,
+                'disposition_failures' => [],
             ];
 
             foreach ($newFiles as $file) {
@@ -130,12 +131,20 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 event(new DocumentImported($aiDocument));
                 $stats['imported']++;
 
-                // Delete file from Drive if enabled
-                if ($config->delete_after_import) {
-                    try {
-                        $driveService->deleteFile($file['id'], $credentials, $config->folder_id);
-                    } catch (Exception $e) {
-                        Log::warning('Failed to delete file from Google Drive', ['file_id' => $file['id'], 'error' => $e->getMessage()]);
+                // Run post-import file disposition if actions are configured
+                if (! empty($config->post_import_actions)) {
+                    $dispositionResult = $driveService->attemptDisposition(
+                        $config,
+                        $file['id'],
+                        $file['name'],
+                        $config->folder_id
+                    );
+
+                    if (! $dispositionResult->success) {
+                        $stats['disposition_failures'][] = [
+                            'file' => $file['name'],
+                            'reasons' => $dispositionResult->failureReasons,
+                        ];
                     }
                 }
             }

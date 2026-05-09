@@ -4,6 +4,7 @@ const {
 
 const globals = require("globals");
 const js = require("@eslint/js");
+const vue = require("eslint-plugin-vue");
 
 const {
     FlatCompat,
@@ -15,25 +16,22 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-module.exports = defineConfig([{
-    languageOptions: {
-        globals: {
-            ...globals.browser,
-            ...globals.node,
+module.exports = defineConfig([
+    js.configs.recommended,
+    ...vue.configs['flat/recommended'],
+    ...compat.extends("plugin:prettier/recommended"),
+    {
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+            },
+            ecmaVersion: 2020,
+            parserOptions: {},
         },
-
-        ecmaVersion: 2020,
-        parserOptions: {},
+        rules: {
+            "vue/html-indent": ["error", 2],
+            indent: ["error", 2],
+        },
     },
-
-    extends: compat.extends(
-        "eslint:recommended",
-        "plugin:vue/vue3-recommended",
-        "plugin:prettier/recommended",
-    ),
-
-    rules: {
-        "vue/html-indent": ["error", 2],
-        indent: ["error", 2],
-    },
-}]);
+]);

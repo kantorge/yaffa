@@ -35,7 +35,7 @@ class GoogleDriveConfigFactory extends Factory
             'service_account_json' => $serviceAccountJson,
             'folder_id' => fake()->regexify('[a-zA-Z0-9_-]{33}'), // Google Drive folder IDs are 33 characters
             'sync_interval_minutes' => 15,
-            'delete_after_import' => fake()->boolean(30), // 30% chance of true
+            'post_import_actions' => null,
             'enabled' => fake()->boolean(90), // 90% chance of enabled
             'last_sync_at' => fake()->optional(0.5)->dateTimeBetween('-7 days'),
             'last_error' => fake()->optional(0.2)->sentence(),
