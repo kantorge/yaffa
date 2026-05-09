@@ -373,7 +373,6 @@ class TransactionApiController extends Controller implements HasMiddleware
         $transactions = $standardTransactions->concat($investmentTransactions);
 
         // We need to load the currency rates for the transactions
-        // TODO: should this be done even more generally?
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
