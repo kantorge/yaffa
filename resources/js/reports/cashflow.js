@@ -238,3 +238,48 @@ if (window.presetAccount) {
     // Initial data for all accounts
     reloadData();
 }
+
+/**
+ * Initialize dismissible alert for rate note
+ * Fetches user's preference and shows alert only if not previously dismissed
+ * Saves preference when user closes the alert
+ */
+function initializeRateNoteAlert() {
+    const dismissKey = 'dismissCashflowRateNote';
+    const alert = document.getElementById('cashflowRateNoteAlert');
+
+    if (!alert) return;
+
+    // Check if user has dismissed this alert before
+    fetch(window.route('api.v1.users.me.preferences.get', { key: dismissKey }))
+        .then(response => response.json())
+        .then(data => {
+            // Only show alert if user has NOT dismissed it
+            if (data.value !== true) {
+                alert.classList.remove('hidden');
+            }
+        })
+        .catch(error => console.error('Failed to fetch dismissal preference:', error));
+
+    // Handle dismiss button click
+    const dismissButton = alert.querySelector('[data-bs-dismiss="alert"]');
+    if (dismissButton) {
+        dismissButton.addEventListener('click', () => {
+            fetch(window.route('api.v1.users.me.preferences.set', { key: dismissKey }), {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .catch(error => console.error('Failed to save dismissal preference:', error));
+        });
+    }
+}
+
+// Initialize rate note alert when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRateNoteAlert);
+} else {
+    initializeRateNoteAlert();
+}
