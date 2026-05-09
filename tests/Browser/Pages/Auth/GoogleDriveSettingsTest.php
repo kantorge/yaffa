@@ -76,7 +76,7 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->waitFor('#service_account_json', 10)
                 ->assertVisible('#service_account_json')
                 ->assertVisible('#folder_id')
-                ->assertVisible('#delete_after_import')
+                ->assertVisible('#sync_interval_minutes')
                 ->assertVisible('#enabled')
                 ->assertVisible('@button-cancel-add-google-drive');
         });
@@ -389,7 +389,7 @@ class GoogleDriveSettingsTest extends DuskTestCase
         });
     }
 
-    public function test_delete_after_import_toggle_works(): void
+    public function test_sync_interval_can_be_set_on_create(): void
     {
         $user = $this->createTestUser();
 
@@ -401,16 +401,16 @@ class GoogleDriveSettingsTest extends DuskTestCase
             $browser
                 ->type('service_account_json', self::VALID_SERVICE_ACCOUNT_JSON)
                 ->type('folder_id', 'test-folder-id')
-                ->assertNotChecked('#delete_after_import')
-                ->click('#delete_after_import')
-                ->assertChecked('#delete_after_import')
+                ->clear('#sync_interval_minutes')
+                ->type('#sync_interval_minutes', '45')
+                ->assertInputValue('#sync_interval_minutes', '45')
                 ->click('@button-save-google-drive')
                 ->waitForTextIn('div.toast-container div.toast.bg-success.show', 'Google Drive configuration created', 30);
         });
 
         // Verify in database
         $config = GoogleDriveConfig::where('user_id', $user->id)->first();
-        $this->assertTrue($config->delete_after_import);
+        $this->assertSame(45, $config->sync_interval_minutes);
     }
 
     public function test_enabled_toggle_works(): void

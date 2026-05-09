@@ -149,7 +149,7 @@ This file contains the implementation-oriented material extracted from the main 
     - Uses `google/apiclient` package
     - Key methods:
       - `getFolderName(string $folderId): string` — fetches the Drive folder `name` field for display purposes
-      - `listFolders(GoogleDriveConfig $config, ?string $parentId = null): array` — lists direct child folders (queries both root-parented and `sharedWithMe` folders); returns `[{ id, name }]`; limited to 100 results per request
+      - `listFolders(GoogleDriveConfig $config, ?string $parentId = null): array` — lists direct child folders (queries both root-parented and `sharedWithMe` folders); returns `[{ id, name }]`; limited to 10 results per query (root-parented + `sharedWithMe`), with a `truncated` flag when more pages exist
       - `deleteFile(string $fileId): bool` — calls `files.delete`
       - `trashFile(string $fileId): bool` — calls `files.update` with `trashed = true`
       - `moveFile(string $fileId, string $targetFolderId, string $currentParentId): bool` — calls `files.update` to add new parent and remove old parent
@@ -384,7 +384,7 @@ A few notes on the statuses
     - Folder ID remains visible below the name field in a read-only style
     - Folder name is cosmetic only and must never be used as a lookup key; nullable — clearing it is valid
   - Folder browser button opens a modal listing Drive folders visible to the service account:
-    - Queries both root-parented and `sharedWithMe` folders; limit 100 per request
+    - Queries both root-parented and `sharedWithMe` folders; limit 10 per request
     - Selecting a folder populates the ID and triggers a name re-fetch
     - Button disabled with tooltip when config is not yet saved
     - UI note: "Only folders shared with the service account are shown"
@@ -512,7 +512,7 @@ A few notes on the statuses
   - Multiple folder monitoring per user (database already supports it)
   - Track consecutive error count, auto-disable after threshold
   - Permanent skip list for user-deleted documents
-  - Pagination for folder browser (currently limited to 100 results per request)
+  - Pagination for folder browser (currently limited to 10 results per request)
 
 ## Email Content Cleanup
 

@@ -112,6 +112,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'post_import_actions' => $request->input('post_import_actions'),
             'processed_folder_id' => $request->input('processed_folder_id'),
             'processed_folder_name' => $request->input('processed_folder_name'),
+            'sync_interval_minutes' => $request->input('sync_interval_minutes', 15),
             'enabled' => $request->input('enabled', true),
         ]);
 
@@ -136,6 +137,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'post_import_actions' => array_key_exists('post_import_actions', $validated) ? $validated['post_import_actions'] : $googleDriveConfig->post_import_actions,
             'processed_folder_id' => array_key_exists('processed_folder_id', $validated) ? $validated['processed_folder_id'] : $googleDriveConfig->processed_folder_id,
             'processed_folder_name' => array_key_exists('processed_folder_name', $validated) ? $validated['processed_folder_name'] : $googleDriveConfig->processed_folder_name,
+            'sync_interval_minutes' => $validated['sync_interval_minutes'] ?? $googleDriveConfig->sync_interval_minutes,
             'enabled' => $validated['enabled'] ?? true,
         ];
 

@@ -734,13 +734,18 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->willReturnCallback(function ($cfg, $parentId) use (&$capturedParentId) {
                 $capturedParentId = $parentId;
 
-                return [];
+                return [
+                    'folders' => [],
+                    'truncated' => false,
+                    'page_size' => 10,
+                ];
             });
         $this->instance(GoogleDriveService::class, $mock);
 
-        $this->actingAs($this->user, 'sanctum')
+        $response = $this->actingAs($this->user, 'sanctum')
             ->getJson(route('api.v1.google-drive.config.folders', $config->id) . '?parent_id=parent-folder-id');
 
+        $response->assertStatus(200);
         $this->assertSame('parent-folder-id', $capturedParentId);
     }
 

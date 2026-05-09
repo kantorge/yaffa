@@ -93,9 +93,6 @@
               >
                 <small>{{ jsonFileError }}</small>
               </div>
-              <small class="form-text text-muted">
-                {{ __('user.googleDriveSettings.fields.jsonKeyFile.helpText') }}
-              </small>
             </div>
           </div>
 
@@ -182,17 +179,6 @@
                 </div>
               </div>
               <HasError field="service_account_json" :form="form" />
-              <small
-                v-if="hasConfig"
-                class="form-text text-muted"
-                dusk="service-account-json-hint"
-              >
-                {{
-                  __(
-                    'user.googleDriveSettings.fields.serviceAccountJson.currentHiddenHint',
-                  )
-                }}
-              </small>
             </div>
           </div>
 
@@ -297,11 +283,18 @@
                     ]"
                   ></i>
                 </button>
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __('user.googleDriveSettings.fields.folderName.infoTooltip')
+                  "
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
               </div>
               <HasError field="folder_name" :form="form" />
-              <small class="form-text text-muted">
-                {{ __('user.googleDriveSettings.fields.folderName.helpText') }}
-              </small>
             </div>
           </div>
 
@@ -311,39 +304,26 @@
               {{ __('user.googleDriveSettings.sections.afterImport.label') }}
             </label>
             <div class="col-sm-9">
-              <!-- Test Connection instruction panel -->
-              <div class="alert alert-info py-2 mb-3">
-                <a
-                  href="#"
-                  class="d-flex align-items-center text-decoration-none text-reset"
-                  @click.prevent="
-                    showTestConnectionTip = !showTestConnectionTip
+              <div class="d-flex align-items-center mb-3">
+                <small class="form-text mb-0">
+                  {{
+                    __(
+                      'user.googleDriveSettings.sections.afterImport.actionOrderHint',
+                    )
+                  }}
+                </small>
+                <span
+                  class="ms-2 text-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __(
+                      'user.googleDriveSettings.sections.afterImport.permissionTipTooltip',
+                    )
                   "
                 >
-                  <i class="fa fa-info-circle me-2"></i>
-                  <strong>{{
-                    __(
-                      'user.googleDriveSettings.sections.afterImport.permissionTipTitle',
-                    )
-                  }}</strong>
-                  <i
-                    :class="[
-                      'fa ms-auto',
-                      showTestConnectionTip
-                        ? 'fa-chevron-up'
-                        : 'fa-chevron-down',
-                    ]"
-                  ></i>
-                </a>
-                <div v-if="showTestConnectionTip" class="mt-2">
-                  <p class="mb-0 small">
-                    {{
-                      __(
-                        'user.googleDriveSettings.sections.afterImport.permissionTipText',
-                      )
-                    }}
-                  </p>
-                </div>
+                  <i class="fa fa-info-circle"></i>
+                </span>
               </div>
 
               <!-- Estimated capabilities banner -->
@@ -431,28 +411,12 @@
                 </div>
               </div>
 
-              <small class="form-text text-muted d-block mt-2">
-                {{
-                  __(
-                    'user.googleDriveSettings.sections.afterImport.actionOrderHint',
-                  )
-                }}
-              </small>
-
               <!-- Processed folder sub-form -->
               <div
                 v-if="moveToProcessedSelected"
                 class="mt-3 p-3 border rounded"
                 dusk="processed-folder-section"
               >
-                <p class="fw-semibold mb-3">
-                  {{
-                    __(
-                      'user.googleDriveSettings.sections.processedFolder.cardTitle',
-                    )
-                  }}
-                </p>
-
                 <!-- Processed folder ID -->
                 <div class="mb-2">
                   <label for="processed_folder_id" class="form-label">
@@ -572,6 +536,18 @@
                         ]"
                       ></i>
                     </button>
+                    <span
+                      class="input-group-text btn btn-outline-input-info"
+                      data-coreui-toggle="tooltip"
+                      data-coreui-placement="top"
+                      :title="
+                        __(
+                          'user.googleDriveSettings.fields.folderName.infoTooltip',
+                        )
+                      "
+                    >
+                      <i class="fa fa-info-circle"></i>
+                    </span>
                   </div>
                   <HasError field="processed_folder_name" :form="form" />
                 </div>
@@ -970,8 +946,6 @@
       folderBrowserSearch: '',
       folderBrowserSelectedId: null,
       folderBrowserSelectedName: null,
-      // UI state
-      showTestConnectionTip: false,
       dispositionActions: DISPOSITION_ACTIONS,
     }),
     computed: {

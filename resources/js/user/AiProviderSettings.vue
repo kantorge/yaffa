@@ -450,9 +450,12 @@
     },
     mounted() {
       this.loadConfig();
-
-      // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
+    },
+    updated() {
+      this.$nextTick(() => {
+        initializeBootstrapTooltips(this.$el);
+      });
     },
     methods: {
       isProviderSupported(providerData) {
