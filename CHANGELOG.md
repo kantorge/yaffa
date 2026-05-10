@@ -1,5 +1,44 @@
 # Changelog
 
+## [3.1.0](https://github.com/kantorge/yaffa/compare/v3.0.2...v3.1.0) (2026-05-10)
+
+
+### 🛠️ Chores
+
+* **deps-dev:** bump phpunit/phpunit ([da7172d](https://github.com/kantorge/yaffa/commit/da7172d4c1fb1b2f1eb9200552fc350142f20449))
+* **deps-dev:** bump phpunit/phpunit from 11.5.55 to 12.5.22 in the composer group across 1 directory ([edad93f](https://github.com/kantorge/yaffa/commit/edad93f3839fa6db8be1ec804556ad326486aa9a))
+* **deps-dev:** bump postcss ([fde37f5](https://github.com/kantorge/yaffa/commit/fde37f54e4daf5ecfd90d137c157dff0c4445ecd))
+* **deps-dev:** bump postcss from 8.5.6 to 8.5.13 in the npm_and_yarn group across 1 directory ([584405b](https://github.com/kantorge/yaffa/commit/584405bedebc1dca90476aceaa25e5ba4280730b))
+* **deps:** bump axios from 1.15.0 to 1.16.0 in the npm_and_yarn group across 1 directory ([e115fd9](https://github.com/kantorge/yaffa/commit/e115fd9a688e7946e59216018c3d81e321563419))
+* **deps:** bump axios in the npm_and_yarn group across 1 directory ([1e32beb](https://github.com/kantorge/yaffa/commit/1e32beb35e37afa3dad6e3ce64038e0528a2f37c))
+* **deps:** bump follow-redirects ([c3cbde6](https://github.com/kantorge/yaffa/commit/c3cbde609564dad6669511e0466c7ef364bbaa3f))
+* **deps:** bump follow-redirects from 1.15.11 to 1.16.0 in the npm_and_yarn group across 1 directory ([1daef94](https://github.com/kantorge/yaffa/commit/1daef947f962e5cfc9685b168a2181609c31413a))
+* stream apache/php errors to container stdout and stderr ([#413](https://github.com/kantorge/yaffa/issues/413)) ([9495334](https://github.com/kantorge/yaffa/commit/94953341a234def2ccbf43ce0ca99940265c9d37))
+
+
+### 📚 Documentation
+
+* added various user-focused product specifications ([93d26b7](https://github.com/kantorge/yaffa/commit/93d26b7f4f14ace2b8d8f2e9927d8bd542172716))
+* added various user-focused product specifications ([25fdad1](https://github.com/kantorge/yaffa/commit/25fdad1daab0a39b19ea5daa04f39c9273b768bf))
+
+
+### ✨ Features
+
+* enhance Google Drive integration and file disposition ([#477](https://github.com/kantorge/yaffa/issues/477)) ([9e52171](https://github.com/kantorge/yaffa/commit/9e5217162fd630274f0aa6decdc80105207a3478))
+
+
+### 🐛 Bug Fixes
+
+* improve process and UI for investment price setup testing ([#472](https://github.com/kantorge/yaffa/issues/472)) ([ba724fb](https://github.com/kantorge/yaffa/commit/ba724fb5ce52f410efad998959f4522a5294398d))
+* more detailed category removal checks ([#471](https://github.com/kantorge/yaffa/issues/471)) ([e02c605](https://github.com/kantorge/yaffa/commit/e02c60581d36e95310a9fe5c6dfe274a0512e39c))
+* update dependency ([1a3c185](https://github.com/kantorge/yaffa/commit/1a3c1852bdfa2b02ada96c79129387dc7ad83048))
+* update dependency ([a82e8e3](https://github.com/kantorge/yaffa/commit/a82e8e38963f251acba1c00b0b4d0abcde035697))
+
+
+### 🧪 Tests
+
+* cover the Docker image behavior with tests ([076f964](https://github.com/kantorge/yaffa/commit/076f964183bb1bad28160d2f675a949780bec7f4))
+
 ## [3.0.2](https://github.com/kantorge/yaffa/compare/v3.0.1...v3.0.2) (2026-04-12)
 
 
