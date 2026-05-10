@@ -1172,7 +1172,7 @@
     "user.googleDriveSettings.folderBrowser.loading": "Mappák betöltése...",
     "user.googleDriveSettings.folderBrowser.sharedHint": "Csak a szolgáltatásfiókkal megosztott mappák jelennek meg.",
     "user.googleDriveSettings.folderBrowser.searchPlaceholder": "Mappák keresése...",
-    "user.googleDriveSettings.folderBrowser.empty": "Nincs található mappa.",
+    "user.googleDriveSettings.folderBrowser.empty": "Nem található mappa.",
     "user.googleDriveSettings.folderBrowser.useFolderButton": "Mappa használata",
     "user.googleDriveSettings.postImportActions.delete.label": "Fájl végleges törlése",
     "user.googleDriveSettings.postImportActions.trash.label": "Áthelyezés a kukába",
