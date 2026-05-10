@@ -301,6 +301,30 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         $this->assertFalse($config->enabled);
     }
 
+    public function test_update_preserves_enabled_status_when_not_provided(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'old-folder-id',
+            'enabled' => false,
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'folder_id' => 'new-folder-id',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'folder_id' => 'new-folder-id',
+            'enabled' => false,
+        ]);
+
+        $config->refresh();
+        $this->assertSame('new-folder-id', $config->folder_id);
+        $this->assertFalse($config->enabled);
+    }
+
     public function test_update_preserves_service_account_json_when_not_provided(): void
     {
         $config = GoogleDriveConfig::factory()->create([

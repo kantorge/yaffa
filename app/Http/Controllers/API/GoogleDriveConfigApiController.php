@@ -138,7 +138,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
             'processed_folder_id' => array_key_exists('processed_folder_id', $validated) ? $validated['processed_folder_id'] : $googleDriveConfig->processed_folder_id,
             'processed_folder_name' => array_key_exists('processed_folder_name', $validated) ? $validated['processed_folder_name'] : $googleDriveConfig->processed_folder_name,
             'sync_interval_minutes' => $validated['sync_interval_minutes'] ?? $googleDriveConfig->sync_interval_minutes,
-            'enabled' => $validated['enabled'] ?? true,
+            'enabled' => array_key_exists('enabled', $validated) ? $validated['enabled'] : $googleDriveConfig->enabled,
         ];
 
         // Only update service account JSON if provided and not the placeholder
