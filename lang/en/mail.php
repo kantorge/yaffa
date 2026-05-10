@@ -44,6 +44,8 @@ return [
         "skipped_existing" => "Skipped (already imported): :count",
         "skipped_too_large" => "Skipped (too large): :count",
         "skipped_unsupported" => "Skipped (unsupported type): :count",
+        "disposition_warning" => "Some files could not be removed from the import folder:",
+        "disposition_warning_detail" => "The files were imported successfully. You may want to clean them up manually from your Google Drive import folder.",
         "subject" => "Google Drive Import Completed"
     ],
     "labels" => [

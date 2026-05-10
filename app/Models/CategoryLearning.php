@@ -38,6 +38,7 @@ class CategoryLearning extends Model
     protected $table = 'category_learning';
 
     protected $fillable = [
+        'user_id',
         'item_description',
         'category_id',
         'usage_count',

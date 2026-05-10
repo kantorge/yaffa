@@ -44,7 +44,9 @@ return [
         "skipped_existing" => "Pominięte (już zaimportowane): :count",
         "skipped_too_large" => "Pominięte (zbyt duży plik): :count",
         "skipped_unsupported" => "Pominięte (nieobsługiwany typ): :count",
-        "subject" => "Import z Google Drive zakończony"
+        "subject" => "Import z Google Drive zakończony",
+        "disposition_warning" => "Niektórych plików nie udało się usunąć z folderu importu:",
+        "disposition_warning_detail" => "Pliki zostały zaimportowane pomyślnie. Możesz je usunąć ręcznie z folderu importu na Dysku Google."
     ],
     "labels" => [
         "amount" => "Kwota",

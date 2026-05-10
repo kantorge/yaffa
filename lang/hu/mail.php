@@ -44,7 +44,9 @@ return [
         "skipped_existing" => "Kihagyva (már importálva): :count",
         "skipped_too_large" => "Kihagyva (túl nagy fájl): :count",
         "skipped_unsupported" => "Kihagyva (nem támogatott típus): :count",
-        "subject" => "Google Drive import befejezve"
+        "subject" => "Google Drive import befejezve",
+        "disposition_warning" => "Néhány fájlt nem sikerült eltávolítani az import mappából:",
+        "disposition_warning_detail" => "A fájlok importálása sikeresen megtörtént. Érdemes manuálisan törölni őket a Google Drive import mappájából."
     ],
     "labels" => [
         "amount" => "Összeg",
