@@ -1197,7 +1197,7 @@
     "user.googleDriveSettings.toasts.syncQueued": "Synchronizacja w kolejce",
     "user.googleDriveSettings.toasts.syncFailed": "Nie udało się uruchomić synchronizacji. Spróbuj ponownie.",
     "user.googleDriveSettings.dialogs.deleteConfiguration.text": "Czy na pewno chcesz usunąć tę konfigurację?",
-    "user.googleDriveSettings.dialogs.deleteConfiguration.confirm": "Potwierdzać",
+    "user.googleDriveSettings.dialogs.deleteConfiguration.confirm": "Potwierdź",
     "user.googleDriveSettings.toasts.deleted": "Konfiguracja Dysku Google została usunięta",
     "user.googleDriveSettings.toasts.deleteFailed": "Nie udało się usunąć konfiguracji. Spróbuj ponownie.",
     "user.googleDriveSettings.folderBrowser.loadFailed": "Nie udało się załadować folderów. Najpierw zapisz dane uwierzytelniające konta usługi, a następnie użyj opcji Przeglądaj."
