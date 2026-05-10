@@ -38,6 +38,18 @@ class CurrencyRequest extends FormRequest
             'auto_update' => [
                 'boolean',
             ],
+            'generic_decimal_precision' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100',
+            ],
+            'detailed_decimal_precision' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100',
+            ],
         ];
     }
 

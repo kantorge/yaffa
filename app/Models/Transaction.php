@@ -208,7 +208,10 @@ class Transaction extends Model
             'budget' => $query->where('budget', true),
             'budget_only' => $query->where('budget', true)->where('schedule', false),
             'both' => $query->where('schedule', true)->where('budget', true),
-            'any' => $query->where('schedule', true)->orWhere('budget', true),
+            'any' => $query->where(function (Builder $query): void {
+                $query->where('schedule', true)
+                    ->orWhere('budget', true);
+            }),
             'none' => $query->where('schedule', false)->where('budget', false),
             default => $query,
         };

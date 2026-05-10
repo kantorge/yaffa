@@ -44,7 +44,9 @@ return [
         "skipped_existing" => "Ignorés (déjà importés) : :count",
         "skipped_too_large" => "Ignorés (trop volumineux) : :count",
         "skipped_unsupported" => "Ignorés (type non pris en charge) : :count",
-        "subject" => "Import Google Drive terminé"
+        "subject" => "Import Google Drive terminé",
+        "disposition_warning" => "Certains fichiers n'ont pas pu être supprimés du dossier d'importation :",
+        "disposition_warning_detail" => "Les fichiers ont été importés avec succès. Vous pouvez les nettoyer manuellement depuis votre dossier d'importation Google Drive."
     ],
     "labels" => [
         "amount" => "Montant",

@@ -81,13 +81,6 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
-              <small class="form-text text-muted">
-                {{
-                  __(
-                    'Deprecated providers cannot be selected for new configurations.',
-                  )
-                }}
-              </small>
               <HasError field="provider" :form="form" />
             </div>
           </div>
@@ -128,13 +121,6 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
-              <small class="form-text text-muted">
-                {{
-                  __(
-                    'Deprecated models remain available only for unchanged existing configurations.',
-                  )
-                }}
-              </small>
               <HasError field="model" :form="form" />
             </div>
           </div>
@@ -464,9 +450,12 @@
     },
     mounted() {
       this.loadConfig();
-
-      // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
+    },
+    updated() {
+      this.$nextTick(() => {
+        initializeBootstrapTooltips(this.$el);
+      });
     },
     methods: {
       isProviderSupported(providerData) {

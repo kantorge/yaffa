@@ -1,36 +1,6 @@
-# AI Document Processing (MVP)
+# AI Document Processing (Technical Reference)
 
-## Feature Summary
-
-Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
-
-**Current Implementation Status:** This feature is **MVP complete**. Core functionality is complete including document upload, AI processing, transaction finalization, category learning, Google Drive sync, and per-user AI behavior settings.
-
-## Goals / Non-Goals
-
-- Goals:
-  - Single-transaction extraction per submission (first match only, warning returned if multiple).
-  - Multi-item receipt parsing and category mapping.
-  - Fuzzy asset matching (accounts, payees, investments) via similarity + AI.
-  - Asynchronous processing with retry and failure email notification.
-  - User-configurable AI provider/model (OpenAI, Gemini for MVP).
-  - Google Drive monitoring with optional delete-after-import.
-  - Per-user AI behavior settings (thresholds, OCR/image constraints, category matching strategy, AI-on/off toggle).
-  - Draft storage in DB as JSON aligned with transaction config structure.
-  - Link final transaction to the AI document.
-  - Update the existing email processing feature to become an AI document source.
-
-- Non-Goals:
-  - Multi-transaction extraction (e.g., bank statements).
-  - Setup guide or wizard for the various components of AI document processing.
-  - CSV/QIF ingestion via AI pipeline.
-  - Community-wide category learning.
-  - On-site notifications for processing failures.
-  - Token/cost tracking or limits for AI usage.
-  - SPA architecture changes or global state on the frontend.
-  - Iterative user-AI prompt refinement during document processing.
-  - Email attachment extraction and storage in AiDocumentFile (MVP only processes email body text, attachments are ignored).
-  - Remove files from local storage after given number of days (MVP does not implement any cleanup mechanism, but this can be added in the future if needed).
+This file contains the implementation-oriented material extracted from the main feature specification. It covers architecture, data structures, technical flow, integrations, and operational constraints.
 
 ## Assumptions
 
@@ -78,7 +48,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `service_account_email` (extracted from JSON, displayed in UI)
     - `service_account_json` (encrypted cast, full JSON credentials)
     - `folder_id` (Google Drive folder ID)
-    - `delete_after_import` (boolean, default false)
+    - `folder_name` (varchar 255, nullable — display name for the import folder) (✅ added in Version 2)
+    - `post_import_actions` (JSON array, nullable — replaces `delete_after_import`) (✅ added in Version 2)
+    - `processed_folder_id` (varchar 255, nullable, indexed) (✅ added in Version 2)
+    - `processed_folder_name` (varchar 255, nullable) (✅ added in Version 2)
+    - ~~`delete_after_import` (boolean, default false)~~ (✅ removed in Version 2, migrated to `post_import_actions`)
     - `enabled` (boolean, default true)
     - `last_sync_at` (timestamp, nullable)
     - `last_error` (text, nullable - stores last error message)
@@ -112,6 +86,14 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Serves as the main API for managing AI provider configurations.
   - `GoogleDriveConfigApiController`
     - Manages Google Drive configurations and sync operations.
+    - `GET /api/v1/google-drive/config` → show current config
+    - `POST /api/v1/google-drive/config` → create config
+    - `PATCH /api/v1/google-drive/config/{id}` → update config (includes `folder_name`, `processed_folder_id`, `processed_folder_name`, `post_import_actions`)
+    - `DELETE /api/v1/google-drive/config/{id}` → delete config
+    - `POST /api/v1/google-drive/config/test` → test connection; returns `folder_name`, `file_count`, and `capabilities` map per disposition action
+    - `POST /api/v1/google-drive/config/{id}/sync` → manually trigger a one-time sync
+    - `GET /api/v1/google-drive/config/{id}/folder-name` → re-fetch display name for a given folder ID; accepts `?folder_id=` query param to support both import and processed folder
+    - `GET /api/v1/google-drive/config/{id}/folders` → list child folders accessible to the service account (for folder browser UI); returns `[{ id, name }]`
   - `PayeeStatsApiController`
     - New API endpoint to fetch payee category stats for AI prompt optimization, and also used by PayeeApiController for default category suggestion on payee selection.
   - `AiUserSettingsApiController`
@@ -165,9 +147,17 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `GoogleDriveService`
     - Handles Google Drive API interactions using service account credentials
     - Uses `google/apiclient` package
+    - Key methods:
+      - `getFolderName(string $folderId): string` — fetches the Drive folder `name` field for display purposes
+      - `listFolders(GoogleDriveConfig $config, ?string $parentId = null): array` — lists direct child folders (queries both root-parented and `sharedWithMe` folders); returns `[{ id, name }]`; limited to 10 results per query (root-parented + `sharedWithMe`), with a `truncated` flag when more pages exist
+      - `deleteFile(string $fileId): bool` — calls `files.delete`
+      - `trashFile(string $fileId): bool` — calls `files.update` with `trashed = true`
+      - `moveFile(string $fileId, string $targetFolderId, string $currentParentId): bool` — calls `files.update` to add new parent and remove old parent
+      - `renameFile(string $fileId, string $newName): bool` — calls `files.update` with new name
+      - `attemptDisposition(GoogleDriveConfig $config, string $fileId, string $originalName, string $currentParentId): DispositionResult` — tries each action in `post_import_actions` order; returns value object with `success: bool`, `action_used: ?string`, `failure_reasons: array`
     - Error handling:
       - Authentication/permission errors: Throw specific exception (triggers config disable)
-      - Other errors: Log and continue (silent fail for MVP)
+      - Other errors: Log and continue (silent fail)
   - `GoogleDriveMonitorJob`
     - Handles scheduled monitoring of Google Drive folders for new files
     - Runs for all users with `enabled = true` in `google_drive_configs`
@@ -239,12 +229,20 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `Google Drive Settings` - `/user/ai-settings`
     - Features:
       - Service account email display
-      - Service account JSON input with show/hide toggle
-      - Folder ID input with smart URL parsing
-      - Delete-after-import and enabled toggles
-      - Sync interval field (minutes; per-config cadence, replaces global env var)
-      - Connection test and manual sync actions
+      - Service account JSON upload (file input + existing paste textarea with show/hide toggle)
+        - File input accepts `.json`; browser-side `FileReader` populates the textarea; validation rejects non-JSON and files over 100 KB
+      - Folder name input group (editable, max 255 chars) with re-fetch button; folder ID displayed below in read-only style
+        - Re-fetch overwrites an empty field automatically; prompts confirmation if the field already has content
+      - Folder browser: "Browse" button opens a modal listing Drive folders accessible to the service account; selecting a folder populates the ID and triggers a name re-fetch
+      - Post-import disposition: labelled checkbox group ("After successful import") replacing the old delete toggle
+        - Actions in fixed priority order: Delete permanently → Move to Trash → Move to Processed folder → Rename with `processed_` prefix
+        - Selecting "Move to Processed folder" reveals a sub-form with processed folder ID input (URL-parsing), name input, and re-fetch button
+        - After test connection, each checkbox shows a capability badge (Verified / Warning / Not tested) based on the `capabilities` map returned by the test endpoint
+        - A collapsible tip block explains the `yaffa.txt` real-file testing approach
+      - Sync interval field (minutes; per-config cadence)
+      - Enabled toggle and manual sync button
       - Last sync timestamp display
+      - Connection test button; on success, auto-populates `folder_name` if empty
       - Per-user configuration management within the AI settings page
   - `AI Behavior Settings` - `/user/ai-settings`
     - Features: AI-on/off toggle, OCR language, Vision API and Tesseract image constraints, matching thresholds, duplicate-detection settings, category matching mode
@@ -379,6 +377,18 @@ A few notes on the statuses
     - Example: `https://drive.google.com/drive/folders/1a2b3c4d5e6f` → extracts `1a2b3c4d5e6f`
   - Tooltip with example URL format and extraction instructions
   - Validation during test connection
+  - Each folder ID field is paired with a `folder_name` display-name field (varchar 255, nullable):
+    - Editable text input (max 255 chars) stored in `google_drive_configs.folder_name`
+    - Re-fetch button calls `GET /api/v1/google-drive/config/{id}/folder-name`; overwrites the field only if it is empty, or the user confirms an overwrite
+    - On successful test connection, if the response includes `folder_name` and the local field is empty, auto-populated
+    - Folder ID remains visible below the name field in a read-only style
+    - Folder name is cosmetic only and must never be used as a lookup key; nullable — clearing it is valid
+  - Folder browser button opens a modal listing Drive folders visible to the service account:
+    - Queries both root-parented and `sharedWithMe` folders; limit 10 per request
+    - Selecting a folder populates the ID and triggers a name re-fetch
+    - Button disabled with tooltip when config is not yet saved
+    - UI note: "Only folders shared with the service account are shown"
+  - The same display-name and browser pattern applies to the optional Processed folder (see Post-Import Disposition)
 
 - **Service Account JSON Validation:**
   - Must be valid JSON format
@@ -414,20 +424,33 @@ A few notes on the statuses
   - Manual trigger: User can request one-time sync via UI button (queues job immediately)
 
 - **File Import Flow:**
-  1. List files from folder (filter by modified date > last_sync_at)
+  1. List files from folder (filter by modified date > last_sync_at; skip files named exactly `yaffa.txt`; skip files whose name starts with `processed*`)
   2. For each file:
      - Check if `google_drive_file_id` exists in `ai_documents` (skip if duplicate)
      - **Download file first** to `storage/app/ai_documents/{user_id}/{temp_id}/{filename}`
      - **Only if download succeeds**, create AiDocument record with `google_drive_file_id`
      - Fire `DocumentImported` event (existing listener handles rest)
-     - If `delete_after_import = true`, delete file from Drive
+     - Call `GoogleDriveService::attemptDisposition()` — tries each action in `post_import_actions` order, stops at first success
+     - Attach `DispositionResult` to the import notification payload; a failed disposition does not fail or roll back the completed import
   3. Update `last_sync_at` on config
   4. One file = one AiDocument (no grouping)
-- **Delete After Import:**
-  - User setting: `delete_after_import` (boolean, default false) in `google_drive_configs`
-  - Requires service account to have delete permissions on folder
-  - Test connection checks delete permission (without actually deleting)
-  - Files deleted after successful import and AiDocument creation
+
+- **Post-Import File Disposition:**
+  - Replaces the former `delete_after_import` boolean flag
+  - Stored in `google_drive_configs.post_import_actions` (JSON array of action keys); null/empty means no action — file is left in place
+  - Disposition actions (fixed priority order, cannot be reordered by user):
+
+    | Priority | Key                 | What it does                                        | Required permission                      |
+    | -------- | ------------------- | --------------------------------------------------- | ---------------------------------------- |
+    | 1        | `delete`            | Permanently removes the file from the folder        | `drive` scope + file owner               |
+    | 2        | `trash`             | Moves the file to the owner's Trash                 | Same constraints as delete               |
+    | 3        | `move_to_processed` | Moves the file into a configured "Processed" folder | Write/editor access to the target folder |
+    | 4        | `rename_processed`  | Renames file to `processed_<original_name>`         | Write/editor access to the file itself   |
+
+  - In the common Gmail-owner + service-account-editor model, `delete` and `trash` will fail because the Drive API only lets the file owner permanently delete or trash files they own. `move_to_processed` and `rename_processed` require only editor access and succeed in this model.
+  - `processed_folder_id` (varchar 255, nullable, indexed) and `processed_folder_name` (varchar 255, nullable) stored in `google_drive_configs`; required when `post_import_actions` contains `move_to_processed`; must differ from the import `folder_id`
+  - If all enabled actions fail, the import notification includes a non-blocking warning
+  - Migration note: existing rows with `delete_after_import = true` were converted to `post_import_actions = ["delete", "trash"]`; the column was then dropped
 
 - **Error Handling:**
   - **Authentication/Permission Errors** (fail-fast):
@@ -446,9 +469,34 @@ A few notes on the statuses
   - Endpoint: `POST /api/v1/google-drive/config/test`
   - Tests performed:
     - Authenticate with service account JSON
-    - Access specified folder (verify read permission)
+    - Access specified folder (verify read permission); extract folder `name` for display
     - List files (return count)
-    - Check delete permission (without actually deleting - use Drive API permissions check)
+    - Capability check for all disposition actions (see below)
+  - **Disposition capability check:**
+    - Primary strategy: uses a file named exactly `yaffa.txt` placed by the user in the import folder
+      - Probes actions in priority order; the first success stops the cascade; remaining actions are `null`
+      - If `delete` succeeds, the file is gone; other capabilities cannot be tested in that run
+      - If `move_to_processed` succeeds, `rename_processed` is inferred as `true` (both require editor write access)
+      - If `processed_folder_id` is not yet configured, `move_to_processed` is returned as `null` (unknown), not `false`
+    - Fallback strategy (no `yaffa.txt` found): uses a service-account-owned temp file; results marked `capabilities_source: "estimated"` and a UI notice is shown — these approximate the service account's own permissions, not its ability to modify user-owned files
+    - Response includes `recommended_actions` based on the highest-priority action that returned `true`
+    - `yaffa.txt` is excluded from regular import scans (silently skipped) regardless of other filter conditions
+  - Response example (typical Gmail-owner + editor scenario):
+    ```json
+    {
+      "folder_accessible": true,
+      "folder_name": "YAFFA Import",
+      "file_count": 3,
+      "capabilities_source": "real_file",
+      "capabilities": {
+        "delete": false,
+        "trash": false,
+        "move_to_processed": true,
+        "rename_processed": true
+      },
+      "recommended_actions": ["move_to_processed", "rename_processed"]
+    }
+    ```
 
 - **Service Account Setup Instructions (for users):**
   1. Create Google Cloud Project
@@ -461,10 +509,10 @@ A few notes on the statuses
 
 - **Non-MVP (Future Improvements):**
   - OAuth2 flow for end-user authentication (easier UX, no service account sharing needed)
-  - Google Drive Picker dialog for folder selection
   - Multiple folder monitoring per user (database already supports it)
   - Track consecutive error count, auto-disable after threshold
   - Permanent skip list for user-deleted documents
+  - Pagination for folder browser (currently limited to 10 results per request)
 
 ## Email Content Cleanup
 
@@ -629,55 +677,228 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 - Tesseract OCR: No Composer package needed, uses command-line binary via Symfony Process
 
-## Tech debts, future improvements
+## Category Learning Management UI (Planned)
 
-- Add an optional title field for AiDocument for user-friendly naming.
-  - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
-- Add camera capture support in upload flow for mobile receipt capture.
-  - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
-- Store and display Google Drive folder name in addition to folder ID.
-  - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
-- Add payee/account-level custom prompt support and optional prompt-learning UX.
-  - Verbose detail: Consider optional per-payee (and maybe per-account) custom prompts to improve extraction on recurring receipt formats, plus optional “save as custom prompt” suggestion after successful extractions.
-- Consider side-by-side receipt vs extracted-values review UI.
-  - Verbose detail: Current tab layout works, but side-by-side could improve review speed; requires careful design for multi-file documents and dense extracted data.
-- [Research] Tune Tesseract parameters for OCR quality.
-  - Verbose detail: Current default OCR results may be weak; investigate concrete parameter combinations that improve practical extraction accuracy.
-- [Research] Define and enforce minimum Tesseract binary version for local mode.
-  - Verbose detail: Add version checks and enforcement strategy so binary mode runs only on supported/minimum versions for compatibility and OCR quality.
-- Add richer live status completion feedback for reprocessing (polling or realtime).
-  - Verbose detail: Reprocessing currently updates status minimally; evaluate if simple polling is enough or if Echo/Reverb realtime would be justified.
-- Allow creating payee from unidentified payee result in AiDocument review flow.
-  - Verbose detail: Add “create payee” action when extraction returns unidentified payee, likely aligned with the modal-based payee management direction in PR 371.
-- Add category-learning management UI (list, delete/archive).
-  - Verbose detail: Once mappings are learned, users currently cannot manage them; add list + cleanup controls in category management.
-- Handle duplicate item descriptions with contextual learning (amount/position aware).
-  - Verbose detail: Current learning key is mostly description-only, which can fail when same item text appears with different categories; consider amount/position/context-sensitive learning.
-- Improve receipt discount handling and optional warning heuristics.
-  - Verbose detail: Test and improve handling of item-level discounts and mixed pricing cases; MVP fallback could warn when same normalized item appears with conflicting category-learning intent.
-- Add payee-level toggle to disable item-level breakdown when desired.
-  - Verbose detail: For some payees (e.g., restaurants), item-level split may be unnecessary; add per-payee preference to collapse to total-category behavior.
-- Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
-  - Verbose detail: System already holds preference data but management is cumbersome; add both per-payee and mass-assignment tooling for preferred/non-preferred categories.
-- Add optional category description and category type constraints for better AI guidance.
-  - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
-- Make item-level editing foldable in finalization UI.
-  - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
-- Explore vector search for AI cost/performance optimization.
-  - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
-- Add learning flow for account/payee/investment overrides during finalization.
-  - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
-- [Tech debt] Revisit AI documents DataTable column width behavior after async refresh.
-  - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
-- Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
-- Add overlap hint for multi-image receipts in extraction prompt.
-  - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
-- Improve failed-processing UX and allow prompt editing directly from AiDocument view.
-  - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing. This could be implemented together with the verbose processing history and AI conversation logging features for better transparency and control.
-  - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
-- Add scanned-PDF fallback to OCR when extracted PDF text is empty.
-  - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
-  - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
-- When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
-- The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
-- File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+### Feature Summary
+
+Add a user-facing management UI for learned item-to-category mappings so users can review, clean up, and safely disable stale mappings. This extends the existing category-learning system from write-only behavior (learn on finalize) to full lifecycle management.
+
+### Goals / Non-Goals
+
+- Goals:
+  - Show the authenticated user's category-learning mappings in a searchable, paginated list.
+  - Support safe cleanup actions: soft archive/unarchive and hard delete.
+  - Support controlled maintenance actions: edit, manual add, merge.
+  - Integrate management entry points into existing category-management UX.
+  - Keep AI processing resilient by ignoring archived/deleted mappings immediately.
+- Non-Goals:
+  - No global/admin cross-user management.
+  - No AI prompt redesign beyond excluding archived mappings.
+  - No bulk import/export in this phase.
+
+### Assumptions
+
+- Category learning rows are user-scoped (directly or by resolvable ownership path via category).
+- Existing `CategoryLearningService` remains the source of normalization and upsert behavior.
+- Soft archive is preferred for reversible cleanup; hard delete remains available for permanent removal.
+- `usage_count` is system-managed and not directly editable by users.
+- This management feature belongs to category management, not the AI document list or review screen.
+
+### Explicit Behavioral Decisions
+
+- Archive semantics:
+  - Yes. Archived learnings are completely ignored during AI processing.
+  - This includes exact local matching and AI prompt context payload generation.
+  - Archive/unarchive takes effect immediately for new processing work.
+- Re-learning an archived mapping:
+  - If finalization tries to store a learning where an archived row already exists for the same normalized description and same category (same user scope), the system revives that row instead of creating a duplicate.
+  - Revive means `archived_at = null`; usage handling follows normal learning rules.
+- Editing:
+  - UI allows editing of `item_description` and `category_id` only.
+  - `usage_count`, timestamps, and lifecycle metadata are read-only.
+  - Server re-normalizes on save and enforces uniqueness constraints.
+- Manual add:
+  - UI allows manually adding learnings.
+  - New manual rows are created as active with `usage_count = 0`.
+  - If manual add matches an archived row key, backend should revive that row instead of creating a duplicate.
+- Merge:
+  - UI supports merge for cleanup/deduplication.
+  - Benefit: reduce duplicate rows and consolidate evidence by summing `usage_count` into one surviving row.
+  - Merge is constrained to safe cases (same normalized key and same category) to avoid semantic data loss.
+
+### Placement in Product / Navigation
+
+- Add a new section under category management, reachable from the categories area:
+  - Primary entry: Category management page adds a `Learned Mappings` tab or sub-section.
+  - Secondary entry: optional quick link from `/user/ai-settings` to category management `Learned Mappings` anchor/tab.
+- Keep this feature out of `/ai-documents` list and `/ai-documents/{id}` to avoid mixing review flow with data-maintenance flow.
+
+### Backend Scope (Laravel)
+
+- Models:
+  - Extend `CategoryLearning` with lifecycle field:
+    - `archived_at` (nullable timestamp, indexed)
+  - Keep existing fields (`item_description`, `category_id`, `usage_count`) unchanged.
+- Migrations:
+  - Add `archived_at` column to `category_learning` table.
+  - Add composite index to support UI filters and prompt fetches efficiently:
+    - `(category_id, archived_at)` and/or ownership + `archived_at` depending on current schema.
+  - Optional: backfill `archived_at = null` for existing rows (implicit default behavior).
+- Controllers / APIs:
+  - New `CategoryLearningApiController` endpoints (under `/api/v1`):
+    - `POST /api/v1/category-learning`
+      - manually create mapping (`item_description`, `category_id`)
+    - `GET /api/v1/category-learning`
+      - list with filters: `search`, `category_id`, `status=active|archived|all`, `min_usage_count`, `sort`, `page`, `per_page`
+    - `PATCH /api/v1/category-learning/{id}`
+      - edit mapping (`item_description`, `category_id`)
+    - `POST /api/v1/category-learning/{id}/archive`
+      - archives a mapping (idempotent)
+    - `POST /api/v1/category-learning/{id}/unarchive`
+      - restores archived mapping (idempotent)
+    - `DELETE /api/v1/category-learning/{id}`
+      - permanently deletes one mapping
+    - `POST /api/v1/category-learning/merge`
+      - merge selected mappings into one target mapping
+    - `POST /api/v1/category-learning/bulk-archive`
+      - archives selected IDs
+    - `POST /api/v1/category-learning/bulk-delete`
+      - deletes selected IDs with confirmation payload
+  - Optional UX helper endpoint:
+    - `GET /api/v1/category-learning/stats`
+      - returns counts by status and top categories for filter chips.
+- Services / Jobs:
+  - Introduce `CategoryLearningManagementService`:
+    - Applies create/edit/archive/unarchive/delete/merge operations with ownership checks.
+    - Performs conflict-safe normalization checks (prevent duplicate active mapping collisions for same normalized description + category rule, if required).
+    - Implements revive-on-relearn behavior for archived duplicates.
+    - Implements merge behavior with deterministic target selection and `usage_count` summation.
+    - Emits lightweight domain events for audit/telemetry hooks.
+  - Update `CategoryLearningService` read paths:
+    - Ensure AI prompt context queries include only active (`archived_at IS NULL`) mappings.
+    - Ensure lookup for exact local matching ignores archived rows.
+    - Ensure write path revives archived exact matches before any insert.
+- Policies / Auth:
+  - Add `CategoryLearningPolicy`:
+    - User can list/manage only own mappings.
+    - No cross-user access via guessed IDs.
+  - Use policy checks in all controller methods.
+- Events / Notifications:
+  - Optional internal events (no user email required):
+    - `CategoryLearningArchived`, `CategoryLearningUnarchived`, `CategoryLearningDeleted`.
+  - No queue requirement for MVP scale; synchronous controller actions are acceptable.
+
+### Frontend Scope (Vue + Bootstrap)
+
+- Pages / Routes:
+  - Reuse existing category management route/page; add `Learned Mappings` tab/panel.
+  - Optional deep-link query param for direct opening (e.g. `?tab=learned-mappings`).
+- Components:
+  - `CategoryLearningTable`:
+    - columns: item description, category, usage count, status, last updated, actions
+    - server-driven pagination/sorting/filtering
+  - `CategoryLearningFilters`:
+    - search input, category dropdown, status dropdown, usage-count threshold
+  - `CategoryLearningRowActions`:
+    - edit, archive/unarchive, delete with confirm modal
+  - `CategoryLearningBulkActionsBar`:
+    - multi-select + bulk archive/delete/merge
+  - `CategoryLearningUpsertModal`:
+    - create/edit form (`item_description`, `category_id`)
+  - `CategoryLearningMergeModal`:
+    - choose target row, show merge preview (`source_count`, `usage_count_sum`), require confirmation
+  - `CategoryLearningDeleteConfirmModal`:
+    - explicit irreversible warning for hard delete
+- State management:
+  - Local page state (filters, pagination, selected rows, loading/error states).
+  - Keep implementation aligned with existing table/data-fetch conventions used in YAFFA (DataTables pattern where applicable).
+- API interactions:
+  - Initial fetch on tab load.
+  - Refetch after create/edit/archive/unarchive/delete/merge actions.
+  - Optimistic UI optional for archive/unarchive; delete should prefer confirmed refresh.
+- UX / validation rules:
+  - Default view shows active mappings only.
+  - Archived rows visually muted and read-only for edit actions except unarchive/delete.
+  - Manual add is available via `Add learning` action.
+  - Edit allows only learning text and category selection; usage count is read-only.
+  - Merge action is available only for merge-eligible selections.
+  - Deleting requires explicit confirmation dialog text.
+  - Empty-state guidance should explain how mappings are learned (through AI document finalization).
+
+### Data & API Design
+
+- Entity:
+  - CategoryLearning (managed lifecycle)
+- Relationship:
+  - belongs to Category; user ownership enforced through category ownership and/or explicit user scope.
+- List response shape (high-level):
+  - `data[]`: `{ id, item_description, normalized_item_description?, category: { id, name }, usage_count, archived_at, updated_at }`
+  - `meta`: pagination + applied filters
+- Mutation response shape:
+  - Return updated row resource for create/edit/archive/unarchive.
+  - Return success summary for delete/bulk/merge operations (including affected IDs and resulting target ID for merge).
+
+### Processing Behavior Changes
+
+- Archive semantics are strict: archived mappings are fully excluded from processing reads.
+- Exact local category matching must query active mappings only.
+- AI-assisted context generation must exclude archived mappings.
+- If a mapping is deleted/archived, subsequent document processing must stop using it immediately (no cache staleness beyond normal request lifecycle).
+- If a matching archived row exists during learning write-back, revive and reuse it.
+
+### Corner Cases
+
+- Archived duplicate exists and user triggers manual add with same key:
+  - Expected behavior: revive archived row, do not create duplicate.
+- Edit changes text to collide with another active row key:
+  - Expected behavior: reject with validation error (422), prompt user to merge/archive instead.
+- Merge selection contains rows with different normalized keys or different categories:
+  - Expected behavior: reject merge (422) and show reason.
+- Merge contains active and archived rows (same key/category):
+  - Expected behavior: valid; resulting row is active, usage counts summed.
+- Category becomes inactive or deleted:
+  - Expected behavior: learning remains visible for audit/history but excluded from matching until category is valid again (or row is cleaned up).
+
+### Test Strategy
+
+- Backend tests:
+  - Feature tests for list endpoint filters, pagination, and ownership isolation.
+  - Feature tests for create/edit validation and ownership constraints.
+  - Feature tests for archive/unarchive/delete (single + bulk).
+  - Feature tests for merge success/failure and `usage_count` summation.
+  - Policy tests for unauthorized access and cross-user ID attempts.
+  - Service tests proving archived mappings are excluded from exact-match and AI-context retrieval.
+  - Service tests for revive-on-relearn behavior.
+- Frontend tests:
+  - Component tests for filters, row actions, upsert modal, merge modal, and confirmation dialogs.
+  - Integration test for tab load, server fetch, and post-action refresh.
+- Edge cases:
+  - Archive already archived row (idempotent success).
+  - Unarchive active row (idempotent success).
+  - Re-learn archived mapping during finalization (revive instead of duplicate).
+  - Manual add matching archived mapping (revive path).
+  - Delete non-existent row (404) and unauthorized row (403).
+  - Category deleted/inactive while mapping exists.
+- Negative paths:
+  - Bulk operation with mixed owned/unowned IDs must be atomic and fail as a whole.
+  - Merge attempt for incompatible rows must return 422.
+
+### Risks / Open Questions
+
+- Ownership model must be explicit in schema if currently only implicit through category relation.
+- Hard-delete vs archive default action may affect user trust; UI copy must be clear.
+- Large mapping tables may need query tuning and indexes validated on production-like datasets.
+- Optional future enhancement: broader semantic merge tooling (fuzzy merge) may be valuable but is intentionally out of scope due higher risk.
+
+### Acceptance Criteria
+
+- Given a user with learned mappings, when they open category management and switch to `Learned Mappings`, then they see a paginated list with search and status filters.
+- Given an active mapping, when the user archives it, then it is hidden from default active view and no longer used by processing.
+- Given an archived mapping, when the user unarchives it, then it becomes active and eligible for future matching.
+- Given a mapping, when the user deletes it and confirms, then it is permanently removed and cannot be returned by list API.
+- Given an archived mapping and a new identical learning event, when finalization stores learning, then the archived row is revived and reused instead of creating a duplicate row.
+- Given the user edits a learning, when they save, then only learning text and category can change and uniqueness validation is enforced.
+- Given the user manually adds a learning, when save succeeds, then it is active and available for subsequent matching.
+- Given merge-eligible learnings, when user confirms merge, then one target row remains and its usage count equals the sum of merged rows.
+- Given user A and user B, when user A queries or mutates user B's mapping ID, then access is denied.
+- Given archived mappings exist, when AI processing builds category-learning context, then archived mappings are excluded.

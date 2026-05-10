@@ -12,6 +12,7 @@ use App\Notifications\GoogleDriveImportFailed;
 use App\Notifications\GoogleDriveImportSuccess;
 use App\Services\AiUserSettingsResolver;
 use App\Services\GoogleDriveService;
+use App\Services\DispositionResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
@@ -236,16 +237,16 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         );
     }
 
-    public function test_job_deletes_file_from_drive_when_enabled(): void
+    public function test_job_runs_disposition_when_post_import_actions_configured(): void
     {
         $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
-            'delete_after_import' => true,
+            'post_import_actions' => ['delete'],
         ]);
 
-        $deleteCallCount = 0;
+        $dispositionCallCount = 0;
         $mock = $this->createMockService([
             'listNewFiles' => [
                 ['id' => 'file-123', 'name' => 'receipt.pdf', 'mimeType' => 'application/pdf', 'modifiedTime' => '2026-02-06T10:00:00Z'],
@@ -256,31 +257,26 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
                 }
                 file_put_contents($dest, 'pdf content');
             },
-            'deleteFile' => function ($fileId, $creds, $folderId) use (&$deleteCallCount, $config) {
-                $deleteCallCount++;
-                if ($fileId !== 'file-123') {
-                    throw new Exception('Unexpected file ID');
-                }
-                if ($folderId !== $config->folder_id) {
-                    throw new Exception('Unexpected folder ID');
-                }
+            'attemptDisposition' => function ($cfg, $fileId, $fileName, $parentId) use (&$dispositionCallCount) {
+                $dispositionCallCount++;
+                return new DispositionResult(true, 'delete', []);
             },
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
         $this->runJob($config->id);
 
-        $this->assertSame(1, $deleteCallCount);
+        $this->assertSame(1, $dispositionCallCount);
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
     }
 
-    public function test_job_continues_after_delete_failure(): void
+    public function test_job_continues_after_disposition_failure(): void
     {
         $user = $this->createUserWithAiEnabled();
         $config = GoogleDriveConfig::factory()->neverSynced()->create([
             'user_id' => $user->id,
             'enabled' => true,
-            'delete_after_import' => true,
+            'post_import_actions' => ['delete'],
         ]);
 
         $mock = $this->createMockService([
@@ -293,13 +289,42 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
                 }
                 file_put_contents($dest, 'pdf content');
             },
-            'deleteFile' => fn (...$args) => throw new Exception('Delete failed'),
+            'attemptDisposition' => fn (...$args) => new DispositionResult(false, null, ['delete' => 'Permission denied']),
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
         $this->runJob($config->id);
 
         // Document should still be created even if deletion fails
+        $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
+    }
+
+    public function test_job_continues_after_disposition_exception(): void
+    {
+        $user = $this->createUserWithAiEnabled();
+        $config = GoogleDriveConfig::factory()->neverSynced()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+            'post_import_actions' => ['delete'],
+        ]);
+
+        $mock = $this->createMockService([
+            'listNewFiles' => [
+                ['id' => 'file-123', 'name' => 'receipt.pdf', 'mimeType' => 'application/pdf', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+            ],
+            'downloadFile' => function ($fileId, $creds, $dest) {
+                if (!file_exists(dirname($dest))) {
+                    mkdir(dirname($dest), 0755, true);
+                }
+                file_put_contents($dest, 'pdf content');
+            },
+            'attemptDisposition' => fn (...$args) => throw new Exception('Disposition crashed'),
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $this->runJob($config->id);
+
+        // Document should still be created even if disposition throws
         $this->assertDatabaseHas('ai_documents', ['google_drive_file_id' => 'file-123']);
     }
 

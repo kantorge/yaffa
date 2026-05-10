@@ -34,13 +34,14 @@
         </dd>
         <dt class="col-6">{{ __('Last known rate') }}</dt>
         <dd class="col-6" v-if="currencyRates.length > 0">
-          {{ toFormattedCurrency(1, locale, from) }}
+          {{ toFormattedCurrency(1, locale, from, 'detailed') }}
           =
           {{
             toFormattedCurrency(
               currencyRates[currencyRates.length - 1].rate,
               locale,
               to,
+              'detailed',
             )
           }}
         </dd>
@@ -72,9 +73,7 @@
 
         return date.toLocaleDateString(this.locale);
       },
-      toFormattedCurrency(value, locale, currency) {
-        return toFormattedCurrency(value, locale, currency);
-      },
+      toFormattedCurrency,
       __,
     },
   };

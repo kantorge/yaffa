@@ -16,6 +16,7 @@
               investment.latest_price,
               locale,
               investment.currency,
+              'detailed',
             )
           }}
         </dd>

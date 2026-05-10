@@ -71,7 +71,7 @@ let table = $('#investmentSummary').DataTable({
             title: __("Latest price"),
             render: function (data, type, row) {
                 if (type === 'display' && !isNaN(data) && typeof data === "number") {
-                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.currency);
+                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.currency, 'detailed');
                 }
 
                 return data;
