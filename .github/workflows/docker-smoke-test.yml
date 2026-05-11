@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Docker image
         run: docker build -f docker/Dockerfile -t kantorge/yaffa:latest .
@@ -97,7 +97,7 @@ jobs:
         run: |
           APP_CONTAINER=$(docker compose -f docker/docker-compose.yml ps --filter status=running -q app)
 
-          docker exec "$APP_CONTAINER" php artisan tinker --execute="Log::error('CI container logging test');"
+          docker exec "$APP_CONTAINER" php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\\Contracts\\Console\\Kernel::class); \$kernel->bootstrap(); Illuminate\\Support\\Facades\\Log::error('CI container logging test');"
 
           for i in $(seq 1 10); do
             if docker logs "$APP_CONTAINER" 2>&1 | grep -q 'CI container logging test'; then
