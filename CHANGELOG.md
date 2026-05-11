@@ -29,8 +29,7 @@
 
 * improve process and UI for investment price setup testing ([#472](https://github.com/kantorge/yaffa/issues/472)) ([ba724fb](https://github.com/kantorge/yaffa/commit/ba724fb5ce52f410efad998959f4522a5294398d))
 * more detailed category removal checks ([#471](https://github.com/kantorge/yaffa/issues/471)) ([e02c605](https://github.com/kantorge/yaffa/commit/e02c60581d36e95310a9fe5c6dfe274a0512e39c))
-* update dependency ([1a3c185](https://github.com/kantorge/yaffa/commit/1a3c1852bdfa2b02ada96c79129387dc7ad83048))
-* update dependency ([a82e8e3](https://github.com/kantorge/yaffa/commit/a82e8e38963f251acba1c00b0b4d0abcde035697))
+* update dependency ([1a3c185](https://github.com/kantorge/yaffa/commit/1a3c1852bdfa2b02ada96c79129387dc7ad83048), [a82e8e3](https://github.com/kantorge/yaffa/commit/a82e8e38963f251acba1c00b0b4d0abcde035697))
 
 
 ### 🧪 Tests
