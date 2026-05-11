@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class CurrencyRateApiV1Test extends TestCase
@@ -183,6 +184,23 @@ class CurrencyRateApiV1Test extends TestCase
         $response->assertOk()->assertJsonStructure(['message']);
 
         $this->assertDatabaseMissing('currency_rates', ['id' => $rate->id]);
+    }
+
+    public function test_v1_clear_cache_clears_currency_trait_caches(): void
+    {
+        $currenciesCacheKey = "currencies_user_{$this->user->id}";
+        $monthlyRatesCacheKey = "allCurrencyRatesByMonth_forUser_{$this->user->id}";
+
+        Cache::put($currenciesCacheKey, ['cached' => true], now()->addMinute());
+        Cache::put($monthlyRatesCacheKey, ['cached' => true], now()->addMinute());
+
+        $this->actingAs($this->user)
+            ->postJson(route('api.v1.maintenance.clear-currency-cache'))
+            ->assertOk()
+            ->assertJsonStructure(['message']);
+
+        $this->assertFalse(Cache::has($currenciesCacheKey));
+        $this->assertFalse(Cache::has($monthlyRatesCacheKey));
     }
 
     // ===== ERROR FORMAT TESTS =====

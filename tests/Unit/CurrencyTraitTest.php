@@ -11,7 +11,11 @@ use Tests\TestCase;
 
 class CurrencyTraitTest extends TestCase
 {
-    use CurrencyTrait;
+    use CurrencyTrait {
+        getAllCurrencyRatesByMonthCacheKey as public;
+        getCurrenciesCacheKey as public;
+        getMissingRateCurrencies as public;
+    }
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -115,14 +119,54 @@ class CurrencyTraitTest extends TestCase
 
         // Prime cache
         $this->getAllCurrencies($user->id);
-        $cacheKey = "currencies_user_{$user->id}";
-        $this->assertTrue(Cache::has($cacheKey));
+        $currenciesCacheKey = $this->getCurrenciesCacheKey($user->id);
+        $monthlyRatesCacheKey = $this->getAllCurrencyRatesByMonthCacheKey($user->id);
+
+        Cache::put($monthlyRatesCacheKey, ['cached' => true], now()->addMinute());
+
+        $this->assertTrue(Cache::has($currenciesCacheKey));
+        $this->assertTrue(Cache::has($monthlyRatesCacheKey));
 
         // Clear cache
         $this->clearCurrencyCache($user->id);
 
         // Should be gone
-        $this->assertFalse(Cache::has($cacheKey));
+        $this->assertFalse(Cache::has($currenciesCacheKey));
+        $this->assertFalse(Cache::has($monthlyRatesCacheKey));
+    }
+
+    public function test_get_missing_rate_currencies_returns_selected_fields_for_missing_ids(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Currency $firstCurrency */
+        $firstCurrency = Currency::factory()->for($user)->fromIsoCodes(['EUR'])->create(['base' => null]);
+        /** @var Currency $secondCurrency */
+        $secondCurrency = Currency::factory()->for($user)->fromIsoCodes(['HUF'])->create(['base' => null]);
+
+        $result = $this->getMissingRateCurrencies([
+            $secondCurrency->id => true,
+            $firstCurrency->id => true,
+        ]);
+
+        $this->assertSame([
+            [
+                'id' => $firstCurrency->id,
+                'iso_code' => 'EUR',
+                'name' => $firstCurrency->name,
+            ],
+            [
+                'id' => $secondCurrency->id,
+                'iso_code' => 'HUF',
+                'name' => $secondCurrency->name,
+            ],
+        ], $result);
+    }
+
+    public function test_get_missing_rate_currencies_returns_empty_array_when_no_ids_are_missing(): void
+    {
+        $this->assertSame([], $this->getMissingRateCurrencies([]));
     }
 
     public function test_get_all_currencies_caches_for_24_hours(): void
@@ -135,7 +179,7 @@ class CurrencyTraitTest extends TestCase
         // Call to cache data
         $this->getAllCurrencies($user->id);
 
-        $cacheKey = "currencies_user_{$user->id}";
+        $cacheKey = $this->getCurrenciesCacheKey($user->id);
 
         // Should exist now
         $this->assertTrue(Cache::has($cacheKey));

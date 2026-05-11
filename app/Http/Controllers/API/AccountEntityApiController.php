@@ -47,7 +47,7 @@ class AccountEntityApiController extends Controller implements HasMiddleware
      */
     public function recalculateAccountMonthlySummaries(Request $request): JsonResponse
     {
-        Artisan::call('app:cache:account-monthly-summaries', [
+        Artisan::queue('app:cache:account-monthly-summaries', [
             'userId' => $request->user()->id,
         ]);
 

@@ -12,7 +12,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class AccountEntityApiControllerTest extends TestCase
@@ -112,7 +112,7 @@ class AccountEntityApiControllerTest extends TestCase
 
     public function test_authenticated_user_can_trigger_account_monthly_summary_recalculation_for_current_user(): void
     {
-        Bus::fake();
+        Artisan::spy();
 
         /** @var User $user */
         $user = User::factory()->create([
@@ -139,28 +139,13 @@ class AccountEntityApiControllerTest extends TestCase
             ->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
 
         $response->assertOk()
-            ->assertJsonPath('message', __('Account monthly summaries recalculation has been queued.'));
+            ->assertJsonPath('message', __('maintenance.accountMonthlySummaries.queued'));
 
-        Bus::assertBatched(
-            fn ($batch) => $batch->name === 'CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id
-                && $batch->jobs->count() === 2
-        );
-        Bus::assertBatched(
-            fn ($batch) => $batch->name === 'CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id
-                && $batch->jobs->count() === 2
-        );
-        Bus::assertBatched(
-            fn ($batch) => $batch->name === 'CalculateAccountMonthlySummariesJob-account_balance-forecast-' . $user->id
-                && $batch->jobs->count() === 2
-        );
-        Bus::assertBatched(
-            fn ($batch) => $batch->name === 'CalculateAccountMonthlySummariesJob-investment_value-forecast-' . $user->id
-                && $batch->jobs->count() === 2
-        );
-        Bus::assertBatched(
-            fn ($batch) => $batch->name === 'CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id
-                && $batch->jobs->count() === 3
-        );
+        Artisan::shouldHaveReceived('queue')
+            ->once()
+            ->with('app:cache:account-monthly-summaries', [
+                'userId' => $user->id,
+            ]);
     }
 
     public function test_user_can_delete_an_existing_payee(): void

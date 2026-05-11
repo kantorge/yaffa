@@ -6,7 +6,6 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -235,13 +234,7 @@ class ReportApiController extends Controller implements HasMiddleware
             ];
         }
 
-        $missingRateCurrencies = [];
-        if (!empty($currenciesWithMissingRates)) {
-            $missingRateCurrencies = Currency::whereIn('id', array_keys($currenciesWithMissingRates))
-                ->select('id', 'iso_code', 'name')
-                ->get()
-                ->toArray();
-        }
+        $missingRateCurrencies = $this->getMissingRateCurrencies($currenciesWithMissingRates);
 
         usort($result, fn ($a, $b) => $a['period'] <=> $b['period']);
 
@@ -384,13 +377,7 @@ class ReportApiController extends Controller implements HasMiddleware
             ];
         }
 
-        $missingRateCurrencies = [];
-        if (!empty($currenciesWithMissingRates)) {
-            $missingRateCurrencies = Currency::whereIn('id', array_keys($currenciesWithMissingRates))
-                ->select('id', 'iso_code', 'name')
-                ->get()
-                ->toArray();
-        }
+        $missingRateCurrencies = $this->getMissingRateCurrencies($currenciesWithMissingRates);
 
         // Return fetched and prepared data
         return response()->json(
@@ -550,13 +537,7 @@ class ReportApiController extends Controller implements HasMiddleware
         }
 
         // If there are currencies with missing rates, load their names for the warning message
-        $missingRateCurrencies = [];
-        if (!empty($currenciesWithMissingRates)) {
-            $missingRateCurrencies = Currency::whereIn('id', array_keys($currenciesWithMissingRates))
-                ->select('id', 'iso_code', 'name')
-                ->get()
-                ->toArray();
-        }
+        $missingRateCurrencies = $this->getMissingRateCurrencies($currenciesWithMissingRates);
 
         return response()->json(
             [

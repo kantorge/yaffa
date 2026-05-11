@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 trait CurrencyTrait
 {
+    protected function getAllCurrencyRatesByMonthCacheKey(int $userId): string
+    {
+        return "allCurrencyRatesByMonth_forUser_{$userId}";
+    }
+
+    protected function getCurrenciesCacheKey(int $userId): string
+    {
+        return "currencies_user_{$userId}";
+    }
+
     /**
      * Load an array for all currencies, with an average rate by month
      * As this data is not expected to change often, it is cached for a day
@@ -22,7 +32,7 @@ trait CurrencyTrait
         }
 
         $userId = auth()->user()->id;
-        $cacheKey = "allCurrencyRatesByMonth_forUser_{$userId}";
+        $cacheKey = $this->getAllCurrencyRatesByMonthCacheKey($userId);
 
         return Cache::remember($cacheKey, now()->addDay(), function () use ($baseCurrency) {
             $rates = DB::table('currency_rates')
@@ -67,7 +77,7 @@ trait CurrencyTrait
             return collect();
         }
 
-        $cacheKey = "currencies_user_{$userId}";
+        $cacheKey = $this->getCurrenciesCacheKey($userId);
 
         return Cache::remember(
             $cacheKey,
@@ -109,8 +119,32 @@ trait CurrencyTrait
         $userId = $userId ?? auth()->user()?->id;
 
         if ($userId) {
-            Cache::forget("currencies_user_{$userId}");
+            Cache::forget($this->getCurrenciesCacheKey($userId));
+            Cache::forget($this->getAllCurrencyRatesByMonthCacheKey($userId));
         }
+    }
+
+    /**
+     * Resolve currency records for missing-rate warnings.
+     *
+     * @param array<int, int|bool> $currenciesWithMissingRates
+     * @return array<int, array{id: int, iso_code: string, name: string}>
+     */
+    protected function getMissingRateCurrencies(array $currenciesWithMissingRates): array
+    {
+        if (empty($currenciesWithMissingRates)) {
+            return [];
+        }
+
+        $currencyIds = array_is_list($currenciesWithMissingRates)
+            ? $currenciesWithMissingRates
+            : array_keys($currenciesWithMissingRates);
+
+        return Currency::whereKey($currencyIds)
+            ->orderBy('id')
+            ->select('id', 'iso_code', 'name')
+            ->get()
+            ->toArray();
     }
 
     /**

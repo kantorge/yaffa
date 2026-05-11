@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 
 class CurrencyRateApiController extends Controller implements HasMiddleware
@@ -153,10 +152,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      */
     public function clearCache(Request $request): JsonResponse
     {
-        $userId = $request->user()->id;
-
-        Cache::forget("allCurrencyRatesByMonth_forUser_{$userId}");
-        Cache::forget("currencies_user_{$userId}");
+        $this->clearCurrencyCache($request->user()->id);
 
         return response()->json([
             'message' => __('maintenance.currencyCache.cleared'),
