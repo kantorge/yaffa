@@ -17,8 +17,7 @@
 
 ### 📚 Documentation
 
-* added various user-focused product specifications ([93d26b7](https://github.com/kantorge/yaffa/commit/93d26b7f4f14ace2b8d8f2e9927d8bd542172716))
-* added various user-focused product specifications ([25fdad1](https://github.com/kantorge/yaffa/commit/25fdad1daab0a39b19ea5daa04f39c9273b768bf))
+* added various user-focused product specifications ([93d26b7](https://github.com/kantorge/yaffa/commit/93d26b7f4f14ace2b8d8f2e9927d8bd542172716), [25fdad1](https://github.com/kantorge/yaffa/commit/25fdad1daab0a39b19ea5daa04f39c9273b768bf))
 
 
 ### ✨ Features
