@@ -68,6 +68,7 @@
       <ai-document-table
         ref="tableRef"
         :documents="documents"
+        :loading="isLoading"
         :status-labels="statusLabels"
         :source-labels="sourceLabels"
       ></ai-document-table>
