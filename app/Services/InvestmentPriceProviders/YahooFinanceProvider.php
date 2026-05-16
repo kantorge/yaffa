@@ -11,6 +11,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use JsonException;
+use Throwable;
 
 class YahooFinanceProvider implements InvestmentPriceProvider
 {
@@ -109,7 +110,7 @@ class YahooFinanceProvider implements InvestmentPriceProvider
             try {
                 $body = json_decode((string) $e->getResponse()->getBody(), true, 512, JSON_THROW_ON_ERROR);
                 $description = $body['chart']['error']['description'] ?? null;
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
 
             // 429 (rate limit) and 403 (forbidden/blocked) are transient — caller should retry later.
