@@ -732,6 +732,7 @@
 
       // Some other settings
       data.locale = window.YAFFA.userSettings.locale;
+      data.initializingTransaction = false;
 
       return data;
     },
@@ -1009,6 +1010,8 @@
       getCurrencySymbol,
       toFormattedCurrency,
       initializeTransaction() {
+        this.initializingTransaction = true;
+
         if (this.transaction && Object.keys(this.transaction).length > 0) {
           // Populate form data with already known values
           this.form.id = this.transaction.id;
@@ -1019,9 +1022,9 @@
           this.form.date = this.copyDateObject(this.transaction.date);
 
           this.form.comment = this.transaction.comment;
-          this.form.schedule = this.transaction.schedule;
-          this.form.budget = this.transaction.budget;
-          this.form.reconciled = this.transaction.reconciled;
+          this.form.schedule = this.transaction.schedule ?? false;
+          this.form.budget = this.transaction.budget ?? false;
+          this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration
           this.form.config.amount_from = this.transaction.config.amount_from;
@@ -1113,6 +1116,10 @@
 
         // Set form action
         this.form.action = this.action;
+
+        this.$nextTick(() => {
+          this.initializingTransaction = false;
+        });
       },
 
       copyDateObject(date) {
@@ -1512,6 +1519,10 @@
 
       // Remove the form date value when schedule or budget is enabled, and restore it when disabled
       'form.schedule': function (newState) {
+        if (this.initializingTransaction) {
+          return;
+        }
+
         if (newState || this.form.budget) {
           this.form.date = null;
         } else {
@@ -1519,6 +1530,10 @@
         }
       },
       'form.budget': function (newState) {
+        if (this.initializingTransaction) {
+          return;
+        }
+
         if (newState || this.form.schedule) {
           this.form.date = null;
         } else {
