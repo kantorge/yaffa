@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.1.1](https://github.com/kantorge/yaffa/compare/v3.1.0...v3.1.1) (2026-05-24)
+
+
+### 🛠️ Chores
+
+* Adds interactive Artisan browser ([881362a](https://github.com/kantorge/yaffa/commit/881362a41736f7c59e034f81daa2d6395007e8bf))
+* convert scheduled commands to class references ([#480](https://github.com/kantorge/yaffa/issues/480)) ([fe5a1fa](https://github.com/kantorge/yaffa/commit/fe5a1fae4ac9997faa38a15cd33da69a99cba9f1))
+* remove outdated Artisan command ([ab7526b](https://github.com/kantorge/yaffa/commit/ab7526b84a688b0fb881f2d184cf08c3b86998a9))
+* update Composer packages ([f4466a7](https://github.com/kantorge/yaffa/commit/f4466a75dddaf9305f1f59e90ee51479cc6122cb))
+
+
+### 🐛 Bug Fixes
+
+* add loader to AI documents datatable ([b3db6a4](https://github.com/kantorge/yaffa/commit/b3db6a4cc6e8daed39cb07c2880296303049828f))
+* Docker smoke test action ([88630d3](https://github.com/kantorge/yaffa/commit/88630d398e66e1d27986f99745cbec081e1e2e26))
+* improve currency rate fallback logic ([#478](https://github.com/kantorge/yaffa/issues/478)) ([c1cf4fe](https://github.com/kantorge/yaffa/commit/c1cf4feba95c4b52a5fd967c3764583bf939fb04))
+
 ## [3.1.0](https://github.com/kantorge/yaffa/compare/v3.0.2...v3.1.0) (2026-05-10)
 
 
