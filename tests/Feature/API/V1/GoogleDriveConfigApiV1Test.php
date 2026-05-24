@@ -65,7 +65,7 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ->getJson(route('api.v1.google-drive.config.show'));
 
         $response->assertOk()
-            ->assertJsonStructure(['id', 'service_account_email', 'folder_id', 'delete_after_import', 'enabled'])
+            ->assertJsonStructure(['id', 'service_account_email', 'folder_id', 'post_import_actions', 'enabled'])
             ->assertJsonMissing(['service_account_json']);
     }
 
@@ -75,12 +75,12 @@ class GoogleDriveConfigApiV1Test extends TestCase
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
-                'delete_after_import' => false,
+                'post_import_actions' => null,
                 'enabled' => true,
             ]);
 
         $response->assertCreated()
-            ->assertJsonStructure(['id', 'service_account_email', 'folder_id', 'delete_after_import', 'enabled'])
+            ->assertJsonStructure(['id', 'service_account_email', 'folder_id', 'post_import_actions', 'enabled'])
             ->assertJsonMissing(['service_account_json']);
 
         $this->assertDatabaseHas('google_drive_configs', [

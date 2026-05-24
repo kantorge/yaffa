@@ -1,0 +1,128 @@
+name: Docker Smoke Test
+
+on:
+  pull_request:
+    paths:
+      - 'docker/Dockerfile'
+      - 'docker/**'
+      - '.github/workflows/**'
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'docker/Dockerfile'
+      - 'docker/**'
+      - '.github/workflows/**'
+
+  workflow_dispatch:
+
+jobs:
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -f docker/Dockerfile -t kantorge/yaffa:latest .
+
+      - name: Set up environment
+        run: |
+          cp .env.example docker/.env
+          sed -i 's|^DB_HOST=.*|DB_HOST=db|' docker/.env
+          sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" docker/.env
+
+      - name: Start stack
+        run: docker compose -f docker/docker-compose.yml up -d
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose -f docker/docker-compose.yml ps --filter status=running --services 2>/dev/null | grep -q '^app$'; then
+              echo "Service 'app' is running (attempt $i)"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "ERROR: Service 'app' did not start after 60 seconds"
+              docker compose -f docker/docker-compose.yml logs app --tail 30
+              exit 1
+            fi
+            echo "Waiting for service 'app'... (attempt $i/30)"
+            sleep 2
+          done
+
+      - name: Verify Apache config
+        run: |
+          APP_CONTAINER=$(docker compose -f docker/docker-compose.yml ps --filter status=running -q app)
+          docker exec "$APP_CONTAINER" apache2ctl configtest
+
+      - name: Verify homepage responds
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent --max-time 5 http://localhost > /dev/null 2>&1; then
+              echo "Homepage responded successfully (attempt $i)"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "ERROR: Homepage did not respond after 60 seconds"
+              exit 1
+            fi
+            echo "Waiting for homepage... (attempt $i/30)"
+            sleep 2
+          done
+
+      - name: Verify access log appears in container logs
+        run: |
+          APP_CONTAINER=$(docker compose -f docker/docker-compose.yml ps --filter status=running -q app)
+
+          curl --silent --max-time 5 http://localhost > /dev/null
+
+          for i in $(seq 1 10); do
+            if docker logs "$APP_CONTAINER" 2>&1 | grep -q 'GET /'; then
+              docker logs "$APP_CONTAINER" 2>&1 | grep 'GET /'
+              break
+            fi
+            if [ "$i" -eq 10 ]; then
+              echo "ERROR: No access log entries found after 10 seconds"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Trigger Laravel log entry
+        run: |
+          APP_CONTAINER=$(docker compose -f docker/docker-compose.yml ps --filter status=running -q app)
+
+          LOG_OUTPUT=$(docker exec "$APP_CONTAINER" php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\\Contracts\\Console\\Kernel::class); \$kernel->bootstrap(); Illuminate\\Support\\Facades\\Log::error('CI container logging test');" 2>&1 || true)
+          echo "$LOG_OUTPUT"
+
+          if echo "$LOG_OUTPUT" | grep -q 'CI container logging test'; then
+            echo "Laravel stderr logging verified via docker exec output"
+            exit 0
+          fi
+
+          for i in $(seq 1 10); do
+            if docker logs "$APP_CONTAINER" 2>&1 | grep -q 'CI container logging test'; then
+              docker logs "$APP_CONTAINER" 2>&1 | grep 'CI container logging test'
+              echo "Laravel logging verified via container logs"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "ERROR: Laravel log entry not found in docker exec output or container logs"
+          exit 1
+
+      - name: Print container logs on failure
+        if: failure()
+        run: |
+          docker compose -f docker/docker-compose.yml ps
+          docker compose -f docker/docker-compose.yml logs
+
+      - name: Shutdown containers
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down -v

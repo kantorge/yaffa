@@ -31,6 +31,10 @@ services:
       - .env
     environment:
       RUNS_SCHEDULER: FALSE
+      # Stream Laravel application logs to the container's stderr so they show up
+      # in `docker logs`. Overrides LOG_STACK from .env. Remove this line if you
+      # prefer file-based logging into the yaffa_storage volume.
+      LOG_STACK: stderr
     volumes:
       - yaffa_storage:/var/www/html/storage # Yaffa storage for logs and planned future upload features
     depends_on:
@@ -62,6 +66,8 @@ services:
       - .env
     environment:
       RUNS_SCHEDULER: TRUE
+      # See note in the `app` service above.
+      LOG_STACK: stderr
     volumes:
       - yaffa_storage:/var/www/html/storage
     depends_on:

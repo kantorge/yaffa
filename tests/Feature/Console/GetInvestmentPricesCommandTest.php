@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Console\Commands\GetInvestmentPrices;
 use App\Jobs\GetInvestmentPrices as GetInvestmentPricesJob;
 use App\Models\Investment;
 use App\Models\InvestmentProviderConfig;
@@ -41,7 +42,7 @@ class GetInvestmentPricesCommandTest extends TestCase
             ],
         ]);
 
-        $this->artisan('app:investment-prices:get')->assertSuccessful();
+        $this->artisan(GetInvestmentPrices::class)->assertSuccessful();
 
         Queue::assertPushed(GetInvestmentPricesJob::class, 2);
         Queue::assertPushed(GetInvestmentPricesJob::class, fn (GetInvestmentPricesJob $job): bool => is_array($job->rateLimitPolicy)
@@ -84,7 +85,7 @@ class GetInvestmentPricesCommandTest extends TestCase
             'last_price_fetch_attempted_at' => null,
         ]);
 
-        $this->artisan('app:investment-prices:get')->assertSuccessful();
+        $this->artisan(GetInvestmentPrices::class)->assertSuccessful();
 
         Queue::assertNothingPushed();
     }
@@ -100,7 +101,7 @@ class GetInvestmentPricesCommandTest extends TestCase
             'investment_price_provider' => 'alpha_vantage',
         ]);
 
-        $this->artisan('app:investment-prices:get')->assertSuccessful();
+        $this->artisan(GetInvestmentPrices::class)->assertSuccessful();
 
         Queue::assertNothingPushed();
 
@@ -122,7 +123,7 @@ class GetInvestmentPricesCommandTest extends TestCase
             'provider_settings' => null,
         ]);
 
-        $this->artisan('app:investment-prices:get')->assertSuccessful();
+        $this->artisan(GetInvestmentPrices::class)->assertSuccessful();
 
         Queue::assertNothingPushed();
 

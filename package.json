@@ -17,7 +17,7 @@
         "cross-env": "^7.0.3",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
-        "eslint-plugin-vue": "^10.5.0",
+        "eslint-plugin-vue": "^10.9.0",
         "globals": "^17.3.0",
         "laravel-vite-plugin": "^2.0.1",
         "postcss": "^8.5.13",

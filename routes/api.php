@@ -100,8 +100,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('google-drive.config.destroy');
     Route::post('/google-drive/config/test', [GoogleDriveConfigApiController::class, 'test'])
         ->name('google-drive.config.test');
+    Route::post('/google-drive/config/folder-name', [GoogleDriveConfigApiController::class, 'folderNameByCredentials'])
+        ->name('google-drive.config.folder-name-by-credentials');
+    Route::post('/google-drive/config/folders', [GoogleDriveConfigApiController::class, 'foldersByCredentials'])
+        ->name('google-drive.config.folders-by-credentials');
     Route::post('/google-drive/config/{googleDriveConfig}/sync', [GoogleDriveConfigApiController::class, 'sync'])
         ->name('google-drive.config.sync');
+    Route::get('/google-drive/config/{googleDriveConfig}/folder-name', [GoogleDriveConfigApiController::class, 'folderName'])
+        ->name('google-drive.config.folder-name');
+    Route::get('/google-drive/config/{googleDriveConfig}/folders', [GoogleDriveConfigApiController::class, 'folders'])
+        ->name('google-drive.config.folders');
 
     // AI Document endpoints
     Route::post('/documents', [AiDocumentApiController::class, 'store'])

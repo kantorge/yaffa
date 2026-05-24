@@ -122,13 +122,13 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['folder_id']);
     }
 
-    public function test_create_accepts_delete_after_import_boolean(): void
+    public function test_create_accepts_post_import_actions_array(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
-                'delete_after_import' => true,
+                'post_import_actions' => ['delete', 'trash'],
             ]);
 
         $response->assertStatus(201);
@@ -157,7 +157,7 @@ class GoogleDriveConfigRequestTest extends TestCase
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'delete_after_import' => true,
+                'enabled' => true,
             ]);
 
         $response->assertStatus(200);
@@ -248,23 +248,23 @@ class GoogleDriveConfigRequestTest extends TestCase
         $this->assertEquals($originalJson, $config->service_account_json);
     }
 
-    public function test_update_allows_changing_delete_after_import(): void
+    public function test_update_allows_changing_post_import_actions(): void
     {
         $config = GoogleDriveConfig::factory()->create([
             'user_id' => $this->user->id,
-            'delete_after_import' => false,
+            'post_import_actions' => null,
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
-                'delete_after_import' => true,
+                'post_import_actions' => ['delete'],
             ]);
 
         $response->assertStatus(200);
 
         $config->refresh();
-        $this->assertTrue($config->delete_after_import);
+        $this->assertEquals(['delete'], $config->post_import_actions);
     }
 
     public function test_update_allows_changing_enabled(): void
@@ -360,5 +360,90 @@ class GoogleDriveConfigRequestTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['service_account_json']);
+    }
+
+    // ===== PROCESSED FOLDER VALIDATION =====
+
+    public function test_update_rejects_processed_folder_id_equal_to_folder_id(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'same-folder-id',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'folder_id' => 'same-folder-id',
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => 'same-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['processed_folder_id']);
+    }
+
+    public function test_update_accepts_processed_folder_id_different_from_folder_id(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'import-folder-id',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'folder_id' => 'import-folder-id',
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => 'processed-folder-id',
+            ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_update_rejects_processed_folder_id_equal_to_existing_folder_id_when_folder_id_omitted(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'import-folder-id',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => 'import-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['processed_folder_id']);
+    }
+
+    public function test_update_requires_processed_folder_id_when_move_to_processed_selected(): void
+    {
+        $config = GoogleDriveConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'folder_id' => 'import-folder-id',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => null,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['processed_folder_id']);
+    }
+
+    public function test_create_rejects_processed_folder_id_equal_to_folder_id(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.store'), [
+                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+                'folder_id' => 'same-folder-id',
+                'post_import_actions' => ['move_to_processed'],
+                'processed_folder_id' => 'same-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['processed_folder_id']);
     }
 }

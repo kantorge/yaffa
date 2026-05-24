@@ -27,6 +27,10 @@
       type: Array,
       default: () => [],
     },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
     statusLabels: {
       type: Object,
       default: () => ({}),
@@ -775,6 +779,17 @@
       refreshRows(newDocuments);
     },
     { deep: true },
+  );
+
+  watch(
+    () => props.loading,
+    (isLoading) => {
+      if (!table.value) {
+        return;
+      }
+
+      table.value.processing(isLoading);
+    },
   );
 
   onUnmounted(() => {

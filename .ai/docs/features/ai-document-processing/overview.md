@@ -97,7 +97,7 @@ AI Document Processing helps users turn receipts, invoices, email confirmations,
 
 - A document list shows submitted and processed items.
 - A review view lets the user inspect extracted details and launch the existing transaction form.
-- AI-related settings are managed from a dedicated settings area.
+- AI-related settings are managed from a dedicated settings area, including Google Drive configuration with folder display names, post-import file disposition, a JSON key file upload shortcut, and a folder browser.
 - The final save experience stays aligned with YAFFA’s existing transaction entry flow.
 
 ## Edge Cases / Constraints
