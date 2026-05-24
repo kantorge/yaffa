@@ -24,6 +24,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
     private const string TRANSACTION_ITEM_CATEGORY_SELECTOR = '#transaction_item_container .transaction_item_row select.category';
 
+    private const string TRANSACTION_ITEM_CATEGORY_SELECT2_SELECTOR = '#transaction_item_container .transaction_item_row select.category + .select2';
+
     protected User $user;
 
     protected function setUp(): void
@@ -54,21 +56,51 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Add amount
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
-            ->click('@button-add-transaction-item')
-            // Wait for the transaction item category select2 to become ready
-            ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
+            ->tap(fn (Browser $browser): Browser => $this->addTransactionItemAndWaitForCategorySelect2($browser))
             // Set the first category input
             ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, null, 10)
             // Set the first amount to the same amount as the transaction
             ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100');
     }
 
+    private function getTransactionItemRowCount(Browser $browser): int
+    {
+        $rowCount = $browser->script(
+            'return document.querySelectorAll(' . json_encode(self::TRANSACTION_ITEM_ROW_SELECTOR) . ').length;'
+        )[0] ?? 0;
+
+        return (int) $rowCount;
+    }
+
+    private function addTransactionItemAndWaitForCategorySelect2(Browser $browser, int $timeout = 10): Browser
+    {
+        $expectedRowCount = $this->getTransactionItemRowCount($browser) + 1;
+
+        return $browser
+            ->click('@button-add-transaction-item')
+            ->waitUsing(
+                $timeout,
+                100,
+                fn () => $this->getTransactionItemRowCount($browser) >= $expectedRowCount
+            )
+            ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser, $timeout));
+    }
+
     private function waitForTransactionItemCategorySelect2(Browser $browser, int $timeout = 10): Browser
     {
         return $browser
             ->waitFor(self::TRANSACTION_ITEM_ROW_SELECTOR, $timeout)
-            ->waitFor(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, $timeout)
-            ->waitFor(self::TRANSACTION_ITEM_CATEGORY_SELECTOR . ' + .select2', $timeout);
+            ->waitUsing(
+                $timeout,
+                100,
+                fn () => ($browser->script(
+                    'const select = document.querySelector(' . json_encode(self::TRANSACTION_ITEM_CATEGORY_SELECTOR) . ');' .
+                    'if (!select) { return false; }' .
+                    'const select2Container = select.nextElementSibling;' .
+                    'return select.classList.contains("select2-hidden-accessible") && !!select2Container && select2Container.matches(".select2");'
+                )[0] ?? false) === true
+            )
+            ->assertPresent(self::TRANSACTION_ITEM_CATEGORY_SELECT2_SELECTOR);
     }
 
     public function test_user_can_load_the_standard_transaction_form(): void
@@ -222,9 +254,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Add amount
                 ->type('#transaction_amount_from', '100')
                 // Allocate the same amount to a random category by adding one new item
-                ->click('@button-add-transaction-item')
-                // Wait for the transaction item category select2 to become ready
-                ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
+                ->tap(fn (Browser $browser): Browser => $this->addTransactionItemAndWaitForCategorySelect2($browser))
                 // Set the first category input
                 ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, null, 10)
                 // Set the first amount to the same amount as the transaction
@@ -517,10 +547,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->type('#transaction_amount_from', '100')
 
                 // Add a new transaction item
-                ->click('@button-add-transaction-item')
-
-                // Wait for the transaction item category select2 to become ready
-                ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser))
+                ->tap(fn (Browser $browser): Browser => $this->addTransactionItemAndWaitForCategorySelect2($browser))
 
                 // Set the first category input to the random category
                 ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, $category->name, 10)

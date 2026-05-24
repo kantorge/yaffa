@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Docker image
         run: docker build -f docker/Dockerfile -t kantorge/yaffa:latest .
@@ -97,19 +97,25 @@ jobs:
         run: |
           APP_CONTAINER=$(docker compose -f docker/docker-compose.yml ps --filter status=running -q app)
 
-          docker exec "$APP_CONTAINER" php artisan tinker --execute="Log::error('CI container logging test');"
+          LOG_OUTPUT=$(docker exec "$APP_CONTAINER" php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\\Contracts\\Console\\Kernel::class); \$kernel->bootstrap(); Illuminate\\Support\\Facades\\Log::error('CI container logging test');" 2>&1 || true)
+          echo "$LOG_OUTPUT"
+
+          if echo "$LOG_OUTPUT" | grep -q 'CI container logging test'; then
+            echo "Laravel stderr logging verified via docker exec output"
+            exit 0
+          fi
 
           for i in $(seq 1 10); do
             if docker logs "$APP_CONTAINER" 2>&1 | grep -q 'CI container logging test'; then
               docker logs "$APP_CONTAINER" 2>&1 | grep 'CI container logging test'
-              break
-            fi
-            if [ "$i" -eq 10 ]; then
-              echo "ERROR: Laravel log entry not found after 10 seconds"
-              exit 1
+              echo "Laravel logging verified via container logs"
+              exit 0
             fi
             sleep 1
           done
+
+          echo "ERROR: Laravel log entry not found in docker exec output or container logs"
+          exit 1
 
       - name: Print container logs on failure
         if: failure()

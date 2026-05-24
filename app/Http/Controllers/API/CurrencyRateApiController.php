@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CurrencyRateRequest;
+use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Services\CurrencyRateService;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Gate;
 
 class CurrencyRateApiController extends Controller implements HasMiddleware
 {
+    use CurrencyTrait;
     public function __construct(
         protected CurrencyRateService $currencyRateService
     ) {
@@ -142,5 +144,18 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         }
 
         return response()->json();
+    }
+
+    /**
+     * Clear all currency-related caches for the current user.
+     * This includes the monthly average rates and individual currency lists.
+     */
+    public function clearCache(Request $request): JsonResponse
+    {
+        $this->clearCurrencyCache($request->user()->id);
+
+        return response()->json([
+            'message' => __('maintenance.currencyCache.cleared'),
+        ], Response::HTTP_OK);
     }
 }

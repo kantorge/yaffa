@@ -245,7 +245,7 @@ class OcrService
                 ->withPrompt($prompt, [Image::fromLocalPath($resizedPath)])
                 ->asText();
 
-            $text = $response->text ?? '';
+            $text = $response->text;
 
             Log::info("Vision API extracted " . mb_strlen($text) . " characters from image");
             Log::debug("Vision API raw response: " . json_encode($response));

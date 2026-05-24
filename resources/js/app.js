@@ -61,6 +61,7 @@ const routeMap = new Map([
     ['user.settings', 'user/settings'],
     ['user.ai-settings', 'user/settings'],
     ['user.investment-provider-settings', 'user/settings'],
+    ['user.maintenance', 'user/maintenance'],
 ]);
 
 // Generic loader

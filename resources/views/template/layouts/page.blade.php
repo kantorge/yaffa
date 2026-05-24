@@ -84,6 +84,11 @@
                             {{ __('Investment provider settings') }}
                         </a>
                         <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ route('user.maintenance') }}">
+                            <i class="fa-solid fa-wrench me-2"></i>
+                            {{ __('maintenance.title') }}
+                        </a>
+                        <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"

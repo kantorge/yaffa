@@ -25,6 +25,12 @@
                     <label class="btn btn-outline-primary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-calendar"></i></label>
                 </div>
             </div>
+            <div class="alert alert-info m-3 mb-0 alert-dismissible fade show hidden" role="alert" id="cashflowRateNoteAlert" data-dismissible-key="dismissCashflowRateNote">
+                <small>
+                    <strong>{{ __('reports.cashflow.rateNoteLabel') }}</strong> {{ __('reports.cashflow.rateNoteBody') }}
+                </small>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             <div class="card-body">
                 <span class="placeholder-glow"><span id="placeholder" class="placeholder col-12 placeholder-lg"></span></span>
                 <div id="chartdiv" class="hidden" style="width:100%; height:500px;"></div>

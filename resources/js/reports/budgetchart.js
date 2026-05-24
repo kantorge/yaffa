@@ -10,6 +10,7 @@ import * as helpers from '@/shared/lib/helpers';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import { initializeSelect2 } from '@/shared/lib/select2';
+import * as toastHelpers from '@/shared/lib/toast';
 
 // Category tree
 import 'jstree';
@@ -160,14 +161,16 @@ let reloadData = function () {
         }
     })
         .done(function (data) {
+            const chartData = Array.isArray(data) ? data : (data.chartData || []);
+
             // Convert date strings to Date objects
-            data = data.map(function (item) {
+            const parsedChartData = chartData.map(function (item) {
                 item.date = new Date(item.period);
                 return item;
             });
 
             // Store the raw data for later use
-            rawData = data.slice();
+            rawData = parsedChartData.slice();
 
             // Determine the highest level of aggregation based on selected categories
             let aggregation = 'month';
@@ -191,6 +194,17 @@ let reloadData = function () {
 
             // Update the chart
             updateChart(rawData);
+
+            if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
+                const currencyList = data.warnings.currenciesWithoutRates
+                    .map(c => `${c.name} (${c.iso_code})`)
+                    .join(', ');
+
+                toastHelpers.showWarningToast(
+                    __('reports.cashflow.missingRatesWarningPrefix') + currencyList +
+                    '. ' + __('reports.cashflow.missingRatesWarningSuffix')
+                );
+            }
         })
         .always(function () {
             elementRefreshButton.disabled = false;

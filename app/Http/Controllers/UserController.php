@@ -77,4 +77,15 @@ class UserController extends Controller implements HasMiddleware
 
         return view('user.investment-provider-settings');
     }
+
+    public function maintenance(): View
+    {
+        /**
+         * @get("/user/maintenance")
+         * @name("user.maintenance")
+         * @middlewares("web", "auth", "verified")
+         */
+
+        return view('user.maintenance');
+    }
 }

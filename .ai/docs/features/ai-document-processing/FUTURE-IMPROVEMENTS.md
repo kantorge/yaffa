@@ -46,4 +46,3 @@
 - File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
 - Add a widget to the dashboard showing recent AI document processing activity and status. (When AI processing is enabled.)
 - When finalizing an AI document, display the number of saved and updated category learnings.
-- Add a DataTables loader/spinner for the AI documents list to improve UX during data refreshes, especially after processing or learning updates.
