@@ -115,6 +115,39 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * GET /api/v1/documents/summary - Aggregate stats for non-finalized documents
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $hasProviderConfig = $user->aiProviderConfigs()->exists();
+
+        if (! $hasProviderConfig) {
+            return response()->json(['active_provider' => false], Response::HTTP_OK);
+        }
+
+        $base = AiDocument::query()
+            ->where('user_id', $user->id)
+            ->where('status', '!=', 'finalized');
+
+        $total = (clone $base)->count();
+        $readyForReview = (clone $base)->where('status', 'ready_for_review')->count();
+        $processingFailed = (clone $base)->where('status', 'processing_failed')->count();
+
+        /** @var AiDocument|null $oldest */
+        $oldest = (clone $base)->oldest()->first();
+
+        return response()->json([
+            'active_provider' => true,
+            'total' => $total,
+            'ready_for_review' => $readyForReview,
+            'processing_failed' => $processingFailed,
+            'oldest_created_at' => $oldest?->created_at?->toIso8601String(),
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * GET /api/v1/documents - List user's documents with filters
      */
     public function index(Request $request): JsonResponse

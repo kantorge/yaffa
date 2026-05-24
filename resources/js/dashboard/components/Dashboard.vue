@@ -15,6 +15,7 @@
       ></onboarding-card>
       <account-balance></account-balance>
       <payee-category-recommendation></payee-category-recommendation>
+      <ai-document-summary></ai-document-summary>
     </div>
     <!-- /.col -->
 
@@ -33,6 +34,7 @@
   import ScheduleCalendar from './widgets/ScheduleCalendar.vue';
   import PayeeCategoryRecommendation from './widgets/PayeeCategoryRecommendation.vue';
   import OnboardingCard from './widgets/OnboardingCard.vue';
+  import AiDocumentSummary from './widgets/AiDocumentSummary.vue';
 
   export default {
     components: {
@@ -41,6 +43,7 @@
       'schedule-calendar': ScheduleCalendar,
       'payee-category-recommendation': PayeeCategoryRecommendation,
       'onboarding-card': OnboardingCard,
+      'ai-document-summary': AiDocumentSummary,
     },
   };
 </script>

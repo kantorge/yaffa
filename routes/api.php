@@ -114,6 +114,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // AI Document endpoints
     Route::post('/documents', [AiDocumentApiController::class, 'store'])
         ->name('documents.store');
+    Route::get('/documents/summary', [AiDocumentApiController::class, 'summary'])
+        ->name('documents.summary');
     Route::get('/documents', [AiDocumentApiController::class, 'index'])
         ->name('documents.index');
     Route::get('/documents/{aiDocument}', [AiDocumentApiController::class, 'show'])
