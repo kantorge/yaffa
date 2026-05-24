@@ -588,7 +588,7 @@ class ReportApiController extends Controller implements HasMiddleware
             $allCurrencies = $this->getAllCurrencies();
             foreach ($debugRows as &$row) {
                 $currency = $allCurrencies->get($row['currency_id']);
-                $row['currency_iso_code'] = $currency?->iso_code ?? 'Unknown';
+                $row['currency_iso_code'] = $currency->iso_code ?? 'Unknown';
             }
             unset($row);
         }
