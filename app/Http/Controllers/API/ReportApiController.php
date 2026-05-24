@@ -486,8 +486,9 @@ class ReportApiController extends Controller implements HasMiddleware
         // Group monthly summaries by month, and get all relevant details
         // Track which currencies had missing rates (fell back to 1:1)
         $currenciesWithMissingRates = [];
+        $debugRows = [];
         $compact = [];
-        $monthlySummaries->each(function ($summary) use (&$compact, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
+        $monthlySummaries->each(function ($summary) use (&$compact, &$currenciesWithMissingRates, &$debugRows, $baseCurrency, $allRatesMap) {
             // First of all, if the amount is 0, we can skip this summary
             if ($summary->amount === 0) {
                 return;
@@ -508,6 +509,7 @@ class ReportApiController extends Controller implements HasMiddleware
             // Calculate the amount in the base currency, using the currency rate closest to the given date.
             // If the account entity is missing (for generic budgets), the base currency is used.
             // When no rate is found for a currency/period, the amount falls back to a 1:1 conversion.
+            $isBaseCurrency = $summary->currency_id === $baseCurrency->id;
             $rate = $this->getLatestRateFromMap(
                 $summary->currency_id,
                 Carbon::parse($summary->date),
@@ -515,15 +517,57 @@ class ReportApiController extends Controller implements HasMiddleware
                 $baseCurrency->id
             );
 
+            // Resolve the source month for the rate that was actually applied
+            $debugRateSourceMonth = null;
+            if (!$isBaseCurrency && $rate !== null && array_key_exists($summary->currency_id, $allRatesMap)) {
+                foreach ($allRatesMap[$summary->currency_id] as $rateDate => $rateValue) {
+                    if (Carbon::parse($rateDate)->lte(Carbon::parse($summary->date))) {
+                        $debugRateSourceMonth = $rateDate;
+                        break;
+                    }
+                }
+            }
+
             // Track if this currency had no rate (fell back to 1:1)
-            if ($rate === null && $summary->currency_id !== $baseCurrency->id) {
+            $isMissingRate = !$isBaseCurrency && $rate === null;
+            if ($isMissingRate) {
                 $currenciesWithMissingRates[$summary->currency_id] = true;
             }
 
-            $amount = $summary->amount * ($rate ?? 1);
+            // Flag a stale rate when the source month is more than one month before the data month
+            $isStaleRate = false;
+            if ($debugRateSourceMonth !== null) {
+                $monthsApart = (int) Carbon::parse($summary->date)->diffInMonths(Carbon::parse($debugRateSourceMonth));
+                $isStaleRate = $monthsApart > 1;
+            }
+
+            // Flag a suspicious rate value (e.g. off by a factor of thousands due to wrong unit)
+            $effectiveRate = $isBaseCurrency ? 1.0 : $rate;
+            $isSuspiciousRate = !$isBaseCurrency && $effectiveRate !== null && ($effectiveRate < 0.0001 || $effectiveRate > 10000);
+
+            $amount = $summary->amount * ($effectiveRate ?? 1);
 
             // Based on the data_type and transaction_type, assign the amount to the correct field
             $compact[$month][$summary->transaction_type] += $amount;
+
+            // Collect per-row debug data for browser console inspection
+            $flags = array_values(array_filter([
+                $isMissingRate ? 'missing_rate' : null,
+                $isStaleRate ? 'stale_rate' : null,
+                $isSuspiciousRate ? 'suspicious_rate' : null,
+            ]));
+
+            $debugRows[] = [
+                'month' => $summary->date,
+                'transaction_type' => $summary->transaction_type,
+                'currency_id' => $summary->currency_id,
+                'raw_amount' => $summary->amount,
+                'exchange_rate' => $effectiveRate,
+                'rate_source_month' => $debugRateSourceMonth,
+                'is_base_currency' => $isBaseCurrency,
+                'converted_amount' => $amount,
+                'flags' => $flags,
+            ];
         });
 
         // Sort the compact array by month to help with the chart
@@ -539,12 +583,23 @@ class ReportApiController extends Controller implements HasMiddleware
         // If there are currencies with missing rates, load their names for the warning message
         $missingRateCurrencies = $this->getMissingRateCurrencies($currenciesWithMissingRates);
 
+        // Enrich debug rows with currency ISO codes
+        if (!empty($debugRows)) {
+            $allCurrencies = $this->getAllCurrencies();
+            foreach ($debugRows as &$row) {
+                $currency = $allCurrencies->get($row['currency_id']);
+                $row['currency_iso_code'] = $currency?->iso_code ?? 'Unknown';
+            }
+            unset($row);
+        }
+
         return response()->json(
             [
                 'chartData' => array_values($compact),
                 'warnings' => [
                     'currenciesWithoutRates' => $missingRateCurrencies,
                 ],
+                'debug' => $debugRows,
             ],
             Response::HTTP_OK
         );
