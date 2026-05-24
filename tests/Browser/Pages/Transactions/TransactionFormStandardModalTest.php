@@ -12,6 +12,12 @@ class TransactionFormStandardModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
+    private const string TRANSACTION_ITEM_ROW_SELECTOR = '#transaction_item_container .transaction_item_row';
+
+    private const string TRANSACTION_ITEM_CATEGORY_SELECTOR = '#transaction_item_container .transaction_item_row select.category';
+
+    private const string TRANSACTION_ITEM_CATEGORY_SELECT2_SELECTOR = '#transaction_item_container .transaction_item_row select.category + .select2';
+
     protected User $user;
 
     protected function setUp(): void
@@ -26,6 +32,46 @@ class TransactionFormStandardModalTest extends DuskTestCase
         }
 
         $this->user = User::firstWhere('email', $this::USER_EMAIL);
+    }
+
+    private function getTransactionItemRowCount(Browser $browser): int
+    {
+        $rowCount = $browser->script(
+            'return document.querySelectorAll(' . json_encode(self::TRANSACTION_ITEM_ROW_SELECTOR) . ').length;'
+        )[0] ?? 0;
+
+        return (int) $rowCount;
+    }
+
+    private function addTransactionItemAndWaitForCategorySelect2(Browser $browser, int $timeout = 10): Browser
+    {
+        $expectedRowCount = $this->getTransactionItemRowCount($browser) + 1;
+
+        return $browser
+            ->click('@button-add-transaction-item')
+            ->waitUsing(
+                $timeout,
+                100,
+                fn () => $this->getTransactionItemRowCount($browser) >= $expectedRowCount
+            )
+            ->tap(fn (Browser $browser): Browser => $this->waitForTransactionItemCategorySelect2($browser, $timeout));
+    }
+
+    private function waitForTransactionItemCategorySelect2(Browser $browser, int $timeout = 10): Browser
+    {
+        return $browser
+            ->waitFor(self::TRANSACTION_ITEM_ROW_SELECTOR, $timeout)
+            ->waitUsing(
+                $timeout,
+                100,
+                fn () => ($browser->script(
+                    'const select = document.querySelector(' . json_encode(self::TRANSACTION_ITEM_CATEGORY_SELECTOR) . ');' .
+                    'if (!select) { return false; }' .
+                    'const select2Container = select.nextElementSibling;' .
+                    'return select.classList.contains("select2-hidden-accessible") && !!select2Container && select2Container.matches(".select2");'
+                )[0] ?? false) === true
+            )
+            ->assertPresent(self::TRANSACTION_ITEM_CATEGORY_SELECT2_SELECTOR);
     }
 
     public function test_user_can_load_the_standard_transaction_form_in_a_modal(): void
@@ -137,12 +183,11 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 // Add amount
                 ->type('#transaction_amount_from', '100')
                 // Allocate the same amount to a random category by adding one new item
-                ->click('@button-add-transaction-item')
+                ->tap(fn (Browser $browser): Browser => $this->addTransactionItemAndWaitForCategorySelect2($browser))
                 // Set the first category input
-                ->waitFor('#transaction_item_container .transaction_item_row select.category', 10)
-                ->select2('#transaction_item_container .transaction_item_row select.category', null, 10)
+                ->select2(self::TRANSACTION_ITEM_CATEGORY_SELECTOR, null, 10)
                 // Set the first amount to the same amount as the transaction
-                ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
+                ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100')
 
                 // Submit form
                 ->click('#transactionFormStandard-Save')
