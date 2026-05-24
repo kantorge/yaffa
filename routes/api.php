@@ -256,6 +256,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('maintenance.clear-currency-cache');
     Route::post('/maintenance/recalculate-account-monthly-summaries', [AccountEntityApiController::class, 'recalculateAccountMonthlySummaries'])
         ->name('maintenance.recalculate-account-monthly-summaries');
+    Route::post('/maintenance/cleanup-ai-document-old-files', [AiDocumentApiController::class, 'cleanupOldFiles'])
+        ->name('maintenance.cleanup-ai-document-old-files');
 
     // Onboarding endpoints
     Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData'])

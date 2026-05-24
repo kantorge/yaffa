@@ -43,5 +43,5 @@
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
 - When extracting the data of a transfer, it can be among accounts with different currencies. In this case, the importance of the currency can be relevant, and we need to extract both amounts.
 - The standalone transaction form should have an option callback option, which leads back to the list of AI documents, instead of the transaction list. This is relevant for the user experience, as after finalizing a transaction, the user might want to review the next AI document, instead of going back to the transaction list.
-- File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+- File retention and cleanup job automation. Most probably, the number of days should be moved from a generic config to a user-specific setting, and the cleanup job should be automated (e.g. run monthly).
 - When finalizing an AI document, display the number of saved and updated category learnings.

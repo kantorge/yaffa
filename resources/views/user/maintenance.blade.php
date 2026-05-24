@@ -57,5 +57,30 @@
             </div>
         </div>
 
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">{{ __('maintenance.aiDocumentOldFiles.title') }}</h5>
+                        <p class="card-text text-muted mb-0">
+                            {{ __('maintenance.aiDocumentOldFiles.description', ['days' => config('ai-documents.local_storage_file_retention.retention_days')]) }}
+                        </p>
+                    </div>
+                    <div class="ms-4 flex-shrink-0">
+                        <button
+                            type="button"
+                            class="btn btn-outline-danger maintenance-task-btn"
+                            data-route="{{ route('api.v1.maintenance.cleanup-ai-document-old-files') }}"
+                            data-method="POST"
+                            data-confirm-text="{{ __('maintenance.aiDocumentOldFiles.confirmText', ['days' => config('ai-documents.local_storage_file_retention.retention_days')]) }}"
+                        >
+                            <i class="fa fa-trash me-2"></i>
+                            {{ __('maintenance.aiDocumentOldFiles.action') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 @stop

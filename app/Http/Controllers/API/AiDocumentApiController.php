@@ -19,6 +19,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
@@ -144,6 +145,20 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             'ready_for_review' => $readyForReview,
             'processing_failed' => $processingFailed,
             'oldest_created_at' => $oldest?->created_at?->toIso8601String(),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * POST /api/v1/maintenance/cleanup-ai-document-old-files - Queue cleanup of old AI document files
+     */
+    public function cleanupOldFiles(Request $request): JsonResponse
+    {
+        Artisan::queue('ai-documents:cleanup-old-files', [
+            'userId' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => __('maintenance.aiDocumentOldFiles.queued'),
         ], Response::HTTP_OK);
     }
 

@@ -1,8 +1,30 @@
 import { __ } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
+import Swal from 'sweetalert2';
 
 document.querySelectorAll('.maintenance-task-btn').forEach((button) => {
     button.addEventListener('click', async () => {
+        const confirmText = button.dataset.confirmText;
+
+        if (confirmText) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                text: confirmText,
+                confirmButtonText: __('Confirm'),
+                cancelButtonText: __('Cancel'),
+                showCancelButton: true,
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: 'btn btn-danger',
+                    cancelButton: 'btn btn-outline-secondary ms-3',
+                },
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+        }
+
         const url = button.dataset.route;
         const method = button.dataset.method || 'POST';
 
