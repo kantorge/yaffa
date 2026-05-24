@@ -1400,6 +1400,8 @@
                 processTransaction(response.data.transaction),
                 {
                   callback: this.callback,
+                  categoryLearningSummary:
+                    response.data.category_learning_summary,
                 },
               );
             });
@@ -1415,6 +1417,8 @@
               processTransaction(response.data.transaction),
               {
                 callback: this.callback,
+                categoryLearningSummary:
+                  response.data.category_learning_summary,
               },
             );
           });

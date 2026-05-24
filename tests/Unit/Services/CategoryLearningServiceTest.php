@@ -63,7 +63,7 @@ class CategoryLearningServiceTest extends TestCase
         $category = Category::factory()->create(['user_id' => $user->id]);
         $service = new CategoryLearningService($user);
 
-        $service->recordCategorySelection('Coffee', $category->id);
+        $this->assertSame('created', $service->recordCategorySelection('Coffee', $category->id));
 
         $this->assertDatabaseHas('category_learning', [
             'user_id' => $user->id,
@@ -86,7 +86,7 @@ class CategoryLearningServiceTest extends TestCase
             'usage_count' => 3,
         ]);
 
-        $service->recordCategorySelection('Coffee', $category->id);
+        $this->assertSame('incremented', $service->recordCategorySelection('Coffee', $category->id));
 
         $this->assertDatabaseHas('category_learning', [
             'user_id' => $user->id,

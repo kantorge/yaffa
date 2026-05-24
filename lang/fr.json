@@ -1094,6 +1094,7 @@
     "maintenance.aiDocumentOldFiles.confirmText": "Supprimer les fichiers de documents IA stockés localement datant de plus de :days jours ? Cette action est irréversible.",
     "maintenance.aiDocumentOldFiles.confirmAction": "Supprimer les fichiers",
     "maintenance.aiDocumentOldFiles.queued": "Le nettoyage des anciens fichiers de documents IA a été mis en file d'attente.",
+    "categoryLearning.summary": "Apprentissages de catégories mis à jour: :created nouveaux apprentissages ajoutés, :updated apprentissages existants mis à jour, :incremented apprentissages existants utilisés.",
     "maintenance.taskSuccessFallback": "Tâche terminée avec succès.",
     "maintenance.taskFailureFallback": "La tâche a échoué. Veuillez réessayer.",
     "maintenance.networkErrorPrefix": "Erreur réseau : ",

@@ -37,10 +37,10 @@ class CategoryLearningService
      * @param string $description Item description to learn from
      * @param int $categoryId Category ID selected by user
      */
-    public function recordCategorySelection(string $description, int $categoryId): void
+    public function recordCategorySelection(string $description, int $categoryId): ?string
     {
         if (! $this->user) {
-            return;
+            return null;
         }
 
         $normalizedDescription = $this->normalize($description);
@@ -54,21 +54,26 @@ class CategoryLearningService
             // If category matches existing learning, increment usage count
             if ((int) $learning->category_id === $categoryId) {
                 $learning->increment('usage_count');
-            } else {
-                // Category changed, reset to new category with count of 1
-                $learning->category_id = $categoryId;
-                $learning->usage_count = 1;
-                $learning->save();
-            }
-        } else {
-            // Create new learning record
-            CategoryLearning::create([
-                'user_id' => $this->user->id,
-                'item_description' => $normalizedDescription,
-                'category_id' => $categoryId,
-                'usage_count' => 1,
-            ]);
-        }
-    }
 
+                return 'incremented';
+            }
+
+            // Category changed, reset to new category with count of 1
+            $learning->category_id = $categoryId;
+            $learning->usage_count = 1;
+            $learning->save();
+
+            return 'updated';
+        }
+
+        // Create new learning record
+        CategoryLearning::create([
+            'user_id' => $this->user->id,
+            'item_description' => $normalizedDescription,
+            'category_id' => $categoryId,
+            'usage_count' => 1,
+        ]);
+
+        return 'created';
+    }
 }

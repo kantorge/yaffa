@@ -1095,6 +1095,7 @@
     "maintenance.aiDocumentOldFiles.confirmText": "Delete locally stored AI document files older than :days days? This cannot be undone.",
     "maintenance.aiDocumentOldFiles.confirmAction": "Delete files",
     "maintenance.aiDocumentOldFiles.queued": "AI document old file cleanup has been queued.",
+    "categoryLearning.summary": "Category learnings updated: :created new learnings added, :updated existing learnings updated, :incremented existing learnings used.",
     "maintenance.taskSuccessFallback": "Task completed successfully.",
     "maintenance.taskFailureFallback": "Task failed. Please try again.",
     "maintenance.networkErrorPrefix": "Network error: ",

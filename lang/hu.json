@@ -1094,6 +1094,7 @@
     "maintenance.aiDocumentOldFiles.confirmText": "Törlöd a :days napnál régebbi, helyben tárolt AI dokumentumfájlokat? Ez a művelet nem vonható vissza.",
     "maintenance.aiDocumentOldFiles.confirmAction": "Fájlok törlése",
     "maintenance.aiDocumentOldFiles.queued": "A régi AI dokumentumfájlok takarítása várólistára került.",
+    "categoryLearning.summary": "Kategóriatanulások frissítve: :created új tanulás hozzáadva, :updated meglévő tanulás frissítve, :incremented meglévő tanulás használva.",
     "maintenance.taskSuccessFallback": "A feladat sikeresen befejeződött.",
     "maintenance.taskFailureFallback": "A feladat sikertelen volt. Próbáld újra.",
     "maintenance.networkErrorPrefix": "Hálózati hiba: ",

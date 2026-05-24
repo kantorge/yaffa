@@ -1094,6 +1094,7 @@
     "maintenance.aiDocumentOldFiles.confirmText": "Usunąć lokalnie przechowywane pliki dokumentów AI starsze niż :days dni? Tego nie można cofnąć.",
     "maintenance.aiDocumentOldFiles.confirmAction": "Usuń pliki",
     "maintenance.aiDocumentOldFiles.queued": "Czyszczenie starych plików dokumentów AI zostało dodane do kolejki.",
+    "categoryLearning.summary": "Uaktualniono uczenie kategorii: dodano :created nowych uczących się wpisów, zaktualizowano :updated istniejących uczących się wpisów, użyto :incremented istniejących uczących się wpisów.",
     "maintenance.taskSuccessFallback": "Zadanie zakończyło się pomyślnie.",
     "maintenance.taskFailureFallback": "Zadanie nie powiodło się. Spróbuj ponownie.",
     "maintenance.networkErrorPrefix": "Błąd sieci: ",
