@@ -526,6 +526,10 @@ class ReportApiController extends Controller implements HasMiddleware
                         break;
                     }
                 }
+
+                if ($debugRateSourceMonth === null) {
+                    $debugRateSourceMonth = array_key_last($allRatesMap[$summary->currency_id]);
+                }
             }
 
             // Track if this currency had no rate (fell back to 1:1)
