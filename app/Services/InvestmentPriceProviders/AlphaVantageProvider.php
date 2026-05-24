@@ -25,9 +25,7 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             $from = Carbon::now()->subDays(3);
         }
 
-        $resolvedApiKey = is_array($investment->provider_credentials ?? null)
-            ? (string) ($investment->provider_credentials['api_key'] ?? '')
-            : '';
+        $resolvedApiKey = (string) ($investment->provider_credentials['api_key'] ?? '');
 
         try {
             $response = $this->httpClient->request(

@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 trait CurrencyTrait
 {
+    protected function getAllCurrencyRatesByMonthCacheKey(int $userId): string
+    {
+        return "allCurrencyRatesByMonth_forUser_{$userId}";
+    }
+
+    protected function getCurrenciesCacheKey(int $userId): string
+    {
+        return "currencies_user_{$userId}";
+    }
+
     /**
      * Load an array for all currencies, with an average rate by month
      * As this data is not expected to change often, it is cached for a day
@@ -22,7 +32,7 @@ trait CurrencyTrait
         }
 
         $userId = auth()->user()->id;
-        $cacheKey = "allCurrencyRatesByMonth_forUser_{$userId}";
+        $cacheKey = $this->getAllCurrencyRatesByMonthCacheKey($userId);
 
         return Cache::remember($cacheKey, now()->addDay(), function () use ($baseCurrency) {
             $rates = DB::table('currency_rates')
@@ -67,7 +77,7 @@ trait CurrencyTrait
             return collect();
         }
 
-        $cacheKey = "currencies_user_{$userId}";
+        $cacheKey = $this->getCurrenciesCacheKey($userId);
 
         return Cache::remember(
             $cacheKey,
@@ -109,8 +119,32 @@ trait CurrencyTrait
         $userId = $userId ?? auth()->user()?->id;
 
         if ($userId) {
-            Cache::forget("currencies_user_{$userId}");
+            Cache::forget($this->getCurrenciesCacheKey($userId));
+            Cache::forget($this->getAllCurrencyRatesByMonthCacheKey($userId));
         }
+    }
+
+    /**
+     * Resolve currency records for missing-rate warnings.
+     *
+     * @param array<int, int|bool> $currenciesWithMissingRates
+     * @return array<int, array{id: int, iso_code: string, name: string}>
+     */
+    protected function getMissingRateCurrencies(array $currenciesWithMissingRates): array
+    {
+        if (empty($currenciesWithMissingRates)) {
+            return [];
+        }
+
+        $currencyIds = array_is_list($currenciesWithMissingRates)
+            ? $currenciesWithMissingRates
+            : array_keys($currenciesWithMissingRates);
+
+        return Currency::whereKey($currencyIds)
+            ->orderBy('id')
+            ->select('id', 'iso_code', 'name')
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -124,30 +158,33 @@ trait CurrencyTrait
      * @param int|null $currencyId The ID of the currency for which to get the rate.
      * @param Carbon $date The date for which to get the latest rate.
      * @param array $allRatesMap A map of all rates, indexed by currency ID and date.
-     * @param int $baseCurrencyID The ID of the base currency, for which we look the rate for.
+     * @param int $baseCurrencyId The ID of the base currency, for which we look the rate for.
      * @return float|null The latest rate for the given currency, or null if not found.
      */
-    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
+    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyId): ?float
     {
         // If the currency is the base currency or not present in the rates map, return null
         if (
             $currencyId === null ||
-            $currencyId === $baseCurrencyID ||
+            $currencyId === $baseCurrencyId ||
             !array_key_exists($currencyId, $allRatesMap)
         ) {
             return null;
         }
 
-        // Iterate over the rates for the given currency
+        // Iterate over the rates for the given currency (ordered newest-first).
+        // Return the first rate whose month is on or before the requested date.
+        $oldestRate = null;
         foreach ($allRatesMap[$currencyId] as $rateDate => $rate) {
+            $oldestRate = $rate;
             $rateDateCarbon = Carbon::parse($rateDate);
-            // Return the first rate that is less than or equal to the given date
             if ($rateDateCarbon->lte($date)) {
                 return $rate;
             }
         }
 
-        // If no rate is found, return null
-        return null;
+        // If no rate was found on or before the given date (i.e. all known rates are
+        // newer than the transaction month), fall back to the oldest available rate.
+        return $oldestRate;
     }
 }

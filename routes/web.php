@@ -127,6 +127,7 @@ Route::get('/user/settings', [UserController::class, 'settings'])->name('user.se
 Route::get('/user/ai-settings', [UserController::class, 'aiSettings'])->name('user.ai-settings');
 Route::get('/user/investment-provider-settings', [UserController::class, 'investmentProviderSettings'])
     ->name('user.investment-provider-settings');
+Route::get('/user/maintenance', [UserController::class, 'maintenance'])->name('user.maintenance');
 
 /*******************
  * Authentication and verification routes

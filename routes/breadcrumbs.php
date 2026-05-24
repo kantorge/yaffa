@@ -262,3 +262,8 @@ Breadcrumbs::for('user.investment-provider-settings', function (BreadcrumbTrail 
     $trail->push(__('User'));
     $trail->push(__('Investment provider settings'), route('user.investment-provider-settings'));
 });
+Breadcrumbs::for('user.maintenance', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('User'));
+    $trail->push(__('maintenance.title'), route('user.maintenance'));
+});

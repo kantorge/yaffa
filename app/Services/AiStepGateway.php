@@ -198,7 +198,7 @@ class AiStepGateway
                 ->withPrompt($prompt)
                 ->asText();
 
-        return $response->text ?? '';
+        return $response->text;
     }
 
     private function requestTextStep(
