@@ -209,12 +209,14 @@ class AssetMatchingServiceTest extends TestCase
             'item_description' => 'coffee',
             'category_id' => $category->id,
             'usage_count' => 2,
+            'active' => true,
         ]);
 
         $user->categoryLearning()->create([
             'item_description' => 'coffee beans',
             'category_id' => $category->id,
             'usage_count' => 4,
+            'active' => true,
         ]);
 
         $service = new AssetMatchingService($user);
@@ -225,6 +227,58 @@ class AssetMatchingServiceTest extends TestCase
         $this->assertSame('coffee', $matches[0]['description']);
         $this->assertArrayNotHasKey('similarity', $matches[0]);
         $this->assertArrayNotHasKey('category_name', $matches[0]);
+    }
+
+    public function test_match_category_learning_ignores_inactive_rows(): void
+    {
+        $user = User::factory()->create();
+
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'asset_similarity_threshold' => 0.0,
+            'asset_max_suggestions' => 10,
+        ]);
+
+        $category = Category::factory()->for($user)->create([
+            'active' => true,
+        ]);
+
+        $user->categoryLearning()->create([
+            'item_description' => 'coffee',
+            'category_id' => $category->id,
+            'usage_count' => 2,
+            'active' => false,
+        ]);
+
+        $service = new AssetMatchingService($user);
+
+        $this->assertSame([], $service->matchCategoryLearning('coffee'));
+    }
+
+    public function test_format_category_learning_for_prompt_ignores_inactive_rows(): void
+    {
+        $user = User::factory()->create();
+
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'asset_similarity_threshold' => 0.0,
+            'asset_max_suggestions' => 10,
+        ]);
+
+        $category = Category::factory()->for($user)->create([
+            'active' => true,
+        ]);
+
+        $user->categoryLearning()->create([
+            'item_description' => 'coffee',
+            'category_id' => $category->id,
+            'usage_count' => 2,
+            'active' => false,
+        ]);
+
+        $service = new AssetMatchingService($user);
+
+        $this->assertSame('No category learning data available.', $service->formatCategoryLearningForPrompt($user));
     }
 
     public function test_resolve_category_prompt_context_filters_categories_by_matching_mode(): void

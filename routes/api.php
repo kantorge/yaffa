@@ -6,6 +6,7 @@ use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
+use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
@@ -167,6 +168,24 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('categories.patch-active');
     Route::delete('/categories/{category}', [CategoryApiController::class, 'destroy'])
         ->name('categories.destroy');
+
+    // Category learning endpoints
+    Route::get('/category-learning', [CategoryLearningApiController::class, 'index'])
+        ->name('category-learning.index');
+    Route::post('/category-learning', [CategoryLearningApiController::class, 'store'])
+        ->name('category-learning.store');
+    Route::post('/category-learning/merge', [CategoryLearningApiController::class, 'merge'])
+        ->name('category-learning.merge');
+    Route::patch('/category-learning/{categoryLearning}', [CategoryLearningApiController::class, 'update'])
+        ->name('category-learning.update');
+    Route::post('/category-learning/{categoryLearning}/deactivate', [CategoryLearningApiController::class, 'deactivate'])
+        ->name('category-learning.deactivate');
+    Route::post('/category-learning/{categoryLearning}/activate', [CategoryLearningApiController::class, 'activate'])
+        ->name('category-learning.activate');
+    Route::delete('/category-learning/{categoryLearning}', [CategoryLearningApiController::class, 'destroy'])
+        ->name('category-learning.destroy');
+    Route::get('/category-learning/{categoryLearning}', [CategoryLearningApiController::class, 'show'])
+        ->name('category-learning.show');
 
     // Investment endpoints
     Route::get('/investments', [InvestmentApiController::class, 'index'])

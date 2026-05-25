@@ -84,6 +84,7 @@ class CategoryLearningServiceTest extends TestCase
             'item_description' => 'coffee',
             'category_id' => $category->id,
             'usage_count' => 3,
+            'active' => true,
         ]);
 
         $this->assertSame('incremented', $service->recordCategorySelection('Coffee', $category->id));
@@ -108,6 +109,7 @@ class CategoryLearningServiceTest extends TestCase
             'item_description' => 'coffee',
             'category_id' => $oldCategory->id,
             'usage_count' => 5,
+            'active' => true,
         ]);
 
         $service->recordCategorySelection('Coffee', $newCategory->id);
@@ -144,6 +146,7 @@ class CategoryLearningServiceTest extends TestCase
             'item_description' => 'supermarket',
             'category_id' => $category->id,
             'usage_count' => 2,
+            'active' => true,
         ]);
 
         // Different casing and whitespace, same normalized form
@@ -154,5 +157,26 @@ class CategoryLearningServiceTest extends TestCase
             'item_description' => 'supermarket',
             'usage_count' => 3,
         ]);
+    }
+
+    public function test_record_activates_inactive_learning_before_incrementing(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['user_id' => $user->id]);
+        $service = new CategoryLearningService($user);
+
+        $learning = CategoryLearning::factory()->create([
+            'user_id' => $user->id,
+            'item_description' => 'coffee',
+            'category_id' => $category->id,
+            'usage_count' => 2,
+            'active' => false,
+        ]);
+
+        $this->assertSame('incremented', $service->recordCategorySelection('Coffee', $category->id));
+
+        $learning->refresh();
+        $this->assertTrue($learning->active);
+        $this->assertSame(3, $learning->usage_count);
     }
 }

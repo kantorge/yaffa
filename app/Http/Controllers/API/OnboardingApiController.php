@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Spatie\Onboard\Facades\Onboard;
 
 class OnboardingApiController extends Controller implements HasMiddleware
@@ -45,6 +46,8 @@ class OnboardingApiController extends Controller implements HasMiddleware
      */
     public function setDismissedFlag(Request $request, string $topic): Response
     {
+        $this->assertTopicSupported($topic);
+
         $request->user()->flag('dismissOnboardingWidget' . ucfirst($topic));
 
         return response()->noContent(Response::HTTP_OK);
@@ -55,6 +58,8 @@ class OnboardingApiController extends Controller implements HasMiddleware
      */
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {
+        $this->assertTopicSupported($topic);
+
         $request->user()->flag('viewProductTour-' . $topic);
 
         return response()->noContent(Response::HTTP_OK);
@@ -66,10 +71,28 @@ class OnboardingApiController extends Controller implements HasMiddleware
      * @uses onboardingTopicDataAccountGroups
      * @uses onboardingTopicDataInvestmentGroups
      * @uses onboardingTopicDataAiDocuments
+     * @uses onboardingTopicDataCategoryLearning
      */
     private function loadOnboardingSteps(string $topic): void
     {
-        $this->{'onboardingTopicData' . ucfirst($topic)}();
+        $method = $this->resolveTopicMethod($topic);
+
+        $this->{$method}();
+    }
+
+    private function assertTopicSupported(string $topic): void
+    {
+        $this->resolveTopicMethod($topic);
+    }
+
+    private function resolveTopicMethod(string $topic): string
+    {
+        $normalizedTopic = Str::studly($topic);
+        $method = 'onboardingTopicData' . $normalizedTopic;
+
+        abort_unless(method_exists($this, $method), Response::HTTP_NOT_FOUND, __('Onboarding topic not found.'));
+
+        return $method;
     }
 
     private function onboardingTopicDataDashboard(): void
@@ -158,5 +181,15 @@ class OnboardingApiController extends Controller implements HasMiddleware
                 'icon' => 'fa fa-fw fa-info',
             ])
             ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-AiDocuments'));
+    }
+
+    private function onboardingTopicDataCategoryLearning(): void
+    {
+        Onboard::addStep(__('View the guided tour for this page'))
+            ->attributes([
+                'tour' => true,
+                'icon' => 'fa fa-fw fa-info',
+            ])
+            ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-CategoryLearning'));
     }
 }

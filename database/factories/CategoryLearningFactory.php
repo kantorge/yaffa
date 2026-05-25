@@ -20,6 +20,7 @@ class CategoryLearningFactory extends Factory
             'item_description' => fake()->word(),
             'category_id' => Category::factory()->create(['user_id' => $user->id])->id,
             'usage_count' => $this->faker->numberBetween(0, 100),
+            'active' => $this->faker->boolean(80),
         ];
     }
 }

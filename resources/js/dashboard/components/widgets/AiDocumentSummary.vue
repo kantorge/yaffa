@@ -94,7 +94,7 @@
     data() {
       return {
         // Expected values: loading, data-available, error, hidden
-        state: 'loading',
+        state: 'hidden',
         summary: {
           total: 0,
           ready_for_review: 0,
@@ -134,11 +134,14 @@
             return;
           }
 
+          this.state = 'loading';
           this.summary = response.data;
           this.state = 'data-available';
         })
         .catch(() => {
-          this.state = 'error';
+          if (this.summary.total !== 0 || this.state !== 'hidden') {
+            this.state = 'error';
+          }
         });
     },
 
