@@ -201,6 +201,7 @@ class AssetMatchingService
         $similarityThreshold = $this->resolveSimilarityThreshold();
 
         $learningRecords = $this->user->categoryLearning()
+            ->active()
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->get();
 
@@ -268,6 +269,7 @@ class AssetMatchingService
     {
         $learningRecords = $user->categoryLearning()
             ->with('category')
+            ->active()
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->orderByDesc('usage_count')
             ->limit(50)

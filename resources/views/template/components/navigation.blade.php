@@ -49,6 +49,13 @@
                 iconClasses="fa-solid fa-folder-open"
                 text="{{ __('Categories') }}"
             />
+            @if(auth()->user()->aiProviderConfigs()->exists())
+                <x-nav-link
+                    href="{{ route('category-learning.index') }}"
+                    iconClasses="fa-solid fa-graduation-cap"
+                    text="{{ __('Category learning') }}"
+                />
+            @endif
             <x-nav-link
                 href="{{ route('tags.index') }}"
                 iconClasses="fa-solid fa-tags"

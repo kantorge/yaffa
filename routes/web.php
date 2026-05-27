@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountEntityController;
 use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CategoryLearningController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\AiDocumentController;
@@ -50,6 +51,10 @@ Route::resource('categories', CategoryController::class)->except(['show']);
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
     ->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+
+// Category learning route
+Route::get('/category-learning', [CategoryLearningController::class, 'index'])
+    ->name('category-learning.index');
 
 /*********************
  * Currency and currency rate related routes

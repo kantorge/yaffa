@@ -661,6 +661,7 @@ class ProcessDocumentService
         // Try to find exact match in learning data with active category
         $learning = $user->categoryLearning()
             ->where('item_description', $normalized)
+            ->where('active', true)
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->orderByDesc('usage_count')
             ->first();

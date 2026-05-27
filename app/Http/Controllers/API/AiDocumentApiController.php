@@ -19,6 +19,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
@@ -111,6 +112,56 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             'id' => $aiDocument->id,
             'status' => $aiDocument->status,
             'custom_prompt' => $aiDocument->custom_prompt,
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * GET /api/v1/documents/summary - Aggregate stats for non-finalized documents
+     */
+    public function summary(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $hasProviderConfig = $user->aiProviderConfigs()->exists();
+
+        if (! $hasProviderConfig) {
+            return response()->json(['active_provider' => false], Response::HTTP_OK);
+        }
+
+        $stats = AiDocument::query()
+            ->where('user_id', $user->id)
+            ->where('status', '!=', 'finalized')
+            ->selectRaw(
+                "COUNT(*) as total, "
+                . "COUNT(CASE WHEN status = 'ready_for_review' THEN 1 END) as ready_for_review, "
+                . "COUNT(CASE WHEN status = 'processing_failed' THEN 1 END) as processing_failed, "
+                . "MIN(created_at) as oldest_created_at"
+            )
+            ->toBase()
+            ->first();
+
+        return response()->json([
+            'active_provider' => true,
+            'total' => (int) ($stats->total ?? 0),
+            'ready_for_review' => (int) ($stats->ready_for_review ?? 0),
+            'processing_failed' => (int) ($stats->processing_failed ?? 0),
+            'oldest_created_at' => $stats->oldest_created_at
+                ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
+                : null,
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * POST /api/v1/maintenance/cleanup-ai-document-old-files - Queue cleanup of old AI document files
+     */
+    public function cleanupOldFiles(Request $request): JsonResponse
+    {
+        Artisan::queue('ai-documents:cleanup-old-files', [
+            'userId' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => __('maintenance.aiDocumentOldFiles.queued'),
         ], Response::HTTP_OK);
     }
 

@@ -39,6 +39,18 @@
           <i class="fa fa-fw fa-sliders"></i>
         </a>
       </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        {{ __('Category learning') }}
+        <a
+          class="btn btn-sm btn-outline-info"
+          :href="categoryLearningUrl"
+          :title="__('Category learning')"
+        >
+          <i class="fa fa-fw fa-graduation-cap"></i>
+        </a>
+      </li>
     </ul>
   </div>
 </template>
@@ -50,4 +62,5 @@
 
   const route = window.route;
   const aiSettingsUrl = route('user.ai-settings');
+  const categoryLearningUrl = route('category-learning.index');
 </script>

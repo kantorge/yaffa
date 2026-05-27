@@ -229,6 +229,8 @@
       data.categorySelect = null;
       data.preferredSelect = null;
       data.notPreferredSelect = null;
+      data.similarPayeesDebounceTimeout = null;
+      data.similarPayeesRequestId = 0;
 
       return data;
     },
@@ -275,6 +277,12 @@
 
       // Initialize modal
       this.modal = new coreui.Modal(document.getElementById(this.id));
+    },
+
+    beforeUnmount() {
+      if (this.similarPayeesDebounceTimeout) {
+        clearTimeout(this.similarPayeesDebounceTimeout);
+      }
     },
 
     methods: {
@@ -514,31 +522,53 @@
 
         // Reset list of similar payees
         this.similarPayees = [];
+
+        if (this.similarPayeesDebounceTimeout) {
+          clearTimeout(this.similarPayeesDebounceTimeout);
+        }
+        this.similarPayeesRequestId++;
       },
 
       onNameChange(event) {
         const query = event.target.value?.trim();
 
+        if (this.similarPayeesDebounceTimeout) {
+          clearTimeout(this.similarPayeesDebounceTimeout);
+        }
+
         if (!query) {
+          this.similarPayeesRequestId++;
           this.similarPayees = [];
           return;
         }
 
-        // Get similar payees from API
-        fetch('/api/v1/payees/similar?query=' + encodeURIComponent(query))
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Failed to fetch similar payees');
-            }
-            return response.json();
-          })
-          .then((data) => {
-            this.similarPayees = data;
-          })
-          .catch((error) => {
-            console.error('Error fetching similar payees:', error);
-            this.similarPayees = [];
-          });
+        const requestId = ++this.similarPayeesRequestId;
+
+        this.similarPayeesDebounceTimeout = setTimeout(() => {
+          // Get similar payees from API
+          fetch('/api/v1/payees/similar?query=' + encodeURIComponent(query))
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('Failed to fetch similar payees');
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (requestId !== this.similarPayeesRequestId) {
+                return;
+              }
+
+              this.similarPayees = data;
+            })
+            .catch((error) => {
+              if (requestId !== this.similarPayeesRequestId) {
+                return;
+              }
+
+              console.error('Error fetching similar payees:', error);
+              this.similarPayees = [];
+            });
+        }, 300);
       },
 
       onSelectPayee(payee) {
