@@ -38,7 +38,7 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
             'file_name' => 'old.txt',
             'file_type' => 'txt',
         ]);
-        AiDocumentFile::factory()->for($newDocument)->create([
+        $newFileRecord = AiDocumentFile::factory()->for($newDocument)->create([
             'file_path' => $newFilePath,
             'file_name' => 'new.txt',
             'file_type' => 'txt',
@@ -49,6 +49,12 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
 
         Storage::disk('local')->assertMissing($oldFilePath);
         Storage::disk('local')->assertExists($newFilePath);
+        $this->assertDatabaseMissing('ai_document_files', [
+            'file_path' => $oldFilePath,
+        ]);
+        $this->assertDatabaseHas('ai_document_files', [
+            'id' => $newFileRecord->id,
+        ]);
     }
 
     public function test_it_skips_cleanup_when_retention_days_is_zero(): void
@@ -97,12 +103,12 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
         Storage::disk('local')->put($userPath, 'u');
         Storage::disk('local')->put($otherUserPath, 'o');
 
-        AiDocumentFile::factory()->for($userDocument)->create([
+        $userRecord = AiDocumentFile::factory()->for($userDocument)->create([
             'file_path' => $userPath,
             'file_name' => 'user.txt',
             'file_type' => 'txt',
         ]);
-        AiDocumentFile::factory()->for($otherUserDocument)->create([
+        $otherUserRecord = AiDocumentFile::factory()->for($otherUserDocument)->create([
             'file_path' => $otherUserPath,
             'file_name' => 'other.txt',
             'file_type' => 'txt',
@@ -113,6 +119,12 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
 
         Storage::disk('local')->assertMissing($userPath);
         Storage::disk('local')->assertExists($otherUserPath);
+        $this->assertDatabaseMissing('ai_document_files', [
+            'id' => $userRecord->id,
+        ]);
+        $this->assertDatabaseHas('ai_document_files', [
+            'id' => $otherUserRecord->id,
+        ]);
     }
 
     public function test_it_fails_when_user_id_is_invalid(): void

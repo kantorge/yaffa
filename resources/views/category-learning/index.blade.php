@@ -37,13 +37,13 @@
                     >
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             {{ __('New category learning entry') }}
-                            <button class="btn btn-sm btn-success" id="button-new-learning" title="{{ __('New category learning entry') }}">
+                            <button class="btn btn-sm btn-success" id="button-new-learning" title="{{ __('New category learning entry') }}" aria-label="{{ __('New category learning entry') }}">
                                 <i class="fa fa-plus"></i>
                             </button>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             {{ __('Merge category learning entries') }}
-                            <button class="btn btn-sm btn-primary" id="button-merge-learning" title="{{ __('Merge category learning entries') }}">
+                            <button class="btn btn-sm btn-primary" id="button-merge-learning" title="{{ __('Merge category learning entries') }}" aria-label="{{ __('Merge category learning entries') }}">
                                 <i class="fa fa-random"></i>
                             </button>
                         </li>

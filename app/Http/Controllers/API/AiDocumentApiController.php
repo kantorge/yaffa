@@ -128,23 +128,26 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             return response()->json(['active_provider' => false], Response::HTTP_OK);
         }
 
-        $base = AiDocument::query()
+        $stats = AiDocument::query()
             ->where('user_id', $user->id)
-            ->where('status', '!=', 'finalized');
-
-        $total = (clone $base)->count();
-        $readyForReview = (clone $base)->where('status', 'ready_for_review')->count();
-        $processingFailed = (clone $base)->where('status', 'processing_failed')->count();
-
-        /** @var AiDocument|null $oldest */
-        $oldest = (clone $base)->oldest()->first();
+            ->where('status', '!=', 'finalized')
+            ->selectRaw(
+                "COUNT(*) as total, "
+                . "COUNT(CASE WHEN status = 'ready_for_review' THEN 1 END) as ready_for_review, "
+                . "COUNT(CASE WHEN status = 'processing_failed' THEN 1 END) as processing_failed, "
+                . "MIN(created_at) as oldest_created_at"
+            )
+            ->toBase()
+            ->first();
 
         return response()->json([
             'active_provider' => true,
-            'total' => $total,
-            'ready_for_review' => $readyForReview,
-            'processing_failed' => $processingFailed,
-            'oldest_created_at' => $oldest?->created_at?->toIso8601String(),
+            'total' => (int) ($stats->total ?? 0),
+            'ready_for_review' => (int) ($stats->ready_for_review ?? 0),
+            'processing_failed' => (int) ($stats->processing_failed ?? 0),
+            'oldest_created_at' => $stats->oldest_created_at
+                ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
+                : null,
         ], Response::HTTP_OK);
     }
 

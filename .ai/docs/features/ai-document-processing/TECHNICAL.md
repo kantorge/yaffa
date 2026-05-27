@@ -832,7 +832,7 @@ Add a user-facing management UI for learned item-to-category mappings so users c
 - Relationship:
   - belongs to Category; user ownership enforced through category ownership and/or explicit user scope.
 - List response shape (high-level):
-  - `data[]`: `{ id, item_description, category: { id, name }, usage_count, archived_at, updated_at }`
+  - `data[]`: `{ id, item_description, category: { id, name }, usage_count, active, updated_at }`
   - `meta`: pagination + applied filters
 - Mutation response shape:
   - Return updated row resource for create/edit/archive/unarchive.

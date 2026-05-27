@@ -106,7 +106,9 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
 
         $this->managementService->destroy($categoryLearning);
 
-        return response()->json([], Response::HTTP_NO_CONTENT);
+        return response()->json([
+            'categoryLearning' => $categoryLearning,
+        ], Response::HTTP_OK);
     }
 
     public function merge(CategoryLearningMergeRequest $request): JsonResponse

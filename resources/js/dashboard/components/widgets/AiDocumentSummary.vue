@@ -126,6 +126,8 @@
     },
 
     created() {
+      this.state = 'loading';
+
       axios
         .get(window.route('api.v1.documents.summary'))
         .then((response) => {
@@ -134,7 +136,6 @@
             return;
           }
 
-          this.state = 'loading';
           this.summary = response.data;
           this.state = 'data-available';
         })

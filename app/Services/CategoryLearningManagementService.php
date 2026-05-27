@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CategoryLearning;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CategoryLearningManagementService
@@ -110,11 +111,13 @@ class CategoryLearningManagementService
             ]);
         }
 
-        $target->usage_count += $source->usage_count;
-        $target->active = $source->active || $target->active;
-        $target->save();
+        DB::transaction(function () use ($source, $target): void {
+            $target->usage_count += $source->usage_count;
+            $target->active = $source->active || $target->active;
+            $target->save();
 
-        $source->delete();
+            $source->delete();
+        });
 
         return $target->fresh(['category']);
     }

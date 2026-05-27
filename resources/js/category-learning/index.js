@@ -129,7 +129,7 @@ const initializeMergeSelect = (selector, otherSelector) => {
     selectOnClose: false,
     dropdownParent: $(mergeModalElement),
     ajax: {
-      url: '/api/v1/category-learning',
+      url: route('api.v1.category-learning.index'),
       dataType: 'json',
       delay: 150,
       data: function (params) {

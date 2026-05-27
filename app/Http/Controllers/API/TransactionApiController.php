@@ -825,7 +825,7 @@ class TransactionApiController extends Controller implements HasMiddleware
      */
     private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): ?array
     {
-        if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
+        if (($validated['action'] ?? null) !== 'finalize' || empty($validated['ai_document_id'] ?? null)) {
             Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
                 'action' => $validated['action'] ?? null,
                 'ai_document_id' => $validated['ai_document_id'] ?? null,
@@ -867,6 +867,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         return [
             'created' => 0,
             'incremented' => 0,
+            'updated' => 0,
         ];
     }
 
@@ -883,6 +884,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             return [
                 'created' => 0,
                 'incremented' => 0,
+                'updated' => 0,
             ];
         }
 

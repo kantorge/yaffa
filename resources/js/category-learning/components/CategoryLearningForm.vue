@@ -164,6 +164,8 @@
         similarLearnings: [],
         learningId: null,
         categorySelect: null,
+        similarLearningsDebounceTimeout: null,
+        similarLearningsRequestId: 0,
       };
     },
 
@@ -194,6 +196,12 @@
     mounted() {
       this.initializeCategorySelect();
       this.modal = new coreui.Modal(document.getElementById(this.id));
+    },
+
+    beforeUnmount() {
+      if (this.similarLearningsDebounceTimeout) {
+        clearTimeout(this.similarLearningsDebounceTimeout);
+      }
     },
 
     methods: {
@@ -285,6 +293,11 @@
         this.learningId = null;
         this.similarLearnings = [];
 
+        if (this.similarLearningsDebounceTimeout) {
+          clearTimeout(this.similarLearningsDebounceTimeout);
+        }
+        this.similarLearningsRequestId++;
+
         if (this.categorySelect) {
           this.categorySelect.empty().val(null).trigger('change');
         }
@@ -293,28 +306,45 @@
       onDescriptionChange(event) {
         const query = event.target.value?.trim();
 
+        if (this.similarLearningsDebounceTimeout) {
+          clearTimeout(this.similarLearningsDebounceTimeout);
+        }
+
         if (!query) {
+          this.similarLearningsRequestId++;
           this.similarLearnings = [];
           return;
         }
 
-        window.axios
-          .get(route('api.v1.category-learning.index'), {
-            params: {
-              search: query,
-              status: 'all',
-            },
-          })
-          .then((response) => {
-            const rows = Array.isArray(response.data) ? response.data : [];
+        const requestId = ++this.similarLearningsRequestId;
 
-            this.similarLearnings = rows.filter(
-              (item) => Number(item.id) !== Number(this.learningId),
-            );
-          })
-          .catch(() => {
-            this.similarLearnings = [];
-          });
+        this.similarLearningsDebounceTimeout = setTimeout(() => {
+          window.axios
+            .get(route('api.v1.category-learning.index'), {
+              params: {
+                search: query,
+                status: 'all',
+              },
+            })
+            .then((response) => {
+              if (requestId !== this.similarLearningsRequestId) {
+                return;
+              }
+
+              const rows = Array.isArray(response.data) ? response.data : [];
+
+              this.similarLearnings = rows.filter(
+                (item) => Number(item.id) !== Number(this.learningId),
+              );
+            })
+            .catch(() => {
+              if (requestId !== this.similarLearningsRequestId) {
+                return;
+              }
+
+              this.similarLearnings = [];
+            });
+        }, 300);
       },
 
       onSelectLearning(learning) {

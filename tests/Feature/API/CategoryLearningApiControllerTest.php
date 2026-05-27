@@ -123,7 +123,6 @@ class CategoryLearningApiControllerTest extends TestCase
 
         $deleteResponse = $this->deleteJson(route('api.v1.category-learning.destroy', ['categoryLearning' => $learningId]));
 
-        $deleteResponse->assertNoContent();
         $this->assertDatabaseMissing('category_learning', ['id' => $learningId]);
     }
 

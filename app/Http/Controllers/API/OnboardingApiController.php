@@ -60,7 +60,7 @@ class OnboardingApiController extends Controller implements HasMiddleware
     {
         $this->assertTopicSupported($topic);
 
-        $request->user()->flag('viewProductTour-' . $topic);
+        $request->user()->flag('viewProductTour-' . Str::studly($topic));
 
         return response()->noContent(Response::HTTP_OK);
     }

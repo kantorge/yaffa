@@ -49,8 +49,11 @@ class CleanupOldAiDocumentFiles extends Command
         $cutoffDate = now()->subDays($retentionDays);
         $deletedFileCount = 0;
         $missingFileCount = 0;
+        $deletedRecordCount = 0;
 
         $query = AiDocumentFile::query()
+            ->whereNotNull('file_path')
+            ->where('file_path', '!=', '')
             ->whereHas('aiDocument', function ($builder) use ($cutoffDate, $userId): void {
                 $builder->where('created_at', '<', $cutoffDate);
 
@@ -59,18 +62,22 @@ class CleanupOldAiDocumentFiles extends Command
                 }
             });
 
-        $query->chunkById(200, function ($files) use (&$deletedFileCount, &$missingFileCount): void {
+        $query->chunkById(200, function ($files) use (&$deletedFileCount, &$missingFileCount, &$deletedRecordCount): void {
             foreach ($files as $file) {
+                /** @var AiDocumentFile $file */
                 if (Storage::disk('local')->exists($file->file_path)) {
                     Storage::disk('local')->delete($file->file_path);
                     $deletedFileCount++;
                 } else {
                     $missingFileCount++;
                 }
+
+                $file->delete();
+                $deletedRecordCount++;
             }
         });
 
-        $this->info("AI document cleanup finished. Deleted: {$deletedFileCount}, Missing: {$missingFileCount}.");
+        $this->info("AI document cleanup finished. Deleted files: {$deletedFileCount}, Missing files: {$missingFileCount}, Deleted records: {$deletedRecordCount}.");
 
         return Command::SUCCESS;
     }

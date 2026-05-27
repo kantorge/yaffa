@@ -55,8 +55,7 @@ class CategoryLearningService
 
             // If category matches existing learning, increment usage count
             if ((int) $learning->category_id === $categoryId) {
-                $learning->usage_count += 1;
-                $learning->save();
+                $learning->increment('usage_count', 1, ['active' => true]);
 
                 return 'incremented';
             }
