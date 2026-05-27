@@ -81,7 +81,7 @@
       onCancel() {
         this.modal.hide();
       },
-      onSuccess(transaction) {
+      onSuccess(transaction, options = {}) {
         // Emit a custom event to global scope about the new transaction to be displayed as a notification
         toastHelpers.showToast(
           __('Success'),
@@ -94,6 +94,25 @@
             ),
           },
         );
+
+        if (options.categoryLearningSummary) {
+          const summary = options.categoryLearningSummary;
+
+          if (
+            (summary.created || 0) +
+              (summary.updated || 0) +
+              (summary.incremented || 0) >
+            0
+          ) {
+            toastHelpers.showInfoToast(
+              __('categoryLearning.summary', {
+                created: summary.created || 0,
+                updated: summary.updated || 0,
+                incremented: summary.incremented || 0,
+              }),
+            );
+          }
+        }
 
         // Emit a custom event about the new transaction to be displayed
         let transactionEvent = new CustomEvent('transaction-created', {

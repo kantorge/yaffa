@@ -176,7 +176,7 @@
       },
 
       // Actual form was submitted. We need to proceed to the screen selected by the user.
-      onSuccess(transaction, options) {
+      onSuccess(transaction, options = {}) {
         if (['create', 'clone', 'enter', 'finalize'].includes(this.action)) {
           storeNotification(
             'success',
@@ -185,6 +185,29 @@
               dismissible: true,
             },
           );
+
+          if (options.categoryLearningSummary) {
+            const summary = options.categoryLearningSummary;
+
+            if (
+              (summary.created || 0) +
+                (summary.updated || 0) +
+                (summary.incremented || 0) >
+              0
+            ) {
+              storeNotification(
+                'info',
+                __('categoryLearning.summary', {
+                  created: summary.created || 0,
+                  updated: summary.updated || 0,
+                  incremented: summary.incremented || 0,
+                }),
+                {
+                  dismissible: true,
+                },
+              );
+            }
+          }
         } else {
           storeNotification(
             'success',

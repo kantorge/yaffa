@@ -465,7 +465,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->handleSourceTransactionUpdates($validated, $request->user());
 
-        $this->finalizeAiDocument($validated, $transaction, $request->user());
+        $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
@@ -475,6 +475,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         return response()->json([
             'transaction' => $transaction,
+            'category_learning_summary' => $categoryLearningSummary,
         ]);
     }
 
@@ -515,7 +516,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->handleSourceTransactionUpdates($validated, $request->user());
 
-        $this->finalizeAiDocument($validated, $transaction, $request->user());
+        $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
@@ -525,6 +526,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         return response()->json([
             'transaction' => $transaction,
+            'category_learning_summary' => $categoryLearningSummary,
         ]);
     }
 
@@ -821,14 +823,14 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Finalize an AI document after transaction creation.
      */
-    private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): void
+    private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): ?array
     {
-        if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
+        if (($validated['action'] ?? null) !== 'finalize' || empty($validated['ai_document_id'] ?? null)) {
             Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
                 'action' => $validated['action'] ?? null,
                 'ai_document_id' => $validated['ai_document_id'] ?? null,
             ]);
-            return;
+            return null;
         }
 
         $aiDocument = AiDocument::query()
@@ -842,7 +844,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'ai_document_id' => $validated['ai_document_id'],
                 'user_id' => $user->id,
             ]);
-            return;
+            return null;
         }
 
         $aiDocument->status = 'finalized';
@@ -859,8 +861,14 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Update CategoryLearning for accepted recommendations if there are any
         if (! empty($validated['items']) && is_array($validated['items'])) {
-            $this->updateCategoryLearning($transaction, $user, $validated['items']);
+            return $this->updateCategoryLearning($transaction, $user, $validated['items']);
         }
+
+        return [
+            'created' => 0,
+            'incremented' => 0,
+            'updated' => 0,
+        ];
     }
 
     /**
@@ -870,13 +878,22 @@ class TransactionApiController extends Controller implements HasMiddleware
         Transaction $transaction,
         User $user,
         array $submittedItems = []
-    ): void {
+    ): array {
         // Only applicable for standard transactions with items
         if ($transaction->config_type !== 'standard') {
-            return;
+            return [
+                'created' => 0,
+                'incremented' => 0,
+                'updated' => 0,
+            ];
         }
 
         $learningService = new CategoryLearningService($user);
+        $summary = [
+            'created' => 0,
+            'incremented' => 0,
+            'updated' => 0,
+        ];
 
         // Process each submitted item where learning is enabled
         foreach ($submittedItems as $submittedItem) {
@@ -894,7 +911,13 @@ class TransactionApiController extends Controller implements HasMiddleware
             }
 
             // Use service method to record the learning
-            $learningService->recordCategorySelection($description, (int) $categoryId);
+            $result = $learningService->recordCategorySelection($description, (int) $categoryId);
+
+            if (array_key_exists($result, $summary)) {
+                $summary[$result]++;
+            }
         }
+
+        return $summary;
     }
 }

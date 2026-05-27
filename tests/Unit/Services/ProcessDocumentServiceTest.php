@@ -232,6 +232,7 @@ class ProcessDocumentServiceTest extends TestCase
             'item_description' => $categoryLearningService->normalize('Coffee beans'),
             'category_id' => $category->id,
             'usage_count' => 3,
+            'active' => true,
         ]);
 
         $service = new class (
@@ -286,6 +287,78 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $historyResponse);
     }
 
+    public function test_inactive_exact_category_match_falls_back_to_ai_matching(): void
+    {
+        $user = User::factory()->create();
+        $exactCategory = Category::factory()->for($user)->create([
+            'active' => 1,
+        ]);
+        $aiCategory = Category::factory()->for($user)->create([
+            'active' => 1,
+        ]);
+        $config = AiProviderConfig::factory()->for($user)->create();
+
+        $categoryLearningService = new CategoryLearningService();
+        $user->categoryLearning()->create([
+            'item_description' => $categoryLearningService->normalize('Coffee beans'),
+            'category_id' => $exactCategory->id,
+            'usage_count' => 3,
+            'active' => false,
+        ]);
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            $categoryLearningService,
+            $this->createMock(PayeeCategoryStatsService::class),
+            new AiExtractionSchemaValidator(),
+            new AiPromptBuilder(),
+            $aiCategory->id
+        ) extends ProcessDocumentService {
+            public function __construct(
+                TextExtractionService $textExtractor,
+                CategoryLearningService $categoryLearningService,
+                PayeeCategoryStatsService $payeeCategoryStatsService,
+                AiExtractionSchemaValidator $aiExtractionSchemaValidator,
+                AiPromptBuilder $aiPromptBuilder,
+                private int $aiCategoryId,
+            ) {
+                parent::__construct(
+                    $textExtractor,
+                    $categoryLearningService,
+                    $payeeCategoryStatsService,
+                    $aiExtractionSchemaValidator,
+                    $aiPromptBuilder,
+                );
+            }
+
+            public function matchCategories(array $items, User $user, AiProviderConfig $config): array
+            {
+                $document = AiDocument::factory()->for($user)->create();
+
+                return $this->matchCategoriesForItems($items, $user, $config, $document);
+            }
+
+            protected function requestCategoryBatchMatches(AiProviderConfig $config, AiDocument $document, string $prompt): array
+            {
+                return [
+                    [
+                        'item_index' => 0,
+                        'recommended_category_id' => $this->aiCategoryId,
+                        'confidence_score' => 0.77,
+                    ],
+                ];
+            }
+        };
+
+        $result = $service->matchCategories([
+            ['description' => 'Coffee beans', 'amount' => 5],
+        ], $user, $config);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('ai', $result[0]['match_type']);
+        $this->assertSame($aiCategory->id, $result[0]['recommended_category_id']);
+    }
+
     public function test_mixed_exact_and_ai_category_matching_uses_ai_for_remaining_items_and_normalizes_descriptions(): void
     {
         $user = User::factory()->create();
@@ -298,6 +371,7 @@ class ProcessDocumentServiceTest extends TestCase
             'item_description' => $categoryLearningService->normalize('Coffee'),
             'category_id' => $exactCategory->id,
             'usage_count' => 5,
+            'active' => true,
         ]);
 
         $service = new class (

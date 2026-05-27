@@ -185,7 +185,7 @@
 
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
-    window.history.pushState('', '', nextUrl);
+    window.history.replaceState('', '', nextUrl);
   };
 
   const onFiltersUpdated = (filters) => {

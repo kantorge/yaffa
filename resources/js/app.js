@@ -35,6 +35,7 @@ const routeMap = new Map([
     ['payees.merge.form', 'payee/merge'],
     ['account.history', 'account/history'],
     ['categories.index', 'categories/index'],
+    ['category-learning.index', 'category-learning/index'],
     ['categories.create', 'categories/form'],
     ['categories.edit', 'categories/form'],
     ['categories.merge.form', 'categories/merge'],

@@ -92,6 +92,12 @@ Breadcrumbs::for('categories.merge.form', function (BreadcrumbTrail $trail) {
     $trail->push(__('Merge'), route('categories.merge.form'));
 });
 
+Breadcrumbs::for('category-learning.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('Category learning'), route('category-learning.index'));
+});
+
 // Currency resource views (index, create, edit)
 Breadcrumbs::for('currencies.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');

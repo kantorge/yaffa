@@ -45,6 +45,17 @@
                             <i class="fa fa-random"></i>
                         </a>
                     </li>
+                    @if(auth()->user()->aiProviderConfigs()->exists())
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ __('Manage category learning') }}
+                            <a class="btn btn-sm btn-info"
+                               href="{{ route('category-learning.index') }}"
+                               title="{{ __('Manage category learning') }}"
+                            >
+                                <i class="fa fa-graduation-cap"></i>
+                            </a>
+                        </li>
+                    @endif
                 </ul>
             </div>
 

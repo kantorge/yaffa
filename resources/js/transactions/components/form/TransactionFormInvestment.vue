@@ -954,9 +954,9 @@
           this.form.date = this.copyDateObject(this.transaction.date);
 
           this.form.comment = this.transaction.comment;
-          this.form.schedule = this.transaction.schedule;
-          this.form.budget = this.transaction.budget;
-          this.form.reconciled = this.transaction.reconciled;
+          this.form.schedule = this.transaction.schedule ?? false;
+          this.form.budget = this.transaction.budget ?? false;
+          this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration (handle both saved transactions and AI drafts)
           const config = this.transaction.config || {};

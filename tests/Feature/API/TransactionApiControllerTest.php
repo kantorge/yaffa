@@ -617,6 +617,8 @@ class TransactionApiControllerTest extends TestCase
         $response = $this->postJson(route('api.v1.transactions.store-standard'), $payload);
 
         $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('category_learning_summary.created', 1)
+            ->assertJsonPath('category_learning_summary.incremented', 1);
 
         $existingLearning->refresh();
         $this->assertSame(3, $existingLearning->usage_count);
