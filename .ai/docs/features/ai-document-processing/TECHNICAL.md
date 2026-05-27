@@ -712,7 +712,7 @@ Add a user-facing management UI for learned item-to-category mappings so users c
   - Archive/unarchive takes effect immediately for new processing work.
 - Re-learning an archived mapping:
   - If finalization tries to store a learning where an archived row already exists for the same normalized description and same category (same user scope), the system revives that row instead of creating a duplicate.
-  - Revive means `archived_at = null`; usage handling follows normal learning rules.
+  - Revive means `active = true`; usage handling follows normal learning rules.
 - Editing:
   - UI allows editing of `item_description` and `category_id` only.
   - `usage_count`, timestamps, and lifecycle metadata are read-only.
@@ -737,13 +737,13 @@ Add a user-facing management UI for learned item-to-category mappings so users c
 
 - Models:
   - Extend `CategoryLearning` with lifecycle field:
-    - `archived_at` (nullable timestamp, indexed)
+    - `active` (boolean, default true, indexed)
   - Keep existing fields (`item_description`, `category_id`, `usage_count`) unchanged.
 - Migrations:
-  - Add `archived_at` column to `category_learning` table.
+  - Add `active` column to `category_learning` table.
   - Add composite index to support UI filters and prompt fetches efficiently:
-    - `(category_id, archived_at)` and/or ownership + `archived_at` depending on current schema.
-  - Optional: backfill `archived_at = null` for existing rows (implicit default behavior).
+    - `(category_id, active)` and/or ownership + `active` depending on current schema.
+  - Optional: backfill `active = true` for existing rows (implicit default behavior).
 - Controllers / APIs:
   - New `CategoryLearningApiController` endpoints (under `/api/v1`):
     - `POST /api/v1/category-learning`
@@ -775,9 +775,9 @@ Add a user-facing management UI for learned item-to-category mappings so users c
     - Implements merge behavior with deterministic target selection and `usage_count` summation.
     - Emits lightweight domain events for audit/telemetry hooks.
   - Update `CategoryLearningService` read paths:
-    - Ensure AI prompt context queries include only active (`archived_at IS NULL`) mappings.
-    - Ensure lookup for exact local matching ignores archived rows.
-    - Ensure write path revives archived exact matches before any insert.
+    - Ensure AI prompt context queries include only active (`active = true`) mappings.
+    - Ensure lookup for exact local matching ignores inactive rows.
+    - Ensure write path revives inactive exact matches before any insert.
 - Policies / Auth:
   - Add `CategoryLearningPolicy`:
     - User can list/manage only own mappings.
