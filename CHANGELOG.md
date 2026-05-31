@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0](https://github.com/kantorge/yaffa/compare/v3.1.1...v3.2.0) (2026-05-31)
+
+
+### 🛠️ Chores
+
+* Composer update ([78217c1](https://github.com/kantorge/yaffa/commit/78217c1c0cec1d71e11e1eac81947694b05911c6))
+
+
+### ✨ Features
+
+* adds AI Category Learning Management and Document Tools ([#482](https://github.com/kantorge/yaffa/issues/482)) ([045b501](https://github.com/kantorge/yaffa/commit/045b50116921792ec2ba5814840d708667b3449b))
+
 ## [3.1.1](https://github.com/kantorge/yaffa/compare/v3.1.0...v3.1.1) (2026-05-24)
 
 
