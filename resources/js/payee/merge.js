@@ -31,7 +31,12 @@ $(selectorSourcePayee).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.name,
+                    };
+                }),
             };
         },
         cache: true,
@@ -74,7 +79,12 @@ $(selectorTargetPayee).select2({
             }
 
             return {
-                results: data,
+                results: data.map(function (item) {
+                    return {
+                        id: item.id,
+                        text: item.name,
+                    };
+                }),
             };
         },
         cache: true,
