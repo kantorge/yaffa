@@ -5,10 +5,14 @@ import * as dataTableHelpers from '@/shared/lib/datatable';
 import * as helpers from '@/shared/lib/helpers';
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
+import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
 import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
+const selectorLeftControlPanel = '#accountLeftControlPanel';
+const selectorMainContent = '#accountMainContent';
+const selectorLeftControlPanelToggleButton = '#toggleAccountLeftControlPanelButton';
 
 let currentDateFilters = {
     dateFrom: window.filters?.date_from || null,
@@ -635,4 +639,9 @@ app.mount('#app')
 // Initialize tooltips in table
 $(document).ready(function () {
     helpers.initializeBootstrapTooltips();
+    initializeTwoColumnLeftControlPanelToggle({
+        leftControlPanelSelector: selectorLeftControlPanel,
+        mainContentSelector: selectorMainContent,
+        toggleButtonSelector: selectorLeftControlPanelToggleButton,
+    });
 });

@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div :class="sidebarCollapsed ? 'd-none' : 'col-sm-3'">
+    <div :class="leftControlPanelCollapsed ? 'd-none' : 'col-sm-3'">
       <div class="card mb-3" id="findTransactionsActionsCard">
         <div class="card-header">
           <div class="card-title">
@@ -80,165 +80,168 @@
         @preset-ready="setReadyFlag($event)"
       ></find-transaction-select-card>
     </div>
-    <div :class="sidebarCollapsed ? 'col-sm-12' : 'col-sm-9'">
-      <div class="card">
-        <div class="card-header d-flex align-items-center">
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-secondary me-2"
-            @click="sidebarCollapsed = !sidebarCollapsed"
-            :title="
-              sidebarCollapsed ? __('Expand sidebar') : __('Collapse sidebar')
-            "
+    <div :class="leftControlPanelCollapsed ? 'col-sm-12' : 'col-sm-9'">
+      <div class="left-control-panel-toggle-shell">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
+          @click="toggleLeftControlPanel"
+          :title="leftControlPanelToggleState.title"
+          :aria-label="leftControlPanelToggleState.title"
+          :aria-expanded="leftControlPanelToggleState.ariaExpanded"
+        >
+          <i
+            :class="leftControlPanelToggleState.iconClass"
+            data-left-control-panel-toggle-icon
+          ></i>
+        </button>
+        <div class="card left-control-panel-toggle-card">
+          <div
+            class="card-header d-flex align-items-center left-control-panel-toggle-header"
           >
-            <i
-              :class="
-                sidebarCollapsed ? 'fas fa-angles-right' : 'fas fa-angles-left'
-              "
-            ></i>
-          </button>
-          <ul class="nav nav-tabs card-header-tabs transactions-tabs-offset">
-            <li class="nav-item">
-              <button
-                class="nav-link active"
-                id="nav-summary"
-                data-coreui-toggle="tab"
-                data-coreui-target="#tab-summary"
-                type="button"
-                role="tab"
-                aria-controls="tab-summary"
-                aria-selected="true"
-              >
-                {{ __('Summary') }}
-              </button>
-            </li>
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                id="nav-transaction-list"
-                data-coreui-toggle="tab"
-                data-coreui-target="#tab-transaction-list"
-                type="button"
-                role="tab"
-                aria-controls="tab-transaction-list"
-                aria-selected="false"
-              >
-                {{ __('List of transactions') }}
-              </button>
-            </li>
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                id="nav-timeline-charts"
-                data-coreui-toggle="tab"
-                data-coreui-target="#tab-timeline-charts"
-                type="button"
-                role="tab"
-                aria-controls="tab-timeline-charts"
-                aria-selected="false"
-              >
-                {{ __('Timeline charts') }}
-              </button>
-            </li>
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                id="nav-category-charts"
-                data-coreui-toggle="tab"
-                data-coreui-target="#tab-category-charts"
-                type="button"
-                role="tab"
-                aria-controls="tab-category-charts"
-                aria-selected="false"
-              >
-                {{ __('Category charts') }}
-              </button>
-            </li>
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                id="nav-monthly-breakdown"
-                data-coreui-toggle="tab"
-                data-coreui-target="#tab-monthly-breakdown"
-                type="button"
-                role="tab"
-                aria-controls="tab-monthly-breakdown"
-                aria-selected="false"
-              >
-                {{ __('Monthly breakdown') }}
-              </button>
-            </li>
-          </ul>
-        </div>
+            <ul class="nav nav-tabs card-header-tabs">
+              <li class="nav-item">
+                <button
+                  class="nav-link active"
+                  id="nav-summary"
+                  data-coreui-toggle="tab"
+                  data-coreui-target="#tab-summary"
+                  type="button"
+                  role="tab"
+                  aria-controls="tab-summary"
+                  aria-selected="true"
+                >
+                  {{ __('Summary') }}
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  id="nav-transaction-list"
+                  data-coreui-toggle="tab"
+                  data-coreui-target="#tab-transaction-list"
+                  type="button"
+                  role="tab"
+                  aria-controls="tab-transaction-list"
+                  aria-selected="false"
+                >
+                  {{ __('List of transactions') }}
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  id="nav-timeline-charts"
+                  data-coreui-toggle="tab"
+                  data-coreui-target="#tab-timeline-charts"
+                  type="button"
+                  role="tab"
+                  aria-controls="tab-timeline-charts"
+                  aria-selected="false"
+                >
+                  {{ __('Timeline charts') }}
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  id="nav-category-charts"
+                  data-coreui-toggle="tab"
+                  data-coreui-target="#tab-category-charts"
+                  type="button"
+                  role="tab"
+                  aria-controls="tab-category-charts"
+                  aria-selected="false"
+                >
+                  {{ __('Category charts') }}
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  id="nav-monthly-breakdown"
+                  data-coreui-toggle="tab"
+                  data-coreui-target="#tab-monthly-breakdown"
+                  type="button"
+                  role="tab"
+                  aria-controls="tab-monthly-breakdown"
+                  aria-selected="false"
+                >
+                  {{ __('Monthly breakdown') }}
+                </button>
+              </li>
+            </ul>
+          </div>
 
-        <div class="card-body">
-          <div class="tab-content">
-            <div
-              class="tab-pane fade show active"
-              id="tab-summary"
-              role="tabpanel"
-              aria-labelledby="nav-summary"
-              tabindex="0"
-            >
-              <reporting-canvas-summary
-                :transactions="transactions"
-                :busy="busy"
-              ></reporting-canvas-summary>
-            </div>
-            <div
-              class="tab-pane fade"
-              id="tab-transaction-list"
-              role="tabpanel"
-              aria-labelledby="nav-transaction-list"
-              tabindex="1"
-            >
-              <reporting-canvas-transaction-list
-                :transactions="transactions"
-                :busy="busy"
-                :drill-down-filter="drillDownFilter"
-                :is-active="activeTab === 'transaction-list'"
-                @return-to-monthly-breakdown="returnToMonthlyBreakdown"
-                @clear-drill-down-filter="clearDrillDownFilter"
-                @transaction-deleted="onTransactionDeleted"
-              ></reporting-canvas-transaction-list>
-            </div>
-            <div
-              class="tab-pane fade"
-              id="tab-timeline-charts"
-              role="tabpanel"
-              aria-labelledby="nav-timeline-charts"
-              tabindex="3"
-            >
-              <reporting-canvas-timeline
-                :transactions="transactions"
-                :busy="busy"
-              ></reporting-canvas-timeline>
-            </div>
-            <div
-              class="tab-pane fade"
-              id="tab-category-charts"
-              role="tabpanel"
-              aria-labelledby="nav-category-charts"
-              tabindex="4"
-            >
-              <reporting-canvas-categories
-                :transactions="transactions"
-                :busy="busy"
-              ></reporting-canvas-categories>
-            </div>
-            <div
-              class="tab-pane fade"
-              id="tab-monthly-breakdown"
-              role="tabpanel"
-              aria-labelledby="nav-monthly-breakdown"
-              tabindex="5"
-            >
-              <reporting-canvas-monthly-breakdown
-                :transactions="transactions"
-                :busy="busy"
-                :is-drill-down="!!drillDownFilter"
-                @drill-down="onMonthlyBreakdownDrillDown"
-              ></reporting-canvas-monthly-breakdown>
+          <div class="card-body">
+            <div class="tab-content">
+              <div
+                class="tab-pane fade show active"
+                id="tab-summary"
+                role="tabpanel"
+                aria-labelledby="nav-summary"
+                tabindex="0"
+              >
+                <reporting-canvas-summary
+                  :transactions="transactions"
+                  :busy="busy"
+                ></reporting-canvas-summary>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="tab-transaction-list"
+                role="tabpanel"
+                aria-labelledby="nav-transaction-list"
+                tabindex="1"
+              >
+                <reporting-canvas-transaction-list
+                  :transactions="transactions"
+                  :busy="busy"
+                  :drill-down-filter="drillDownFilter"
+                  :is-active="activeTab === 'transaction-list'"
+                  @return-to-monthly-breakdown="returnToMonthlyBreakdown"
+                  @clear-drill-down-filter="clearDrillDownFilter"
+                  @transaction-deleted="onTransactionDeleted"
+                ></reporting-canvas-transaction-list>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="tab-timeline-charts"
+                role="tabpanel"
+                aria-labelledby="nav-timeline-charts"
+                tabindex="3"
+              >
+                <reporting-canvas-timeline
+                  :transactions="transactions"
+                  :busy="busy"
+                ></reporting-canvas-timeline>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="tab-category-charts"
+                role="tabpanel"
+                aria-labelledby="nav-category-charts"
+                tabindex="4"
+              >
+                <reporting-canvas-categories
+                  :transactions="transactions"
+                  :busy="busy"
+                ></reporting-canvas-categories>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="tab-monthly-breakdown"
+                role="tabpanel"
+                aria-labelledby="nav-monthly-breakdown"
+                tabindex="5"
+              >
+                <reporting-canvas-monthly-breakdown
+                  :transactions="transactions"
+                  :busy="busy"
+                  :is-drill-down="!!drillDownFilter"
+                  @drill-down="onMonthlyBreakdownDrillDown"
+                ></reporting-canvas-monthly-breakdown>
+              </div>
             </div>
           </div>
         </div>
@@ -262,6 +265,7 @@
   import ReportingCanvasFindTransactionsMonthlyBreakdown from '../widgets/ReportingCanvas-FindTransactions-MonthlyBreakdown.vue';
   import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+  import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
 
   const TRANSACTIONS_CACHE_KEY = 'yaffa_transactions_cache';
   const BREAKDOWN_CACHE_KEY = 'yaffa_breakdown_cache';
@@ -286,7 +290,7 @@
       return {
         busy: false,
         ready: false,
-        sidebarCollapsed: false,
+        leftControlPanelCollapsed: false,
         activeTab: 'summary',
         dateFrom: urlParams.get('date_from') || null,
         dateTo: urlParams.get('date_to') || null,
@@ -307,7 +311,15 @@
         transactions: [],
       };
     },
+    computed: {
+      leftControlPanelToggleState() {
+        return getLeftControlPanelToggleState(this.leftControlPanelCollapsed);
+      },
+    },
     methods: {
+      toggleLeftControlPanel() {
+        this.leftControlPanelCollapsed = !this.leftControlPanelCollapsed;
+      },
       setReadyFlag(event) {
         this.presetsReady[event] = true;
         this.ready = Object.values(this.presetsReady).every(
@@ -671,9 +683,3 @@
     },
   };
 </script>
-
-<style scoped>
-  .transactions-tabs-offset {
-    margin-left: 10px;
-  }
-</style>

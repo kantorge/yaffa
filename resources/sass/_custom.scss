@@ -259,3 +259,32 @@ button[type="submit"] .spinner-border {
     color: var(--cui-secondary-color);
     opacity: 0.5;
 }
+
+.left-control-panel-toggle-shell {
+    position: relative;
+}
+
+.left-control-panel-toggle-card {
+    position: relative;
+    z-index: 2;
+}
+
+.left-control-panel-toggle-header {
+    position: relative;
+}
+
+.left-control-panel-toggle-handle {
+    position: absolute;
+    left: var(--left-control-panel-toggle-left, 4px);
+    top: var(--left-control-panel-toggle-top, -20px);
+    transform: translateY(var(--left-control-panel-toggle-resting-offset, 10px));
+    opacity: var(--left-control-panel-toggle-resting-opacity, 0.35);
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    z-index: 1;
+}
+
+.left-control-panel-toggle-handle:hover,
+.left-control-panel-toggle-handle:focus-visible {
+    transform: translateY(var(--left-control-panel-toggle-hover-offset, -6px));
+    opacity: var(--left-control-panel-toggle-hover-opacity, 1);
+}

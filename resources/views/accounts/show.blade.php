@@ -10,7 +10,7 @@
 
 @section('content')
 <div class="row">
-    <div class="col-12 col-lg-3">
+    <div class="col-12 col-lg-3" id="accountLeftControlPanel">
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-title collapse-control" data-coreui-toggle="collapse"
@@ -118,27 +118,40 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-9">
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-                <div class="card-title">
-                    {{ __('Transaction history') }}
+    <div class="col-12 col-lg-9" id="accountMainContent">
+        <div class="left-control-panel-toggle-shell mb-3">
+            <button
+                type="button"
+                id="toggleAccountLeftControlPanelButton"
+                class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
+                title="{{ __('Collapse left control panel') }}"
+                aria-label="{{ __('Collapse left control panel') }}"
+                aria-expanded="true"
+                aria-controls="accountLeftControlPanel accountMainContent"
+            >
+                <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
+            </button>
+            <div class="card left-control-panel-toggle-card">
+                <div class="card-header d-flex justify-content-between left-control-panel-toggle-header">
+                    <div class="card-title">
+                        {{ __('Transaction history') }}
+                    </div>
+                    <div class="d-lg-none">
+                        <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'standard', 'callback' => 'back']) }}"
+                            title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
+                        <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'investment', 'callback' => 'back']) }}"
+                            title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                    </div>
+                    <div class="d-none d-lg-block">
+                        <button type="button" id="create-standard-transaction-button" class="btn btn-sm btn-success"
+                            title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></button>
+                        <button type="button" id="create-investment-transaction-button" class="btn btn-sm btn-success"
+                            title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></button>
+                    </div>
                 </div>
-                <div class="d-lg-none">
-                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'standard', 'callback' => 'back']) }}"
-                        title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
-                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'investment', 'callback' => 'back']) }}"
-                        title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover no-footer" id="historyTable"></table>
                 </div>
-                <div class="d-none d-lg-block">
-                    <button type="button" id="create-standard-transaction-button" class="btn btn-sm btn-success"
-                        title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></button>
-                    <button type="button" id="create-investment-transaction-button" class="btn btn-sm btn-success"
-                        title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></button>
-                </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered table-hover no-footer" id="historyTable"></table>
             </div>
         </div>
 
