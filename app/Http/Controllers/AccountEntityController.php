@@ -381,7 +381,7 @@ class AccountEntityController extends Controller implements HasMiddleware
     }
 
     /**
-     * Display a form to merge two payees.
+     * Display a form to merge two payees, optionally with the source payee preselected.
      */
     public function mergePayeesForm(?AccountEntity $payeeSource): View
     {
@@ -390,12 +390,14 @@ class AccountEntityController extends Controller implements HasMiddleware
          * @name("payees.merge.form")
          * @middlewares("web", "auth", "verified")
          */
-        if ($payeeSource) {
+        if ($payeeSource !== null && $payeeSource->id !== null && $payeeSource->config_type === 'payee') {
             Gate::authorize('view', $payeeSource);
 
             JavaScriptFacade::put([
                 'payeeSource' => $payeeSource->toArray(),
             ]);
+        } else {
+            Gate::authorize('viewAny', AccountEntity::class);
         }
 
         return view('payees.merge');
