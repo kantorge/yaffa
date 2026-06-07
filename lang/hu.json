@@ -1280,5 +1280,7 @@
     "Use active, category, and search filters to quickly find the entries you want to review.": "Használja az aktív, kategória és keresési szűrőket a gyors áttekintéshez.",
     "Use this page to review, maintain, and merge category learning entries created from your AI-assisted categorization history.": "Ezen az oldalon áttekintheti, karbantarthatja és összevonhatja az AI-alapú kategorizálási előzményekből létrehozott kategóriatanulási bejegyzéseket.",
     "You can only merge category learning entries that belong to the same category.": "Csak azonos kategóriába tartozó kategóriatanulási bejegyzések vonhatók össze.",
-    "inactive, click to activate": "inaktív, kattintson az aktiváláshoz"
+    "inactive, click to activate": "inaktív, kattintson az aktiváláshoz",
+    "Expand left control panel": "Bal oldali vezérlőpanel kinyitása",
+    "Collapse left control panel": "Bal oldali vezérlőpanel összecsukása"
 }

@@ -266,8 +266,8 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         }),
         contentType: 'application/json',
         headers: { 'X-CSRF-TOKEN': csrfToken },
-        success: function (_data) {
-            currentState = !currentState;
+        success: (data) => {
+            currentState = data.transaction.reconciled;
 
             $(this).removeClass()
                 .addClass('fa reconcile')

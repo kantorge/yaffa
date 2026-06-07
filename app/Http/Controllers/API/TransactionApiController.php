@@ -69,7 +69,9 @@ class TransactionApiController extends Controller implements HasMiddleware
         $transaction->reconciled = $validated['reconciled'];
         $transaction->save();
 
-        return response()->json([], Response::HTTP_OK);
+        return response()->json([
+            'transaction' => $transaction,
+        ], Response::HTTP_OK);
     }
 
     /**
