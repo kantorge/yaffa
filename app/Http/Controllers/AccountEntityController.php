@@ -390,7 +390,7 @@ class AccountEntityController extends Controller implements HasMiddleware
          * @name("payees.merge.form")
          * @middlewares("web", "auth", "verified")
          */
-        if ($payeeSource !== null && $payeeSource->id !== null && $payeeSource->config_type === 'payee') {
+        if ($payeeSource && $payeeSource->config_type === 'payee') {
             Gate::authorize('view', $payeeSource);
 
             JavaScriptFacade::put([

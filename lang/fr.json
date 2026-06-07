@@ -1280,5 +1280,7 @@
     "Use active, category, and search filters to quickly find the entries you want to review.": "Utilisez les filtres actif, catégorie et recherche pour trouver rapidement les entrées à examiner.",
     "Use this page to review, maintain, and merge category learning entries created from your AI-assisted categorization history.": "Utilisez cette page pour examiner, maintenir et fusionner les entrées d'apprentissage de catégorie créées à partir de votre historique de catégorisation assistée par IA.",
     "You can only merge category learning entries that belong to the same category.": "Vous ne pouvez fusionner que des entrées d'apprentissage de catégorie appartenant à la même catégorie.",
-    "inactive, click to activate": "inactif, cliquez pour activer"
+    "inactive, click to activate": "inactif, cliquez pour activer",
+    "Expand left control panel": "Développer le panneau de contrôle gauche",
+    "Collapse left control panel": "Réduire le panneau de contrôle gauche"
 }

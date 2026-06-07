@@ -31,12 +31,10 @@ $(selectorSourcePayee).select2({
             }
 
             return {
-                results: data.map(function (item) {
-                    return {
-                        id: item.id,
-                        text: item.name,
-                    };
-                }),
+                results: data.map(item => ({
+                    id: item.id,
+                    text: item.name,
+                })),
             };
         },
         cache: true,
@@ -79,12 +77,10 @@ $(selectorTargetPayee).select2({
             }
 
             return {
-                results: data.map(function (item) {
-                    return {
-                        id: item.id,
-                        text: item.name,
-                    };
-                }),
+                results: data.map(item => ({
+                    id: item.id,
+                    text: item.name,
+                })),
             };
         },
         cache: true,

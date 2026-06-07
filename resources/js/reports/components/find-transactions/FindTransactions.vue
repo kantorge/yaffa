@@ -91,7 +91,7 @@
           :aria-expanded="leftControlPanelToggleState.ariaExpanded"
         >
           <i
-            :class="leftControlPanelToggleState.iconClass"
+            :class="`fas ${leftControlPanelToggleState.iconClass}`"
             data-left-control-panel-toggle-icon
           ></i>
         </button>
