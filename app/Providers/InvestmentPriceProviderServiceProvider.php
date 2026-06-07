@@ -37,7 +37,12 @@ class InvestmentPriceProviderServiceProvider extends ServiceProvider implements 
             // Register Generic API provider (advanced, user-configured)
             $registry->register(
                 'generic_api',
-                new GenericApiProvider(new Client())
+                new GenericApiProvider(new Client([
+                    'timeout' => 30,
+                    'connect_timeout' => 10,
+                    'verify' => true,
+                    'http_errors' => true,
+                ]))
             );
 
             return $registry;

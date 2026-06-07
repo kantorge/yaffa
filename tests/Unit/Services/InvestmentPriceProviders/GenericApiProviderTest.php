@@ -140,6 +140,42 @@ class GenericApiProviderTest extends TestCase
             'date_format' => 'timestamp_seconds',
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_validate_credentials_rejects_localhost_endpoint(): void
+    {
+        $provider = new GenericApiProvider($this->createMock(Client::class));
+
+        $this->expectException(PriceProviderException::class);
+        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+
+        $provider->validateCredentials([
+            'endpoint_url' => 'http://localhost:8080/prices',
+            'date_path' => 'data.0.date',
+            'price_path' => 'data.0.close',
+        ]);
+    }
+
+    public function test_fetch_prices_rejects_loopback_endpoint_before_request(): void
+    {
+        $client = $this->createMock(Client::class);
+        $client->expects($this->never())->method('request');
+
+        $provider = new GenericApiProvider($client);
+
+        $investment = new Investment([
+            'symbol' => 'MSFT',
+        ]);
+        $investment->provider_credentials = [
+            'endpoint_url' => 'http://127.0.0.1/prices/{symbol}',
+            'date_path' => 'date',
+            'price_path' => 'close',
+        ];
+
+        $this->expectException(PriceProviderException::class);
+        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+
+        $provider->fetchPrices($investment);
     }
 }

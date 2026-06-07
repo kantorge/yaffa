@@ -9,6 +9,7 @@ use App\Models\Investment;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Str;
 use JsonException;
 use Throwable;
 
@@ -44,6 +45,7 @@ class GenericApiProvider implements InvestmentPriceProvider
         ];
 
         $resolvedEndpointUrl = $this->interpolate((string) $endpointUrl, $placeholders);
+        $this->assertPublicEndpointUrl($resolvedEndpointUrl, $investment->symbol);
 
         $headers = $this->parseJsonObjectCredential($credentials, 'headers_json', $placeholders, $investment);
         $query = $this->parseJsonObjectCredential($credentials, 'query_json', $placeholders, $investment);
@@ -73,14 +75,14 @@ class GenericApiProvider implements InvestmentPriceProvider
 
             $prices = [];
             $dateFormat = isset($credentials['date_format']) && is_string($credentials['date_format'])
-                ? mb_trim($credentials['date_format'])
+                ? Str::trim($credentials['date_format'])
                 : 'auto';
 
             $dateValuesPath = isset($credentials['date_values_path']) && is_string($credentials['date_values_path'])
-                ? mb_trim($credentials['date_values_path'])
+                ? Str::trim($credentials['date_values_path'])
                 : '';
             $priceValuesPath = isset($credentials['price_values_path']) && is_string($credentials['price_values_path'])
-                ? mb_trim($credentials['price_values_path'])
+                ? Str::trim($credentials['price_values_path'])
                 : '';
 
             if ($dateValuesPath !== '' || $priceValuesPath !== '') {
@@ -95,39 +97,34 @@ class GenericApiProvider implements InvestmentPriceProvider
                     );
                 }
 
+                $dateValues = array_values($dateValues);
+                $priceValues = array_values($priceValues);
+
                 foreach ($dateValues as $index => $rawDate) {
                     $rawPrice = $priceValues[$index] ?? null;
 
-                    if ($rawDate === null || $rawPrice === null || ! is_numeric($rawPrice)) {
-                        continue;
+                    $normalizedPrice = $this->normalizeDatePrice(
+                        $rawDate,
+                        $rawPrice,
+                        $dateFormat,
+                        $cutoff,
+                        $investment,
+                    );
+
+                    if ($normalizedPrice !== null) {
+                        $prices[] = $normalizedPrice;
                     }
-
-                    $day = $this->parseDate($rawDate, $dateFormat, $investment);
-
-                    if ($cutoff !== null && $day->lt($cutoff)) {
-                        continue;
-                    }
-
-                    $price = (float) $rawPrice;
-                    if ($price <= 0) {
-                        continue;
-                    }
-
-                    $prices[] = [
-                        'date' => $day->format('Y-m-d'),
-                        'price' => $price,
-                    ];
                 }
             } else {
                 $datePath = $this->requiredStringCredential($credentials, 'date_path', $investment);
                 $pricePath = $this->requiredStringCredential($credentials, 'price_path', $investment);
 
                 $itemsPath = isset($credentials['items_path']) && is_string($credentials['items_path'])
-                    ? mb_trim($credentials['items_path'])
+                    ? Str::trim($credentials['items_path'])
                     : '';
 
                 $items = $itemsPath === ''
-                    ? [$decodedBody]
+                    ? (isset($decodedBody[0]) && is_array($decodedBody[0]) ? $decodedBody : [$decodedBody])
                     : data_get($decodedBody, $itemsPath);
 
                 if (! is_array($items) || $items === []) {
@@ -146,25 +143,17 @@ class GenericApiProvider implements InvestmentPriceProvider
                     $rawDate = data_get($item, $datePath);
                     $rawPrice = data_get($item, $pricePath);
 
-                    if ($rawDate === null || $rawPrice === null || ! is_numeric($rawPrice)) {
-                        continue;
+                    $normalizedPrice = $this->normalizeDatePrice(
+                        $rawDate,
+                        $rawPrice,
+                        $dateFormat,
+                        $cutoff,
+                        $investment,
+                    );
+
+                    if ($normalizedPrice !== null) {
+                        $prices[] = $normalizedPrice;
                     }
-
-                    $day = $this->parseDate($rawDate, $dateFormat, $investment);
-
-                    if ($cutoff !== null && $day->lt($cutoff)) {
-                        continue;
-                    }
-
-                    $price = (float) $rawPrice;
-                    if ($price <= 0) {
-                        continue;
-                    }
-
-                    $prices[] = [
-                        'date' => $day->format('Y-m-d'),
-                        'price' => $price,
-                    ];
                 }
             }
 
@@ -202,7 +191,7 @@ class GenericApiProvider implements InvestmentPriceProvider
     public function validateCredentials(array $credentials): void
     {
         $endpointUrl = isset($credentials['endpoint_url']) && is_string($credentials['endpoint_url'])
-            ? mb_trim($credentials['endpoint_url'])
+            ? Str::trim($credentials['endpoint_url'])
             : '';
 
         if ($endpointUrl === '') {
@@ -219,19 +208,21 @@ class GenericApiProvider implements InvestmentPriceProvider
             throw new PriceProviderException('Endpoint URL must be a valid URL.', 'generic_api');
         }
 
+        $this->assertPublicEndpointUrl($resolvedEndpointUrl, null);
+
         $datePath = isset($credentials['date_path']) && is_string($credentials['date_path'])
-            ? mb_trim($credentials['date_path'])
+            ? Str::trim($credentials['date_path'])
             : '';
 
         $pricePath = isset($credentials['price_path']) && is_string($credentials['price_path'])
-            ? mb_trim($credentials['price_path'])
+            ? Str::trim($credentials['price_path'])
             : '';
 
         $dateValuesPath = isset($credentials['date_values_path']) && is_string($credentials['date_values_path'])
-            ? mb_trim($credentials['date_values_path'])
+            ? Str::trim($credentials['date_values_path'])
             : '';
         $priceValuesPath = isset($credentials['price_values_path']) && is_string($credentials['price_values_path'])
-            ? mb_trim($credentials['price_values_path'])
+            ? Str::trim($credentials['price_values_path'])
             : '';
 
         if ($dateValuesPath !== '' || $priceValuesPath !== '') {
@@ -243,7 +234,7 @@ class GenericApiProvider implements InvestmentPriceProvider
         }
 
         $method = isset($credentials['http_method']) && is_string($credentials['http_method'])
-            ? mb_strtoupper(mb_trim($credentials['http_method']))
+            ? Str::upper(Str::trim($credentials['http_method']))
             : 'GET';
 
         if (! in_array($method, ['GET', 'POST'], true)) {
@@ -387,7 +378,7 @@ class GenericApiProvider implements InvestmentPriceProvider
     private function requiredStringCredential(array $credentials, string $key, Investment $investment): string
     {
         $value = isset($credentials[$key]) && is_string($credentials[$key])
-            ? mb_trim($credentials[$key])
+            ? Str::trim($credentials[$key])
             : '';
 
         if ($value === '') {
@@ -413,7 +404,7 @@ class GenericApiProvider implements InvestmentPriceProvider
         Investment $investment
     ): array {
         $value = isset($credentials[$key]) && is_string($credentials[$key])
-            ? mb_trim($credentials[$key])
+            ? Str::trim($credentials[$key])
             : '';
 
         if ($value === '') {
@@ -450,7 +441,7 @@ class GenericApiProvider implements InvestmentPriceProvider
     private function assertJsonObjectCredential(array $credentials, string $key): void
     {
         $value = isset($credentials[$key]) && is_string($credentials[$key])
-            ? mb_trim($credentials[$key])
+            ? Str::trim($credentials[$key])
             : '';
 
         if ($value === '') {
@@ -484,6 +475,130 @@ class GenericApiProvider implements InvestmentPriceProvider
         return strtr($value, $placeholders);
     }
 
+    private function assertPublicEndpointUrl(string $endpointUrl, ?string $investmentSymbol): void
+    {
+        $host = parse_url($endpointUrl, PHP_URL_HOST);
+
+        if (! is_string($host) || Str::trim($host) === '') {
+            throw new PriceProviderException(
+                'Endpoint URL must include a valid host.',
+                'generic_api',
+                $investmentSymbol
+            );
+        }
+
+        $normalizedHost = Str::lower(mb_trim($host, '[]'));
+
+        if ($normalizedHost === 'localhost') {
+            throw new PriceProviderException(
+                'Endpoint URL must resolve to a public IP address.',
+                'generic_api',
+                $investmentSymbol
+            );
+        }
+
+        $resolvedIps = $this->resolveEndpointIps($normalizedHost);
+
+        if ($resolvedIps === []) {
+            return;
+        }
+
+        foreach ($resolvedIps as $resolvedIp) {
+            if ($this->isDisallowedIp($resolvedIp)) {
+                throw new PriceProviderException(
+                    'Endpoint URL must resolve to a public IP address.',
+                    'generic_api',
+                    $investmentSymbol
+                );
+            }
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveEndpointIps(string $host): array
+    {
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return [$host];
+        }
+
+        $resolvedIps = [];
+
+        $records = dns_get_record($host, DNS_A | DNS_AAAA);
+        if (is_array($records)) {
+            foreach ($records as $record) {
+                $ipAddress = $record['ip'] ?? $record['ipv6'] ?? null;
+
+                if (is_string($ipAddress) && $ipAddress !== '') {
+                    $resolvedIps[] = $ipAddress;
+                }
+            }
+        }
+
+        if ($resolvedIps === []) {
+            $ipv4Addresses = gethostbynamel($host);
+
+            if (is_array($ipv4Addresses)) {
+                foreach ($ipv4Addresses as $ipv4Address) {
+                    if ($ipv4Address !== '') {
+                        $resolvedIps[] = $ipv4Address;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($resolvedIps));
+    }
+
+    private function isDisallowedIp(string $ipAddress): bool
+    {
+        $normalizedIpAddress = Str::lower($ipAddress);
+
+        if (in_array($normalizedIpAddress, ['::1', '0:0:0:0:0:0:0:1'], true)) {
+            return true;
+        }
+
+        return filter_var(
+            $ipAddress,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+        ) === false;
+    }
+
+    /**
+     * @param  mixed  $rawDate
+     * @param  mixed  $rawPrice
+     * @return array{date: string, price: float}|null
+     */
+    private function normalizeDatePrice(
+        mixed $rawDate,
+        mixed $rawPrice,
+        string $dateFormat,
+        ?Carbon $cutoff,
+        Investment $investment,
+    ): ?array {
+        if ($rawDate === null || $rawPrice === null || ! is_numeric($rawPrice)) {
+            return null;
+        }
+
+        $day = $this->parseDate($rawDate, $dateFormat, $investment);
+
+        if ($cutoff !== null && $day->lt($cutoff)) {
+            return null;
+        }
+
+        $price = (float) $rawPrice;
+        if ($price <= 0) {
+            return null;
+        }
+
+        return [
+            'date' => $day->format('Y-m-d'),
+            'price' => $price,
+        ];
+    }
+
     /**
      * @param  mixed  $rawDate
      */
@@ -503,6 +618,11 @@ class GenericApiProvider implements InvestmentPriceProvider
             }
 
             if (is_numeric($rawDate)) {
+                $strDate = (string) $rawDate;
+                if (preg_match('/^\d{8}$/', $strDate)) {
+                    return Carbon::createFromFormat('Ymd', $strDate)->startOfDay();
+                }
+
                 $timestamp = (float) $rawDate;
                 if ($timestamp > 9999999999) {
                     return Carbon::createFromTimestampMs((int) $timestamp)->startOfDay();
