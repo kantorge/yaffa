@@ -89,6 +89,10 @@
             </div>
 
             <div v-else>
+              <div v-if="provider.instructions" class="form-text mb-3">
+                {{ provider.instructions }}
+              </div>
+
               <div class="row g-4">
                 <div
                   v-for="field in credentialFields(provider)"
@@ -108,8 +112,8 @@
                     class="form-control"
                     :placeholder="credentialPlaceholder(provider, field.key)"
                   />
-                  <div class="form-text mt-2" v-if="provider.instructions">
-                    {{ provider.instructions }}
+                  <div class="form-text mt-2" v-if="field.schema.helpText">
+                    {{ field.schema.helpText }}
                   </div>
                 </div>
 

@@ -134,6 +134,54 @@ class InvestmentProviderConfigApiV1Test extends TestCase
             ->assertJsonValidationErrors(['credentials.api_key']);
     }
 
+    public function test_update_validates_required_credentials_for_generic_api(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'generic_api']), [
+                'credentials' => [
+                    'http_method' => 'GET',
+                ],
+            ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'credentials.endpoint_url',
+                'credentials.date_path',
+                'credentials.price_path',
+            ]);
+    }
+
+    public function test_update_allows_placeholder_url_and_parallel_array_mode_for_generic_api(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'generic_api']), [
+                'credentials' => [
+                    'endpoint_url' => 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
+                    'date_values_path' => 'chart.result.0.timestamp',
+                    'price_values_path' => 'chart.result.0.indicators.quote.0.close',
+                    'date_format' => 'timestamp_seconds',
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('provider_key', 'generic_api')
+            ->assertJsonPath('has_credentials', true);
+    }
+
+    public function test_update_requires_both_parallel_paths_when_parallel_mode_is_used_for_generic_api(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->patchJson(route('api.v1.investment-provider-configs.update', ['providerKey' => 'generic_api']), [
+                'credentials' => [
+                    'endpoint_url' => 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
+                    'date_values_path' => 'chart.result.0.timestamp',
+                ],
+            ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['credentials.price_values_path']);
+    }
+
     public function test_update_rejects_overrides_for_non_overrideable_provider(): void
     {
         $response = $this->actingAs($this->user)
