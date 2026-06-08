@@ -71,6 +71,10 @@ services:
     volumes:
       - yaffa_storage:/var/www/html/storage
     depends_on:
+      # Keep startup serialized for first-run named-volume initialization on
+      # shared storage to avoid sporadic Docker mkdir/file-exists races.
+      app:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
@@ -113,7 +117,7 @@ services:
           '-h',
           'localhost',
           '-u',
-          '${DB_USERNAME}',
+          'root',
           '-p${DB_PASSWORD}',
         ]
       interval: 30s

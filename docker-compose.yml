@@ -43,7 +43,7 @@ services:
       - sail
     stop_grace_period: 1m
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+      test: ['CMD', 'mysqladmin', 'ping', '-uroot', '-p${DB_PASSWORD}']
       start_period: 30s
       retries: 3
       timeout: 5s

@@ -36,8 +36,8 @@ jobs:
           sed -i 's|^DB_HOST=.*|DB_HOST=db|' docker/.env
           sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" docker/.env
 
-      - name: Start stack
-        run: docker compose -f docker/docker-compose.yml up -d
+      - name: Start core services
+        run: docker compose -f docker/docker-compose.yml up -d db redis app
 
       - name: Wait for services
         run: |
