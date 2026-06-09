@@ -13,7 +13,7 @@
         "@vue/compiler-sfc": "^3.2.45",
         "autoprefixer": "^10.4.13",
         "baseline-browser-mapping": "^2.9.11",
-        "concurrently": "^9.0.1",
+        "concurrently": "^10.0.3",
         "cross-env": "^7.0.3",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
