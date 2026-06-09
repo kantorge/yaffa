@@ -67,6 +67,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
 
         $this->assertTrue($providers->has('alpha_vantage'));
         $this->assertTrue($providers->has('web_scraping'));
+        $this->assertFalse($providers->has('generic_api'));
         $this->assertTrue($providers->get('alpha_vantage')['available']);
         $this->assertSame('Configured', $providers->get('alpha_vantage')['statusLabel']);
         $this->assertTrue($providers->get('web_scraping')['available']);
@@ -87,6 +88,10 @@ class InvestmentPriceProviderApiV1Test extends TestCase
         $this->assertSame(['setup_required'], $providers->get('alpha_vantage')['reasonFlags']);
         $this->assertTrue($providers->has('web_scraping'));
         $this->assertTrue($providers->get('web_scraping')['available']);
+        $this->assertTrue($providers->has('generic_api'));
+        $this->assertFalse($providers->get('generic_api')['available']);
+        $this->assertSame('Setup required', $providers->get('generic_api')['statusLabel']);
+        $this->assertSame(['setup_required'], $providers->get('generic_api')['reasonFlags']);
     }
 
     public function test_test_fetch_requires_symbol_for_all_providers(): void

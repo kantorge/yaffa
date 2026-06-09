@@ -26,7 +26,7 @@ services:
       - mailhog
       - selenium
   mysql:
-    image: 'mysql/mysql-server:8.0'
+    image: 'mysql:8.0'
     ports:
       - '${FORWARD_DB_PORT:-3306}:3306'
     environment:
@@ -41,8 +41,10 @@ services:
       - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
     networks:
       - sail
+    stop_grace_period: 1m
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+      test: ['CMD', 'mysqladmin', 'ping', '-uroot', '-p${DB_PASSWORD}']
+      start_period: 30s
       retries: 3
       timeout: 5s
   mailhog:

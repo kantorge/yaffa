@@ -30,8 +30,8 @@ cp .env.example docker/.env
 sed -i 's|^DB_HOST=.*|DB_HOST=db|' docker/.env
 sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" docker/.env
 
-print_step "Starting stack"
-docker compose -f "$COMPOSE_FILE" up -d
+print_step "Starting core services"
+docker compose -f "$COMPOSE_FILE" up -d db redis app
 
 print_step "Waiting for services to start"
 for i in $(seq 1 "$HEALTH_CHECK_RETRIES"); do
@@ -99,8 +99,14 @@ else
 fi
 
 print_step "Triggering Laravel log entry"
-ESCAPED_MESSAGE=$(printf '%s' "$TEST_LOG_MESSAGE" | sed "s/'/\\\\'/g")
-docker exec "$APP_CONTAINER" php artisan tinker --execute="Log::error('${ESCAPED_MESSAGE}');"
+LOG_OUTPUT=$(docker exec -e TEST_LOG_MESSAGE="$TEST_LOG_MESSAGE" "$APP_CONTAINER" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $kernel = $app->make(Illuminate\\Contracts\\Console\\Kernel::class); $kernel->bootstrap(); Illuminate\\Support\\Facades\\Log::error(getenv("TEST_LOG_MESSAGE"));' 2>&1 || true)
+echo "$LOG_OUTPUT"
+
+if echo "$LOG_OUTPUT" | grep -q "$TEST_LOG_MESSAGE"; then
+  echo "Laravel stderr logging verified via docker exec output"
+else
+  echo "Log entry not printed directly by docker exec; checking container logs"
+fi
 
 print_step "Checking Laravel stderr logging"
 for i in $(seq 1 10); do

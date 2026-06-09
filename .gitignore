@@ -2,6 +2,7 @@
 /.idea
 /.idea/sonarlint
 /.vscode
+/.continue
 
 ## Laravel IDE helper artifacts
 _ide_helper.php

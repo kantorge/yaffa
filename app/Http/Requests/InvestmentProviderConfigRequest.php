@@ -7,6 +7,7 @@ use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Closure;
 
 class InvestmentProviderConfigRequest extends FormRequest
 {
@@ -58,7 +59,26 @@ class InvestmentProviderConfigRequest extends FormRequest
             }
 
             if (($fieldSchema['format'] ?? null) === 'url') {
-                $fieldRules[] = 'url';
+                if (($fieldSchema['allowPlaceholders'] ?? false) === true) {
+                    $fieldRules[] = function (string $attribute, mixed $value, Closure $fail): void {
+                        if (! is_string($value)) {
+                            return;
+                        }
+
+                        // Apply simple placeholder replacements to validate the URL format
+                        $resolved = strtr($value, [
+                            '{symbol}' => 'AAPL',
+                            '{from}' => '2024-01-01',
+                            '{to}' => '2024-01-02',
+                        ]);
+
+                        if (! filter_var($resolved, FILTER_VALIDATE_URL)) {
+                            $fail(__('The :attribute field must contain a valid URL.', ['attribute' => $attribute]));
+                        }
+                    };
+                } else {
+                    $fieldRules[] = 'url';
+                }
             }
 
             if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
@@ -116,7 +136,64 @@ class InvestmentProviderConfigRequest extends FormRequest
             }
 
             $this->validateRateLimitOverrides($validator, $metadata, $existingConfig);
+            $this->validateGenericApiConditionalRequirements($validator, $providerKey, $existingConfig);
         });
+    }
+
+    private function validateGenericApiConditionalRequirements(
+        Validator $validator,
+        string $providerKey,
+        ?InvestmentProviderConfig $existingConfig
+    ): void {
+        if ($providerKey !== 'generic_api') {
+            return;
+        }
+
+        $credentials = $this->input('credentials', []);
+        if (! is_array($credentials)) {
+            $credentials = [];
+        }
+
+        $storedCredentials = is_array($existingConfig?->credentials)
+            ? $existingConfig->credentials
+            : [];
+
+        $effectiveCredentials = array_merge($storedCredentials, $credentials);
+
+        $datePath = isset($effectiveCredentials['date_path']) && is_string($effectiveCredentials['date_path'])
+            ? mb_trim($effectiveCredentials['date_path'])
+            : '';
+        $pricePath = isset($effectiveCredentials['price_path']) && is_string($effectiveCredentials['price_path'])
+            ? mb_trim($effectiveCredentials['price_path'])
+            : '';
+        $dateValuesPath = isset($effectiveCredentials['date_values_path']) && is_string($effectiveCredentials['date_values_path'])
+            ? mb_trim($effectiveCredentials['date_values_path'])
+            : '';
+        $priceValuesPath = isset($effectiveCredentials['price_values_path']) && is_string($effectiveCredentials['price_values_path'])
+            ? mb_trim($effectiveCredentials['price_values_path'])
+            : '';
+
+        $parallelModeEnabled = $dateValuesPath !== '' || $priceValuesPath !== '';
+
+        if ($parallelModeEnabled) {
+            if ($dateValuesPath === '') {
+                $validator->errors()->add('credentials.date_values_path', __('This field is required when using parallel array mode.'));
+            }
+
+            if ($priceValuesPath === '') {
+                $validator->errors()->add('credentials.price_values_path', __('This field is required when using parallel array mode.'));
+            }
+
+            return;
+        }
+
+        if ($datePath === '') {
+            $validator->errors()->add('credentials.date_path', __('This field is required unless parallel array mode is used.'));
+        }
+
+        if ($pricePath === '') {
+            $validator->errors()->add('credentials.price_path', __('This field is required unless parallel array mode is used.'));
+        }
     }
 
     private function validateRateLimitOverrides(

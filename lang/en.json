@@ -1281,5 +1281,7 @@
     "Use active, category, and search filters to quickly find the entries you want to review.": "Use active, category, and search filters to quickly find the entries you want to review.",
     "Use this page to review, maintain, and merge category learning entries created from your AI-assisted categorization history.": "Use this page to review, maintain, and merge category learning entries created from your AI-assisted categorization history.",
     "You can only merge category learning entries that belong to the same category.": "You can only merge category learning entries that belong to the same category.",
-    "inactive, click to activate": "inactive, click to activate"
+    "inactive, click to activate": "inactive, click to activate",
+    "Expand left control panel": "Expand left control panel",
+    "Collapse left control panel": "Collapse left control panel"
 }

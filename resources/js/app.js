@@ -1,6 +1,7 @@
 import '../sass/app.scss';
 import './bootstrap';
 import { initializeDataTablesI18n } from '@/shared/lib/i18n/datatables';
+import { initializeSidebarVisibilityPersistence } from '@/shared/lib/ui/sidebarVisibilityPersistence';
 
 // One glob map for all .js files under resources/js
 // Exclude files that are statically imported to avoid redundant dynamic imports
@@ -108,6 +109,12 @@ if (current === 'transaction.open' && ['edit', 'clone', 'enter', 'replace'].incl
 
 if (current === 'transaction.open' && ['show'].includes(route().params.action)) {
     loadModule('transactions/show');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSidebarVisibilityPersistence);
+} else {
+    initializeSidebarVisibilityPersistence();
 }
 
 // Notifications
