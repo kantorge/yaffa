@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviders\AlphaVantageProvider;
+use App\Services\InvestmentPriceProviders\GenericApiProvider;
 use App\Services\InvestmentPriceProviders\WebScrapingProvider;
 use App\Services\ScraperService;
 use GuzzleHttp\Client;
@@ -31,6 +32,17 @@ class InvestmentPriceProviderServiceProvider extends ServiceProvider implements 
             $registry->register(
                 'web_scraping',
                 new WebScrapingProvider(new ScraperService())
+            );
+
+            // Register Generic API provider (advanced, user-configured)
+            $registry->register(
+                'generic_api',
+                new GenericApiProvider(new Client([
+                    'timeout' => 30,
+                    'connect_timeout' => 10,
+                    'verify' => true,
+                    'http_errors' => true,
+                ]))
             );
 
             return $registry;
