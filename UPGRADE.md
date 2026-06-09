@@ -1,11 +1,27 @@
-# Upgrade guide for major versions
+# Upgrade guide
 
-This document describes the breaking changes of major versions, and the steps that need to be performed to get you migrated.
+This document describes the breaking changes of major versions, and also includes notable upgrade notes for changes within a major version when extra operator action is recommended.
 
 Table of contents:
 
+- [Upgrade within YAFFA 3.x](#upgrade-within-yaffa-3x)
 - [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
+
+## Upgrade within YAFFA 3.x
+
+Most 3.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
+
+### Docker users switching from `mysql/mysql-server:8.0` to `mysql:8.0`
+
+If the updated `docker-compose.yml` changes the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, review the Docker notes in the 3.x upgrade section below before restarting the stack.
+
+In particular:
+
+- Keep the existing named database volume so the new container reuses the current data directory.
+- Make sure `DB_HOST` still matches the database service name from your Docker Compose file. In the packaged YAFFA Docker setup, the service is named `db`.
+- Verify that your Docker deployment does not use `DB_USERNAME=root`, because the official `mysql` image does not support initializing `MYSQL_USER=root`.
+- Prefer restarting the database first, then the YAFFA application containers, to minimize user impact during the first startup on the new image.
 
 ## Upgrade from YAFFA 2.x to 3.x
 
@@ -144,12 +160,23 @@ From this point, the steps differ depending on your hosting option. Follow only 
    - Decide whether to use Tesseract OCR as a local service. It is disabled by default and not needed if you only use a Vision AI model for document processing, or if you don't use document processing at all.
    - If you want to use Tesseract OCR, uncomment the relevant lines in the `depends_on` section of the `app` service and uncomment the entire `tesseract` service definition.
    - If using Tesseract in `http` mode, set `TESSERACT_HTTP_HOST` to the Docker service name (e.g., `tesseract`) and set `TESSERACT_ENABLED=true`.
+   - Make sure `DB_HOST` matches the database service name in the compose file. In the default packaged Docker setup, this is `db`.
+   - If you are updating to a compose file that switches the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, keep the existing named database volume in place. This allows the upgraded container to reuse the current data directory instead of initializing a fresh database.
+   - Before the first start on the new MySQL image, verify that your Docker deployment does not use `DB_USERNAME=root`. The official `mysql` image does not support initializing `MYSQL_USER=root`. Use a dedicated application user instead, such as the default `yaffa_user` from `.env.example`.
 
 2. **Pull the latest image and restart your container**:
+
    ```bash
    docker compose pull
-   docker compose up -d
+   docker compose stop app scheduler
+   docker compose up -d db
+   docker compose up -d app scheduler
    ```
+
+   This restart order minimizes user impact during the MySQL image swap by letting the database finish its first startup on the new image before YAFFA reconnects.
+
+   If you use different service names, adapt the commands accordingly. Avoid removing the database volume unless you intentionally want a fresh empty database.
+
    The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup. No further action is required.
 
 ##### Source code users
