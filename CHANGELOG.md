@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/kantorge/yaffa/compare/v3.2.0...v3.3.0) (2026-06-09)
+
+
+### 🛠️ Chores
+
+* NPM package updates ([a4f2970](https://github.com/kantorge/yaffa/commit/a4f297054b0c05832d63816e6890ed07f2024e05))
+* update Composer dependencies ([0084089](https://github.com/kantorge/yaffa/commit/00840899e4223f86c37f5eae76c54ef412dd28db))
+
+
+### ✨ Features
+
+* adds generic API investment price provider ([#487](https://github.com/kantorge/yaffa/issues/487)) ([39a2e46](https://github.com/kantorge/yaffa/commit/39a2e46f20cc935174c42ea1b457fde425330ab8))
+* adopts official MySQL Docker image ([#488](https://github.com/kantorge/yaffa/issues/488)) ([b313597](https://github.com/kantorge/yaffa/commit/b313597f3a26b38bd68c5edb7c7f63cafe06b3c8))
+* enhances UI with panel toggles and state persistence ([#486](https://github.com/kantorge/yaffa/issues/486)) ([f00a4c3](https://github.com/kantorge/yaffa/commit/f00a4c36482727d339236ded80444b0df9d78b1a))
+
 ## [3.2.0](https://github.com/kantorge/yaffa/compare/v3.1.1...v3.2.0) (2026-05-31)
 
 
