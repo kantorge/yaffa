@@ -95,7 +95,7 @@
         activePopover: null,
         activePopoverTrigger: null,
         popoverHideTimer: null,
-        popoverHideDelayMs: 1000,
+        popoverHideDelayMs: 1500,
         skipInstanceBusy: false,
         visiblePage: null,
       };
@@ -109,12 +109,7 @@
       );
     },
 
-    mounted() {
-      document.addEventListener('click', this.onPopoverActionClick);
-    },
-
     beforeUnmount() {
-      document.removeEventListener('click', this.onPopoverActionClick);
       window.removeEventListener(
         'transaction-created',
         this.handleTransactionCreated,
@@ -145,7 +140,7 @@
         }
 
         if (typeConfig.category === 'investment') {
-          return ['fa', 'fa-line-chart', 'text-primary'];
+          return ['fa', 'fa-chart-line', 'text-primary'];
         }
 
         return ['fa', 'fa-circle', 'text-muted'];
@@ -211,6 +206,15 @@
 
         return `
       <div class="schedule-calendar-popover-content">
+        <div class="schedule-calendar-popover-header">
+          <button
+            type="button"
+            class="btn-close btn-close-white schedule-calendar-popover-close"
+            data-schedule-calendar-action="close"
+            title="${escapeHtml(this.__('Close'))}"
+            aria-label="${escapeHtml(this.__('Close'))}"
+          ></button>
+        </div>
         <div class="schedule-calendar-popover-label">${label}</div>
         <div class="schedule-calendar-popover-actions">
           <button
@@ -258,8 +262,11 @@
 
         const tip = this.getPopoverTipElement();
         if (tip) {
+          tip.removeEventListener('click', this.onPopoverActionClick);
           tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
           tip.removeEventListener('mouseleave', this.schedulePopoverHide);
+          tip.removeEventListener('focusin', this.clearPopoverHideTimer);
+          tip.removeEventListener('focusout', this.schedulePopoverHide);
         }
 
         this.activePopover.hide();
@@ -294,7 +301,8 @@
             content: this.getPopoverContent(transaction),
             customClass: 'schedule-calendar-popover',
             html: true,
-            placement: 'auto',
+            placement: 'top',
+            fallbackPlacements: ['top', 'right', 'left', 'bottom'],
             popperConfig(defaultBsPopperConfig) {
               return {
                 ...defaultBsPopperConfig,
@@ -303,7 +311,7 @@
                   {
                     name: 'offset',
                     options: {
-                      offset: [0, 12],
+                      offset: [0, 8],
                     },
                   },
                 ],
@@ -319,8 +327,11 @@
 
         const tip = this.getPopoverTipElement();
         if (tip) {
+          tip.addEventListener('click', this.onPopoverActionClick);
           tip.addEventListener('mouseenter', this.clearPopoverHideTimer);
           tip.addEventListener('mouseleave', this.schedulePopoverHide);
+          tip.addEventListener('focusin', this.clearPopoverHideTimer);
+          tip.addEventListener('focusout', this.schedulePopoverHide);
         }
       },
       getPopoverTipElement() {
@@ -405,8 +416,17 @@
         this.hideActivePopover();
       },
       onPopoverActionClick(event) {
+        if (!(event.target instanceof Element)) {
+          return;
+        }
+
         const button = event.target.closest('[data-schedule-calendar-action]');
         if (!button) {
+          return;
+        }
+
+        const tip = this.getPopoverTipElement();
+        if (!tip || !tip.contains(button)) {
           return;
         }
 
@@ -414,6 +434,12 @@
         event.stopPropagation();
 
         const action = button.dataset.scheduleCalendarAction;
+
+        if (action === 'close') {
+          this.hideActivePopover();
+          return;
+        }
+
         const transactionId = Number(button.dataset.transactionId);
 
         if (!transactionId) {
@@ -583,6 +609,8 @@
   }
 
   .schedule-calendar-trigger:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
     box-shadow: none;
   }
 
@@ -637,6 +665,21 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .schedule-calendar-popover-header {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .schedule-calendar-popover-close {
+    transform: scale(0.82);
+    transform-origin: top right;
+    opacity: 0.65;
+  }
+
+  .schedule-calendar-popover-close:hover {
+    opacity: 0.85;
   }
 
   .schedule-calendar-popover-label {
