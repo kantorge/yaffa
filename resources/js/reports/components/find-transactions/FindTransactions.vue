@@ -318,7 +318,7 @@
         activeTab: 'summary',
         dateFrom,
         dateTo,
-        selectedPreset: datePreset,
+        selectedPreset: urlParams.get('date_from') || urlParams.get('date_to') ? null : datePreset,
         selectedAccounts: this.getUrlParams('accounts'),
         selectedCategories: this.getUrlParams('categories'),
         selectedPayees: this.getUrlParams('payees'),
