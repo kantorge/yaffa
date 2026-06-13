@@ -44,6 +44,11 @@
                 class="btn btn-link p-0 schedule-calendar-trigger"
                 @mouseenter="onTransactionTriggerEnter($event, item.customData)"
                 @mouseleave="onTransactionTriggerLeave"
+                @click="onTransactionTriggerClick($event, item.customData)"
+                @keydown="onTransactionTriggerKeydown($event, item.customData)"
+                @touchstart="
+                  onTransactionTriggerTouchstart($event, item.customData)
+                "
                 @focus="onTransactionTriggerEnter($event, item.customData)"
                 @blur="onTransactionTriggerLeave"
               >
@@ -98,6 +103,7 @@
         popoverHideDelayMs: 1500,
         skipInstanceBusy: false,
         visiblePage: null,
+        preventGhostClickUntil: 0,
       };
     },
 
@@ -350,6 +356,33 @@
       },
       onTransactionTriggerLeave() {
         this.schedulePopoverHide();
+      },
+      onTransactionTriggerClick(event, transaction) {
+        if (Date.now() < this.preventGhostClickUntil) {
+          event.preventDefault();
+          return;
+        }
+
+        this.onTransactionTriggerEnter(event, transaction);
+      },
+      onTransactionTriggerKeydown(event, transaction) {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return;
+        }
+
+        event.preventDefault();
+        this.onTransactionTriggerEnter(event, transaction);
+      },
+      preventGhostClick(event) {
+        this.preventGhostClickUntil = Date.now() + 700;
+
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+      },
+      onTransactionTriggerTouchstart(event, transaction) {
+        this.onTransactionTriggerEnter(event, transaction);
+        this.preventGhostClick(event);
       },
       async skipInstance(transactionId, buttonElement = null) {
         if (this.skipInstanceBusy) {
