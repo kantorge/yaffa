@@ -11,6 +11,7 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { toFormattedCurrency } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   am4core.useTheme(am4themes_animated);
 
@@ -178,43 +179,52 @@
           .map((item) => item.category.parent_id)
           .filter((value, index, self) => self.indexOf(value) === index);
       },
+      createChart() {
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(this.$refs.chartContainer, am4charts.PieChart);
+        applyAmChartsLocalization(
+          chart,
+          window.YAFFA.userSettings.locale,
+          window.YAFFA.userSettings.language,
+        );
+        chart.data = null;
+
+        let pieSeries = chart.series.push(new am4charts.PieSeries());
+        pieSeries.dataFields.value = 'amount';
+        pieSeries.dataFields.category = 'name';
+        pieSeries.slices.template.propertyFields.fill = 'color';
+        pieSeries.slices.template.propertyFields.isActive = 'selected';
+        pieSeries.labels.template.propertyFields.disabled = 'disabled';
+        pieSeries.ticks.template.propertyFields.disabled = 'disabled';
+
+        pieSeries.slices.template.tooltipText = '{tooltip}';
+
+        pieSeries.slices.template.events.on('hit', (event) => {
+          const data = event.target.dataItem.dataContext;
+          this.selectedParentId = data.id;
+          this.updateChartData(this.transactions);
+        });
+
+        let title = chart.titles.create();
+        title.text = this.title;
+        title.fontSize = 20;
+        title.marginBottom = 20;
+
+        this.chart = chart;
+      },
     },
     mounted() {
-      let chart = am4core.create(this.$refs.chartContainer, am4charts.PieChart);
-      applyAmChartsLocalization(
-        chart,
-        window.YAFFA.userSettings.locale,
-        window.YAFFA.userSettings.language,
-      );
-      chart.data = null;
-
-      let pieSeries = chart.series.push(new am4charts.PieSeries());
-      pieSeries.dataFields.value = 'amount';
-      pieSeries.dataFields.category = 'name';
-      pieSeries.slices.template.propertyFields.fill = 'color';
-      pieSeries.slices.template.propertyFields.isActive = 'selected';
-      pieSeries.labels.template.propertyFields.disabled = 'disabled';
-      pieSeries.ticks.template.propertyFields.disabled = 'disabled';
-
-      // Set the tooltip to use currency format
-      pieSeries.slices.template.tooltipText = '{tooltip}';
-
-      // Set up listener for the slice click event
-      pieSeries.slices.template.events.on('hit', (event) => {
-        const data = event.target.dataItem.dataContext;
-        this.selectedParentId = data.id;
+      this.createChart();
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
         this.updateChartData(this.transactions);
-      });
-
-      // Set the chart title
-      let title = chart.titles.create();
-      title.text = this.title;
-      title.fontSize = 20;
-      title.marginBottom = 20;
-
-      this.chart = chart;
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
-    beforeDestroy() {
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }

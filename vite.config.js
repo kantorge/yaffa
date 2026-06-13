@@ -40,6 +40,15 @@ export default defineConfig({
         __VUE_PROD_DEVTOOLS__: false,
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                // Suppress deprecation warnings from node_modules only.
+                // Our own @import warnings remain visible as a reminder to migrate to @use.
+                quietDeps: true,
+            },
+        },
+    },
     server: {
         hmr: {
             host: 'localhost',

@@ -27,11 +27,11 @@
         </ul>
       </div>
 
-      <date-range-selector
+      <date-range-filter-card
         :initial-date-from="dateFrom"
         :initial-date-to="dateTo"
         @update="onUpdateDateRange"
-      ></date-range-selector>
+      ></date-range-filter-card>
 
       <find-transaction-select-card
         property="category"
@@ -258,7 +258,7 @@
   import { buildFilterCacheKey, buildBreakdownCacheKey } from './helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
-  import DateRangeSelector from '@/shared/ui/date/DateRangeSelector.vue';
+  import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import ReportingCanvasFindTransactionsCategoryDetails from '../widgets/ReportingCanvas-FindTransactions-CategoryDetails.vue';
   import ReportingCanvasFindTransactionsSummary from '../widgets/ReportingCanvas-FindTransactions-Summary.vue';
   import ReportingCanvasFindTransactionsTimeline from '../widgets/ReportingCanvas-FindTransactions-Timeline.vue';
@@ -275,7 +275,7 @@
     components: {
       'find-transaction-select-card': FindTransactionSelectCard,
       'transaction-show-modal': TransactionShowModal,
-      'date-range-selector': DateRangeSelector,
+      'date-range-filter-card': DateRangeFilterCard,
       'reporting-canvas-categories':
         ReportingCanvasFindTransactionsCategoryDetails,
       'reporting-canvas-summary': ReportingCanvasFindTransactionsSummary,

@@ -92,17 +92,31 @@ ul.search-result-list li.inactive:before {
     text-align: right;
 }
 
-.sidebar-brand a {
-    color: $sidebar-brand-color;
-    text-decoration: none;
-}
-
 // Custom row color for DataTables
 table.dataTable tr.table-danger {
     background-color: #fadddd !important;
 }
 table.dataTable tr.table-warning {
     background-color: #feefd0 !important;
+}
+
+// Dark mode table adjustments:
+// Default border (#323a49) is only 8 RGB points above the card-body (#2a303d) — nearly invisible.
+[data-coreui-theme="dark"] .table {
+    --cui-table-border-color: rgba(255, 255, 255, 0.15);
+}
+
+// DataTables detects dark mode via [data-bs-theme="dark"], not CoreUI's [data-coreui-theme="dark"].
+// This means --dt-row-stripe stays at its default "0, 0, 0" (black) in dark mode — a black
+// overlay on a dark background is invisible. Fix: set white rgb values and override the
+// hardcoded 0.05 box-shadow opacity to something visible.
+[data-coreui-theme="dark"] {
+    --dt-row-stripe: 255, 255, 255;
+    --dt-row-hover: 255, 255, 255;
+
+    table.table.dataTable.table-striped > tbody > tr:nth-of-type(2n+1) > * {
+        box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.07);
+    }
 }
 
 :root {
@@ -118,20 +132,21 @@ table.dataTable tr.table-warning {
 
 .sidebar-brand-form input,
 .sidebar-brand-form select {
-    background-color: var(--cui-sidebar-nav-link-active-bg);
-    color: var(--cui-input-placeholder-color, #8a93a2);
+    background-color: var(--cui-body-bg);
+    color: var(--cui-body-color);
+    border-color: var(--cui-border-color);
     opacity: 1;
 }
 
 .sidebar-brand-form input::placeholder {
-    color: var(--cui-input-placeholder-color, #8a93a2);
+    color: var(--cui-secondary-color);
     opacity: 1;
 }
 
 .sidebar-brand-form select {
-    option {
-        color: black; // color of all the other options
-    }
+    // .sidebar-dark is always a dark surface but [data-coreui-theme="dark"] is not set
+    // in light mode, so the caret SVG must be explicitly overridden to the light variant.
+    --cui-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28255%2C 255%2C 255%2C 0.87%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
 }
 
 // XS buttons
@@ -168,6 +183,18 @@ div.card-header > div.card-title {
     background-color: var(--cui-danger);
 }
 
+// Center the logo/brand container (not the form variants)
+.sidebar-brand a {
+    color: $sidebar-brand-color;
+    text-decoration: none;
+}
+
+.sidebar-brand:not(.sidebar-brand-form) {
+    justify-content: center;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
 // Adjust the font of the brand name in the header
 .sidebar-brand-full > a {
     font-size: 1.5rem;
@@ -178,20 +205,19 @@ div.card-header > div.card-title {
     vertical-align: middle;
 }
 
+// Make sidebar search and account forms fill the available width
+.sidebar-brand-form form {
+    width: 100%;
+}
+
 // Quick action panel customizations
+// sidebar-light is no longer part of CoreUI v5 — we define it ourselves.
 .sidebar-light {
     --cui-sidebar-color: rgba(44, 56, 74, 0.95);
     --cui-sidebar-bg: #fff;
-    --cui-sidebar-border-width: 0;
-    --cui-sidebar-border-color: transparent;
     --cui-sidebar-brand-color: #fff;
     --cui-sidebar-brand-bg: #321fdb;
-    --cui-sidebar-header-bg: rgba(0, 0, 21, 0.2);
-    --cui-sidebar-footer-bg: rgba(0, 0, 21, 0.1);
     --cui-sidebar-toggler-bg: rgba(0, 0, 21, 0.1);
-    --cui-sidebar-toggler-hover-bg: rgba(0, 0, 0, 0.2);
-    --cui-sidebar-toggler-indicator: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 14'%3E%3Cpath fill='rgba(44, 56, 74, 0.681)' d='M9.148 2.352l-4.148 4.148 4.148 4.148q0.148 0.148 0.148 0.352t-0.148 0.352l-1.297 1.297q-0.148 0.148-0.352 0.148t-0.352-0.148l-5.797-5.797q-0.148-0.148-0.148-0.352t0.148-0.352l5.797-5.797q0.148-0.148 0.352-0.148t0.352 0.148l1.297 1.297q0.148 0.148 0.148 0.352t-0.148 0.352z'/%3E%3C/svg%3E");
-    --cui-sidebar-toggler-indicator-hover: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 14'%3E%3Cpath fill='rgba(44, 56, 74, 0.95)' d='M9.148 2.352l-4.148 4.148 4.148 4.148q0.148 0.148 0.148 0.352t-0.148 0.352l-1.297 1.297q-0.148 0.148-0.352 0.148t-0.352-0.148l-5.797-5.797q-0.148-0.148-0.148-0.352t0.148-0.352l5.797-5.797q0.148-0.148 0.352-0.148t0.352 0.148l1.297 1.297q0.148 0.148 0.148 0.352t-0.148 0.352z'/%3E%3C/svg%3E");
 
     --cui-sidebar-nav-title-color: rgba(44, 56, 74, 0.681);
     --cui-sidebar-nav-link-color: rgba(44, 56, 74, 0.681);
@@ -209,6 +235,49 @@ div.card-header > div.card-title {
     --cui-sidebar-nav-group-toggle-show-color: rgba(44, 56, 74, 0.681);
 }
 
+// Preserve the submenu background contrast on the dark main sidebar in v5.
+// CoreUI v5 defaults to transparent; we restore the slightly-darker group background.
+.sidebar-dark .sidebar-nav .nav-group.show > .nav-group-items {
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+// Add a subtle separator above each nav group to increase section contrast.
+.sidebar-dark .sidebar-nav .nav-group {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 0.25rem;
+}
+
+// Elevate the main sidebar to secondary-bg in both light and dark mode.
+// .sidebar-dark sets its own dark CSS variables internally, so --cui-secondary-bg
+// always resolves to #323a49 here regardless of the page's color mode.
+.sidebar-dark {
+    --cui-sidebar-bg: var(--cui-secondary-bg);
+}
+
+[data-coreui-theme="dark"] .header {
+    --cui-header-bg: var(--cui-secondary-bg);
+}
+
+// Dark mode overrides for sidebar-light (used by the quick-actions panel).
+[data-coreui-theme="dark"] .sidebar-light {
+    --cui-sidebar-color: rgba(255, 255, 255, 0.87);
+    --cui-sidebar-bg: var(--cui-secondary-bg);
+    --cui-sidebar-brand-color: #fff;
+    --cui-sidebar-brand-bg: #321fdb;
+    --cui-sidebar-nav-title-color: rgba(255, 255, 255, 0.6);
+    --cui-sidebar-nav-link-color: rgba(255, 255, 255, 0.6);
+    --cui-sidebar-nav-link-bg: transparent;
+    --cui-sidebar-nav-link-icon-color: rgba(255, 255, 255, 0.6);
+    --cui-sidebar-nav-link-hover-color: #fff;
+    --cui-sidebar-nav-link-hover-bg: rgba(255, 255, 255, 0.05);
+    --cui-sidebar-nav-link-hover-icon-color: #fff;
+    --cui-sidebar-nav-link-active-color: #fff;
+    --cui-sidebar-nav-link-active-bg: rgba(255, 255, 255, 0.05);
+    --cui-sidebar-nav-link-active-icon-color: #fff;
+    --cui-sidebar-nav-group-bg: rgba(0, 0, 0, 0.2);
+    --cui-sidebar-nav-group-toggle-show-color: rgba(255, 255, 255, 0.6);
+}
+
 .sidebar-close-custom {
     position: absolute;
     top: 5px;
@@ -222,6 +291,41 @@ div.card-header > div.card-title {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--cui-sidebar-color);
+}
+
+// Three-tier background system for dark mode.
+// Light mode: page area is a light grey, cards float as white on top.
+// Dark mode:
+//   Page (wrapper):       body-bg      #212631  — darkest
+//   Card body:            tertiary-bg  #2a303d  — mid surface
+//   Card header/footer:   secondary-bg #323a49  — elevated frame
+//   Disabled inputs also use secondary-bg (#323a49), making them
+//   visibly distinct from the card body behind them.
+.wrapper {
+  background-color: var(--cui-tertiary-bg);  // #ebedef (light) / #2a303d (dark)
+}
+
+[data-coreui-theme="dark"] .wrapper {
+  background-color: var(--cui-body-bg);  // #212631 — the darkest level
+}
+
+[data-coreui-theme="dark"] .card {
+  --cui-card-bg: var(--cui-tertiary-bg);  // #2a303d — card body (mid surface)
+}
+
+[data-coreui-theme="dark"] .card-header,
+[data-coreui-theme="dark"] .card-footer {
+  background-color: var(--cui-secondary-bg);  // #323a49 — elevated frame
+}
+
+// Auth page background — same surface logic as .wrapper: recessed grey in light
+// mode so white cards float on top; darkest level in dark mode so elevated cards stand out.
+.auth-page-bg {
+  background-color: var(--cui-tertiary-bg);  // light: #f3f4f7  dark: #2a303d (overridden below)
+}
+
+[data-coreui-theme="dark"] .auth-page-bg {
+  background-color: var(--cui-body-bg);  // #212631 — darker than the card (#2a303d)
 }
 
 // Timeline chart placeholder
@@ -258,6 +362,107 @@ button[type="submit"] .spinner-border {
 .select2-container--bootstrap-5 .select2-search__field::placeholder {
     color: var(--cui-secondary-color);
     opacity: 0.5;
+}
+
+// Select2 dark mode overrides — the select2-bootstrap-5-theme uses hardcoded light-mode colors.
+[data-coreui-theme="dark"] {
+    // Selection box (the visible input-like control)
+    .select2-container--bootstrap-5 .select2-selection {
+        color: var(--cui-body-color);
+        background-color: var(--cui-body-bg);
+        border-color: var(--cui-border-color);
+    }
+
+    // Focused / open state border
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+    .select2-container--bootstrap-5.select2-container--open .select2-selection {
+        border-color: var(--cui-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--cui-primary-rgb), 0.25);
+    }
+
+    // Single-select caret arrow — use light stroke to match form-select dark mode
+    .select2-container--bootstrap-5 .select2-selection--single {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%28255%2C 255%2C 255%2C 0.87%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    }
+
+    // Single-select rendered text
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--cui-body-color);
+    }
+
+    // Single-select placeholder
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
+        color: var(--cui-secondary-color);
+    }
+
+    // Clear "×" button icons (single and multiple)
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear,
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='rgba%28255%2C 255%2C 255%2C 0.6%29'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover,
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear:hover {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='rgba%28255%2C 255%2C 255%2C 0.87%29'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+    }
+
+    // Dropdown panel (elevated surface — matches CoreUI dark dropdown)
+    .select2-container--bootstrap-5 .select2-dropdown {
+        color: var(--cui-body-color);
+        background-color: var(--cui-secondary-bg);
+        border-color: var(--cui-border-color);
+    }
+
+    // Search field inside the dropdown
+    .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+        color: var(--cui-body-color);
+        background-color: var(--cui-body-bg);
+        border-color: var(--cui-border-color);
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
+        border-color: var(--cui-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--cui-primary-rgb), 0.25);
+    }
+
+    // Option hover — matches CoreUI's own dark dropdown-item:hover (rgba overlay)
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option--highlighted {
+        color: var(--cui-body-color);
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    // Muted texts: messages, disabled options, group labels
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__message,
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option--disabled,
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-disabled=true],
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[role=group] .select2-results__group {
+        color: var(--cui-secondary-color);
+    }
+
+    // Multiple-select: choice tags (the selected-value chips)
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice {
+        color: var(--cui-body-color);
+        background-color: var(--cui-tertiary-bg);
+        border-color: var(--cui-border-color);
+    }
+
+    // Multiple-select: remove "×" icon on each tag
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice .select2-selection__choice__remove {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='rgba%28255%2C 255%2C 255%2C 0.6%29'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice .select2-selection__choice__remove:hover {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='rgba%28255%2C 255%2C 255%2C 0.87%29'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+    }
+
+    // Disabled select
+    .select2-container--bootstrap-5.select2-container--disabled .select2-selection,
+    .select2-container--bootstrap-5.select2-container--disabled.select2-container--focus .select2-selection {
+        color: var(--cui-secondary-color);
+        background-color: var(--cui-secondary-bg);
+        border-color: var(--cui-border-color);
+        box-shadow: none;
+    }
 }
 
 .left-control-panel-toggle-shell {

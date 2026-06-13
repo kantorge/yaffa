@@ -449,4 +449,13 @@
   .pointer-events-none {
     pointer-events: none;
   }
+
+  :global([data-coreui-theme="dark"] .file-drop-zone:hover) {
+    background-color: var(--cui-tertiary-bg);
+  }
+
+  :global([data-coreui-theme="dark"] .file-drop-zone.bg-light) {
+    background-color: var(--cui-secondary-bg) !important;
+    border-color: var(--cui-primary);
+  }
 </style>

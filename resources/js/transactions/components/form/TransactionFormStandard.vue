@@ -175,6 +175,7 @@
                   <DatePicker
                     :columns="2"
                     :initial-page="datePickerInitialPage"
+                    :is-dark="isDarkMode"
                     :is-required="false"
                     :masks="{
                       L: 'YYYY-MM-DD',
@@ -599,8 +600,11 @@
   import TransactionSchedule from './TransactionSchedule.vue';
 
   import PayeeForm from '@/payee/components/PayeeForm.vue';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       TransactionItemContainer,
       TransactionSchedule,

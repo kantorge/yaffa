@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-coreui-theme="light">
 
 <head>
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.head')
@@ -26,6 +26,14 @@
     </title>
 
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}" />
+
+    {{-- Apply stored color mode before first paint to prevent flash --}}
+    <script>
+        (function () {
+            var mode = localStorage.getItem('yaffa-color-mode') || 'light';
+            document.documentElement.setAttribute('data-coreui-theme', mode);
+        })();
+    </script>
 
     {{-- Vite preload tags to prevent FOUC --}}
     @vite(['resources/js/app.js'])

@@ -16,7 +16,7 @@
           @rates-loaded="reloadData"
         />
 
-        <date-range-selector-with-presets
+        <date-range-filter-card
           ref="dateSelector"
           :initial-date-from="dateFrom"
           :initial-date-to="dateTo"
@@ -61,7 +61,7 @@
   import CurrencyRateTable from './CurrencyRateTable.vue';
   import CurrencyRateChart from './CurrencyRateChart.vue';
   import CurrencyRateModal from './CurrencyRateModal.vue';
-  import DateRangeSelectorWithPresets from '@/shared/ui/date/DateRangeSelectorWithPresets.vue';
+  import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -73,7 +73,7 @@
       CurrencyRateTable,
       CurrencyRateChart,
       CurrencyRateModal,
-      DateRangeSelectorWithPresets,
+      DateRangeFilterCard,
     },
     props: {
       from: {

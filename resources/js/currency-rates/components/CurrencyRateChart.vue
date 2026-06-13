@@ -20,6 +20,7 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { __ } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     name: 'CurrencyRateChart',
@@ -69,8 +70,18 @@
       if (!this.hasData) return;
 
       this.initializeChart();
+      this._colorModeHandler = () => {
+        if (!this.hasData) return;
+        if (this.chart) {
+          this.chart.dispose();
+          this.chart = null;
+        }
+        this.initializeChart();
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }
@@ -78,6 +89,7 @@
     methods: {
       initializeChart() {
         am4core.useTheme(am4themes_animated);
+        applyAmChartsColorTheme(am4core);
 
         // Chart setup using ref instead of ID
         const chart = am4core.create(this.$refs.chartRate, am4charts.XYChart);

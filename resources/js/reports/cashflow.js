@@ -11,94 +11,104 @@ import { initializeSelect2 } from '@/shared/lib/select2';
 initializeSelect2(window.YAFFA.userSettings.language);
 
 import * as toastHelpers from '@/shared/lib/toast';
+import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
 window.chartData = [];
-let chart;
+let chart, dateAxis, valueAxis, seriesMonhtly, seriesTotal, seriesInvestment, valueAxisTotal, scrollbarX;
+let cachedChartData = null;
 
-chart = am4core.create("chartdiv", am4charts.XYChart);
-applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
+function initChart() {
+    if (chart) chart.dispose();
 
-chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
-chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    applyAmChartsColorTheme(am4core);
 
-chart.numberFormatter.numberFormat = {
-    style: 'currency',
-    currency: window.YAFFA.userSettings.baseCurrency.iso_code,
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 0
-};
+    chart = am4core.create("chartdiv", am4charts.XYChart);
+    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
 
-chart.dateFormatter.dateFormat = {
-    "year": "numeric",
-    "month": "long",
-};
+    chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
-let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-dateAxis.dataFields.category = "month";
-dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
-dateAxis.dateFormats.setKey("year", {"year": "numeric"});
-dateAxis.dateFormats.setKey("month", {"year": "numeric", "month": "short"});
+    chart.numberFormatter.numberFormat = {
+        style: 'currency',
+        currency: window.YAFFA.userSettings.baseCurrency.iso_code,
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 0
+    };
 
-// Set up event listener to date axis to highlight current month
-dateAxis.events.on("datavalidated", function (ev) {
-    let axis = ev.target;
-    const now = new Date();
+    chart.dateFormatter.dateFormat = {
+        "year": "numeric",
+        "month": "long",
+    };
 
-    // Create a range
-    let range = axis.axisRanges.create();
-    range.date = new Date(now.getFullYear(), now.getMonth(), 1);
-    range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    range.axisFill.fill = am4core.color("#396478");
-    range.axisFill.fillOpacity = 0.4;
-    range.grid.strokeOpacity = 0;
-});
+    dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.dataFields.category = "month";
+    dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    dateAxis.dateFormats.setKey("year", {"year": "numeric"});
+    dateAxis.dateFormats.setKey("month", {"year": "numeric", "month": "short"});
 
-let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+    // Set up event listener to date axis to highlight current month
+    dateAxis.events.on("datavalidated", function (ev) {
+        let axis = ev.target;
+        const now = new Date();
 
-// Monthly account balance fact bars
-let seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
-seriesMonhtly.dataFields.valueY = "account_balance";
-seriesMonhtly.yAxis = valueAxis;
-seriesMonhtly.dataFields.dateX = "month";
-seriesMonhtly.name = __('Monthly balance change');
-seriesMonhtly.columns.template.strokeOpacity = 0;
-seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
-seriesMonhtly.columns.template.fill = am4core.color('green');
-seriesMonhtly.columns.template.adapter.add("fill", function(fill, target) {
-    if (target.dataItem && (target.dataItem.valueY < 0)) {
-      return am4core.color("red");
-    }
+        // Create a range
+        let range = axis.axisRanges.create();
+        range.date = new Date(now.getFullYear(), now.getMonth(), 1);
+        range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fillOpacity = 0.4;
+        range.grid.strokeOpacity = 0;
+    });
 
-    return fill;
-});
+    valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
-// Running total line for account balance fact
-let seriesTotal = chart.series.push(new am4charts.LineSeries());
-seriesTotal.dataFields.valueY = "account_balance_running_total";
-seriesTotal.dataFields.dateX = "month";
-seriesTotal.strokeWidth = 2;
-seriesTotal.stroke = am4core.color('black');
-seriesTotal.name = __('Running total');
-seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
+    // Monthly account balance fact bars
+    seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
+    seriesMonhtly.dataFields.valueY = "account_balance";
+    seriesMonhtly.yAxis = valueAxis;
+    seriesMonhtly.dataFields.dateX = "month";
+    seriesMonhtly.name = __('Monthly balance change');
+    seriesMonhtly.columns.template.strokeOpacity = 0;
+    seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
+    seriesMonhtly.columns.template.fill = am4core.color('green');
+    seriesMonhtly.columns.template.adapter.add("fill", function(fill, target) {
+        if (target.dataItem && (target.dataItem.valueY < 0)) {
+          return am4core.color("red");
+        }
 
-// Line for the investment value fact
-let seriesInvestment = chart.series.push(new am4charts.LineSeries());
-seriesInvestment.dataFields.valueY = "investment_value";
-seriesInvestment.dataFields.dateX = "month";
-seriesInvestment.strokeWidth = 2;
-seriesInvestment.stroke = am4core.color('blue');
-seriesInvestment.name = __('Investment value');
-seriesInvestment.tooltipText = "{dateX}: [b]{valueY}[/]";
+        return fill;
+    });
 
-let valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
-valueAxisTotal.renderer.opposite = true;
+    // Running total line for account balance fact
+    seriesTotal = chart.series.push(new am4charts.LineSeries());
+    seriesTotal.dataFields.valueY = "account_balance_running_total";
+    seriesTotal.dataFields.dateX = "month";
+    seriesTotal.strokeWidth = 2;
+    seriesTotal.stroke = am4core.color('black');
+    seriesTotal.name = __('Running total');
+    seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
 
-let scrollbarX = new am4charts.XYChartScrollbar();
-scrollbarX.series.push(seriesMonhtly);
-chart.scrollbarX = scrollbarX;
+    // Line for the investment value fact
+    seriesInvestment = chart.series.push(new am4charts.LineSeries());
+    seriesInvestment.dataFields.valueY = "investment_value";
+    seriesInvestment.dataFields.dateX = "month";
+    seriesInvestment.strokeWidth = 2;
+    seriesInvestment.stroke = am4core.color('blue');
+    seriesInvestment.name = __('Investment value');
+    seriesInvestment.tooltipText = "{dateX}: [b]{valueY}[/]";
 
-chart.legend = new am4charts.Legend();
-chart.cursor = new am4charts.XYCursor();
+    valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
+    valueAxisTotal.renderer.opposite = true;
+
+    scrollbarX = new am4charts.XYChartScrollbar();
+    scrollbarX.series.push(seriesMonhtly);
+    chart.scrollbarX = scrollbarX;
+
+    chart.legend = new am4charts.Legend();
+    chart.cursor = new am4charts.XYCursor();
+}
+
+initChart();
 
 
 function reloadData() {
@@ -122,6 +132,7 @@ function reloadData() {
                 return;
             }
 
+            cachedChartData = data.chartData;
             chart.data = data.chartData;
             chart.invalidateData();
             document.getElementById('placeholder').classList.add('hidden');
@@ -315,3 +326,11 @@ if (document.readyState === 'loading') {
 } else {
     initializeRateNoteAlert();
 }
+
+document.addEventListener(COLOR_MODE_EVENT, () => {
+    initChart();
+    if (cachedChartData) {
+        chart.data = cachedChartData;
+        chart.invalidateData();
+    }
+});

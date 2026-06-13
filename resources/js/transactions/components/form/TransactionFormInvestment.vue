@@ -72,7 +72,7 @@
                           )
                         : ''
                     "
-                    :data-toggle="action === 'replace' ? 'tooltip' : ''"
+                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
                     <span class="fa-solid fa-arrows-rotate"></span><br />
                     {{ __('Scheduled') }}
@@ -122,6 +122,7 @@
                   <DatePicker
                     :columns="2"
                     :initial-page="datePickerInitialPage"
+                    :is-dark="isDarkMode"
                     :masks="{
                       L: 'YYYY-MM-DD',
                       modelValue: 'YYYY-MM-DD',
@@ -506,8 +507,11 @@
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       TransactionSchedule,
       MathInput,
