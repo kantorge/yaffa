@@ -30,7 +30,7 @@ You do NOT change feature scope.
 
 ## Inputs You Rely On
 
-- The feature brief in `.ai/features/*.md`
+- The feature brief in `.ai/docs/features/`
 - Existing codebase structure
 - Laravel best practices
 - Test feedback from CI or local runs
