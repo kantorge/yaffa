@@ -32,6 +32,7 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { __ } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     name: 'PriceHistoryCard',
@@ -63,54 +64,65 @@
     mounted() {
       if (!this.hasData) return;
 
-      am4core.useTheme(am4themes_animated);
-      // Chart setup
-      let chart = am4core.create(this.$refs.chartPrice, am4charts.XYChart);
-      applyAmChartsLocalization(
-        chart,
-        this.locale,
-        window.YAFFA.userSettings.language,
-      );
-      chart.data = this.prices;
-      chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
-      chart.numberFormatter.intlLocales = this.locale;
-      chart.numberFormatter.numberFormat = {
-        style: 'currency',
-        currency: this.investment.currency.iso_code,
-        currencyDisplay: 'narrowSymbol',
-        minimumFractionDigits: 0,
+      this.createChart();
+      this._colorModeHandler = () => {
+        if (!this.hasData) return;
+        if (this.chart) this.chart.dispose();
+        this.createChart();
       };
-
-      let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
-      categoryAxis.dataFields = { category: 'date' };
-
-      let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-      let series = chart.series.push(new am4charts.LineSeries());
-      series.dataFields.valueY = 'price';
-      series.dataFields.dateX = 'date';
-      series.strokeWidth = 3;
-      series.minBulletDistance = 15;
-
-      let bullet = series.bullets.push(new am4charts.Bullet());
-      let square = bullet.createChild(am4core.Rectangle);
-      square.width = 5;
-      square.height = 5;
-      square.horizontalCenter = 'middle';
-      square.verticalCenter = 'middle';
-
-      let scrollbarX = new am4charts.XYChartScrollbar();
-      scrollbarX.series.push(series);
-      chart.scrollbarX = scrollbarX;
-
-      this.chart = chart;
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }
     },
     methods: {
       __,
+      createChart() {
+        am4core.useTheme(am4themes_animated);
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(this.$refs.chartPrice, am4charts.XYChart);
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
+        chart.data = this.prices;
+        chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
+        chart.numberFormatter.intlLocales = this.locale;
+        chart.numberFormatter.numberFormat = {
+          style: 'currency',
+          currency: this.investment.currency.iso_code,
+          currencyDisplay: 'narrowSymbol',
+          minimumFractionDigits: 0,
+        };
+
+        let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
+        categoryAxis.dataFields = { category: 'date' };
+
+        chart.yAxes.push(new am4charts.ValueAxis());
+        let series = chart.series.push(new am4charts.LineSeries());
+        series.dataFields.valueY = 'price';
+        series.dataFields.dateX = 'date';
+        series.strokeWidth = 3;
+        series.minBulletDistance = 15;
+
+        let bullet = series.bullets.push(new am4charts.Bullet());
+        let square = bullet.createChild(am4core.Rectangle);
+        square.width = 5;
+        square.height = 5;
+        square.horizontalCenter = 'middle';
+        square.verticalCenter = 'middle';
+
+        let scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(series);
+        chart.scrollbarX = scrollbarX;
+
+        this.chart = chart;
+      },
     },
   };
 </script>

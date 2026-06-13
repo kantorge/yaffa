@@ -111,6 +111,7 @@
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     props: {
@@ -151,102 +152,118 @@
         return;
       }
 
-      let chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart);
-      applyAmChartsLocalization(
-        chart,
-        this.locale,
-        window.YAFFA.userSettings.language,
-      );
-      chart.hiddenState.properties.opacity = 0;
-
-      // Set up number formatting
-      chart.numberFormatter.intlLocales = this.locale;
-      chart.numberFormatter.numberFormat = {
-        style: 'currency',
-        currency: this.baseCurrency.iso_code,
-        minimumFractionDigits: 0,
+      this.createChart();
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        if (!this.rawData || this.rawData.length === 0) {
+          this.noDataMessagecontainer.show();
+        } else {
+          this.noDataMessagecontainer.hide();
+        }
       };
-
-      chart.data = this.chartData;
-
-      var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
-      categoryAxis.dataFields.category = 'category';
-      categoryAxis.renderer.minGridDistance = 40;
-
-      if (!this.categoryAxisVisible) {
-        categoryAxis.hide();
-      } else {
-        categoryAxis.events.on('sizechanged', function (ev) {
-          var axis = ev.target;
-          var cellWidth = axis.pixelWidth / (axis.endIndex - axis.startIndex);
-          if (cellWidth < axis.renderer.labels.template.maxWidth) {
-            axis.renderer.labels.template.rotation = -45;
-            axis.renderer.labels.template.horizontalCenter = 'right';
-            axis.renderer.labels.template.verticalCenter = 'middle';
-          } else {
-            axis.renderer.labels.template.rotation = 0;
-            axis.renderer.labels.template.horizontalCenter = 'middle';
-            axis.renderer.labels.template.verticalCenter = 'top';
-          }
-        });
-      }
-
-      var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-
-      var columnSeries = chart.series.push(new am4charts.ColumnSeries());
-      columnSeries.dataFields.categoryX = 'category';
-      columnSeries.dataFields.valueY = 'barValue';
-      columnSeries.dataFields.openValueY = 'open';
-      columnSeries.fillOpacity = 0.8;
-      columnSeries.sequencedInterpolation = true;
-      columnSeries.interpolationDuration = 1500;
-      columnSeries.tooltipText = `[bold]{categoryX}[/]: {value}`;
-
-      var columnTemplate = columnSeries.columns.template;
-      columnTemplate.strokeOpacity = 0;
-      columnTemplate.propertyFields.fill = 'color';
-
-      var stepSeries = chart.series.push(new am4charts.StepLineSeries());
-      stepSeries.dataFields.categoryX = 'category';
-      stepSeries.dataFields.valueY = 'stepValue';
-      stepSeries.noRisers = true;
-      stepSeries.stroke = new am4core.InterfaceColorSet().getFor(
-        'alternativeBackground',
-      );
-      stepSeries.strokeDasharray = '3,3';
-      stepSeries.interpolationDuration = 2000;
-      stepSeries.sequencedInterpolation = true;
-
-      // Because column width is 80%, we modify start/end locations so that step would start with column and end with next column
-      stepSeries.startLocation = 0.1;
-      stepSeries.endLocation = 1.1;
-
-      chart.cursor = new am4charts.XYCursor();
-      chart.cursor.behavior = 'none';
-
-      // Optional message for missing data
-      const noDataMessagecontainer = chart.chartContainer.createChild(
-        am4core.Container,
-      );
-      noDataMessagecontainer.id = 'noDataMessagecontainer';
-      noDataMessagecontainer.align = 'center';
-      noDataMessagecontainer.isMeasured = false;
-      noDataMessagecontainer.x = am4core.percent(50);
-      noDataMessagecontainer.horizontalCenter = 'middle';
-      noDataMessagecontainer.y = am4core.percent(50);
-      noDataMessagecontainer.verticalCenter = 'middle';
-      noDataMessagecontainer.layout = 'vertical';
-
-      const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
-      messageLabel.text = __('widget.categoryWaterfall.noData');
-      messageLabel.textAlign = 'middle';
-      messageLabel.maxWidth = 300;
-      messageLabel.wrap = true;
-
-      this.chart = chart;
-      this.noDataMessagecontainer = noDataMessagecontainer;
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     methods: {
+      createChart() {
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart);
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
+        chart.hiddenState.properties.opacity = 0;
+
+        // Set up number formatting
+        chart.numberFormatter.intlLocales = this.locale;
+        chart.numberFormatter.numberFormat = {
+          style: 'currency',
+          currency: this.baseCurrency.iso_code,
+          minimumFractionDigits: 0,
+        };
+
+        chart.data = this.chartData;
+
+        var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+        categoryAxis.dataFields.category = 'category';
+        categoryAxis.renderer.minGridDistance = 40;
+
+        if (!this.categoryAxisVisible) {
+          categoryAxis.hide();
+        } else {
+          categoryAxis.events.on('sizechanged', function (ev) {
+            var axis = ev.target;
+            var cellWidth = axis.pixelWidth / (axis.endIndex - axis.startIndex);
+            if (cellWidth < axis.renderer.labels.template.maxWidth) {
+              axis.renderer.labels.template.rotation = -45;
+              axis.renderer.labels.template.horizontalCenter = 'right';
+              axis.renderer.labels.template.verticalCenter = 'middle';
+            } else {
+              axis.renderer.labels.template.rotation = 0;
+              axis.renderer.labels.template.horizontalCenter = 'middle';
+              axis.renderer.labels.template.verticalCenter = 'top';
+            }
+          });
+        }
+
+        chart.yAxes.push(new am4charts.ValueAxis());
+
+        var columnSeries = chart.series.push(new am4charts.ColumnSeries());
+        columnSeries.dataFields.categoryX = 'category';
+        columnSeries.dataFields.valueY = 'barValue';
+        columnSeries.dataFields.openValueY = 'open';
+        columnSeries.fillOpacity = 0.8;
+        columnSeries.sequencedInterpolation = true;
+        columnSeries.interpolationDuration = 1500;
+        columnSeries.tooltipText = `[bold]{categoryX}[/]: {value}`;
+
+        var columnTemplate = columnSeries.columns.template;
+        columnTemplate.strokeOpacity = 0;
+        columnTemplate.propertyFields.fill = 'color';
+
+        var stepSeries = chart.series.push(new am4charts.StepLineSeries());
+        stepSeries.dataFields.categoryX = 'category';
+        stepSeries.dataFields.valueY = 'stepValue';
+        stepSeries.noRisers = true;
+        stepSeries.stroke = new am4core.InterfaceColorSet().getFor(
+          'alternativeBackground',
+        );
+        stepSeries.strokeDasharray = '3,3';
+        stepSeries.interpolationDuration = 2000;
+        stepSeries.sequencedInterpolation = true;
+
+        // Because column width is 80%, we modify start/end locations so that step would start with column and end with next column
+        stepSeries.startLocation = 0.1;
+        stepSeries.endLocation = 1.1;
+
+        chart.cursor = new am4charts.XYCursor();
+        chart.cursor.behavior = 'none';
+
+        // Optional message for missing data
+        const noDataMessagecontainer = chart.chartContainer.createChild(
+          am4core.Container,
+        );
+        noDataMessagecontainer.id = 'noDataMessagecontainer';
+        noDataMessagecontainer.align = 'center';
+        noDataMessagecontainer.isMeasured = false;
+        noDataMessagecontainer.x = am4core.percent(50);
+        noDataMessagecontainer.horizontalCenter = 'middle';
+        noDataMessagecontainer.y = am4core.percent(50);
+        noDataMessagecontainer.verticalCenter = 'middle';
+        noDataMessagecontainer.layout = 'vertical';
+
+        const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
+        messageLabel.text = __('widget.categoryWaterfall.noData');
+        messageLabel.textAlign = 'middle';
+        messageLabel.maxWidth = 300;
+        messageLabel.wrap = true;
+
+        this.chart = chart;
+        this.noDataMessagecontainer = noDataMessagecontainer;
+      },
+
       previousMonth: function () {
         this.month--;
         if (this.month < 1) {
@@ -388,7 +405,8 @@
         });
       },
     },
-    beforeDestroy() {
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }

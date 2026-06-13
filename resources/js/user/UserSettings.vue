@@ -85,6 +85,7 @@
           <div class="col-sm-9">
             <div class="input-group">
               <DatePicker
+                :is-dark="isDarkMode"
                 :is-required="true"
                 :masks="{
                   L: 'YYYY-MM-DD',
@@ -130,6 +131,7 @@
           <div class="col-sm-9">
             <div class="input-group">
               <DatePicker
+                :is-dark="isDarkMode"
                 :is-required="true"
                 :masks="{
                   L: 'YYYY-MM-DD',
@@ -279,9 +281,11 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
     name: 'UserSettings',
+    mixins: [colorModeMixin],
     components: {
       DatePicker,
       Button,

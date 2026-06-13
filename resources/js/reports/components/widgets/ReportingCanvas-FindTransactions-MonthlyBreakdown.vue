@@ -645,6 +645,8 @@
     --rb-gray-500: #{$gray-500};
     --rb-gray-700: #{$gray-700};
     --rb-gray-800: #{$gray-800};
+    /* Sticky column background — overridable for dark mode */
+    --rb-sticky-bg: white;
   }
 
   .breakdown-table-wrapper {
@@ -667,7 +669,7 @@
   .sticky-col {
     position: sticky;
     left: 0;
-    background: white;
+    background: var(--rb-sticky-bg);
     z-index: 1;
     min-width: 180px;
     max-width: 220px;
@@ -789,5 +791,42 @@
   }
   .bg-deviation-low-3 {
     background-color: var(--rb-green-300);
+  }
+
+  /* Dark mode: redefine all --rb-* variables with dark-appropriate values.
+     Uses :global() so no scoped [data-v-xxx] attribute is added; positioned
+     after the light-mode variable block so it wins the cascade at equal
+     specificity when the theme attribute is present. */
+  :global([data-coreui-theme="dark"] .reporting-monthly-breakdown) {
+    --rb-sticky-bg:  var(--cui-body-bg);
+
+    --rb-blue-100:   rgba(13, 110, 253, 0.18);
+    --rb-blue-700:   #6ea8fe;
+    --rb-orange-100: rgba(253, 126, 20, 0.18);
+    --rb-orange-700: #feb272;
+    --rb-green-100:  rgba(25, 135, 84, 0.18);
+    --rb-green-200:  rgba(25, 135, 84, 0.32);
+    --rb-green-300:  rgba(25, 135, 84, 0.48);
+    --rb-green-700:  #75b798;
+    --rb-teal-100:   rgba(32, 201, 151, 0.18);
+    --rb-teal-700:   #79dfc1;
+    --rb-purple-100: rgba(111, 66, 193, 0.18);
+    --rb-purple-700: #c29ffa;
+    --rb-pink-100:   rgba(214, 51, 132, 0.18);
+    --rb-pink-700:   #de6ea8;
+    --rb-yellow-100: rgba(255, 193, 7, 0.18);
+    --rb-yellow-700: #ffda6a;
+    --rb-cyan-100:   rgba(13, 202, 240, 0.18);
+    --rb-cyan-700:   #6edff6;
+    --rb-red-100:    rgba(220, 53, 69, 0.18);
+    --rb-red-200:    rgba(220, 53, 69, 0.32);
+    --rb-red-300:    rgba(220, 53, 69, 0.48);
+
+    --rb-gray-100:   var(--cui-tertiary-bg);
+    --rb-gray-200:   var(--cui-secondary-bg);
+    --rb-gray-400:   rgba(255, 255, 255, 0.2);
+    --rb-gray-500:   rgba(255, 255, 255, 0.3);
+    --rb-gray-700:   var(--cui-body-color);
+    --rb-gray-800:   var(--cui-body-color);
   }
 </style>

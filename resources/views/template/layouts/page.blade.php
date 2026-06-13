@@ -48,7 +48,7 @@
 
 @include('template.components.quick-actions')
 
-<div class="wrapper d-flex flex-column min-vh-100 bg-light">
+<div class="wrapper d-flex flex-column min-vh-100">
     <header class="header header-sticky mb-4 @env('local') header-local-mode @endenv">
         <div class="container-fluid">
             <button class="header-toggler px-md-0 me-md-3" type="button"
@@ -100,6 +100,10 @@
                     </div>
                 </li>
             </ul>
+            <button class="header-toggler px-md-0 me-md-3" type="button" data-action="toggle-color-mode"
+                title="{{ __('Toggle dark mode') }}" aria-label="{{ __('Toggle dark mode') }}">
+                <i class="fa fa-fw fa-moon color-mode-icon"></i>
+            </button>
             <button class="header-toggler px-md-0 me-md-3" dusk="quick-action-bar-toggler" type="button"
                 onclick="coreui.Sidebar.getInstance(document.querySelector('#quick-action-bar')).show()">
                 <i class="fa fa-fw fa-bolt"></i>
@@ -125,7 +129,7 @@
             {{ config('yaffa.version') }}
         </div>
         <div class="ms-auto">
-            <a href="https://github.com/kantorge/yaffa" class="text-black" target="_blank" rel="noopener">
+            <a href="https://github.com/kantorge/yaffa" class="text-body" target="_blank" rel="noopener">
                 <i class="fa-brands fa-github fa-2x"></i>
             </a>
         </div>

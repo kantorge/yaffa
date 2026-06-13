@@ -272,6 +272,16 @@ $cyan-900: shade-color($cyan, 80%) !default;
 $enable-ltr:                        true !default;
 $enable-rtl:                        false !default;
 
+// CoreUI v5 uses color-translucent($gray-300, .175) which fails with our custom
+// darker gray-300 value (#c4c9d0). Override with a Bootstrap-compatible value.
+$border-color-translucent:          rgba(0, 0, 0, .175) !default;
+
+// Our custom light-theme grays ($gray-800/#636f83, $gray-900/#4f5d73) are too light
+// for CoreUI v5's dark mode calculations (color-translucent requires a darker base).
+// Override with CoreUI v5's own default dark grays so dark mode computations succeed.
+$gray-800-dark:                     #323a49 !default;
+$gray-900-dark:                     #212631 !default;
+
 // Set mobile breakpoint
 
 // $mobile-breakpoint:           md !default;

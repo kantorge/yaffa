@@ -39,7 +39,7 @@
     <div v-if="selectedProvider" class="row mb-3">
       <div class="col-sm-3"></div>
       <div class="col-sm-9">
-        <div class="border rounded p-3 bg-light">
+        <div class="border rounded p-3 bg-body-secondary">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="fw-semibold">{{ __('Provider settings') }}</div>
             <div>

@@ -15,7 +15,7 @@
             </div>
             <div>
                 <div class="d-inline-block">
-                    <div class="btn-group" data-toggle="buttons">
+                    <div class="btn-group">
                         <label class="btn btn-primary" title="{{ __('Show reconciled only') }}">
                             <input type="radio" name="reconciled" value="Reconciled" class="btn-check">
                             <span class="fa fa-fw fa-check"></span>

@@ -2,6 +2,7 @@ import '../sass/app.scss';
 import './bootstrap';
 import { initializeDataTablesI18n } from '@/shared/lib/i18n/datatables';
 import { initializeSidebarVisibilityPersistence } from '@/shared/lib/ui/sidebarVisibilityPersistence';
+import { initializeColorMode } from '@/shared/lib/ui/colorMode';
 
 // One glob map for all .js files under resources/js
 // Exclude files that are statically imported to avoid redundant dynamic imports
@@ -10,7 +11,9 @@ const modules = import.meta.glob([
     '!./bootstrap.js',
     '!./shared/lib/i18n/**/*.js',
     '!./shared/lib/vue/installRouteGlobal.js',
-    '!./shared/lib/notifications/displayNotifications.js'
+    '!./shared/lib/notifications/displayNotifications.js',
+    '!./shared/lib/ui/colorMode.js',
+    '!./shared/lib/ui/sidebarVisibilityPersistence.js',
 ]);
 
 const dataTablesI18nReady = initializeDataTablesI18n(
@@ -113,8 +116,10 @@ if (current === 'transaction.open' && ['show'].includes(route().params.action)) 
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeSidebarVisibilityPersistence);
+    document.addEventListener('DOMContentLoaded', initializeColorMode);
 } else {
     initializeSidebarVisibilityPersistence();
+    initializeColorMode();
 }
 
 // Notifications

@@ -26,6 +26,7 @@
         :first-day-of-week="2"
         :min-date="minDate"
         :max-date="maxDate"
+        :is-dark="isDarkMode"
         disable-page-swipe
         expanded
         trim-weeks
@@ -71,8 +72,11 @@
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { Calendar } from 'v-calendar';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       Calendar,
     },
@@ -623,6 +627,11 @@
     padding: 5px 0;
   }
 
+  [data-coreui-theme="dark"] .custom-calendar .vc-weekday {
+    background-color: var(--cui-secondary-bg);
+    border-color: var(--cui-border-color);
+  }
+
   .custom-calendar .vc-day {
     border: 1px solid #b8c2cc;
     padding: 0 5px 3px 5px;
@@ -630,6 +639,11 @@
     height: 65px;
     min-width: 45px;
     background-color: white;
+  }
+
+  [data-coreui-theme="dark"] .custom-calendar .vc-day {
+    background-color: var(--cui-body-bg);
+    border-color: var(--cui-border-color);
   }
 
   .custom-calendar .vc-day-custom-content {
@@ -642,56 +656,73 @@
   }
 
   .schedule-calendar-trigger:focus {
-    outline: 2px solid #0d6efd;
+    outline: 2px solid var(--cui-primary);
     outline-offset: 2px;
     box-shadow: none;
   }
 
+  /* Light mode: intentionally dark tooltip for contrast against the white calendar */
   .schedule-calendar-popover {
-    --bs-popover-bg: #1f2937;
-    --bs-popover-body-bg: #1f2937;
-    --bs-popover-border-color: transparent;
-    --bs-popover-arrow-border: transparent;
-    --cui-popover-bg: #1f2937;
-    --cui-popover-body-bg: #1f2937;
-    --cui-popover-border-color: transparent;
-    --cui-popover-arrow-border: transparent;
+    --schedule-popover-bg: #1f2937;
+    --schedule-popover-color: #f8fafc;
+    --schedule-popover-border: transparent;
+    --bs-popover-bg: var(--schedule-popover-bg);
+    --bs-popover-body-bg: var(--schedule-popover-bg);
+    --bs-popover-border-color: var(--schedule-popover-border);
+    --bs-popover-arrow-border: var(--schedule-popover-border);
+    --cui-popover-bg: var(--schedule-popover-bg);
+    --cui-popover-body-bg: var(--schedule-popover-bg);
+    --cui-popover-border-color: var(--schedule-popover-border);
+    --cui-popover-arrow-border: var(--schedule-popover-border);
     background-color: transparent;
   }
 
+  /* Dark mode: flipped to light background for contrast against the dark page */
+  [data-coreui-theme="dark"] .schedule-calendar-popover {
+    --schedule-popover-bg: #f8fafc;
+    --schedule-popover-color: #1e293b;
+    --schedule-popover-border: rgba(0, 0, 0, 0.15);
+  }
+
   .popover.schedule-calendar-popover {
-    background-color: #1f2937;
-    border-color: transparent;
+    background-color: var(--schedule-popover-bg);
+    border-color: var(--schedule-popover-border);
   }
 
   .schedule-calendar-popover .popover-body {
     min-width: 230px;
-    background-color: #1f2937;
-    color: #f8fafc;
+    background-color: var(--schedule-popover-bg);
+    color: var(--schedule-popover-color);
   }
 
   .schedule-calendar-popover .popover-arrow::before {
     display: none;
   }
 
+  /* In dark mode the close button uses btn-close-white (invert filter) — neutralise
+     it so the icon appears dark against the light popover background. */
+  [data-coreui-theme="dark"] .schedule-calendar-popover .btn-close-white {
+    filter: none;
+  }
+
   .popover.schedule-calendar-popover[data-popper-placement^='top']
     > .popover-arrow::after {
-    border-top-color: #1f2937;
+    border-top-color: var(--schedule-popover-bg);
   }
 
   .popover.schedule-calendar-popover[data-popper-placement^='bottom']
     > .popover-arrow::after {
-    border-bottom-color: #1f2937;
+    border-bottom-color: var(--schedule-popover-bg);
   }
 
   .popover.schedule-calendar-popover[data-popper-placement^='left']
     > .popover-arrow::after {
-    border-left-color: #1f2937;
+    border-left-color: var(--schedule-popover-bg);
   }
 
   .popover.schedule-calendar-popover[data-popper-placement^='right']
     > .popover-arrow::after {
-    border-right-color: #1f2937;
+    border-right-color: var(--schedule-popover-bg);
   }
 
   .schedule-calendar-popover-content {

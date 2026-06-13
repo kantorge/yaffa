@@ -19,6 +19,7 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   am4core.useTheme(am4themes_animated);
 
@@ -57,6 +58,68 @@
       },
     },
     methods: {
+      createChart() {
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(this.$refs.chartContainer, am4charts.XYChart);
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
+
+        chart.data = null;
+
+        chart.numberFormatter.intlLocales = this.locale;
+        chart.numberFormatter.numberFormat = {
+          style: 'currency',
+          currency: this.baseCurrency.iso_code,
+          minimumFractionDigits: 0,
+        };
+
+        let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+        dateAxis.renderer.minGridDistance = 50;
+
+        chart.yAxes.push(new am4charts.ValueAxis());
+
+        let seriesDeposit = chart.series.push(new am4charts.ColumnSeries());
+        seriesDeposit.dataFields.valueY = 'deposits';
+        seriesDeposit.dataFields.dateX = 'date';
+        seriesDeposit.name = 'Deposits';
+        seriesDeposit.tooltipText = '{name}: [bold]{valueY}[/]';
+        seriesDeposit.columns.template.fill = am4core.color('green');
+        seriesDeposit.strokeOpacity = 0;
+        seriesDeposit.clustered = false;
+
+        let seriesWithdrawal = chart.series.push(new am4charts.ColumnSeries());
+        seriesWithdrawal.dataFields.valueY = 'withdrawals';
+        seriesWithdrawal.dataFields.dateX = 'date';
+        seriesWithdrawal.name = 'Withdrawals';
+        seriesWithdrawal.tooltipText = '{name}: [bold]{valueY}[/]';
+        seriesWithdrawal.columns.template.fill = am4core.color('red');
+        seriesWithdrawal.strokeOpacity = 0;
+        seriesWithdrawal.clustered = false;
+
+        let seriesCashFlow = chart.series.push(new am4charts.LineSeries());
+        seriesCashFlow.dataFields.valueY = 'cashFlow';
+        seriesCashFlow.dataFields.dateX = 'date';
+        seriesCashFlow.name = 'Monthly cash flow';
+        seriesCashFlow.tooltipText = '{name}: [bold]{valueY}[/]';
+
+        let bullet = seriesCashFlow.bullets.push(new am4charts.CircleBullet());
+        bullet.circle.fill = am4core.color('#fff');
+        bullet.circle.strokeWidth = 2;
+
+        chart.cursor = new am4charts.XYCursor();
+
+        let title = chart.titles.create();
+        title.text = this.title;
+        title.fontSize = 20;
+        title.marginBottom = 20;
+
+        this.chart = chart;
+      },
+
       /**
        * Update the chart data based on the current set of transactions.
        *
@@ -150,70 +213,17 @@
       },
     },
     mounted() {
-      let chart = am4core.create(this.$refs.chartContainer, am4charts.XYChart);
-      applyAmChartsLocalization(
-        chart,
-        this.locale,
-        window.YAFFA.userSettings.language,
-      );
-
-      // Data is empty initially
-      chart.data = null;
-
-      // Set up number formatting
-      chart.numberFormatter.intlLocales = this.locale;
-      chart.numberFormatter.numberFormat = {
-        style: 'currency',
-        currency: this.baseCurrency.iso_code,
-        minimumFractionDigits: 0,
+      this.createChart();
+      this.chart.data = this.chartData;
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        if (this.chart) this.chart.data = this.chartData;
       };
-
-      // Create axes
-      let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-      dateAxis.renderer.minGridDistance = 50;
-
-      chart.yAxes.push(new am4charts.ValueAxis());
-
-      // Create series
-      let seriesDeposit = chart.series.push(new am4charts.ColumnSeries());
-      seriesDeposit.dataFields.valueY = 'deposits';
-      seriesDeposit.dataFields.dateX = 'date';
-      seriesDeposit.name = 'Deposits';
-      seriesDeposit.tooltipText = '{name}: [bold]{valueY}[/]';
-      seriesDeposit.columns.template.fill = am4core.color('green');
-      seriesDeposit.strokeOpacity = 0;
-      seriesDeposit.clustered = false;
-
-      let seriesWithdrawal = chart.series.push(new am4charts.ColumnSeries());
-      seriesWithdrawal.dataFields.valueY = 'withdrawals';
-      seriesWithdrawal.dataFields.dateX = 'date';
-      seriesWithdrawal.name = 'Withdrawals';
-      seriesWithdrawal.tooltipText = '{name}: [bold]{valueY}[/]';
-      seriesWithdrawal.columns.template.fill = am4core.color('red');
-      seriesWithdrawal.strokeOpacity = 0;
-      seriesWithdrawal.clustered = false;
-
-      let seriesCashFlow = chart.series.push(new am4charts.LineSeries());
-      seriesCashFlow.dataFields.valueY = 'cashFlow';
-      seriesCashFlow.dataFields.dateX = 'date';
-      seriesCashFlow.name = 'Monthly cash flow';
-      seriesCashFlow.tooltipText = '{name}: [bold]{valueY}[/]';
-
-      let bullet = seriesCashFlow.bullets.push(new am4charts.CircleBullet());
-      bullet.circle.fill = am4core.color('#fff');
-      bullet.circle.strokeWidth = 2;
-
-      chart.cursor = new am4charts.XYCursor();
-
-      // Set the chart title
-      let title = chart.titles.create();
-      title.text = this.title;
-      title.fontSize = 20;
-      title.marginBottom = 20;
-
-      this.chart = chart;
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }

@@ -7,6 +7,7 @@ am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
 import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import * as toastHelpers from '@/shared/lib/toast';
 import { investmentGroupTree } from '@/shared/lib/datatable';
@@ -18,6 +19,8 @@ function initializeChart() {
     if (chart) {
         chart.dispose();
     }
+
+    applyAmChartsColorTheme(am4core);
 
     chart = am4core.create("chart", am4charts.XYChart);
     applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
@@ -181,3 +184,10 @@ fetch('/api/v1/investments/timeline')
             __('Error: :error', {error: error.message})
         );
     });
+
+document.addEventListener(COLOR_MODE_EVENT, () => {
+    initializeChart();
+    if (window.chartData && window.chartData.length > 0) {
+        filterData();
+    }
+});

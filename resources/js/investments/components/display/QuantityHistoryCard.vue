@@ -21,6 +21,7 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     name: 'QuantityHistoryCard',
@@ -40,47 +41,57 @@
     mounted() {
       if (!this.hasData) return;
 
-      am4core.useTheme(am4themes_animated);
-      // Chart setup
-      let chart = am4core.create(this.$refs.chartQuantity, am4charts.XYChart);
-      applyAmChartsLocalization(
-        chart,
-        this.locale,
-        window.YAFFA.userSettings.language,
-      );
-      chart.data = this.quantities;
-      chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
-      let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
-      categoryAxis.dataFields = { category: 'date' };
-      let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-
-      // Step line for history
-      let seriesHistory = chart.series.push(new am4charts.StepLineSeries());
-      seriesHistory.dataFields.valueY = 'quantity';
-      seriesHistory.dataFields.dateX = 'date';
-      seriesHistory.strokeWidth = 3;
-      seriesHistory.startLocation = 1;
-
-      // Step line for schedule
-      let seriesSchedule = chart.series.push(new am4charts.StepLineSeries());
-      seriesSchedule.dataFields.valueY = 'schedule';
-      seriesSchedule.dataFields.dateX = 'date';
-      seriesSchedule.strokeWidth = 3;
-      seriesSchedule.strokeDasharray = '3,3';
-      seriesSchedule.startLocation = 1;
-
-      let scrollbarX = new am4charts.XYChartScrollbar();
-      scrollbarX.series.push(seriesHistory);
-      scrollbarX.series.push(seriesSchedule);
-      chart.scrollbarX = scrollbarX;
-
-      this.chart = chart;
+      this.createChart();
+      this._colorModeHandler = () => {
+        if (!this.hasData) return;
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       if (this.chart) {
         this.chart.dispose();
       }
     },
-    methods: {},
+    methods: {
+      createChart() {
+        am4core.useTheme(am4themes_animated);
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(this.$refs.chartQuantity, am4charts.XYChart);
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
+        chart.data = this.quantities;
+        chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
+        let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
+        categoryAxis.dataFields = { category: 'date' };
+        chart.yAxes.push(new am4charts.ValueAxis());
+
+        let seriesHistory = chart.series.push(new am4charts.StepLineSeries());
+        seriesHistory.dataFields.valueY = 'quantity';
+        seriesHistory.dataFields.dateX = 'date';
+        seriesHistory.strokeWidth = 3;
+        seriesHistory.startLocation = 1;
+
+        let seriesSchedule = chart.series.push(new am4charts.StepLineSeries());
+        seriesSchedule.dataFields.valueY = 'schedule';
+        seriesSchedule.dataFields.dateX = 'date';
+        seriesSchedule.strokeWidth = 3;
+        seriesSchedule.strokeDasharray = '3,3';
+        seriesSchedule.startLocation = 1;
+
+        let scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(seriesHistory);
+        scrollbarX.series.push(seriesSchedule);
+        chart.scrollbarX = scrollbarX;
+
+        this.chart = chart;
+      },
+    },
   };
 </script>
