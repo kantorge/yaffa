@@ -213,7 +213,7 @@ class WebScrapingProvider implements InvestmentPriceProvider
         }
 
         $isNegative = preg_match('/[-−]/u', $priceValue) === 1;
-        $sanitized = preg_replace('/[^0-9' . preg_quote($decimalSeparator, '/') . ']/u', '', trim($priceValue));
+        $sanitized = preg_replace('/[^0-9' . preg_quote($decimalSeparator, '/') . ']/u', '', mb_trim($priceValue));
 
         if (! is_string($sanitized) || $sanitized === '') {
             throw new InvalidPriceDataException(
