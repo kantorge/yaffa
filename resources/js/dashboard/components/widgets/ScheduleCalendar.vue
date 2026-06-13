@@ -72,9 +72,11 @@
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { Calendar } from 'v-calendar';
-  import { COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       Calendar,
     },
@@ -93,7 +95,6 @@
     data() {
       return {
         busy: false,
-        isDarkMode: document.documentElement.getAttribute('data-coreui-theme') === 'dark',
         transactions: [],
         masks: {
           weekdays: 'WWW',
@@ -118,19 +119,11 @@
       );
     },
 
-    mounted() {
-      this._colorModeHandler = (event) => {
-        this.isDarkMode = event.detail.mode === 'dark';
-      };
-      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-    },
-
     beforeUnmount() {
       window.removeEventListener(
         'transaction-created',
         this.handleTransactionCreated,
       );
-      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
       this.disposeActivePopover();
     },
 

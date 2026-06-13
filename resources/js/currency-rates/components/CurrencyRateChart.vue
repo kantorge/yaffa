@@ -67,9 +67,6 @@
       },
     },
     mounted() {
-      if (!this.hasData) return;
-
-      this.initializeChart();
       this._colorModeHandler = () => {
         if (!this.hasData) return;
         if (this.chart) {
@@ -79,6 +76,9 @@
         this.initializeChart();
       };
       document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+
+      if (!this.hasData) return;
+      this.initializeChart();
     },
     beforeUnmount() {
       document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);

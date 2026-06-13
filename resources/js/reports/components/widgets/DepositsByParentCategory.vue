@@ -216,6 +216,7 @@
     },
     mounted() {
       this.createChart();
+      this.updateChartData(this.transactions);
       this._colorModeHandler = () => {
         if (this.chart) this.chart.dispose();
         this.createChart();

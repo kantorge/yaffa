@@ -328,7 +328,12 @@ if (document.readyState === 'loading') {
 }
 
 document.addEventListener(COLOR_MODE_EVENT, () => {
+    const singleAxisChecked = document.getElementById('singleAxis').checked;
     initChart();
+    if (singleAxisChecked) {
+        seriesTotal.yAxis = valueAxisTotal;
+        valueAxisTotal.disabled = false;
+    }
     if (cachedChartData) {
         chart.data = cachedChartData;
         chart.invalidateData();

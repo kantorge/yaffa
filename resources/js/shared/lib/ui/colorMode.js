@@ -1,11 +1,18 @@
 const STORAGE_KEY = 'yaffa-color-mode';
 
-const getStoredMode = () => localStorage.getItem(STORAGE_KEY) || 'light';
+const getStoredMode = () => {
+    try {
+        return localStorage.getItem(STORAGE_KEY) || 'light';
+    } catch {
+        return 'light';
+    }
+};
 
 const applyMode = (mode) => {
     document.documentElement.setAttribute('data-coreui-theme', mode);
     document.querySelectorAll('.color-mode-icon').forEach((icon) => {
-        icon.className = icon.className.replace(/fa-sun|fa-moon/, mode === 'dark' ? 'fa-sun' : 'fa-moon');
+        icon.classList.toggle('fa-sun', mode === 'dark');
+        icon.classList.toggle('fa-moon', mode !== 'dark');
     });
     document.dispatchEvent(new CustomEvent('yaffa:colorModeChange', { detail: { mode } }));
 };
@@ -13,7 +20,11 @@ const applyMode = (mode) => {
 const toggleMode = () => {
     const current = document.documentElement.getAttribute('data-coreui-theme') || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(STORAGE_KEY, next);
+    try {
+        localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+        // localStorage unavailable (e.g. private browsing) — mode change applies for this session only
+    }
     applyMode(next);
 };
 

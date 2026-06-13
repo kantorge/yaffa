@@ -30,7 +30,11 @@
     {{-- Apply stored color mode before first paint to prevent flash --}}
     <script>
         (function () {
-            var mode = localStorage.getItem('yaffa-color-mode') || 'light';
+            var mode = 'light';
+            try {
+                var stored = localStorage.getItem('yaffa-color-mode');
+                if (stored === 'dark' || stored === 'light') mode = stored;
+            } catch (e) {}
             document.documentElement.setAttribute('data-coreui-theme', mode);
         })();
     </script>

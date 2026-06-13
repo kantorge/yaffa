@@ -218,7 +218,7 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
                 // Select date range preset
-                ->select('#dateRangePickerPresets', 'thisMonth')
+                ->select('#dateRangeFilterPresets', 'thisMonth')
                 // Wait for filter to apply - this is done locally, so a short pause is sufficient
                 ->pause(2000)
                 // Verify table shows filtered results

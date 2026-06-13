@@ -33,6 +33,7 @@
               <input
                 type="text"
                 class="form-control"
+                :id="componentId + '_from'"
                 :value="inputValue"
                 v-on="inputEvents"
                 :placeholder="__('Select date')"
@@ -57,6 +58,7 @@
               <input
                 type="text"
                 class="form-control"
+                :id="componentId + '_to'"
                 :value="inputValue"
                 v-on="inputEvents"
                 :placeholder="__('Select date')"
@@ -70,6 +72,7 @@
         <div class="col-12">
           <select
             class="form-select"
+            :id="componentId + 'Presets'"
             v-model="selectedPreset"
             @change="onPresetChange"
           >
@@ -92,13 +95,18 @@
       </div>
     </div>
     <div class="card-footer text-end">
-      <button class="btn btn-sm btn-outline-dark" @click="clearDates">
+      <button
+        class="btn btn-sm btn-outline-dark"
+        :id="componentId + 'Clear'"
+        @click="clearDates"
+      >
         {{ __('Clear selection') }}
       </button>
       <button
         v-if="showUpdateButton"
         type="button"
         class="btn btn-sm btn-primary ms-2"
+        :id="componentId + 'Update'"
         @click="emitDates"
       >
         {{ __('Update') }}
@@ -144,7 +152,7 @@
       },
       componentId: {
         type: String,
-        default: 'dateRangeFilter',
+        default: () => 'dateRangeFilter_' + Math.random().toString(36).slice(2, 9),
       },
       initialDateFrom: {
         type: String,
@@ -280,19 +288,20 @@
         });
       },
       rebuildUrl() {
-        const params = [];
+        const params = new URLSearchParams();
         if (this.selectedPreset && this.selectedPreset !== 'none') {
-          params.push('date_preset=' + this.selectedPreset);
+          params.set('date_preset', this.selectedPreset);
         } else {
-          if (this.dateFrom) params.push('date_from=' + this.dateFrom);
-          if (this.dateTo) params.push('date_to=' + this.dateTo);
+          if (this.dateFrom) params.set('date_from', this.dateFrom);
+          if (this.dateTo) params.set('date_to', this.dateTo);
         }
+        const qs = params.toString();
         window.history.pushState(
           '',
           '',
           window.location.origin +
             window.location.pathname +
-            (params.length ? '?' + params.join('&') : ''),
+            (qs ? '?' + qs : ''),
         );
       },
       __,

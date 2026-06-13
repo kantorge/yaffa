@@ -91,6 +91,7 @@ function initChart() {
     am4core.useTheme(am4themes_kelly);
 
     chart = am4core.create("chartdiv", am4charts.XYChart);
+    window.chart = chart;
     applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
 
     chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;

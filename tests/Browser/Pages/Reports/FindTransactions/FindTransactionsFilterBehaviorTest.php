@@ -34,14 +34,14 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['date_from' => '2022-01-01', 'date_to' => '2022-01-31'])
-                ->waitFor('@dateRangePicker')
-                ->assertInputValue('#date_from', '2022-01-01')
-                ->assertInputValue('#date_to', '2022-01-31');
+                ->waitFor('#dateRangeFilter_from')
+                ->assertInputValue('#dateRangeFilter_from', '2022-01-01')
+                ->assertInputValue('#dateRangeFilter_to', '2022-01-31');
 
             $browser->visitRoute('reports.transactions', [])
-                ->waitFor('@dateRangePicker')
-                ->assertInputValue('#date_from', '')
-                ->assertInputValue('#date_to', '');
+                ->waitFor('#dateRangeFilter_from')
+                ->assertInputValue('#dateRangeFilter_from', '')
+                ->assertInputValue('#dateRangeFilter_to', '');
         });
     }
 
@@ -50,18 +50,18 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
-                ->waitFor('@dateRangePicker')
+                ->waitFor('#dateRangeFilter_from')
                 // Select option with value "thisMonth"
-                ->select('#dateRangePickerPresets', 'thisMonth')
-                ->assertInputValue('#date_from', date('Y-m-01'))
-                ->assertInputValue('#date_to', date('Y-m-t'))
+                ->select('#dateRangeFilterPresets', 'thisMonth')
+                ->assertInputValue('#dateRangeFilter_from', date('Y-m-01'))
+                ->assertInputValue('#dateRangeFilter_to', date('Y-m-t'))
                 // Check the parameters in the URL
                 ->assertQueryStringHas('date_from', date('Y-m-01'))
                 ->assertQueryStringHas('date_to', date('Y-m-t'))
-                // Remove the selection with the option "placeholder"
-                ->select('#dateRangePickerPresets', 'placeholder')
-                ->assertInputValue('#date_from', '')
-                ->assertInputValue('#date_to', '')
+                // Remove the selection with the "Select preset" option (value "none")
+                ->select('#dateRangeFilterPresets', 'none')
+                ->assertInputValue('#dateRangeFilter_from', '')
+                ->assertInputValue('#dateRangeFilter_to', '')
                 // Check the parameters in the URL
                 ->assertQueryStringMissing('date_from')
                 ->assertQueryStringMissing('date_to');
@@ -73,16 +73,16 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
-                ->waitFor('@dateRangePicker')
+                ->waitFor('#dateRangeFilter_from')
                 // Set the date range using the presets
-                ->select('#dateRangePickerPresets', 'thisMonth')
-                ->assertInputValue('#date_from', date('Y-m-01'))
-                ->assertInputValue('#date_to', date('Y-m-t'))
+                ->select('#dateRangeFilterPresets', 'thisMonth')
+                ->assertInputValue('#dateRangeFilter_from', date('Y-m-01'))
+                ->assertInputValue('#dateRangeFilter_to', date('Y-m-t'))
                 // Clear the date range
-                ->click('#clearDateSelection')
-                ->assertInputValue('#date_from', '')
-                ->assertInputValue('#date_to', '')
-                ->assertSelected('#dateRangePickerPresets', 'placeholder');
+                ->click('#dateRangeFilterClear')
+                ->assertInputValue('#dateRangeFilter_from', '')
+                ->assertInputValue('#dateRangeFilter_to', '')
+                ->assertSelected('#dateRangeFilterPresets', 'none');
         });
     }
 
