@@ -41,6 +41,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             'provider_settings' => [
                 'url' => 'https://example.com',
                 'selector' => '.price',
+                'decimal_separator' => ',',
             ],
         ]);
 
@@ -112,6 +113,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
                 'provider_settings' => [
                     'url' => 'https://example.com/price',
                     'selector' => '.price',
+                    'decimal_separator' => ',',
                 ],
             ]);
 
@@ -156,6 +158,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
                 'provider_settings' => [
                     'url' => 'https://example.com/price',
                     'selector' => '.price',
+                    'decimal_separator' => ',',
                 ],
             ]);
 
@@ -175,7 +178,8 @@ class InvestmentPriceProviderApiV1Test extends TestCase
             ->once()
             ->withArgs(fn ($investment): bool => is_array($investment->provider_settings)
                     && ($investment->provider_settings['url'] ?? null) === 'https://example.com/live'
-                    && ($investment->provider_settings['selector'] ?? null) === '.quote')
+                    && ($investment->provider_settings['selector'] ?? null) === '.quote'
+                    && ($investment->provider_settings['decimal_separator'] ?? null) === ',')
             ->andReturnUsing(fn () => [
                 [
                     'date' => $newerDate,
@@ -205,6 +209,7 @@ class InvestmentPriceProviderApiV1Test extends TestCase
                 'provider_settings' => [
                     'url' => 'https://example.com/live',
                     'selector' => '.quote',
+                    'decimal_separator' => ',',
                 ],
             ]);
 

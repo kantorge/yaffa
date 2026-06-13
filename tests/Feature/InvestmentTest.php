@@ -181,6 +181,7 @@ class InvestmentTest extends TestCase
             'provider_settings' => [
                 'url' => 'https://example.com/price',
                 'selector' => '.price',
+                'decimal_separator' => ',',
             ],
         ]);
 
@@ -194,6 +195,7 @@ class InvestmentTest extends TestCase
         $this->assertSame('web_scraping', $investment->investment_price_provider);
         $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
         $this->assertSame('.price', $investment->provider_settings['selector']);
+        $this->assertSame(',', $investment->provider_settings['decimal_separator']);
     }
 
     public function test_user_can_edit_an_existing_investment(): void
@@ -309,6 +311,7 @@ class InvestmentTest extends TestCase
             'provider_settings' => [
                 'url' => 'https://example.com/price',
                 'selector' => '.price',
+                'decimal_separator' => ',',
             ],
         ]);
 
@@ -331,6 +334,7 @@ class InvestmentTest extends TestCase
         $this->assertSame('alpha_vantage', $investment->investment_price_provider);
         $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
         $this->assertSame('.price', $investment->provider_settings['selector']);
+        $this->assertSame(',', $investment->provider_settings['decimal_separator']);
     }
 
     public function test_omitting_provider_settings_preserves_existing_settings(): void
@@ -347,6 +351,7 @@ class InvestmentTest extends TestCase
             'provider_settings' => [
                 'url' => 'https://example.com/price',
                 'selector' => '.price',
+                'decimal_separator' => ',',
             ],
         ]);
 
@@ -369,6 +374,7 @@ class InvestmentTest extends TestCase
         $this->assertSame('alpha_vantage', $investment->investment_price_provider);
         $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
         $this->assertSame('.price', $investment->provider_settings['selector']);
+        $this->assertSame(',', $investment->provider_settings['decimal_separator']);
     }
 
     public function test_user_can_delete_an_existing_investment(): void
