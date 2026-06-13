@@ -152,7 +152,7 @@
       },
       componentId: {
         type: String,
-        default: () => 'dateRangeFilter_' + Math.random().toString(36).slice(2, 9),
+        default: 'dateRangeFilter',
       },
       initialDateFrom: {
         type: String,
