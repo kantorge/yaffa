@@ -30,6 +30,7 @@
       <date-range-filter-card
         :initial-date-from="dateFrom"
         :initial-date-to="dateTo"
+        :initial-preset="selectedPreset"
         @update="onUpdateDateRange"
       ></date-range-filter-card>
 
@@ -266,6 +267,16 @@
   import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
+  import presetCalculators from '@/shared/lib/date/presetDates';
+
+  function formatDate(date) {
+    if (!date) return null;
+    const d = date instanceof Date ? date : new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
 
   const TRANSACTIONS_CACHE_KEY = 'yaffa_transactions_cache';
   const BREAKDOWN_CACHE_KEY = 'yaffa_breakdown_cache';
@@ -287,13 +298,27 @@
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
+      const datePreset = urlParams.get('date_preset') || null;
+      let dateFrom = urlParams.get('date_from') || null;
+      let dateTo = urlParams.get('date_to') || null;
+
+      if (datePreset && !dateFrom && !dateTo) {
+        const calculator = presetCalculators[datePreset];
+        if (calculator) {
+          const dates = calculator(new Date());
+          dateFrom = formatDate(dates.start);
+          dateTo = formatDate(dates.end);
+        }
+      }
+
       return {
         busy: false,
         ready: false,
         leftControlPanelCollapsed: false,
         activeTab: 'summary',
-        dateFrom: urlParams.get('date_from') || null,
-        dateTo: urlParams.get('date_to') || null,
+        dateFrom,
+        dateTo,
+        selectedPreset: datePreset,
         selectedAccounts: this.getUrlParams('accounts'),
         selectedCategories: this.getUrlParams('categories'),
         selectedPayees: this.getUrlParams('payees'),
@@ -330,6 +355,7 @@
         this.drillDownFilter = null;
         this.dateFrom = event.dateFrom;
         this.dateTo = event.dateTo;
+        this.selectedPreset = event.preset || null;
         this.rebuildUrl();
       },
       onUpdateCategory(event) {
@@ -393,14 +419,16 @@
       rebuildUrl(tab = null, returnTo = null) {
         let params = [];
 
-        // Date from
-        if (this.dateFrom) {
-          params.push('date_from=' + this.dateFrom);
-        }
-
-        // Date to
-        if (this.dateTo) {
-          params.push('date_to=' + this.dateTo);
+        // Date filter: use preset key when active, explicit dates otherwise
+        if (this.selectedPreset) {
+          params.push('date_preset=' + encodeURIComponent(this.selectedPreset));
+        } else {
+          if (this.dateFrom) {
+            params.push('date_from=' + this.dateFrom);
+          }
+          if (this.dateTo) {
+            params.push('date_to=' + this.dateTo);
+          }
         }
 
         // Accounts

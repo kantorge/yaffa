@@ -55,14 +55,16 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->select('#dateRangeFilterPresets', 'thisMonth')
                 ->assertInputValue('#dateRangeFilter_from', date('Y-m-01'))
                 ->assertInputValue('#dateRangeFilter_to', date('Y-m-t'))
-                // Check the parameters in the URL
-                ->assertQueryStringHas('date_from', date('Y-m-01'))
-                ->assertQueryStringHas('date_to', date('Y-m-t'))
+                // Preset key should appear in the URL; resolved dates should not
+                ->assertQueryStringHas('date_preset', 'thisMonth')
+                ->assertQueryStringMissing('date_from')
+                ->assertQueryStringMissing('date_to')
                 // Remove the selection with the "Select preset" option (value "none")
                 ->select('#dateRangeFilterPresets', 'none')
                 ->assertInputValue('#dateRangeFilter_from', '')
                 ->assertInputValue('#dateRangeFilter_to', '')
                 // Check the parameters in the URL
+                ->assertQueryStringMissing('date_preset')
                 ->assertQueryStringMissing('date_from')
                 ->assertQueryStringMissing('date_to');
         });

@@ -227,7 +227,12 @@
           return this.dateFrom;
         },
         set(val) {
-          this.dateFrom = val || null;
+          const normalized = val || null;
+          // v-calendar echoes update:modelValue when its :modelValue prop changes
+          // programmatically (e.g. from onPresetChange). Skip if the value is
+          // unchanged so we don't accidentally clear selectedPreset.
+          if (normalized === this.dateFrom) return;
+          this.dateFrom = normalized;
           // New start is after the current end: clear end (start is authoritative)
           if (this.dateFrom && this.dateTo && this.dateFrom > this.dateTo) {
             this.dateTo = null;
@@ -243,7 +248,10 @@
           return this.dateTo;
         },
         set(val) {
-          this.dateTo = val || null;
+          const normalized = val || null;
+          // Same echo-guard as dateFromBinding.
+          if (normalized === this.dateTo) return;
+          this.dateTo = normalized;
           // New end is before the current start: clear start (end is authoritative)
           if (this.dateFrom && this.dateTo && this.dateTo < this.dateFrom) {
             this.dateFrom = null;
@@ -288,12 +296,21 @@
         });
       },
       rebuildUrl() {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams(window.location.search);
         if (this.selectedPreset && this.selectedPreset !== 'none') {
           params.set('date_preset', this.selectedPreset);
-        } else {
+          params.delete('date_from');
+          params.delete('date_to');
+        } else if (this.dateFrom || this.dateTo) {
+          params.delete('date_preset');
           if (this.dateFrom) params.set('date_from', this.dateFrom);
+          else params.delete('date_from');
           if (this.dateTo) params.set('date_to', this.dateTo);
+          else params.delete('date_to');
+        } else {
+          params.delete('date_preset');
+          params.delete('date_from');
+          params.delete('date_to');
         }
         const qs = params.toString();
         window.history.pushState(
