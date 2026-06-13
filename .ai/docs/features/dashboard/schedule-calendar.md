@@ -6,7 +6,7 @@ Upcoming Scheduled Transactions Calendar
 
 ## Feature Summary
 
-This widget places scheduled transaction instances on a calendar so users can quickly see what is coming up next. It is a future-awareness tool designed to reduce surprises and keep recurring financial commitments visible.
+This widget places scheduled transaction instances on a calendar so users can quickly see what is coming up next. It is a future-awareness tool designed to reduce surprises and keep recurring financial commitments visible, while also allowing users to act on a scheduled instance directly from the calendar.
 
 ## Target User
 
@@ -20,15 +20,17 @@ This widget places scheduled transaction instances on a calendar so users can qu
 
 - Scheduled commitments are easy to forget when they are hidden inside forms or lists.
 - Users need a visual way to see near-future financial activity without running a full report.
-- Provides a quick link to enter scheduled instances when they are top of mind.
+- Users need a quick way to either enter or skip a scheduled instance when it is top of mind.
 
 ## User Value / Benefit
 
 ### Functional Benefits
 
 - Displays upcoming scheduled instances in calendar form.
-- Lets users click through directly to the enter-instance workflow.
+- Lets users open the enter-instance workflow directly from the calendar.
+- Lets users skip the current scheduled instance without leaving the calendar.
 - Makes upcoming planned activity visible in a time-based layout.
+- Keeps the user on the same month when the widget refreshes after an action.
 
 ### Conceptual Benefits
 
@@ -49,8 +51,9 @@ Use this widget when the user wants to know What is scheduled soon?
 
 - The widget loads scheduled transaction items from the existing transaction API.
 - It maps next scheduled dates into a calendar component.
-- Each date cell can contain one or more transaction-type icons that link to the related entry action.
-- The visible date range is automatically adjusted to the relevant upcoming period.
+- Each date cell can contain one or more transaction-type icons that open an interactive popover.
+- The popover lets the user skip the current instance or enter it through the existing transaction modal flow.
+- The visible month is preserved when the widget refreshes after user actions.
 
 ## Inputs
 
@@ -61,14 +64,17 @@ Use this widget when the user wants to know What is scheduled soon?
 ## Outputs
 
 - Calendar with scheduled-instance markers
-- Tooltip-style labels for transaction details
-- Direct navigation into the schedule entry workflow
+- Interactive popover with transaction details and action buttons
+- Skip action result reflected back into the calendar data
+- Direct entry into the schedule workflow through the modal-based form
 
 ## Core Logic / Rules
 
 - Only items with a valid next scheduled date are shown.
 - The calendar focuses on schedule instances rather than the full transaction history.
 - The widget is a visibility tool, not a full schedule-management interface.
+- The popover can stay open long enough for interaction and closes when the calendar moves or the widget is dismissed.
+- After skipping or saving an instance, the widget refreshes its schedule data and keeps the visible month stable when possible.
 
 ## Confidence Level
 
@@ -76,4 +82,4 @@ High
 
 ## Assumptions
 
-- The widget is mainly oriented toward awareness and follow-up rather than detailed schedule editing.
+- The widget is mainly oriented toward awareness and follow-up rather than detailed schedule editing, even though it now supports two lightweight actions on each upcoming instance.
