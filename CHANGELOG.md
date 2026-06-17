@@ -16,6 +16,8 @@
 ### ✨ Features
 
 * support configurable decimal separators for web-scraped investment prices ([#493](https://github.com/kantorge/yaffa/issues/493)) ([9fed197](https://github.com/kantorge/yaffa/commit/9fed197a5512c711ea32fa05590234fb8f946dbd))
+* UI improvements and introducing dark mode ([4e06cc6](https://github.com/kantorge/yaffa/commit/4e06cc60cd05da53caaf02fb05fb9b0f2eeca272))
+
 
 ## [3.3.0](https://github.com/kantorge/yaffa/compare/v3.2.0...v3.3.0) (2026-06-09)
 
