@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.4.0](https://github.com/kantorge/yaffa/compare/v3.3.0...v3.4.0) (2026-06-17)
+
+
+### 🛠️ Chores
+
+* **deps:** bump esbuild in the npm_and_yarn group across 1 directory ([#491](https://github.com/kantorge/yaffa/issues/491)) ([dd83518](https://github.com/kantorge/yaffa/commit/dd83518e1e38b429bf50a24baf4f101822c05660))
+
+
+### 📚 Documentation
+
+* add Claude-specific guidelines and update other AI-related docs ([22d30ba](https://github.com/kantorge/yaffa/commit/22d30baf7b8569b6a9bb445b13ee9020544210e5))
+
+
+### ✨ Features
+
+* support configurable decimal separators for web-scraped investment prices ([#493](https://github.com/kantorge/yaffa/issues/493)) ([9fed197](https://github.com/kantorge/yaffa/commit/9fed197a5512c711ea32fa05590234fb8f946dbd))
+* UI improvements and introducing dark mode ([4e06cc6](https://github.com/kantorge/yaffa/commit/4e06cc60cd05da53caaf02fb05fb9b0f2eeca272))
+
+
 ## [3.3.0](https://github.com/kantorge/yaffa/compare/v3.2.0...v3.3.0) (2026-06-09)
 
 
