@@ -29,7 +29,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => 123.45])]);
+            ->andReturn([new Item(['price' => '$123.45'])]);
 
         $provider = new WebScrapingProvider($scraperService);
         $prices = $provider->fetchPrices($investment);
@@ -37,6 +37,46 @@ class WebScrapingProviderTest extends TestCase
         $this->assertCount(1, $prices);
         $this->assertEquals(123.45, $prices[0]['price']);
         $this->assertEquals(Carbon::yesterday()->format('Y-m-d'), $prices[0]['date']);
+    }
+
+    public function test_fetches_prices_with_comma_decimal_separator(): void
+    {
+        $investment = $this->makeInvestment([
+            'provider_settings' => [
+                'url' => 'https://example.com/price',
+                'selector' => '.price',
+                'decimal_separator' => ',',
+            ],
+        ]);
+
+        $scraperService = Mockery::mock(ScraperService::class);
+        $scraperService->shouldReceive('scrape')
+            ->once()
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
+            ->andReturn([new Item(['price' => '€1.234,56'])]);
+
+        $provider = new WebScrapingProvider($scraperService);
+        $prices = $provider->fetchPrices($investment);
+
+        $this->assertCount(1, $prices);
+        $this->assertEquals(1234.56, $prices[0]['price']);
+    }
+
+    public function test_defaults_to_dot_decimal_separator_when_setting_is_missing(): void
+    {
+        $investment = $this->makeInvestment();
+
+        $scraperService = Mockery::mock(ScraperService::class);
+        $scraperService->shouldReceive('scrape')
+            ->once()
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
+            ->andReturn([new Item(['price' => '$1,234.56'])]);
+
+        $provider = new WebScrapingProvider($scraperService);
+        $prices = $provider->fetchPrices($investment);
+
+        $this->assertCount(1, $prices);
+        $this->assertEquals(1234.56, $prices[0]['price']);
     }
 
     public function test_handles_empty_scraping_result(): void
@@ -223,6 +263,18 @@ class WebScrapingProviderTest extends TestCase
         $instructions = $provider->getInstructions();
         $this->assertStringContainsString('URL', $instructions);
         $this->assertStringContainsString('selector', $instructions);
+    }
+
+    public function test_get_investment_settings_schema_includes_optional_decimal_separator(): void
+    {
+        $scraperService = Mockery::mock(ScraperService::class);
+        $provider = new WebScrapingProvider($scraperService);
+
+        $schema = $provider->getInvestmentSettingsSchema();
+
+        $this->assertArrayHasKey('decimal_separator', $schema['properties']);
+        $this->assertSame(['.', ','], $schema['properties']['decimal_separator']['enum']);
+        $this->assertNotContains('decimal_separator', $schema['required']);
     }
 
     /**

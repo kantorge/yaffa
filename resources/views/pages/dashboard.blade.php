@@ -9,5 +9,7 @@
 @section('content')
     <div id="app">
         <dashboard></dashboard>
+        <transaction-create-standard-modal></transaction-create-standard-modal>
+        <transaction-create-investment-modal></transaction-create-investment-modal>
     </div>
 @stop

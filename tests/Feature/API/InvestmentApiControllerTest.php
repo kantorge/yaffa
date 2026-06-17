@@ -76,18 +76,21 @@ class InvestmentApiControllerTest extends TestCase
                 'provider_settings' => [
                     'url' => 'https://example.com/price',
                     'selector' => '.price',
+                    'decimal_separator' => ',',
                 ],
             ],
         );
 
         $response->assertOk()
             ->assertJsonPath('provider_settings.url', 'https://example.com/price')
-            ->assertJsonPath('provider_settings.selector', '.price');
+            ->assertJsonPath('provider_settings.selector', '.price')
+            ->assertJsonPath('provider_settings.decimal_separator', ',');
 
         $investment->refresh();
 
         $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
         $this->assertSame('.price', $investment->provider_settings['selector']);
+        $this->assertSame(',', $investment->provider_settings['decimal_separator']);
     }
 
     public function test_provider_settings_update_validates_selected_provider_schema(): void
@@ -122,6 +125,7 @@ class InvestmentApiControllerTest extends TestCase
             'provider_settings' => [
                 'url' => 'https://example.com/price',
                 'selector' => '.price',
+                'decimal_separator' => ',',
             ],
         ]);
 
@@ -129,7 +133,8 @@ class InvestmentApiControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('provider_settings.url', 'https://example.com/price')
-            ->assertJsonPath('provider_settings.selector', '.price');
+            ->assertJsonPath('provider_settings.selector', '.price')
+            ->assertJsonPath('provider_settings.decimal_separator', ',');
     }
 
     private function createInvestmentForUser(User $user): Investment

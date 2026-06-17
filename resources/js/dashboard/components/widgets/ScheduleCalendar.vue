@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-4" id="widgetScheduleCalendar">
+  <div id="widgetScheduleCalendar" class="card mb-4">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('widget.scheduleCalendar.cardTitle') }}
@@ -9,40 +9,52 @@
           type="button"
           class="btn-close"
           aria-label="Close"
-          @click="hide"
           :disabled="busy"
+          @click="hide"
         ></button>
       </div>
     </div>
     <div class="card-body">
-      <p aria-hidden="true" v-if="busy" class="placeholder-glow">
+      <p v-if="busy" aria-hidden="true" class="placeholder-glow">
         <span class="placeholder col-12"></span>
       </p>
       <Calendar
+        ref="calendar"
         class="custom-calendar"
         :masks="masks"
         :attributes="transactions"
         :first-day-of-week="2"
         :min-date="minDate"
         :max-date="maxDate"
+        :is-dark="isDarkMode"
         disable-page-swipe
         expanded
         trim-weeks
-        @transition-end="refreshTooltip"
-        v-if="!busy"
         :locale="language"
+        @transition-start="onCalendarTransitionStart"
+        @update:pages="handlePagesUpdate"
       >
-        <template v-slot:day-content="{ day, attributes }">
+        <template #day-content="{ day, attributes }">
           <div>
             <span class="day-label text-sm">{{ day.day }}</span>
             <div class="vc-day-custom-content">
-              <a
+              <button
                 v-for="item in attributes"
                 :key="item.key"
-                style="margin: 0 1px"
-                :href="getTransactionLink(item.customData?.id || 0)"
-                v-html="getTransactionTypeIcon(item.customData)"
-              ></a>
+                type="button"
+                class="btn btn-link p-0 schedule-calendar-trigger"
+                @mouseenter="onTransactionTriggerEnter($event, item.customData)"
+                @mouseleave="onTransactionTriggerLeave"
+                @click="onTransactionTriggerClick($event, item.customData)"
+                @keydown="onTransactionTriggerKeydown($event, item.customData)"
+                @touchstart="
+                  onTransactionTriggerTouchstart($event, item.customData)
+                "
+                @focus="onTransactionTriggerEnter($event, item.customData)"
+                @blur="onTransactionTriggerLeave"
+              >
+                <i :class="getTransactionIconClasses(item.customData)"></i>
+              </button>
             </div>
           </div>
         </template>
@@ -52,12 +64,19 @@
 </template>
 
 <script>
-  import { transactionTypeIcon } from '@/shared/lib/datatable';
-  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import {
+    escapeHtml,
+    escapeHtmlWithLineBreaks,
+    getTransactionTypeConfig,
+  } from '@/shared/lib/helpers';
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
   import { Calendar } from 'v-calendar';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       Calendar,
     },
@@ -73,56 +92,6 @@
       },
     },
 
-    methods: {
-      getTransactionTypeIcon: function (transaction) {
-        if (!transaction) {
-          return '';
-        }
-
-        return transactionTypeIcon(
-          transaction.transaction_type,
-          this.getTransactionLabel(transaction),
-        );
-      },
-      getTransactionLink: function (id) {
-        return this.route('transaction.open', {
-          transaction: id,
-          action: 'enter',
-        });
-      },
-      getTransactionLabel: function (transaction) {
-        if (!transaction) {
-          return '';
-        }
-
-        if (transaction.config_type === 'standard') {
-          // Capitalize first letter of transaction type
-          const type =
-            transaction.transaction_type.charAt(0).toUpperCase() +
-            transaction.transaction_type.slice(1);
-          // Return constructed label
-          return this.__('widget.scheduleCalendar.transactionLabel', {
-            type: __(type), // Type itself is also translated before being inserted into the label
-            amount: toFormattedCurrency(
-              transaction.config.amount_to,
-              this.locale,
-              transaction.transaction_currency,
-            ),
-            fromAccount: transaction.config.account_from.name,
-            toAccount: transaction.config.account_to.name,
-          });
-        }
-      },
-      refreshTooltip: function () {
-        initializeBootstrapTooltips();
-      },
-      __,
-      toFormattedCurrency,
-      hide() {
-        $('#widgetScheduleCalendar').hide();
-      },
-    },
-
     data() {
       return {
         busy: false,
@@ -132,26 +101,481 @@
         },
         minDate: null,
         maxDate: null,
+        activePopover: null,
+        activePopoverTrigger: null,
+        popoverHideTimer: null,
+        popoverHideDelayMs: 1500,
+        skipInstanceBusy: false,
+        visiblePage: null,
+        preventGhostClickUntil: 0,
       };
     },
 
     created() {
-      this.busy = true;
-      let vue = this;
+      this.loadTransactions();
+      window.addEventListener(
+        'transaction-created',
+        this.handleTransactionCreated,
+      );
+    },
 
-      axios
-        .get('/api/v1/transactions/scheduled-items?type=schedule')
-        .then(function (response) {
-          vue.transactions = response.data.transactions
-            // Keep only the transactions with a next date set.
-            // Note: the date values are not converted to JavaScript Date objects in general.
-            // Note: at this point, all items should have a schedule and next date, but a double-check is performed
+    beforeUnmount() {
+      window.removeEventListener(
+        'transaction-created',
+        this.handleTransactionCreated,
+      );
+      this.disposeActivePopover();
+    },
+
+    methods: {
+      getTransactionIconClasses(transaction) {
+        if (!transaction) {
+          return [];
+        }
+
+        const typeConfig = getTransactionTypeConfig(
+          transaction.transaction_type,
+        );
+
+        if (typeConfig.category === 'standard') {
+          if (transaction.transaction_type === 'withdrawal') {
+            return ['fa', 'fa-circle-minus', 'text-danger'];
+          }
+          if (transaction.transaction_type === 'deposit') {
+            return ['fa', 'fa-circle-plus', 'text-success'];
+          }
+          if (transaction.transaction_type === 'transfer') {
+            return ['fa', 'fa-exchange-alt', 'text-primary'];
+          }
+        }
+
+        if (typeConfig.category === 'investment') {
+          return ['fa', 'fa-chart-line', 'text-primary'];
+        }
+
+        return ['fa', 'fa-circle', 'text-muted'];
+      },
+      getTransactionById(id) {
+        const transactionId = Number(id);
+
+        return (
+          this.transactions.find(
+            (attribute) => Number(attribute.customData?.id) === transactionId,
+          )?.customData || null
+        );
+      },
+      getTransactionLabel(transaction) {
+        if (!transaction) {
+          return '';
+        }
+
+        if (transaction.config_type === 'standard') {
+          const type =
+            transaction.transaction_type.charAt(0).toUpperCase() +
+            transaction.transaction_type.slice(1);
+
+          return this.__('widget.scheduleCalendar.transactionLabel', {
+            type: __(type),
+            amount: toFormattedCurrency(
+              transaction.config.amount_to,
+              this.locale,
+              transaction.transaction_currency,
+            ),
+            fromAccount: transaction.config.account_from.name,
+            toAccount: transaction.config.account_to.name,
+          });
+        }
+
+        if (transaction.config_type === 'investment') {
+          const typeConfig = getTransactionTypeConfig(
+            transaction.transaction_type,
+          );
+          const investmentName = transaction.config?.investment?.name;
+          const accountName = transaction.config?.account?.name;
+          const quantity = transaction.config?.quantity;
+
+          let label = `${this.__(typeConfig.label)}: ${investmentName || this.__('N/A')}`;
+
+          if (accountName) {
+            label += `\n${this.__('Account')}: ${accountName}`;
+          }
+
+          if (quantity !== null && quantity !== undefined) {
+            label += `\n${this.__('Quantity')}: ${Number(quantity).toLocaleString(this.locale)}`;
+          }
+
+          return label;
+        }
+
+        return '';
+      },
+      getPopoverContent(transaction) {
+        const label = escapeHtmlWithLineBreaks(
+          this.getTransactionLabel(transaction),
+        );
+
+        return `
+      <div class="schedule-calendar-popover-content">
+        <div class="schedule-calendar-popover-header">
+          <button
+            type="button"
+            class="btn-close btn-close-white schedule-calendar-popover-close"
+            data-schedule-calendar-action="close"
+            title="${escapeHtml(this.__('Close'))}"
+            aria-label="${escapeHtml(this.__('Close'))}"
+          ></button>
+        </div>
+        <div class="schedule-calendar-popover-label">${label}</div>
+        <div class="schedule-calendar-popover-actions">
+          <button
+            type="button"
+            class="btn btn-sm btn-warning"
+            data-schedule-calendar-action="skip"
+            data-transaction-id="${transaction.id}"
+            title="${escapeHtml(this.__('Skip schedule instance'))}"
+          >
+            <i class="fa fa-fw fa-fast-forward"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-success"
+            data-schedule-calendar-action="enter"
+            data-transaction-id="${transaction.id}"
+            title="${escapeHtml(this.__('Enter schedule instance'))}"
+          >
+            <i class="fa fa-fw fa-pencil"></i>
+          </button>
+        </div>
+      </div>
+    `;
+      },
+      clearPopoverHideTimer() {
+        if (!this.popoverHideTimer) {
+          return;
+        }
+
+        clearTimeout(this.popoverHideTimer);
+        this.popoverHideTimer = null;
+      },
+      schedulePopoverHide() {
+        this.clearPopoverHideTimer();
+        this.popoverHideTimer = setTimeout(() => {
+          this.hideActivePopover();
+        }, this.popoverHideDelayMs);
+      },
+      hideActivePopover() {
+        this.clearPopoverHideTimer();
+
+        if (!this.activePopover) {
+          return;
+        }
+
+        const tip = this.getPopoverTipElement();
+        if (tip) {
+          tip.removeEventListener('click', this.onPopoverActionClick);
+          tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
+          tip.removeEventListener('mouseleave', this.schedulePopoverHide);
+          tip.removeEventListener('focusin', this.clearPopoverHideTimer);
+          tip.removeEventListener('focusout', this.schedulePopoverHide);
+        }
+
+        this.activePopover.hide();
+      },
+      disposeActivePopover() {
+        this.hideActivePopover();
+
+        if (!this.activePopover) {
+          return;
+        }
+
+        this.activePopover.dispose();
+        this.activePopover = null;
+        this.activePopoverTrigger = null;
+      },
+      showPopover(event, transaction) {
+        if (!event.currentTarget || !transaction) {
+          return;
+        }
+
+        const triggerElement = event.currentTarget;
+        const shouldRecreatePopover =
+          !this.activePopover || this.activePopoverTrigger !== triggerElement;
+
+        this.clearPopoverHideTimer();
+
+        if (shouldRecreatePopover) {
+          this.disposeActivePopover();
+
+          this.activePopover = new window.bootstrap.Popover(triggerElement, {
+            container: 'body',
+            content: this.getPopoverContent(transaction),
+            customClass: 'schedule-calendar-popover',
+            html: true,
+            placement: 'top',
+            fallbackPlacements: ['top', 'right', 'left', 'bottom'],
+            popperConfig(defaultBsPopperConfig) {
+              return {
+                ...defaultBsPopperConfig,
+                modifiers: [
+                  ...(defaultBsPopperConfig?.modifiers || []),
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 8],
+                    },
+                  },
+                ],
+              };
+            },
+            sanitize: false,
+            trigger: 'manual',
+          });
+          this.activePopoverTrigger = triggerElement;
+        }
+
+        this.activePopover.show();
+
+        const tip = this.getPopoverTipElement();
+        if (tip) {
+          tip.addEventListener('click', this.onPopoverActionClick);
+          tip.addEventListener('mouseenter', this.clearPopoverHideTimer);
+          tip.addEventListener('mouseleave', this.schedulePopoverHide);
+          tip.addEventListener('focusin', this.clearPopoverHideTimer);
+          tip.addEventListener('focusout', this.schedulePopoverHide);
+        }
+      },
+      getPopoverTipElement() {
+        if (!this.activePopover) {
+          return null;
+        }
+
+        if (typeof this.activePopover.getTipElement === 'function') {
+          return this.activePopover.getTipElement();
+        }
+
+        return this.activePopover.tip || null;
+      },
+      onTransactionTriggerEnter(event, transaction) {
+        this.showPopover(event, transaction);
+      },
+      onTransactionTriggerLeave() {
+        this.schedulePopoverHide();
+      },
+      onTransactionTriggerClick(event, transaction) {
+        if (Date.now() < this.preventGhostClickUntil) {
+          event.preventDefault();
+          return;
+        }
+
+        this.onTransactionTriggerEnter(event, transaction);
+      },
+      onTransactionTriggerKeydown(event, transaction) {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return;
+        }
+
+        event.preventDefault();
+        this.onTransactionTriggerEnter(event, transaction);
+      },
+      preventGhostClick(event) {
+        this.preventGhostClickUntil = Date.now() + 700;
+
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+      },
+      onTransactionTriggerTouchstart(event, transaction) {
+        this.onTransactionTriggerEnter(event, transaction);
+        this.preventGhostClick(event);
+      },
+      async skipInstance(transactionId, buttonElement = null) {
+        if (this.skipInstanceBusy) {
+          return;
+        }
+
+        this.skipInstanceBusy = true;
+        const id = Number(transactionId);
+        const originalButtonContent = buttonElement?.innerHTML || null;
+
+        try {
+          if (buttonElement) {
+            buttonElement.disabled = true;
+            buttonElement.innerHTML =
+              '<i class="fa fa-fw fa-spinner fa-spin"></i>';
+          }
+
+          await axios.patch(
+            this.route('api.v1.transactions.skip', {
+              transaction: id,
+            }),
+          );
+
+          toastHelpers.showSuccessToast(this.__('Schedule instance skipped.'));
+
+          this.hideActivePopover();
+          await this.loadTransactions();
+        } catch (error) {
+          toastHelpers.showErrorToast(
+            error?.response?.data?.message ||
+              error?.message ||
+              this.__('Error skipping schedule instance.'),
+          );
+        } finally {
+          if (buttonElement) {
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalButtonContent;
+          }
+
+          this.skipInstanceBusy = false;
+        }
+      },
+      enterInstance(transactionId) {
+        const transaction = this.getTransactionById(transactionId);
+
+        if (!transaction) {
+          return;
+        }
+
+        const draft = {
+          ...transaction,
+          schedule: false,
+          budget: false,
+          date: transaction.transaction_schedule?.next_date,
+        };
+
+        const event = new CustomEvent('initiateEnterInstance', {
+          detail: {
+            transaction: draft,
+          },
+        });
+        window.dispatchEvent(event);
+
+        this.hideActivePopover();
+      },
+      onPopoverActionClick(event) {
+        if (!(event.target instanceof Element)) {
+          return;
+        }
+
+        const button = event.target.closest('[data-schedule-calendar-action]');
+        if (!button) {
+          return;
+        }
+
+        const tip = this.getPopoverTipElement();
+        if (!tip || !tip.contains(button)) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const action = button.dataset.scheduleCalendarAction;
+
+        if (action === 'close') {
+          this.hideActivePopover();
+          return;
+        }
+
+        const transactionId = Number(button.dataset.transactionId);
+
+        if (!transactionId) {
+          return;
+        }
+
+        if (action === 'skip') {
+          this.skipInstance(transactionId, button);
+          return;
+        }
+
+        if (action === 'enter') {
+          this.enterInstance(transactionId);
+        }
+      },
+      handlePagesUpdate(pages) {
+        if (!Array.isArray(pages) || pages.length === 0) {
+          return;
+        }
+
+        const firstPage = pages[0];
+        if (!firstPage?.month || !firstPage?.year) {
+          return;
+        }
+
+        this.visiblePage = {
+          month: firstPage.month,
+          year: firstPage.year,
+        };
+      },
+      async restoreVisiblePage() {
+        if (!this.visiblePage || !this.$refs.calendar?.move) {
+          return;
+        }
+
+        await this.$nextTick();
+
+        try {
+          await this.$refs.calendar.move(this.visiblePage, {
+            force: true,
+            position: 1,
+            transition: 'none',
+          });
+        } catch (_error) {
+          // Ignore failed page restoration when the requested page is no longer valid.
+        }
+      },
+      updateCalendarRange() {
+        if (this.transactions.length > 1) {
+          const minDate = this.transactions
+            .map((transaction) => transaction.dates)
+            .reduce(function (a, b) {
+              return a < b ? a : b;
+            });
+
+          this.minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+
+          const maxDate = this.transactions
+            .map((transaction) => transaction.dates)
+            .reduce(function (a, b) {
+              return a > b ? a : b;
+            });
+
+          this.maxDate = new Date(
+            maxDate.getFullYear(),
+            maxDate.getMonth() + 1,
+            0,
+          );
+          return;
+        }
+
+        if (this.transactions.length === 1) {
+          const date = new Date(this.transactions[0].dates);
+          this.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
+          this.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          return;
+        }
+
+        const date = this.visiblePage
+          ? new Date(this.visiblePage.year, this.visiblePage.month - 1, 1)
+          : new Date();
+        this.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
+        this.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      },
+      async loadTransactions() {
+        this.busy = true;
+        this.disposeActivePopover();
+
+        try {
+          const response = await axios.get(
+            '/api/v1/transactions/scheduled-items?type=schedule',
+          );
+
+          this.transactions = response.data.transactions
             .filter(
               (transaction) =>
                 transaction.transaction_schedule &&
                 transaction.transaction_schedule.next_date,
             )
-            // Map the data to the format required by the calendar component
             .map(function (transaction, index) {
               return {
                 key: index + 1,
@@ -160,47 +584,24 @@
               };
             });
 
-          // Set min and max dates or fall back to current month
-          if (vue.transactions.length > 1) {
-            const minDate = vue.transactions
-              .map((transaction) => transaction.dates)
-              .reduce(function (a, b) {
-                return a < b ? a : b;
-              });
-
-            // Set the minDate to the first day of the same month
-            vue.minDate = new Date(
-              minDate.getFullYear(),
-              minDate.getMonth(),
-              1,
-            );
-
-            const maxDate = vue.transactions
-              .map((transaction) => transaction.dates)
-              .reduce(function (a, b) {
-                return a > b ? a : b;
-              });
-
-            // Set the maxDate to the last day of the same month
-            vue.maxDate = new Date(
-              maxDate.getFullYear(),
-              maxDate.getMonth() + 1,
-              0,
-            );
-          } else if (vue.transactions.length === 1) {
-            const date = new Date(vue.transactions[0].dates);
-            vue.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
-            vue.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          } else {
-            const date = new Date();
-            vue.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
-            vue.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          }
-        })
-        .finally(function () {
-          vue.busy = false;
-          setTimeout(() => vue.refreshTooltip(), 1000);
-        });
+          this.updateCalendarRange();
+          await this.restoreVisiblePage();
+        } finally {
+          this.busy = false;
+        }
+      },
+      handleTransactionCreated() {
+        this.loadTransactions();
+      },
+      onCalendarTransitionStart() {
+        this.disposeActivePopover();
+      },
+      __,
+      toFormattedCurrency,
+      hide() {
+        this.disposeActivePopover();
+        $('#widgetScheduleCalendar').hide();
+      },
     },
   };
 </script>
@@ -226,6 +627,11 @@
     padding: 5px 0;
   }
 
+  [data-coreui-theme="dark"] .custom-calendar .vc-weekday {
+    background-color: var(--cui-secondary-bg);
+    border-color: var(--cui-border-color);
+  }
+
   .custom-calendar .vc-day {
     border: 1px solid #b8c2cc;
     padding: 0 5px 3px 5px;
@@ -235,7 +641,118 @@
     background-color: white;
   }
 
+  [data-coreui-theme="dark"] .custom-calendar .vc-day {
+    background-color: var(--cui-body-bg);
+    border-color: var(--cui-border-color);
+  }
+
   .custom-calendar .vc-day-custom-content {
     line-height: normal;
+  }
+
+  .schedule-calendar-trigger {
+    margin: 0 1px;
+    text-decoration: none;
+  }
+
+  .schedule-calendar-trigger:focus {
+    outline: 2px solid var(--cui-primary);
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  /* Light mode: intentionally dark tooltip for contrast against the white calendar */
+  .schedule-calendar-popover {
+    --schedule-popover-bg: #1f2937;
+    --schedule-popover-color: #f8fafc;
+    --schedule-popover-border: transparent;
+    --bs-popover-bg: var(--schedule-popover-bg);
+    --bs-popover-body-bg: var(--schedule-popover-bg);
+    --bs-popover-border-color: var(--schedule-popover-border);
+    --bs-popover-arrow-border: var(--schedule-popover-border);
+    --cui-popover-bg: var(--schedule-popover-bg);
+    --cui-popover-body-bg: var(--schedule-popover-bg);
+    --cui-popover-border-color: var(--schedule-popover-border);
+    --cui-popover-arrow-border: var(--schedule-popover-border);
+    background-color: transparent;
+  }
+
+  /* Dark mode: flipped to light background for contrast against the dark page */
+  [data-coreui-theme="dark"] .schedule-calendar-popover {
+    --schedule-popover-bg: #f8fafc;
+    --schedule-popover-color: #1e293b;
+    --schedule-popover-border: rgba(0, 0, 0, 0.15);
+  }
+
+  .popover.schedule-calendar-popover {
+    background-color: var(--schedule-popover-bg);
+    border-color: var(--schedule-popover-border);
+  }
+
+  .schedule-calendar-popover .popover-body {
+    min-width: 230px;
+    background-color: var(--schedule-popover-bg);
+    color: var(--schedule-popover-color);
+  }
+
+  .schedule-calendar-popover .popover-arrow::before {
+    display: none;
+  }
+
+  /* In dark mode the close button uses btn-close-white (invert filter) — neutralise
+     it so the icon appears dark against the light popover background. */
+  [data-coreui-theme="dark"] .schedule-calendar-popover .btn-close-white {
+    filter: none;
+  }
+
+  .popover.schedule-calendar-popover[data-popper-placement^='top']
+    > .popover-arrow::after {
+    border-top-color: var(--schedule-popover-bg);
+  }
+
+  .popover.schedule-calendar-popover[data-popper-placement^='bottom']
+    > .popover-arrow::after {
+    border-bottom-color: var(--schedule-popover-bg);
+  }
+
+  .popover.schedule-calendar-popover[data-popper-placement^='left']
+    > .popover-arrow::after {
+    border-left-color: var(--schedule-popover-bg);
+  }
+
+  .popover.schedule-calendar-popover[data-popper-placement^='right']
+    > .popover-arrow::after {
+    border-right-color: var(--schedule-popover-bg);
+  }
+
+  .schedule-calendar-popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .schedule-calendar-popover-header {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .schedule-calendar-popover-close {
+    transform: scale(0.82);
+    transform-origin: top right;
+    opacity: 0.65;
+  }
+
+  .schedule-calendar-popover-close:hover {
+    opacity: 0.85;
+  }
+
+  .schedule-calendar-popover-label {
+    white-space: normal;
+  }
+
+  .schedule-calendar-popover-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
   }
 </style>

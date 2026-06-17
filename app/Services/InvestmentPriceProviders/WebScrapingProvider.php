@@ -31,6 +31,11 @@ class WebScrapingProvider implements InvestmentPriceProvider
         $scrapeSelector = isset($providerSettings['selector']) && is_string($providerSettings['selector'])
             ? $providerSettings['selector']
             : null;
+        $decimalSeparator = isset($providerSettings['decimal_separator'])
+            && is_string($providerSettings['decimal_separator'])
+            && in_array($providerSettings['decimal_separator'], ['.', ','], true)
+            ? $providerSettings['decimal_separator']
+            : '.';
 
         if (empty($scrapeUrl)) {
             throw new InvalidPriceDataException(
@@ -62,18 +67,11 @@ class WebScrapingProvider implements InvestmentPriceProvider
                 );
             }
 
-            $priceValue = $result[0]->get('price');
-
-            // Validate price format
-            if (! is_numeric($priceValue)) {
-                throw new InvalidPriceDataException(
-                    "Invalid price format from web scraping: {$priceValue}",
-                    'web_scraping',
-                    $investment->symbol
-                );
-            }
-
-            $price = (float) $priceValue;
+            $price = $this->parsePriceValue(
+                $result[0]->get('price'),
+                $decimalSeparator,
+                $investment->symbol
+            );
 
             if ($price <= 0) {
                 throw new InvalidPriceDataException(
@@ -96,6 +94,7 @@ class WebScrapingProvider implements InvestmentPriceProvider
             Log::error("Web scraping failed for {$investment->symbol}", [
                 'url' => $scrapeUrl,
                 'selector' => $scrapeSelector,
+                'decimal_separator' => $decimalSeparator,
                 'exception' => $e->getMessage(),
             ]);
 
@@ -157,6 +156,13 @@ class WebScrapingProvider implements InvestmentPriceProvider
                     'minLength' => 1,
                     'helpText' => __('CSS selector that identifies the element containing the price.'),
                 ],
+                'decimal_separator' => [
+                    'type' => 'string',
+                    'label' => __('Decimal separator'),
+                    'enum' => ['.', ','],
+                    'maxLength' => 1,
+                    'helpText' => __('Optional decimal separator used in the scraped price. Leave empty to use a dot, or enter a comma for values like 1.234,56.'),
+                ],
             ],
         ];
     }
@@ -190,5 +196,49 @@ class WebScrapingProvider implements InvestmentPriceProvider
     public function supportsHistoricalSync(): bool
     {
         return false;
+    }
+
+    private function parsePriceValue(mixed $priceValue, string $decimalSeparator, string $symbol): float
+    {
+        if (is_int($priceValue) || is_float($priceValue)) {
+            return (float) $priceValue;
+        }
+
+        if (! is_string($priceValue)) {
+            throw new InvalidPriceDataException(
+                'Invalid price format from web scraping: ' . get_debug_type($priceValue),
+                'web_scraping',
+                $symbol
+            );
+        }
+
+        $isNegative = preg_match('/[-−]/u', $priceValue) === 1;
+        $sanitized = preg_replace('/[^0-9' . preg_quote($decimalSeparator, '/') . ']/u', '', mb_trim($priceValue));
+
+        if (! is_string($sanitized) || $sanitized === '') {
+            throw new InvalidPriceDataException(
+                "Invalid price format from web scraping: {$priceValue}",
+                'web_scraping',
+                $symbol
+            );
+        }
+
+        $normalized = $decimalSeparator === ','
+            ? str_replace(',', '.', $sanitized)
+            : $sanitized;
+
+        if ($isNegative) {
+            $normalized = '-' . $normalized;
+        }
+
+        if (preg_match('/^-?\d+(?:\.\d+)?$/', $normalized) !== 1) {
+            throw new InvalidPriceDataException(
+                "Invalid price format from web scraping: {$priceValue}",
+                'web_scraping',
+                $symbol
+            );
+        }
+
+        return (float) $normalized;
     }
 }

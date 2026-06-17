@@ -27,7 +27,7 @@ You do NOT change backend code unless explicitly instructed.
 
 ## Inputs You Rely On
 
-- Feature brief in `.ai/features/*.md`
+- Feature brief in `.ai/docs/features/`
 - Backend API definitions
 - Existing Vue and Bootstrap conventions in the repo
 - Existing frontend state management approach
@@ -49,8 +49,8 @@ If API behavior or UI requirements are unclear, STOP and ask for clarification.
 
 ## Vue-Specific Guidelines
 
-- Vue 3 Composition API only
-- Prefer `<script>` over `<script setup>` for better readability and consistency
+- Vue 3 **Options API** — use `export default { data(), methods:, computed:, ... }` inside `<script>`
+- Do **not** use `<script setup>` — the codebase uses classic `<script>` blocks
 - Keep components small and focused
 - Avoid business logic in components
 - Prefer computed properties over watchers

@@ -11,6 +11,7 @@ import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import { initializeSelect2 } from '@/shared/lib/select2';
 import * as toastHelpers from '@/shared/lib/toast';
+import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 
 // Category tree
 import 'jstree';
@@ -80,60 +81,71 @@ const computeMovingAverage = (baseData, interval) => {
 
 const elementRefreshButton = document.getElementById('reload');
 
-am4core.useTheme(am4themes_animated);
-am4core.useTheme(am4themes_kelly);
-window.chart = am4core.create("chartdiv", am4charts.XYChart);
-applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
+let chart, dateAxis, seriesActual, seriesBudget, seriesMovingAverage, scrollbarX;
 
-chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
-chart.numberFormatter.numberFormat = {
-    style: 'currency',
-    currency: window.YAFFA.userSettings.baseCurrency.iso_code,
-    minimumFractionDigits: 0
-};
+function initChart() {
+    if (chart) chart.dispose();
 
-const dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-dateAxis.dataFields.category = "period";
-dateAxis.baseInterval = {
-    timeUnit: "month",
-    count: 1
+    applyAmChartsColorTheme(am4core);
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_kelly);
+
+    chart = am4core.create("chartdiv", am4charts.XYChart);
+    window.chart = chart;
+    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
+
+    chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
+    chart.numberFormatter.numberFormat = {
+        style: 'currency',
+        currency: window.YAFFA.userSettings.baseCurrency.iso_code,
+        minimumFractionDigits: 0
+    };
+
+    dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.dataFields.category = "period";
+    dateAxis.baseInterval = {
+        timeUnit: "month",
+        count: 1
+    }
+    dateAxis.dateFormats.setKey("month", "yyyy MMM");
+
+    // This is not used later, so it is not assigned to a variable
+    chart.yAxes.push(new am4charts.ValueAxis());
+
+    seriesActual = chart.series.push(new am4charts.ColumnSeries());
+    seriesActual.dataFields.valueY = "actual";
+    seriesActual.dataFields.dateX = "date";
+    seriesActual.name = __("Actual");
+    seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
+
+    seriesBudget = chart.series.push(new am4charts.LineSeries());
+    seriesBudget.strokeWidth = 3;
+    seriesBudget.strokeDasharray = "8,4";
+    seriesBudget.dataFields.valueY = "budget";
+    seriesBudget.dataFields.dateX = "date";
+    seriesBudget.name = __("Budget");
+    seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
+
+    seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
+    seriesMovingAverage.strokeWidth = 3;
+    seriesMovingAverage.dataFields.valueY = "movingAverage";
+    seriesMovingAverage.dataFields.dateX = "date";
+    seriesMovingAverage.name = __("Moving average");
+    seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
+
+    scrollbarX = new am4charts.XYChartScrollbar();
+    scrollbarX.series.push(seriesBudget);
+    scrollbarX.series.push(seriesActual);
+    scrollbarX.series.push(seriesMovingAverage);
+    chart.scrollbarX = scrollbarX;
+
+    chart.legend = new am4charts.Legend();
+    chart.cursor = new am4charts.XYCursor();
 }
-dateAxis.dateFormats.setKey("month", "yyyy MMM");
 
-// This is not used later, so it is not assigned to a variable
-chart.yAxes.push(new am4charts.ValueAxis());
+initChart();
 
-const seriesActual = chart.series.push(new am4charts.ColumnSeries());
-seriesActual.dataFields.valueY = "actual";
-seriesActual.dataFields.dateX = "date";
-seriesActual.name = __("Actual");
-seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
-
-const seriesBudget = chart.series.push(new am4charts.LineSeries());
-seriesBudget.strokeWidth = 3;
-seriesBudget.strokeDasharray = "8,4";
-seriesBudget.dataFields.valueY = "budget";
-seriesBudget.dataFields.dateX = "date";
-seriesBudget.name = __("Budget");
-seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
-
-const seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
-seriesMovingAverage.strokeWidth = 3;
-seriesMovingAverage.dataFields.valueY = "movingAverage";
-seriesMovingAverage.dataFields.dateX = "date";
-seriesMovingAverage.name = __("Moving average");
-seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
-
-const scrollbarX = new am4charts.XYChartScrollbar();
-scrollbarX.series.push(seriesBudget);
-scrollbarX.series.push(seriesActual);
-scrollbarX.series.push(seriesMovingAverage);
-chart.scrollbarX = scrollbarX;
-
-chart.legend = new am4charts.Legend();
-chart.cursor = new am4charts.XYCursor();
-
-// Set AmCharts zoom in functionality for button
+// Set AmCharts zoom in functionality for button (set up once; dateAxis is module-level)
 const btnZoomIn = document.getElementById('btnZoomIn')
 if (btnZoomIn) {
     btnZoomIn.addEventListener('click', function () {
@@ -681,3 +693,10 @@ $('input[name=table_filter_account_scope]').on("change", function() {
 
 // Set initial state of account selector
 $(accountSelector).prop('disabled', $('input[name=table_filter_account_scope]:checked').val() !== 'selected');
+
+document.addEventListener(COLOR_MODE_EVENT, () => {
+    initChart();
+    if (rawData && rawData.length > 0) {
+        updateChart(rawData);
+    }
+});

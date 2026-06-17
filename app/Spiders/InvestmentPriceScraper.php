@@ -26,18 +26,8 @@ class InvestmentPriceScraper extends BasicSpider
 
     public function parse(Response $response): Generator
     {
-        // Extract the price from the response
-        $priceText = $response->filter($this->context['selector'])->text();
-
-        // Remove any non-numeric characters from the price
-        $priceText = preg_replace('/[^0-9.]/', '', $priceText);
-
-        // Convert to float
-        $priceValue = (float) $priceText;
-
-        // We expect only one price, so we return only one item
         yield $this->item([
-            'price' => $priceValue,
+            'price' => $response->filter($this->context['selector'])->text(),
         ]);
     }
 }

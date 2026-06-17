@@ -13,7 +13,7 @@
           @prices-loaded="reloadData"
         />
 
-        <date-range-selector-with-presets
+        <date-range-filter-card
           ref="dateSelector"
           :initial-date-from="dateFrom"
           :initial-date-to="dateTo"
@@ -56,7 +56,7 @@
   import InvestmentPriceTable from './InvestmentPriceTable.vue';
   import InvestmentPriceModal from './InvestmentPriceModal.vue';
   import PriceHistoryCard from '@/investments/components/display/PriceHistoryCard.vue';
-  import DateRangeSelectorWithPresets from '@/shared/ui/date/DateRangeSelectorWithPresets.vue';
+  import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -68,7 +68,7 @@
       InvestmentPriceTable,
       InvestmentPriceModal,
       PriceHistoryCard,
-      DateRangeSelectorWithPresets,
+      DateRangeFilterCard,
     },
     props: {
       investment: {

@@ -74,6 +74,7 @@
           <DatePicker
             v-model.string="schedule.start_date"
             :disabled="!allowCustomizationData"
+            :is-dark="isDarkMode"
             mode="date"
             is-required
             :popover="{ visibility: 'click' }"
@@ -116,6 +117,7 @@
           <DatePicker
             v-model.string="schedule.next_date"
             :disabled="!allowCustomizationData"
+            :is-dark="isDarkMode"
             mode="date"
             :popover="{ visibility: 'click' }"
             :masks="{
@@ -191,6 +193,7 @@
           <DatePicker
             v-model.string="schedule.end_date"
             :disabled="!allowCustomizationData"
+            :is-dark="isDarkMode"
             mode="date"
             :popover="{ visibility: 'click' }"
             :masks="{
@@ -240,8 +243,11 @@
   import { DatePicker } from 'v-calendar';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import { __ } from '@/shared/lib/i18n';
+  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
+    mixins: [colorModeMixin],
+
     components: {
       DatePicker,
       MathInput,

@@ -24,7 +24,7 @@ You do NOT implement business logic unless strictly required to fix test failure
 
 ## Inputs You Rely On
 
-- Feature brief in `.ai/features/*.md`
+- Feature brief in `.ai/docs/features/`
 - Backend implementation
 - Existing test patterns in the codebase
 - CI test output (GitHub Actions)
