@@ -2,29 +2,30 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CsvImportProfile;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Models\FileImportProfile;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Console\Command;
 
-class SyncSystemCsvImportProfilesCommand extends Command
+class SyncSystemFileImportProfilesCommand extends Command
 {
     protected $signature = 'app:import:sync-system-profiles';
 
-    protected $description = 'Synchronize application-managed system CSV import profiles';
+    protected $description = 'Synchronize application-managed system file import profiles';
 
-    public function handle(SystemCsvImportProfileRegistry $registry): int
+    public function handle(SystemFileImportProfileRegistry $registry): int
     {
         $count = 0;
 
         foreach ($registry->profiles() as $profile) {
-            CsvImportProfile::query()->updateOrCreate(
+            FileImportProfile::query()->updateOrCreate(
                 ['key' => $profile['key']],
                 [
                     'user_id' => null,
                     'type' => 'system',
+                    'file_type' => $profile['file_type'] ?? 'csv',
                     'name' => $profile['name'],
-                    'delimiter' => $profile['delimiter'] ?? ',',
-                    'has_header_row' => (bool) ($profile['has_header_row'] ?? true),
+                    'delimiter' => $profile['delimiter'] ?? null,
+                    'has_header_row' => (bool) ($profile['has_header_row'] ?? false),
                     'date_format' => $profile['date_format'] ?? null,
                     'decimal_separator' => $profile['decimal_separator'] ?? null,
                     'thousand_separator' => $profile['thousand_separator'] ?? null,
@@ -38,7 +39,7 @@ class SyncSystemCsvImportProfilesCommand extends Command
             $count++;
         }
 
-        $this->info(sprintf('Synchronized %d system CSV import profile(s).', $count));
+        $this->info(sprintf('Synchronized %d system file import profile(s).', $count));
 
         return self::SUCCESS;
     }

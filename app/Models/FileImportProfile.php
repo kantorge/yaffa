@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
-class CsvImportProfile extends Model
+class FileImportProfile extends Model
 {
-    /** @use HasFactory<\Database\Factories\CsvImportProfileFactory> */
+    /** @use HasFactory<\Database\Factories\FileImportProfileFactory> */
     use HasFactory;
+
+    protected $table = 'file_import_profiles';
 
     /**
      * @var list<string>
@@ -21,6 +23,7 @@ class CsvImportProfile extends Model
         'user_id',
         'key',
         'type',
+        'file_type',
         'name',
         'delimiter',
         'has_header_row',
@@ -38,13 +41,13 @@ class CsvImportProfile extends Model
         static::saving(function (self $profile): void {
             if ($profile->type === 'system' && blank($profile->key)) {
                 throw ValidationException::withMessages([
-                    'key' => __('System CSV import profiles require a stable key.'),
+                    'key' => __('System file import profiles require a stable key.'),
                 ]);
             }
 
             if ($profile->type === 'user' && blank($profile->user_id)) {
                 throw ValidationException::withMessages([
-                    'user_id' => __('User CSV import profiles must belong to a user.'),
+                    'user_id' => __('User file import profiles must belong to a user.'),
                 ]);
             }
         });
@@ -96,6 +99,7 @@ class CsvImportProfile extends Model
             'user_id' => $user->id,
             'key' => null,
             'type' => 'user',
+            'file_type' => $this->file_type,
             'name' => $name ?: __(':name (Copy)', ['name' => $this->name]),
             'delimiter' => $this->delimiter,
             'has_header_row' => $this->has_header_row,

@@ -9,7 +9,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -282,30 +282,30 @@ class AccountApiController extends Controller implements HasMiddleware
         }
 
         $validated = $request->validate([
-            'preferred_csv_import_profile_id' => [
+            'preferred_file_import_profile_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('csv_import_profiles', 'id'),
+                Rule::exists('file_import_profiles', 'id'),
                 function (string $attribute, mixed $value, Closure $fail) use ($request): void {
                     if ($value === null || $value === '') {
                         return;
                     }
 
-                    $profile = CsvImportProfile::query()->find((int) $value);
-                    if (! $profile instanceof CsvImportProfile) {
+                    $profile = FileImportProfile::query()->find((int) $value);
+                    if (! $profile instanceof FileImportProfile) {
                         return;
                     }
 
                     if (Gate::forUser($request->user())->denies('view', $profile)) {
-                        $fail(__('The selected CSV import profile is not accessible.'));
+                        $fail(__('The selected file import profile is not accessible.'));
                     }
                 },
             ],
         ]);
 
-        $accountEntity->preferred_csv_import_profile_id = $validated['preferred_csv_import_profile_id'] ?? null;
+        $accountEntity->preferred_file_import_profile_id = $validated['preferred_file_import_profile_id'] ?? null;
         $accountEntity->save();
-        $accountEntity->load('preferredCsvImportProfile');
+        $accountEntity->load('preferredFileImportProfile');
 
         return response()->json($accountEntity, Response::HTTP_OK);
     }

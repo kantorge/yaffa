@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CsvImportProfileStoreRequest;
-use App\Http\Requests\CsvImportProfileUpdateRequest;
-use App\Models\CsvImportProfile;
+use App\Http\Requests\FileImportProfileStoreRequest;
+use App\Http\Requests\FileImportProfileUpdateRequest;
+use App\Models\FileImportProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 
-class CsvImportProfileApiController extends Controller implements HasMiddleware
+class FileImportProfileApiController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
@@ -22,33 +22,37 @@ class CsvImportProfileApiController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        Gate::authorize('viewAny', CsvImportProfile::class);
-
-        $user = request()->user();
-
-        $profiles = CsvImportProfile::query()
-            ->selectableForUser($user)
-            ->orderByDesc('type')
-            ->orderBy('name')
-            ->get();
-
-        return response()->json([
-            'data' => $profiles,
-        ], Response::HTTP_OK);
-    }
-
-    public function store(CsvImportProfileStoreRequest $request): JsonResponse
-    {
-        Gate::authorize('create', CsvImportProfile::class);
+        Gate::authorize('viewAny', FileImportProfile::class);
 
         $user = $request->user();
 
-        $profile = CsvImportProfile::query()->create([
+        $query = FileImportProfile::query()
+            ->selectableForUser($user)
+            ->orderByDesc('type')
+            ->orderBy('name');
+
+        if ($request->filled('file_type')) {
+            $query->where('file_type', $request->input('file_type'));
+        }
+
+        return response()->json([
+            'data' => $query->get(),
+        ], Response::HTTP_OK);
+    }
+
+    public function store(FileImportProfileStoreRequest $request): JsonResponse
+    {
+        Gate::authorize('create', FileImportProfile::class);
+
+        $user = $request->user();
+
+        $profile = FileImportProfile::query()->create([
             'user_id' => $user?->id,
             'key' => null,
             'type' => 'user',
+            'file_type' => $request->input('file_type', 'csv'),
             'name' => (string) $request->input('name'),
             'delimiter' => (string) $request->input('delimiter', ','),
             'has_header_row' => (bool) $request->input('has_header_row', true),
@@ -64,7 +68,7 @@ class CsvImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_CREATED);
     }
 
-    public function update(CsvImportProfileUpdateRequest $request, CsvImportProfile $profile): JsonResponse
+    public function update(FileImportProfileUpdateRequest $request, FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('update', $profile);
 
@@ -74,7 +78,7 @@ class CsvImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_OK);
     }
 
-    public function destroy(CsvImportProfile $profile): JsonResponse
+    public function destroy(FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('delete', $profile);
 
@@ -83,7 +87,7 @@ class CsvImportProfileApiController extends Controller implements HasMiddleware
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function clone(Request $request, CsvImportProfile $profile): JsonResponse
+    public function clone(Request $request, FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('clone', $profile);
 
@@ -91,7 +95,7 @@ class CsvImportProfileApiController extends Controller implements HasMiddleware
             'name' => ['nullable', 'string', 'min:2', 'max:191'],
         ]);
 
-        $clone = CsvImportProfile::query()->create(
+        $clone = FileImportProfile::query()->create(
             $profile->toUserCloneAttributes($request->user(), $validated['name'] ?? null)
         );
 

@@ -6,12 +6,12 @@ use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -37,7 +37,7 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $profile->id,
+                'file_import_profile_id' => $profile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
@@ -76,7 +76,7 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $profile->id,
+                'file_import_profile_id' => $profile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
@@ -98,11 +98,11 @@ CSV;
             ]);
     }
 
-    private function createSystemProfile(): CsvImportProfile
+    private function createSystemProfile(): FileImportProfile
     {
-        $definition = (new SystemCsvImportProfileRegistry())->profiles()[0];
+        $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return CsvImportProfile::query()->updateOrCreate(
+        return FileImportProfile::query()->updateOrCreate(
             ['key' => $definition['key']],
             [
                 'user_id' => null,

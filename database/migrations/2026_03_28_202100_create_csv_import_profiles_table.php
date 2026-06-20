@@ -10,7 +10,7 @@ return new class () extends Migration {
      */
     public function up(): void
     {
-        Schema::create('csv_import_profiles', function (Blueprint $table) {
+        Schema::create('file_import_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')
                 ->nullable()
@@ -18,8 +18,9 @@ return new class () extends Migration {
                 ->cascadeOnDelete();
             $table->string('key', 100)->nullable()->unique();
             $table->string('type', 20)->default('user');
+            $table->string('file_type', 10)->default('csv');
             $table->string('name');
-            $table->string('delimiter', 5)->default(',');
+            $table->string('delimiter', 5)->nullable();
             $table->boolean('has_header_row')->default(true);
             $table->string('date_format', 64)->nullable();
             $table->string('decimal_separator', 10)->nullable();
@@ -40,6 +41,6 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('csv_import_profiles');
+        Schema::dropIfExists('file_import_profiles');
     }
 };

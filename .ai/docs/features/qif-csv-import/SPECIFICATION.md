@@ -69,12 +69,12 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
 
 - Models:
   - No new import batch/draft persistence models in MVP.
-  - CsvImportProfile
+  - FileImportProfile
     - Stores reusable CSV import profile definitions with `type = system|user`.
 
 - Migrations:
   - No mandatory import batch/draft persistence migrations in MVP.
-  - csv_import_profiles.
+  - file_import_profiles.
 
 - Controllers / APIs:
   - ImportApiController (new)
@@ -92,9 +92,9 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - Converts parser output into transaction-form-compatible draft payload.
   - ImportDuplicateDetectionService (new adapter)
     - Calls existing DuplicateDetectionService with extracted fields.
-  - SystemCsvImportProfileRegistry (new)
+  - SystemFileImportProfileRegistry (new)
     - PHP array definitions of all system profiles; single source of truth for profile content.
-  - SyncSystemCsvImportProfilesCommand (new Artisan command: `import:sync-system-profiles`)
+  - SyncSystemFileImportProfilesCommand (new Artisan command: `import:sync-system-profiles`)
     - Idempotent sync of registry entries to the database via `updateOrCreate` keyed on `key`.
   - No background parsing job in MVP.
 
@@ -154,9 +154,10 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
       - warnings[]
       - duplicate_candidates[]
       - related_ai_documents[] (optional candidate list of AI Documents in state ready_for_review that likely represent the same purchase/receipt)
-  - CsvImportProfile (persisted entity)
+  - FileImportProfile (persisted entity)
     - id
     - type (`system` or `user`)
+    - file_type (`csv` or `qif`)
     - user_id nullable
     - key nullable, required for system profiles
     - name
@@ -178,24 +179,24 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
 
 - Existing model changes:
   - AccountEntity (account type only)
-    - preferred_csv_import_profile_id nullable
+    - preferred_file_import_profile_id nullable
 
 - Relationships:
-  - User has many CsvImportProfiles of type `user`.
-  - AccountEntity belongs to preferred CsvImportProfile (nullable foreign key).
+  - User has many FileImportProfiles of type `user`.
+  - AccountEntity belongs to preferred FileImportProfile (nullable foreign key).
 
 - Endpoints (draft):
   - POST /api/v1/imports/parse
-    - Request: multipart/form-data; required fields: `file`, `source_type` (`qif` or `csv`), `account_id`; optional: `csv_import_profile_id` (CSV only; omit to use account preferred profile; if no profile is available from either source, the request is rejected)
+    - Request: multipart/form-data; required fields: `file`, `source_type` (`qif` or `csv`), `account_id`; optional: `file_import_profile_id` (CSV only; omit to use account preferred profile; if no profile is available from either source, the request is rejected)
     - Response: Runtime Import Parse Result DTO
   - CSV import profile endpoints:
-    - GET /api/v1/imports/csv-profiles
-    - POST /api/v1/imports/csv-profiles
-    - PATCH /api/v1/imports/csv-profiles/{profile}
-    - DELETE /api/v1/imports/csv-profiles/{profile}
+    - GET /api/v1/imports/file-profiles
+    - POST /api/v1/imports/file-profiles
+    - PATCH /api/v1/imports/file-profiles/{profile}
+    - DELETE /api/v1/imports/file-profiles/{profile}
   - Generic account update endpoint addition:
     - PATCH /api/v1/accounts/{accountEntity}
-    - Allowed fields include `preferred_csv_import_profile_id`.
+    - Allowed fields include `preferred_file_import_profile_id`.
 
 - Finalization flow:
   - Finalization uses existing transaction create endpoints via modal-based form workflow. (Refer to AI Document finalization flow for details.)
@@ -236,6 +237,44 @@ External QIF library may be reconsidered later only if:
 - Package governance rule:
   - New parsing dependencies are accepted only when they are actively maintained, version-compatible, and covered by reliable tests.
   - If these criteria are not met, implement and test parser behavior in application code.
+
+### QIF Profiles (Optional Field Remapping)
+
+The QIF format has no authoritative standard. Different banks assign different semantic meanings to the same markers (e.g., one bank puts transaction type in `P` and payee name in `M`, while the standard convention is the reverse).
+
+To handle this without heuristic guessing, QIF imports support an optional `FileImportProfile` with `file_type = 'qif'`.
+
+**When selected:**
+- The profile's `options_json` provides a `field_map` and optional `amount_sign` override.
+- The parser reads the marker specified by `field_map.payee` instead of always reading `P`, etc.
+- If no profile is selected, standard QIF semantics apply (P=payee, M=memo, L=category, N=reference).
+
+**Profile is always optional for QIF** — unlike CSV where a profile is required.
+
+**Supported `options_json` keys for QIF profiles:**
+
+```json
+{
+  "field_map": {
+    "payee": "M",
+    "comment": "P",
+    "category": "L",
+    "reference": "N"
+  },
+  "amount_sign": "normal"
+}
+```
+
+- `field_map` keys: `payee`, `comment`, `category`, `reference` — each maps to a QIF marker letter.
+- `amount_sign`: `"normal"` (default) or `"inverted"` (multiply parsed amount by -1).
+
+**System QIF profile shipped with MVP:**
+- Key: `qif_swap_p_m_v1` — for banks that put transaction type in `P` and payee in `M`.
+
+**User-created QIF profiles:**
+- Same model as user CSV profiles but with `file_type = 'qif'`.
+- No `matching_rules` or `actions` — field remapping only.
+- No `mapping_json` required (QIF markers are fixed).
 
 ### QIF Rules for MVP
 
@@ -651,7 +690,7 @@ The application does not run `artisan db:seed` in production. The Docker entrypo
 
 #### Recommended Approach: Artisan Sync Command
 
-- Define each system profile as a PHP array in a dedicated registry class, for example `App\Services\Import\SystemCsvImportProfileRegistry`.
+- Define each system profile as a PHP array in a dedicated registry class, for example `App\Services\Import\SystemFileImportProfileRegistry`.
 - Implement a dedicated Artisan command, for example `artisan import:sync-system-profiles`, that calls `updateOrCreate` keyed on `key` for each entry in the registry.
 - Add the command to `docker/entrypoint.sh` immediately after `php artisan migrate --force`.
 - Adding a new format, updating field mappings, or retiring a profile is done by editing the registry class; the next deploy applies changes automatically.
@@ -675,7 +714,7 @@ Accounts should gain a new preference for CSV import defaults.
 
 Recommended account-level field:
 
-- `preferred_csv_import_profile_id` nullable
+- `preferred_file_import_profile_id` nullable
 
 Expected behavior:
 
@@ -687,17 +726,17 @@ Expected behavior:
 
 Recommended endpoints:
 
-- `GET /api/v1/imports/csv-profiles`
+- `GET /api/v1/imports/file-profiles`
   - returns system profiles plus current user's user profiles
-- `POST /api/v1/imports/csv-profiles`
+- `POST /api/v1/imports/file-profiles`
   - create user profile
-- `PATCH /api/v1/imports/csv-profiles/{profile}`
+- `PATCH /api/v1/imports/file-profiles/{profile}`
   - update user profile
-- `DELETE /api/v1/imports/csv-profiles/{profile}`
+- `DELETE /api/v1/imports/file-profiles/{profile}`
   - delete user profile
 - `PATCH /api/v1/accounts/{accountEntity}`
   - generic account update endpoint
-  - supports whitelisted account-level settings, including `preferred_csv_import_profile_id`
+  - supports whitelisted account-level settings, including `preferred_file_import_profile_id`
 
 ### Import Request Behavior for CSV
 
@@ -851,7 +890,7 @@ Notes:
 ## Testing Strategy
 
 - Required factories:
-  - CsvImportProfileFactory
+  - FileImportProfileFactory
 
 - Backend unit tests:
   - QifParserServiceTest
@@ -944,13 +983,13 @@ Notes:
   - [x] Convert parsed QIF entries to draft transaction DTOs
   - [x] Populate mandatory fields (date, amount, account_id, transaction_type)
   - [x] Attach warnings to drafts
-- [x] Create `CsvImportProfile` migration and model
+- [x] Create `FileImportProfile` migration and model
 - [x] Implement `ImportApiController::parse` endpoint
   - [x] Accepts multipart `file`, `source_type=qif`, `account_id`
   - [x] Returns Runtime Import Parse Result DTO
   - [x] Enforce file size limits from env variables
 - [x] Implement `ImportPolicy` for auth/ownership checks
-- [x] Create `CsvImportProfileFactory` for testing
+- [x] Create `FileImportProfileFactory` for testing
 
 **Frontend Tasks**:
 
@@ -1000,12 +1039,12 @@ Notes:
 
 **Backend Tasks**:
 
-- [x] Create `SystemCsvImportProfileRegistry` with one system profile (hun_raiffeisen_v1 equivalent)
+- [x] Create `SystemFileImportProfileRegistry` with one system profile (hun_raiffeisen_v1 equivalent)
   - [x] Define parser_settings (delimiter, has_header_row, date format)
   - [x] Define mapping_json (source columns → canonical fields)
   - [x] Define matching_rules[] with conditions/actions for transaction type classification
   - [x] Define defaults and warnings
-- [x] Implement `SyncSystemCsvImportProfilesCommand`
+- [x] Implement `SyncSystemFileImportProfilesCommand`
   - [x] Idempotent `updateOrCreate` keyed on `key`
   - [x] Add to `docker/entrypoint.sh`
 - [x] Implement `CsvParserService`
@@ -1019,12 +1058,12 @@ Notes:
   - [x] Execute duplicate check eagerly at parse completion
   - [x] Attach duplicate_candidates[] to each draft
 - [x] Extend `ImportApiController::parse` to support CSV
-  - [x] Accept `source_type=csv` and optional `csv_import_profile_id`
+  - [x] Accept `source_type=csv` and optional `file_import_profile_id`
   - [x] Default resolution: account preferred profile; reject with 422 if neither explicit nor account-preferred profile is available
   - [x] Return drafts with duplicate_candidates populated
-- [x] Implement `CsvImportProfile` CRUD endpoints (GET, POST for user profiles)
-  - [x] GET `/api/v1/imports/csv-profiles` returns system + user profiles
-  - [x] POST `/api/v1/imports/csv-profiles` creates user profile
+- [x] Implement `FileImportProfile` CRUD endpoints (GET, POST for user profiles)
+  - [x] GET `/api/v1/imports/file-profiles` returns system + user profiles
+  - [x] POST `/api/v1/imports/file-profiles` creates user profile
   - [x] Validate request: reject `options_json.matching_rules`, `options_json.actions`
 
 **Frontend Tasks**:
@@ -1047,9 +1086,9 @@ Notes:
 
 **Testing Tasks** (Backend Agent):
 
-- Component integration test: `SystemCsvImportProfileRegistry`
+- Component integration test: `SystemFileImportProfileRegistry`
   - Registry contains expected system profile structure
-  - `SyncSystemCsvImportProfilesCommand` loads profiles correctly
+  - `SyncSystemFileImportProfilesCommand` loads profiles correctly
 - Unit test: `CsvParserServiceTest`
   - Parse valid CSV with system profile
   - Header canonicalization via mapping_json
@@ -1092,20 +1131,20 @@ Notes:
 
 **Backend Tasks**:
 
-- [x] Extend `CsvImportProfile` model
+- [x] Extend `FileImportProfile` model
   - [x] Add `user_id` for user profiles
   - [x] Add `key` for system profiles
   - [x] Add validation: type=system requires key, type=user requires user_id
-  - [x] Add relationship: User hasMany CsvImportProfile(type=user)
-- [x] Implement `CsvImportProfilePolicy`
+  - [x] Add relationship: User hasMany FileImportProfile(type=user)
+- [x] Implement `FileImportProfilePolicy`
   - [x] Only user owner can read/edit/delete user profiles
   - [x] Everyone can read system profiles
 - [x] Implement `AccountEntity` model update
-  - [x] Add `preferred_csv_import_profile_id` nullable foreign key
+  - [x] Add `preferred_file_import_profile_id` nullable foreign key
   - [x] Add `PATCH /api/v1/accounts/{accountEntity}` endpoint
-  - [x] Whitelist `preferred_csv_import_profile_id` in update validation
+  - [x] Whitelist `preferred_file_import_profile_id` in update validation
 - [x] Implement profile clone endpoint
-  - [x] POST `/api/v1/imports/csv-profiles/{profile}/clone`
+  - [x] POST `/api/v1/imports/file-profiles/{profile}/clone`
   - [x] Strip DSL fields when cloning system → user
   - [x] Validate user ownership of target user profile
 - [x] Document expected parse response error format for partial success
@@ -1150,7 +1189,7 @@ Notes:
   - [x] Confidence scoring
   - [x] Bounded search (time window, candidate count)
 - [x] Regression test: existing transaction create/update flow still works with import context
-- [x] Command test: `SyncSystemCsvImportProfilesCommand`
+- [x] Command test: `SyncSystemFileImportProfilesCommand`
   - [x] Idempotent: re-run produces same database state
   - [x] Migration of hun_raiffeisen_v1 rule file into profile
 

@@ -4,11 +4,11 @@ namespace Tests\Unit\Services\Import;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Models\Payee;
 use App\Models\User;
 use App\Services\Import\CsvParserService;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -106,11 +106,11 @@ CSV;
         $this->assertStringContainsString('No matching system rule', implode(' ', $parsed['drafts'][1]['warnings']));
     }
 
-    private function createSystemProfile(): CsvImportProfile
+    private function createSystemProfile(): FileImportProfile
     {
-        $definition = (new SystemCsvImportProfileRegistry())->profiles()[0];
+        $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return CsvImportProfile::query()->create([
+        return FileImportProfile::query()->create([
             'user_id' => null,
             'key' => $definition['key'],
             'type' => 'system',

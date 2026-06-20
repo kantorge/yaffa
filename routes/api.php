@@ -9,7 +9,7 @@ use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
-use App\Http\Controllers\API\CsvImportProfileApiController;
+use App\Http\Controllers\API\FileImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
 use App\Http\Controllers\API\ImportApiController;
 use App\Http\Controllers\API\InvestmentApiController;
@@ -135,16 +135,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Import endpoints
     Route::post('/imports/parse', [ImportApiController::class, 'parse'])
         ->name('imports.parse');
-    Route::get('/imports/csv-profiles', [CsvImportProfileApiController::class, 'index'])
-        ->name('imports.csv-profiles.index');
-    Route::post('/imports/csv-profiles', [CsvImportProfileApiController::class, 'store'])
-        ->name('imports.csv-profiles.store');
-    Route::post('/imports/csv-profiles/{profile}/clone', [CsvImportProfileApiController::class, 'clone'])
-        ->name('imports.csv-profiles.clone');
-    Route::patch('/imports/csv-profiles/{profile}', [CsvImportProfileApiController::class, 'update'])
-        ->name('imports.csv-profiles.update');
-    Route::delete('/imports/csv-profiles/{profile}', [CsvImportProfileApiController::class, 'destroy'])
-        ->name('imports.csv-profiles.destroy');
+    Route::get('/imports/file-profiles', [FileImportProfileApiController::class, 'index'])
+        ->name('imports.file-profiles.index');
+    Route::post('/imports/file-profiles', [FileImportProfileApiController::class, 'store'])
+        ->name('imports.file-profiles.store');
+    Route::post('/imports/file-profiles/{profile}/clone', [FileImportProfileApiController::class, 'clone'])
+        ->name('imports.file-profiles.clone');
+    Route::patch('/imports/file-profiles/{profile}', [FileImportProfileApiController::class, 'update'])
+        ->name('imports.file-profiles.update');
+    Route::delete('/imports/file-profiles/{profile}', [FileImportProfileApiController::class, 'destroy'])
+        ->name('imports.file-profiles.destroy');
 
     // Account endpoints
     Route::get('/accounts', [AccountApiController::class, 'getList'])

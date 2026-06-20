@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportParseRequest;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Services\Import\CsvParserService;
 use App\Services\Import\ImportDuplicateDetectionService;
 use App\Services\Import\ImportNormalizationService;
@@ -56,9 +56,9 @@ class ImportApiController extends Controller implements HasMiddleware
 
         try {
             if ($sourceType === 'csv') {
-                $profile = $this->resolveCsvImportProfile($request, $accountEntity);
+                $profile = $this->resolveFileImportProfile($request, $accountEntity);
 
-                if (! $profile instanceof CsvImportProfile) {
+                if (! $profile instanceof FileImportProfile) {
                     return response()->json([
                         'error' => [
                             'code' => 'CSV_PROFILE_REQUIRED',
@@ -71,6 +71,11 @@ class ImportApiController extends Controller implements HasMiddleware
                 $drafts = $parsed['drafts'];
                 $parsedWarnings = $parsed['warnings'];
             } else {
+                $qifProfile = $this->resolveQifImportProfile($request);
+                if ($qifProfile instanceof FileImportProfile) {
+                    $this->qifParserService->applyProfile($qifProfile);
+                }
+
                 $parsed = $this->qifParserService->parseFile($file);
                 $drafts = $this->importNormalizationService->normalizeQifEntries($parsed['entries'], $accountEntity->id);
                 $parsedWarnings = $parsed['warnings'];
@@ -84,6 +89,7 @@ class ImportApiController extends Controller implements HasMiddleware
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        $drafts = $this->importNormalizationService->enrichDraftsWithPayeeMatches($request->user(), $drafts);
         $drafts = $this->importDuplicateDetectionService->enrichDrafts($request->user(), $drafts);
         $drafts = $this->importNormalizationService->enrichDraftsWithRelatedAiDocuments($request->user(), $drafts);
 
@@ -105,20 +111,38 @@ class ImportApiController extends Controller implements HasMiddleware
         ], Response::HTTP_OK);
     }
 
-    private function resolveCsvImportProfile(ImportParseRequest $request, AccountEntity $accountEntity): ?CsvImportProfile
+    private function resolveQifImportProfile(ImportParseRequest $request): ?FileImportProfile
     {
-        $selectedProfileId = $request->input('csv_import_profile_id');
+        $selectedProfileId = $request->input('file_import_profile_id');
+
+        if (! is_numeric($selectedProfileId)) {
+            return null;
+        }
+
+        $profile = FileImportProfile::query()->findOrFail((int) $selectedProfileId);
+        Gate::authorize('view', $profile);
+
+        if ($profile->file_type !== 'qif') {
+            abort(422, __('The selected profile is not a QIF profile.'));
+        }
+
+        return $profile;
+    }
+
+    private function resolveFileImportProfile(ImportParseRequest $request, AccountEntity $accountEntity): ?FileImportProfile
+    {
+        $selectedProfileId = $request->input('file_import_profile_id');
 
         if (is_numeric($selectedProfileId)) {
-            $profile = CsvImportProfile::query()->findOrFail((int) $selectedProfileId);
+            $profile = FileImportProfile::query()->findOrFail((int) $selectedProfileId);
             Gate::authorize('view', $profile);
 
             return $profile;
         }
 
-        if (is_int($accountEntity->preferred_csv_import_profile_id)) {
-            $profile = CsvImportProfile::query()->find($accountEntity->preferred_csv_import_profile_id);
-            if ($profile instanceof CsvImportProfile) {
+        if (is_int($accountEntity->preferred_file_import_profile_id)) {
+            $profile = FileImportProfile::query()->find($accountEntity->preferred_file_import_profile_id);
+            if ($profile instanceof FileImportProfile) {
                 Gate::authorize('view', $profile);
 
                 return $profile;

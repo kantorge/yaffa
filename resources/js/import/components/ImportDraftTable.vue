@@ -78,7 +78,13 @@
                 <td class="text-nowrap">{{ formatDate(draft.date) }}</td>
                 <td class="text-nowrap">{{ formatAmount(draft.amount) }}</td>
                 <td>
-                  <span v-if="draft.payee">{{ draft.payee }}</span>
+                  <template v-if="draft.matched_payee">
+                    {{ draft.matched_payee.name }}
+                    <div v-if="draft.payee" class="text-muted small mt-1">
+                      {{ draft.payee }}
+                    </div>
+                  </template>
+                  <span v-else-if="draft.payee">{{ draft.payee }}</span>
                   <span v-else class="text-muted fst-italic">{{
                     __('Not set')
                   }}</span>
@@ -153,6 +159,22 @@
                             {{ warning }}
                           </li>
                         </ul>
+                      </div>
+                      <div v-if="draft.matched_payee" class="mb-2">
+                        <div class="fw-semibold">
+                          {{ __('Matched payee') }}
+                        </div>
+                        <div>
+                          {{ draft.matched_payee.name }}
+                          <span class="badge bg-secondary ms-1"
+                            >~{{
+                              Math.round(draft.matched_payee.similarity * 100)
+                            }}%</span
+                          >
+                        </div>
+                        <div class="text-muted small">
+                          {{ __('Raw:') }} {{ draft.payee }}
+                        </div>
                       </div>
                       <div class="fw-semibold">{{ __('Raw entry') }}</div>
                       <pre class="mb-0 small text-wrap">{{

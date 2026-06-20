@@ -224,11 +224,11 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<CsvImportProfile, $this>
+     * @return HasMany<FileImportProfile, $this>
      */
-    public function csvImportProfiles(): HasMany
+    public function fileImportProfiles(): HasMany
     {
-        return $this->hasMany(CsvImportProfile::class)
+        return $this->hasMany(FileImportProfile::class)
             ->where('type', 'user');
     }
 

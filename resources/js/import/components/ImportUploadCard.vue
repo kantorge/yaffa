@@ -65,6 +65,42 @@
       </div>
     </template>
 
+    <template v-if="sourceType === 'qif'">
+      <div class="col-12">
+        <label class="form-label" for="qif-profile-select">
+          {{ __('QIF field mapping profile') }}
+          <span class="form-text">({{ __('optional') }})</span>
+        </label>
+        <select
+          id="qif-profile-select"
+          class="form-select"
+          :value="selectedQifProfileId"
+          :disabled="loading || loadingQifProfiles"
+          @change="onQifProfileChange($event.target.value)"
+        >
+          <option :value="null">{{ __('— Standard QIF mapping (default) —') }}</option>
+          <optgroup v-if="qifSystemProfiles.length" :label="__('System profiles')">
+            <option
+              v-for="profile in qifSystemProfiles"
+              :key="profile.id"
+              :value="profile.id"
+            >
+              {{ profile.name }}
+            </option>
+          </optgroup>
+          <optgroup v-if="qifUserProfiles.length" :label="__('My profiles')">
+            <option
+              v-for="profile in qifUserProfiles"
+              :key="profile.id"
+              :value="profile.id"
+            >
+              {{ profile.name }}
+            </option>
+          </optgroup>
+        </select>
+      </div>
+    </template>
+
     <div class="col-lg-4 d-grid">
       <button
         type="submit"
@@ -130,6 +166,18 @@
         type: Boolean,
         default: false,
       },
+      qifProfiles: {
+        type: Array,
+        default: () => [],
+      },
+      selectedQifProfileId: {
+        type: Number,
+        default: null,
+      },
+      loadingQifProfiles: {
+        type: Boolean,
+        default: false,
+      },
       loading: {
         type: Boolean,
         default: false,
@@ -143,7 +191,7 @@
         default: null,
       },
     },
-    emits: ['submit', 'update:selectedProfileId'],
+    emits: ['submit', 'update:selectedProfileId', 'update:selectedQifProfileId'],
     setup(props, { emit }) {
       const selectedFile = ref(null);
       const fileInput = ref(null);
@@ -153,6 +201,12 @@
       );
       const userProfiles = computed(() =>
         props.profiles.filter((p) => p.type === 'user'),
+      );
+      const qifSystemProfiles = computed(() =>
+        props.qifProfiles.filter((p) => p.type === 'system'),
+      );
+      const qifUserProfiles = computed(() =>
+        props.qifProfiles.filter((p) => p.type === 'user'),
       );
 
       const isSubmitDisabled = computed(() => {
@@ -181,6 +235,11 @@
         emit('update:selectedProfileId', numericValue);
       };
 
+      const onQifProfileChange = (value) => {
+        const numericValue = value ? Number(value) : null;
+        emit('update:selectedQifProfileId', numericValue);
+      };
+
       const submitUpload = () => {
         if (isSubmitDisabled.value) {
           return;
@@ -203,10 +262,13 @@
         fileInput,
         systemProfiles,
         userProfiles,
+        qifSystemProfiles,
+        qifUserProfiles,
         isSubmitDisabled,
         acceptedFileTypes,
         handleFileSelection,
         onProfileChange,
+        onQifProfileChange,
         submitUpload,
         reset,
       };

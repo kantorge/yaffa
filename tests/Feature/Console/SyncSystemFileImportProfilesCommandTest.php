@@ -2,18 +2,18 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\CsvImportProfile;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Models\FileImportProfile;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class SyncSystemCsvImportProfilesCommandTest extends TestCase
+class SyncSystemFileImportProfilesCommandTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_registry_contains_expected_system_profile_structure(): void
     {
-        $registry = new SystemCsvImportProfileRegistry();
+        $registry = new SystemFileImportProfileRegistry();
         $profiles = $registry->profiles();
 
         $this->assertNotEmpty($profiles);
@@ -30,16 +30,16 @@ class SyncSystemCsvImportProfilesCommandTest extends TestCase
         $this->artisan('import:sync-system-profiles')->assertSuccessful();
         $this->artisan('import:sync-system-profiles')->assertSuccessful();
 
-        $this->assertDatabaseHas('csv_import_profiles', [
+        $this->assertDatabaseHas('file_import_profiles', [
             'key' => 'hun_raiffeisen_v1',
             'type' => 'system',
             'user_id' => null,
         ]);
 
-        $count = CsvImportProfile::query()->where('key', 'hun_raiffeisen_v1')->count();
+        $count = FileImportProfile::query()->where('key', 'hun_raiffeisen_v1')->count();
         $this->assertSame(1, $count);
 
-        $profile = CsvImportProfile::query()->where('key', 'hun_raiffeisen_v1')->firstOrFail();
+        $profile = FileImportProfile::query()->where('key', 'hun_raiffeisen_v1')->firstOrFail();
         $this->assertSame('Raiffeisen Hungary v1', $profile->name);
         $this->assertSame('value_date', $profile->mapping_json['Értéknap'] ?? null);
         $this->assertSame('Cash withdrawal and internal transfer entries', data_get($profile->options_json, 'matching_rules.3.name'));

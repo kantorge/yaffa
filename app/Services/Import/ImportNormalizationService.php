@@ -6,12 +6,15 @@ use App\Enums\AiDocumentStatus;
 use App\Enums\TransactionType;
 use App\Models\AiDocument;
 use App\Models\User;
+use App\Services\AssetMatchingService;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Throwable;
 
 class ImportNormalizationService
 {
+    private const float IMPORT_PAYEE_SIMILARITY_THRESHOLD = 0.60;
+
     private const int RELATED_AI_DOCUMENT_LOOKBACK_DAYS = 45;
 
     private const int RELATED_AI_DOCUMENT_QUERY_LIMIT = 50;
@@ -78,6 +81,32 @@ class ImportNormalizationService
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $drafts
+     * @return list<array<string, mixed>>
+     */
+    public function enrichDraftsWithPayeeMatches(User $user, array $drafts): array
+    {
+        $payees = $user->payees()->select('id', 'name', 'alias')->get();
+        $matchingService = new AssetMatchingService($user);
+
+        foreach ($drafts as $index => $draft) {
+            $rawPayee = is_string($draft['payee'] ?? null) && $draft['payee'] !== ''
+                ? $draft['payee']
+                : null;
+
+            $match = ($rawPayee !== null && ! $payees->isEmpty())
+                ? $matchingService->matchBestPayeeFromCollection($rawPayee, $payees)
+                : null;
+
+            $drafts[$index]['matched_payee'] = ($match !== null && $match['similarity'] >= self::IMPORT_PAYEE_SIMILARITY_THRESHOLD)
+                ? $match
+                : null;
+        }
+
+        return $drafts;
     }
 
     /**

@@ -113,12 +113,18 @@ class ImportDuplicateDetectionService
             $input['account_to_id'] = $accountToId;
         }
 
-        if ($transactionType === TransactionType::WITHDRAWAL->value && is_int($accountToId)) {
-            $input['payee_id'] = $accountToId;
+        if (! isset($input['account_to_id']) && $transactionType === TransactionType::WITHDRAWAL->value) {
+            $matchedPayeeId = data_get($draft, 'matched_payee.id');
+            if (is_int($matchedPayeeId)) {
+                $input['account_to_id'] = $matchedPayeeId;
+            }
         }
 
-        if ($transactionType === TransactionType::DEPOSIT->value && is_int($accountFromId)) {
-            $input['payee_id'] = $accountFromId;
+        if (! isset($input['account_from_id']) && $transactionType === TransactionType::DEPOSIT->value) {
+            $matchedPayeeId = data_get($draft, 'matched_payee.id');
+            if (is_int($matchedPayeeId)) {
+                $input['account_from_id'] = $matchedPayeeId;
+            }
         }
 
         return $input;

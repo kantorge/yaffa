@@ -4,9 +4,9 @@ namespace Tests\Feature\API\V1;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Models\User;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
@@ -125,13 +125,13 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $profile->id,
+                'file_import_profile_id' => $profile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
         $response->assertOk()
             ->assertJsonPath('source_type', 'csv')
-            ->assertJsonPath('drafts.0.csv_import_profile_id', $profile->id)
+            ->assertJsonPath('drafts.0.file_import_profile_id', $profile->id)
             ->assertJsonPath('drafts.0.transaction_type', 'withdrawal')
             ->assertJsonPath('drafts.0.amount', 50.25);
     }
@@ -142,7 +142,7 @@ CSV;
         $systemProfile = $this->createSystemProfile();
         $accountEntity = $this->createAccountEntity($user);
 
-        $accountEntity->preferred_csv_import_profile_id = $systemProfile->id;
+        $accountEntity->preferred_file_import_profile_id = $systemProfile->id;
         $accountEntity->save();
 
         $csv = <<<'CSV'
@@ -158,7 +158,7 @@ CSV;
             ]);
 
         $response->assertOk()
-            ->assertJsonPath('drafts.0.csv_import_profile_id', $systemProfile->id);
+            ->assertJsonPath('drafts.0.file_import_profile_id', $systemProfile->id);
     }
 
     public function test_csv_parse_returns_422_when_no_profile_and_no_account_default(): void
@@ -187,7 +187,7 @@ CSV;
         $user = User::factory()->create();
         $accountEntity = $this->createAccountEntity($user);
 
-        $userProfile = CsvImportProfile::factory()->create([
+        $userProfile = FileImportProfile::factory()->create([
             'user_id' => $user->id,
             'type' => 'user',
             'delimiter' => ',',
@@ -214,12 +214,12 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $userProfile->id,
+                'file_import_profile_id' => $userProfile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
         $response->assertOk()
-            ->assertJsonPath('drafts.0.csv_import_profile_id', $userProfile->id)
+            ->assertJsonPath('drafts.0.file_import_profile_id', $userProfile->id)
             ->assertJsonPath('drafts.0.transaction_type', 'withdrawal')
             ->assertJsonPath('drafts.0.amount', 12.5);
     }
@@ -240,7 +240,7 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $profile->id,
+                'file_import_profile_id' => $profile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
@@ -270,7 +270,7 @@ CSV;
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $accountEntity->id,
-                'csv_import_profile_id' => $profile->id,
+                'file_import_profile_id' => $profile->id,
                 'file' => UploadedFile::fake()->createWithContent('import.csv', $csv),
             ]);
 
@@ -283,7 +283,7 @@ CSV;
         $user = User::factory()->create();
 
         $createResponse = $this->actingAs($user)
-            ->postJson(route('api.v1.imports.csv-profiles.store'), [
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'Unsafe profile',
                 'delimiter' => ',',
                 'has_header_row' => true,
@@ -297,13 +297,13 @@ CSV;
 
         $createResponse->assertUnprocessable();
 
-        $safeProfile = CsvImportProfile::factory()->create([
+        $safeProfile = FileImportProfile::factory()->create([
             'user_id' => $user->id,
             'type' => 'user',
         ]);
 
         $updateResponse = $this->actingAs($user)
-            ->patchJson(route('api.v1.imports.csv-profiles.update', ['profile' => $safeProfile->id]), [
+            ->patchJson(route('api.v1.imports.file-profiles.update', ['profile' => $safeProfile->id]), [
                 'options_json' => [
                     'actions' => [['type' => 'set', 'target' => 'transaction_type', 'value' => 'withdrawal']],
                 ],
@@ -312,11 +312,11 @@ CSV;
         $updateResponse->assertUnprocessable();
     }
 
-    private function createSystemProfile(): CsvImportProfile
+    private function createSystemProfile(): FileImportProfile
     {
-        $definition = (new SystemCsvImportProfileRegistry())->profiles()[0];
+        $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return CsvImportProfile::query()->updateOrCreate(
+        return FileImportProfile::query()->updateOrCreate(
             ['key' => $definition['key']],
             [
                 'user_id' => null,

@@ -2,7 +2,7 @@
 
 namespace App\Services\Import;
 
-class SystemCsvImportProfileRegistry
+class SystemFileImportProfileRegistry
 {
     /**
      * @return list<array<string, mixed>>
@@ -13,6 +13,7 @@ class SystemCsvImportProfileRegistry
             [
                 'key' => 'hun_raiffeisen_v1',
                 'type' => 'system',
+                'file_type' => 'csv',
                 'name' => 'Raiffeisen Hungary v1',
                 'delimiter' => ';',
                 'has_header_row' => true,
@@ -152,6 +153,27 @@ class SystemCsvImportProfileRegistry
                     'warnings' => [
                         'unmatched_row' => 'No matching system rule was found for this row.',
                     ],
+                ],
+                'active' => true,
+            ],
+            [
+                'key' => 'qif_swap_p_m_v1',
+                'type' => 'system',
+                'file_type' => 'qif',
+                'name' => 'QIF – Swapped P/M fields (P=type, M=payee)',
+                'delimiter' => null,
+                'has_header_row' => false,
+                'date_format' => null,
+                'decimal_separator' => null,
+                'thousand_separator' => null,
+                'sign_handling' => null,
+                'mapping_json' => null,
+                'options_json' => [
+                    'field_map' => [
+                        'payee' => 'M',
+                        'comment' => 'P',
+                    ],
+                    'amount_sign' => 'normal',
                 ],
                 'active' => true,
             ],

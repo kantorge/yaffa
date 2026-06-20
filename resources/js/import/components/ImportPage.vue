@@ -23,11 +23,15 @@
               :profiles="profiles"
               :loading-profiles="loadingProfiles"
               :selected-profile-id="selectedProfileId"
+              :qif-profiles="qifProfiles"
+              :loading-qif-profiles="loadingQifProfiles"
+              :selected-qif-profile-id="selectedQifProfileId"
               :loading="loading"
               :progress="uploadProgress"
               :error="uploadError"
               @submit="onSubmit"
               @update:selectedProfileId="onProfileChange"
+              @update:selectedQifProfileId="onQifProfileChange"
             />
           </div>
         </div>
@@ -66,12 +70,21 @@
           @finalize-draft="onFinalizeDraft"
         />
 
-        <CsvImportProfileManager
+        <FileImportProfileManager
           v-if="sourceType === 'csv'"
           :profiles="profiles"
           :loading="loadingProfiles"
+          file-type="csv"
           class="mt-3"
           @profiles-updated="fetchProfiles"
+        />
+        <FileImportProfileManager
+          v-if="sourceType === 'qif'"
+          :profiles="qifProfiles"
+          :loading="loadingQifProfiles"
+          file-type="qif"
+          class="mt-3"
+          @profiles-updated="fetchQifProfiles"
         />
       </div>
     </div>
@@ -86,7 +99,7 @@
   import ImportSourceSelector from './ImportSourceSelector.vue';
   import ImportUploadCard from './ImportUploadCard.vue';
   import ImportDraftTable from './ImportDraftTable.vue';
-  import CsvImportProfileManager from './CsvImportProfileManager.vue';
+  import FileImportProfileManager from './FileImportProfileManager.vue';
 
   const STORAGE_KEY_LAST_PROFILE = 'importLastCsvProfileId';
 
@@ -96,7 +109,7 @@
       ImportSourceSelector,
       ImportUploadCard,
       ImportDraftTable,
-      CsvImportProfileManager,
+      FileImportProfileManager,
     },
     setup() {
       const sourceType = ref('qif');
@@ -107,6 +120,10 @@
       const profiles = ref([]);
       const loadingProfiles = ref(false);
       const selectedProfileId = ref(null);
+
+      const qifProfiles = ref([]);
+      const loadingQifProfiles = ref(false);
+      const selectedQifProfileId = ref(null);
 
       const loading = ref(false);
       const uploadProgress = ref(0);
@@ -145,7 +162,9 @@
         loadingProfiles.value = true;
 
         try {
-          const response = await axios.get('/api/v1/imports/csv-profiles');
+          const response = await axios.get('/api/v1/imports/file-profiles', {
+            params: { file_type: 'csv' },
+          });
           profiles.value = Array.isArray(response.data?.data)
             ? response.data.data
             : [];
@@ -156,13 +175,30 @@
         }
       };
 
+      const fetchQifProfiles = async () => {
+        loadingQifProfiles.value = true;
+
+        try {
+          const response = await axios.get('/api/v1/imports/file-profiles', {
+            params: { file_type: 'qif' },
+          });
+          qifProfiles.value = Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        } catch (_error) {
+          // Non-critical; QIF profile list will stay empty
+        } finally {
+          loadingQifProfiles.value = false;
+        }
+      };
+
       const autoSelectProfile = (accountId) => {
         const account = accounts.value.find(
           (a) => String(a.id) === String(accountId),
         );
 
-        if (account?.preferred_csv_import_profile_id) {
-          selectedProfileId.value = account.preferred_csv_import_profile_id;
+        if (account?.preferred_file_import_profile_id) {
+          selectedProfileId.value = account.preferred_file_import_profile_id;
           return;
         }
 
@@ -224,6 +260,10 @@
         selectedProfileId.value = value;
       };
 
+      const onQifProfileChange = (value) => {
+        selectedQifProfileId.value = value;
+      };
+
       const onSubmit = async ({ file }) => {
         uploadError.value = null;
 
@@ -243,7 +283,9 @@
         formData.append('account_id', selectedAccountId.value);
 
         if (sourceType.value === 'csv' && selectedProfileId.value) {
-          formData.append('csv_import_profile_id', selectedProfileId.value);
+          formData.append('file_import_profile_id', selectedProfileId.value);
+        } else if (sourceType.value === 'qif' && selectedQifProfileId.value) {
+          formData.append('file_import_profile_id', selectedQifProfileId.value);
         }
 
         loading.value = true;
@@ -351,6 +393,10 @@
           if (selectedAccountId.value) {
             autoSelectProfile(selectedAccountId.value);
           }
+        } else if (newType === 'qif') {
+          if (!qifProfiles.value.length) {
+            fetchQifProfiles();
+          }
         }
       });
 
@@ -376,16 +422,27 @@
 
         finalizingDraftIndex.value = draftIndex;
 
+        const matchedPayeeId = draft.matched_payee?.id ?? null;
+        const txType = draft.transaction_type || 'withdrawal';
+        const configFromId = draft.config?.account_from_id ?? null;
+        const configToId = draft.config?.account_to_id ?? null;
+
         const transaction = {
-          transaction_type: draft.transaction_type || 'withdrawal',
+          transaction_type: txType,
           date: draft.date,
           schedule: false,
           budget: false,
           reconciled: false,
           comment: null,
           config: {
-            account_from_id: draft.config?.account_from_id ?? null,
-            account_to_id: draft.config?.account_to_id ?? null,
+            account_from_id:
+              configFromId === null && txType === 'deposit' && matchedPayeeId
+                ? matchedPayeeId
+                : configFromId,
+            account_to_id:
+              configToId === null && txType === 'withdrawal' && matchedPayeeId
+                ? matchedPayeeId
+                : configToId,
             // For deposits, amount_from is null in normalized data but the form uses
             // amount_from as the primary visible amount field for all transaction types.
             amount_from: draft.config?.amount_from ?? draft.amount ?? null,
@@ -423,6 +480,7 @@
 
       onMounted(() => {
         fetchAccounts();
+        fetchQifProfiles();
         window.addEventListener('transaction-created', onTransactionCreated);
       });
 
@@ -434,6 +492,9 @@
         profiles,
         loadingProfiles,
         selectedProfileId,
+        qifProfiles,
+        loadingQifProfiles,
+        selectedQifProfileId,
         loading,
         uploadProgress,
         uploadError,
@@ -443,8 +504,10 @@
         accountCurrency,
         selectedAccountCurrency,
         fetchProfiles,
+        fetchQifProfiles,
         onAccountChange,
         onProfileChange,
+        onQifProfileChange,
         onSubmit,
         onIgnoreDraft,
         onFinalizeDraft,
