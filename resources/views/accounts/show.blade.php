@@ -75,11 +75,11 @@
 
         <h2>{{ __('Transaction filters') }}</h2>
 
-        <div id="account-csv-profile-preference">
-            <csv-profile-preference
+        <div id="account-file-import-profile-preference">
+            <file-import-profile-preference
                 :account-entity-id="{{ $account->id }}"
-                :initial-profile-id="{{ $account->preferred_csv_import_profile_id ?? 'null' }}"
-            ></csv-profile-preference>
+                :initial-profile-id="{{ $account->preferred_file_import_profile_id ?? 'null' }}"
+            ></file-import-profile-preference>
         </div>
 
         <div class="card mb-3">

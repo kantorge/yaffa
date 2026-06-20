@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Models\User;
-use App\Services\Import\SystemCsvImportProfileRegistry;
+use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -17,13 +17,13 @@ class ImportAuthorizationTest extends TestCase
 
     public function test_unauthorized_requests_to_import_profile_routes_are_denied(): void
     {
-        $profile = CsvImportProfile::factory()->create();
+        $profile = FileImportProfile::factory()->create();
 
-        $this->getJson(route('api.v1.imports.csv-profiles.index'))->assertStatus(Response::HTTP_UNAUTHORIZED);
-        $this->postJson(route('api.v1.imports.csv-profiles.store'), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
-        $this->patchJson(route('api.v1.imports.csv-profiles.update', $profile), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
-        $this->deleteJson(route('api.v1.imports.csv-profiles.destroy', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
-        $this->postJson(route('api.v1.imports.csv-profiles.clone', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $this->getJson(route('api.v1.imports.file-profiles.index'))->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $this->postJson(route('api.v1.imports.file-profiles.store'), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $this->patchJson(route('api.v1.imports.file-profiles.update', $profile), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $this->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $this->postJson(route('api.v1.imports.file-profiles.clone', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
     public function test_user_can_crud_own_profiles_and_clone_system_profiles(): void
@@ -32,7 +32,7 @@ class ImportAuthorizationTest extends TestCase
         $systemProfile = $this->createSystemProfile();
 
         $storeResponse = $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.v1.imports.csv-profiles.store'), [
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'My Import Profile',
                 'delimiter' => ',',
                 'has_header_row' => true,
@@ -51,14 +51,14 @@ class ImportAuthorizationTest extends TestCase
         $profileId = $storeResponse->json('data.id');
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson(route('api.v1.imports.csv-profiles.update', $profileId), [
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profileId), [
                 'name' => 'Updated Import Profile',
             ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Import Profile');
 
         $cloneResponse = $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.v1.imports.csv-profiles.clone', $systemProfile), [
+            ->postJson(route('api.v1.imports.file-profiles.clone', $systemProfile), [
                 'name' => 'Cloned System Profile',
             ]);
 
@@ -71,7 +71,7 @@ class ImportAuthorizationTest extends TestCase
         $this->assertNull(data_get($cloneResponse->json('data.options_json'), 'defaults'));
 
         $this->actingAs($user, 'sanctum')
-            ->deleteJson(route('api.v1.imports.csv-profiles.destroy', $profileId))
+            ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profileId))
             ->assertNoContent();
     }
 
@@ -79,13 +79,13 @@ class ImportAuthorizationTest extends TestCase
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        $profile = CsvImportProfile::factory()->create([
+        $profile = FileImportProfile::factory()->create([
             'user_id' => $otherUser->id,
             'type' => 'user',
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson(route('api.v1.imports.csv-profiles.update', $profile), [
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'name' => 'Should fail',
             ])
             ->assertForbidden();
@@ -97,7 +97,7 @@ class ImportAuthorizationTest extends TestCase
         $profile = $this->createSystemProfile();
 
         $this->actingAs($user, 'sanctum')
-            ->deleteJson(route('api.v1.imports.csv-profiles.destroy', $profile))
+            ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))
             ->assertForbidden();
     }
 
@@ -106,34 +106,34 @@ class ImportAuthorizationTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
         $accountEntity = $this->createAccountEntity($user);
-        $ownProfile = CsvImportProfile::factory()->create([
+        $ownProfile = FileImportProfile::factory()->create([
             'user_id' => $user->id,
             'type' => 'user',
         ]);
-        $foreignProfile = CsvImportProfile::factory()->create([
+        $foreignProfile = FileImportProfile::factory()->create([
             'user_id' => $otherUser->id,
             'type' => 'user',
         ]);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson(route('api.v1.accounts.update', $accountEntity), [
-                'preferred_csv_import_profile_id' => $ownProfile->id,
+                'preferred_file_import_profile_id' => $ownProfile->id,
             ])
             ->assertOk()
-            ->assertJsonPath('preferred_csv_import_profile_id', $ownProfile->id);
+            ->assertJsonPath('preferred_file_import_profile_id', $ownProfile->id);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson(route('api.v1.accounts.update', $accountEntity), [
-                'preferred_csv_import_profile_id' => $foreignProfile->id,
+                'preferred_file_import_profile_id' => $foreignProfile->id,
             ])
             ->assertUnprocessable();
     }
 
-    private function createSystemProfile(): CsvImportProfile
+    private function createSystemProfile(): FileImportProfile
     {
-        $definition = (new SystemCsvImportProfileRegistry())->profiles()[0];
+        $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return CsvImportProfile::query()->updateOrCreate(
+        return FileImportProfile::query()->updateOrCreate(
             ['key' => $definition['key']],
             [
                 'user_id' => null,

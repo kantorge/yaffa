@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-class CsvImportProfileUpdateRequest extends FormRequest
+class FileImportProfileUpdateRequest extends FormRequest
 {
     /**
      * @return array<string, array<int, mixed>>
@@ -13,6 +13,7 @@ class CsvImportProfileUpdateRequest extends FormRequest
             'user_id' => ['prohibited'],
             'key' => ['prohibited'],
             'type' => ['prohibited'],
+            'file_type' => ['prohibited'],
             'name' => ['sometimes', 'string', 'min:2', 'max:191'],
             'delimiter' => ['sometimes', 'nullable', 'string', 'max:5'],
             'has_header_row' => ['sometimes', 'boolean'],

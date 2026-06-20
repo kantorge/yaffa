@@ -2,11 +2,43 @@
 
 namespace App\Services\Import;
 
+use App\Models\FileImportProfile;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
 
 class QifParserService
 {
+    /**
+     * Default QIF marker → semantic field mapping.
+     *
+     * @var array<string, string>
+     */
+    private array $fieldMap = [
+        'payee' => 'P',
+        'comment' => 'M',
+        'category' => 'L',
+        'reference' => 'N',
+    ];
+
+    private string $amountSign = 'normal';
+
+    public function applyProfile(FileImportProfile $profile): void
+    {
+        $options = is_array($profile->options_json) ? $profile->options_json : [];
+
+        if (isset($options['field_map']) && is_array($options['field_map'])) {
+            foreach ($options['field_map'] as $canonical => $marker) {
+                if (isset($this->fieldMap[$canonical]) && is_string($marker) && $marker !== '') {
+                    $this->fieldMap[$canonical] = mb_strtoupper($marker);
+                }
+            }
+        }
+
+        if (isset($options['amount_sign']) && $options['amount_sign'] === 'inverted') {
+            $this->amountSign = 'inverted';
+        }
+    }
+
     /**
      * @return array{entries: list<array<string, mixed>>, warnings: list<string>}
      */
@@ -112,7 +144,7 @@ class QifParserService
 
             $currentEntry['raw_lines'][] = $line;
 
-            $marker = mb_substr($line, 0, 1);
+            $marker = mb_strtoupper(mb_substr($line, 0, 1));
             $value = mb_trim(mb_substr($line, 1));
 
             switch ($marker) {
@@ -121,18 +153,6 @@ class QifParserService
                     break;
                 case 'T':
                     $currentEntry['amount_raw'] = $value;
-                    break;
-                case 'P':
-                    $currentEntry['payee'] = $value;
-                    break;
-                case 'M':
-                    $currentEntry['memo'] = $value;
-                    break;
-                case 'L':
-                    $currentEntry['category'] = $value;
-                    break;
-                case 'N':
-                    $currentEntry['reference'] = $value;
                     break;
                 case 'S':
                 case 'E':
@@ -143,10 +163,20 @@ class QifParserService
                     );
                     break;
                 default:
-                    $this->addUniqueWarning(
-                        $currentEntry['warnings'],
-                        sprintf('Unsupported QIF marker line "%s" was kept in raw_entry.', $line),
-                    );
+                    if ($marker === $this->fieldMap['payee']) {
+                        $currentEntry['payee'] = $value;
+                    } elseif ($marker === $this->fieldMap['comment']) {
+                        $currentEntry['memo'] = $value;
+                    } elseif ($marker === $this->fieldMap['category']) {
+                        $currentEntry['category'] = $value;
+                    } elseif ($marker === $this->fieldMap['reference']) {
+                        $currentEntry['reference'] = $value;
+                    } else {
+                        $this->addUniqueWarning(
+                            $currentEntry['warnings'],
+                            sprintf('Unsupported QIF marker line "%s" was kept in raw_entry.', $line),
+                        );
+                    }
                     break;
             }
         }
@@ -171,9 +201,16 @@ class QifParserService
      */
     private function finalizeEntry(array $entry): array
     {
+        $amountRaw = $entry['amount_raw'];
+        if ($this->amountSign === 'inverted' && is_string($amountRaw) && $amountRaw !== '') {
+            $amountRaw = str_starts_with($amountRaw, '-')
+                ? mb_substr($amountRaw, 1)
+                : '-' . $amountRaw;
+        }
+
         return [
             'date_raw' => $entry['date_raw'],
-            'amount_raw' => $entry['amount_raw'],
+            'amount_raw' => $amountRaw,
             'payee' => $entry['payee'],
             'memo' => $entry['memo'],
             'category' => $entry['category'],

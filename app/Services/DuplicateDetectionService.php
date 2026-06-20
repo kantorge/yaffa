@@ -134,17 +134,6 @@ class DuplicateDetectionService
             if (isset($extractedData['account_to_id']) && $config->account_to_id === $extractedData['account_to_id']) {
                 $matches++;
             }
-
-            // Check payee
-            if (isset($extractedData['payee_id'])) {
-                $hasPayeeMatch = $transaction->transactionItems()
-                    ->where('payee_id', $extractedData['payee_id'])
-                    ->exists();
-
-                if ($hasPayeeMatch) {
-                    $matches++;
-                }
-            }
         } elseif ($transaction->isInvestment()) {
             $config = $transaction->config;
 

@@ -4,7 +4,7 @@
       <div
         class="card-title collapsed collapse-control"
         data-coreui-toggle="collapse"
-        data-coreui-target="#cardCsvProfilePreference"
+        data-coreui-target="#cardFileImportProfilePreference"
       >
         <i class="fa fa-angle-down"></i>
         {{ __('CSV import preference') }}
@@ -13,18 +13,18 @@
     <div
       class="collapse card-body"
       aria-expanded="false"
-      id="cardCsvProfilePreference"
+      id="cardFileImportProfilePreference"
     >
       <div v-if="loading" class="text-muted small">
         {{ __('Loading profiles...') }}
       </div>
 
       <template v-else>
-        <label class="form-label small" for="csv-profile-preference-select">
+        <label class="form-label small" for="file-import-profile-preference-select">
           {{ __('Default CSV import profile') }}
         </label>
         <select
-          id="csv-profile-preference-select"
+          id="file-import-profile-preference-select"
           class="form-select form-select-sm"
           :value="selectedProfileId"
           :disabled="saving"
@@ -76,7 +76,7 @@
   import { __ } from '@/shared/lib/i18n';
 
   export default {
-    name: 'CsvProfilePreference',
+    name: 'FileImportProfilePreference',
     props: {
       accountEntityId: {
         type: Number,
@@ -107,7 +107,9 @@
         loading.value = true;
 
         try {
-          const response = await axios.get('/api/v1/imports/csv-profiles');
+          const response = await axios.get('/api/v1/imports/file-profiles', {
+            params: { file_type: 'csv' },
+          });
           profiles.value = Array.isArray(response.data?.data)
             ? response.data.data
             : [];
@@ -125,7 +127,7 @@
 
         try {
           await axios.patch(`/api/v1/accounts/${props.accountEntityId}`, {
-            preferred_csv_import_profile_id: profileId || null,
+            preferred_file_import_profile_id: profileId || null,
           });
 
           selectedProfileId.value = profileId || null;

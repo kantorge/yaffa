@@ -58,7 +58,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
  * @property string|null $alias
- * @property int|null $preferred_csv_import_profile_id
+ * @property int|null $preferred_file_import_profile_id
  * @property-read Collection<int, Transaction> $transactionsInvestment
  * @property-read int|null $transactions_investment_count
  * @property-read Collection<int, Transaction> $transactionsStandardFrom
@@ -67,7 +67,7 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $transactions_standard_to_count
  * @property int|null $transactions_count
  * @method static Builder<static>|AccountEntity whereAlias($value)
- * @method static Builder<static>|AccountEntity wherePreferredCsvImportProfileId($value)
+ * @method static Builder<static>|AccountEntity wherePreferredFileImportProfileId($value)
  * @mixin Eloquent
  */
 class AccountEntity extends Model
@@ -84,7 +84,7 @@ class AccountEntity extends Model
         'active',
         'config_type',
         'config_id',
-        'preferred_csv_import_profile_id',
+        'preferred_file_import_profile_id',
         'user_id',
         'alias',
     ];
@@ -214,9 +214,9 @@ class AccountEntity extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function preferredCsvImportProfile(): BelongsTo
+    public function preferredFileImportProfile(): BelongsTo
     {
-        return $this->belongsTo(CsvImportProfile::class, 'preferred_csv_import_profile_id');
+        return $this->belongsTo(FileImportProfile::class, 'preferred_file_import_profile_id');
     }
 
     public function isAccount(): bool

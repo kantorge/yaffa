@@ -636,14 +636,14 @@ app.component('transaction-create-investment-modal', CreateInvestmentTransaction
 
 app.mount('#app')
 
-// Mount the CSV profile preference component in its own app
-import CsvProfilePreference from './components/CsvProfilePreference.vue';
+// Mount the file import profile preference component in its own app
+import FileImportProfilePreference from './components/FileImportProfilePreference.vue';
 
 const preferenceApp = createApp({});
 preferenceApp.config.globalProperties.__ = window.__;
 installRouteGlobal(preferenceApp);
-preferenceApp.component('csv-profile-preference', CsvProfilePreference);
-preferenceApp.mount('#account-csv-profile-preference');
+preferenceApp.component('file-import-profile-preference', FileImportProfilePreference);
+preferenceApp.mount('#account-file-import-profile-preference');
 
 // Initialize tooltips in table
 $(document).ready(function () {

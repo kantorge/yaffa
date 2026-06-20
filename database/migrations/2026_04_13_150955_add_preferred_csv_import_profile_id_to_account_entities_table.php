@@ -11,13 +11,13 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('account_entities', function (Blueprint $table) {
-            $table->foreignId('preferred_csv_import_profile_id')
+            $table->foreignId('preferred_file_import_profile_id')
                 ->nullable()
                 ->after('config_id')
-                ->constrained('csv_import_profiles')
+                ->constrained('file_import_profiles')
                 ->nullOnDelete();
 
-            $table->index('preferred_csv_import_profile_id');
+            $table->index('preferred_file_import_profile_id');
         });
     }
 
@@ -27,7 +27,7 @@ return new class () extends Migration {
     public function down(): void
     {
         Schema::table('account_entities', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('preferred_csv_import_profile_id');
+            $table->dropConstrainedForeignId('preferred_file_import_profile_id');
         });
     }
 };

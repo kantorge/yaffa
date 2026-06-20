@@ -30,10 +30,10 @@ class ImportParseRequest extends FormRequest
                 'integer',
                 'exists:account_entities,id',
             ],
-            'csv_import_profile_id' => [
+            'file_import_profile_id' => [
                 'nullable',
                 'integer',
-                'exists:csv_import_profiles,id',
+                'exists:file_import_profiles,id',
             ],
             'file' => [
                 'required',

@@ -4,7 +4,7 @@ namespace App\Services\Import;
 
 use App\Enums\TransactionType;
 use App\Models\AccountEntity;
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use Illuminate\Http\UploadedFile;
 use League\Csv\Reader;
 use RuntimeException;
@@ -15,7 +15,7 @@ class CsvParserService
     /**
      * @return array{drafts: list<array<string, mixed>>, warnings: list<string>, unmatched_rows: list<array<string, mixed>>}
      */
-    public function parseFile(UploadedFile $file, CsvImportProfile $profile, int $accountId, int $userId): array
+    public function parseFile(UploadedFile $file, FileImportProfile $profile, int $accountId, int $userId): array
     {
         $path = $file->getRealPath();
         if (! is_string($path)) {
@@ -140,7 +140,7 @@ class CsvParserService
      */
     private function parseSystemRow(
         array $canonicalFacts,
-        CsvImportProfile $profile,
+        FileImportProfile $profile,
         int $accountId,
         int $userId,
         int $draftIndex,
@@ -204,7 +204,7 @@ class CsvParserService
      */
     private function parseUserRow(
         array $canonicalFacts,
-        CsvImportProfile $profile,
+        FileImportProfile $profile,
         int $accountId,
         int $draftIndex,
         string $rawEntry,
@@ -287,7 +287,7 @@ class CsvParserService
         array &$warnings,
         int $accountId,
         int $userId,
-        CsvImportProfile $profile,
+        FileImportProfile $profile,
     ): void {
         $type = (string) ($action['type'] ?? '');
         $target = (string) ($action['target'] ?? '');
@@ -447,7 +447,7 @@ class CsvParserService
         array &$warnings,
         int $accountId,
         int $userId,
-        CsvImportProfile $profile,
+        FileImportProfile $profile,
     ): mixed {
         return match ($transform) {
             'parse_localized_amount' => $this->transformParseLocalizedAmount($value, array_merge($args, [
@@ -661,7 +661,7 @@ class CsvParserService
         string $rawEntry,
         array $warnings,
         string $sourceType,
-        CsvImportProfile $profile,
+        FileImportProfile $profile,
     ): array {
         $date = is_string($output['date'] ?? null) ? $output['date'] : null;
 
@@ -709,7 +709,7 @@ class CsvParserService
             'draft_index' => $draftIndex,
             'status' => $status,
             'source_type' => $sourceType,
-            'csv_import_profile_id' => $profile->id,
+            'file_import_profile_id' => $profile->id,
             'date' => $date,
             'amount' => $finalAmount,
             'transaction_type' => $transactionType,

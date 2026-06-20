@@ -2,17 +2,17 @@
 
 namespace App\Policies;
 
-use App\Models\CsvImportProfile;
+use App\Models\FileImportProfile;
 use App\Models\User;
 
-class CsvImportProfilePolicy
+class FileImportProfilePolicy
 {
     public function viewAny(User $user): bool
     {
         return true;
     }
 
-    public function view(User $user, CsvImportProfile $profile): bool
+    public function view(User $user, FileImportProfile $profile): bool
     {
         return $profile->isSystem() || $profile->isUserOwnedBy($user);
     }
@@ -22,17 +22,17 @@ class CsvImportProfilePolicy
         return true;
     }
 
-    public function update(User $user, CsvImportProfile $profile): bool
+    public function update(User $user, FileImportProfile $profile): bool
     {
         return $profile->isUserOwnedBy($user);
     }
 
-    public function delete(User $user, CsvImportProfile $profile): bool
+    public function delete(User $user, FileImportProfile $profile): bool
     {
         return $profile->isUserOwnedBy($user);
     }
 
-    public function clone(User $user, CsvImportProfile $profile): bool
+    public function clone(User $user, FileImportProfile $profile): bool
     {
         return $this->view($user, $profile);
     }
