@@ -13,7 +13,6 @@ return [
     // Optional settings, used primarily for the public facing Sandbox environment
     'sandbox_mode' => env('SANDBOX_MODE', false),
     'gtm_container_id' => env('GTM_CONTAINER_ID'),
-    'cookieyes_id' => env('COOKIEYES_ID'),
 
     // These are not actual config values, but a list of supported date presets for account details.
     // The default / empty value is not added, as it behaves differently in various places.
