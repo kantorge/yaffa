@@ -635,15 +635,6 @@ app.component('transaction-create-investment-modal', CreateInvestmentTransaction
 
 app.mount('#app')
 
-// Mount the file import profile preference component in its own app
-import FileImportProfilePreference from './components/FileImportProfilePreference.vue';
-
-const preferenceApp = createApp({});
-preferenceApp.config.globalProperties.__ = window.__;
-installRouteGlobal(preferenceApp);
-preferenceApp.component('file-import-profile-preference', FileImportProfilePreference);
-preferenceApp.mount('#account-file-import-profile-preference');
-
 // Initialize tooltips in table
 $(document).ready(function () {
     helpers.initializeBootstrapTooltips();

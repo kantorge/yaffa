@@ -98,6 +98,10 @@ if (current === 'account-entity.show') {
     loadModule('account/show');
 }
 
+if ((current === 'account-entity.create' || current === 'account-entity.edit') && route().params.type === 'account') {
+    loadModule('account/form');
+}
+
 if ((current === 'account-entity.create' || current === 'account-entity.edit') && route().params.type === 'payee') {
     loadModule('payee/form');
 }
