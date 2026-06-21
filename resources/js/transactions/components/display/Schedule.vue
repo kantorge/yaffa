@@ -111,6 +111,7 @@
 
 <script>
   import { __ } from '@/shared/lib/i18n';
+  import { parseIsoDate } from '@/shared/lib/helpers';
 
   /**
    * @property {Object} schedule
@@ -148,7 +149,7 @@
           return;
         }
 
-        const newDate = new Date(date);
+        const newDate = typeof date === 'string' ? parseIsoDate(date) : date;
 
         return newDate.toLocaleDateString(this.locale);
       },

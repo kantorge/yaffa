@@ -57,7 +57,7 @@
 
 <script setup>
   import { nextTick, onMounted, ref, watch } from 'vue';
-  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import { initializeBootstrapTooltips, parseIsoDate } from '@/shared/lib/helpers';
   import { __ } from '@/shared/lib/i18n';
 
   const props = defineProps({
@@ -113,8 +113,8 @@
       return __('Not set');
     }
 
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
+    const date = typeof value === 'string' ? parseIsoDate(value) : value;
+    if (!date || Number.isNaN(date.getTime())) {
       return value;
     }
 
@@ -132,21 +132,21 @@
       const transaction = data.transaction;
 
       if (transaction?.date) {
-        transaction.date = new Date(transaction.date);
+        transaction.date = parseIsoDate(transaction.date);
       }
       if (transaction?.transaction_schedule) {
         if (transaction.transaction_schedule.start_date) {
-          transaction.transaction_schedule.start_date = new Date(
+          transaction.transaction_schedule.start_date = parseIsoDate(
             transaction.transaction_schedule.start_date,
           );
         }
         if (transaction.transaction_schedule.end_date) {
-          transaction.transaction_schedule.end_date = new Date(
+          transaction.transaction_schedule.end_date = parseIsoDate(
             transaction.transaction_schedule.end_date,
           );
         }
         if (transaction.transaction_schedule.next_date) {
-          transaction.transaction_schedule.next_date = new Date(
+          transaction.transaction_schedule.next_date = parseIsoDate(
             transaction.transaction_schedule.next_date,
           );
         }
