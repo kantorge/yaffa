@@ -49,10 +49,6 @@ class CsvParserService
 
         $rowIndex = 0;
         foreach ($records as $record) {
-            if (! is_array($record)) {
-                continue;
-            }
-
             $rowIndex++;
             if ($rowIndex > $maxRows) {
                 throw new RuntimeException(
@@ -123,10 +119,10 @@ class CsvParserService
         $canonical = [];
 
         foreach ($record as $header => $value) {
-            $headerKey = is_string($header) ? $header : (string) $header;
+            $headerKey = $header;
             $targetKey = $mapping[$headerKey] ?? $headerKey;
 
-            if (is_string($targetKey) && $targetKey !== '') {
+            if ($targetKey !== '') {
                 $canonical[$targetKey] = $value;
             }
         }
@@ -528,6 +524,12 @@ class CsvParserService
 
         if ($parsed === false) {
             $warnings[] = sprintf('Date value "%s" does not match format %s.', $value, $format);
+            return null;
+        }
+
+        $errors = DateTimeImmutable::getLastErrors();
+        if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
+            $warnings[] = sprintf('Date value "%s" contains an out-of-range date component.', $value);
             return null;
         }
 

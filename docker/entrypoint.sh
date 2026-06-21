@@ -14,7 +14,7 @@ fi
 # Run various Laravel maintenance scripts
 php artisan down || true
 php artisan migrate --force
-php artisan import:sync-system-profiles --no-interaction
+php artisan app:import:sync-system-profiles --no-interaction
 php artisan optimize:clear
 php artisan optimize
 php artisan up

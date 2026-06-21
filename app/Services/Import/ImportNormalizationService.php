@@ -191,7 +191,13 @@ class ImportNormalizationService
                 $normalized = str_replace(',', '', $normalized);
             }
         } elseif ($hasComma) {
-            $normalized = str_replace(',', '.', $normalized);
+            if (preg_match('/,\d{3}$/', $normalized)) {
+                // Comma in thousands position (e.g. 1,234) — remove it
+                $normalized = str_replace(',', '', $normalized);
+            } else {
+                // Comma as decimal separator (e.g. 1,23 or 1,2) — replace with dot
+                $normalized = str_replace(',', '.', $normalized);
+            }
         }
 
         if (! preg_match('/^-?\d+(\.\d+)?$/', $normalized)) {
@@ -254,7 +260,7 @@ class ImportNormalizationService
             ->get();
 
         return $documents
-            ->map(function (AiDocument $document): ?array {
+            ->map(function (AiDocument $document): array {
                 $payload = is_array($document->processed_transaction_data)
                     ? $document->processed_transaction_data
                     : [];
@@ -266,7 +272,6 @@ class ImportNormalizationService
                     'date' => $this->extractDocumentDate($payload),
                 ];
             })
-            ->filter(fn (mixed $candidate): bool => is_array($candidate))
             ->values()
             ->all();
     }
@@ -304,7 +309,7 @@ class ImportNormalizationService
             if ($draftDate instanceof CarbonImmutable && $candidateDate instanceof CarbonImmutable) {
                 $daysApart = abs($draftDate->diffInDays($candidateDate, false));
 
-                if ($daysApart === 0) {
+                if ($daysApart === 0.0) {
                     $score += 0.25;
                     $matchedOn[] = 'date';
                 } elseif ($daysApart <= 3) {

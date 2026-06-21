@@ -47,11 +47,11 @@ class ImportDuplicateDetectionService
             $draft['duplicate_candidates'] = collect($matches)
                 ->take(10)
                 ->map(function (array $match) use ($draft, $transactions): array {
-                    $transactionId = (int) ($match['id'] ?? 0);
+                    $transactionId = (int) $match['id'];
                     /** @var Transaction|null $transaction */
                     $transaction = $transactions->get($transactionId);
 
-                    $similarity = (float) ($match['similarity'] ?? 0.0);
+                    $similarity = (float) $match['similarity'];
 
                     return [
                         'transaction_id' => $transactionId,
@@ -61,7 +61,7 @@ class ImportDuplicateDetectionService
                         'summary' => [
                             'date' => $transaction?->date?->format('Y-m-d'),
                             'comment' => $transaction?->comment,
-                            'amount' => $transaction ? (float) $transaction->transactionItems()->sum('amount') : null,
+                            'amount' => $transaction ? (float) $transaction->transactionItems->sum('amount') : null,
                         ],
                     ];
                 })
@@ -143,7 +143,7 @@ class ImportDuplicateDetectionService
         $signals = ['date'];
 
         $draftAmount = is_numeric($draft['amount'] ?? null) ? (float) $draft['amount'] : null;
-        $transactionAmount = (float) $transaction->transactionItems()->sum('amount');
+        $transactionAmount = (float) $transaction->transactionItems->sum('amount');
 
         if ($draftAmount !== null && abs($draftAmount - $transactionAmount) < 0.00001) {
             $signals[] = 'amount';

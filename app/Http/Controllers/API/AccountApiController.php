@@ -298,6 +298,12 @@ class AccountApiController extends Controller implements HasMiddleware
 
                     if (Gate::forUser($request->user())->denies('view', $profile)) {
                         $fail(__('The selected file import profile is not accessible.'));
+
+                        return;
+                    }
+
+                    if ($profile->file_type !== 'csv') {
+                        $fail(__('Only CSV profiles can be set as the preferred import profile.'));
                     }
                 },
             ],

@@ -72,7 +72,6 @@
 
 <script>
   import axios from 'axios';
-  import { computed, onMounted, ref } from 'vue';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
@@ -87,85 +86,67 @@
         default: null,
       },
     },
-    setup(props) {
-      const profiles = ref([]);
-      const loading = ref(false);
-      const saving = ref(false);
-      const successMessage = ref(null);
-      const errorMessage = ref(null);
-      const selectedProfileId = ref(props.initialProfileId);
-
-      const systemProfiles = computed(() =>
-        profiles.value.filter((p) => p.type === 'system'),
-      );
-
-      const userProfiles = computed(() =>
-        profiles.value.filter((p) => p.type === 'user'),
-      );
-
-      const fetchProfiles = async () => {
-        loading.value = true;
-
+    data() {
+      return {
+        profiles: [],
+        loading: false,
+        saving: false,
+        successMessage: null,
+        errorMessage: null,
+        selectedProfileId: this.initialProfileId,
+      };
+    },
+    computed: {
+      systemProfiles() {
+        return this.profiles.filter((p) => p.type === 'system');
+      },
+      userProfiles() {
+        return this.profiles.filter((p) => p.type === 'user');
+      },
+    },
+    mounted() {
+      this.fetchProfiles();
+    },
+    methods: {
+      async fetchProfiles() {
+        this.loading = true;
         try {
           const response = await axios.get('/api/v1/imports/file-profiles', {
             params: { file_type: 'csv' },
           });
-          profiles.value = Array.isArray(response.data?.data)
+          this.profiles = Array.isArray(response.data?.data)
             ? response.data.data
             : [];
         } catch (_error) {
           // Non-critical; profiles list will stay empty
         } finally {
-          loading.value = false;
+          this.loading = false;
         }
-      };
-
-      const savePreference = async (profileId) => {
-        saving.value = true;
-        successMessage.value = null;
-        errorMessage.value = null;
-
+      },
+      async savePreference(profileId) {
+        this.saving = true;
+        this.successMessage = null;
+        this.errorMessage = null;
         try {
-          await axios.patch(`/api/v1/accounts/${props.accountEntityId}`, {
+          await axios.patch(`/api/v1/accounts/${this.accountEntityId}`, {
             preferred_file_import_profile_id: profileId || null,
           });
-
-          selectedProfileId.value = profileId || null;
-          successMessage.value = __('Preference saved.');
-
+          this.selectedProfileId = profileId || null;
+          this.successMessage = __('Preference saved.');
           setTimeout(() => {
-            successMessage.value = null;
+            this.successMessage = null;
           }, 3000);
         } catch (_error) {
-          errorMessage.value = __(
-            'Failed to save preference. Please try again.',
-          );
+          this.errorMessage = __('Failed to save preference. Please try again.');
         } finally {
-          saving.value = false;
+          this.saving = false;
         }
-      };
-
-      const onSelectChange = (value) => {
+      },
+      onSelectChange(value) {
         const profileId = value ? Number(value) : null;
-        savePreference(profileId);
-      };
-
-      onMounted(() => {
-        fetchProfiles();
-      });
-
-      return {
-        profiles,
-        loading,
-        saving,
-        successMessage,
-        errorMessage,
-        selectedProfileId,
-        systemProfiles,
-        userProfiles,
-        onSelectChange,
-        __,
-      };
+        this.savePreference(profileId);
+      },
+      __,
     },
   };
 </script>

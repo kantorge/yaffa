@@ -1,6 +1,6 @@
 <template>
   <form @submit.prevent="submitUpload" class="row g-3 align-items-end">
-    <div :class="sourceType === 'csv' ? 'col-lg-8' : 'col-lg-8'">
+    <div class="col-12 col-lg-5">
       <label class="form-label" for="import-file">
         {{ __('File') }}
         <span class="form-text"
@@ -25,7 +25,7 @@
     </div>
 
     <template v-if="sourceType === 'csv'">
-      <div class="col-12">
+      <div class="col-12 col-lg-4">
         <label class="form-label" for="csv-profile-select">
           {{ __('CSV import profile') }}
         </label>
@@ -66,7 +66,7 @@
     </template>
 
     <template v-if="sourceType === 'qif'">
-      <div class="col-12">
+      <div class="col-12 col-lg-4">
         <label class="form-label" for="qif-profile-select">
           {{ __('QIF field mapping profile') }}
           <span class="form-text">({{ __('optional') }})</span>
@@ -74,11 +74,11 @@
         <select
           id="qif-profile-select"
           class="form-select"
-          :value="selectedQifProfileId"
+          :value="selectedQifProfileId ?? ''"
           :disabled="loading || loadingQifProfiles"
           @change="onQifProfileChange($event.target.value)"
         >
-          <option :value="null">{{ __('— Standard QIF mapping (default) —') }}</option>
+          <option value="">{{ __('— Standard QIF mapping (default) —') }}</option>
           <optgroup v-if="qifSystemProfiles.length" :label="__('System profiles')">
             <option
               v-for="profile in qifSystemProfiles"
@@ -101,7 +101,7 @@
       </div>
     </template>
 
-    <div class="col-lg-4 d-grid">
+    <div class="col-12 col-lg-3 d-grid">
       <button
         type="submit"
         class="btn btn-primary"
@@ -127,9 +127,10 @@
       >
         <div
           class="progress-bar progress-bar-striped progress-bar-animated"
-          :style="{ width: `${progress}%` }"
+          :class="{ 'bg-info': isProcessing }"
+          :style="{ width: isProcessing ? '100%' : `${progress}%` }"
         >
-          {{ progress }}%
+          {{ isProcessing ? __('Parsing on server…') : `${progress}%` }}
         </div>
       </div>
     </div>
@@ -141,8 +142,6 @@
 </template>
 
 <script>
-  import { computed, ref } from 'vue';
-
   export default {
     name: 'ImportUploadCard',
     props: {
@@ -192,86 +191,65 @@
       },
     },
     emits: ['submit', 'update:selectedProfileId', 'update:selectedQifProfileId'],
-    setup(props, { emit }) {
-      const selectedFile = ref(null);
-      const fileInput = ref(null);
-
-      const systemProfiles = computed(() =>
-        props.profiles.filter((p) => p.type === 'system'),
-      );
-      const userProfiles = computed(() =>
-        props.profiles.filter((p) => p.type === 'user'),
-      );
-      const qifSystemProfiles = computed(() =>
-        props.qifProfiles.filter((p) => p.type === 'system'),
-      );
-      const qifUserProfiles = computed(() =>
-        props.qifProfiles.filter((p) => p.type === 'user'),
-      );
-
-      const isSubmitDisabled = computed(() => {
-        if (props.loading || !props.accountId || !selectedFile.value) {
+    data() {
+      return {
+        selectedFile: null,
+      };
+    },
+    computed: {
+      systemProfiles() {
+        return this.profiles.filter((p) => p.type === 'system');
+      },
+      userProfiles() {
+        return this.profiles.filter((p) => p.type === 'user');
+      },
+      qifSystemProfiles() {
+        return this.qifProfiles.filter((p) => p.type === 'system');
+      },
+      qifUserProfiles() {
+        return this.qifProfiles.filter((p) => p.type === 'user');
+      },
+      isSubmitDisabled() {
+        if (this.loading || !this.accountId || !this.selectedFile) {
           return true;
         }
-
-        if (props.sourceType === 'csv' && !props.selectedProfileId) {
+        if (this.sourceType === 'csv' && !this.selectedProfileId) {
           return true;
         }
-
         return false;
-      });
-
-      const acceptedFileTypes = computed(() => {
-        return props.sourceType === 'qif' ? '.qif,.txt' : '.csv';
-      });
-
-      const handleFileSelection = (event) => {
+      },
+      acceptedFileTypes() {
+        return this.sourceType === 'qif' ? '.qif,.txt' : '.csv';
+      },
+      isProcessing() {
+        return this.loading && this.progress >= 100;
+      },
+    },
+    methods: {
+      handleFileSelection(event) {
         const files = event.target.files;
-        selectedFile.value = files && files.length > 0 ? files[0] : null;
-      };
-
-      const onProfileChange = (value) => {
+        this.selectedFile = files && files.length > 0 ? files[0] : null;
+      },
+      onProfileChange(value) {
         const numericValue = value ? Number(value) : null;
-        emit('update:selectedProfileId', numericValue);
-      };
-
-      const onQifProfileChange = (value) => {
+        this.$emit('update:selectedProfileId', numericValue);
+      },
+      onQifProfileChange(value) {
         const numericValue = value ? Number(value) : null;
-        emit('update:selectedQifProfileId', numericValue);
-      };
-
-      const submitUpload = () => {
-        if (isSubmitDisabled.value) {
+        this.$emit('update:selectedQifProfileId', numericValue);
+      },
+      submitUpload() {
+        if (this.isSubmitDisabled) {
           return;
         }
-
-        emit('submit', {
-          file: selectedFile.value,
-        });
-      };
-
-      const reset = () => {
-        selectedFile.value = null;
-        if (fileInput.value) {
-          fileInput.value.value = '';
+        this.$emit('submit', { file: this.selectedFile });
+      },
+      reset() {
+        this.selectedFile = null;
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
         }
-      };
-
-      return {
-        selectedFile,
-        fileInput,
-        systemProfiles,
-        userProfiles,
-        qifSystemProfiles,
-        qifUserProfiles,
-        isSubmitDisabled,
-        acceptedFileTypes,
-        handleFileSelection,
-        onProfileChange,
-        onQifProfileChange,
-        submitUpload,
-        reset,
-      };
+      },
     },
   };
 </script>

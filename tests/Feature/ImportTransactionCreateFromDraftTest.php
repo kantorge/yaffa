@@ -181,7 +181,9 @@ QIF;
 
     private function createSystemProfile(): FileImportProfile
     {
-        $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
+        $definitions = (new SystemFileImportProfileRegistry())->profiles();
+        $definition = collect($definitions)->firstWhere('file_type', 'csv')
+            ?? $definitions[0];
 
         return FileImportProfile::query()->updateOrCreate(
             ['key' => $definition['key']],
