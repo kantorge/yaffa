@@ -75,13 +75,6 @@
 
         <h2>{{ __('Transaction filters') }}</h2>
 
-        <div id="account-file-import-profile-preference">
-            <file-import-profile-preference
-                :account-entity-id="{{ $account->id }}"
-                :initial-profile-id="{{ $account->preferred_file_import_profile_id ?? 'null' }}"
-            ></file-import-profile-preference>
-        </div>
-
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div class="card-title">

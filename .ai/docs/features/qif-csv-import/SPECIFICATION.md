@@ -194,9 +194,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - POST /api/v1/imports/file-profiles
     - PATCH /api/v1/imports/file-profiles/{profile}
     - DELETE /api/v1/imports/file-profiles/{profile}
-  - Generic account update endpoint addition:
-    - PATCH /api/v1/accounts/{accountEntity}
-    - Allowed fields include `preferred_file_import_profile_id`.
+  - Note: `preferred_file_import_profile_id` is managed through the account add/edit web form, not via a dedicated API endpoint. See "Account Default Import Profile Preference" section below.
 
 - Finalization flow:
   - Finalization uses existing transaction create endpoints via modal-based form workflow. (Refer to AI Document finalization flow for details.)
@@ -711,19 +709,23 @@ This approach ensures:
 
 Inserting system profiles directly in a migration file is also viable and requires no changes to the deploy scripts. However, this means every profile content change (new mapping, updated rule) requires a new migration file. This creates noise in the migration history and is harder to maintain as the number of supported formats grows. Not recommended unless the command approach presents integration challenges.
 
-### Account Default CSV Import Preference
+### Account Default Import Profile Preference
 
-Accounts should gain a new preference for CSV import defaults.
+Accounts carry a single import profile preference covering both QIF and CSV imports.
 
-Recommended account-level field:
+Account-level field:
 
-- `preferred_file_import_profile_id` nullable
+- `preferred_file_import_profile_id` nullable — accepts any accessible `FileImportProfile` (CSV or QIF)
+
+The preference is set and edited through the standard account add/edit web form (`AccountEntityController`), validated by `AccountEntityRequest`. No dedicated API endpoint exists for this field.
 
 Expected behavior:
 
-- user selects account first,
-- import UI auto-selects preferred profile,
-- user may override for the current import run.
+- user selects account on the import page,
+- import UI auto-selects the preferred profile if it matches the current source type (CSV or QIF),
+- if no matching preferred profile exists for the current source type, the CSV fallback reads `localStorage` (last-used profile); QIF falls back to no profile (QIF profiles are optional),
+- when the user switches source type, the previously selected profile for the outgoing type is cleared and the preferred profile for the incoming type is applied (if one exists),
+- user may override the auto-selected profile for the current import run.
 
 ### API Shape for CSV Import Profiles
 
@@ -737,9 +739,8 @@ Recommended endpoints:
   - update user profile
 - `DELETE /api/v1/imports/file-profiles/{profile}`
   - delete user profile
-- `PATCH /api/v1/accounts/{accountEntity}`
-  - generic account update endpoint
-  - supports whitelisted account-level settings, including `preferred_file_import_profile_id`
+
+Note: `preferred_file_import_profile_id` is not managed through this API. It is set via the account add/edit web form.
 
 ### Import Request Behavior for CSV
 
@@ -1125,12 +1126,19 @@ Notes:
 
 **Objective**: Enable user finalization workflow and migrate from legacy CSV import.
 
-**Implementation Status (2026-04-14)**:
+**Implementation Status (2026-04-14, updated 2026-06-21)**:
 
 - Milestone 3 backend tasks below are implemented.
 - Milestone 3 frontend tasks below are implemented.
 - Backend milestone tests listed below are implemented.
 - Frontend component tests listed below are not implemented yet because the repository does not currently have a working Vue component test harness configured.
+
+**Changes from original design (2026-06-21)**:
+
+- Account import profile preference is managed via the account add/edit web form (`accounts/form.blade.php` + `AccountEntityController` + `AccountEntityRequest`) instead of a dedicated sidebar Vue component and API endpoint.
+- The `PATCH /api/v1/accounts/{accountEntity}` endpoint was removed; `preferred_file_import_profile_id` is now handled as part of the standard account update web form flow.
+- Both CSV and QIF profiles are accepted as the account's preferred profile (single field, type-aware at selection time); original design implied CSV-only.
+- Import page auto-selection (`ImportPage.vue`) is type-aware: switches source type clears the outgoing profile selection and applies the preferred profile for the incoming type if one exists.
 
 **Backend Tasks**:
 
@@ -1144,8 +1152,9 @@ Notes:
   - [x] Everyone can read system profiles
 - [x] Implement `AccountEntity` model update
   - [x] Add `preferred_file_import_profile_id` nullable foreign key
-  - [x] Add `PATCH /api/v1/accounts/{accountEntity}` endpoint
-  - [x] Whitelist `preferred_file_import_profile_id` in update validation
+  - [x] Add `preferred_file_import_profile_id` to account add/edit web form (`accounts/form.blade.php`)
+  - [x] Validate `preferred_file_import_profile_id` in `AccountEntityRequest` (both CSV and QIF profiles accepted; ownership enforced via `selectableForUser` scope)
+  - Changed: no dedicated `PATCH /api/v1/accounts/{accountEntity}` API endpoint; preference is managed through the standard web form flow
 - [x] Implement profile clone endpoint
   - [x] POST `/api/v1/imports/file-profiles/{profile}/clone`
   - [x] Strip DSL fields when cloning system → user
@@ -1172,9 +1181,16 @@ Notes:
   - [x] Link to open AI Document finalization modal instead of transaction form
 - [x] Update navigation: replace legacy CSV import page with unified import page
 - [x] Migrate existing CSV import rule file logic into first system profile
-- [x] Add profile preference UI to account settings
-  - [x] Select preferred import profile per account
-  - [x] Auto-select on import page based on account
+- [x] Add profile preference to account add/edit form
+  - [x] Select field in `accounts/form.blade.php`, grouped by file type (CSV / QIF) using `<optgroup>`
+  - [x] Info tooltip on the field (CoreUI tooltip, initialized via `account/form.js`)
+  - [x] Both CSV and QIF profiles selectable; single preference per account
+  - Changed: preference is not a Vue component on the account show page; it is part of the standard account form
+- [x] Auto-select preferred profile on import page (`ImportPage.vue`)
+  - [x] On account selection: auto-select preferred profile if it matches the current source type
+  - [x] On source type switch: clear the outgoing type's profile selection; apply the preferred profile for the incoming type if available
+  - [x] CSV fallback: last-used profile from `localStorage` when no account preference matches
+  - [x] QIF fallback: no profile selected (QIF profiles are optional)
 
 **Testing Tasks** (Backend Agent):
 
@@ -1183,6 +1199,7 @@ Notes:
   - [x] User cannot edit other user profiles
   - [x] User cannot delete system profiles
   - [x] Unauthorized requests denied
+  - [x] User can set accessible profile as account preference via web form; inaccessible profile is rejected (tested via `AccountEntityRequest` validation, not via removed API endpoint)
 - [x] Feature test: `ImportTransactionCreateFromDraftTest`
   - [x] Finalize draft → creates exactly one transaction via existing endpoint
   - [x] Transaction fields match normalized draft

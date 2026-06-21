@@ -106,6 +106,8 @@ class ImportAuthorizationTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
         $accountEntity = $this->createAccountEntity($user);
+        $accountEntity->load('config');
+
         $ownProfile = FileImportProfile::factory()->create([
             'user_id' => $user->id,
             'type' => 'user',
@@ -115,18 +117,31 @@ class ImportAuthorizationTest extends TestCase
             'type' => 'user',
         ]);
 
-        $this->actingAs($user, 'sanctum')
-            ->patchJson(route('api.v1.accounts.update', $accountEntity), [
-                'preferred_file_import_profile_id' => $ownProfile->id,
-            ])
-            ->assertOk()
-            ->assertJsonPath('preferred_file_import_profile_id', $ownProfile->id);
+        $formData = [
+            'config_type' => 'account',
+            'name' => $accountEntity->name,
+            'active' => 1,
+            'config' => [
+                'opening_balance' => $accountEntity->config->opening_balance,
+                'account_group_id' => $accountEntity->config->account_group_id,
+                'currency_id' => $accountEntity->config->currency_id,
+            ],
+            'preferred_file_import_profile_id' => $ownProfile->id,
+        ];
 
-        $this->actingAs($user, 'sanctum')
-            ->patchJson(route('api.v1.accounts.update', $accountEntity), [
+        // User can set their own profile
+        $this->actingAs($user)
+            ->patch(route('account-entity.update', $accountEntity), $formData)
+            ->assertRedirect(route('account-entity.index', ['type' => 'account']));
+
+        $this->assertSame($ownProfile->id, $accountEntity->fresh()->preferred_file_import_profile_id);
+
+        // User cannot set a foreign (inaccessible) profile
+        $this->actingAs($user)
+            ->patch(route('account-entity.update', $accountEntity), array_merge($formData, [
                 'preferred_file_import_profile_id' => $foreignProfile->id,
-            ])
-            ->assertUnprocessable();
+            ]))
+            ->assertSessionHasErrors('preferred_file_import_profile_id');
     }
 
     private function createSystemProfile(): FileImportProfile

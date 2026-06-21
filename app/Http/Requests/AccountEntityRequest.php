@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\AccountEntity;
+use App\Models\FileImportProfile;
+use Closure;
 use Illuminate\Validation\Rule;
 
 /**
@@ -37,6 +39,24 @@ class AccountEntityRequest extends FormRequest
 
         if ($this->config_type === 'account') {
             $rules = array_merge($rules, [
+                'preferred_file_import_profile_id' => [
+                    'nullable',
+                    'integer',
+                    function (string $attribute, mixed $value, Closure $fail): void {
+                        if ($value === null) {
+                            return;
+                        }
+
+                        $exists = FileImportProfile::query()
+                            ->selectableForUser($this->user())
+                            ->where('id', (int) $value)
+                            ->exists();
+
+                        if (! $exists) {
+                            $fail(__('The selected file import profile is not accessible.'));
+                        }
+                    },
+                ],
                 'config.opening_balance' => [
                     'required',
                     'numeric',
@@ -106,6 +126,7 @@ class AccountEntityRequest extends FormRequest
         // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
+            'preferred_file_import_profile_id' => $this->preferred_file_import_profile_id ?: null,
         ]);
 
         // Handle category_id - use input() method to handle both array and object notation

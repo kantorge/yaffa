@@ -8,6 +8,7 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\FileImportProfile;
 use App\Models\Category;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\PayeePersistenceService;
@@ -202,8 +203,10 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     private function createAccount(): View|RedirectResponse
     {
+        $user = Auth::user();
+
         // Redirect to account group form, if empty
-        if (Auth::user()->accountGroups()->count() === 0) {
+        if ($user->accountGroups()->count() === 0) {
             $this->addMessage(
                 __('account.requirement.accountGroup'),
                 'info',
@@ -215,7 +218,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         // Redirect to currency form, if empty
-        if (Auth::user()->currencies()->count() === 0) {
+        if ($user->currencies()->count() === 0) {
             $this->addMessage(
                 __('account.requirement.currency'),
                 'info',
@@ -226,7 +229,16 @@ class AccountEntityController extends Controller implements HasMiddleware
             return to_route('currencies.create');
         }
 
-        return view('accounts.form');
+        return view('accounts.form', [
+            'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
+            'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+            'allFileImportProfiles' => FileImportProfile::query()
+                ->selectableForUser($user)
+                ->orderBy('file_type')
+                ->orderByDesc('type')
+                ->orderBy('name')
+                ->get(),
+        ]);
     }
 
     private function createPayee(): View
@@ -304,18 +316,20 @@ class AccountEntityController extends Controller implements HasMiddleware
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
-        // Get all account groups of the user
-        $allAccountGroups = Auth::user()->accountGroups()->pluck('name', 'id')->all();
-
-        // Get all currencies of the user
-        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
+        $user = Auth::user();
 
         return view(
             'accounts.form',
             [
                 'account' => $accountEntity,
-                'allAccountGroups' => $allAccountGroups,
-                'allCurrencies' => $allCurrencies,
+                'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
+                'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+                'allFileImportProfiles' => FileImportProfile::query()
+                    ->selectableForUser($user)
+                    ->orderBy('file_type')
+                    ->orderByDesc('type')
+                    ->orderBy('name')
+                    ->get(),
             ]
         );
     }

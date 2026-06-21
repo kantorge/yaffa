@@ -171,15 +171,20 @@
         this.$refs.uploadCard?.reset?.();
 
         if (newType === 'csv') {
+          this.selectedQifProfileId = null;
           if (!this.profiles.length) {
-            this.fetchProfiles();
+            await this.fetchProfiles();
           }
           if (this.selectedAccountId) {
             this.autoSelectProfile(this.selectedAccountId);
           }
         } else if (newType === 'qif') {
+          this.selectedProfileId = null;
           if (!this.qifProfiles.length) {
-            this.fetchQifProfiles();
+            await this.fetchQifProfiles();
+          }
+          if (this.selectedAccountId) {
+            this.autoSelectProfile(this.selectedAccountId);
           }
         }
       },
@@ -245,12 +250,26 @@
         const account = this.accounts.find(
           (a) => String(a.id) === String(accountId),
         );
-        if (account?.preferred_file_import_profile_id) {
-          this.selectedProfileId = account.preferred_file_import_profile_id;
-          return;
+        const preferredId = account?.preferred_file_import_profile_id ?? null;
+
+        if (this.sourceType === 'csv') {
+          const inCsvProfiles = preferredId
+            ? this.profiles.some((p) => p.id === preferredId)
+            : false;
+
+          if (inCsvProfiles) {
+            this.selectedProfileId = preferredId;
+          } else {
+            const stored = localStorage.getItem(STORAGE_KEY_LAST_PROFILE);
+            this.selectedProfileId = stored ? Number(stored) : null;
+          }
+        } else if (this.sourceType === 'qif') {
+          const inQifProfiles = preferredId
+            ? this.qifProfiles.some((p) => p.id === preferredId)
+            : false;
+
+          this.selectedQifProfileId = inQifProfiles ? preferredId : null;
         }
-        const stored = localStorage.getItem(STORAGE_KEY_LAST_PROFILE);
-        this.selectedProfileId = stored ? Number(stored) : null;
       },
       resetParseState() {
         this.drafts = [];
@@ -293,7 +312,7 @@
           }
         }
 
-        if (this.sourceType === 'csv') {
+        if (value) {
           this.autoSelectProfile(value);
         }
       },

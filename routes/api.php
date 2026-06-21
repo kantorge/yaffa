@@ -159,9 +159,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
         ->whereNumber('accountEntity')
         ->name('accounts.show');
-    Route::patch('/accounts/{accountEntity}', [AccountApiController::class, 'update'])
-        ->whereNumber('accountEntity')
-        ->name('accounts.update');
     Route::post('/accounts/{accountEntity}/monthly-summary', [AccountApiController::class, 'recalculateMonthlySummary'])
         ->whereNumber('accountEntity')
         ->name('accounts.monthly-summary');
