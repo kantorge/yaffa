@@ -52,7 +52,7 @@ class SystemFileImportProfileRegistry
                             'actions' => [
                                 ['type' => 'set', 'target' => 'config_type', 'value' => 'standard'],
                                 ['type' => 'set', 'target' => 'transaction_type', 'value' => 'withdrawal'],
-                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'notice_1', 'transform' => 'extract_date_regex', 'args' => ['pattern' => '(\d{4})(\d{2})(\d{2})']],
+                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'notice_1', 'transform' => 'extract_date_regex', 'args' => ['pattern' => '(?:^|\D)(\d{4})(\d{2})(\d{2})(?:\D|$)']],
                                 ['type' => 'map_transform', 'target' => 'amount', 'source' => 'amount', 'transform' => 'parse_localized_amount', 'args' => ['absolute_value' => true]],
                                 ['type' => 'map_transform', 'target' => 'payee', 'source' => 'notice_2', 'transform' => 'normalize_whitespace'],
                                 ['type' => 'copy', 'target' => 'memo', 'source' => 'notice_2'],
@@ -79,7 +79,7 @@ class SystemFileImportProfileRegistry
                             'actions' => [
                                 ['type' => 'set', 'target' => 'config_type', 'value' => 'standard'],
                                 ['type' => 'set', 'target' => 'transaction_type', 'value' => 'withdrawal'],
-                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'parse_date', 'args' => ['format' => 'Y.m.d.']],
+                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'extract_date_regex', 'args' => ['pattern' => '(\d{4})\.(\d{2})\.(\d{2})']],
                                 ['type' => 'map_transform', 'target' => 'amount', 'source' => 'amount', 'transform' => 'parse_localized_amount', 'args' => ['absolute_value' => true]],
                                 ['type' => 'map_transform', 'target' => 'payee', 'source' => 'notice_2', 'transform' => 'normalize_whitespace'],
                                 ['type' => 'copy', 'target' => 'memo', 'source' => 'notice_3'],
@@ -104,7 +104,7 @@ class SystemFileImportProfileRegistry
                             'actions' => [
                                 ['type' => 'set', 'target' => 'config_type', 'value' => 'standard'],
                                 ['type' => 'set', 'target' => 'transaction_type', 'value' => 'deposit'],
-                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'parse_date', 'args' => ['format' => 'Y.m.d.']],
+                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'extract_date_regex', 'args' => ['pattern' => '(\d{4})\.(\d{2})\.(\d{2})']],
                                 ['type' => 'map_transform', 'target' => 'amount', 'source' => 'amount', 'transform' => 'parse_localized_amount', 'args' => ['absolute_value' => true]],
                                 ['type' => 'map_transform', 'target' => 'payee', 'source' => 'notice_2', 'transform' => 'normalize_whitespace'],
                                 ['type' => 'copy', 'target' => 'memo', 'source' => 'notice_3'],
@@ -138,7 +138,7 @@ class SystemFileImportProfileRegistry
                             'actions' => [
                                 ['type' => 'set', 'target' => 'config_type', 'value' => 'standard'],
                                 ['type' => 'set', 'target' => 'transaction_type', 'value' => 'transfer'],
-                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'parse_date', 'args' => ['format' => 'Y.m.d.']],
+                                ['type' => 'map_transform', 'target' => 'date', 'source' => 'value_date', 'transform' => 'extract_date_regex', 'args' => ['pattern' => '(\d{4})\.(\d{2})\.(\d{2})']],
                                 ['type' => 'map_transform', 'target' => 'amount', 'source' => 'amount', 'transform' => 'parse_localized_amount', 'args' => ['absolute_value' => true]],
                                 ['type' => 'apply_transform', 'target' => 'config.account_from_id', 'transform' => 'selected_account_context'],
                                 ['type' => 'copy', 'target' => 'memo', 'source' => 'notice_3'],
