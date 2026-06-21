@@ -79,14 +79,23 @@
                 <td>
                   <template v-if="draft.matched_payee">
                     {{ draft.matched_payee.name }}
-                    <div v-if="draft.payee" class="text-muted small mt-1">
-                      {{ draft.payee }}
-                    </div>
+                    <i
+                      v-if="draft.matched_payee.similarity >= 0.9"
+                      class="fa fa-check-circle text-success ms-1"
+                      :title="__('Matched database entity (:pct%)', { pct: Math.round(draft.matched_payee.similarity * 100) })"
+                    ></i>
+                    <i
+                      v-else
+                      class="fa fa-circle-half-stroke text-warning ms-1"
+                      :title="__('Similarity match (~:pct%)', { pct: Math.round(draft.matched_payee.similarity * 100) })"
+                    ></i>
+                    <div v-if="draft.payee" class="text-muted small mt-1">{{ draft.payee }}</div>
                   </template>
-                  <span v-else-if="draft.payee">{{ draft.payee }}</span>
-                  <span v-else class="text-muted fst-italic">{{
-                    __('Not set')
-                  }}</span>
+                  <template v-else-if="draft.payee">
+                    {{ draft.payee }}
+                    <span class="badge bg-secondary ms-1" :title="__('No database match found')">{{ __('Text') }}</span>
+                  </template>
+                  <span v-else class="text-muted fst-italic">{{ __('Not set') }}</span>
                 </td>
                 <td>
                   <span :class="statusClass(draft.status)">
@@ -142,65 +151,73 @@
                 </td>
               </tr>
               <tr v-if="isRawVisible(draft.draft_index)">
-                <td colspan="8" class="bg-light p-3">
+                <td colspan="8" class="bg-body-secondary p-3">
                   <div class="row g-3">
+                    <!-- Structured raw entry -->
                     <div class="col-12 col-lg-6">
-                      <div
-                        v-if="draft.warnings && draft.warnings.length"
-                        class="mb-2"
+                      <div class="fw-semibold mb-1">{{ __('Raw entry') }}</div>
+                      <!-- CSV: key-value table -->
+                      <table
+                        v-if="draft.source_type === 'csv' && csvRawFields(draft.raw_entry).length"
+                        class="table table-sm table-bordered mb-0 small"
                       >
-                        <div class="fw-semibold">{{ __('Warnings') }}</div>
-                        <ul class="mb-0 ps-3">
-                          <li
-                            v-for="(warning, warningIndex) in draft.warnings"
-                            :key="`${draft.draft_index}-warning-${warningIndex}`"
+                        <tbody>
+                          <tr
+                            v-for="[key, val] in csvRawFields(draft.raw_entry)"
+                            :key="key"
                           >
-                            {{ warning }}
-                          </li>
-                        </ul>
-                      </div>
-                      <div v-if="draft.matched_payee" class="mb-2">
-                        <div class="fw-semibold">
-                          {{ __('Matched payee') }}
-                        </div>
-                        <div>
-                          {{ draft.matched_payee.name }}
-                          <span class="badge bg-secondary ms-1"
-                            >~{{
-                              Math.round(draft.matched_payee.similarity * 100)
-                            }}%</span
+                            <th class="bg-body-tertiary fw-semibold text-nowrap" style="width:40%">{{ key }}</th>
+                            <td>{{ (val !== null && val !== '') ? val : '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <!-- QIF: marker table -->
+                      <table
+                        v-else-if="draft.source_type === 'qif' && qifRawFields(draft.raw_entry).length"
+                        class="table table-sm table-bordered mb-0 small"
+                      >
+                        <tbody>
+                          <tr
+                            v-for="(field, fi) in qifRawFields(draft.raw_entry)"
+                            :key="fi"
                           >
-                        </div>
-                        <div class="text-muted small">
-                          {{ __('Raw:') }} {{ draft.payee }}
-                        </div>
-                      </div>
-                      <div class="fw-semibold">{{ __('Raw entry') }}</div>
-                      <pre class="mb-0 small text-wrap">{{
-                        draft.raw_entry || __('Not available')
-                      }}</pre>
+                            <th class="bg-body-tertiary text-center fw-bold text-nowrap" style="width:2rem">{{ field.marker }}</th>
+                            <td class="text-muted text-nowrap" style="width:30%">{{ field.label }}</td>
+                            <td>{{ field.value || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <!-- Fallback -->
+                      <pre v-else class="mb-0 small text-wrap">{{ draft.raw_entry || __('Not available') }}</pre>
                     </div>
+                    <!-- Warnings -->
                     <div
-                      v-if="
-                        draft.duplicate_candidates &&
-                        draft.duplicate_candidates.length
-                      "
-                      class="col-12 col-md-6 col-lg-3"
+                      v-if="draft.warnings && draft.warnings.length"
+                      class="col-12 col-lg-2"
                     >
-                      <DuplicateCandidatesPanel
-                        :candidates="draft.duplicate_candidates"
-                      />
+                      <div class="fw-semibold mb-1">{{ __('Warnings') }}</div>
+                      <ul class="mb-0 ps-3 small">
+                        <li
+                          v-for="(warning, warningIndex) in draft.warnings"
+                          :key="`${draft.draft_index}-warning-${warningIndex}`"
+                        >
+                          {{ warning }}
+                        </li>
+                      </ul>
                     </div>
+                    <!-- Duplicate candidates -->
                     <div
-                      v-if="
-                        draft.related_ai_documents &&
-                        draft.related_ai_documents.length
-                      "
-                      class="col-12 col-md-6 col-lg-3"
+                      v-if="draft.duplicate_candidates && draft.duplicate_candidates.length"
+                      class="col-12 col-md-6 col-lg-2"
                     >
-                      <RelatedAiDocumentsPanel
-                        :candidates="draft.related_ai_documents"
-                      />
+                      <DuplicateCandidatesPanel :candidates="draft.duplicate_candidates" />
+                    </div>
+                    <!-- Related AI documents -->
+                    <div
+                      v-if="draft.related_ai_documents && draft.related_ai_documents.length"
+                      class="col-12 col-md-6 col-lg-2"
+                    >
+                      <RelatedAiDocumentsPanel :candidates="draft.related_ai_documents" />
                     </div>
                   </div>
                 </td>
@@ -241,6 +258,11 @@
         showIgnoredRows: false,
         showFinalizedRows: false,
       };
+    },
+    watch: {
+      drafts() {
+        this.expandedRows = new Set();
+      },
     },
     computed: {
       visibleDrafts() {
@@ -290,7 +312,7 @@
           finalized: 'badge bg-success',
           failed_validation: 'badge bg-danger',
         };
-        return classes[status] || 'badge bg-light text-dark';
+        return classes[status] || 'badge bg-secondary';
       },
       formatDate(dateString) {
         if (!dateString) {
@@ -348,6 +370,36 @@
           return 'table-success';
         }
         return '';
+      },
+      csvRawFields(rawEntry) {
+        try {
+          const obj = JSON.parse(rawEntry || '{}');
+          return Object.entries(obj).filter(([key]) => key !== '');
+        } catch {
+          return [];
+        }
+      },
+      qifRawFields(rawEntry) {
+        const markerLabels = {
+          D: __('Date'),
+          T: __('Amount'),
+          P: __('Payee'),
+          M: __('Memo'),
+          L: __('Category'),
+          N: __('Reference'),
+          S: __('Split Category'),
+          E: __('Split Memo'),
+          $: __('Split Amount'),
+          '^': __('Entry End'),
+        };
+        return (rawEntry || '')
+          .split('\n')
+          .filter((line) => line.trim() !== '')
+          .map((line) => ({
+            marker: line[0] || '',
+            label: markerLabels[line[0]] || '',
+            value: line.slice(1),
+          }));
       },
       __,
     },

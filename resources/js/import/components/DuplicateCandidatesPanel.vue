@@ -4,7 +4,7 @@
       <i class="fa fa-warning me-1"></i>
       {{ __('Potential duplicates') }} ({{ candidates.length }})
     </div>
-    <div class="list-group list-group-sm">
+    <div class="list-group list-group-sm duplicate-list">
       <button
         v-for="(candidate, index) in candidates"
         :key="index"
@@ -243,3 +243,17 @@
     },
   };
 </script>
+
+<style scoped>
+  :global([data-coreui-theme="dark"] .duplicate-list .list-group-item-warning) {
+    background-color: rgba(var(--cui-warning-rgb), 0.15);
+    color: var(--cui-body-color);
+    border-color: rgba(var(--cui-warning-rgb), 0.25);
+  }
+
+  :global([data-coreui-theme="dark"] .duplicate-list .list-group-item-action.list-group-item-warning:hover),
+  :global([data-coreui-theme="dark"] .duplicate-list .list-group-item-action.list-group-item-warning:focus) {
+    background-color: rgba(var(--cui-warning-rgb), 0.25);
+    color: var(--cui-body-color);
+  }
+</style>

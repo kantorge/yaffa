@@ -598,7 +598,6 @@ class CsvParserService
 
         $payee = $query->first();
         if (! $payee instanceof AccountEntity) {
-            $warnings[] = sprintf('No payee matched "%s".', $candidate);
             return null;
         }
 
