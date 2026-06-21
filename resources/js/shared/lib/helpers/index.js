@@ -56,6 +56,7 @@ export function escapeHtmlWithLineBreaks(value) {
  */
 export function parseIsoDate(dateString) {
     if (!dateString) return null;
+    if (dateString instanceof Date) return dateString;
     const [y, m, d] = String(dateString).split('-').map(Number);
     return new Date(y, m - 1, d);
 }
