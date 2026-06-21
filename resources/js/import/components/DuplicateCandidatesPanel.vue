@@ -154,7 +154,11 @@
           return formatDate(candidate.summary?.date);
         }
 
-        if (signal === 'payee' || signal === 'comment') {
+        if (signal === 'payee') {
+          return candidate.summary?.payee || '—';
+        }
+
+        if (signal === 'comment') {
           return candidate.summary?.comment || '—';
         }
 

@@ -24,7 +24,7 @@ class QifParserService
 
     public function applyProfile(FileImportProfile $profile): void
     {
-        $options = is_array($profile->options_json) ? $profile->options_json : [];
+        $options = $profile->options_json ?? [];
 
         if (isset($options['field_map']) && is_array($options['field_map'])) {
             foreach ($options['field_map'] as $canonical => $marker) {

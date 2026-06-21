@@ -27,8 +27,8 @@ class SyncSystemFileImportProfilesCommandTest extends TestCase
 
     public function test_sync_command_is_idempotent_and_loads_profiles(): void
     {
-        $this->artisan('import:sync-system-profiles')->assertSuccessful();
-        $this->artisan('import:sync-system-profiles')->assertSuccessful();
+        $this->artisan('app:import:sync-system-profiles')->assertSuccessful();
+        $this->artisan('app:import:sync-system-profiles')->assertSuccessful();
 
         $this->assertDatabaseHas('file_import_profiles', [
             'key' => 'hun_raiffeisen_v1',

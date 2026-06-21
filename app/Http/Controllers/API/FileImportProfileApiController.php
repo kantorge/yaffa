@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CloneFileImportProfileRequest;
 use App\Http\Requests\FileImportProfileStoreRequest;
 use App\Http\Requests\FileImportProfileUpdateRequest;
 use App\Models\FileImportProfile;
@@ -33,8 +34,10 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
             ->orderByDesc('type')
             ->orderBy('name');
 
-        if ($request->filled('file_type')) {
-            $query->where('file_type', $request->input('file_type'));
+        $allowedFileTypes = ['csv', 'qif'];
+        $fileType = $request->input('file_type');
+        if ($request->filled('file_type') && in_array($fileType, $allowedFileTypes, true)) {
+            $query->where('file_type', $fileType);
         }
 
         return response()->json([
@@ -87,16 +90,12 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function clone(Request $request, FileImportProfile $profile): JsonResponse
+    public function clone(CloneFileImportProfileRequest $request, FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('clone', $profile);
 
-        $validated = $request->validate([
-            'name' => ['nullable', 'string', 'min:2', 'max:191'],
-        ]);
-
         $clone = FileImportProfile::query()->create(
-            $profile->toUserCloneAttributes($request->user(), $validated['name'] ?? null)
+            $profile->toUserCloneAttributes($request->user(), $request->input('name'))
         );
 
         return response()->json(['data' => $clone], Response::HTTP_CREATED);

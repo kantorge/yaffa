@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @property array<string, mixed>|null $mapping_json
+ * @property array<string, mixed>|null $options_json
+ */
 class FileImportProfile extends Model
 {
     /** @use HasFactory<\Database\Factories\FileImportProfileFactory> */
@@ -118,7 +122,7 @@ class FileImportProfile extends Model
      */
     public function sanitizedOptionsForUserProfile(): array
     {
-        $options = is_array($this->options_json) ? $this->options_json : [];
+        $options = $this->options_json ?? [];
 
         unset(
             $options['matching_rules'],

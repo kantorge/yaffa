@@ -2,11 +2,20 @@
 
 namespace App\Http\Requests;
 
+use App\Models\FileImportProfile;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
+use Closure;
 
 class ImportParseRequest extends FormRequest
 {
+    private function effectiveMaxFileSizeMb(): int
+    {
+        $configured = (int) config('yaffa.import_max_file_size_mb', 2);
+
+        return max(1, $configured);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -14,10 +23,7 @@ class ImportParseRequest extends FormRequest
      */
     public function rules(): array
     {
-        $maxFileSizeMb = (int) config('yaffa.import_max_file_size_mb', 2);
-        if ($maxFileSizeMb < 1) {
-            $maxFileSizeMb = 1;
-        }
+        $maxFileSizeMb = $this->effectiveMaxFileSizeMb();
 
         return [
             'source_type' => [
@@ -34,6 +40,21 @@ class ImportParseRequest extends FormRequest
                 'nullable',
                 'integer',
                 'exists:file_import_profiles,id',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $profile = FileImportProfile::query()->find((int) $value);
+                    if (! $profile instanceof FileImportProfile) {
+                        return;
+                    }
+
+                    $sourceType = (string) $this->input('source_type');
+                    if ($sourceType !== '' && $profile->file_type !== $sourceType) {
+                        $fail(__('The selected import profile does not match the chosen source type.'));
+                    }
+                },
             ],
             'file' => [
                 'required',
@@ -50,7 +71,7 @@ class ImportParseRequest extends FormRequest
         return [
             'source_type.in' => __('Only QIF and CSV imports are supported.'),
             'file.max' => __('The import file exceeds the configured maximum size of :size MB.', [
-                'size' => (int) config('yaffa.import_max_file_size_mb', 2),
+                'size' => $this->effectiveMaxFileSizeMb(),
             ]),
         ];
     }

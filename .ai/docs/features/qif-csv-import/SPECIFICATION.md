@@ -245,6 +245,7 @@ The QIF format has no authoritative standard. Different banks assign different s
 To handle this without heuristic guessing, QIF imports support an optional `FileImportProfile` with `file_type = 'qif'`.
 
 **When selected:**
+
 - The profile's `options_json` provides a `field_map` and optional `amount_sign` override.
 - The parser reads the marker specified by `field_map.payee` instead of always reading `P`, etc.
 - If no profile is selected, standard QIF semantics apply (P=payee, M=memo, L=category, N=reference).
@@ -269,9 +270,11 @@ To handle this without heuristic guessing, QIF imports support an optional `File
 - `amount_sign`: `"normal"` (default) or `"inverted"` (multiply parsed amount by -1).
 
 **System QIF profile shipped with MVP:**
+
 - Key: `qif_swap_p_m_v1` — for banks that put transaction type in `P` and payee in `M`.
 
 **User-created QIF profiles:**
+
 - Same model as user CSV profiles but with `file_type = 'qif'`.
 - No `matching_rules` or `actions` — field remapping only.
 - No `mapping_json` required (QIF markers are fixed).
@@ -691,7 +694,7 @@ The application does not run `artisan db:seed` in production. The Docker entrypo
 #### Recommended Approach: Artisan Sync Command
 
 - Define each system profile as a PHP array in a dedicated registry class, for example `App\Services\Import\SystemFileImportProfileRegistry`.
-- Implement a dedicated Artisan command, for example `artisan import:sync-system-profiles`, that calls `updateOrCreate` keyed on `key` for each entry in the registry.
+- Implement a dedicated Artisan command, for example `artisan app:import:sync-system-profiles`, that calls `updateOrCreate` keyed on `key` for each entry in the registry.
 - Add the command to `docker/entrypoint.sh` immediately after `php artisan migrate --force`.
 - Adding a new format, updating field mappings, or retiring a profile is done by editing the registry class; the next deploy applies changes automatically.
 - System profiles are never created, updated, or deleted through user-facing API endpoints.

@@ -48,7 +48,7 @@
         <table class="table table-striped table-hover mb-0">
           <thead>
             <tr>
-              <th style="width: 32px"></th>
+              <th class="col-expand"></th>
               <th class="text-nowrap">{{ __('Draft') }}</th>
               <th class="text-nowrap">{{ __('Date') }}</th>
               <th class="text-nowrap">{{ __('Amount') }}</th>
@@ -61,8 +61,7 @@
           <tbody>
             <template v-for="draft in visibleDrafts" :key="draft.draft_index">
               <tr
-                :class="rowClass(draft.status)"
-                style="cursor: pointer"
+                :class="['row-expandable', rowClass(draft.status)]"
                 @click="toggleRaw(draft.draft_index)"
               >
                 <td class="text-center">
@@ -215,7 +214,6 @@
 </template>
 
 <script>
-  import { computed, ref } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import DuplicateCandidatesPanel from './DuplicateCandidatesPanel.vue';
   import RelatedAiDocumentsPanel from './RelatedAiDocumentsPanel.vue';
@@ -237,72 +235,67 @@
       },
     },
     emits: ['ignore-draft', 'finalize-draft'],
-    setup(props) {
-      const expandedRows = ref(new Set());
-
-      const showIgnoredRows = ref(false);
-      const showFinalizedRows = ref(false);
-
-      const visibleDrafts = computed(() =>
-        props.drafts.filter((draft) => {
-          if (draft.status === 'ignored' && !showIgnoredRows.value) {
+    data() {
+      return {
+        expandedRows: new Set(),
+        showIgnoredRows: false,
+        showFinalizedRows: false,
+      };
+    },
+    computed: {
+      visibleDrafts() {
+        return this.drafts.filter((draft) => {
+          if (draft.status === 'ignored' && !this.showIgnoredRows) {
             return false;
           }
-          if (draft.status === 'finalized' && !showFinalizedRows.value) {
+          if (draft.status === 'finalized' && !this.showFinalizedRows) {
             return false;
           }
           return true;
-        }),
-      );
-
-      const ignoredCount = computed(
-        () => props.drafts.filter((d) => d.status === 'ignored').length,
-      );
-
-      const finalizedCount = computed(
-        () => props.drafts.filter((d) => d.status === 'finalized').length,
-      );
-
-      const toggleRaw = (draftIndex) => {
-        if (expandedRows.value.has(draftIndex)) {
-          expandedRows.value.delete(draftIndex);
-          return;
+        });
+      },
+      ignoredCount() {
+        return this.drafts.filter((d) => d.status === 'ignored').length;
+      },
+      finalizedCount() {
+        return this.drafts.filter((d) => d.status === 'finalized').length;
+      },
+    },
+    methods: {
+      toggleRaw(draftIndex) {
+        if (this.expandedRows.has(draftIndex)) {
+          this.expandedRows.delete(draftIndex);
+        } else {
+          this.expandedRows.add(draftIndex);
         }
-
-        expandedRows.value.add(draftIndex);
-      };
-
-      const isRawVisible = (draftIndex) => {
-        return expandedRows.value.has(draftIndex);
-      };
-
-      const statusLabel = (status) => {
+        // Trigger reactivity for the Set mutation
+        this.expandedRows = new Set(this.expandedRows);
+      },
+      isRawVisible(draftIndex) {
+        return this.expandedRows.has(draftIndex);
+      },
+      statusLabel(status) {
         const labels = {
           pending_review: __('Pending review'),
           ignored: __('Ignored'),
           finalized: __('Finalized'),
           failed_validation: __('Failed validation'),
         };
-
         return labels[status] || status;
-      };
-
-      const statusClass = (status) => {
+      },
+      statusClass(status) {
         const classes = {
           pending_review: 'badge bg-info text-dark',
           ignored: 'badge bg-secondary',
           finalized: 'badge bg-success',
           failed_validation: 'badge bg-danger',
         };
-
         return classes[status] || 'badge bg-light text-dark';
-      };
-
-      const formatDate = (dateString) => {
+      },
+      formatDate(dateString) {
         if (!dateString) {
           return __('Invalid');
         }
-
         try {
           const parts = dateString.split('-');
           if (parts.length === 3) {
@@ -319,27 +312,22 @@
         } catch {
           // fall through
         }
-
         return dateString;
-      };
-
-      const formatAmount = (amount) => {
+      },
+      formatAmount(amount) {
         if (amount === null || amount === undefined) {
           return __('Invalid');
         }
-
         const value = Number(amount);
         if (Number.isNaN(value)) {
           return __('Invalid');
         }
-
         const locale = window.YAFFA?.userSettings?.locale || undefined;
-
-        if (props.accountCurrency) {
+        if (this.accountCurrency) {
           try {
             return value.toLocaleString(locale, {
               style: 'currency',
-              currency: props.accountCurrency,
+              currency: this.accountCurrency,
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
@@ -347,14 +335,12 @@
             // fall through to plain format
           }
         }
-
         return value.toLocaleString(locale, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      };
-
-      const rowClass = (status) => {
+      },
+      rowClass(status) {
         if (status === 'ignored') {
           return 'opacity-50';
         }
@@ -362,23 +348,17 @@
           return 'table-success';
         }
         return '';
-      };
-
-      return {
-        expandedRows,
-        showIgnoredRows,
-        showFinalizedRows,
-        visibleDrafts,
-        ignoredCount,
-        finalizedCount,
-        toggleRaw,
-        isRawVisible,
-        statusLabel,
-        statusClass,
-        formatDate,
-        formatAmount,
-        rowClass,
-      };
+      },
+      __,
     },
   };
 </script>
+
+<style scoped>
+  .col-expand {
+    width: 32px;
+  }
+  .row-expandable {
+    cursor: pointer;
+  }
+</style>

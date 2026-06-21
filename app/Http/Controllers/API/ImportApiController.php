@@ -137,13 +137,21 @@ class ImportApiController extends Controller implements HasMiddleware
             $profile = FileImportProfile::query()->findOrFail((int) $selectedProfileId);
             Gate::authorize('view', $profile);
 
+            if ($profile->file_type !== 'csv') {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, __('The selected profile is not a CSV profile.'));
+            }
+
             return $profile;
         }
 
-        if (is_int($accountEntity->preferred_file_import_profile_id)) {
+        if ($accountEntity->preferred_file_import_profile_id) {
             $profile = FileImportProfile::query()->find($accountEntity->preferred_file_import_profile_id);
             if ($profile instanceof FileImportProfile) {
                 Gate::authorize('view', $profile);
+
+                if ($profile->file_type !== 'csv') {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, __('The account default profile is not a CSV profile.'));
+                }
 
                 return $profile;
             }

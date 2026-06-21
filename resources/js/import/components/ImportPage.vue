@@ -94,7 +94,6 @@
 <script>
   import Swal from 'sweetalert2';
   import axios from 'axios';
-  import { computed, onMounted, ref, watch } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import ImportSourceSelector from './ImportSourceSelector.vue';
   import ImportUploadCard from './ImportUploadCard.vue';
@@ -111,255 +110,41 @@
       ImportDraftTable,
       FileImportProfileManager,
     },
-    setup() {
-      const sourceType = ref('qif');
-      const selectedAccountId = ref('');
-      const accounts = ref([]);
-      const loadingAccounts = ref(false);
-
-      const profiles = ref([]);
-      const loadingProfiles = ref(false);
-      const selectedProfileId = ref(null);
-
-      const qifProfiles = ref([]);
-      const loadingQifProfiles = ref(false);
-      const selectedQifProfileId = ref(null);
-
-      const loading = ref(false);
-      const uploadProgress = ref(0);
-      const uploadError = ref(null);
-
-      const drafts = ref([]);
-      const parseWarnings = ref([]);
-
-      const uploadCard = ref(null);
-
-      const selectedAccountCurrency = ref(null);
-
-      const accountCurrency = computed(() => selectedAccountCurrency.value);
-
-      const fetchAccounts = async () => {
-        loadingAccounts.value = true;
-
-        try {
-          const response = await axios.get('/api/v1/accounts', {
-            params: {
-              limit: 0,
-            },
-          });
-
-          accounts.value = Array.isArray(response.data) ? response.data : [];
-        } catch (_error) {
-          uploadError.value = __(
-            'Unable to load accounts. Please refresh the page and try again.',
-          );
-        } finally {
-          loadingAccounts.value = false;
-        }
+    data() {
+      return {
+        sourceType: 'qif',
+        selectedAccountId: '',
+        accounts: [],
+        loadingAccounts: false,
+        profiles: [],
+        loadingProfiles: false,
+        selectedProfileId: null,
+        qifProfiles: [],
+        loadingQifProfiles: false,
+        selectedQifProfileId: null,
+        loading: false,
+        uploadProgress: 0,
+        uploadError: null,
+        drafts: [],
+        parseWarnings: [],
+        selectedAccountCurrency: null,
+        finalizingDraftIndex: null,
+        isRevertingSourceType: false,
       };
-
-      const fetchProfiles = async () => {
-        loadingProfiles.value = true;
-
-        try {
-          const response = await axios.get('/api/v1/imports/file-profiles', {
-            params: { file_type: 'csv' },
-          });
-          profiles.value = Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-        } catch (_error) {
-          // Non-critical; profiles will just be empty
-        } finally {
-          loadingProfiles.value = false;
-        }
-      };
-
-      const fetchQifProfiles = async () => {
-        loadingQifProfiles.value = true;
-
-        try {
-          const response = await axios.get('/api/v1/imports/file-profiles', {
-            params: { file_type: 'qif' },
-          });
-          qifProfiles.value = Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-        } catch (_error) {
-          // Non-critical; QIF profile list will stay empty
-        } finally {
-          loadingQifProfiles.value = false;
-        }
-      };
-
-      const autoSelectProfile = (accountId) => {
-        const account = accounts.value.find(
-          (a) => String(a.id) === String(accountId),
-        );
-
-        if (account?.preferred_file_import_profile_id) {
-          selectedProfileId.value = account.preferred_file_import_profile_id;
+    },
+    computed: {
+      accountCurrency() {
+        return this.selectedAccountCurrency;
+      },
+    },
+    watch: {
+      async sourceType(newType, oldType) {
+        if (this.isRevertingSourceType) {
+          this.isRevertingSourceType = false;
           return;
         }
 
-        const stored = localStorage.getItem(STORAGE_KEY_LAST_PROFILE);
-        selectedProfileId.value = stored ? Number(stored) : null;
-      };
-
-      const resetParseState = () => {
-        drafts.value = [];
-        parseWarnings.value = [];
-        uploadError.value = null;
-        uploadProgress.value = 0;
-      };
-
-      const onAccountChange = async (value) => {
-        if (drafts.value.length > 0) {
-          const result = await Swal.fire({
-            text: __(
-              'Changing the account will discard all parsed drafts. Continue?',
-            ),
-            icon: 'warning',
-            showCancelButton: true,
-            cancelButtonText: __('Cancel'),
-            confirmButtonText: __('Continue'),
-            buttonsStyling: false,
-            customClass: {
-              confirmButton: 'btn btn-danger',
-              cancelButton: 'btn btn-outline-secondary ms-3',
-            },
-          });
-
-          if (!result.isConfirmed) {
-            return;
-          }
-        }
-
-        selectedAccountId.value = value;
-        selectedAccountCurrency.value = null;
-        resetParseState();
-
-        if (value) {
-          try {
-            const accountResponse = await axios.get(
-              `/api/v1/accounts/${value}`,
-            );
-            selectedAccountCurrency.value =
-              accountResponse.data?.config?.currency?.iso_code ?? null;
-          } catch {
-            // Non-critical, amounts will format without currency symbol
-          }
-        }
-
-        if (sourceType.value === 'csv') {
-          autoSelectProfile(value);
-        }
-      };
-
-      const onProfileChange = (value) => {
-        selectedProfileId.value = value;
-      };
-
-      const onQifProfileChange = (value) => {
-        selectedQifProfileId.value = value;
-      };
-
-      const onSubmit = async ({ file }) => {
-        uploadError.value = null;
-
-        if (!file) {
-          uploadError.value = __('Please select a file first.');
-          return;
-        }
-
-        if (!selectedAccountId.value) {
-          uploadError.value = __('Please select a target account first.');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('source_type', sourceType.value);
-        formData.append('account_id', selectedAccountId.value);
-
-        if (sourceType.value === 'csv' && selectedProfileId.value) {
-          formData.append('file_import_profile_id', selectedProfileId.value);
-        } else if (sourceType.value === 'qif' && selectedQifProfileId.value) {
-          formData.append('file_import_profile_id', selectedQifProfileId.value);
-        }
-
-        loading.value = true;
-        uploadProgress.value = 0;
-
-        try {
-          const response = await axios.post('/api/v1/imports/parse', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: (event) => {
-              if (!event.total || event.total <= 0) {
-                return;
-              }
-
-              const progress = Math.round((event.loaded * 100) / event.total);
-              uploadProgress.value = Math.min(100, Math.max(0, progress));
-            },
-          });
-
-          drafts.value = Array.isArray(response.data?.drafts)
-            ? response.data.drafts
-            : [];
-          parseWarnings.value = Array.isArray(response.data?.warnings)
-            ? response.data.warnings
-            : [];
-
-          if (sourceType.value === 'csv' && selectedProfileId.value) {
-            localStorage.setItem(
-              STORAGE_KEY_LAST_PROFILE,
-              String(selectedProfileId.value),
-            );
-          }
-
-          if (
-            uploadCard.value &&
-            typeof uploadCard.value.reset === 'function'
-          ) {
-            uploadCard.value.reset();
-          }
-        } catch (error) {
-          if (error?.response?.data?.errors) {
-            const firstKey = Object.keys(error.response.data.errors)[0];
-            if (
-              firstKey &&
-              Array.isArray(error.response.data.errors[firstKey])
-            ) {
-              uploadError.value = error.response.data.errors[firstKey][0];
-            } else {
-              uploadError.value = __(
-                'Upload failed. Please review your input and try again.',
-              );
-            }
-          } else if (error?.response?.data?.error?.message) {
-            uploadError.value = error.response.data.error.message;
-          } else {
-            uploadError.value = __(
-              'Upload failed due to a network or server error.',
-            );
-          }
-        } finally {
-          loading.value = false;
-        }
-      };
-
-      let isRevertingSourceType = false;
-
-      watch(sourceType, async (newType, oldType) => {
-        if (isRevertingSourceType) {
-          isRevertingSourceType = false;
-          return;
-        }
-
-        if (drafts.value.length > 0) {
+        if (this.drafts.length > 0) {
           const result = await Swal.fire({
             text: __(
               'Changing the source type will discard all parsed drafts. Continue?',
@@ -376,51 +161,243 @@
           });
 
           if (!result.isConfirmed) {
-            isRevertingSourceType = true;
-            sourceType.value = oldType;
+            this.isRevertingSourceType = true;
+            this.sourceType = oldType;
             return;
           }
         }
 
-        resetParseState();
-        uploadCard.value?.reset?.();
+        this.resetParseState();
+        this.$refs.uploadCard?.reset?.();
 
         if (newType === 'csv') {
-          if (!profiles.value.length) {
-            fetchProfiles();
+          if (!this.profiles.length) {
+            this.fetchProfiles();
           }
-
-          if (selectedAccountId.value) {
-            autoSelectProfile(selectedAccountId.value);
+          if (this.selectedAccountId) {
+            this.autoSelectProfile(this.selectedAccountId);
           }
         } else if (newType === 'qif') {
-          if (!qifProfiles.value.length) {
-            fetchQifProfiles();
+          if (!this.qifProfiles.length) {
+            this.fetchQifProfiles();
           }
         }
-      });
+      },
+    },
+    mounted() {
+      this.fetchAccounts();
+      this.fetchQifProfiles();
+      window.addEventListener('transaction-created', this.onTransactionCreated);
+    },
+    unmounted() {
+      window.removeEventListener(
+        'transaction-created',
+        this.onTransactionCreated,
+      );
+    },
+    methods: {
+      async fetchAccounts() {
+        this.loadingAccounts = true;
+        try {
+          const response = await axios.get('/api/v1/accounts', {
+            params: { limit: 0 },
+          });
+          this.accounts = Array.isArray(response.data) ? response.data : [];
+        } catch (_error) {
+          this.uploadError = __(
+            'Unable to load accounts. Please refresh the page and try again.',
+          );
+        } finally {
+          this.loadingAccounts = false;
+        }
+      },
+      async fetchProfiles() {
+        this.loadingProfiles = true;
+        try {
+          const response = await axios.get('/api/v1/imports/file-profiles', {
+            params: { file_type: 'csv' },
+          });
+          this.profiles = Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        } catch (_error) {
+          // Non-critical; profiles will just be empty
+        } finally {
+          this.loadingProfiles = false;
+        }
+      },
+      async fetchQifProfiles() {
+        this.loadingQifProfiles = true;
+        try {
+          const response = await axios.get('/api/v1/imports/file-profiles', {
+            params: { file_type: 'qif' },
+          });
+          this.qifProfiles = Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        } catch (_error) {
+          // Non-critical; QIF profile list will stay empty
+        } finally {
+          this.loadingQifProfiles = false;
+        }
+      },
+      autoSelectProfile(accountId) {
+        const account = this.accounts.find(
+          (a) => String(a.id) === String(accountId),
+        );
+        if (account?.preferred_file_import_profile_id) {
+          this.selectedProfileId = account.preferred_file_import_profile_id;
+          return;
+        }
+        const stored = localStorage.getItem(STORAGE_KEY_LAST_PROFILE);
+        this.selectedProfileId = stored ? Number(stored) : null;
+      },
+      resetParseState() {
+        this.drafts = [];
+        this.parseWarnings = [];
+        this.uploadError = null;
+        this.uploadProgress = 0;
+      },
+      async onAccountChange(value) {
+        if (this.drafts.length > 0) {
+          const result = await Swal.fire({
+            text: __(
+              'Changing the account will discard all parsed drafts. Continue?',
+            ),
+            icon: 'warning',
+            showCancelButton: true,
+            cancelButtonText: __('Cancel'),
+            confirmButtonText: __('Continue'),
+            buttonsStyling: false,
+            customClass: {
+              confirmButton: 'btn btn-danger',
+              cancelButton: 'btn btn-outline-secondary ms-3',
+            },
+          });
+          if (!result.isConfirmed) {
+            return;
+          }
+        }
 
-      const onIgnoreDraft = (draftIndex) => {
-        const index = drafts.value.findIndex(
+        this.selectedAccountId = value;
+        this.selectedAccountCurrency = null;
+        this.resetParseState();
+
+        if (value) {
+          try {
+            const accountResponse = await axios.get(`/api/v1/accounts/${value}`);
+            this.selectedAccountCurrency =
+              accountResponse.data?.config?.currency?.iso_code ?? null;
+          } catch {
+            // Non-critical, amounts will format without currency symbol
+          }
+        }
+
+        if (this.sourceType === 'csv') {
+          this.autoSelectProfile(value);
+        }
+      },
+      onProfileChange(value) {
+        this.selectedProfileId = value;
+      },
+      onQifProfileChange(value) {
+        this.selectedQifProfileId = value;
+      },
+      async onSubmit({ file }) {
+        this.uploadError = null;
+
+        if (!file) {
+          this.uploadError = __('Please select a file first.');
+          return;
+        }
+        if (!this.selectedAccountId) {
+          this.uploadError = __('Please select a target account first.');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('source_type', this.sourceType);
+        formData.append('account_id', this.selectedAccountId);
+
+        if (this.sourceType === 'csv' && this.selectedProfileId) {
+          formData.append('file_import_profile_id', this.selectedProfileId);
+        } else if (this.sourceType === 'qif' && this.selectedQifProfileId) {
+          formData.append(
+            'file_import_profile_id',
+            this.selectedQifProfileId,
+          );
+        }
+
+        this.loading = true;
+        this.uploadProgress = 0;
+
+        try {
+          const response = await axios.post('/api/v1/imports/parse', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (event) => {
+              if (!event.total || event.total <= 0) {
+                return;
+              }
+              const progress = Math.round((event.loaded * 100) / event.total);
+              this.uploadProgress = Math.min(100, Math.max(0, progress));
+            },
+          });
+
+          this.drafts = Array.isArray(response.data?.drafts)
+            ? response.data.drafts
+            : [];
+          this.parseWarnings = Array.isArray(response.data?.warnings)
+            ? response.data.warnings
+            : [];
+
+          if (this.sourceType === 'csv' && this.selectedProfileId) {
+            localStorage.setItem(
+              STORAGE_KEY_LAST_PROFILE,
+              String(this.selectedProfileId),
+            );
+          }
+
+          this.$refs.uploadCard?.reset?.();
+        } catch (error) {
+          if (error?.response?.data?.errors) {
+            const firstKey = Object.keys(error.response.data.errors)[0];
+            if (
+              firstKey &&
+              Array.isArray(error.response.data.errors[firstKey])
+            ) {
+              this.uploadError = error.response.data.errors[firstKey][0];
+            } else {
+              this.uploadError = __(
+                'Upload failed. Please review your input and try again.',
+              );
+            }
+          } else if (error?.response?.data?.error?.message) {
+            this.uploadError = error.response.data.error.message;
+          } else {
+            this.uploadError = __(
+              'Upload failed due to a network or server error.',
+            );
+          }
+        } finally {
+          this.loading = false;
+        }
+      },
+      onIgnoreDraft(draftIndex) {
+        const index = this.drafts.findIndex(
           (d) => d.draft_index === draftIndex,
         );
         if (index !== -1) {
-          drafts.value[index] = {
-            ...drafts.value[index],
-            status: 'ignored',
-          };
+          this.drafts[index] = { ...this.drafts[index], status: 'ignored' };
         }
-      };
-
-      const finalizingDraftIndex = ref(null);
-
-      const onFinalizeDraft = (draftIndex) => {
-        const draft = drafts.value.find((d) => d.draft_index === draftIndex);
+      },
+      onFinalizeDraft(draftIndex) {
+        const draft = this.drafts.find((d) => d.draft_index === draftIndex);
         if (!draft) {
           return;
         }
 
-        finalizingDraftIndex.value = draftIndex;
+        this.finalizingDraftIndex = draftIndex;
 
         const matchedPayeeId = draft.matched_payee?.id ?? null;
         const txType = draft.transaction_type || 'withdrawal';
@@ -452,66 +429,26 @@
 
         window.dispatchEvent(
           new CustomEvent('initiateCreateFromDraft', {
-            detail: {
-              type: 'standard',
-              transaction,
-            },
+            detail: { type: 'standard', transaction },
           }),
         );
-      };
-
-      const onTransactionCreated = () => {
-        if (finalizingDraftIndex.value === null) {
+      },
+      onTransactionCreated() {
+        if (this.finalizingDraftIndex === null) {
           return;
         }
-
-        const index = drafts.value.findIndex(
-          (d) => d.draft_index === finalizingDraftIndex.value,
+        const index = this.drafts.findIndex(
+          (d) => d.draft_index === this.finalizingDraftIndex,
         );
         if (index !== -1) {
-          drafts.value[index] = {
-            ...drafts.value[index],
+          this.drafts[index] = {
+            ...this.drafts[index],
             status: 'finalized',
           };
         }
-
-        finalizingDraftIndex.value = null;
-      };
-
-      onMounted(() => {
-        fetchAccounts();
-        fetchQifProfiles();
-        window.addEventListener('transaction-created', onTransactionCreated);
-      });
-
-      return {
-        sourceType,
-        selectedAccountId,
-        accounts,
-        loadingAccounts,
-        profiles,
-        loadingProfiles,
-        selectedProfileId,
-        qifProfiles,
-        loadingQifProfiles,
-        selectedQifProfileId,
-        loading,
-        uploadProgress,
-        uploadError,
-        drafts,
-        parseWarnings,
-        uploadCard,
-        accountCurrency,
-        selectedAccountCurrency,
-        fetchProfiles,
-        fetchQifProfiles,
-        onAccountChange,
-        onProfileChange,
-        onQifProfileChange,
-        onSubmit,
-        onIgnoreDraft,
-        onFinalizeDraft,
-      };
+        this.finalizingDraftIndex = null;
+      },
+      __,
     },
   };
 </script>

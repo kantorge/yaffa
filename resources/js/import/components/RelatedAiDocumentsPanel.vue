@@ -6,8 +6,8 @@
     </div>
     <div class="list-group list-group-sm">
       <a
-        v-for="(candidate, index) in candidates"
-        :key="index"
+        v-for="candidate in candidates"
+        :key="candidate.ai_document_id"
         :href="documentUrl(candidate.ai_document_id)"
         target="_blank"
         rel="noopener noreferrer"
