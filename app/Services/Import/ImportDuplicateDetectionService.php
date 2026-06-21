@@ -6,6 +6,7 @@ use App\Enums\TransactionType;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DuplicateDetectionService;
+use Throwable;
 
 class ImportDuplicateDetectionService
 {
@@ -30,7 +31,16 @@ class ImportDuplicateDetectionService
                 continue;
             }
 
-            $matches = $this->duplicateDetectionService->findDuplicates($user, $input);
+            try {
+                $matches = $this->duplicateDetectionService->findDuplicates($user, $input);
+            } catch (Throwable) {
+                $draft['duplicate_candidates'] = [];
+                $draft['warnings'] = array_merge((array) ($draft['warnings'] ?? []), [
+                    __('Duplicate detection skipped for this row due to an unexpected error.'),
+                ]);
+                $enriched[] = $draft;
+                continue;
+            }
             $candidateIds = collect($matches)
                 ->pluck('id')
                 ->filter(fn (mixed $id) => is_int($id))
@@ -81,6 +91,12 @@ class ImportDuplicateDetectionService
     private function toDuplicateDetectionInput(array $draft): ?array
     {
         if (! is_string($draft['date'] ?? null)) {
+            return null;
+        }
+
+        try {
+            \Carbon\Carbon::parse($draft['date']);
+        } catch (\Carbon\Exceptions\InvalidFormatException) {
             return null;
         }
 

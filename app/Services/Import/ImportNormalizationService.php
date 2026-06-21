@@ -241,7 +241,14 @@ class ImportNormalizationService
         $draftDates = collect($drafts)
             ->pluck('date')
             ->filter(fn (mixed $date): bool => is_string($date) && $date !== '')
-            ->map(fn (string $date): CarbonImmutable => CarbonImmutable::parse($date));
+            ->map(function (string $date): ?CarbonImmutable {
+                try {
+                    return CarbonImmutable::parse($date);
+                } catch (Throwable) {
+                    return null;
+                }
+            })
+            ->filter();
 
         $fromDate = $draftDates->isNotEmpty()
             ? $draftDates->min()->subDays(self::RELATED_AI_DOCUMENT_LOOKBACK_DAYS)
@@ -304,7 +311,13 @@ class ImportNormalizationService
                 }
             }
 
-            $draftDate = is_string($draft['date'] ?? null) ? CarbonImmutable::parse($draft['date']) : null;
+            $draftDate = null;
+            if (is_string($draft['date'] ?? null) && $draft['date'] !== '') {
+                try {
+                    $draftDate = CarbonImmutable::parse($draft['date']);
+                } catch (Throwable) {
+                }
+            }
             $candidateDate = is_string($candidate['date'] ?? null) ? CarbonImmutable::parse($candidate['date']) : null;
             if ($draftDate instanceof CarbonImmutable && $candidateDate instanceof CarbonImmutable) {
                 $daysApart = abs($draftDate->diffInDays($candidateDate, false));

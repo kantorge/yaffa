@@ -35,7 +35,12 @@ class DuplicateDetectionService
         $amountTolerancePercent = (float) ($resolvedSettings['duplicate_amount_tolerance_percent'] ?? self::DEFAULT_AMOUNT_TOLERANCE_PERCENT);
         $similarityThreshold = (float) ($resolvedSettings['duplicate_similarity_threshold'] ?? self::DEFAULT_SIMILARITY_THRESHOLD);
 
-        $date = \Carbon\Carbon::parse($extractedData['date']);
+        try {
+            $date = \Carbon\Carbon::parse($extractedData['date']);
+        } catch (\Carbon\Exceptions\InvalidFormatException) {
+            return [];
+        }
+
         $startDate = $date->clone()->subDays($dateWindowDays);
         $endDate = $date->clone()->addDays($dateWindowDays);
 
