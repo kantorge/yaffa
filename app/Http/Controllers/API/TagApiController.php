@@ -37,8 +37,8 @@ class TagApiController extends Controller implements HasMiddleware
                 $query->where('active', true);
             })
             ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+            ->when($request->query('q'), function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->query('q') . '%');
             })
             ->orderBy('name')
             ->take(10)

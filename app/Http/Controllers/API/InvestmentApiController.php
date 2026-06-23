@@ -57,8 +57,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
          */
         // Whitelist of valid sortable columns
         $validSortColumns = ['name', 'symbol', 'isin', 'active', 'created_at'];
-        $sortBy = $request->get('sort_by', 'name');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->query('sort_by', 'name');
+        $sortOrder = $request->query('sort_order', 'asc');
 
         // Validate sort_by parameter
         if (!in_array($sortBy, $validSortColumns, true)) {
@@ -75,34 +75,34 @@ class InvestmentApiController extends Controller implements HasMiddleware
             ->when(
                 $request->has('active'),
                 fn ($query) =>
-                $query->where('active', $request->get('active'))
+                $query->where('active', $request->query('active'))
             )
             ->when(
-                $request->get('query'),
+                $request->query('query'),
                 fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
                 $query->where(function ($q) use ($request) {
                     $q->whereRaw(
                         'LOWER(name) LIKE ?',
-                        ['%' . Str::lower($request->get('query')) . '%']
+                        ['%' . Str::lower($request->query('query')) . '%']
                     )
                         ->orWhereRaw(
                             'LOWER(symbol) LIKE ?',
-                            ['%' . Str::lower($request->get('query')) . '%']
+                            ['%' . Str::lower($request->query('query')) . '%']
                         )
                         ->orWhereRaw(
                             'LOWER(isin) LIKE ?',
-                            ['%' . Str::lower($request->get('query')) . '%']
+                            ['%' . Str::lower($request->query('query')) . '%']
                         );
                 })
             )
             ->when(
-                $request->get('currency_id'),
+                $request->query('currency_id'),
                 fn ($query) =>
-                $query->where('currency_id', '=', $request->get('currency_id'))
+                $query->where('currency_id', '=', $request->query('currency_id'))
             )
             ->orderBy($sortBy, $sortOrder)
-            ->take($request->get('limit', 10))
+            ->take($request->query('limit', 10))
             ->get();
 
         return response()->json($investments, Response::HTTP_OK);

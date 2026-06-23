@@ -45,26 +45,26 @@ class PayeeApiController extends Controller implements HasMiddleware
          * @name("api.v1.payees.index")
          * @middlewares("api", "auth:sanctum", "verified")
          */
-        if ($request->get('q')) {
+        if ($request->query('q')) {
             $payees = $request->user()
                 ->payees()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
-                ->when($request->get('q'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+                ->when($request->query('q'), function ($query) use ($request) {
+                    $query->where('name', 'LIKE', '%' . $request->query('q') . '%');
                 })
                 ->orderBy('name')
                 ->take(10)
                 ->get();
-        } elseif ($request->get('account_entity_id')) {
+        } elseif ($request->query('account_entity_id')) {
             // Account and transaction type is expected to be present
-            $accountId = $request->get('account_entity_id');
+            $accountId = $request->query('account_entity_id');
 
-            $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
-            $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
+            $accountDirection = ($request->query('account_type') === 'from' ? 'to' : 'from');
+            $payeeDirection = ($request->query('account_type') === 'from' ? 'from' : 'to');
 
-            $transactionType = $request->get('transaction_type', null);
+            $transactionType = $request->query('transaction_type', null);
             if ($transactionType !== null && TransactionTypeEnum::tryFrom($transactionType) === null) {
                 // If transaction type is provided but not valid, return a bad request response
                 return response()->json(
@@ -215,8 +215,8 @@ class PayeeApiController extends Controller implements HasMiddleware
          * @name("api.v1.payees.similar")
          * @middlewares("api", "auth:sanctum", "verified")
          */
-        $query = Str::lower($request->get('query'));
-        $withActive = $request->get('withActive');
+        $query = Str::lower($request->query('query'));
+        $withActive = $request->query('withActive');
 
         // Get all payees of the user
         $payees = $request->user()

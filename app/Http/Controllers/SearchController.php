@@ -28,7 +28,7 @@ class SearchController extends Controller implements HasMiddleware
          * @name("search")
          * @middlewares("web")
          */
-        $searchTerm = $request->get('q');
+        $searchTerm = $request->query('q');
         $results = [];
 
         if (!($searchTerm && mb_strlen($searchTerm) > 2)) {

@@ -32,10 +32,10 @@ class ReportController extends Controller implements HasMiddleware
          */
 
         // Check if forecast is required
-        $withForecast = $request->get('withForecast') ?? false;
+        $withForecast = $request->query('withForecast') ?? false;
 
         JavaScript::put([
-            'presetAccount' => $request->get('accountEntity'),
+            'presetAccount' => $request->query('accountEntity'),
         ]);
 
         return view(

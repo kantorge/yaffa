@@ -30,7 +30,7 @@ Breadcrumbs::for('account-groups.edit', function (BreadcrumbTrail $trail, $accou
 Breadcrumbs::for('account-entity.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     // Based on the type in the request, the title of the breadcrumb will be different
-    $type = request()->get('type');
+    $type = request()->query('type');
     if ($type === 'account') {
         $trail->push(__('Accounts'), route('account-entity.index', ['type' => 'account']));
     } elseif ($type === 'payee') {

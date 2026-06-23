@@ -65,16 +65,16 @@ class AccountEntityController extends Controller implements HasMiddleware
             // Get preset filters from query string
             $filters = [];
             if ($request->has('date_from')) {
-                $filters['date_from'] = $request->get('date_from');
+                $filters['date_from'] = $request->query('date_from');
             }
             if ($request->has('date_to')) {
-                $filters['date_to'] = $request->get('date_to');
+                $filters['date_to'] = $request->query('date_to');
             }
 
             // If neither date_from nor date_to is set, check for date_preset or use default
             if (!$request->has('date_from') && !$request->has('date_to')) {
                 if ($request->has('date_preset')) {
-                    $filters['date_preset'] = $request->get('date_preset');
+                    $filters['date_preset'] = $request->query('date_preset');
                 } else {
                     $filters['date_preset'] = $accountEntity->config->default_date_range
                     ?? $request->user()->account_details_date_range
@@ -114,7 +114,7 @@ class AccountEntityController extends Controller implements HasMiddleware
          */
         $this->checkTypeParam($request);
 
-        return $this->{'index' . Str::ucfirst($request->get('type'))}();
+        return $this->{'index' . Str::ucfirst($request->query('type'))}();
     }
 
     private function indexAccount(): View
