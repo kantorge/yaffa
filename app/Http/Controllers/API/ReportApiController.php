@@ -56,8 +56,8 @@ class ReportApiController extends Controller implements HasMiddleware
         $categories = $this->categoryService->getChildCategories($request);
 
         // Get the account selection properties
-        $accountSelection = $request->get('accountSelection');
-        $accountEntity = $request->get('accountEntity');
+        $accountSelection = $request->query('accountSelection');
+        $accountEntity = $request->query('accountEntity');
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
@@ -437,7 +437,7 @@ class ReportApiController extends Controller implements HasMiddleware
         }
 
         // Check if forecast is required
-        $withForecast = $request->get('withForecast') ?? false;
+        $withForecast = $request->query('withForecast') ?? false;
 
         // Get monthly average currency rate for all currencies
         $baseCurrency = $this->getBaseCurrency();
@@ -467,8 +467,8 @@ class ReportApiController extends Controller implements HasMiddleware
             )
             // Optionally filter by accountEntity
             ->when(
-                $request->get('accountEntity'),
-                fn ($query) => $query->where('account_entity_id', '=', $request->get('accountEntity'))
+                $request->query('accountEntity'),
+                fn ($query) => $query->where('account_entity_id', '=', $request->query('accountEntity'))
             )
             ->select(
                 'date',
