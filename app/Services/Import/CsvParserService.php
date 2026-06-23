@@ -29,7 +29,7 @@ class CsvParserService
 
         [$normalizedContent, $encodingWarning] = $this->normalizeContentToUtf8($content);
 
-        $reader = Reader::createFromString($normalizedContent);
+        $reader = Reader::fromString($normalizedContent);
         $reader->setDelimiter((string) ($profile->delimiter ?: ','));
 
         if ($profile->has_header_row) {
@@ -84,6 +84,7 @@ class CsvParserService
             } else {
                 $parsedRow = $this->parseUserRow(
                     canonicalFacts: $canonicalFacts,
+                    originalRecord: $record,
                     profile: $profile,
                     accountId: $accountId,
                     draftIndex: count($drafts),
@@ -196,10 +197,12 @@ class CsvParserService
 
     /**
      * @param  array<string, mixed>  $canonicalFacts
+     * @param  array<int|string, mixed>  $originalRecord
      * @return array{matched: bool, warnings: list<string>, draft: array<string, mixed>}
      */
     private function parseUserRow(
         array $canonicalFacts,
+        array $originalRecord,
         FileImportProfile $profile,
         int $accountId,
         int $draftIndex,
@@ -230,15 +233,18 @@ class CsvParserService
             $warnings,
         );
 
+        $memo = $this->buildUserProfileMemo($originalRecord, $profile);
+
         $output = [
             'config_type' => 'standard',
             'date' => $date,
             'amount' => $amount,
             'transaction_type' => $transactionType,
             'payee' => is_string($canonicalFacts['payee'] ?? null) ? $canonicalFacts['payee'] : null,
-            'memo' => is_string($canonicalFacts['memo'] ?? null)
-                ? $canonicalFacts['memo']
-                : (is_string($canonicalFacts['comment'] ?? null) ? $canonicalFacts['comment'] : null),
+            'memo' => $memo,
+            'source_category' => is_string($canonicalFacts['category'] ?? null) && $canonicalFacts['category'] !== ''
+                ? $canonicalFacts['category']
+                : null,
         ];
 
         if ($transactionType === TransactionType::DEPOSIT->value) {
@@ -649,6 +655,32 @@ class CsvParserService
     }
 
     /**
+     * Concatenates all comment and reference column values for a user-profile row.
+     * Separator is configurable via options_json.comment_separator (defaults to " | ").
+     *
+     * @param  array<int|string, mixed>  $originalRecord
+     */
+    private function buildUserProfileMemo(array $originalRecord, FileImportProfile $profile): ?string
+    {
+        $separator = (string) data_get($profile->options_json, 'comment_separator', ' | ');
+        $mapping = (array) ($profile->mapping_json ?? []);
+
+        $parts = [];
+        foreach ($originalRecord as $header => $value) {
+            $target = $mapping[(string) $header] ?? null;
+            if (($target === 'comment' || $target === 'reference') && is_string($value) && mb_trim($value) !== '') {
+                $parts[] = mb_trim($value);
+            }
+        }
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return implode($separator, $parts);
+    }
+
+    /**
      * @param  array<string, mixed>  $output
      * @param  array<string, mixed>  $canonicalFacts
      * @param  list<string>  $warnings
@@ -718,8 +750,9 @@ class CsvParserService
             'account_id' => $accountId,
             'payee' => is_string($output['payee'] ?? null) ? $output['payee'] : null,
             'memo' => is_string($output['memo'] ?? null) ? $output['memo'] : null,
-            'category' => null,
-            'reference' => is_string($output['reference'] ?? null) ? $output['reference'] : null,
+            'source_category' => is_string($output['source_category'] ?? null) && $output['source_category'] !== ''
+                ? $output['source_category']
+                : null,
             'raw_entry' => $rawEntry,
             'config' => [
                 'account_from_id' => $accountFromId,

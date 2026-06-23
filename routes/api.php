@@ -139,6 +139,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('imports.file-profiles.index');
     Route::post('/imports/file-profiles', [FileImportProfileApiController::class, 'store'])
         ->name('imports.file-profiles.store');
+    Route::post('/imports/file-profiles/suggest', [FileImportProfileApiController::class, 'suggest'])
+        ->name('imports.file-profiles.suggest');
     Route::post('/imports/file-profiles/{profile}/clone', [FileImportProfileApiController::class, 'clone'])
         ->name('imports.file-profiles.clone');
     Route::patch('/imports/file-profiles/{profile}', [FileImportProfileApiController::class, 'update'])

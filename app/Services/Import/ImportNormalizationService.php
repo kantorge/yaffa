@@ -65,7 +65,9 @@ class ImportNormalizationService
                 'account_id' => $accountId,
                 'payee' => is_string($entry['payee'] ?? null) ? $entry['payee'] : null,
                 'memo' => is_string($entry['memo'] ?? null) ? $entry['memo'] : null,
-                'category' => is_string($entry['category'] ?? null) ? $entry['category'] : null,
+                'source_category' => is_string($entry['category'] ?? null) && $entry['category'] !== ''
+                    ? $entry['category']
+                    : null,
                 'reference' => is_string($entry['reference'] ?? null) ? $entry['reference'] : null,
                 'raw_entry' => is_string($entry['raw_entry'] ?? null) ? $entry['raw_entry'] : null,
                 'config' => [

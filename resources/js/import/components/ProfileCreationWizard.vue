@@ -1,0 +1,1233 @@
+<template>
+  <div>
+    <!-- Wizard header with step indicator -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">{{ __('New CSV import profile') }}</div>
+      <div class="d-flex align-items-center gap-1">
+        <span
+          v-for="n in 4"
+          :key="n"
+          :class="[
+            'badge',
+            n === currentStep
+              ? 'bg-primary'
+              : n < currentStep
+                ? 'bg-success'
+                : 'bg-secondary',
+          ]"
+        >
+          {{ n }}
+        </span>
+        <span class="ms-2 small text-muted">{{ stepLabel }}</span>
+      </div>
+    </div>
+
+    <!-- General error -->
+    <div
+      v-if="generalError"
+      class="alert alert-danger alert-dismissible mb-3 small"
+      role="alert"
+    >
+      {{ generalError }}
+      <button
+        type="button"
+        class="btn-close"
+        @click="generalError = null"
+      ></button>
+    </div>
+
+    <!-- ────────────────────────────────────────────────── -->
+    <!-- Step 1: File selection and auto-detection          -->
+    <!-- ────────────────────────────────────────────────── -->
+    <div v-if="currentStep === 1">
+      <div class="mb-3">
+        <label class="form-label small">
+          {{ __('Select a CSV file to analyse') }} *
+        </label>
+        <input
+          ref="fileInput"
+          type="file"
+          class="form-control form-control-sm"
+          accept=".csv,.txt"
+          :disabled="aiSuggesting"
+          @change="onFileChange"
+        />
+        <div class="form-text">
+          {{
+            __(
+              'The file is read locally in your browser. No data is uploaded during this step.',
+            )
+          }}
+        </div>
+      </div>
+
+      <template v-if="headers.length > 0">
+        <div class="d-flex gap-3 mb-2 small text-muted flex-wrap">
+          <span>
+            {{ __('Delimiter:') }}
+            <code>{{ delimiterLabel(detectedDelimiter) }}</code>
+          </span>
+          <span>
+            {{
+              detectedHasHeader
+                ? __('Header row detected')
+                : __('No header row detected')
+            }}
+          </span>
+          <span>{{ headers.length }} {{ __('columns') }}</span>
+        </div>
+        <div class="mb-1 small text-muted">
+          {{ __('Preview (first 5 data rows):') }}
+        </div>
+        <CsvPreviewTable :headers="displayHeaders" :data-rows="previewRows" />
+
+        <!-- AI suggestion (inline, Step 1 only) -->
+        <div v-if="hasAiProvider" class="mt-3">
+          <div v-if="!showAiPanel && !aiSuggesting">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-info"
+              @click="showAiPanel = true"
+            >
+              <i class="fa fa-magic me-1"></i>{{ __('Suggest with AI') }}
+            </button>
+            <span class="ms-2 small text-muted">{{
+              __('— or click Next to configure manually')
+            }}</span>
+          </div>
+
+          <div v-if="showAiPanel || aiSuggesting" class="border rounded p-3 bg-light">
+            <div class="alert alert-info small mb-2 py-2">
+              <i class="fa fa-info-circle me-1"></i>
+              {{
+                __(
+                  'The first 10 rows of your file will be sent to your configured AI provider using your API key.',
+                )
+              }}
+            </div>
+
+            <div
+              v-if="accountId"
+              class="form-text mb-2"
+            >
+              <i class="fa fa-info-circle me-1"></i>
+              {{ __('Account context will be included in the AI prompt as a hint.') }}
+            </div>
+
+            <div v-if="aiError" class="alert alert-danger small py-2 mb-2">
+              {{ aiError }}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-info"
+                :disabled="aiSuggesting"
+                @click="requestAiSuggestion"
+              >
+                <span
+                  v-if="aiSuggesting"
+                  class="spinner-border spinner-border-sm me-1"
+                ></span>
+                {{
+                  aiSuggesting
+                    ? __('Requesting suggestion…')
+                    : __('Confirm and send')
+                }}
+              </button>
+              <button
+                v-if="!aiSuggesting"
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                @click="showAiPanel = false"
+              >
+                {{ __('Cancel') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ────────────────────────────────────────────────── -->
+    <!-- Step 2: Parser settings                           -->
+    <!-- ────────────────────────────────────────────────── -->
+    <div v-if="currentStep === 2">
+      <!-- Row 1: name + format controls -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-5">
+          <label class="form-label small">{{ __('Profile name') }} *</label>
+          <input
+            v-model="profileName"
+            type="text"
+            class="form-control form-control-sm"
+            :class="{ 'is-invalid': validationErrors.profileName }"
+            :placeholder="__('e.g. My Bank CSV')"
+          />
+          <div v-if="validationErrors.profileName" class="invalid-feedback">
+            {{ validationErrors.profileName }}
+          </div>
+        </div>
+
+        <!-- Delimiter -->
+        <div class="col-md-4">
+          <label class="form-label small">{{ __('Delimiter') }}</label>
+          <select
+            v-model="delimiterChoice"
+            class="form-select form-select-sm"
+            @change="onSettingsChange"
+          >
+            <option value=",">, ({{ __('comma') }})</option>
+            <option value=";">; ({{ __('semicolon') }})</option>
+            <option value="	">&#8677; ({{ __('tab') }})</option>
+            <option value="|">| ({{ __('pipe') }})</option>
+            <option value="__custom__">{{ __('Custom…') }}</option>
+          </select>
+          <input
+            v-if="delimiterChoice === '__custom__'"
+            v-model="customDelimiter"
+            type="text"
+            class="form-control form-control-sm mt-1 font-monospace"
+            maxlength="1"
+            :placeholder="__('Single character')"
+            @input="onSettingsChange"
+          />
+        </div>
+
+        <!-- Has header row -->
+        <div class="col-md-3 d-flex align-items-end pb-1">
+          <div class="form-check">
+            <input
+              id="wiz-has-header"
+              v-model="hasHeaderRow"
+              type="checkbox"
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label class="form-check-label small" for="wiz-has-header">
+              {{ __('Has header row') }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: numeric parsing controls -->
+      <div class="row g-2 mb-3">
+        <!-- Decimal separator -->
+        <div class="col-md-3">
+          <label class="form-label small">{{ __('Decimal separator') }}</label>
+          <div class="d-flex gap-3 mt-1">
+            <div class="form-check">
+              <input
+                id="dec-dot"
+                v-model="decimalSeparator"
+                type="radio"
+                value="."
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label for="dec-dot" class="form-check-label small font-monospace"
+                >. ({{ __('dot') }})</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                id="dec-comma"
+                v-model="decimalSeparator"
+                type="radio"
+                value=","
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label
+                for="dec-comma"
+                class="form-check-label small font-monospace"
+                >, ({{ __('comma') }})</label
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Thousand separator -->
+        <div class="col-md-4">
+          <label class="form-label small">{{ __('Thousand separator') }}</label>
+          <div class="d-flex gap-2 flex-wrap mt-1">
+            <div class="form-check">
+              <input
+                id="thou-space"
+                v-model="thousandSeparator"
+                type="radio"
+                value=" "
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label for="thou-space" class="form-check-label small">{{
+                __('Space')
+              }}</label>
+            </div>
+            <div class="form-check">
+              <input
+                id="thou-dot"
+                v-model="thousandSeparator"
+                type="radio"
+                value="."
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label for="thou-dot" class="form-check-label small font-monospace"
+                >.</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                id="thou-comma"
+                v-model="thousandSeparator"
+                type="radio"
+                value=","
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label
+                for="thou-comma"
+                class="form-check-label small font-monospace"
+                >,</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                id="thou-none"
+                v-model="thousandSeparator"
+                type="radio"
+                value=""
+                class="form-check-input"
+                @change="onSettingsChange"
+              />
+              <label for="thou-none" class="form-check-label small">{{
+                __('None')
+              }}</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign handling -->
+        <div class="col-md-5">
+          <label class="form-label small">{{ __('Sign handling') }}</label>
+          <div class="form-check mt-1">
+            <input
+              id="sign-asis"
+              v-model="signHandling"
+              type="radio"
+              value="as_is"
+              class="form-check-input"
+            />
+            <label for="sign-asis" class="form-check-label small">
+              {{ __('As-is') }}
+              <span class="text-muted">—
+                {{ __('use the parsed signed value directly') }}</span
+              >
+            </label>
+          </div>
+          <div class="form-check mt-1">
+            <input
+              id="sign-inv"
+              v-model="signHandling"
+              type="radio"
+              value="inverted"
+              class="form-check-input"
+            />
+            <label for="sign-inv" class="form-check-label small">
+              {{ __('Inverted') }}
+              <span class="text-muted">—
+                {{ __('negate the parsed value (bank exports debits as positive)') }}</span
+              >
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="mb-1 small text-muted">
+        {{ __('Preview with current settings (first 5 data rows):') }}
+      </div>
+      <CsvPreviewTable :headers="displayHeaders" :data-rows="previewRows" />
+    </div>
+
+    <!-- ────────────────────────────────────────────────── -->
+    <!-- Step 3: Column mapping                            -->
+    <!-- ────────────────────────────────────────────────── -->
+    <div v-if="currentStep === 3">
+      <div
+        v-if="mappingValidationError"
+        class="alert alert-warning small py-2 mb-3"
+      >
+        <i class="fa fa-exclamation-triangle me-1"></i>
+        {{ mappingValidationError }}
+      </div>
+
+      <!-- Date format panel – shown above the table once a date column is selected -->
+      <div
+        v-if="dateMappedIndex >= 0"
+        class="mb-3 p-3 bg-light border rounded"
+      >
+        <div class="small fw-semibold mb-2">
+          <i class="fa fa-calendar me-1"></i>{{ __('Date format') }}
+          <span class="fw-normal text-muted ms-1">
+            ({{ __('column:') }} {{ displayHeaders[dateMappedIndex] }})
+          </span>
+        </div>
+        <DateFormatSelector
+          :sample-values="columnSamples[dateMappedIndex] || []"
+          :model-value="dateFormat"
+          :bordered="false"
+          :show-samples="false"
+          @update:model-value="updateDateFormat($event)"
+        />
+      </div>
+
+      <!-- Integrated mapping + preview table -->
+      <div class="table-responsive border rounded">
+        <table class="table table-sm table-bordered mb-0 small">
+          <thead>
+            <!-- Row 1: source column header names -->
+            <tr class="table-light">
+              <th
+                v-for="(h, i) in displayHeaders"
+                :key="'h-' + i"
+                class="fw-normal text-muted text-nowrap"
+                style="max-width: 180px; overflow: hidden; text-overflow: ellipsis"
+                :title="h"
+              >
+                {{ h }}
+              </th>
+            </tr>
+            <!-- Row 2: canonical field mapping dropdowns -->
+            <tr>
+              <th
+                v-for="(col, i) in columnMappings"
+                :key="'m-' + i"
+                class="p-1 align-top"
+                style="min-width: 140px"
+              >
+                <select
+                  :value="col.canonical"
+                  class="form-select form-select-sm"
+                  :class="col.canonical !== 'ignore' ? 'border-success' : ''"
+                  @change="updateMapping(i, $event.target.value)"
+                >
+                  <option value="ignore">{{ __('— ignore —') }}</option>
+                  <option value="date">date</option>
+                  <option value="amount">amount</option>
+                  <option value="payee">payee</option>
+                  <option value="comment">comment</option>
+                  <option value="reference">reference</option>
+                  <option value="category">category</option>
+                </select>
+
+                <div
+                  v-if="duplicateWarningForColumn(i)"
+                  class="small text-warning mt-1"
+                >
+                  <i class="fa fa-exclamation-circle me-1"></i>{{ duplicateWarningForColumn(i) }}
+                </div>
+                <div
+                  v-if="confidenceNoteForHeader(col.header)"
+                  class="small text-info mt-1"
+                >
+                  <i class="fa fa-info-circle me-1"></i>{{ confidenceNoteForHeader(col.header) }}
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="previewRows.length === 0">
+              <td
+                :colspan="columnMappings.length || 1"
+                class="text-muted text-center py-2"
+              >
+                {{ __('No data rows to preview') }}
+              </td>
+            </tr>
+            <tr v-for="(row, ri) in previewRows" :key="ri">
+              <td
+                v-for="(col, ci) in columnMappings"
+                :key="ci"
+                class="text-nowrap"
+                :class="col.canonical === 'ignore' ? 'text-muted' : ''"
+                style="max-width: 200px; overflow: hidden; text-overflow: ellipsis"
+                :title="row[ci] ?? ''"
+              >
+                {{ (row[ci] ?? '') !== '' ? row[ci] : '—' }}
+                <!-- Parsed value preview: amount -->
+                <div
+                  v-if="col.canonical === 'amount' && (row[ci] ?? '') !== ''"
+                  class="font-monospace"
+                  :class="parseAmountPreview(row[ci]) !== null ? 'text-success' : 'text-danger'"
+                >
+                  → {{ parseAmountPreview(row[ci]) !== null ? parseAmountPreview(row[ci]) : __('?') }}
+                </div>
+                <!-- Parsed value preview: date -->
+                <div
+                  v-if="col.canonical === 'date' && (row[ci] ?? '') !== ''"
+                  class="font-monospace"
+                  :class="parseDatePreview(row[ci]) !== null ? 'text-success' : 'text-warning'"
+                >
+                  → {{ parseDatePreview(row[ci]) !== null ? parseDatePreview(row[ci]) : __('set format ↑') }}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="small text-muted mt-2">
+        {{ __('"date" and "amount" must be mapped before you can proceed.') }}
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────────────── -->
+    <!-- Step 4: Review and save                           -->
+    <!-- ────────────────────────────────────────────────── -->
+    <div v-if="currentStep === 4">
+      <div class="mb-3">
+        <div class="fw-semibold small mb-2">{{ __('Profile summary') }}</div>
+        <dl class="row small mb-0">
+          <dt class="col-5 col-md-3 text-muted">{{ __('Name') }}</dt>
+          <dd class="col-7 col-md-9">{{ profileName }}</dd>
+          <dt class="col-5 col-md-3 text-muted">{{ __('Delimiter') }}</dt>
+          <dd class="col-7 col-md-9 font-monospace">
+            {{ delimiterLabel(effectiveDelimiter) }}
+          </dd>
+          <dt class="col-5 col-md-3 text-muted">{{ __('Header row') }}</dt>
+          <dd class="col-7 col-md-9">
+            {{ hasHeaderRow ? __('Yes') : __('No') }}
+          </dd>
+          <dt class="col-5 col-md-3 text-muted">{{ __('Date format') }}</dt>
+          <dd class="col-7 col-md-9 font-monospace">
+            {{ primaryDateFormat || __('Not set') }}
+          </dd>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Decimal separator') }}
+          </dt>
+          <dd class="col-7 col-md-9 font-monospace">{{ decimalSeparator }}</dd>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Thousand separator') }}
+          </dt>
+          <dd class="col-7 col-md-9 font-monospace">
+            {{ thousandSeparator || __('None') }}
+          </dd>
+          <dt class="col-5 col-md-3 text-muted">{{ __('Sign handling') }}</dt>
+          <dd class="col-7 col-md-9">{{ signHandling }}</dd>
+          <dt class="col-12 text-muted mb-1">{{ __('Column mappings') }}</dt>
+          <dd class="col-12 mb-0">
+            <div class="d-flex flex-wrap gap-1">
+              <span
+                v-for="col in columnMappings.filter((c) => c.canonical !== 'ignore')"
+                :key="col.header"
+                class="badge bg-light text-dark border font-monospace"
+                style="font-size: 0.8em"
+              >
+                {{ col.header }} → {{ col.canonical }}
+              </span>
+              <span
+                v-if="columnMappings.filter((c) => c.canonical === 'ignore').length"
+                class="badge bg-light text-secondary border"
+                style="font-size: 0.8em"
+              >
+                + {{ columnMappings.filter((c) => c.canonical === 'ignore').length }}
+                {{ __('ignored') }}
+              </span>
+            </div>
+          </dd>
+        </dl>
+      </div>
+
+      <!-- Save errors from API -->
+      <div v-if="saveErrors" class="alert alert-danger small mb-3">
+        <div v-if="typeof saveErrors === 'string'">{{ saveErrors }}</div>
+        <ul v-else class="mb-0 ps-3">
+          <li v-for="(msgs, field) in saveErrors" :key="field">
+            <strong>{{ field }}:</strong>
+            {{ Array.isArray(msgs) ? msgs.join(' ') : msgs }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="d-flex gap-2 mt-4 border-top pt-3">
+      <button
+        v-if="currentStep > 1"
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        :disabled="saving"
+        @click="prevStep"
+      >
+        <i class="fa fa-arrow-left me-1"></i>{{ __('Back') }}
+      </button>
+
+      <button
+        v-if="currentStep < 4"
+        type="button"
+        class="btn btn-sm btn-primary"
+        :disabled="!canAdvance"
+        @click="nextStep"
+      >
+        {{ __('Next') }}<i class="fa fa-arrow-right ms-1"></i>
+      </button>
+
+      <button
+        v-if="currentStep === 4"
+        type="button"
+        class="btn btn-sm btn-primary"
+        :disabled="saving"
+        @click="save"
+      >
+        <span
+          v-if="saving"
+          class="spinner-border spinner-border-sm me-1"
+        ></span>
+        {{ __('Save profile') }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary ms-auto"
+        :disabled="saving"
+        @click="$emit('cancel')"
+      >
+        {{ __('Cancel') }}
+      </button>
+    </div>
+  </div>
+</template>
+
+<script>
+  import axios from 'axios';
+  import { __ } from '@/shared/lib/i18n';
+  import { tryParseDate, DATE_PATTERNS } from '../utils/dateFormatUtils.js';
+  import CsvPreviewTable from './CsvPreviewTable.vue';
+  import DateFormatSelector from './DateFormatSelector.vue';
+
+  // ─── CSV utilities ────────────────────────────────────────────────────────
+
+  const DELIMITER_CANDIDATES = [',', ';', '\t', '|'];
+
+  /** Parse one CSV line respecting double-quoted fields and escaped quotes. */
+  function parseCsvLine(line, delimiter) {
+    const result = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (i + 1 < line.length && line[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === delimiter) {
+        result.push(field.trim());
+        field = '';
+      } else {
+        field += c;
+      }
+    }
+    result.push(field.trim());
+    return result;
+  }
+
+  /** Score each candidate delimiter and return the winner. */
+  function detectDelimiter(lines) {
+    const scores = {};
+    for (const d of DELIMITER_CANDIDATES) {
+      const escaped = d === '|' ? '\\|' : d === '\t' ? '\t' : d;
+      const re = new RegExp(escaped, 'g');
+      const counts = lines.map((l) => (l.match(re) || []).length);
+      const maxCount = Math.max(...counts);
+      if (maxCount === 0) {
+        scores[d] = 0;
+        continue;
+      }
+      const consistency =
+        counts.filter((c) => c === maxCount).length / counts.length;
+      scores[d] = maxCount * consistency;
+    }
+    let best = ',';
+    let bestScore = -1;
+    for (const [d, s] of Object.entries(scores)) {
+      if (s > bestScore) {
+        bestScore = s;
+        best = d;
+      }
+    }
+    return best;
+  }
+
+  /** Heuristic: first row with no numeric values while subsequent rows have them → header. */
+  function detectHasHeader(parsedLines) {
+    if (parsedLines.length < 2) return false;
+    const firstRow = parsedLines[0];
+    const rest = parsedLines.slice(1);
+    const firstHasNoNumbers = firstRow.every(
+      (c) => isNaN(parseFloat(c.replace(/[\s,.]/g, ''))),
+    );
+    const restHaveNumbers = rest.some((row) =>
+      row.some((c) => !isNaN(parseFloat(c.replace(/[\s,.]/g, '')))),
+    );
+    return firstHasNoNumbers && restHaveNumbers;
+  }
+
+  /** Human-readable label for a delimiter character. */
+  function delimiterLabel(d) {
+    if (d === '\t') return '\\t (tab)';
+    if (d === ',') return ', (comma)';
+    if (d === ';') return '; (semicolon)';
+    if (d === '|') return '| (pipe)';
+    return d;
+  }
+
+  // ─── Component ────────────────────────────────────────────────────────────
+
+  export default {
+    name: 'ProfileCreationWizard',
+    components: { CsvPreviewTable, DateFormatSelector },
+
+    props: {
+      /** Optional account ID passed to AI suggestion for contextual hints. */
+      accountId: {
+        type: [Number, String],
+        default: null,
+      },
+      /** Whether the authenticated user has an AiProviderConfig. */
+      hasAiProvider: {
+        type: Boolean,
+        default: false,
+      },
+    },
+
+    emits: ['saved', 'cancel'],
+
+    data() {
+      return {
+        currentStep: 1,
+
+        // ── File / raw data
+        sampleFile: null,
+        rawLines: [], // first 20 non-empty raw lines
+
+        // ── Auto-detected values
+        detectedDelimiter: ',',
+        detectedHasHeader: true,
+
+        // ── Step-2 settings (initialised from detected values)
+        delimiterChoice: ',', // preset or '__custom__'
+        customDelimiter: '',
+        hasHeaderRow: true,
+        decimalSeparator: '.',
+        thousandSeparator: '',
+        signHandling: 'as_is',
+        profileName: '',
+
+        // ── Parsed state (recomputed when settings change)
+        parsedAllRows: [], // all rows from raw lines using current delimiter
+        headers: [], // column headers
+        dataRows: [], // data rows (without header)
+
+        // ── Column mapping (Step 3)
+        columnMappings: [], // [{header, canonical}]
+        dateFormat: '', // PHP date format string (single value, matches FileImportProfile model)
+
+        // ── AI confidence notes keyed by source header
+        confidenceNotes: {}, // { 'HeaderName': 'note text' }
+
+        // ── Validation
+        mappingValidationError: null,
+        validationErrors: {},
+
+        // ── Save
+        saving: false,
+        saveErrors: null,
+        generalError: null,
+
+        // ── AI suggestion
+        showAiPanel: false,
+        aiSuggesting: false,
+        aiError: null,
+      };
+    },
+
+    computed: {
+      stepLabel() {
+        const labels = [
+          __('File selection'),
+          __('Parser settings'),
+          __('Column mapping'),
+          __('Review & save'),
+        ];
+        return labels[this.currentStep - 1] || '';
+      },
+
+      effectiveDelimiter() {
+        return this.delimiterChoice === '__custom__'
+          ? this.customDelimiter || ','
+          : this.delimiterChoice;
+      },
+
+      /** Headers shown in the preview table (auto-generated indices when no header row). */
+      displayHeaders() {
+        if (this.hasHeaderRow) return this.headers;
+        return this.headers.map((_, i) => `#${i + 1}`);
+      },
+
+      /** First 5 data rows for preview tables. */
+      previewRows() {
+        return this.dataRows.slice(0, 5);
+      },
+
+      /** Sample values per column index (up to 5 from data rows). */
+      columnSamples() {
+        return this.headers.map((_, colIdx) =>
+          this.dataRows
+            .slice(0, 5)
+            .map((row) => row[colIdx] ?? '')
+            .filter((v) => v !== ''),
+        );
+      },
+
+      /** Index of the first column mapped to 'date', or -1 (used for table preview). */
+      dateMappedIndex() {
+        return this.columnMappings.findIndex((c) => c.canonical === 'date');
+      },
+
+      /** PHP date format — single value matching the FileImportProfile model field. */
+      primaryDateFormat() {
+        return this.dateFormat;
+      },
+
+      /**
+       * Sample values from the first column that looks like it contains dates.
+       * Used to drive the DateFormatSelector in Step 2 before mapping is done.
+       */
+      autoDetectedDateSamples() {
+        for (let i = 0; i < this.headers.length; i++) {
+          const samples = this.columnSamples[i] || [];
+          const looksLikeDates = samples.some((v) =>
+            DATE_PATTERNS.some((p) => v && p.regex.test(String(v).trim())),
+          );
+          if (looksLikeDates) return samples;
+        }
+        return [];
+      },
+
+      canAdvance() {
+        if (this.currentStep === 1) return this.headers.length > 0 && !this.aiSuggesting;
+        if (this.currentStep === 2)
+          return this.profileName.trim().length > 0 && this.headers.length > 0;
+        if (this.currentStep === 3) return !this.mappingValidationError;
+        return false;
+      },
+    },
+
+    methods: {
+      __,
+      delimiterLabel,
+
+      // ── File handling ──────────────────────────────────────────────────────
+
+      async onFileChange(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        this.sampleFile = file;
+        await this.processFile(file);
+        if (!this.profileName) {
+          this.profileName = file.name.replace(/\.[^.]+$/, '');
+        }
+      },
+
+      async processFile(file) {
+        const text = await this.readFileAsText(file, 20);
+        const lines = text
+          .split(/\r?\n/)
+          .filter((l) => l.trim().length > 0)
+          .slice(0, 20);
+        this.rawLines = lines;
+
+        // Auto-detect
+        const delim = detectDelimiter(lines);
+        this.detectedDelimiter = delim;
+
+        const allParsed = lines.map((l) => parseCsvLine(l, delim));
+        this.detectedHasHeader = detectHasHeader(allParsed);
+
+        // Apply detected values to settings (only on first file load)
+        this.delimiterChoice = DELIMITER_CANDIDATES.includes(delim)
+          ? delim
+          : '__custom__';
+        if (!DELIMITER_CANDIDATES.includes(delim)) this.customDelimiter = delim;
+        this.hasHeaderRow = this.detectedHasHeader;
+
+        this.rebuildParsedState(lines, delim, this.hasHeaderRow);
+      },
+
+      readFileAsText(file, maxLines) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const buffer = e.target.result;
+            const uint8 = new Uint8Array(buffer);
+
+            // Detect encoding from BOM; fall back to replacement-character heuristic.
+            let encoding = 'utf-8';
+            if (uint8.length >= 3 && uint8[0] === 0xef && uint8[1] === 0xbb && uint8[2] === 0xbf) {
+              encoding = 'utf-8';
+            } else if (uint8.length >= 2 && uint8[0] === 0xff && uint8[1] === 0xfe) {
+              encoding = 'utf-16le';
+            } else if (uint8.length >= 2 && uint8[0] === 0xfe && uint8[1] === 0xff) {
+              encoding = 'utf-16be';
+            } else {
+              // Probe the first 4 KB; if UTF-8 produces replacement chars, use windows-1252.
+              const probe = new TextDecoder('utf-8', { fatal: false }).decode(
+                buffer.slice(0, 4096),
+              );
+              if (probe.includes('�')) {
+                encoding = 'windows-1252';
+              }
+            }
+
+            const text = new TextDecoder(encoding, { fatal: false }).decode(buffer);
+
+            // Trim to first maxLines non-empty lines for efficiency.
+            const lines = text.split(/\r?\n/);
+            let count = 0;
+            let cut = lines.length;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].trim()) count++;
+              if (count >= maxLines) {
+                cut = i + 1;
+                break;
+              }
+            }
+            resolve(lines.slice(0, cut).join('\n'));
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      },
+
+      rebuildParsedState(lines, delimiter, hasHeader) {
+        if (!lines || lines.length === 0) {
+          this.headers = [];
+          this.dataRows = [];
+          this.parsedAllRows = [];
+          return;
+        }
+
+        const parsed = lines.map((l) => parseCsvLine(l, delimiter));
+        this.parsedAllRows = parsed;
+
+        const colCount = Math.max(...parsed.map((r) => r.length));
+
+        if (hasHeader && parsed.length > 0) {
+          const headerRow = parsed[0];
+          // Ensure header row has an entry for every column
+          this.headers = Array.from(
+            { length: colCount },
+            (_, i) => headerRow[i] ?? `#${i + 1}`,
+          );
+          this.dataRows = parsed.slice(1);
+        } else {
+          this.headers = Array.from({ length: colCount }, (_, i) => `#${i + 1}`);
+          this.dataRows = parsed;
+        }
+
+        // Initialise column mappings (preserve any existing that match headers)
+        const existingMap = Object.fromEntries(
+          this.columnMappings.map((c) => [c.header, c.canonical]),
+        );
+        this.columnMappings = this.headers.map((h) => ({
+          header: h,
+          canonical: existingMap[h] ?? 'ignore',
+        }));
+      },
+
+      onSettingsChange() {
+        this.rebuildParsedState(
+          this.rawLines,
+          this.effectiveDelimiter,
+          this.hasHeaderRow,
+        );
+      },
+
+      // ── Step navigation ────────────────────────────────────────────────────
+
+      nextStep() {
+        if (this.currentStep === 3) {
+          this.validateMappings();
+          if (this.mappingValidationError) return;
+        }
+        if (this.currentStep === 2) {
+          const trimmed = this.profileName.trim();
+          if (!trimmed) {
+            this.validationErrors = { profileName: __('Profile name is required.') };
+            return;
+          }
+        }
+        this.validationErrors = {};
+        this.currentStep = Math.min(4, this.currentStep + 1);
+        this.saveErrors = null;
+        this.generalError = null;
+      },
+
+      prevStep() {
+        this.currentStep = Math.max(1, this.currentStep - 1);
+        this.saveErrors = null;
+        this.generalError = null;
+      },
+
+      // ── Column mapping helpers ────────────────────────────────────────────
+
+      updateMapping(index, canonical) {
+        this.columnMappings = this.columnMappings.map((c, i) =>
+          i === index ? { ...c, canonical } : c,
+        );
+        this.validateMappings();
+      },
+
+      updateDateFormat(format) {
+        this.dateFormat = format;
+      },
+
+      validateMappings() {
+        const mapped = this.columnMappings.map((c) => c.canonical);
+        const hasDate = mapped.includes('date');
+        const hasAmount = mapped.includes('amount');
+        if (!hasDate && !hasAmount) {
+          this.mappingValidationError = __(
+            '"date" and "amount" columns must be mapped before continuing.',
+          );
+          return;
+        }
+        if (!hasDate) {
+          this.mappingValidationError = __(
+            'A "date" column must be mapped before continuing.',
+          );
+          return;
+        }
+        if (!hasAmount) {
+          this.mappingValidationError = __(
+            'An "amount" column must be mapped before continuing.',
+          );
+          return;
+        }
+        const hasDuplicates = this.columnMappings.some(
+          (_, i) => !!this.duplicateWarningForColumn(i),
+        );
+        if (hasDuplicates) {
+          this.mappingValidationError = __(
+            'Duplicate column mappings must be resolved before continuing.',
+          );
+          return;
+        }
+        this.mappingValidationError = null;
+      },
+
+      duplicateWarningForColumn(index) {
+        const canonical = this.columnMappings[index]?.canonical;
+        if (!canonical || canonical === 'ignore') return '';
+        // comment and reference allow multiple mappings
+        if (canonical === 'comment' || canonical === 'reference') return '';
+        const duplicates = this.columnMappings.filter(
+          (c, i) => i !== index && c.canonical === canonical,
+        );
+        if (duplicates.length > 0) return __('Duplicate mapping');
+        return '';
+      },
+
+      confidenceNoteForHeader(header) {
+        return this.confidenceNotes[header] || '';
+      },
+
+      parseAmountPreview(raw) {
+        if (!raw && raw !== 0) return null;
+        let cleaned = String(raw).trim();
+        if (this.thousandSeparator) {
+          cleaned = cleaned.split(this.thousandSeparator).join('');
+        }
+        if (this.decimalSeparator && this.decimalSeparator !== '.') {
+          cleaned = cleaned.replace(this.decimalSeparator, '.');
+        }
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? null : parsed;
+      },
+
+      parseDatePreview(raw) {
+        return tryParseDate(raw, this.dateFormat);
+      },
+
+      // ── Save ─────────────────────────────────────────────────────────────
+
+      async save() {
+        this.validateMappings();
+        if (this.mappingValidationError) {
+          this.currentStep = 3;
+          return;
+        }
+
+        const mappingJson = {};
+        this.columnMappings.forEach((col, i) => {
+          if (col.canonical && col.canonical !== 'ignore') {
+            mappingJson[col.header] = col.canonical;
+          }
+        });
+
+        const payload = {
+          name: this.profileName.trim(),
+          delimiter: this.effectiveDelimiter,
+          has_header_row: this.hasHeaderRow,
+          date_format: this.primaryDateFormat || null,
+          decimal_separator: this.decimalSeparator || null,
+          thousand_separator: this.thousandSeparator || null,
+          sign_handling: this.signHandling || null,
+          mapping_json: mappingJson,
+        };
+
+        this.saving = true;
+        this.saveErrors = null;
+        this.generalError = null;
+
+        try {
+          const response = await axios.post(
+            '/api/v1/imports/file-profiles',
+            payload,
+          );
+          this.$emit('saved', response.data);
+        } catch (err) {
+          if (err?.response?.data?.errors) {
+            this.saveErrors = err.response.data.errors;
+          } else if (err?.response?.data?.error?.message) {
+            this.generalError = err.response.data.error.message;
+          } else {
+            this.generalError = __('Save failed due to a network or server error.');
+          }
+        } finally {
+          this.saving = false;
+        }
+      },
+
+      // ── AI suggestion ────────────────────────────────────────────────────
+
+      async requestAiSuggestion() {
+        if (!this.sampleFile) return;
+
+        this.aiSuggesting = true;
+        this.aiError = null;
+
+        try {
+          const formData = new FormData();
+          formData.append('file', this.sampleFile);
+          if (this.accountId) {
+            formData.append('account_id', this.accountId);
+          }
+
+          const response = await axios.post(
+            '/api/v1/imports/file-profiles/suggest',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } },
+          );
+
+          this.applyAiSuggestion(response.data.data);
+          this.showAiPanel = false;
+
+          // Advance to step 2 so the user can review the pre-filled settings.
+          if (this.headers.length > 0) {
+            this.currentStep = 2;
+          }
+        } catch (err) {
+          if (err?.response?.status === 422) {
+            const errors = err.response.data?.errors;
+            if (errors) {
+              const firstKey = Object.keys(errors)[0];
+              this.aiError = errors[firstKey]?.[0] || __('Invalid request.');
+            } else {
+              this.aiError =
+                err.response.data?.error?.message ||
+                err.response.data?.message ||
+                __('Invalid request.');
+            }
+          } else {
+            this.aiError =
+              err?.response?.data?.error?.message ||
+              err?.response?.data?.message ||
+              __('AI provider request failed. Please try again.');
+          }
+        } finally {
+          this.aiSuggesting = false;
+        }
+      },
+
+      applyAiSuggestion(data) {
+        // Parser settings
+        if (data.delimiter) {
+          this.delimiterChoice = DELIMITER_CANDIDATES.includes(data.delimiter)
+            ? data.delimiter
+            : '__custom__';
+          if (!DELIMITER_CANDIDATES.includes(data.delimiter)) {
+            this.customDelimiter = data.delimiter;
+          }
+        }
+        if (typeof data.has_header_row === 'boolean') {
+          this.hasHeaderRow = data.has_header_row;
+        }
+        if (data.decimal_separator) {
+          this.decimalSeparator = data.decimal_separator;
+        }
+        if (data.thousand_separator !== undefined) {
+          this.thousandSeparator = data.thousand_separator;
+        }
+        if (data.sign_handling) {
+          this.signHandling = data.sign_handling;
+        }
+
+        // Rebuild parsed state with new delimiter/header settings
+        if (this.rawLines.length > 0) {
+          this.rebuildParsedState(
+            this.rawLines,
+            this.effectiveDelimiter,
+            this.hasHeaderRow,
+          );
+        }
+
+        // Apply date format (single global setting matching the model)
+        if (data.date_format) {
+          this.dateFormat = data.date_format;
+        }
+
+        // Apply column mappings from AI response
+        if (data.mapping_json && typeof data.mapping_json === 'object') {
+          this.columnMappings = this.columnMappings.map((col) => ({
+            ...col,
+            canonical: data.mapping_json[col.header] ?? col.canonical,
+          }));
+        }
+
+        // Store confidence notes keyed by header name
+        this.confidenceNotes = {};
+        if (Array.isArray(data.confidence_notes)) {
+          data.confidence_notes.forEach((note) => {
+            if (note.field && note.note) {
+              this.confidenceNotes[note.field] = note.note;
+            }
+          });
+        }
+
+        this.validateMappings();
+      },
+    },
+  };
+</script>
