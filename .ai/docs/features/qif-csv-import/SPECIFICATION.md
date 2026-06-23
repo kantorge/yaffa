@@ -44,6 +44,8 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
   - Reuse existing transaction creation endpoints and validation.
   - Reuse existing duplicate detection logic and AI-related duplicate thresholds.
   - Support extensible CSV format mapping for advanced users.
+  - Enable guided user profile creation with browser-side CSV preview and column mapping.
+  - Support AI-assisted profile suggestion using the user's own configured AI provider, consistent with the existing receipt processing privacy model.
 
 - Non-Goals:
   - Auto-record transactions immediately after parsing.
@@ -96,6 +98,10 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - PHP array definitions of all system profiles; single source of truth for profile content.
   - SyncSystemFileImportProfilesCommand (new Artisan command: `import:sync-system-profiles`)
     - Idempotent sync of registry entries to the database via `updateOrCreate` keyed on `key`.
+  - AiImportProfileSuggestionService (new)
+    - Sends a trimmed CSV sample to the user's configured AiProviderConfig via Prism structured output.
+    - Returns a structured profile suggestion covering all editable user profile fields plus per-field confidence notes.
+    - Does not depend on AiDocument; operates as a standalone AI call separate from AiStepGateway.
   - No background parsing job in MVP.
 
 - Policies / Auth:
@@ -118,6 +124,11 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
   - ImportUnmatchedEntriesPanel
   - DuplicateCandidatesPanel
   - Reuse existing transaction display/create modal interactions.
+  - ProfileCreationWizard (multi-step wizard for guided user profile creation)
+  - CsvPreviewTable (renders detected headers and sample rows; updates reactively on settings change)
+  - ColumnMappingRow (per-column: header display, canonical field dropdown, parsed value preview) — component exists but is not used in the wizard; functionality is absorbed into the integrated mapping table in Step 3
+  - DateFormatSelector (auto-detected and locale-based format candidates, custom PHP format string input, optional sample value display)
+  - AmountFormatPreview (raw and parsed amount side-by-side) — component exists but is not used in the wizard; amount preview is rendered inline in the mapping table cells instead
 
 - State management:
   - Page-local state only.
@@ -151,6 +162,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
       - draft_index
       - raw_entry (raw text block of the original CSV row or QIF entry, for display and troubleshooting)
       - normalized_transaction (follows existing transaction form payload contract; key fields: date, amount, payee, comment, account_id, transaction_type; optional fields populated where source data permits)
+      - source_category (optional string; bank-assigned category label when a `category` column is mapped in the profile; advisory only — shown in the review table as a hint, not forwarded to the transaction form)
       - warnings[]
       - duplicate_candidates[]
       - related_ai_documents[] (optional candidate list of AI Documents in state ready_for_review that likely represent the same purchase/receipt)
@@ -194,6 +206,12 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - POST /api/v1/imports/file-profiles
     - PATCH /api/v1/imports/file-profiles/{profile}
     - DELETE /api/v1/imports/file-profiles/{profile}
+  - AI-assisted profile suggestion endpoint:
+    - POST /api/v1/imports/file-profiles/suggest
+      - Requires a configured AiProviderConfig for the authenticated user; returns 422 if none exists.
+      - Request: multipart/form-data; required: `file`; optional: `account_id` (used for contextual hints in the prompt only).
+      - Server trims the uploaded file to the first 10 data rows before forwarding to the AI provider.
+      - Response: structured profile suggestion payload (not persisted; returned for form pre-fill only).
   - Note: `preferred_file_import_profile_id` is managed through the account add/edit web form, not via a dedicated API endpoint. See "Account Default Import Profile Preference" section below.
 
 - Finalization flow:
@@ -620,9 +638,9 @@ Recommended persisted fields:
   - trim strings
   - skip empty rows
   - lowercase/uppercase normalization where allowed
-  - sign inversion toggle
-  - comment concatenation options
+  - comment concatenation options (separator string used when multiple columns map to `comment` or `reference`)
   - must not include `matching_rules`, `actions`, or transform registry overrides
+  - note: sign handling is expressed via the top-level `sign_handling` column, not in `options_json`
 - active
 
 User-owned profiles should support:
@@ -782,6 +800,184 @@ The current Raiffeisen rule file should be migrated into:
 
 The JavaScript rule file should be treated as legacy reference material during migration, not as long-term runtime architecture. Removed as frontend code after migration.
 
+## User Profile Creation Workflow
+
+### Overview
+
+Two complementary paths exist for creating user CSV import profiles:
+
+1. **In-app profile creation wizard** — the primary UX path, usable without any AI configuration. Guides the user step-by-step through parser settings and column mapping with live browser-side previews. No financial data is sent to any server during the analysis phase.
+2. **AI-assisted profile generation** — an optional accelerator available to users who have a configured `AiProviderConfig`. Sends a small CSV sample to the user's own AI provider and returns a structured draft profile for review. Follows the same privacy model as receipt processing: the user's own API key, the user's own provider.
+
+Both paths produce a standard `type = user` profile saved via the existing `POST /api/v1/imports/file-profiles` endpoint. The paths are not mutually exclusive — a user may use AI suggestion to get a starting point and then adjust it using the wizard's live preview.
+
+### Canonical Target Fields for User Profile Mapping
+
+The following canonical field names are the closed, enumerated set of valid mapping targets for user profile `mapping_json`. These names are used in the wizard column mapping dropdowns, validated by the backend on save, and documented in the AI suggestion prompt.
+
+| Canonical name | Destination in normalized output | Description |
+|---|---|---|
+| `date` | `normalized_transaction.date` | Transaction date |
+| `amount` | `normalized_transaction.amount` | Single amount column; sign is applied according to `sign_handling` |
+| `payee` | `normalized_transaction.payee` | Counterparty or merchant name |
+| `comment` | `normalized_transaction.comment` | Free-text memo or description; multiple columns concatenated in mapping order |
+| `reference` | `normalized_transaction.comment` | Bank reference number or transaction ID; treated as a secondary comment and appended to `comment` with a separator if `comment` is also mapped |
+| `category` | draft `source_category` field (advisory) | Bank-assigned category label; **not** placed in `normalized_transaction` and not auto-matched to a YAFFA category; shown as a hint column in the draft review table to assist manual category selection during finalization |
+| `ignore` | — | Column present in the source file but not imported |
+
+**`sign_handling` valid values for user profiles:**
+- `as_is` — use the parsed signed value directly as-is (positive values are treated as the import direction implied by the account type and transaction context).
+- `inverted` — negate the parsed value; for banks that export debits as positive numbers using a sign convention opposite to YAFFA's expectation.
+
+**Banks with separate credit and debit columns** (two positive-value columns representing income and expense) cannot be handled by a user profile. That pattern requires conditional column logic (`if credit > 0 → deposit; if debit > 0 → withdrawal`), which is a `matching_rules` capability belonging to system profiles only. Users with such a bank export should request a system profile for their institution via the community contribution path.
+
+**Validation rules:**
+- `date` must be mapped.
+- `amount` must be mapped.
+- `reference` is treated as a comment-type field; if both `comment` and `reference` are mapped, their values are concatenated in the order they appear in `mapping_json`.
+- Multiple columns may map to `comment` and/or `reference`; all values are concatenated in mapping order.
+- Mapping two columns to any other single canonical target (e.g., two columns to `payee`) must produce a validation warning on save.
+
+### In-App Profile Creation Wizard
+
+#### Overview
+
+The wizard is browser-driven. CSV analysis runs entirely in JavaScript using the `File API` — the file is read locally and never uploaded during the analysis phase. The resulting profile is saved via the existing profile CRUD endpoint when the user explicitly submits.
+
+Auto-detection is designed to provide useful defaults, not to be authoritative. All detected values are displayed as editable fields so the user can correct any mis-detection before saving.
+
+#### Step 1: File Selection and Auto-Detection
+
+- User selects a CSV sample file from their local filesystem (the same export they intend to import, or any representative sample).
+- JavaScript reads the first 20 lines of the file using the `File API`.
+- Auto-detection logic runs client-side:
+  - **Delimiter**: test candidate delimiters (`;`, `,`, tab, `|`) by counting consistent column-count splits across all sampled rows; highest-scoring delimiter wins; ties default to `,`.
+  - **Header row**: heuristic — if the first row contains no numeric values and subsequent rows do, treat as header. Shown as a toggle the user can override.
+  - **Encoding**: attempt BOM detection (UTF-8, UTF-16 LE/BE); fall back to UTF-8 for browser-side reading. Encoding conversion for non-UTF-8 files happens server-side at import time (consistent with `CsvParserService` behavior).
+- A preview table is rendered immediately showing the detected headers and the first 5 data rows.
+- User can override any auto-detected setting; the preview re-renders on each change.
+
+#### Step 2: Parser Settings Confirmation
+
+Fields editable in this step (all shown with auto-detected values as defaults):
+
+- **Delimiter** — dropdown: `;`, `,`, tab, `|`, or a custom single-character entry.
+- **Has header row** — toggle.
+- **Decimal separator** — radio: `.` or `,`.
+- **Thousand separator** — radio: space, `.`, `,`, or none.
+- **Sign handling** — radio:
+  - `as_is` — the amount column is already correctly signed; use as-is.
+  - `inverted` — negate the parsed value; for banks that export amounts with a reversed sign convention.
+- **Profile name** — text field; pre-filled with the file name if not yet set.
+
+The preview table updates on every settings change without a server round-trip.
+
+#### Step 3: Column Mapping
+
+- The mapping UI is an **integrated table**: source header names occupy the first header row; canonical field dropdowns occupy a second header row directly below; sample data rows fill the table body. This keeps the source data visible while the user decides how to map each column.
+- The dropdown options are the canonical target fields listed above, plus `ignore` as the default. Mapped columns are visually highlighted; ignored columns are dimmed.
+- **Validation gate**: the step cannot be completed unless both `date` and `amount` are mapped, and no duplicate mappings exist. Columns that allow multiple mappings (`comment` and `reference`) are exempt from the duplicate check.
+- **Date field UX**: when a column is mapped to `date`, a date format panel appears above the table:
+  - Lists auto-detected PHP format string candidates inferred from the column's sample values (marked ✓), locale-based suggestions, and a base set of generic common formats always shown.
+  - User selects from candidates or types a custom PHP date format string. The format is a single profile-level setting (matching `FileImportProfile.date_format`), not stored per-column.
+  - Parsed date values are shown inline beneath each raw value in the date-mapped table cells for immediate confirmation. Trailing content after the date (e.g. a weekday name such as `, péntek` in `2026.03.27., péntek`) is tolerated and ignored during parsing, consistent with PHP's `DateTime::createFromFormat` behaviour.
+- **Amount field UX**: parsed numeric values are shown inline beneath each raw value in amount-mapped table cells, using the decimal and thousand separator settings confirmed in Step 2. Updates live when separator settings change.
+- Multiple columns may be mapped to `comment`; they are concatenated in mapping order at parse time.
+
+#### Step 4: Save
+
+- User confirms the profile name and clicks Save.
+- Frontend assembles the profile payload from wizard state and calls `POST /api/v1/imports/file-profiles`.
+- On success: navigate to the import page or profile list, depending on the entry point.
+- On validation error: field-level errors shown inline; wizard remains on the step with the failing field.
+
+### AI-Assisted Profile Generation
+
+#### Overview
+
+Users who have a configured `AiProviderConfig` can request an AI-generated profile suggestion based on a small CSV sample. This uses the existing Prism-based AI provider infrastructure with the user's own API key — identical to the receipt processing model. The suggestion pre-fills the profile creation form; no profile is saved automatically.
+
+Vision capability is not required; text-only models are sufficient. The feature is available for any provider that supports structured output via Prism.
+
+#### Trigger and Availability
+
+- A "Suggest with AI" button is displayed on the profile creation form only when the user has at least one `AiProviderConfig` record.
+- If no AI provider is configured, the button is not shown. A contextual note linking to the AI settings page may be shown in its place.
+- The button is also available when editing an existing user profile (to regenerate a suggestion from a new sample).
+
+#### User Flow
+
+1. User clicks "Suggest with AI".
+2. A file picker appears for a CSV sample file (separate from the main import file field on the import page).
+3. User selects a CSV export from their bank. It may be the same file they intend to import, or any representative sample.
+4. A brief privacy notice is shown: *"The first 10 rows of your sample will be sent to [provider name] using your configured AI API key."*
+5. User confirms.
+6. Browser uploads the file to `POST /api/v1/imports/file-profiles/suggest`.
+7. Backend reads and trims the file to the first 10 data rows; remaining rows are discarded before the AI call.
+8. `AiImportProfileSuggestionService` sends the trimmed sample to the AI provider and requests structured output.
+9. On success: form fields are pre-filled from the suggestion; confidence notes appear as helper text per field.
+10. User reviews, adjusts if needed, and saves via the normal profile save flow.
+
+#### Backend: `AiImportProfileSuggestionService`
+
+This service is distinct from `AiStepGateway` because it has no dependency on `AiDocument`. It is a standalone, single-call service.
+
+Implementation:
+
+- Uses `Prism::structured()` with the user's `AiProviderConfig` (`provider`, `model`, `api_key`).
+- Applies provider-specific options as needed (e.g., OpenAI strict mode for structured output).
+- Prompt content:
+  - Description of the YAFFA user profile schema and all canonical field names with their meanings.
+  - The CSV headers line and up to 10 data rows verbatim.
+  - If `account_id` was provided: the account's name and currency as contextual hints.
+  - Instruction to produce confidence notes explaining the reasoning behind each non-obvious field.
+- Returns the structured Prism response payload; does not persist anything.
+
+Structured output schema (Prism `ObjectSchema`):
+
+- `delimiter` (enum: `,`, `;`, `\t`, `|`)
+- `has_header_row` (boolean)
+- `date_format` (string — PHP date format string, e.g., `d/m/Y`)
+- `decimal_separator` (enum: `.`, `,`)
+- `thousand_separator` (enum: space, `.`, `,`, empty string)
+- `sign_handling` (enum: `as_is`, `inverted`)
+- `mapping_json` (object: source header string → canonical field name)
+- `confidence_notes` (array of objects: `field` string, `note` string)
+
+#### Frontend Behavior After Suggestion
+
+- All suggested field values are written into the wizard form.
+- `confidence_notes` are rendered as helper text beneath the corresponding form field (e.g., *"Date column detected as `Értéknap` with format `Y.m.d.` based on sample value `2024.01.15.`"*).
+- Fields where the AI returned a low-confidence note are visually highlighted to prompt the user to verify.
+- The live preview table updates from the pre-filled delimiter and header settings so the user can immediately see whether the suggestion is correct.
+- All pre-filled values remain editable.
+- Save is always a user-initiated action.
+
+#### Error Handling
+
+| Condition | Response |
+|---|---|
+| No `AiProviderConfig` for user | 422 with message linking to AI settings |
+| Uploaded file is not parseable as text CSV | 422 with clear user-facing message |
+| AI provider call fails or times out | 502 with user-facing message; form not pre-filled |
+| AI returns an unrecognised canonical field name in `mapping_json` | Backend strips unknown keys from the suggestion before returning; a warning is included in `confidence_notes` |
+| AI returns a structurally invalid response | 502; Prism structured output failure surface |
+
+### Profile Export and Community Contribution
+
+User profiles can be exported as JSON from the profile management UI. The export format matches the `FileImportProfile` persisted structure minus `id`, `user_id`, and timestamps, and is suitable for manual inspection and editing.
+
+**Community contribution path**
+
+If a user has created a high-quality profile for a specific bank or institution and is willing to share it publicly, they may submit it for promotion to a system profile. Promotion is a development-side process, not an in-app workflow:
+
+1. User exports their profile JSON from the profile management UI.
+2. User submits it (e.g., via a GitHub issue or a designated community channel) with notes on the source institution, country, and any known limitations.
+3. A developer reviews the submission, migrates it into the system profile format (adding `matching_rules` and `actions` as needed, and covering edge cases the user's mapping-only profile could not express), adds it to `SystemFileImportProfileRegistry`, and covers it with automated tests.
+4. The promoted profile ships as a system profile in a subsequent release and becomes available to all users.
+
+This keeps system profiles application-managed, version-controlled, and test-covered while allowing community knowledge to grow the built-in profile library over time. In-app profile sharing between users is not in scope.
+
 ## Duplicate Detection Reuse
 
 Use existing DuplicateDetectionService for import drafts.
@@ -914,8 +1110,45 @@ Notes:
   - DuplicateCandidatesPanel.spec.js
   - RelatedAiDocumentsPanel.spec.js
 
+- Backend unit tests (profile creation wizard and AI suggestion):
+  - AiImportProfileSuggestionServiceTest
+    - Structured output schema matches expected user profile fields
+    - File trimming: only first 10 data rows forwarded to AI provider
+    - Confidence notes returned per field
+    - Unknown canonical field names in AI response are stripped with a warning note
+    - AI provider failure surfaces as 502 response
+    - Missing AiProviderConfig surfaces as 422 response
+
+- Backend feature tests (profile creation):
+  - ImportProfileSuggestTest
+    - Authenticated user with AiProviderConfig receives structured suggestion
+    - File is trimmed to 10 data rows before AI call (verify via mock)
+    - Optional account_id context is passed to prompt when provided
+    - Returns 422 when no AiProviderConfig exists
+    - Returns 422 when uploaded file is not a parseable CSV
+    - Returns 502 when AI provider call fails
+
+- Frontend component tests (profile wizard):
+  - ProfileCreationWizard.spec.js
+    - Step navigation: forward and back, validation gate prevents advancing without required mappings
+    - Auto-detection output pre-fills settings as editable defaults
+    - Preview table re-renders on delimiter or header toggle change
+    - Save assembles correct profile payload matching the user profile schema
+  - CsvPreviewTable.spec.js
+    - Renders detected headers and sample rows correctly
+    - Updates reactively when delimiter or header-row settings change
+  - ColumnMappingRow.spec.js
+    - Dropdown options match the canonical field name list
+    - Date format sub-control appears only when date is selected
+    - Amount preview appears only when an amount field is selected
+  - DateFormatSelector.spec.js
+    - Sample values from the mapped column are displayed
+    - Auto-detected format candidates are shown and selectable
+    - Custom format string input is accepted and validated
+
 - Regression tests:
   - Ensure current transaction create/finalize flow still works from import context.
+  - Ensure existing profile CRUD endpoints are unaffected by the addition of the suggest endpoint.
 
 ## Edge Cases and Negative Scenarios
 
@@ -930,6 +1163,14 @@ Notes:
 - AI Document exists but belongs to another user (must never be returned).
 - Finalize called for already finalized/ignored draft should not be allowed by the UI
 - Unauthorized access to import and profile endpoints should be denied.
+- Profile wizard: CSV file where all delimiter candidates score equally (tie-breaking must be deterministic).
+- Profile wizard: CSV file with no detectable header row (wizard defaults to no-header and shows raw column indices as names).
+- Profile wizard: user maps two columns to the same canonical field other than `comment` or `reference` (must be shown as a validation warning).
+- Profile wizard: user uploads a CSV with split credit/debit columns and no `amount` column; wizard cannot produce a valid mapping and should show a clear message explaining that split-column exports require a system profile.
+- AI suggestion: AI provider returns an unrecognised canonical field name in `mapping_json` (backend strips it and adds a confidence note warning).
+- AI suggestion: AI provider call times out or returns a malformed structured response (502 with user-facing message; form not pre-filled).
+- AI suggestion: user submits a non-CSV file (e.g., a QIF or PDF) as the AI sample (422 with a clear message).
+- AI suggestion: no AiProviderConfig exists for the user (422; button not shown in UI, but endpoint still enforces this for direct API calls).
 
 ## Open Questions for Post-MVP
 
@@ -961,6 +1202,11 @@ Notes:
 - Given unauthorized access, when import and profile endpoints are requested without proper auth, then access is denied.
 - Given existing import entry point, when feature is enabled, then users can import QIF and CSV through the unified review workflow.
 - Given one-off import philosophy, when parsing completes, then uploaded source file is not stored on the server.
+- Given a CSV file and the profile creation wizard, when the user completes all steps, then a valid user profile is created using browser-side analysis only; no data is uploaded to any server during the analysis phase.
+- Given an incomplete column mapping (missing date or amount), when the user attempts to advance past the mapping step, then a validation error is shown and navigation is blocked.
+- Given no AI provider configured, when the user opens the profile creation form, then the AI suggestion option is not shown.
+- Given an AI provider configured, when the user requests an AI suggestion and confirms the privacy notice, then form fields are pre-filled with the structured suggestion and the user must explicitly save.
+- Given a user profile, when the user exports it as JSON, then the exported format is suitable for manual inspection and community submission for potential promotion to a system profile.
 
 ## Suggested Delivery Milestones
 
@@ -1228,7 +1474,91 @@ Notes:
 
 ---
 
-### Milestone 4: Documentation & Polish
+### Milestone 4: Profile Creation Wizard & AI Assistance
+
+**Objective**: Guided user profile creation with browser-side preview and optional AI-assisted suggestion.
+
+**Implementation Status (2026-06-22)**:
+
+- Milestone 4 backend tasks listed below are implemented.
+- Backend milestone tests listed below are implemented and passing.
+- Frontend tasks listed below are not yet implemented.
+
+**Backend Tasks**:
+
+- [x] Implement `AiImportProfileSuggestionService`
+  - [x] Prism `structured()` call using user's `AiProviderConfig` (provider, model, api_key)
+  - [x] Prompt construction: canonical field list, trimmed CSV rows, optional account context
+  - [x] Structured output schema: all user profile fields plus `confidence_notes`
+  - [x] Strip unrecognised canonical field names from AI response; add confidence note warning
+  - [x] Provider-specific options (e.g., OpenAI strict mode) applied as in existing AI services
+- [x] Implement `POST /api/v1/imports/file-profiles/suggest` endpoint
+  - [x] Auth: authenticated user; 422 if no `AiProviderConfig` exists
+  - [x] File trimming: read first 10 data rows, discard remainder before AI call
+  - [x] 422 for non-parseable CSV input
+  - [x] 502 for AI provider failure, with user-facing message
+- [x] Validate canonical field names on `POST`/`PATCH` profile save (closed enum enforcement against the defined list)
+- [x] Validate `sign_handling` accepts only `as_is` and `inverted` for user profiles
+- [x] Validate `amount` and `date` are present in `mapping_json` on save
+- [x] Emit validation warning when two columns map to the same target other than `comment` or `reference`
+- [x] Populate `source_category` on draft payload when a `category` column is mapped; do not forward to `normalized_transaction`
+- [x] Concatenate `reference` column values into `normalized_transaction.comment` (appended after `comment` values using the configured separator)
+- [x] Document canonical field name list in code (single source of truth, shared with frontend via API or constant)
+  - Implemented as `App\Enums\ImportCanonicalField` enum; values exposed in validation and prompt construction
+
+**Implementation Status (2026-06-23)**:
+
+- Milestone 4 frontend tasks listed below are implemented.
+- Frontend component tests are not implemented yet because the repository does not currently have a working Vue component test harness configured.
+
+**Changes from original design (2026-06-23)**:
+
+- `ProfileCreationWizard` is integrated directly into `FileImportProfileManager`: clicking "New profile" for CSV profiles opens the wizard in-place (no separate route/page).
+- The wizard also handles the AI suggestion panel internally; no separate wizard entry-point component was needed.
+- The "Suggest with AI" button is also available in the existing CSV edit form (as a re-suggestion panel), satisfying the spec requirement that it be available during editing.
+- `hasAiProvider` flag is passed from `ImportController` via `JavaScriptFacade::put()` and accessed as `window.hasAiProvider` in the Vue layer.
+- Privacy notice is rendered inline in the AI panel rather than as a modal — functionally equivalent and simpler.
+
+**Changes from original design (2026-06-23, Step 3 UX refinement)**:
+
+- Step 3 uses an **integrated mapping table** rather than a list of `ColumnMappingRow` components. Source header names (row 1 of `<thead>`), canonical field dropdowns (row 2 of `<thead>`), and sample data rows (`<tbody>`) are shown in a single scrollable table. This keeps the source data visible while mapping columns.
+- `ColumnMappingRow` and `AmountFormatPreview` components are implemented but not used in the wizard; their functionality is absorbed into the integrated table.
+- The date format selector appears as a compact panel **above** the integrated table (not inline per-column). Sample values are not repeated in the panel; instead, parsed date values are shown inline beneath each raw value in the date-mapped table cells.
+- `dateFormat` is a single profile-level string matching `FileImportProfile.date_format`, not a per-column array.
+- Duplicate mapping validation **blocks step 3 → step 4 navigation** rather than surfacing only at save time.
+- Date pattern matching tolerates trailing text after the date value (e.g. `, péntek` in Hungarian bank exports), consistent with PHP's `DateTime::createFromFormat` behaviour. The shared client-side logic lives in `resources/js/import/utils/dateFormatUtils.js` and is used by both `DateFormatSelector` and the wizard's inline table preview.
+- `DateFormatSelector` always shows a base set of generic formats (`Y-m-d`, `d/m/Y`, `d.m.Y`, `Y.m.d.`) in addition to auto-detected and locale-specific candidates, so the picker is never empty even without sample values.
+
+**Frontend Tasks**:
+
+- [x] Implement `ProfileCreationWizard` component
+  - [x] Step 1: file selection, client-side auto-detection (delimiter, header row heuristic), preview table render
+  - [x] Step 2: parser settings form (delimiter, header row, decimal/thousand separator, sign handling, profile name) with live preview re-render
+  - [x] Step 3: column mapping — integrated table (header name row + dropdown row + sample data rows); `DateFormatSelector` shown as a panel above the table when a date column is mapped; parsed amount and date values shown inline in table cells; validation gate enforcing required mappings and rejecting duplicate mappings
+  - [x] Step 4: save via `POST /api/v1/imports/file-profiles`; field-level error display on failure
+- [x] Implement `CsvPreviewTable` component (reactive, updates on settings change)
+- [x] Implement `ColumnMappingRow` component (canonical field dropdown, conditional sub-controls)
+- [x] Implement `DateFormatSelector` component (sample values, auto-detected candidates, custom input)
+- [x] Implement `AmountFormatPreview` component (raw and parsed value side-by-side)
+- [x] Add "Suggest with AI" button to profile creation form
+  - [x] Visible only when user has `AiProviderConfig`; contextual note linking to AI settings otherwise
+  - [x] Separate file picker for sample CSV
+  - [x] Privacy notice before submission: provider name, API key usage
+  - [x] Pre-fill wizard fields from suggestion response
+  - [x] Render `confidence_notes` as per-field helper text; visually highlight low-confidence fields
+- [x] Add profile export action to profile management UI (JSON download)
+
+**Testing Tasks**:
+
+- [x] Unit test: `AiImportProfileSuggestionServiceTest` (see Testing Strategy section)
+- [x] Feature test: `ImportProfileSuggestTest` (see Testing Strategy section)
+- [ ] Frontend component tests: `ProfileCreationWizard.spec.js`, `CsvPreviewTable.spec.js`, `ColumnMappingRow.spec.js`, `DateFormatSelector.spec.js`
+
+**Deliverable**: Users can create user profiles through the guided wizard without writing JSON. Users with a configured AI provider can generate a profile draft from a CSV sample with one click.
+
+---
+
+### Milestone 5: Documentation & Polish
 
 **Objective**: Complete documentation and release preparation.
 

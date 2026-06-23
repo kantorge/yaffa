@@ -17,12 +17,11 @@
     </div>
 
     <div class="collapse card-body show" :id="collapseId">
-      <!-- New profile button -->
-      <div class="mb-3">
+      <!-- New profile button (shown when not editing or showing wizard) -->
+      <div v-if="!editingProfile && !showWizard" class="mb-3">
         <button
           type="button"
           class="btn btn-sm btn-outline-primary"
-          :disabled="!!editingProfile"
           @click="startCreate"
         >
           <i class="fa fa-plus me-1"></i>{{ __('New profile') }}
@@ -39,7 +38,20 @@
         <button type="button" class="btn-close" @click="error = null"></button>
       </div>
 
-      <!-- Create / Edit form -->
+      <!-- CSV profile creation wizard -->
+      <div
+        v-if="showWizard && fileType === 'csv'"
+        class="border rounded p-3 mb-3 bg-light"
+      >
+        <ProfileCreationWizard
+          :account-id="null"
+          :has-ai-provider="hasAiProvider"
+          @saved="onWizardSaved"
+          @cancel="showWizard = false"
+        />
+      </div>
+
+      <!-- Create / Edit form (QIF always; CSV only for editing existing profiles) -->
       <div v-if="editingProfile" class="border rounded p-3 mb-3 bg-light">
         <div class="fw-semibold mb-3">
           {{ editingProfile.id ? __('Edit profile') : __('New profile') }}
@@ -61,7 +73,7 @@
           </div>
         </div>
 
-        <!-- CSV-specific fields -->
+        <!-- CSV-specific fields (edit mode only) -->
         <template v-if="fileType === 'csv'">
           <div class="row g-2 mb-2">
             <div class="col-md-3">
@@ -133,7 +145,7 @@
             >
               <option :value="null">{{ __('— Default (as-is) —') }}</option>
               <option value="as_is">{{ __('As-is') }}</option>
-              <option value="invert">{{ __('Invert sign') }}</option>
+              <option value="inverted">{{ __('Inverted') }}</option>
             </select>
           </div>
 
@@ -157,9 +169,81 @@
             <div class="form-text">
               {{
                 __(
-                  'Map each source column header to a canonical field: date, amount, payee, memo, reference.',
+                  'Map each source column header to a canonical field: date, amount, payee, comment, reference, category, ignore.',
                 )
               }}
+            </div>
+          </div>
+
+          <!-- AI re-suggestion panel (edit mode) -->
+          <div v-if="hasAiProvider" class="mb-3">
+            <button
+              v-if="!showEditAiPanel"
+              type="button"
+              class="btn btn-sm btn-outline-info"
+              :disabled="aiSuggesting"
+              @click="showEditAiPanel = true"
+            >
+              <i class="fa fa-magic me-1"></i>{{ __('Re-suggest with AI') }}
+            </button>
+
+            <div
+              v-if="showEditAiPanel"
+              class="border rounded p-3 bg-white mt-2"
+            >
+              <div class="fw-semibold small mb-2">
+                {{ __('AI Profile Re-suggestion') }}
+              </div>
+              <div class="alert alert-info small mb-2 py-2">
+                <i class="fa fa-info-circle me-1"></i>
+                {{
+                  __(
+                    'The first 10 rows of your sample will be sent to your configured AI provider using your API key.',
+                  )
+                }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">{{
+                  __('CSV sample file')
+                }}</label>
+                <input
+                  ref="editAiFileInput"
+                  type="file"
+                  class="form-control form-control-sm"
+                  accept=".csv,.txt"
+                  :disabled="aiSuggesting"
+                  @change="onEditAiFileChange"
+                />
+              </div>
+              <div v-if="aiError" class="alert alert-danger small py-2 mb-2">
+                {{ aiError }}
+              </div>
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-info"
+                  :disabled="!editAiFile || aiSuggesting"
+                  @click="requestEditAiSuggestion"
+                >
+                  <span
+                    v-if="aiSuggesting"
+                    class="spinner-border spinner-border-sm me-1"
+                  ></span>
+                  {{
+                    aiSuggesting
+                      ? __('Requesting suggestion…')
+                      : __('Get AI suggestion')
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="aiSuggesting"
+                  @click="showEditAiPanel = false"
+                >
+                  {{ __('Close') }}
+                </button>
+              </div>
             </div>
           </div>
         </template>
@@ -264,11 +348,11 @@
 
       <!-- User profiles list -->
       <div v-if="loading" class="text-muted small">
-        {{ __('Loading profiles...') }}
+        {{ __('Loading profiles…') }}
       </div>
 
       <div
-        v-else-if="userProfiles.length === 0 && !editingProfile"
+        v-else-if="userProfiles.length === 0 && !editingProfile && !showWizard"
         class="text-muted small"
       >
         {{
@@ -276,13 +360,14 @@
             ? __(
                 'No custom profiles yet. Create one to define your own QIF field mappings.',
               )
-            : __(
-                'No custom profiles yet. Create one to define your own column mappings.',
-              )
+            : __('No custom profiles yet. Use the wizard to create one.')
         }}
       </div>
 
-      <table v-else-if="userProfiles.length > 0" class="table table-sm mb-0">
+      <table
+        v-else-if="userProfiles.length > 0 && !showWizard"
+        class="table table-sm mb-0"
+      >
         <thead>
           <tr v-if="fileType === 'csv'">
             <th>{{ __('Name') }}</th>
@@ -323,6 +408,16 @@
             <td class="text-end text-nowrap">
               <button
                 type="button"
+                class="btn btn-sm btn-outline-secondary me-1"
+                :disabled="!!editingProfile"
+                :title="__('Export as JSON')"
+                @click="exportProfile(profile)"
+                v-if="false"
+              >
+                <i class="fa fa-download"></i>
+              </button>
+              <button
+                type="button"
                 class="btn btn-sm btn-outline-primary me-1"
                 :disabled="!!editingProfile"
                 @click="startEdit(profile)"
@@ -353,15 +448,17 @@
   import axios from 'axios';
   import { computed, ref } from 'vue';
   import { __ } from '@/shared/lib/i18n';
+  import ProfileCreationWizard from './ProfileCreationWizard.vue';
 
   const mappingJsonPlaceholder = JSON.stringify(
-    { Date: 'date', Amount: 'amount', Payee: 'payee', Memo: 'memo' },
+    { Date: 'date', Amount: 'amount', Payee: 'payee', Memo: 'comment' },
     null,
     2,
   );
 
   export default {
     name: 'FileImportProfileManager',
+    components: { ProfileCreationWizard },
     props: {
       profiles: {
         type: Array,
@@ -383,6 +480,18 @@
       const deletingId = ref(null);
       const error = ref(null);
       const mappingJsonError = ref(null);
+      const showWizard = ref(false);
+
+      // AI suggestion state (edit mode)
+      const showEditAiPanel = ref(false);
+      const editAiFile = ref(null);
+      const aiSuggesting = ref(false);
+      const aiError = ref(null);
+
+      const hasAiProvider =
+        typeof window.hasAiProvider === 'boolean'
+          ? window.hasAiProvider
+          : false;
 
       const collapseId = computed(() =>
         props.fileType === 'qif'
@@ -428,10 +537,15 @@
       const startCreate = () => {
         mappingJsonError.value = null;
         error.value = null;
-        editingProfile.value = buildEditingState(null);
+        if (props.fileType === 'csv') {
+          showWizard.value = true;
+        } else {
+          editingProfile.value = buildEditingState(null);
+        }
       };
 
       const startEdit = (profile) => {
+        showWizard.value = false;
         mappingJsonError.value = null;
         error.value = null;
         editingProfile.value = buildEditingState(profile);
@@ -441,19 +555,22 @@
         editingProfile.value = null;
         mappingJsonError.value = null;
         error.value = null;
+        showEditAiPanel.value = false;
+        aiError.value = null;
+      };
+
+      const onWizardSaved = () => {
+        showWizard.value = false;
+        emit('profiles-updated');
       };
 
       const validateMappingJson = () => {
-        if (!editingProfile.value) {
-          return;
-        }
-
+        if (!editingProfile.value) return;
         const text = editingProfile.value.mapping_json_text.trim();
         if (!text) {
           mappingJsonError.value = __('Column mapping is required.');
           return;
         }
-
         try {
           const parsed = JSON.parse(text);
           if (typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -462,7 +579,6 @@
             );
             return;
           }
-
           mappingJsonError.value = null;
         } catch (_e) {
           mappingJsonError.value = __('Invalid JSON. Please check the format.');
@@ -470,9 +586,7 @@
       };
 
       const saveProfile = async () => {
-        if (!editingProfile.value) {
-          return;
-        }
+        if (!editingProfile.value) return;
 
         let payload;
 
@@ -489,21 +603,18 @@
               amount_sign: editingProfile.value.amount_sign,
             },
           };
-
-          if (!editingProfile.value.id) {
-            payload.file_type = 'qif';
-          }
+          if (!editingProfile.value.id) payload.file_type = 'qif';
         } else {
           validateMappingJson();
-          if (mappingJsonError.value) {
-            return;
-          }
+          if (mappingJsonError.value) return;
 
           let mappingJson;
           try {
             mappingJson = JSON.parse(editingProfile.value.mapping_json_text);
           } catch (_e) {
-            mappingJsonError.value = __('Invalid JSON. Please check the format.');
+            mappingJsonError.value = __(
+              'Invalid JSON. Please check the format.',
+            );
             return;
           }
 
@@ -513,8 +624,7 @@
             has_header_row: editingProfile.value.has_header_row,
             date_format: editingProfile.value.date_format || null,
             decimal_separator: editingProfile.value.decimal_separator || null,
-            thousand_separator:
-              editingProfile.value.thousand_separator || null,
+            thousand_separator: editingProfile.value.thousand_separator || null,
             sign_handling: editingProfile.value.sign_handling || null,
             mapping_json: mappingJson,
           };
@@ -532,7 +642,6 @@
           } else {
             await axios.post('/api/v1/imports/file-profiles', payload);
           }
-
           editingProfile.value = null;
           mappingJsonError.value = null;
           emit('profiles-updated');
@@ -556,7 +665,7 @@
         if (
           !window.confirm(
             __('Delete profile ":name"? This cannot be undone.', {
-              ':name': profile.name,
+              name: profile.name,
             }),
           )
         ) {
@@ -580,6 +689,105 @@
         }
       };
 
+      const exportProfile = (profile) => {
+        const exportData = {
+          type: profile.type,
+          file_type: profile.file_type,
+          name: profile.name,
+          delimiter: profile.delimiter,
+          has_header_row: profile.has_header_row,
+          date_format: profile.date_format,
+          decimal_separator: profile.decimal_separator,
+          thousand_separator: profile.thousand_separator,
+          sign_handling: profile.sign_handling,
+          mapping_json: profile.mapping_json,
+          options_json: profile.options_json,
+          active: profile.active,
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${profile.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_profile.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      // ── AI re-suggestion (edit mode) ──────────────────────────────────────
+
+      const onEditAiFileChange = (event) => {
+        editAiFile.value = event.target.files?.[0] || null;
+        aiError.value = null;
+      };
+
+      const requestEditAiSuggestion = async () => {
+        if (!editAiFile.value || !editingProfile.value) return;
+
+        aiSuggesting.value = true;
+        aiError.value = null;
+
+        try {
+          const formData = new FormData();
+          formData.append('file', editAiFile.value);
+
+          const response = await axios.post(
+            '/api/v1/imports/file-profiles/suggest',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } },
+          );
+
+          const data = response.data.data;
+
+          // Apply settings to edit form
+          if (data.delimiter) editingProfile.value.delimiter = data.delimiter;
+          if (typeof data.has_header_row === 'boolean')
+            editingProfile.value.has_header_row = data.has_header_row;
+          if (data.date_format !== undefined)
+            editingProfile.value.date_format = data.date_format;
+          if (data.decimal_separator)
+            editingProfile.value.decimal_separator = data.decimal_separator;
+          if (data.thousand_separator !== undefined)
+            editingProfile.value.thousand_separator = data.thousand_separator;
+          if (data.sign_handling)
+            editingProfile.value.sign_handling = data.sign_handling;
+          if (data.mapping_json && typeof data.mapping_json === 'object') {
+            editingProfile.value.mapping_json_text = JSON.stringify(
+              data.mapping_json,
+              null,
+              2,
+            );
+            mappingJsonError.value = null;
+          }
+
+          showEditAiPanel.value = false;
+        } catch (err) {
+          if (err?.response?.status === 422) {
+            const errors = err.response.data?.errors;
+            if (errors) {
+              const firstKey = Object.keys(errors)[0];
+              aiError.value = errors[firstKey]?.[0] || __('Invalid request.');
+            } else {
+              aiError.value =
+                err.response.data?.error?.message ||
+                err.response.data?.message ||
+                __('Invalid request.');
+            }
+          } else {
+            aiError.value =
+              err?.response?.data?.error?.message ||
+              err?.response?.data?.message ||
+              __('AI provider request failed. Please try again.');
+          }
+        } finally {
+          aiSuggesting.value = false;
+        }
+      };
+
       return {
         editingProfile,
         saving,
@@ -587,14 +795,24 @@
         error,
         mappingJsonError,
         mappingJsonPlaceholder,
+        showWizard,
+        hasAiProvider,
+        showEditAiPanel,
+        editAiFile,
+        aiSuggesting,
+        aiError,
         collapseId,
         userProfiles,
         startCreate,
         startEdit,
         cancelEdit,
+        onWizardSaved,
         validateMappingJson,
         saveProfile,
         deleteProfile,
+        exportProfile,
+        onEditAiFileChange,
+        requestEditAiSuggestion,
         __,
       };
     },

@@ -63,7 +63,7 @@ QIF;
                     'account_id',
                     'payee',
                     'memo',
-                    'category',
+                    'source_category',
                     'reference',
                     'raw_entry',
                     'config' => [

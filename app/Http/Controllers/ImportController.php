@@ -25,8 +25,13 @@ class ImportController extends Controller
             ->with('config', 'config.category')
             ->get();
 
+        $hasAiProvider = $request->user()
+            ->aiProviderConfigs()
+            ->exists();
+
         JavaScriptFacade::put([
             'payees' => $payees,
+            'hasAiProvider' => $hasAiProvider,
         ]);
 
         return view('import.index');

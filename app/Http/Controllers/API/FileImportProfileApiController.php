@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exceptions\AiProviderFailureException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CloneFileImportProfileRequest;
 use App\Http\Requests\FileImportProfileStoreRequest;
 use App\Http\Requests\FileImportProfileUpdateRequest;
+use App\Http\Requests\SuggestFileImportProfileRequest;
+use App\Models\AiProviderConfig;
 use App\Models\FileImportProfile;
+use App\Services\Import\AiImportProfileSuggestionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
+use RuntimeException;
 
 class FileImportProfileApiController extends Controller implements HasMiddleware
 {
@@ -88,6 +93,45 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         $profile->delete();
 
         return response()->json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function suggest(SuggestFileImportProfileRequest $request, AiImportProfileSuggestionService $service): JsonResponse
+    {
+        $user = $request->user();
+
+        $aiConfig = AiProviderConfig::query()->where('user_id', $user?->id)->first();
+        if (! $aiConfig instanceof AiProviderConfig) {
+            return response()->json([
+                'message' => 'No AI provider is configured for your account. Please configure an AI provider in your settings before using this feature.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $file = $request->file('file');
+        $csvContent = $file !== null ? (string) file_get_contents((string) $file->getRealPath()) : '';
+
+        if ($csvContent === '') {
+            return response()->json([
+                'message' => 'The uploaded file could not be read.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $suggestion = $service->suggest(
+                config: $aiConfig,
+                csvContent: $csvContent,
+                accountId: $request->integer('account_id') ?: null,
+            );
+        } catch (RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (AiProviderFailureException $e) {
+            return response()->json([
+                'message' => 'The AI provider encountered an error while generating the profile suggestion. Please try again later.',
+            ], Response::HTTP_BAD_GATEWAY);
+        }
+
+        return response()->json(['data' => $suggestion], Response::HTTP_OK);
     }
 
     public function clone(CloneFileImportProfileRequest $request, FileImportProfile $profile): JsonResponse

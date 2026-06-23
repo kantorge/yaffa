@@ -49,8 +49,10 @@ class ImportNormalizationServiceTest extends TestCase
         $this->assertSame('withdrawal', $drafts[0]['transaction_type']);
         $this->assertSame(99, $drafts[0]['config']['account_from_id']);
         $this->assertSame(1234.56, $drafts[0]['config']['amount_from']);
+        $this->assertSame('Food', $drafts[0]['source_category']);
 
         $this->assertSame('pending_review', $drafts[1]['status']);
+        $this->assertNull($drafts[1]['source_category']);
         $this->assertSame('2025-02-01', $drafts[1]['date']);
         $this->assertSame(250.75, $drafts[1]['amount']);
         $this->assertSame('deposit', $drafts[1]['transaction_type']);
