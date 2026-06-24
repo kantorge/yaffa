@@ -126,7 +126,7 @@ class AccountEntityRequest extends FormRequest
         // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
-            'preferred_file_import_profile_id' => $this->preferred_file_import_profile_id ?: null,
+            'preferred_file_import_profile_id' => $this->preferred_file_import_profile_id ?? null,
         ]);
 
         // Handle category_id - use input() method to handle both array and object notation

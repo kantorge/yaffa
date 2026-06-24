@@ -91,7 +91,7 @@ class AiImportProfileSuggestionService
         foreach ($rows as $row) {
             $output .= implode(',', array_map(
                 fn (mixed $v) => '"' . str_replace('"', '""', (string) $v) . '"',
-                is_array($row) ? $row : [],
+                $row,
             )) . "\n";
         }
 

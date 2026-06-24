@@ -28,6 +28,7 @@ class FileImportProfileStoreRequest extends FormRequest
             'mapping_json' => ['nullable', 'array'],
             'mapping_json.*' => ['string', Rule::in(ImportCanonicalField::values())],
             'options_json' => ['nullable', 'array'],
+            'options_json.defaults' => ['prohibited'],
             'options_json.matching_rules' => ['prohibited'],
             'options_json.actions' => ['prohibited'],
             'options_json.transform_catalog' => ['prohibited'],
