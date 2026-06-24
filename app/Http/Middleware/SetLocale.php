@@ -23,7 +23,7 @@ class SetLocale
         }
 
         // Alternatively user can set this on the UI, which is also stored in session
-        $lang = $request->get('language');
+        $lang = $request->query('language');
         if ($lang && array_key_exists($lang, config('app.available_languages'))) {
             app()->setLocale($lang);
             $request->session()->put('language', $lang);

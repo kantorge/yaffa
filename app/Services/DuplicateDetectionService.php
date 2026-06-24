@@ -35,7 +35,12 @@ class DuplicateDetectionService
         $amountTolerancePercent = (float) ($resolvedSettings['duplicate_amount_tolerance_percent'] ?? self::DEFAULT_AMOUNT_TOLERANCE_PERCENT);
         $similarityThreshold = (float) ($resolvedSettings['duplicate_similarity_threshold'] ?? self::DEFAULT_SIMILARITY_THRESHOLD);
 
-        $date = \Carbon\Carbon::parse($extractedData['date']);
+        try {
+            $date = \Carbon\Carbon::parse($extractedData['date']);
+        } catch (\Carbon\Exceptions\InvalidFormatException) {
+            return [];
+        }
+
         $startDate = $date->clone()->subDays($dateWindowDays);
         $endDate = $date->clone()->addDays($dateWindowDays);
 
@@ -133,17 +138,6 @@ class DuplicateDetectionService
             // Check account_to
             if (isset($extractedData['account_to_id']) && $config->account_to_id === $extractedData['account_to_id']) {
                 $matches++;
-            }
-
-            // Check payee
-            if (isset($extractedData['payee_id'])) {
-                $hasPayeeMatch = $transaction->transactionItems()
-                    ->where('payee_id', $extractedData['payee_id'])
-                    ->exists();
-
-                if ($hasPayeeMatch) {
-                    $matches++;
-                }
             }
         } elseif ($transaction->isInvestment()) {
             $config = $transaction->config;
