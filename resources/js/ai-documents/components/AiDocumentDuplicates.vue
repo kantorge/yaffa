@@ -113,8 +113,8 @@
       return __('Not set');
     }
 
-    const date = typeof value === 'string' ? parseIsoDate(value) : value;
-    if (!date || Number.isNaN(date.getTime())) {
+    const date = typeof value === 'string' ? parseIsoDate(value) : (typeof value === 'number' ? new Date(value) : value);
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
       return value;
     }
 

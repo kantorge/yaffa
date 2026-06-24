@@ -18,7 +18,7 @@ window.transactionData = window.transactionData.map(function (transaction) {
 });
 
 window.scheduleData = window.scheduleData.map(function (transaction) {
-    if (transaction.transaction_schedule.next_date) {
+    if (transaction.transaction_schedule && transaction.transaction_schedule.next_date) {
         transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
     }
 

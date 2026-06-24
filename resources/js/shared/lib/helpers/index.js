@@ -57,7 +57,12 @@ export function escapeHtmlWithLineBreaks(value) {
 export function parseIsoDate(dateString) {
     if (!dateString) return null;
     if (dateString instanceof Date) return dateString;
-    const [y, m, d] = String(dateString).split('-').map(Number);
+    const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const d = Number(match[3]);
+    if (m < 1 || m > 12) return null;
     return new Date(y, m - 1, d);
 }
 

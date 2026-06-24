@@ -81,7 +81,7 @@ class ScheduleDateDisplayTest extends DuskTestCase
                 }
                 const d = row.transaction_schedule.next_date;
                 return [d.getFullYear(), d.getMonth() + 1, d.getDate()];
-            ");
+            ")[0];
 
             [$expectYear, $expectMonth, $expectDay] = array_map('intval', explode('-', $nextDateString));
 
@@ -148,7 +148,7 @@ class ScheduleDateDisplayTest extends DuskTestCase
                 }
                 const d = row.transaction_schedule.start_date;
                 return [d.getFullYear(), d.getMonth() + 1, d.getDate()];
-            ");
+            ")[0];
 
             [$expectYear, $expectMonth, $expectDay] = array_map('intval', explode('-', $startDateString));
 
