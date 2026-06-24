@@ -142,7 +142,7 @@ class TransactionSchedule extends Model
     }
 
     /**
-     * Determine if the schedule is determined to be active.
+     * Determine if the schedule is considered to be active.
      *
      * The transaction schedule is active, if it has a next date defined. This is the case for not finished schedules.
      * Otherwise we need to process the rule and check if any of the occurrences are in the future.
@@ -174,11 +174,11 @@ class TransactionSchedule extends Model
     private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
     {
         $rule = (new Rule())
-            ->setStartDate(new DateTime($this->start_date))
+            ->setStartDate(new DateTime($this->start_date->toDateString()))
             ->setFreq($this->frequency);
 
         if ($this->end_date) {
-            $rule->setUntil(new DateTime($this->end_date));
+            $rule->setUntil(new DateTime($this->end_date->toDateString()));
         }
 
         if ($this->count) {
@@ -194,7 +194,7 @@ class TransactionSchedule extends Model
         $transformerConfig->enableLastDayOfMonthFix();
         $transformer->setConfig($transformerConfig);
 
-        $constraint = ($afterDate ? new AfterConstraint(new DateTime($afterDate), false) : null);
+        $constraint = ($afterDate ? new AfterConstraint(new DateTime($afterDate->toDateString()), false) : null);
 
         return $transformer->transform($rule, $constraint);
     }

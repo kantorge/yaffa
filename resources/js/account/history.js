@@ -3,6 +3,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import { getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import { parseIsoDate } from '@/shared/lib/helpers';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -10,15 +11,15 @@ const selectorHistoryTable = '#historyTable';
 // Table data transformation
 window.transactionData = window.transactionData.map(function (transaction) {
     if (transaction.date) {
-        transaction.date = new Date(transaction.date);
+        transaction.date = parseIsoDate(transaction.date);
     }
 
     return transaction;
 });
 
 window.scheduleData = window.scheduleData.map(function (transaction) {
-    if (transaction.transaction_schedule.next_date) {
-        transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+    if (transaction.transaction_schedule && transaction.transaction_schedule.next_date) {
+        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
     }
 
     return transaction;
@@ -222,7 +223,7 @@ $(selectorScheduleTable).DataTable({
     ],
 
     createdRow: function (row, data) {
-        var nextDate = new Date(data.transaction_schedule.next_date);
+        var nextDate = data.transaction_schedule.next_date;
         if (nextDate < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('table-danger');
         } else if (nextDate < new Date(new Date().setHours(24, 0, 0, 0))) {

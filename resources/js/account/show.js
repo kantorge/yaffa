@@ -290,7 +290,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
             let newNextDate = response.data.transaction.transaction_schedule.next_date;
             // If next date exists, update the row. Otherwise remove it.
             if (newNextDate) {
-                data.transaction_schedule.next_date = new Date(newNextDate);
+                data.transaction_schedule.next_date = helpers.parseIsoDate(newNextDate);
                 row.data(data).draw();
 
                 toastHelpers.showToast(
@@ -561,9 +561,8 @@ $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', fun
 
 // Set up an event listener for the recently created transaction
 window.addEventListener('transaction-created', function (event) {
-    // Transform incoming data
+    // Transform incoming data — helpers.processTransaction() already converts dates
     let transaction = processTransaction(helpers.processTransaction(event.detail.transaction));
-    transaction.date = new Date(transaction.date);
 
     // Add the newly created transaction to the history table, regardless if the date range and account matches
     dtHistory.row.add(transaction).draw();

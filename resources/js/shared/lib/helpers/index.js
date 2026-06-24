@@ -43,14 +43,38 @@ export function escapeHtmlWithLineBreaks(value) {
     return escapeHtml(value).replace(/\r?\n/g, '<br>');
 }
 
-// Function to return just the ISO version of a date.
+/**
+ * Parse an ISO date-only string ("YYYY-MM-DD") as a local calendar date.
+ *
+ * new Date("YYYY-MM-DD") is specified to treat the string as UTC midnight,
+ * which shifts the displayed date backward by one day for users in timezones
+ * west of UTC. This function constructs the Date from components so it always
+ * lands in the browser's local timezone.
+ *
+ * @param {string|null} dateString
+ * @returns {Date|null}
+ */
+export function parseIsoDate(dateString) {
+    if (!dateString) return null;
+    if (dateString instanceof Date) return dateString;
+    const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const d = Number(match[3]);
+    if (m < 1 || m > 12) return null;
+    return new Date(y, m - 1, d);
+}
+
+// Return the ISO "YYYY-MM-DD" representation of a Date in local time.
 export function toIsoDateString(date) {
-    // Verify that the date is a Date object
     if (!(date instanceof Date)) {
         date = new Date();
     }
-
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 // Function to create a new date in UTC
@@ -68,24 +92,24 @@ export function todayInUTC() {
  * @returns {Object}
  */
 export function processTransaction(transaction) {
-    // Convert date strings to Date objects
+    // Convert ISO date strings to local-timezone Date objects.
     if (transaction.date) {
-        transaction.date = new Date(transaction.date);
+        transaction.date = parseIsoDate(transaction.date);
     }
 
-    // Add a helper to handle year-month level handling
-    transaction.year_month = transaction.date ? transaction.date.toISOString().slice(0, 7) : null;
+    // toIsoDateString uses local date components, so year_month is always correct.
+    transaction.year_month = transaction.date ? toIsoDateString(transaction.date).slice(0, 7) : null;
 
     if (transaction.transaction_schedule?.start_date) {
-        transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
     }
 
     if (transaction.transaction_schedule?.end_date) {
-        transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
     }
 
     if (transaction.transaction_schedule?.next_date) {
-        transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
     }
 
     // We need an array of categories for standard transactions, extracted from the item array
