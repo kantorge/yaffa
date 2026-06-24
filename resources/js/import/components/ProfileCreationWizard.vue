@@ -852,7 +852,13 @@
       },
 
       async processFile(file) {
-        const text = await this.readFileAsText(file, 20);
+        let text;
+        try {
+          text = await this.readFileAsText(file, 20);
+        } catch (_err) {
+          this.generalError = __('The file could not be read. Please try a different file.');
+          return;
+        }
         const lines = text
           .split(/\r?\n/)
           .filter((l) => l.trim().length > 0)
@@ -877,9 +883,11 @@
       },
 
       readFileAsText(file, maxLines) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           const reader = new FileReader();
+          reader.onerror = () => reject(new Error('File could not be read.'));
           reader.onload = (e) => {
+            try {
             const buffer = e.target.result;
             const uint8 = new Uint8Array(buffer);
 
@@ -915,6 +923,9 @@
               }
             }
             resolve(lines.slice(0, cut).join('\n'));
+            } catch (err) {
+              reject(err);
+            }
           };
           reader.readAsArrayBuffer(file);
         });

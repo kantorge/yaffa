@@ -548,6 +548,9 @@
         showWizard.value = false;
         mappingJsonError.value = null;
         error.value = null;
+        showEditAiPanel.value = false;
+        editAiFile.value = null;
+        aiError.value = null;
         editingProfile.value = buildEditingState(profile);
       };
 

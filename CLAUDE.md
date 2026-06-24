@@ -84,3 +84,20 @@ tests/Browser/          Dusk E2E tests
 .ai/docs/               domain documentation
 .ai/agents/             agent role instructions
 ```
+
+## Linting
+
+**Run linters before committing code to catch style and quality issues.**
+
+```bash
+# PHP linting (PSR-12 code style)
+./vendor/bin/pint              # Auto-fixes style issues
+
+# PHP static analysis (PHPStan Level 5)
+./vendor/bin/phpstan analyse   # Finds type errors and bugs
+
+# JavaScript/Vue linting
+npx eslint resources/js --ext .js,.vue
+```
+
+**Note:** Pint excludes `vendor/`, `public/`, `storage/`, `bootstrap/` directories. PHPStan analyzes `app/` directory only.

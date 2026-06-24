@@ -9,7 +9,7 @@ class SuggestFileImportProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        $maxSizeKb = (int) config('yaffa.import_max_file_size_mb', 2) * 1024;
+        $maxSizeKb = max(1, (int) config('yaffa.import_max_file_size_mb', 2)) * 1024;
 
         return [
             'file' => ['required', 'file', 'mimes:csv,txt', "max:{$maxSizeKb}"],

@@ -8,6 +8,7 @@ use App\Http\Requests\CloneFileImportProfileRequest;
 use App\Http\Requests\FileImportProfileStoreRequest;
 use App\Http\Requests\FileImportProfileUpdateRequest;
 use App\Http\Requests\SuggestFileImportProfileRequest;
+use App\Models\AccountEntity;
 use App\Models\AiProviderConfig;
 use App\Models\FileImportProfile;
 use App\Services\Import\AiImportProfileSuggestionService;
@@ -115,11 +116,19 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        $accountId = $request->integer('account_id') ?: null;
+        if ($accountId !== null) {
+            $account = AccountEntity::query()->find($accountId);
+            if ($account instanceof AccountEntity) {
+                Gate::authorize('view', $account);
+            }
+        }
+
         try {
             $suggestion = $service->suggest(
                 config: $aiConfig,
                 csvContent: $csvContent,
-                accountId: $request->integer('account_id') ?: null,
+                accountId: $accountId,
             );
         } catch (RuntimeException $e) {
             return response()->json([

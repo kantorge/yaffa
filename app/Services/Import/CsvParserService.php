@@ -2,6 +2,7 @@
 
 namespace App\Services\Import;
 
+use App\Enums\ImportCanonicalField;
 use App\Enums\TransactionType;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
@@ -123,7 +124,7 @@ class CsvParserService
             $headerKey = $header;
             $targetKey = $mapping[$headerKey] ?? $headerKey;
 
-            if ($targetKey !== '') {
+            if ($targetKey !== '' && $targetKey !== ImportCanonicalField::Ignore->value) {
                 $canonical[$targetKey] = $value;
             }
         }
@@ -227,9 +228,17 @@ class CsvParserService
             $warnings,
         );
 
+        $rawAmountForTypeDetection = $rawAmount;
+        if ($profile->sign_handling === 'inverted' && is_string($rawAmount)) {
+            $trimmed = mb_trim($rawAmount);
+            $rawAmountForTypeDetection = str_starts_with($trimmed, '-')
+                ? mb_substr($trimmed, 1)
+                : '-' . $trimmed;
+        }
+
         $transactionType = $this->resolveTransactionType(
             is_string($canonicalFacts['transaction_type'] ?? null) ? $canonicalFacts['transaction_type'] : null,
-            $rawAmount,
+            $rawAmountForTypeDetection,
             $warnings,
         );
 
@@ -565,6 +574,15 @@ class CsvParserService
         }
 
         if (isset($matches[1], $matches[2], $matches[3])) {
+            $year = (int) $matches[1];
+            $month = (int) $matches[2];
+            $day = (int) $matches[3];
+
+            if (! checkdate($month, $day, $year)) {
+                $warnings[] = sprintf('Date extraction produced an invalid date "%s-%s-%s".', $matches[1], $matches[2], $matches[3]);
+                return null;
+            }
+
             return sprintf('%s-%s-%s', $matches[1], $matches[2], $matches[3]);
         }
 
