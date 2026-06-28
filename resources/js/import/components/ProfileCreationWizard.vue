@@ -3,15 +3,16 @@
     <!-- Wizard header -->
     <div class="mb-4">
       <h6 class="mb-3 fw-bold">
-        {{ isEditMode ? __('Edit CSV import profile') : __('New CSV import profile') }}
+        {{
+          isEditMode
+            ? __('Edit CSV import profile')
+            : __('New CSV import profile')
+        }}
       </h6>
       <div class="d-flex align-items-start">
         <template v-for="n in 4" :key="n">
           <div class="d-flex flex-column align-items-center wizard-step-item">
-            <div
-              class="wizard-step-circle"
-              :class="stepCircleClass(n)"
-            >
+            <div class="wizard-step-circle" :class="stepCircleClass(n)">
               <i v-if="n < currentStep" class="fa fa-check"></i>
               <span v-else>{{ n }}</span>
             </div>
@@ -49,24 +50,14 @@
     <!-- Step 1: File selection and auto-detection          -->
     <!-- ────────────────────────────────────────────────── -->
     <div v-if="currentStep === 1">
-      <div v-if="isEditMode" class="alert alert-info small py-2 mb-3">
-        <i class="fa fa-circle-info me-1"></i>
-        {{
-          __(
-            'Uploading a file is optional when editing. Skip to the next step to adjust parser settings and column mappings directly.',
-          )
-        }}
-      </div>
-
       <div class="mb-3">
-        <label class="form-label small">
-          {{ isEditMode ? __('CSV sample file (optional)') : __('Select a CSV file to analyse') }}
-          <span v-if="!isEditMode">*</span>
+        <label class="form-label">
+          {{ __('Select a CSV file to analyse') }} *
         </label>
         <input
           ref="fileInput"
           type="file"
-          class="form-control form-control-sm"
+          class="form-control"
           accept=".csv,.txt"
           :disabled="aiSuggesting"
           @change="onFileChange"
@@ -80,23 +71,36 @@
         </div>
       </div>
 
-      <template v-if="headers.length > 0">
-        <div class="d-flex gap-3 mb-2 small text-muted flex-wrap">
-          <span>
-            {{ __('Delimiter:') }}
-            <code>{{ delimiterLabel(detectedDelimiter) }}</code>
+      <template v-if="sampleFile !== null && headers.length > 0">
+        <div class="d-flex gap-2 mb-2 flex-wrap align-items-center">
+          <span class="border rounded px-2 py-1 bg-body-secondary">
+            <span class="text-body-secondary">{{ __('Delimiter') }}</span>
+            <code class="ms-1 fw-semibold text-primary">{{
+              delimiterLabel(detectedDelimiter)
+            }}</code>
           </span>
-          <span>
-            {{
-              detectedHasHeader
-                ? __('Header row detected')
-                : __('No header row detected')
-            }}
+          <span class="border rounded px-2 py-1 bg-body-secondary">
+            <i
+              :class="
+                detectedHasHeader
+                  ? 'fa fa-check text-success'
+                  : 'fa fa-xmark text-secondary'
+              "
+              class="me-1"
+            ></i>
+            <span :class="detectedHasHeader ? 'text-success' : 'text-body'">
+              {{ detectedHasHeader ? __('Header row') : __('No header row') }}
+            </span>
           </span>
-          <span>{{ headers.length }} {{ __('columns') }}</span>
+          <span class="border rounded px-2 py-1 bg-body-secondary">
+            <strong class="text-primary">{{ headers.length }}</strong>
+            <span class="text-body-secondary ms-1">{{ __('columns') }}</span>
+          </span>
         </div>
-        <div class="mb-1 small text-muted">
-          {{ __('Preview (first 5 data rows):') }}
+        <div class="mb-2 mt-4 fw-bold">
+          {{
+            __('Preview (first :count data rows):', { count: previewRowCount })
+          }}
         </div>
         <CsvPreviewTable :headers="displayHeaders" :data-rows="previewRows" />
 
@@ -108,14 +112,18 @@
               class="btn btn-sm btn-outline-info"
               @click="showAiPanel = true"
             >
-              <i class="fa fa-magic me-1"></i>{{ __('Suggest with AI') }}
+              <i class="fa fa-wand-magic-sparkles me-1"></i
+              >{{ __('Suggest with AI') }}
             </button>
             <span class="ms-2 small text-muted">{{
               __('— or click Next to configure manually')
             }}</span>
           </div>
 
-          <div v-if="showAiPanel || aiSuggesting" class="border rounded p-3 bg-light">
+          <div
+            v-if="showAiPanel || aiSuggesting"
+            class="border rounded p-3 bg-body-secondary"
+          >
             <div class="alert alert-info small mb-2 py-2">
               <i class="fa fa-info-circle me-1"></i>
               {{
@@ -125,12 +133,13 @@
               }}
             </div>
 
-            <div
-              v-if="accountId"
-              class="form-text mb-2"
-            >
+            <div v-if="accountId" class="form-text mb-2">
               <i class="fa fa-info-circle me-1"></i>
-              {{ __('Account context will be included in the AI prompt as a hint.') }}
+              {{
+                __(
+                  'Account context will be included in the AI prompt as a hint.',
+                )
+              }}
             </div>
 
             <div v-if="aiError" class="alert alert-danger small py-2 mb-2">
@@ -175,11 +184,11 @@
       <!-- Row 1: name + format controls -->
       <div class="row g-2 mb-3">
         <div class="col-md-5">
-          <label class="form-label small">{{ __('Profile name') }} *</label>
+          <label class="form-label fw-bold">{{ __('Profile name') }} *</label>
           <input
             v-model="profileName"
             type="text"
-            class="form-control form-control-sm"
+            class="form-control"
             :class="{ 'is-invalid': validationErrors.profileName }"
             :placeholder="__('e.g. My Bank CSV')"
           />
@@ -190,10 +199,10 @@
 
         <!-- Delimiter -->
         <div class="col-md-4">
-          <label class="form-label small">{{ __('Delimiter') }}</label>
+          <label class="form-label fw-bold">{{ __('Delimiter') }}</label>
           <select
             v-model="delimiterChoice"
-            class="form-select form-select-sm"
+            class="form-select"
             @change="onSettingsChange"
           >
             <option value=",">, ({{ __('comma') }})</option>
@@ -206,7 +215,7 @@
             v-if="delimiterChoice === '__custom__'"
             v-model="customDelimiter"
             type="text"
-            class="form-control form-control-sm mt-1 font-monospace"
+            class="form-control mt-1 font-monospace"
             maxlength="1"
             :placeholder="__('Single character')"
             @input="onSettingsChange"
@@ -214,18 +223,19 @@
         </div>
 
         <!-- Has header row -->
-        <div class="col-md-3 d-flex align-items-end pb-1">
-          <div class="form-check">
+        <div class="col-md-3">
+          <label class="form-label fw-bold" for="wiz-has-header">
+            {{ __('Has header row') }}
+          </label>
+          <div class="form-check form-switch form-check-lg mt-1">
             <input
               id="wiz-has-header"
               v-model="hasHeaderRow"
               type="checkbox"
+              role="switch"
               class="form-check-input"
               @change="onSettingsChange"
             />
-            <label class="form-check-label small" for="wiz-has-header">
-              {{ __('Has header row') }}
-            </label>
           </div>
         </div>
       </div>
@@ -234,103 +244,99 @@
       <div class="row g-2 mb-3">
         <!-- Decimal separator -->
         <div class="col-md-3">
-          <label class="form-label small">{{ __('Decimal separator') }}</label>
-          <div class="d-flex gap-3 mt-1">
-            <div class="form-check">
-              <input
-                id="dec-dot"
-                v-model="decimalSeparator"
-                type="radio"
-                value="."
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label for="dec-dot" class="form-check-label small font-monospace"
-                >. ({{ __('dot') }})</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                id="dec-comma"
-                v-model="decimalSeparator"
-                type="radio"
-                value=","
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label
-                for="dec-comma"
-                class="form-check-label small font-monospace"
-                >, ({{ __('comma') }})</label
-              >
-            </div>
+          <label class="form-label fw-bold">{{
+            __('Decimal separator')
+          }}</label>
+          <div class="form-check mt-1">
+            <input
+              id="dec-dot"
+              v-model="decimalSeparator"
+              type="radio"
+              value="."
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="dec-dot" class="form-check-label font-monospace"
+              >. ({{ __('dot') }})</label
+            >
+          </div>
+          <div class="form-check mt-1">
+            <input
+              id="dec-comma"
+              v-model="decimalSeparator"
+              type="radio"
+              value=","
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="dec-comma" class="form-check-label font-monospace"
+              >, ({{ __('comma') }})</label
+            >
           </div>
         </div>
 
         <!-- Thousand separator -->
         <div class="col-md-4">
-          <label class="form-label small">{{ __('Thousand separator') }}</label>
-          <div class="d-flex gap-2 flex-wrap mt-1">
-            <div class="form-check">
-              <input
-                id="thou-space"
-                v-model="thousandSeparator"
-                type="radio"
-                value=" "
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label for="thou-space" class="form-check-label small">{{
-                __('Space')
-              }}</label>
-            </div>
-            <div class="form-check">
-              <input
-                id="thou-dot"
-                v-model="thousandSeparator"
-                type="radio"
-                value="."
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label for="thou-dot" class="form-check-label small font-monospace"
-                >.</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                id="thou-comma"
-                v-model="thousandSeparator"
-                type="radio"
-                value=","
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label
-                for="thou-comma"
-                class="form-check-label small font-monospace"
-                >,</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                id="thou-none"
-                v-model="thousandSeparator"
-                type="radio"
-                value=""
-                class="form-check-input"
-                @change="onSettingsChange"
-              />
-              <label for="thou-none" class="form-check-label small">{{
-                __('None')
-              }}</label>
-            </div>
+          <label class="form-label fw-bold">{{
+            __('Thousand separator')
+          }}</label>
+          <div class="form-check mt-1">
+            <input
+              id="thou-space"
+              v-model="thousandSeparator"
+              type="radio"
+              value=" "
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="thou-space" class="form-check-label">{{
+              __('Space')
+            }}</label>
+          </div>
+          <div class="form-check mt-1">
+            <input
+              id="thou-dot"
+              v-model="thousandSeparator"
+              type="radio"
+              value="."
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="thou-dot" class="form-check-label font-monospace"
+              >. ({{ __('dot') }})</label
+            >
+          </div>
+          <div class="form-check mt-1">
+            <input
+              id="thou-comma"
+              v-model="thousandSeparator"
+              type="radio"
+              value=","
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="thou-comma" class="form-check-label font-monospace"
+              >, ({{ __('comma') }})</label
+            >
+          </div>
+          <div class="form-check mt-1">
+            <input
+              id="thou-none"
+              v-model="thousandSeparator"
+              type="radio"
+              value=""
+              class="form-check-input"
+              @change="onSettingsChange"
+            />
+            <label for="thou-none" class="form-check-label">{{
+              __('None')
+            }}</label>
           </div>
         </div>
 
         <!-- Sign handling -->
         <div class="col-md-5">
-          <label class="form-label small">{{ __('Sign handling') }}</label>
+          <label class="form-label fw-bold">{{ __('Sign handling') }}</label>
           <div class="form-check mt-1">
             <input
               id="sign-asis"
@@ -339,10 +345,10 @@
               value="as_is"
               class="form-check-input"
             />
-            <label for="sign-asis" class="form-check-label small">
+            <label for="sign-asis" class="form-check-label">
               {{ __('As-is') }}
-              <span class="text-muted">—
-                {{ __('use the parsed signed value directly') }}</span
+              <span class="text-muted"
+                >— {{ __('use the parsed signed value directly') }}</span
               >
             </label>
           </div>
@@ -354,10 +360,15 @@
               value="inverted"
               class="form-check-input"
             />
-            <label for="sign-inv" class="form-check-label small">
+            <label for="sign-inv" class="form-check-label">
               {{ __('Inverted') }}
-              <span class="text-muted">—
-                {{ __('negate the parsed value (bank exports debits as positive)') }}</span
+              <span class="text-muted"
+                >—
+                {{
+                  __(
+                    'negate the parsed value (bank exports debits as positive)',
+                  )
+                }}</span
               >
             </label>
           </div>
@@ -365,8 +376,12 @@
       </div>
 
       <!-- Live preview -->
-      <div class="mb-1 small text-muted">
-        {{ __('Preview with current settings (first 5 data rows):') }}
+      <div class="mb-2 mt-4 fw-bold">
+        {{
+          __('Preview with current settings (first :count data rows):', {
+            count: previewRowCount,
+          })
+        }}
       </div>
       <CsvPreviewTable :headers="displayHeaders" :data-rows="previewRows" />
     </div>
@@ -375,6 +390,50 @@
     <!-- Step 3: Column mapping                            -->
     <!-- ────────────────────────────────────────────────── -->
     <div v-if="currentStep === 3">
+      <!-- Mapping requirements status panel (always visible) -->
+      <div
+        class="d-flex flex-wrap gap-3 mb-3 p-2 bg-body-secondary border rounded"
+      >
+        <span :class="hasDateMapped ? 'text-success' : 'text-body-secondary'">
+          <i
+            :class="hasDateMapped ? 'fa fa-circle-check' : 'fa fa-circle'"
+            class="me-1"
+          ></i>
+          <code>date</code>
+          <span class="text-body-tertiary ms-1">({{ __('required') }})</span>
+        </span>
+        <span
+          v-if="hasDateMapped"
+          :class="dateFormat ? 'text-success' : 'text-warning'"
+        >
+          <i
+            :class="
+              dateFormat ? 'fa fa-circle-check' : 'fa fa-exclamation-circle'
+            "
+            class="me-1"
+          ></i>
+          {{ __('date format') }}
+          <span class="text-body-tertiary ms-1">({{ __('required') }})</span>
+        </span>
+        <span :class="hasAmountMapped ? 'text-success' : 'text-body-secondary'">
+          <i
+            :class="hasAmountMapped ? 'fa fa-circle-check' : 'fa fa-circle'"
+            class="me-1"
+          ></i>
+          <code>amount</code>
+          <span class="text-body-tertiary ms-1">({{ __('required') }})</span>
+        </span>
+        <span :class="hasPayeeMapped ? 'text-success' : 'text-body-secondary'">
+          <i
+            :class="hasPayeeMapped ? 'fa fa-circle-check' : 'fa fa-circle-dot'"
+            class="me-1"
+          ></i>
+          <code>payee</code>
+          <span class="text-body-tertiary ms-1">({{ __('recommended') }})</span>
+        </span>
+      </div>
+
+      <!-- Duplicate mapping warning (only for actual problems) -->
       <div
         v-if="mappingValidationError"
         class="alert alert-warning small py-2 mb-3"
@@ -386,7 +445,7 @@
       <!-- Date format panel – shown above the table once a date column is selected -->
       <div
         v-if="dateMappedIndex >= 0"
-        class="mb-3 p-3 bg-light border rounded"
+        class="mb-3 p-3 bg-body-secondary border rounded"
       >
         <div class="small fw-semibold mb-2">
           <i class="fa fa-calendar me-1"></i>{{ __('Date format') }}
@@ -408,12 +467,16 @@
         <table class="table table-sm table-bordered mb-0 small">
           <thead>
             <!-- Row 1: source column header names -->
-            <tr class="table-light">
+            <tr class="table-active">
               <th
                 v-for="(h, i) in displayHeaders"
                 :key="'h-' + i"
                 class="fw-normal text-muted text-nowrap"
-                style="max-width: 180px; overflow: hidden; text-overflow: ellipsis"
+                style="
+                  max-width: 180px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
                 :title="h"
               >
                 {{ h }}
@@ -446,13 +509,15 @@
                   v-if="duplicateWarningForColumn(i)"
                   class="small text-warning mt-1"
                 >
-                  <i class="fa fa-exclamation-circle me-1"></i>{{ duplicateWarningForColumn(i) }}
+                  <i class="fa fa-exclamation-circle me-1"></i
+                  >{{ duplicateWarningForColumn(i) }}
                 </div>
                 <div
                   v-if="confidenceNoteForHeader(col.header)"
                   class="small text-info mt-1"
                 >
-                  <i class="fa fa-info-circle me-1"></i>{{ confidenceNoteForHeader(col.header) }}
+                  <i class="fa fa-info-circle me-1"></i
+                  >{{ confidenceNoteForHeader(col.header) }}
                 </div>
               </th>
             </tr>
@@ -472,7 +537,11 @@
                 :key="ci"
                 class="text-nowrap"
                 :class="col.canonical === 'ignore' ? 'text-muted' : ''"
-                style="max-width: 200px; overflow: hidden; text-overflow: ellipsis"
+                style="
+                  max-width: 200px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
                 :title="row[ci] ?? ''"
               >
                 {{ (row[ci] ?? '') !== '' ? row[ci] : '—' }}
@@ -480,26 +549,40 @@
                 <div
                   v-if="col.canonical === 'amount' && (row[ci] ?? '') !== ''"
                   class="font-monospace"
-                  :class="parseAmountPreview(row[ci]) !== null ? 'text-success' : 'text-danger'"
+                  :class="
+                    parseAmountPreview(row[ci]) !== null
+                      ? 'text-success'
+                      : 'text-danger'
+                  "
                 >
-                  → {{ parseAmountPreview(row[ci]) !== null ? parseAmountPreview(row[ci]) : __('?') }}
+                  →
+                  {{
+                    parseAmountPreview(row[ci]) !== null
+                      ? parseAmountPreview(row[ci])
+                      : __('?')
+                  }}
                 </div>
                 <!-- Parsed value preview: date -->
                 <div
                   v-if="col.canonical === 'date' && (row[ci] ?? '') !== ''"
                   class="font-monospace"
-                  :class="parseDatePreview(row[ci]) !== null ? 'text-success' : 'text-warning'"
+                  :class="
+                    parseDatePreview(row[ci]) !== null
+                      ? 'text-success'
+                      : 'text-warning'
+                  "
                 >
-                  → {{ parseDatePreview(row[ci]) !== null ? parseDatePreview(row[ci]) : __('set format ↑') }}
+                  →
+                  {{
+                    parseDatePreview(row[ci]) !== null
+                      ? parseDatePreview(row[ci])
+                      : __('set format ↑')
+                  }}
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div class="small text-muted mt-2">
-        {{ __('"date" and "amount" must be mapped before you can proceed.') }}
       </div>
     </div>
 
@@ -508,8 +591,8 @@
     <!-- ────────────────────────────────────────────────── -->
     <div v-if="currentStep === 4">
       <div class="mb-3">
-        <div class="fw-semibold small mb-2">{{ __('Profile summary') }}</div>
-        <dl class="row small mb-0">
+        <div class="fw-bold mb-2">{{ __('Profile summary') }}</div>
+        <dl class="row mb-0">
           <dt class="col-5 col-md-3 text-muted">{{ __('Name') }}</dt>
           <dd class="col-7 col-md-9">{{ profileName }}</dd>
           <dt class="col-5 col-md-3 text-muted">{{ __('Delimiter') }}</dt>
@@ -540,19 +623,26 @@
           <dd class="col-12 mb-0">
             <div class="d-flex flex-wrap gap-1">
               <span
-                v-for="col in columnMappings.filter((c) => c.canonical !== 'ignore')"
+                v-for="col in columnMappings.filter(
+                  (c) => c.canonical !== 'ignore',
+                )"
                 :key="col.header"
-                class="badge bg-light text-dark border font-monospace"
+                class="badge bg-body-secondary text-body border font-monospace"
                 style="font-size: 0.8em"
               >
                 {{ col.header }} → {{ col.canonical }}
               </span>
               <span
-                v-if="columnMappings.filter((c) => c.canonical === 'ignore').length"
-                class="badge bg-light text-secondary border"
+                v-if="
+                  columnMappings.filter((c) => c.canonical === 'ignore').length
+                "
+                class="badge bg-body-secondary text-body-secondary border"
                 style="font-size: 0.8em"
               >
-                + {{ columnMappings.filter((c) => c.canonical === 'ignore').length }}
+                +
+                {{
+                  columnMappings.filter((c) => c.canonical === 'ignore').length
+                }}
                 {{ __('ignored') }}
               </span>
             </div>
@@ -694,8 +784,8 @@
     if (parsedLines.length < 2) return false;
     const firstRow = parsedLines[0];
     const rest = parsedLines.slice(1);
-    const firstHasNoNumbers = firstRow.every(
-      (c) => isNaN(parseFloat(c.replace(/[\s,.]/g, ''))),
+    const firstHasNoNumbers = firstRow.every((c) =>
+      isNaN(parseFloat(c.replace(/[\s,.]/g, ''))),
     );
     const restHaveNumbers = rest.some((row) =>
       row.some((c) => !isNaN(parseFloat(c.replace(/[\s,.]/g, '')))),
@@ -714,7 +804,10 @@
 
     for (const row of dataRows) {
       for (const cell of row) {
-        const stripped = cell.trim().replace(/[A-Z]{3}$/, '').trim();
+        const stripped = cell
+          .trim()
+          .replace(/[A-Z]{3}$/, '')
+          .trim();
         // Pattern: digit, comma, exactly 2 digits at end → comma is decimal
         if (/\d,\d{2}$/.test(stripped)) {
           commaDecimalVotes++;
@@ -755,6 +848,11 @@
       hasAiProvider: {
         type: Boolean,
         default: false,
+      },
+      /** Number of data rows shown in preview tables throughout the wizard. */
+      previewRowCount: {
+        type: Number,
+        default: 10,
       },
       /** When editing: the ID of the profile to update (triggers PATCH instead of POST). */
       editProfileId: {
@@ -822,7 +920,6 @@
     created() {
       if (this.initialProfile && this.editProfileId) {
         this.initFromProfile(this.initialProfile);
-        this.currentStep = 2;
       }
     },
 
@@ -833,7 +930,7 @@
 
       stepLabels() {
         return [
-          this.isEditMode ? __('File (optional)') : __('File selection'),
+          __('File selection'),
           __('Parser settings'),
           __('Column mapping'),
           __('Review & save'),
@@ -856,16 +953,16 @@
         return this.headers.map((_, i) => `#${i + 1}`);
       },
 
-      /** First 5 data rows for preview tables. */
+      /** First `previewRowCount` data rows for preview tables. */
       previewRows() {
-        return this.dataRows.slice(0, 5);
+        return this.dataRows.slice(0, this.previewRowCount);
       },
 
-      /** Sample values per column index (up to 5 from data rows). */
+      /** Sample values per column index (up to `previewRowCount` from data rows). */
       columnSamples() {
         return this.headers.map((_, colIdx) =>
           this.dataRows
-            .slice(0, 5)
+            .slice(0, this.previewRowCount)
             .map((row) => row[colIdx] ?? '')
             .filter((v) => v !== ''),
         );
@@ -874,6 +971,24 @@
       /** Index of the first column mapped to 'date', or -1 (used for table preview). */
       dateMappedIndex() {
         return this.columnMappings.findIndex((c) => c.canonical === 'date');
+      },
+
+      hasDateMapped() {
+        return this.columnMappings.some((c) => c.canonical === 'date');
+      },
+
+      hasAmountMapped() {
+        return this.columnMappings.some((c) => c.canonical === 'amount');
+      },
+
+      hasPayeeMapped() {
+        return this.columnMappings.some((c) => c.canonical === 'payee');
+      },
+
+      hasDuplicateMappings() {
+        return this.columnMappings.some(
+          (_, i) => !!this.duplicateWarningForColumn(i),
+        );
       },
 
       /** PHP date format — single value matching the FileImportProfile model field. */
@@ -898,16 +1013,23 @@
 
       canAdvance() {
         if (this.currentStep === 1) {
-          if (this.isEditMode) return !this.aiSuggesting;
-          return this.headers.length > 0 && !this.aiSuggesting;
+          return (
+            this.sampleFile !== null &&
+            this.headers.length > 0 &&
+            !this.aiSuggesting
+          );
         }
         if (this.currentStep === 2) {
-          const hasMapping = this.isEditMode
-            ? this.columnMappings.length > 0
-            : this.headers.length > 0;
-          return this.profileName.trim().length > 0 && hasMapping;
+          return this.profileName.trim().length > 0 && this.headers.length > 0;
         }
-        if (this.currentStep === 3) return !this.mappingValidationError;
+        if (this.currentStep === 3) {
+          return (
+            this.hasDateMapped &&
+            this.hasAmountMapped &&
+            !!this.dateFormat &&
+            !this.hasDuplicateMappings
+          );
+        }
         return false;
       },
     },
@@ -944,7 +1066,8 @@
         this.hasHeaderRow = profile.has_header_row !== false;
         this.decimalSeparator = profile.decimal_separator || '.';
         this.thousandSeparator =
-          profile.thousand_separator !== null && profile.thousand_separator !== undefined
+          profile.thousand_separator !== null &&
+          profile.thousand_separator !== undefined
             ? profile.thousand_separator
             : '';
         this.signHandling = profile.sign_handling || 'as_is';
@@ -977,7 +1100,9 @@
         try {
           text = await this.readFileAsText(file, 20);
         } catch (_err) {
-          this.generalError = __('The file could not be read. Please try a different file.');
+          this.generalError = __(
+            'The file could not be read. Please try a different file.',
+          );
           return;
         }
         const lines = text
@@ -1001,7 +1126,9 @@
         this.hasHeaderRow = this.detectedHasHeader;
 
         // Auto-detect decimal separator from data rows (skip header if present)
-        const dataRows = this.detectedHasHeader ? allParsed.slice(1) : allParsed;
+        const dataRows = this.detectedHasHeader
+          ? allParsed.slice(1)
+          : allParsed;
         const detectedDecimal = detectDecimalSeparator(dataRows);
         if (detectedDecimal) {
           this.decimalSeparator = detectedDecimal;
@@ -1016,41 +1143,56 @@
           reader.onerror = () => reject(new Error('File could not be read.'));
           reader.onload = (e) => {
             try {
-            const buffer = e.target.result;
-            const uint8 = new Uint8Array(buffer);
+              const buffer = e.target.result;
+              const uint8 = new Uint8Array(buffer);
 
-            // Detect encoding from BOM; fall back to replacement-character heuristic.
-            let encoding = 'utf-8';
-            if (uint8.length >= 3 && uint8[0] === 0xef && uint8[1] === 0xbb && uint8[2] === 0xbf) {
-              encoding = 'utf-8';
-            } else if (uint8.length >= 2 && uint8[0] === 0xff && uint8[1] === 0xfe) {
-              encoding = 'utf-16le';
-            } else if (uint8.length >= 2 && uint8[0] === 0xfe && uint8[1] === 0xff) {
-              encoding = 'utf-16be';
-            } else {
-              // Probe the first 4 KB; if UTF-8 produces replacement chars, use windows-1252.
-              const probe = new TextDecoder('utf-8', { fatal: false }).decode(
-                buffer.slice(0, 4096),
+              // Detect encoding from BOM; fall back to replacement-character heuristic.
+              let encoding = 'utf-8';
+              if (
+                uint8.length >= 3 &&
+                uint8[0] === 0xef &&
+                uint8[1] === 0xbb &&
+                uint8[2] === 0xbf
+              ) {
+                encoding = 'utf-8';
+              } else if (
+                uint8.length >= 2 &&
+                uint8[0] === 0xff &&
+                uint8[1] === 0xfe
+              ) {
+                encoding = 'utf-16le';
+              } else if (
+                uint8.length >= 2 &&
+                uint8[0] === 0xfe &&
+                uint8[1] === 0xff
+              ) {
+                encoding = 'utf-16be';
+              } else {
+                // Probe the first 4 KB; if UTF-8 produces replacement chars, use windows-1252.
+                const probe = new TextDecoder('utf-8', { fatal: false }).decode(
+                  buffer.slice(0, 4096),
+                );
+                if (probe.includes('�')) {
+                  encoding = 'windows-1252';
+                }
+              }
+
+              const text = new TextDecoder(encoding, { fatal: false }).decode(
+                buffer,
               );
-              if (probe.includes('�')) {
-                encoding = 'windows-1252';
-              }
-            }
 
-            const text = new TextDecoder(encoding, { fatal: false }).decode(buffer);
-
-            // Trim to first maxLines non-empty lines for efficiency.
-            const lines = text.split(/\r?\n/);
-            let count = 0;
-            let cut = lines.length;
-            for (let i = 0; i < lines.length; i++) {
-              if (lines[i].trim()) count++;
-              if (count >= maxLines) {
-                cut = i + 1;
-                break;
+              // Trim to first maxLines non-empty lines for efficiency.
+              const lines = text.split(/\r?\n/);
+              let count = 0;
+              let cut = lines.length;
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim()) count++;
+                if (count >= maxLines) {
+                  cut = i + 1;
+                  break;
+                }
               }
-            }
-            resolve(lines.slice(0, cut).join('\n'));
+              resolve(lines.slice(0, cut).join('\n'));
             } catch (err) {
               reject(err);
             }
@@ -1081,7 +1223,10 @@
           );
           this.dataRows = parsed.slice(1);
         } else {
-          this.headers = Array.from({ length: colCount }, (_, i) => `#${i + 1}`);
+          this.headers = Array.from(
+            { length: colCount },
+            (_, i) => `#${i + 1}`,
+          );
           this.dataRows = parsed;
         }
 
@@ -1113,7 +1258,9 @@
         if (this.currentStep === 2) {
           const trimmed = this.profileName.trim();
           if (!trimmed) {
-            this.validationErrors = { profileName: __('Profile name is required.') };
+            this.validationErrors = {
+              profileName: __('Profile name is required.'),
+            };
             return;
           }
         }
@@ -1143,31 +1290,7 @@
       },
 
       validateMappings() {
-        const mapped = this.columnMappings.map((c) => c.canonical);
-        const hasDate = mapped.includes('date');
-        const hasAmount = mapped.includes('amount');
-        if (!hasDate && !hasAmount) {
-          this.mappingValidationError = __(
-            '"date" and "amount" columns must be mapped before continuing.',
-          );
-          return;
-        }
-        if (!hasDate) {
-          this.mappingValidationError = __(
-            'A "date" column must be mapped before continuing.',
-          );
-          return;
-        }
-        if (!hasAmount) {
-          this.mappingValidationError = __(
-            'An "amount" column must be mapped before continuing.',
-          );
-          return;
-        }
-        const hasDuplicates = this.columnMappings.some(
-          (_, i) => !!this.duplicateWarningForColumn(i),
-        );
-        if (hasDuplicates) {
+        if (this.hasDuplicateMappings) {
           this.mappingValidationError = __(
             'Duplicate column mappings must be resolved before continuing.',
           );
@@ -1242,7 +1365,10 @@
 
         try {
           const response = this.editProfileId
-            ? await axios.patch(`/api/v1/imports/file-profiles/${this.editProfileId}`, payload)
+            ? await axios.patch(
+                `/api/v1/imports/file-profiles/${this.editProfileId}`,
+                payload,
+              )
             : await axios.post('/api/v1/imports/file-profiles', payload);
           this.$emit('saved', response.data);
         } catch (err) {
@@ -1251,7 +1377,9 @@
           } else if (err?.response?.data?.error?.message) {
             this.generalError = err.response.data.error.message;
           } else {
-            this.generalError = __('Save failed due to a network or server error.');
+            this.generalError = __(
+              'Save failed due to a network or server error.',
+            );
           }
         } finally {
           this.saving = false;
@@ -1407,10 +1535,8 @@
   }
 
   .wizard-step-label {
-    font-size: 0.75rem;
     margin-top: 0.35rem;
     line-height: 1.2;
-    max-width: 5.5rem;
   }
 
   .wizard-step-connector {

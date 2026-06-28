@@ -41,7 +41,7 @@
       <!-- CSV profile creation wizard (new profile) -->
       <div
         v-if="showWizard && fileType === 'csv' && !editingProfile"
-        class="border rounded p-3 mb-3 bg-light"
+        class="border rounded p-3 mb-3 bg-body-secondary"
       >
         <ProfileCreationWizard
           :account-id="null"
@@ -54,7 +54,7 @@
       <!-- CSV profile edit wizard (existing profile) -->
       <div
         v-if="showWizard && fileType === 'csv' && editingProfile"
-        class="border rounded p-3 mb-3 bg-light"
+        class="border rounded p-3 mb-3 bg-body-secondary"
       >
         <ProfileCreationWizard
           :account-id="null"
@@ -67,7 +67,7 @@
       </div>
 
       <!-- Create / Edit form (QIF always; CSV edit handled by wizard above) -->
-      <div v-if="editingProfile && fileType !== 'csv'" class="border rounded p-3 mb-3 bg-light">
+      <div v-if="editingProfile && fileType !== 'csv'" class="border rounded p-3 mb-3 bg-body-secondary">
         <div class="fw-semibold mb-3">
           {{ editingProfile.id ? __('Edit profile') : __('New profile') }}
         </div>
@@ -204,7 +204,7 @@
 
             <div
               v-if="showEditAiPanel"
-              class="border rounded p-3 bg-white mt-2"
+              class="border rounded p-3 bg-body-secondary mt-2"
             >
               <div class="fw-semibold small mb-2">
                 {{ __('AI Profile Re-suggestion') }}

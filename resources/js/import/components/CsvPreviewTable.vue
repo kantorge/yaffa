@@ -1,7 +1,7 @@
 <template>
   <div class="table-responsive border rounded">
     <table class="table table-sm table-bordered mb-0 small">
-      <thead class="table-light">
+      <thead>
         <tr>
           <th
             v-for="(header, i) in headers"
@@ -14,7 +14,7 @@
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="table-group-divider">
         <tr v-if="dataRows.length === 0">
           <td :colspan="headers.length || 1" class="text-muted text-center py-2">
             {{ __('No data rows to preview') }}

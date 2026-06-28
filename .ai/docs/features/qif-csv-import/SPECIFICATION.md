@@ -863,9 +863,11 @@ The wizard is browser-driven. CSV analysis runs entirely in JavaScript using the
 
 Auto-detection is designed to provide useful defaults, not to be authoritative. All detected values are displayed as editable fields so the user can correct any mis-detection before saving.
 
+The same four-step wizard is used for both creating a new profile and editing an existing one. When editing, the wizard pre-populates all fields from the saved profile (parser settings, column mappings, date format, etc.) but still requires a CSV sample file in Step 1. The sample file is needed for live previews in Steps 2–3 and for the AI suggestion feature; without it the column mapping table would be static and the auto-detection indicators would be absent.
+
 #### Step 1: File Selection and Auto-Detection
 
-- User selects a CSV sample file from their local filesystem (the same export they intend to import, or any representative sample).
+- User selects a CSV sample file from their local filesystem (the same export they intend to import, or any representative sample). **This step is required for both new profiles and edits.**
 - JavaScript reads the first 20 lines of the file using the `File API`.
 - Auto-detection logic runs client-side:
   - **Delimiter**: test candidate delimiters (`;`, `,`, tab, `|`) by counting consistent column-count splits across all sampled rows; highest-scoring delimiter wins; ties default to `,`.
@@ -873,10 +875,11 @@ Auto-detection is designed to provide useful defaults, not to be authoritative. 
   - **Encoding**: attempt BOM detection (UTF-8, UTF-16 LE/BE); fall back to UTF-8 for browser-side reading. Encoding conversion for non-UTF-8 files happens server-side at import time (consistent with `CsvParserService` behavior).
 - A preview table is rendered immediately showing the detected headers and the first 5 data rows.
 - User can override any auto-detected setting; the preview re-renders on each change.
+- When editing, existing column mappings from the saved profile are preserved for any headers that match the uploaded file's columns; unmatched columns default to `ignore`.
 
 #### Step 2: Parser Settings Confirmation
 
-Fields editable in this step (all shown with auto-detected values as defaults):
+Fields editable in this step (all shown with auto-detected values as defaults; pre-populated from the saved profile when editing):
 
 - **Delimiter** — dropdown: `;`, `,`, tab, `|`, or a custom single-character entry.
 - **Has header row** — toggle.
@@ -885,7 +888,7 @@ Fields editable in this step (all shown with auto-detected values as defaults):
 - **Sign handling** — radio:
   - `as_is` — the amount column is already correctly signed; use as-is.
   - `inverted` — negate the parsed value; for banks that export amounts with a reversed sign convention.
-- **Profile name** — text field; pre-filled with the file name if not yet set.
+- **Profile name** — text field; pre-filled with the file name (new) or the existing profile name (edit).
 
 The preview table updates on every settings change without a server round-trip.
 
@@ -893,7 +896,8 @@ The preview table updates on every settings change without a server round-trip.
 
 - The mapping UI is an **integrated table**: source header names occupy the first header row; canonical field dropdowns occupy a second header row directly below; sample data rows fill the table body. This keeps the source data visible while the user decides how to map each column.
 - The dropdown options are the canonical target fields listed above, plus `ignore` as the default. Mapped columns are visually highlighted; ignored columns are dimmed.
-- **Validation gate**: the step cannot be completed unless both `date` and `amount` are mapped, and no duplicate mappings exist. Columns that allow multiple mappings (`comment` and `reference`) are exempt from the duplicate check.
+- **Mapping requirements**: a persistent status panel at the top of this step shows the mapping state at a glance. `date` and `amount` are required; `payee` is recommended. The panel uses neutral indicators until each requirement is met, then turns green. A date format must also be selected once `date` is mapped — the panel highlights this with a warning indicator until satisfied. Warnings (amber, with icon) are reserved for blocking issues such as duplicate mappings.
+- **Validation gate**: the step cannot be completed unless both `date` and `amount` are mapped, a date format is selected, and no duplicate mappings exist. Columns that allow multiple mappings (`comment` and `reference`) are exempt from the duplicate check.
 - **Date field UX**: when a column is mapped to `date`, a date format panel appears above the table:
   - Lists auto-detected PHP format string candidates inferred from the column's sample values (marked ✓), locale-based suggestions, and a base set of generic common formats always shown.
   - User selects from candidates or types a custom PHP date format string. The format is a single profile-level setting (matching `FileImportProfile.date_format`), not stored per-column.
@@ -903,9 +907,9 @@ The preview table updates on every settings change without a server round-trip.
 
 #### Step 4: Save
 
-- User confirms the profile name and clicks Save.
-- Frontend assembles the profile payload from wizard state and calls `POST /api/v1/imports/file-profiles`.
-- On success: navigate to the import page or profile list, depending on the entry point.
+- User reviews the profile summary and clicks Save.
+- Frontend assembles the profile payload from wizard state and calls `POST /api/v1/imports/file-profiles` (new profile) or `PATCH /api/v1/imports/file-profiles/{id}` (edit).
+- On success: the wizard closes and the profile list refreshes.
 - On validation error: field-level errors shown inline; wizard remains on the step with the failing field.
 
 ### AI-Assisted Profile Generation
@@ -920,7 +924,7 @@ Vision capability is not required; text-only models are sufficient. The feature 
 
 - A "Suggest with AI" button is displayed on the profile creation form only when the user has at least one `AiProviderConfig` record.
 - If no AI provider is configured, the button is not shown. A contextual note linking to the AI settings page may be shown in its place.
-- The button is also available when editing an existing user profile (to regenerate a suggestion from a new sample).
+- The button is also available when editing an existing user profile. Because file upload is required in Step 1 for both new and edit flows, the uploaded sample is available for the AI suggestion in either case.
 
 #### User Flow
 
