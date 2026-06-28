@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Exceptions\AiProviderFailureException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CloneFileImportProfileRequest;
 use App\Http\Requests\FileImportProfileStoreRequest;
 use App\Http\Requests\FileImportProfileUpdateRequest;
 use App\Http\Requests\SuggestFileImportProfileRequest;
@@ -37,6 +36,10 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
 
         $query = FileImportProfile::query()
             ->selectableForUser($user)
+            ->with(['accountEntities' => fn ($q) => $q
+                ->where('user_id', $user->id)
+                ->select(['id', 'name', 'preferred_file_import_profile_id']),
+            ])
             ->orderByDesc('type')
             ->orderBy('name');
 
@@ -57,10 +60,7 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
 
         $user = $request->user();
 
-        $profile = FileImportProfile::query()->create([
-            'user_id' => $user?->id,
-            'key' => null,
-            'type' => 'user',
+        $profile = new FileImportProfile([
             'file_type' => $request->input('file_type', 'csv'),
             'name' => (string) $request->input('name'),
             'delimiter' => (string) $request->input('delimiter', ','),
@@ -73,6 +73,9 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
             'options_json' => (array) $request->input('options_json', []),
             'active' => (bool) $request->input('active', true),
         ]);
+        $profile->user_id = $user?->id;
+        $profile->type = 'user';
+        $profile->save();
 
         return response()->json(['data' => $profile], Response::HTTP_CREATED);
     }
@@ -87,21 +90,15 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_OK);
     }
 
-    public function affectedAccounts(FileImportProfile $profile, Request $request): JsonResponse
-    {
-        Gate::authorize('delete', $profile);
-
-        $accounts = AccountEntity::query()
-            ->where('user_id', $request->user()?->id)
-            ->where('preferred_file_import_profile_id', $profile->id)
-            ->get(['id', 'name']);
-
-        return response()->json(['data' => $accounts], Response::HTTP_OK);
-    }
-
     public function destroy(FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('delete', $profile);
+
+        if ($profile->accountEntities()->exists()) {
+            return response()->json([
+                'message' => __('This profile cannot be deleted because it is set as the default for one or more accounts.'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $profile->delete();
 
@@ -155,14 +152,4 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $suggestion], Response::HTTP_OK);
     }
 
-    public function clone(CloneFileImportProfileRequest $request, FileImportProfile $profile): JsonResponse
-    {
-        Gate::authorize('clone', $profile);
-
-        $clone = FileImportProfile::query()->create(
-            $profile->toUserCloneAttributes($request->user(), $request->input('name'))
-        );
-
-        return response()->json(['data' => $clone], Response::HTTP_CREATED);
-    }
 }

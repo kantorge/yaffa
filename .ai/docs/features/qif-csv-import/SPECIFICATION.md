@@ -383,7 +383,6 @@ CSV import uses a single persisted profile model with two types:
 
 - `type = user`
 - user-managed reusable configurations,
-- may be created from scratch or cloned from a system profile,
 - allow safe customization of parser settings and field mappings,
 - do not allow arbitrary code execution.
 
@@ -647,7 +646,6 @@ Recommended persisted fields:
 User-owned profiles should support:
 
 - creating from scratch,
-- cloning from a system profile,
 - editing parser options,
 - editing column mappings,
 - deleting when no longer needed.
@@ -669,7 +667,7 @@ Minimal profile behavior:
 
 2. Create user profile
 
-- from scratch or cloned from a system profile
+- from scratch
 - reject payload keys `options_json.matching_rules`, `options_json.actions`, and transform catalog overrides
 
 3. Update user profile
@@ -695,23 +693,6 @@ Those are read-only to users.
   - fully CRUD within ownership scope
   - no shared/community profiles in MVP
   - no rule DSL editing in MVP
-
-Clone behavior from system profile to user profile:
-
-- Allowed to copy: parser settings, mapping aliases, safe normalization options, and display metadata.
-- Not allowed to copy: `matching_rules`, action pipelines, or any executable DSL sections.
-- Clone output is always a mapping-oriented `type = user` profile.
-
-> **Implementation status (2026-06-28): Clone is partially complete.**
->
-> The backend endpoint (`POST /api/v1/imports/file-profiles/{profile}/clone`) exists, strips DSL keys from `options_json`, and now sanitizes `mapping_json`. One gap remains before cloning is fully usable:
->
-> 1. ~~**`mapping_json` is copied verbatim from the source profile.**~~ **Fixed (2026-06-28).** `FileImportProfile::toUserCloneAttributes` now calls `sanitizedMappingForUserProfile()`, which replaces any value not present in `ImportCanonicalField` (e.g. `value_date`, `entry_type`, `notice_1-3`) with `ignore`. Regression test: `FileImportProfileCloneTest`.
->
-> 2. **The frontend has no clone UI.** `FileImportProfileManager.vue` does not expose a clone action. The endpoint cannot be triggered by users.
->    *Required fix:* add a "Clone" button to the profile list in `FileImportProfileManager` that calls the endpoint and then opens the wizard in edit mode for the new clone.
->
-> Do not mark clone as complete until the frontend UI gap is resolved and covered by tests.
 
 ### System Profile Definition and Maintenance
 
@@ -1124,8 +1105,6 @@ Notes:
   - ImportDuplicateDetectionTest
   - ImportRelatedAiDocumentsTest
   - ImportAuthorizationTest
-  - FileImportProfileCloneTest (clone mapping_json sanitization; canonical field preservation)
-
 - Frontend component tests:
   - ImportUploadCard.spec.js
   - ImportDraftTable.spec.js
@@ -1352,7 +1331,7 @@ Notes:
   - [x] Highlight drafts with high-confidence duplicates
 - [x] Add profile management UI (basic form)
   - [x] List user profiles
-  - [x] Create new profile (from scratch or clone from system)
+  - [x] Create new profile from scratch
   - [x] Edit mapping_json and parser options
   - [x] Delete user profile
 
@@ -1423,12 +1402,6 @@ Notes:
   - [x] Add `preferred_file_import_profile_id` to account add/edit web form (`accounts/form.blade.php`)
   - [x] Validate `preferred_file_import_profile_id` in `AccountEntityRequest` (both CSV and QIF profiles accepted; ownership enforced via `selectableForUser` scope)
   - Changed: no dedicated `PATCH /api/v1/accounts/{accountEntity}` API endpoint; preference is managed through the standard web form flow
-- [ ] Implement profile clone endpoint *(backend complete; frontend UI pending — see note above)*
-  - [x] POST `/api/v1/imports/file-profiles/{profile}/clone`
-  - [x] Strip `options_json` DSL fields (`matching_rules`, `actions`, `transform_catalog`, `defaults`) when cloning system → user
-  - [x] Sanitize `mapping_json` values: non-canonical fact names (e.g. `value_date`, `entry_type`, `notice_1`) replaced with `ignore` via `FileImportProfile::sanitizedMappingForUserProfile()` (2026-06-28)
-  - [x] Validate user ownership of target user profile
-  - [ ] Frontend clone UI in `FileImportProfileManager.vue` (button + wizard edit flow for the cloned profile)
 - [x] Document expected parse response error format for partial success
   - [x] 200 with mixed valid/invalid drafts (same payload, warnings per draft)
   - [x] 422 for structural errors (bad profile, missing required fields)
@@ -1482,9 +1455,6 @@ Notes:
 - [x] Command test: `SyncSystemFileImportProfilesCommand`
   - [x] Idempotent: re-run produces same database state
   - [x] Migration of hun_raiffeisen_v1 rule file into profile
-- [x] Feature test: `FileImportProfileCloneTest` (added 2026-06-28)
-  - [x] Cloning a system profile replaces non-canonical `mapping_json` values with `ignore`
-  - [x] Cloning a user profile preserves all valid canonical field values unchanged
 
 **Testing Tasks** (Frontend Agent):
 

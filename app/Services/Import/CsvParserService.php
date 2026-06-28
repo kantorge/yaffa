@@ -14,6 +14,9 @@ use DateTimeImmutable;
 
 class CsvParserService
 {
+    /** @var array<string, int>|null */
+    private ?array $payeeLookup = null;
+
     /**
      * @return array{drafts: list<array<string, mixed>>, warnings: list<string>, unmatched_rows: list<array<string, mixed>>}
      */
@@ -30,97 +33,112 @@ class CsvParserService
         }
 
         [$normalizedContent, $encodingWarning] = $this->normalizeContentToUtf8($content);
+        unset($content);
 
-        $reader = Reader::fromString($normalizedContent);
-        $reader->setDelimiter((string) ($profile->delimiter ?: ','));
-
-        if ($profile->has_header_row) {
-            $reader->setHeaderOffset(0);
+        $tmpPath = tempnam(sys_get_temp_dir(), 'csv_import_');
+        if ($tmpPath === false) {
+            throw new RuntimeException('Unable to create temporary file for CSV parsing.');
         }
 
         try {
-            $records = $reader->getRecords();
-        } catch (CsvException $e) {
-            throw new RuntimeException($this->humanizeCsvException($e));
-        }
+            file_put_contents($tmpPath, $normalizedContent);
+            unset($normalizedContent);
 
-        $maxRows = max(1, (int) config('yaffa.import_max_rows', 5000));
+            $reader = Reader::createFromPath($tmpPath);
+            $reader->setDelimiter((string) ($profile->delimiter ?: ','));
 
-        $warnings = [];
-        if ($encodingWarning !== null) {
-            $warnings[] = $encodingWarning;
-        }
-
-        $drafts = [];
-        $unmatchedRows = [];
-
-        $rowIndex = 0;
-        try {
-            foreach ($records as $record) {
-                $rowIndex++;
-                if ($rowIndex > $maxRows) {
-                    throw new RuntimeException(
-                        sprintf('CSV import exceeds the configured maximum row count of %d.', $maxRows),
-                    );
-                }
-
-                $canonicalFacts = $this->canonicalizeRow($record, (array) ($profile->mapping_json ?? []));
-                $rawEntry = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
-
-                $trimStrings = (bool) data_get($profile->options_json, 'parser_settings.trim_strings', true);
-                if ($trimStrings) {
-                    $canonicalFacts = array_map(
-                        fn (mixed $value) => is_string($value) ? mb_trim($value) : $value,
-                        $canonicalFacts,
-                    );
-                }
-
-                $skipEmptyRows = (bool) data_get($profile->options_json, 'parser_settings.skip_empty_rows', true);
-                if ($skipEmptyRows && $this->isEmptyRow($canonicalFacts)) {
-                    continue;
-                }
-
-                if ($profile->type === 'system') {
-                    $parsedRow = $this->parseSystemRow(
-                        canonicalFacts: $canonicalFacts,
-                        profile: $profile,
-                        accountId: $accountId,
-                        userId: $userId,
-                        draftIndex: count($drafts),
-                        rawEntry: $rawEntry,
-                    );
-                } else {
-                    $parsedRow = $this->parseUserRow(
-                        canonicalFacts: $canonicalFacts,
-                        originalRecord: $record,
-                        profile: $profile,
-                        accountId: $accountId,
-                        draftIndex: count($drafts),
-                        rawEntry: $rawEntry,
-                    );
-                }
-
-                if ($parsedRow['matched'] === false) {
-                    $unmatchedRows[] = [
-                        'row_index' => $rowIndex,
-                        'raw_entry' => $rawEntry,
-                        'warnings' => $parsedRow['warnings'],
-                    ];
-                }
-
-                $drafts[] = $parsedRow['draft'];
+            if ($profile->has_header_row) {
+                $reader->setHeaderOffset(0);
             }
-        } catch (RuntimeException $e) {
-            throw $e;
-        } catch (CsvException $e) {
-            throw new RuntimeException($this->humanizeCsvException($e));
-        }
 
-        return [
-            'drafts' => $drafts,
-            'warnings' => array_values(array_unique($warnings)),
-            'unmatched_rows' => $unmatchedRows,
-        ];
+            try {
+                $records = $reader->getRecords();
+            } catch (CsvException $e) {
+                throw new RuntimeException($this->humanizeCsvException($e));
+            }
+
+            $this->loadPayeeLookup($userId);
+
+            $maxRows = max(1, (int) config('yaffa.import_max_rows', 5000));
+
+            $warnings = [];
+            if ($encodingWarning !== null) {
+                $warnings[] = $encodingWarning;
+            }
+
+            $drafts = [];
+            $unmatchedRows = [];
+
+            $rowIndex = 0;
+            try {
+                foreach ($records as $record) {
+                    $rowIndex++;
+                    if ($rowIndex > $maxRows) {
+                        throw new RuntimeException(
+                            sprintf('CSV import exceeds the configured maximum row count of %d.', $maxRows),
+                        );
+                    }
+
+                    $canonicalFacts = $this->canonicalizeRow($record, (array) ($profile->mapping_json ?? []));
+                    $rawEntry = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+
+                    $trimStrings = (bool) data_get($profile->options_json, 'parser_settings.trim_strings', true);
+                    if ($trimStrings) {
+                        $canonicalFacts = array_map(
+                            fn (mixed $value) => is_string($value) ? mb_trim($value) : $value,
+                            $canonicalFacts,
+                        );
+                    }
+
+                    $skipEmptyRows = (bool) data_get($profile->options_json, 'parser_settings.skip_empty_rows', true);
+                    if ($skipEmptyRows && $this->isEmptyRow($canonicalFacts)) {
+                        continue;
+                    }
+
+                    if ($profile->type === 'system') {
+                        $parsedRow = $this->parseSystemRow(
+                            canonicalFacts: $canonicalFacts,
+                            profile: $profile,
+                            accountId: $accountId,
+                            userId: $userId,
+                            draftIndex: count($drafts),
+                            rawEntry: $rawEntry,
+                        );
+                    } else {
+                        $parsedRow = $this->parseUserRow(
+                            canonicalFacts: $canonicalFacts,
+                            originalRecord: $record,
+                            profile: $profile,
+                            accountId: $accountId,
+                            draftIndex: count($drafts),
+                            rawEntry: $rawEntry,
+                        );
+                    }
+
+                    if ($parsedRow['matched'] === false) {
+                        $unmatchedRows[] = [
+                            'row_index' => $rowIndex,
+                            'raw_entry' => $rawEntry,
+                            'warnings' => $parsedRow['warnings'],
+                        ];
+                    }
+
+                    $drafts[] = $parsedRow['draft'];
+                }
+            } catch (RuntimeException $e) {
+                throw $e;
+            } catch (CsvException $e) {
+                throw new RuntimeException($this->humanizeCsvException($e));
+            }
+
+            return [
+                'drafts' => $drafts,
+                'warnings' => array_values(array_unique($warnings)),
+                'unmatched_rows' => $unmatchedRows,
+            ];
+        } finally {
+            @unlink($tmpPath);
+        }
     }
 
     private function humanizeCsvException(CsvException $e): string
@@ -135,7 +153,7 @@ class CsvParserService
             return 'The CSV header row could not be read. Please verify the file format and delimiter settings in the selected profile.';
         }
 
-        return 'The CSV file could not be parsed: ' . $message;
+        return 'The CSV file could not be parsed. Please check that the file format and delimiter match the selected profile settings.';
     }
 
     /**
@@ -657,20 +675,33 @@ class CsvParserService
             return null;
         }
 
-        $query = AccountEntity::query()
+        return ($this->payeeLookup ?? [])[mb_strtolower($candidate)] ?? null;
+    }
+
+    private function loadPayeeLookup(int $userId): void
+    {
+        $this->payeeLookup = [];
+
+        $payees = AccountEntity::query()
             ->where('user_id', $userId)
             ->where('config_type', 'payee')
-            ->where(function ($builder) use ($candidate): void {
-                $builder->whereRaw('LOWER(name) = ?', [mb_strtolower($candidate)])
-                    ->orWhereRaw('LOWER(alias) = ?', [mb_strtolower($candidate)]);
-            });
+            ->select(['id', 'name', 'alias'])
+            ->get();
 
-        $payee = $query->first();
-        if (! $payee instanceof AccountEntity) {
-            return null;
+        foreach ($payees as $payee) {
+            $lowerName = mb_strtolower((string) $payee->name);
+            if ($lowerName !== '' && ! isset($this->payeeLookup[$lowerName])) {
+                $this->payeeLookup[$lowerName] = (int) $payee->id;
+            }
+
+            $alias = $payee->alias;
+            if (is_string($alias) && $alias !== '') {
+                $lowerAlias = mb_strtolower($alias);
+                if (! isset($this->payeeLookup[$lowerAlias])) {
+                    $this->payeeLookup[$lowerAlias] = (int) $payee->id;
+                }
+            }
         }
-
-        return $payee->id;
     }
 
     private function transformNormalizeWhitespace(mixed $value): mixed

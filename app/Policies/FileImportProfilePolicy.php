@@ -31,9 +31,4 @@ class FileImportProfilePolicy
     {
         return $profile->isUserOwnedBy($user);
     }
-
-    public function clone(User $user, FileImportProfile $profile): bool
-    {
-        return $this->view($user, $profile);
-    }
 }

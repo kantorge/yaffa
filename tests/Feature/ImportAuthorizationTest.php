@@ -23,13 +23,11 @@ class ImportAuthorizationTest extends TestCase
         $this->postJson(route('api.v1.imports.file-profiles.store'), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
         $this->patchJson(route('api.v1.imports.file-profiles.update', $profile), [])->assertStatus(Response::HTTP_UNAUTHORIZED);
         $this->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
-        $this->postJson(route('api.v1.imports.file-profiles.clone', $profile))->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
-    public function test_user_can_crud_own_profiles_and_clone_system_profiles(): void
+    public function test_user_can_crud_own_profiles(): void
     {
         $user = User::factory()->create();
-        $systemProfile = $this->createSystemProfile();
 
         $storeResponse = $this->actingAs($user, 'sanctum')
             ->postJson(route('api.v1.imports.file-profiles.store'), [
@@ -42,7 +40,7 @@ class ImportAuthorizationTest extends TestCase
                     'Payee' => 'payee',
                 ],
                 'options_json' => [
-                    'trim_strings' => true,
+                    'parser_settings' => ['trim_strings' => true],
                 ],
             ]);
 
@@ -56,19 +54,6 @@ class ImportAuthorizationTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Import Profile');
-
-        $cloneResponse = $this->actingAs($user, 'sanctum')
-            ->postJson(route('api.v1.imports.file-profiles.clone', $systemProfile), [
-                'name' => 'Cloned System Profile',
-            ]);
-
-        $cloneResponse->assertCreated()
-            ->assertJsonPath('data.type', 'user')
-            ->assertJsonPath('data.user_id', $user->id)
-            ->assertJsonPath('data.key', null);
-
-        $this->assertNull(data_get($cloneResponse->json('data.options_json'), 'matching_rules'));
-        $this->assertNull(data_get($cloneResponse->json('data.options_json'), 'defaults'));
 
         $this->actingAs($user, 'sanctum')
             ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profileId))
@@ -144,27 +129,134 @@ class ImportAuthorizationTest extends TestCase
             ->assertSessionHasErrors('preferred_file_import_profile_id');
     }
 
+    public function test_index_includes_account_entities_for_current_user(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+        ]);
+
+        $ownAccount = $this->createAccountEntity($user);
+        $ownAccount->preferred_file_import_profile_id = $profile->id;
+        $ownAccount->save();
+
+        $otherAccount = $this->createAccountEntity($otherUser);
+        $otherAccount->preferred_file_import_profile_id = $profile->id;
+        $otherAccount->save();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson(route('api.v1.imports.file-profiles.index'));
+
+        $response->assertOk();
+
+        $profileData = collect($response->json('data'))->firstWhere('id', $profile->id);
+        $this->assertNotNull($profileData);
+
+        $accountEntities = $profileData['account_entities'] ?? null;
+        $this->assertIsArray($accountEntities);
+        $this->assertCount(1, $accountEntities);
+        $this->assertSame($ownAccount->id, $accountEntities[0]['id']);
+        $this->assertArrayNotHasKey($otherAccount->id, array_column($accountEntities, 'id'));
+    }
+
+    public function test_cannot_delete_profile_in_use_by_an_account(): void
+    {
+        $user = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+        ]);
+
+        $account = $this->createAccountEntity($user);
+        $account->preferred_file_import_profile_id = $profile->id;
+        $account->save();
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('file_import_profiles', ['id' => $profile->id]);
+    }
+
+    public function test_store_rejects_unknown_options_json_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
+                'name' => 'Bad Options Profile',
+                'options_json' => [
+                    'trim_strings' => true,
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['options_json']);
+    }
+
+    public function test_store_accepts_valid_options_json_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
+                'name' => 'Good Options Profile',
+                'options_json' => [
+                    'parser_settings' => [
+                        'trim_strings' => true,
+                        'skip_empty_rows' => false,
+                    ],
+                    'comment_separator' => ' – ',
+                ],
+            ])
+            ->assertCreated();
+    }
+
+    public function test_update_rejects_unknown_options_json_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
+                'options_json' => [
+                    'field_map' => ['payee' => 'M'],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['options_json']);
+    }
+
     private function createSystemProfile(): FileImportProfile
     {
         $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return FileImportProfile::query()->updateOrCreate(
-            ['key' => $definition['key']],
-            [
-                'user_id' => null,
-                'type' => 'system',
-                'name' => $definition['name'],
-                'delimiter' => $definition['delimiter'],
-                'has_header_row' => $definition['has_header_row'],
-                'date_format' => $definition['date_format'],
-                'decimal_separator' => $definition['decimal_separator'],
-                'thousand_separator' => $definition['thousand_separator'],
-                'sign_handling' => $definition['sign_handling'],
-                'mapping_json' => $definition['mapping_json'],
-                'options_json' => $definition['options_json'],
-                'active' => true,
-            ],
-        );
+        $record = FileImportProfile::query()->firstOrNew(['key' => $definition['key']]);
+        $record->fill([
+            'name' => $definition['name'],
+            'delimiter' => $definition['delimiter'],
+            'has_header_row' => $definition['has_header_row'],
+            'date_format' => $definition['date_format'],
+            'decimal_separator' => $definition['decimal_separator'],
+            'thousand_separator' => $definition['thousand_separator'],
+            'sign_handling' => $definition['sign_handling'],
+            'mapping_json' => $definition['mapping_json'],
+            'options_json' => $definition['options_json'],
+            'active' => true,
+        ]);
+        $record->key = $definition['key'];
+        $record->user_id = null;
+        $record->type = 'system';
+        $record->save();
+
+        return $record;
     }
 
     private function createAccountEntity(User $user): AccountEntity

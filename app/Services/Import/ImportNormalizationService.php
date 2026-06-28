@@ -312,6 +312,7 @@ class ImportNormalizationService
             ->orderByDesc('processed_at')
             ->orderByDesc('created_at')
             ->limit(self::RELATED_AI_DOCUMENT_QUERY_LIMIT)
+            ->select(['id', 'status', 'processed_transaction_data', 'processed_at', 'created_at'])
             ->get();
 
         return $documents

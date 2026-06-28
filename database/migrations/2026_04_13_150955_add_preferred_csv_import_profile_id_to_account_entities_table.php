@@ -15,7 +15,7 @@ return new class () extends Migration {
                 ->nullable()
                 ->after('config_id')
                 ->constrained('file_import_profiles')
-                ->nullOnDelete();
+                ->restrictOnDelete();
 
             $table->index('preferred_file_import_profile_id');
         });

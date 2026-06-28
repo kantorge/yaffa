@@ -17,24 +17,24 @@ class SyncSystemFileImportProfilesCommand extends Command
         $count = 0;
 
         foreach ($registry->profiles() as $profile) {
-            FileImportProfile::query()->updateOrCreate(
-                ['key' => $profile['key']],
-                [
-                    'user_id' => null,
-                    'type' => 'system',
-                    'file_type' => $profile['file_type'] ?? 'csv',
-                    'name' => $profile['name'],
-                    'delimiter' => $profile['delimiter'] ?? null,
-                    'has_header_row' => (bool) ($profile['has_header_row'] ?? false),
-                    'date_format' => $profile['date_format'] ?? null,
-                    'decimal_separator' => $profile['decimal_separator'] ?? null,
-                    'thousand_separator' => $profile['thousand_separator'] ?? null,
-                    'sign_handling' => $profile['sign_handling'] ?? null,
-                    'mapping_json' => $profile['mapping_json'] ?? [],
-                    'options_json' => $profile['options_json'] ?? [],
-                    'active' => (bool) ($profile['active'] ?? true),
-                ],
-            );
+            $record = FileImportProfile::query()->firstOrNew(['key' => $profile['key']]);
+            $record->fill([
+                'file_type' => $profile['file_type'] ?? 'csv',
+                'name' => $profile['name'],
+                'delimiter' => $profile['delimiter'] ?? null,
+                'has_header_row' => (bool) ($profile['has_header_row'] ?? false),
+                'date_format' => $profile['date_format'] ?? null,
+                'decimal_separator' => $profile['decimal_separator'] ?? null,
+                'thousand_separator' => $profile['thousand_separator'] ?? null,
+                'sign_handling' => $profile['sign_handling'] ?? null,
+                'mapping_json' => $profile['mapping_json'] ?? [],
+                'options_json' => $profile['options_json'] ?? [],
+                'active' => (bool) ($profile['active'] ?? true),
+            ]);
+            $record->key = $profile['key'];
+            $record->user_id = null;
+            $record->type = 'system';
+            $record->save();
 
             $count++;
         }

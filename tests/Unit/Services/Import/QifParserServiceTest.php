@@ -4,6 +4,8 @@ namespace Tests\Unit\Services\Import;
 
 use App\Services\Import\QifParserService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
+use RuntimeException;
 use Tests\TestCase;
 
 class QifParserServiceTest extends TestCase
@@ -101,5 +103,33 @@ QIF;
         $this->assertSame('Déjà vu payee', $parsed['entries'][0]['payee']);
         $this->assertNotEmpty($parsed['warnings']);
         $this->assertStringContainsString('converted to UTF-8', implode(' ', $parsed['warnings']));
+    }
+
+    public function test_parse_content_throws_runtime_exception_when_entry_count_exceeds_max_rows(): void
+    {
+        Config::set('yaffa.import_max_rows', 2);
+
+        $content = <<<'QIF'
+!Type:Bank
+D2025-01-01
+T-10.00
+PPayee A
+^
+D2025-01-02
+T-20.00
+PPayee B
+^
+D2025-01-03
+T-30.00
+PPayee C
+^
+QIF;
+
+        $service = new QifParserService();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/maximum entry count of 2/');
+
+        $service->parseContent($content);
     }
 }

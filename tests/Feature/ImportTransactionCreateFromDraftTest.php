@@ -185,23 +185,25 @@ QIF;
         $definition = collect($definitions)->firstWhere('file_type', 'csv')
             ?? $definitions[0];
 
-        return FileImportProfile::query()->updateOrCreate(
-            ['key' => $definition['key']],
-            [
-                'user_id' => null,
-                'type' => 'system',
-                'name' => $definition['name'],
-                'delimiter' => $definition['delimiter'],
-                'has_header_row' => $definition['has_header_row'],
-                'date_format' => $definition['date_format'],
-                'decimal_separator' => $definition['decimal_separator'],
-                'thousand_separator' => $definition['thousand_separator'],
-                'sign_handling' => $definition['sign_handling'],
-                'mapping_json' => $definition['mapping_json'],
-                'options_json' => $definition['options_json'],
-                'active' => true,
-            ],
-        );
+        $record = FileImportProfile::query()->firstOrNew(['key' => $definition['key']]);
+        $record->fill([
+            'name' => $definition['name'],
+            'delimiter' => $definition['delimiter'],
+            'has_header_row' => $definition['has_header_row'],
+            'date_format' => $definition['date_format'],
+            'decimal_separator' => $definition['decimal_separator'],
+            'thousand_separator' => $definition['thousand_separator'],
+            'sign_handling' => $definition['sign_handling'],
+            'mapping_json' => $definition['mapping_json'],
+            'options_json' => $definition['options_json'],
+            'active' => true,
+        ]);
+        $record->key = $definition['key'];
+        $record->user_id = null;
+        $record->type = 'system';
+        $record->save();
+
+        return $record;
     }
 
     /**

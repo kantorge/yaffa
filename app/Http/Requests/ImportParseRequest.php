@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\FileImportProfile;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 use Closure;
@@ -39,14 +40,24 @@ class ImportParseRequest extends FormRequest
             'file_import_profile_id' => [
                 'nullable',
                 'integer',
-                'exists:file_import_profiles,id',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if ($value === null || $value === '') {
                         return;
                     }
 
-                    $profile = FileImportProfile::query()->find((int) $value);
+                    $user = $this->user();
+                    if (! $user instanceof User) {
+                        $fail(__('The selected import profile is not accessible.'));
+                        return;
+                    }
+
+                    $profile = FileImportProfile::query()
+                        ->selectableForUser($user)
+                        ->where('id', (int) $value)
+                        ->first();
+
                     if (! $profile instanceof FileImportProfile) {
+                        $fail(__('The selected import profile is not accessible.'));
                         return;
                     }
 

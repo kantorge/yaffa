@@ -28,16 +28,6 @@
         </button>
       </div>
 
-      <!-- Error -->
-      <div
-        v-if="error"
-        class="alert alert-danger alert-dismissible mb-3"
-        role="alert"
-      >
-        {{ error }}
-        <button type="button" class="btn-close" @click="error = null"></button>
-      </div>
-
       <!-- CSV profile creation wizard (new profile) -->
       <div
         v-if="showWizard && fileType === 'csv' && !editingProfile"
@@ -381,6 +371,7 @@
 
       <table
         v-else-if="userProfiles.length > 0 && !showWizard"
+        ref="profilesTable"
         class="table table-sm mb-0"
       >
         <thead>
@@ -439,18 +430,37 @@
               >
                 <i class="fa fa-edit"></i>
               </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger"
-                :disabled="!!editingProfile || deletingId === profile.id"
-                @click="deleteProfile(profile)"
-              >
+              <template v-if="profile.account_entities?.length > 0">
                 <span
-                  v-if="deletingId === profile.id"
-                  class="spinner-border spinner-border-sm"
-                ></span>
-                <i v-else class="fa fa-trash"></i>
-              </button>
+                  class="d-inline-block"
+                  tabindex="0"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="left"
+                  :title="deleteDisabledTooltip(profile)"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    disabled
+                  >
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </span>
+              </template>
+              <template v-else>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  :disabled="!!editingProfile || deletingId === profile.id"
+                  @click="deleteProfile(profile)"
+                >
+                  <span
+                    v-if="deletingId === profile.id"
+                    class="spinner-border spinner-border-sm"
+                  ></span>
+                  <i v-else class="fa fa-trash"></i>
+                </button>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -462,9 +472,13 @@
 <script>
   import Swal from 'sweetalert2';
   import axios from 'axios';
-  import { computed, ref } from 'vue';
+  import { computed, nextTick, ref, watch } from 'vue';
   import { __ } from '@/shared/lib/i18n';
-  import { escapeHtml } from '@/shared/lib/helpers';
+  import {
+    escapeHtml,
+    initializeBootstrapTooltips,
+  } from '@/shared/lib/helpers';
+  import { showSuccessToast, showErrorToast } from '@/shared/lib/toast';
   import ProfileCreationWizard from './ProfileCreationWizard.vue';
 
   const mappingJsonPlaceholder = JSON.stringify(
@@ -495,9 +509,9 @@
       const editingProfile = ref(null);
       const saving = ref(false);
       const deletingId = ref(null);
-      const error = ref(null);
       const mappingJsonError = ref(null);
       const showWizard = ref(false);
+      const profilesTable = ref(null);
 
       // AI suggestion state (edit mode)
       const showEditAiPanel = ref(false);
@@ -551,9 +565,26 @@
         };
       };
 
+      const deleteDisabledTooltip = (profile) => {
+        const names = (profile.account_entities || [])
+          .map((a) => a.name)
+          .join(', ');
+        return __('Used as default profile by: :accounts', { accounts: names });
+      };
+
+      watch(
+        () => props.profiles,
+        async () => {
+          await nextTick();
+          if (profilesTable.value) {
+            initializeBootstrapTooltips(profilesTable.value);
+          }
+        },
+        { deep: false },
+      );
+
       const startCreate = () => {
         mappingJsonError.value = null;
-        error.value = null;
         if (props.fileType === 'csv') {
           showWizard.value = true;
         } else {
@@ -563,7 +594,6 @@
 
       const startEdit = (profile) => {
         mappingJsonError.value = null;
-        error.value = null;
         showEditAiPanel.value = false;
         editAiFile.value = null;
         aiError.value = null;
@@ -580,7 +610,6 @@
         editingProfile.value = null;
         showWizard.value = false;
         mappingJsonError.value = null;
-        error.value = null;
         showEditAiPanel.value = false;
         aiError.value = null;
       };
@@ -658,7 +687,6 @@
         }
 
         saving.value = true;
-        error.value = null;
 
         try {
           if (editingProfile.value.id) {
@@ -673,33 +701,27 @@
           mappingJsonError.value = null;
           emit('profiles-updated');
         } catch (err) {
+          let message;
           if (err?.response?.data?.errors) {
             const firstKey = Object.keys(err.response.data.errors)[0];
-            error.value =
+            message =
               err.response.data.errors[firstKey]?.[0] ||
               __('Save failed. Please review your input.');
           } else if (err?.response?.data?.error?.message) {
-            error.value = err.response.data.error.message;
+            message = err.response.data.error.message;
           } else {
-            error.value = __('Save failed due to a network or server error.');
+            message = __('Save failed due to a network or server error.');
           }
+          showErrorToast(message);
         } finally {
           saving.value = false;
         }
       };
 
       const deleteProfile = async (profile) => {
-        let affectedAccounts = [];
-        try {
-          const response = await axios.get(
-            `/api/v1/imports/file-profiles/${profile.id}/affected-accounts`,
-          );
-          affectedAccounts = Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-        } catch (_e) {
-          // Non-critical; proceed without affected-account context
-        }
+        const affectedAccounts = Array.isArray(profile.account_entities)
+          ? profile.account_entities
+          : [];
 
         const escapedName = escapeHtml(profile.name);
         let html =
@@ -716,7 +738,7 @@
           html +=
             `<p class="small mt-2">` +
             __(
-              'This profile is set as the default for :count account(s): :accounts. The default will be removed — manual profile selection will be required for these accounts on future imports.',
+              'This profile is set as the default for :count account(s): :accounts. Deleting it will require manual profile selection for these accounts on future imports.',
               { count: affectedAccounts.length, accounts: accountList },
             ) +
             `</p>`;
@@ -740,17 +762,17 @@
         }
 
         deletingId.value = profile.id;
-        error.value = null;
 
         try {
           await axios.delete(`/api/v1/imports/file-profiles/${profile.id}`);
+          showSuccessToast(__('Profile deleted successfully.'));
           emit('profiles-updated');
         } catch (err) {
-          if (err?.response?.data?.error?.message) {
-            error.value = err.response.data.error.message;
-          } else {
-            error.value = __('Delete failed. Please try again.');
-          }
+          showErrorToast(
+            err?.response?.data?.message ||
+              err?.response?.data?.error?.message ||
+              __('Delete failed. Please try again.'),
+          );
         } finally {
           deletingId.value = null;
         }
@@ -859,8 +881,9 @@
         editingProfile,
         saving,
         deletingId,
-        error,
         mappingJsonError,
+        profilesTable,
+        deleteDisabledTooltip,
         mappingJsonPlaceholder,
         showWizard,
         hasAiProvider,

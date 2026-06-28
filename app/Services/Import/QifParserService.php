@@ -5,6 +5,7 @@ namespace App\Services\Import;
 use App\Models\FileImportProfile;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
+use SplFileObject;
 
 class QifParserService
 {
@@ -55,8 +56,25 @@ class QifParserService
         }
 
         [$normalizedContent, $encodingWarning] = $this->normalizeContentToUtf8($content);
+        unset($content);
 
-        $parsed = $this->parseContent($normalizedContent);
+        $tmpPath = tempnam(sys_get_temp_dir(), 'qif_import_');
+        if ($tmpPath === false) {
+            throw new RuntimeException('Unable to create temporary file for QIF parsing.');
+        }
+
+        try {
+            file_put_contents($tmpPath, $normalizedContent);
+            unset($normalizedContent);
+
+            $fileObj = new SplFileObject($tmpPath);
+            $fileObj->setFlags(SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE);
+
+            $parsed = $this->doParseLines($fileObj);
+        } finally {
+            unset($fileObj);
+            @unlink($tmpPath);
+        }
 
         if ($encodingWarning !== null) {
             $parsed['warnings'][] = $encodingWarning;
@@ -71,6 +89,17 @@ class QifParserService
      */
     public function parseContent(string $content): array
     {
+        $lines = preg_split('/\r\n|\r|\n/', $content) ?: [];
+
+        return $this->doParseLines($lines);
+    }
+
+    /**
+     * @param  iterable<int, string>  $lines
+     * @return array{entries: list<array<string, mixed>>, warnings: list<string>}
+     */
+    private function doParseLines(iterable $lines): array
+    {
         $entries = [];
         $warnings = [];
         $supportedTypes = ['Bank', 'Cash', 'CCard'];
@@ -78,8 +107,6 @@ class QifParserService
         $skipSection = false;
         $inAccountBlock = false;
         $currentEntry = null;
-
-        $lines = preg_split('/\r\n|\r|\n/', $content) ?: [];
 
         foreach ($lines as $lineNumber => $rawLine) {
             $line = mb_trim($rawLine);
@@ -124,6 +151,13 @@ class QifParserService
                 if ($currentEntry !== null) {
                     $entries[] = $this->finalizeEntry($currentEntry);
                     $currentEntry = null;
+
+                    $maxRows = max(1, (int) config('yaffa.import_max_rows', 5000));
+                    if (count($entries) > $maxRows) {
+                        throw new RuntimeException(
+                            sprintf('QIF import exceeds the configured maximum entry count of %d.', $maxRows),
+                        );
+                    }
                 }
 
                 continue;

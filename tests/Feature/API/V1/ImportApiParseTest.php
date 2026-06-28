@@ -278,6 +278,79 @@ CSV;
             ->assertJsonPath('error.code', 'IMPORT_PARSE_FAILED');
     }
 
+    public function test_csv_parse_returns_422_for_foreign_owned_profile_id(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $accountEntity = $this->createAccountEntity($user);
+
+        $foreignProfile = FileImportProfile::factory()->create([
+            'user_id' => $otherUser->id,
+            'type' => 'user',
+            'file_type' => 'csv',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.v1.imports.parse'), [
+                'source_type' => 'csv',
+                'account_id' => $accountEntity->id,
+                'file_import_profile_id' => $foreignProfile->id,
+                'file' => UploadedFile::fake()->createWithContent('import.csv', "Date,Amount\n2025-01-01,-10.00"),
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonMissingPath('error');
+    }
+
+    public function test_csv_parse_returns_422_for_nonexistent_profile_id(): void
+    {
+        $user = User::factory()->create();
+        $accountEntity = $this->createAccountEntity($user);
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.v1.imports.parse'), [
+                'source_type' => 'csv',
+                'account_id' => $accountEntity->id,
+                'file_import_profile_id' => 999999,
+                'file' => UploadedFile::fake()->createWithContent('import.csv', "Date,Amount\n2025-01-01,-10.00"),
+            ]);
+
+        $response->assertUnprocessable();
+    }
+
+    public function test_profile_store_rejects_multi_char_delimiter(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
+                'name' => 'Bad Delimiter Profile',
+                'delimiter' => '--',
+                'has_header_row' => true,
+                'mapping_json' => ['Date' => 'date', 'Amount' => 'amount'],
+            ]);
+
+        $response->assertUnprocessable();
+    }
+
+    public function test_profile_update_rejects_multi_char_delimiter(): void
+    {
+        $user = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+            'delimiter' => ',',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
+                'delimiter' => ';;',
+            ]);
+
+        $response->assertUnprocessable();
+    }
+
     public function test_profile_create_and_update_reject_forbidden_executable_keys(): void
     {
         $user = User::factory()->create();
@@ -316,23 +389,25 @@ CSV;
     {
         $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return FileImportProfile::query()->updateOrCreate(
-            ['key' => $definition['key']],
-            [
-                'user_id' => null,
-                'type' => 'system',
-                'name' => $definition['name'],
-                'delimiter' => $definition['delimiter'],
-                'has_header_row' => $definition['has_header_row'],
-                'date_format' => $definition['date_format'],
-                'decimal_separator' => $definition['decimal_separator'],
-                'thousand_separator' => $definition['thousand_separator'],
-                'sign_handling' => $definition['sign_handling'],
-                'mapping_json' => $definition['mapping_json'],
-                'options_json' => $definition['options_json'],
-                'active' => true,
-            ],
-        );
+        $record = FileImportProfile::query()->firstOrNew(['key' => $definition['key']]);
+        $record->fill([
+            'name' => $definition['name'],
+            'delimiter' => $definition['delimiter'],
+            'has_header_row' => $definition['has_header_row'],
+            'date_format' => $definition['date_format'],
+            'decimal_separator' => $definition['decimal_separator'],
+            'thousand_separator' => $definition['thousand_separator'],
+            'sign_handling' => $definition['sign_handling'],
+            'mapping_json' => $definition['mapping_json'],
+            'options_json' => $definition['options_json'],
+            'active' => true,
+        ]);
+        $record->key = $definition['key'];
+        $record->user_id = null;
+        $record->type = 'system';
+        $record->save();
+
+        return $record;
     }
 
     private function createAccountEntity(User $user): AccountEntity

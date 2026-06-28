@@ -118,6 +118,7 @@ class ImportDuplicateDetectionService
         /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
         $result = $user->transactions()
             ->whereBetween('date', [$windowStart, $windowEnd])
+            ->select(['id', 'date', 'config_type', 'config_id'])
             ->with(['config', 'transactionItems'])
             ->get();
 

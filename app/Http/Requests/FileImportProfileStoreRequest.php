@@ -19,7 +19,7 @@ class FileImportProfileStoreRequest extends FormRequest
             'key' => ['prohibited'],
             'type' => ['prohibited'],
             'file_type' => ['nullable', Rule::in(['csv', 'qif'])],
-            'delimiter' => ['nullable', 'string', 'max:5'],
+            'delimiter' => ['nullable', 'string', 'max:1'],
             'has_header_row' => ['nullable', 'boolean'],
             'date_format' => ['nullable', 'string', 'max:64'],
             'decimal_separator' => ['nullable', 'string', 'max:10'],
@@ -28,6 +28,10 @@ class FileImportProfileStoreRequest extends FormRequest
             'mapping_json' => ['nullable', 'array'],
             'mapping_json.*' => ['string', Rule::in(ImportCanonicalField::values())],
             'options_json' => ['nullable', 'array'],
+            'options_json.parser_settings' => ['sometimes', 'array'],
+            'options_json.parser_settings.trim_strings' => ['sometimes', 'boolean'],
+            'options_json.parser_settings.skip_empty_rows' => ['sometimes', 'boolean'],
+            'options_json.comment_separator' => ['sometimes', 'string', 'max:32'],
             'options_json.defaults' => ['prohibited'],
             'options_json.matching_rules' => ['prohibited'],
             'options_json.actions' => ['prohibited'],
@@ -71,7 +75,32 @@ class FileImportProfileStoreRequest extends FormRequest
 
                 $this->validateCsvMappingJson($validator, $mapping);
             },
+            function (Validator $validator): void {
+                $options = $this->input('options_json');
+                if (! is_array($options)) {
+                    return;
+                }
+
+                $this->validateOptionsJsonKeys($validator, $options);
+            },
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     */
+    private function validateOptionsJsonKeys(Validator $validator, array $options): void
+    {
+        $allowed = ['parser_settings', 'comment_separator'];
+
+        foreach (array_keys($options) as $key) {
+            if (! in_array($key, $allowed, true)) {
+                $validator->errors()->add(
+                    'options_json',
+                    sprintf('The options_json key "%s" is not allowed. Allowed keys are: %s.', $key, implode(', ', $allowed)),
+                );
+            }
+        }
     }
 
     /**

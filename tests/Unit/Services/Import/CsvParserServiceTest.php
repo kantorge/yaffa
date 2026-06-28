@@ -11,6 +11,9 @@ use App\Services\Import\CsvParserService;
 use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use League\Csv\Exception as CsvException;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class CsvParserServiceTest extends TestCase
@@ -106,14 +109,69 @@ CSV;
         $this->assertStringContainsString('No matching system rule', implode(' ', $parsed['drafts'][1]['warnings']));
     }
 
+    public function test_resolve_payee_by_name_or_alias_makes_single_db_query_for_multi_row_csv(): void
+    {
+        $user = User::factory()->create();
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create(['config_type' => 'account', 'active' => true]);
+
+        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
+            ->create(['config_type' => 'payee', 'name' => 'Vendor A']);
+        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
+            ->create(['config_type' => 'payee', 'name' => 'Vendor B']);
+        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
+            ->create(['config_type' => 'payee', 'name' => 'Vendor C']);
+
+        $profile = $this->createSystemProfile();
+
+        $csv = <<<'CSV'
+Értéknap;Összeg;Típus;Közlemény/1;Közlemény/2;Közlemény/3
+2025.01.05.;-100,00;Elektronikus forint átutalás;Ref-1;Vendor A;Memo A
+2025.01.06.;-200,00;Elektronikus forint átutalás;Ref-2;Vendor B;Memo B
+2025.01.07.;-300,00;Elektronikus forint átutalás;Ref-3;Vendor C;Memo C
+CSV;
+
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csv);
+        $service = new CsvParserService();
+
+        DB::enableQueryLog();
+        $service->parseFile($file, $profile, $account->id, $user->id);
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $payeeQueries = array_filter(
+            $queries,
+            fn (array $q) => str_contains($q['query'], 'account_entities')
+                && in_array('payee', $q['bindings'], true),
+        );
+
+        $this->assertCount(1, $payeeQueries, 'Expected exactly one payee lookup query regardless of row count.');
+    }
+
+    public function test_humanize_csv_exception_fallback_returns_static_string_without_raw_message(): void
+    {
+        $service = new CsvParserService();
+        $method = new ReflectionMethod(CsvParserService::class, 'humanizeCsvException');
+        $method->setAccessible(true);
+
+        $rawMessage = 'internal state: byte offset 127, parser state 0x3F';
+        $exception = new CsvException($rawMessage);
+
+        $result = $method->invoke($service, $exception);
+
+        $this->assertStringNotContainsString($rawMessage, $result);
+        $this->assertStringNotContainsString('byte offset', $result);
+        $this->assertStringContainsString('Please check that the file format', $result);
+    }
+
     private function createSystemProfile(): FileImportProfile
     {
         $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
 
-        return FileImportProfile::query()->create([
-            'user_id' => null,
-            'key' => $definition['key'],
-            'type' => 'system',
+        $record = FileImportProfile::query()->firstOrNew(['key' => $definition['key']]);
+        $record->fill([
             'name' => $definition['name'],
             'delimiter' => $definition['delimiter'],
             'has_header_row' => $definition['has_header_row'],
@@ -125,5 +183,11 @@ CSV;
             'options_json' => $definition['options_json'],
             'active' => true,
         ]);
+        $record->key = $definition['key'];
+        $record->user_id = null;
+        $record->type = 'system';
+        $record->save();
+
+        return $record;
     }
 }

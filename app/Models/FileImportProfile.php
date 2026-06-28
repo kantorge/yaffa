@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use App\Enums\ImportCanonicalField;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
@@ -25,9 +25,6 @@ class FileImportProfile extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'user_id',
-        'key',
-        'type',
         'file_type',
         'name',
         'delimiter',
@@ -73,6 +70,11 @@ class FileImportProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function accountEntities(): HasMany
+    {
+        return $this->hasMany(AccountEntity::class, 'preferred_file_import_profile_id');
+    }
+
     #[Scope]
     protected function selectableForUser(Builder $query, User $user): Builder
     {
@@ -95,63 +97,4 @@ class FileImportProfile extends Model
         return $this->type === 'user' && (int) $this->user_id === (int) $user->id;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toUserCloneAttributes(User $user, ?string $name = null): array
-    {
-        return [
-            'user_id' => $user->id,
-            'key' => null,
-            'type' => 'user',
-            'file_type' => $this->file_type,
-            'name' => $name ?: __(':name (Copy)', ['name' => $this->name]),
-            'delimiter' => $this->delimiter,
-            'has_header_row' => $this->has_header_row,
-            'date_format' => $this->date_format,
-            'decimal_separator' => $this->decimal_separator,
-            'thousand_separator' => $this->thousand_separator,
-            'sign_handling' => $this->sign_handling,
-            'mapping_json' => $this->sanitizedMappingForUserProfile(),
-            'options_json' => $this->sanitizedOptionsForUserProfile(),
-            'active' => $this->active,
-        ];
-    }
-
-    /**
-     * Returns mapping_json safe for a user-owned profile: any value that is not a valid
-     * ImportCanonicalField (e.g. system-only fact names like value_date, entry_type, notice_*) is
-     * replaced with 'ignore' so the cloned profile does not silently fail on every import.
-     *
-     * @return array<string, string>
-     */
-    public function sanitizedMappingForUserProfile(): array
-    {
-        $mapping = $this->mapping_json ?? [];
-        $validValues = ImportCanonicalField::values();
-
-        return array_map(
-            fn (mixed $value): string => is_string($value) && in_array($value, $validValues, true)
-                ? $value
-                : ImportCanonicalField::Ignore->value,
-            $mapping,
-        );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function sanitizedOptionsForUserProfile(): array
-    {
-        $options = $this->options_json ?? [];
-
-        unset(
-            $options['matching_rules'],
-            $options['actions'],
-            $options['transform_catalog'],
-            $options['defaults']
-        );
-
-        return $options;
-    }
 }
