@@ -1318,14 +1318,21 @@
       parseAmountPreview(raw) {
         if (!raw && raw !== 0) return null;
         let cleaned = String(raw).trim();
+        // Strip trailing 3-letter uppercase currency code (e.g. "HUF", "EUR") — mirrors backend logic
+        cleaned = cleaned.replace(/\s*[A-Z]{3}$/, '').trimEnd();
         if (this.thousandSeparator) {
           cleaned = cleaned.split(this.thousandSeparator).join('');
         }
         if (this.decimalSeparator && this.decimalSeparator !== '.') {
           cleaned = cleaned.replace(this.decimalSeparator, '.');
         }
-        const parsed = parseFloat(cleaned);
-        return isNaN(parsed) ? null : parsed;
+        // Remove any remaining whitespace
+        cleaned = cleaned.replace(/\s+/g, '');
+        // Strict validation: reject if anything other than a signed decimal number remains
+        if (!/^-?\d+(\.\d+)?$/.test(cleaned)) {
+          return null;
+        }
+        return parseFloat(cleaned);
       },
 
       parseDatePreview(raw) {

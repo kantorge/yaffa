@@ -39,24 +39,24 @@
         if (!this.rawValue) {
           return null;
         }
-        let cleaned = this.rawValue.trim();
+        // Strip trailing 3-letter uppercase currency code (e.g. "HUF", "EUR") — mirrors backend logic
+        let cleaned = this.rawValue.trim().replace(/\s*[A-Z]{3}$/, '').trimEnd();
 
-        // Remove thousand separator
         if (this.thousandSeparator) {
           cleaned = cleaned.split(this.thousandSeparator).join('');
         }
 
-        // Normalise decimal separator to .
         if (this.decimalSeparator && this.decimalSeparator !== '.') {
           cleaned = cleaned.replace(this.decimalSeparator, '.');
         }
 
-        const parsed = parseFloat(cleaned);
-        if (isNaN(parsed)) {
+        // Remove any remaining whitespace then strictly validate
+        cleaned = cleaned.replace(/\s+/g, '');
+        if (!/^-?\d+(\.\d+)?$/.test(cleaned)) {
           return null;
         }
 
-        return parsed;
+        return parseFloat(cleaned);
       },
     },
     methods: { __ },

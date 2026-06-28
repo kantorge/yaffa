@@ -8,6 +8,18 @@
         <div class="d-flex gap-3">
           <div class="form-check form-check-inline mb-0">
             <input
+              id="show-drafts-filter"
+              v-model="showDraftRows"
+              type="checkbox"
+              class="form-check-input"
+            />
+            <label class="form-check-label small" for="show-drafts-filter">
+              {{ __('Show drafts') }}
+              <span v-if="draftCount" class="badge bg-info text-dark ms-1">{{ draftCount }}</span>
+            </label>
+          </div>
+          <div class="form-check form-check-inline mb-0">
+            <input
               id="show-ignored-filter"
               v-model="showIgnoredRows"
               type="checkbox"
@@ -265,6 +277,7 @@
     data() {
       return {
         expandedRows: new Set(),
+        showDraftRows: true,
         showIgnoredRows: false,
         showFinalizedRows: false,
       };
@@ -277,6 +290,9 @@
     computed: {
       visibleDrafts() {
         return this.drafts.filter((draft) => {
+          if (draft.status === 'pending_review' && !this.showDraftRows) {
+            return false;
+          }
           if (draft.status === 'ignored' && !this.showIgnoredRows) {
             return false;
           }
@@ -285,6 +301,9 @@
           }
           return true;
         });
+      },
+      draftCount() {
+        return this.drafts.filter((d) => d.status === 'pending_review').length;
       },
       ignoredCount() {
         return this.drafts.filter((d) => d.status === 'ignored').length;
