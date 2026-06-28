@@ -25,7 +25,7 @@
     </div>
 
     <template v-if="sourceType === 'csv'">
-      <div class="col-12 col-lg-4">
+      <div id="import-profile-selector" class="col-12 col-lg-4">
         <label class="form-label" for="csv-profile-select">
           {{ __('CSV import profile') }}
         </label>
@@ -66,7 +66,7 @@
     </template>
 
     <template v-if="sourceType === 'qif'">
-      <div class="col-12 col-lg-4">
+      <div id="import-profile-selector" class="col-12 col-lg-4">
         <label class="form-label" for="qif-profile-select">
           {{ __('QIF field mapping profile') }}
           <span class="form-text">({{ __('optional') }})</span>

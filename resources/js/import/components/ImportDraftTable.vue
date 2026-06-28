@@ -5,7 +5,7 @@
     >
       <div class="card-title mb-0">{{ __('Parsed drafts') }}</div>
       <div class="d-flex align-items-center gap-3">
-        <div class="d-flex gap-3">
+        <div id="import-draft-filters" class="d-flex gap-3">
           <div class="form-check form-check-inline mb-0">
             <input
               id="show-drafts-filter"

@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-3">
+  <div id="import-profile-manager" class="card mb-3">
     <div
       class="card-header d-flex justify-content-between align-items-center collapse-control"
       data-coreui-toggle="collapse"
