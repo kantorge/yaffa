@@ -115,10 +115,13 @@ class ImportDuplicateDetectionService
         $windowStart = $draftDates->min()->subDays($dateWindowDays);
         $windowEnd = $draftDates->max()->addDays($dateWindowDays);
 
-        return $user->transactions()
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
+        $result = $user->transactions()
             ->whereBetween('date', [$windowStart, $windowEnd])
             ->with(['config', 'transactionItems'])
             ->get();
+
+        return $result;
     }
 
     /**

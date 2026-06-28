@@ -51,6 +51,7 @@ class DuplicateDetectionService
             $query->where('config_type', $extractedData['config_type']);
         }
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $potentialMatches */
         $potentialMatches = $query->with(['config', 'transactionItems'])->get();
 
         return $this->scoreTransactions($extractedData, $potentialMatches, $amountTolerancePercent, $similarityThreshold);
@@ -206,10 +207,6 @@ class DuplicateDetectionService
         $matches = [];
 
         foreach ($transactions as $transaction) {
-            if (! $transaction instanceof Transaction) {
-                continue;
-            }
-
             $similarity = $this->calculateSimilarity($extractedData, $transaction, $amountTolerancePercent);
 
             if ($similarity > $similarityThreshold) {
