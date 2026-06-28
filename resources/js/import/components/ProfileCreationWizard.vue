@@ -1,24 +1,33 @@
 <template>
   <div>
-    <!-- Wizard header with step indicator -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div class="fw-semibold">{{ __('New CSV import profile') }}</div>
-      <div class="d-flex align-items-center gap-1">
-        <span
-          v-for="n in 4"
-          :key="n"
-          :class="[
-            'badge',
-            n === currentStep
-              ? 'bg-primary'
-              : n < currentStep
-                ? 'bg-success'
-                : 'bg-secondary',
-          ]"
-        >
-          {{ n }}
-        </span>
-        <span class="ms-2 small text-muted">{{ stepLabel }}</span>
+    <!-- Wizard header -->
+    <div class="mb-4">
+      <h6 class="mb-3 fw-bold">
+        {{ isEditMode ? __('Edit CSV import profile') : __('New CSV import profile') }}
+      </h6>
+      <div class="d-flex align-items-start">
+        <template v-for="n in 4" :key="n">
+          <div class="d-flex flex-column align-items-center wizard-step-item">
+            <div
+              class="wizard-step-circle"
+              :class="stepCircleClass(n)"
+            >
+              <i v-if="n < currentStep" class="fa fa-check"></i>
+              <span v-else>{{ n }}</span>
+            </div>
+            <div
+              class="wizard-step-label text-center"
+              :class="stepLabelClass(n)"
+            >
+              {{ stepLabels[n - 1] }}
+            </div>
+          </div>
+          <div
+            v-if="n < 4"
+            class="wizard-step-connector"
+            :class="n < currentStep ? 'connector-done' : 'connector-pending'"
+          ></div>
+        </template>
       </div>
     </div>
 
@@ -40,9 +49,19 @@
     <!-- Step 1: File selection and auto-detection          -->
     <!-- ────────────────────────────────────────────────── -->
     <div v-if="currentStep === 1">
+      <div v-if="isEditMode" class="alert alert-info small py-2 mb-3">
+        <i class="fa fa-circle-info me-1"></i>
+        {{
+          __(
+            'Uploading a file is optional when editing. Skip to the next step to adjust parser settings and column mappings directly.',
+          )
+        }}
+      </div>
+
       <div class="mb-3">
         <label class="form-label small">
-          {{ __('Select a CSV file to analyse') }} *
+          {{ isEditMode ? __('CSV sample file (optional)') : __('Select a CSV file to analyse') }}
+          <span v-if="!isEditMode">*</span>
         </label>
         <input
           ref="fileInput"
@@ -684,6 +703,33 @@
     return firstHasNoNumbers && restHaveNumbers;
   }
 
+  /**
+   * Detect decimal separator from CSV data rows.
+   * Looks at all cell values and counts how many look like numbers with a comma
+   * vs. a dot as their decimal mark. Returns ',' or '.' (or null if inconclusive).
+   */
+  function detectDecimalSeparator(dataRows) {
+    let commaDecimalVotes = 0;
+    let dotDecimalVotes = 0;
+
+    for (const row of dataRows) {
+      for (const cell of row) {
+        const stripped = cell.trim().replace(/[A-Z]{3}$/, '').trim();
+        // Pattern: digit, comma, exactly 2 digits at end → comma is decimal
+        if (/\d,\d{2}$/.test(stripped)) {
+          commaDecimalVotes++;
+        }
+        // Pattern: digit, dot, exactly 2 digits at end → dot is decimal
+        if (/\d\.\d{2}$/.test(stripped)) {
+          dotDecimalVotes++;
+        }
+      }
+    }
+
+    if (commaDecimalVotes === 0 && dotDecimalVotes === 0) return null;
+    return commaDecimalVotes > dotDecimalVotes ? ',' : '.';
+  }
+
   /** Human-readable label for a delimiter character. */
   function delimiterLabel(d) {
     if (d === '\t') return '\\t (tab)';
@@ -709,6 +755,16 @@
       hasAiProvider: {
         type: Boolean,
         default: false,
+      },
+      /** When editing: the ID of the profile to update (triggers PATCH instead of POST). */
+      editProfileId: {
+        type: Number,
+        default: null,
+      },
+      /** When editing: the existing profile data to pre-populate the wizard. */
+      initialProfile: {
+        type: Object,
+        default: null,
       },
     },
 
@@ -763,15 +819,29 @@
       };
     },
 
+    created() {
+      if (this.initialProfile && this.editProfileId) {
+        this.initFromProfile(this.initialProfile);
+        this.currentStep = 2;
+      }
+    },
+
     computed: {
-      stepLabel() {
-        const labels = [
-          __('File selection'),
+      isEditMode() {
+        return !!this.editProfileId;
+      },
+
+      stepLabels() {
+        return [
+          this.isEditMode ? __('File (optional)') : __('File selection'),
           __('Parser settings'),
           __('Column mapping'),
           __('Review & save'),
         ];
-        return labels[this.currentStep - 1] || '';
+      },
+
+      stepLabel() {
+        return this.stepLabels[this.currentStep - 1] || '';
       },
 
       effectiveDelimiter() {
@@ -827,9 +897,16 @@
       },
 
       canAdvance() {
-        if (this.currentStep === 1) return this.headers.length > 0 && !this.aiSuggesting;
-        if (this.currentStep === 2)
-          return this.profileName.trim().length > 0 && this.headers.length > 0;
+        if (this.currentStep === 1) {
+          if (this.isEditMode) return !this.aiSuggesting;
+          return this.headers.length > 0 && !this.aiSuggesting;
+        }
+        if (this.currentStep === 2) {
+          const hasMapping = this.isEditMode
+            ? this.columnMappings.length > 0
+            : this.headers.length > 0;
+          return this.profileName.trim().length > 0 && hasMapping;
+        }
         if (this.currentStep === 3) return !this.mappingValidationError;
         return false;
       },
@@ -838,6 +915,50 @@
     methods: {
       __,
       delimiterLabel,
+
+      // ── Stepper helpers ──────────────────────────────────────────────────
+
+      stepCircleClass(n) {
+        if (n < this.currentStep) return 'wizard-circle-done';
+        if (n === this.currentStep) return 'wizard-circle-active';
+        return 'wizard-circle-pending';
+      },
+
+      stepLabelClass(n) {
+        if (n === this.currentStep) return 'fw-semibold text-primary';
+        if (n < this.currentStep) return 'text-success';
+        return 'text-muted';
+      },
+
+      // ── Edit mode initialisation ─────────────────────────────────────────
+
+      initFromProfile(profile) {
+        this.profileName = profile.name || '';
+        const delimiter = profile.delimiter || ',';
+        this.delimiterChoice = DELIMITER_CANDIDATES.includes(delimiter)
+          ? delimiter
+          : '__custom__';
+        if (!DELIMITER_CANDIDATES.includes(delimiter)) {
+          this.customDelimiter = delimiter;
+        }
+        this.hasHeaderRow = profile.has_header_row !== false;
+        this.decimalSeparator = profile.decimal_separator || '.';
+        this.thousandSeparator =
+          profile.thousand_separator !== null && profile.thousand_separator !== undefined
+            ? profile.thousand_separator
+            : '';
+        this.signHandling = profile.sign_handling || 'as_is';
+        this.dateFormat = profile.date_format || '';
+
+        if (profile.mapping_json && typeof profile.mapping_json === 'object') {
+          const entries = Object.entries(profile.mapping_json);
+          this.headers = entries.map(([header]) => header);
+          this.columnMappings = entries.map(([header, canonical]) => ({
+            header,
+            canonical: canonical || 'ignore',
+          }));
+        }
+      },
 
       // ── File handling ──────────────────────────────────────────────────────
 
@@ -878,6 +999,13 @@
           : '__custom__';
         if (!DELIMITER_CANDIDATES.includes(delim)) this.customDelimiter = delim;
         this.hasHeaderRow = this.detectedHasHeader;
+
+        // Auto-detect decimal separator from data rows (skip header if present)
+        const dataRows = this.detectedHasHeader ? allParsed.slice(1) : allParsed;
+        const detectedDecimal = detectDecimalSeparator(dataRows);
+        if (detectedDecimal) {
+          this.decimalSeparator = detectedDecimal;
+        }
 
         this.rebuildParsedState(lines, delim, this.hasHeaderRow);
       },
@@ -1113,10 +1241,9 @@
         this.generalError = null;
 
         try {
-          const response = await axios.post(
-            '/api/v1/imports/file-profiles',
-            payload,
-          );
+          const response = this.editProfileId
+            ? await axios.patch(`/api/v1/imports/file-profiles/${this.editProfileId}`, payload)
+            : await axios.post('/api/v1/imports/file-profiles', payload);
           this.$emit('saved', response.data);
         } catch (err) {
           if (err?.response?.data?.errors) {
@@ -1242,3 +1369,62 @@
     },
   };
 </script>
+
+<style scoped>
+  /* ── Wizard stepper ──────────────────────────────────────── */
+  .wizard-step-item {
+    flex-shrink: 0;
+    min-width: 4.5rem;
+    max-width: 7rem;
+  }
+
+  .wizard-step-circle {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+  }
+
+  .wizard-circle-active {
+    background-color: var(--cui-primary, #0d6efd);
+    color: #fff;
+  }
+
+  .wizard-circle-done {
+    background-color: var(--cui-success, #198754);
+    color: #fff;
+  }
+
+  .wizard-circle-pending {
+    background-color: var(--cui-secondary-bg, #e9ecef);
+    color: var(--cui-secondary-color, #6c757d);
+    border: 2px solid var(--cui-border-color, #dee2e6);
+  }
+
+  .wizard-step-label {
+    font-size: 0.75rem;
+    margin-top: 0.35rem;
+    line-height: 1.2;
+    max-width: 5.5rem;
+  }
+
+  .wizard-step-connector {
+    flex: 1;
+    height: 2px;
+    margin: 1.1rem 0.35rem 0;
+    border-radius: 1px;
+  }
+
+  .connector-done {
+    background-color: var(--cui-success, #198754);
+  }
+
+  .connector-pending {
+    background-color: var(--cui-border-color, #dee2e6);
+  }
+</style>

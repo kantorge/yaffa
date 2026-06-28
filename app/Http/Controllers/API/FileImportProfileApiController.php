@@ -87,6 +87,18 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_OK);
     }
 
+    public function affectedAccounts(FileImportProfile $profile, Request $request): JsonResponse
+    {
+        Gate::authorize('delete', $profile);
+
+        $accounts = AccountEntity::query()
+            ->where('user_id', $request->user()?->id)
+            ->where('preferred_file_import_profile_id', $profile->id)
+            ->get(['id', 'name']);
+
+        return response()->json(['data' => $accounts], Response::HTTP_OK);
+    }
+
     public function destroy(FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('delete', $profile);

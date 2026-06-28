@@ -119,11 +119,14 @@ class ImportApiController extends Controller implements HasMiddleware
             return null;
         }
 
-        $profile = FileImportProfile::query()->findOrFail((int) $selectedProfileId);
+        $profile = FileImportProfile::query()->find((int) $selectedProfileId);
+        if (! $profile instanceof FileImportProfile) {
+            abort(403);
+        }
         Gate::authorize('view', $profile);
 
         if ($profile->file_type !== 'qif') {
-            abort(422, __('The selected profile is not a QIF profile.'));
+            throw new RuntimeException(__('The selected profile is not a QIF profile.'));
         }
 
         return $profile;
@@ -134,11 +137,14 @@ class ImportApiController extends Controller implements HasMiddleware
         $selectedProfileId = $request->input('file_import_profile_id');
 
         if (is_numeric($selectedProfileId)) {
-            $profile = FileImportProfile::query()->findOrFail((int) $selectedProfileId);
+            $profile = FileImportProfile::query()->find((int) $selectedProfileId);
+            if (! $profile instanceof FileImportProfile) {
+                abort(403);
+            }
             Gate::authorize('view', $profile);
 
             if ($profile->file_type !== 'csv') {
-                abort(Response::HTTP_UNPROCESSABLE_ENTITY, __('The selected profile is not a CSV profile.'));
+                throw new RuntimeException(__('The selected profile is not a CSV profile.'));
             }
 
             return $profile;
@@ -150,7 +156,7 @@ class ImportApiController extends Controller implements HasMiddleware
                 Gate::authorize('view', $profile);
 
                 if ($profile->file_type !== 'csv') {
-                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, __('The account default profile is not a CSV profile.'));
+                    throw new RuntimeException(__('The account default profile is not a CSV profile.'));
                 }
 
                 return $profile;

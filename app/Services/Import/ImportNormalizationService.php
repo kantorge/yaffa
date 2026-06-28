@@ -92,6 +92,42 @@ class ImportNormalizationService
     public function enrichDraftsWithPayeeMatches(User $user, array $drafts): array
     {
         $payees = $user->payees()->select('id', 'name', 'alias')->get();
+
+        if ($payees->isEmpty()) {
+            foreach ($drafts as $index => $draft) {
+                $drafts[$index]['matched_payee'] = null;
+            }
+
+            return $drafts;
+        }
+
+        // Pre-build a normalized name/alias → match result map for O(1) exact lookups.
+        // Covers the common case where the CSV payee name matches an existing payee exactly
+        // (case-insensitive), avoiding Jaro-Winkler for those drafts entirely.
+        $exactLookup = [];
+        foreach ($payees as $payee) {
+            $displayName = $payee->name . ($payee->alias ? ' (' . $payee->alias . ')' : '');
+            $result = [
+                'id' => (int) $payee->id,
+                'name' => $displayName,
+                'similarity' => 1.0,
+            ];
+
+            $normalizedName = mb_strtolower(mb_trim((string) $payee->name));
+            if ($normalizedName !== '' && ! isset($exactLookup[$normalizedName])) {
+                $exactLookup[$normalizedName] = $result;
+            }
+
+            if ($payee->alias) {
+                foreach (array_filter(array_map('trim', explode("\n", $payee->alias))) as $aliasLine) {
+                    $normalizedAlias = mb_strtolower(mb_trim($aliasLine));
+                    if ($normalizedAlias !== '' && ! isset($exactLookup[$normalizedAlias])) {
+                        $exactLookup[$normalizedAlias] = $result;
+                    }
+                }
+            }
+        }
+
         $matchingService = new AssetMatchingService($user);
 
         foreach ($drafts as $index => $draft) {
@@ -99,10 +135,20 @@ class ImportNormalizationService
                 ? $draft['payee']
                 : null;
 
-            $match = ($rawPayee !== null && ! $payees->isEmpty())
-                ? $matchingService->matchBestPayeeFromCollection($rawPayee, $payees)
-                : null;
+            if ($rawPayee === null) {
+                $drafts[$index]['matched_payee'] = null;
+                continue;
+            }
 
+            // Fast path: exact case-insensitive match on name or alias.
+            $normalizedRaw = mb_strtolower(mb_trim($rawPayee));
+            if ($normalizedRaw !== '' && isset($exactLookup[$normalizedRaw])) {
+                $drafts[$index]['matched_payee'] = $exactLookup[$normalizedRaw];
+                continue;
+            }
+
+            // Slow path: fuzzy Jaro-Winkler similarity.
+            $match = $matchingService->matchBestPayeeFromCollection($rawPayee, $payees);
             $drafts[$index]['matched_payee'] = ($match !== null && $match['similarity'] >= self::IMPORT_PAYEE_SIMILARITY_THRESHOLD)
                 ? $match
                 : null;

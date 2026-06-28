@@ -38,9 +38,9 @@
         <button type="button" class="btn-close" @click="error = null"></button>
       </div>
 
-      <!-- CSV profile creation wizard -->
+      <!-- CSV profile creation wizard (new profile) -->
       <div
-        v-if="showWizard && fileType === 'csv'"
+        v-if="showWizard && fileType === 'csv' && !editingProfile"
         class="border rounded p-3 mb-3 bg-light"
       >
         <ProfileCreationWizard
@@ -51,8 +51,23 @@
         />
       </div>
 
-      <!-- Create / Edit form (QIF always; CSV only for editing existing profiles) -->
-      <div v-if="editingProfile" class="border rounded p-3 mb-3 bg-light">
+      <!-- CSV profile edit wizard (existing profile) -->
+      <div
+        v-if="showWizard && fileType === 'csv' && editingProfile"
+        class="border rounded p-3 mb-3 bg-light"
+      >
+        <ProfileCreationWizard
+          :account-id="null"
+          :has-ai-provider="hasAiProvider"
+          :edit-profile-id="editingProfile.id"
+          :initial-profile="editingProfile._raw"
+          @saved="onWizardSaved"
+          @cancel="cancelEdit"
+        />
+      </div>
+
+      <!-- Create / Edit form (QIF always; CSV edit handled by wizard above) -->
+      <div v-if="editingProfile && fileType !== 'csv'" class="border rounded p-3 mb-3 bg-light">
         <div class="fw-semibold mb-3">
           {{ editingProfile.id ? __('Edit profile') : __('New profile') }}
         </div>
@@ -445,9 +460,11 @@
 </template>
 
 <script>
+  import Swal from 'sweetalert2';
   import axios from 'axios';
   import { computed, ref } from 'vue';
   import { __ } from '@/shared/lib/i18n';
+  import { escapeHtml } from '@/shared/lib/helpers';
   import ProfileCreationWizard from './ProfileCreationWizard.vue';
 
   const mappingJsonPlaceholder = JSON.stringify(
@@ -545,17 +562,23 @@
       };
 
       const startEdit = (profile) => {
-        showWizard.value = false;
         mappingJsonError.value = null;
         error.value = null;
         showEditAiPanel.value = false;
         editAiFile.value = null;
         aiError.value = null;
-        editingProfile.value = buildEditingState(profile);
+
+        const state = buildEditingState(profile);
+        state._raw = profile;
+        editingProfile.value = state;
+
+        // CSV profiles use the wizard; QIF profiles use the form
+        showWizard.value = props.fileType === 'csv';
       };
 
       const cancelEdit = () => {
         editingProfile.value = null;
+        showWizard.value = false;
         mappingJsonError.value = null;
         error.value = null;
         showEditAiPanel.value = false;
@@ -564,6 +587,7 @@
 
       const onWizardSaved = () => {
         showWizard.value = false;
+        editingProfile.value = null;
         emit('profiles-updated');
       };
 
@@ -665,13 +689,53 @@
       };
 
       const deleteProfile = async (profile) => {
-        if (
-          !window.confirm(
-            __('Delete profile ":name"? This cannot be undone.', {
-              name: profile.name,
-            }),
-          )
-        ) {
+        let affectedAccounts = [];
+        try {
+          const response = await axios.get(
+            `/api/v1/imports/file-profiles/${profile.id}/affected-accounts`,
+          );
+          affectedAccounts = Array.isArray(response.data?.data)
+            ? response.data.data
+            : [];
+        } catch (_e) {
+          // Non-critical; proceed without affected-account context
+        }
+
+        const escapedName = escapeHtml(profile.name);
+        let html =
+          `<p>` +
+          __('Delete profile ":name"? This cannot be undone.', {
+            name: escapedName,
+          }) +
+          `</p>`;
+
+        if (affectedAccounts.length > 0) {
+          const accountList = affectedAccounts
+            .map((a) => `<strong>${escapeHtml(a.name)}</strong>`)
+            .join(', ');
+          html +=
+            `<p class="small mt-2">` +
+            __(
+              'This profile is set as the default for :count account(s): :accounts. The default will be removed — manual profile selection will be required for these accounts on future imports.',
+              { count: affectedAccounts.length, accounts: accountList },
+            ) +
+            `</p>`;
+        }
+
+        const result = await Swal.fire({
+          html,
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: __('Cancel'),
+          confirmButtonText: __('Delete'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+          },
+        });
+
+        if (!result.isConfirmed) {
           return;
         }
 

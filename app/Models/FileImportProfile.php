@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ImportCanonicalField;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -111,10 +112,30 @@ class FileImportProfile extends Model
             'decimal_separator' => $this->decimal_separator,
             'thousand_separator' => $this->thousand_separator,
             'sign_handling' => $this->sign_handling,
-            'mapping_json' => $this->mapping_json ?? [],
+            'mapping_json' => $this->sanitizedMappingForUserProfile(),
             'options_json' => $this->sanitizedOptionsForUserProfile(),
             'active' => $this->active,
         ];
+    }
+
+    /**
+     * Returns mapping_json safe for a user-owned profile: any value that is not a valid
+     * ImportCanonicalField (e.g. system-only fact names like value_date, entry_type, notice_*) is
+     * replaced with 'ignore' so the cloned profile does not silently fail on every import.
+     *
+     * @return array<string, string>
+     */
+    public function sanitizedMappingForUserProfile(): array
+    {
+        $mapping = $this->mapping_json ?? [];
+        $validValues = ImportCanonicalField::values();
+
+        return array_map(
+            fn (mixed $value): string => is_string($value) && in_array($value, $validValues, true)
+                ? $value
+                : ImportCanonicalField::Ignore->value,
+            $mapping,
+        );
     }
 
     /**

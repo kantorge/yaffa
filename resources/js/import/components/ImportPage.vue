@@ -393,6 +393,8 @@
             }
           } else if (error?.response?.data?.error?.message) {
             this.uploadError = error.response.data.error.message;
+          } else if (error?.response?.data?.message) {
+            this.uploadError = error.response.data.message;
           } else {
             this.uploadError = __(
               'Upload failed due to a network or server error.',

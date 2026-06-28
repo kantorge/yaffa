@@ -49,6 +49,7 @@
           <thead>
             <tr>
               <th class="col-expand"></th>
+              <th class="col-type text-center" :title="__('Transaction type')"></th>
               <th class="text-nowrap">{{ __('Draft') }}</th>
               <th class="text-nowrap">{{ __('Date') }}</th>
               <th class="text-nowrap">{{ __('Amount') }}</th>
@@ -71,6 +72,12 @@
                         ? 'fa fa-chevron-up text-primary'
                         : 'fa fa-chevron-down text-muted'
                     "
+                  ></i>
+                </td>
+                <td class="text-center">
+                  <i
+                    :class="transactionTypeIconClass(draft)"
+                    :title="transactionTypeLabel(draft)"
                   ></i>
                 </td>
                 <td>#{{ draft.draft_index + 1 }}</td>
@@ -151,7 +158,7 @@
                 </td>
               </tr>
               <tr v-if="isRawVisible(draft.draft_index)">
-                <td colspan="8" class="bg-body-secondary p-3">
+                <td colspan="9" class="bg-body-secondary p-3">
                   <div class="row g-3">
                     <!-- Structured raw entry -->
                     <div class="col-12 col-lg-6">
@@ -208,14 +215,17 @@
                     <!-- Duplicate candidates -->
                     <div
                       v-if="draft.duplicate_candidates && draft.duplicate_candidates.length"
-                      class="col-12 col-md-6 col-lg-2"
+                      class="col-12 col-md-6 col-lg-4"
                     >
-                      <DuplicateCandidatesPanel :candidates="draft.duplicate_candidates" />
+                      <DuplicateCandidatesPanel
+                        :candidates="draft.duplicate_candidates"
+                        :draft-amount="draft.amount"
+                      />
                     </div>
                     <!-- Related AI documents -->
                     <div
                       v-if="draft.related_ai_documents && draft.related_ai_documents.length"
-                      class="col-12 col-md-6 col-lg-2"
+                      class="col-12 col-md-6 col-lg-4"
                     >
                       <RelatedAiDocumentsPanel :candidates="draft.related_ai_documents" />
                     </div>
@@ -284,6 +294,29 @@
       },
     },
     methods: {
+      transactionTypeIconClass(draft) {
+        const type = draft.transaction_type;
+        if (type === 'withdrawal') return ['fa', 'fa-circle-minus', 'text-danger'];
+        if (type === 'deposit') return ['fa', 'fa-circle-plus', 'text-success'];
+        if (type === 'transfer') return ['fa', 'fa-exchange-alt', 'text-primary'];
+        // For QIF: infer from amount sign when type is generic/other
+        if (draft.amount !== null && draft.amount !== undefined) {
+          return Number(draft.amount) >= 0
+            ? ['fa', 'fa-circle-plus', 'text-success']
+            : ['fa', 'fa-circle-minus', 'text-danger'];
+        }
+        return ['fa', 'fa-circle', 'text-muted'];
+      },
+      transactionTypeLabel(draft) {
+        const type = draft.transaction_type;
+        if (type === 'withdrawal') return __('Withdrawal');
+        if (type === 'deposit') return __('Deposit');
+        if (type === 'transfer') return __('Transfer');
+        if (draft.amount !== null && draft.amount !== undefined) {
+          return Number(draft.amount) >= 0 ? __('Deposit') : __('Withdrawal');
+        }
+        return __('Unknown type');
+      },
       toggleRaw(draftIndex) {
         if (this.expandedRows.has(draftIndex)) {
           this.expandedRows.delete(draftIndex);
@@ -409,6 +442,9 @@
 <style scoped>
   .col-expand {
     width: 32px;
+  }
+  .col-type {
+    width: 28px;
   }
   .row-expandable {
     cursor: pointer;

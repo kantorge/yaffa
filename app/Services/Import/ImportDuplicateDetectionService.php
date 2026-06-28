@@ -20,6 +20,15 @@ class ImportDuplicateDetectionService
      */
     public function enrichDrafts(User $user, array $drafts): array
     {
+        $settings = $this->duplicateDetectionService->resolveSettingsForUser($user);
+        $dateWindowDays = max(1, (int) ($settings['duplicate_date_window_days'] ?? 3));
+        $amountTolerancePercent = (float) ($settings['duplicate_amount_tolerance_percent'] ?? 10.0);
+        $similarityThreshold = (float) ($settings['duplicate_similarity_threshold'] ?? 0.5);
+
+        // Single bulk query covers all drafts — O(1) DB round-trips instead of O(n).
+        $windowTransactions = $this->loadTransactionWindow($user, $drafts, $dateWindowDays);
+        $windowById = $windowTransactions->keyBy('id');
+
         $enriched = [];
 
         foreach ($drafts as $draft) {
@@ -32,7 +41,13 @@ class ImportDuplicateDetectionService
             }
 
             try {
-                $matches = $this->duplicateDetectionService->findDuplicates($user, $input);
+                $matches = $this->duplicateDetectionService->findDuplicatesFromWindow(
+                    $input,
+                    $windowTransactions,
+                    $amountTolerancePercent,
+                    $similarityThreshold,
+                    $dateWindowDays,
+                );
             } catch (Throwable) {
                 $draft['duplicate_candidates'] = [];
                 $draft['warnings'] = array_merge((array) ($draft['warnings'] ?? []), [
@@ -41,25 +56,13 @@ class ImportDuplicateDetectionService
                 $enriched[] = $draft;
                 continue;
             }
-            $candidateIds = collect($matches)
-                ->pluck('id')
-                ->filter(fn (mixed $id) => is_int($id))
-                ->take(10)
-                ->values()
-                ->all();
-
-            $transactions = Transaction::query()
-                ->whereIn('id', $candidateIds)
-                ->with(['config', 'transactionItems'])
-                ->get()
-                ->keyBy('id');
 
             $draft['duplicate_candidates'] = collect($matches)
                 ->take(10)
-                ->map(function (array $match) use ($draft, $transactions): array {
+                ->map(function (array $match) use ($draft, $windowById): array {
                     $transactionId = (int) $match['id'];
                     /** @var Transaction|null $transaction */
-                    $transaction = $transactions->get($transactionId);
+                    $transaction = $windowById->get($transactionId);
 
                     $similarity = (float) $match['similarity'];
 
@@ -82,6 +85,40 @@ class ImportDuplicateDetectionService
         }
 
         return $enriched;
+    }
+
+    /**
+     * Load all transactions that fall within the combined date window of the given drafts.
+     * Eager-loads config and transactionItems to prevent N+1 queries during scoring.
+     *
+     * @param  list<array<string, mixed>>  $drafts
+     * @return \Illuminate\Database\Eloquent\Collection<int, Transaction>
+     */
+    private function loadTransactionWindow(User $user, array $drafts, int $dateWindowDays): \Illuminate\Database\Eloquent\Collection
+    {
+        $draftDates = collect($drafts)
+            ->pluck('date')
+            ->filter(fn (mixed $d): bool => is_string($d) && $d !== '')
+            ->map(function (string $d): ?\Carbon\Carbon {
+                try {
+                    return \Carbon\Carbon::parse($d);
+                } catch (Throwable) {
+                    return null;
+                }
+            })
+            ->filter();
+
+        if ($draftDates->isEmpty()) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        $windowStart = $draftDates->min()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+
+        return $user->transactions()
+            ->whereBetween('date', [$windowStart, $windowEnd])
+            ->with(['config', 'transactionItems'])
+            ->get();
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Enums\TransactionType;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
 use Illuminate\Http\UploadedFile;
+use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use RuntimeException;
 use DateTimeImmutable;
@@ -37,7 +38,12 @@ class CsvParserService
             $reader->setHeaderOffset(0);
         }
 
-        $records = $reader->getRecords();
+        try {
+            $records = $reader->getRecords();
+        } catch (CsvException $e) {
+            throw new RuntimeException($this->humanizeCsvException($e));
+        }
+
         $maxRows = max(1, (int) config('yaffa.import_max_rows', 5000));
 
         $warnings = [];
@@ -49,59 +55,65 @@ class CsvParserService
         $unmatchedRows = [];
 
         $rowIndex = 0;
-        foreach ($records as $record) {
-            $rowIndex++;
-            if ($rowIndex > $maxRows) {
-                throw new RuntimeException(
-                    sprintf('CSV import exceeds the configured maximum row count of %d.', $maxRows),
-                );
+        try {
+            foreach ($records as $record) {
+                $rowIndex++;
+                if ($rowIndex > $maxRows) {
+                    throw new RuntimeException(
+                        sprintf('CSV import exceeds the configured maximum row count of %d.', $maxRows),
+                    );
+                }
+
+                $canonicalFacts = $this->canonicalizeRow($record, (array) ($profile->mapping_json ?? []));
+                $rawEntry = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+
+                $trimStrings = (bool) data_get($profile->options_json, 'parser_settings.trim_strings', true);
+                if ($trimStrings) {
+                    $canonicalFacts = array_map(
+                        fn (mixed $value) => is_string($value) ? mb_trim($value) : $value,
+                        $canonicalFacts,
+                    );
+                }
+
+                $skipEmptyRows = (bool) data_get($profile->options_json, 'parser_settings.skip_empty_rows', true);
+                if ($skipEmptyRows && $this->isEmptyRow($canonicalFacts)) {
+                    continue;
+                }
+
+                if ($profile->type === 'system') {
+                    $parsedRow = $this->parseSystemRow(
+                        canonicalFacts: $canonicalFacts,
+                        profile: $profile,
+                        accountId: $accountId,
+                        userId: $userId,
+                        draftIndex: count($drafts),
+                        rawEntry: $rawEntry,
+                    );
+                } else {
+                    $parsedRow = $this->parseUserRow(
+                        canonicalFacts: $canonicalFacts,
+                        originalRecord: $record,
+                        profile: $profile,
+                        accountId: $accountId,
+                        draftIndex: count($drafts),
+                        rawEntry: $rawEntry,
+                    );
+                }
+
+                if ($parsedRow['matched'] === false) {
+                    $unmatchedRows[] = [
+                        'row_index' => $rowIndex,
+                        'raw_entry' => $rawEntry,
+                        'warnings' => $parsedRow['warnings'],
+                    ];
+                }
+
+                $drafts[] = $parsedRow['draft'];
             }
-
-            $canonicalFacts = $this->canonicalizeRow($record, (array) ($profile->mapping_json ?? []));
-            $rawEntry = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
-
-            $trimStrings = (bool) data_get($profile->options_json, 'parser_settings.trim_strings', true);
-            if ($trimStrings) {
-                $canonicalFacts = array_map(
-                    fn (mixed $value) => is_string($value) ? mb_trim($value) : $value,
-                    $canonicalFacts,
-                );
-            }
-
-            $skipEmptyRows = (bool) data_get($profile->options_json, 'parser_settings.skip_empty_rows', true);
-            if ($skipEmptyRows && $this->isEmptyRow($canonicalFacts)) {
-                continue;
-            }
-
-            if ($profile->type === 'system') {
-                $parsedRow = $this->parseSystemRow(
-                    canonicalFacts: $canonicalFacts,
-                    profile: $profile,
-                    accountId: $accountId,
-                    userId: $userId,
-                    draftIndex: count($drafts),
-                    rawEntry: $rawEntry,
-                );
-            } else {
-                $parsedRow = $this->parseUserRow(
-                    canonicalFacts: $canonicalFacts,
-                    originalRecord: $record,
-                    profile: $profile,
-                    accountId: $accountId,
-                    draftIndex: count($drafts),
-                    rawEntry: $rawEntry,
-                );
-            }
-
-            if ($parsedRow['matched'] === false) {
-                $unmatchedRows[] = [
-                    'row_index' => $rowIndex,
-                    'raw_entry' => $rawEntry,
-                    'warnings' => $parsedRow['warnings'],
-                ];
-            }
-
-            $drafts[] = $parsedRow['draft'];
+        } catch (RuntimeException $e) {
+            throw $e;
+        } catch (CsvException $e) {
+            throw new RuntimeException($this->humanizeCsvException($e));
         }
 
         return [
@@ -109,6 +121,21 @@ class CsvParserService
             'warnings' => array_values(array_unique($warnings)),
             'unmatched_rows' => $unmatchedRows,
         ];
+    }
+
+    private function humanizeCsvException(CsvException $e): string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, 'duplicate')) {
+            return 'The CSV file contains duplicate column names in the header row. Please check the file and ensure all column headers are unique.';
+        }
+
+        if (str_contains($message, 'header')) {
+            return 'The CSV header row could not be read. Please verify the file format and delimiter settings in the selected profile.';
+        }
+
+        return 'The CSV file could not be parsed: ' . $message;
     }
 
     /**
@@ -417,7 +444,13 @@ class CsvParserService
                 return false;
             }
 
-            return is_string($actual) && preg_match('/' . $expected . '/u', $actual) === 1;
+            if (! is_string($actual)) {
+                return false;
+            }
+
+            $result = @preg_match('/' . $expected . '/u', $actual);
+
+            return $result === 1 && preg_last_error() === PREG_NO_ERROR;
         }
 
         if ($operator === 'starts_with') {
@@ -497,8 +530,11 @@ class CsvParserService
         $thousandSeparator = (string) ($args['thousand_separator'] ?? ' ');
         $decimalSeparator = (string) ($args['decimal_separator'] ?? ',');
 
-        $normalized = str_replace(["\u{00A0}", "'"], '', $raw);
-        $normalized = preg_replace('/\s*[A-Z]{3}$/u', '', $normalized) ?? $normalized;
+        $normalized = str_replace(["\u{00A0}", "\u{2009}", "\u{202F}", "'"], '', $raw);
+        // Strip trailing 3-letter uppercase currency code (e.g. "HUF", "EUR", "USD") using ASCII-safe pattern
+        if (preg_match('/[A-Z]{3}$/', $normalized) === 1) {
+            $normalized = mb_rtrim(mb_substr($normalized, 0, -3));
+        }
         if ($thousandSeparator !== '') {
             $normalized = str_replace($thousandSeparator, '', $normalized);
         }
@@ -535,7 +571,9 @@ class CsvParserService
         }
 
         $format = (string) ($args['format'] ?? 'Y-m-d');
-        $parsed = DateTimeImmutable::createFromFormat('!' . $format, mb_trim($value));
+        // The '+' suffix tells PHP 8.2+ to treat trailing content (e.g. weekday names such as
+        // ", szerda") as a warning rather than a hard parse failure that returns false.
+        $parsed = DateTimeImmutable::createFromFormat('!' . $format . '+', mb_trim($value));
 
         if ($parsed === false) {
             $warnings[] = sprintf('Date value "%s" does not match format %s.', $value, $format);
@@ -543,7 +581,7 @@ class CsvParserService
         }
 
         $errors = DateTimeImmutable::getLastErrors();
-        if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
+        if ($errors !== false && $errors['error_count'] > 0) {
             $warnings[] = sprintf('Date value "%s" contains an out-of-range date component.', $value);
             return null;
         }
@@ -568,7 +606,14 @@ class CsvParserService
             return null;
         }
 
-        if (preg_match('/' . $pattern . '/u', $value, $matches) !== 1) {
+        $matchResult = @preg_match('/' . $pattern . '/u', $value, $matches);
+
+        if ($matchResult === false || preg_last_error() !== PREG_NO_ERROR) {
+            $warnings[] = 'Date extraction pattern is invalid.';
+            return null;
+        }
+
+        if ($matchResult !== 1) {
             $warnings[] = sprintf('Date extraction pattern did not match value "%s".', $value);
             return null;
         }

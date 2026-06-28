@@ -204,6 +204,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
   - CSV import profile endpoints:
     - GET /api/v1/imports/file-profiles
     - POST /api/v1/imports/file-profiles
+    - GET /api/v1/imports/file-profiles/{profile}/affected-accounts — returns accounts that have this profile set as their default; used to warn the user before deletion
     - PATCH /api/v1/imports/file-profiles/{profile}
     - DELETE /api/v1/imports/file-profiles/{profile}
   - AI-assisted profile suggestion endpoint:
@@ -678,7 +679,9 @@ Minimal profile behavior:
 
 4. Delete user profile
 
-- blocked or validated when used as account default
+- when the profile is set as the default for one or more accounts, the user is shown a warning listing those accounts before confirming deletion
+- upon confirmation, the profile is deleted; the database automatically clears `preferred_file_import_profile_id` on affected accounts (`nullOnDelete` FK behaviour)
+- manual profile selection will be required for those accounts on future imports
 
 No user CRUD is needed for system profiles in MVP.
 Those are read-only to users.
@@ -698,6 +701,17 @@ Clone behavior from system profile to user profile:
 - Allowed to copy: parser settings, mapping aliases, safe normalization options, and display metadata.
 - Not allowed to copy: `matching_rules`, action pipelines, or any executable DSL sections.
 - Clone output is always a mapping-oriented `type = user` profile.
+
+> **Implementation status (2026-06-28): Clone is partially complete.**
+>
+> The backend endpoint (`POST /api/v1/imports/file-profiles/{profile}/clone`) exists, strips DSL keys from `options_json`, and now sanitizes `mapping_json`. One gap remains before cloning is fully usable:
+>
+> 1. ~~**`mapping_json` is copied verbatim from the source profile.**~~ **Fixed (2026-06-28).** `FileImportProfile::toUserCloneAttributes` now calls `sanitizedMappingForUserProfile()`, which replaces any value not present in `ImportCanonicalField` (e.g. `value_date`, `entry_type`, `notice_1-3`) with `ignore`. Regression test: `FileImportProfileCloneTest`.
+>
+> 2. **The frontend has no clone UI.** `FileImportProfileManager.vue` does not expose a clone action. The endpoint cannot be triggered by users.
+>    *Required fix:* add a "Clone" button to the profile list in `FileImportProfileManager` that calls the endpoint and then opens the wizard in edit mode for the new clone.
+>
+> Do not mark clone as complete until the frontend UI gap is resolved and covered by tests.
 
 ### System Profile Definition and Maintenance
 
@@ -753,10 +767,13 @@ Recommended endpoints:
   - returns system profiles plus current user's user profiles
 - `POST /api/v1/imports/file-profiles`
   - create user profile
+- `GET /api/v1/imports/file-profiles/{profile}/affected-accounts`
+  - returns accounts that have this profile set as their preferred import profile
+  - used by the frontend to warn the user before confirming deletion
 - `PATCH /api/v1/imports/file-profiles/{profile}`
   - update user profile
 - `DELETE /api/v1/imports/file-profiles/{profile}`
-  - delete user profile
+  - delete user profile; database automatically clears `preferred_file_import_profile_id` on affected accounts via `nullOnDelete` FK behaviour
 
 Note: `preferred_file_import_profile_id` is not managed through this API. It is set via the account add/edit web form.
 
@@ -1103,6 +1120,7 @@ Notes:
   - ImportDuplicateDetectionTest
   - ImportRelatedAiDocumentsTest
   - ImportAuthorizationTest
+  - FileImportProfileCloneTest (clone mapping_json sanitization; canonical field preservation)
 
 - Frontend component tests:
   - ImportUploadCard.spec.js
@@ -1401,10 +1419,12 @@ Notes:
   - [x] Add `preferred_file_import_profile_id` to account add/edit web form (`accounts/form.blade.php`)
   - [x] Validate `preferred_file_import_profile_id` in `AccountEntityRequest` (both CSV and QIF profiles accepted; ownership enforced via `selectableForUser` scope)
   - Changed: no dedicated `PATCH /api/v1/accounts/{accountEntity}` API endpoint; preference is managed through the standard web form flow
-- [x] Implement profile clone endpoint
+- [ ] Implement profile clone endpoint *(backend complete; frontend UI pending — see note above)*
   - [x] POST `/api/v1/imports/file-profiles/{profile}/clone`
-  - [x] Strip DSL fields when cloning system → user
+  - [x] Strip `options_json` DSL fields (`matching_rules`, `actions`, `transform_catalog`, `defaults`) when cloning system → user
+  - [x] Sanitize `mapping_json` values: non-canonical fact names (e.g. `value_date`, `entry_type`, `notice_1`) replaced with `ignore` via `FileImportProfile::sanitizedMappingForUserProfile()` (2026-06-28)
   - [x] Validate user ownership of target user profile
+  - [ ] Frontend clone UI in `FileImportProfileManager.vue` (button + wizard edit flow for the cloned profile)
 - [x] Document expected parse response error format for partial success
   - [x] 200 with mixed valid/invalid drafts (same payload, warnings per draft)
   - [x] 422 for structural errors (bad profile, missing required fields)
@@ -1458,6 +1478,9 @@ Notes:
 - [x] Command test: `SyncSystemFileImportProfilesCommand`
   - [x] Idempotent: re-run produces same database state
   - [x] Migration of hun_raiffeisen_v1 rule file into profile
+- [x] Feature test: `FileImportProfileCloneTest` (added 2026-06-28)
+  - [x] Cloning a system profile replaces non-canonical `mapping_json` values with `ignore`
+  - [x] Cloning a user profile preserves all valid canonical field values unchanged
 
 **Testing Tasks** (Frontend Agent):
 
