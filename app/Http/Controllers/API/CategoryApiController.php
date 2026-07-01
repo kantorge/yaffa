@@ -45,7 +45,7 @@ class CategoryApiController extends Controller implements HasMiddleware
          */
         $user = $request->user();
 
-        $query = $request->get('q');
+        $query = $request->query('q');
         if ($query && $query !== '*') {
             $categories = $user->categories()
                 ->with('parent')
@@ -57,7 +57,7 @@ class CategoryApiController extends Controller implements HasMiddleware
                     $query->whereDoesntHave(
                         'payeesNotPreferring',
                         function (Builder $query) use ($request) {
-                            $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
+                            $query->where('account_entity_id', $request->query('payee'))->where('preferred', false);
                         }
                     );
                 })
@@ -105,7 +105,7 @@ class CategoryApiController extends Controller implements HasMiddleware
                 ->when($request->has('payee'), function ($query) use ($request) {
                     $query->whereRaw(
                         '(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)',
-                        [$request->get('payee'), $request->get('payee')],
+                        [$request->query('payee'), $request->query('payee')],
                     );
                 })
                 ->groupBy('categories.id')

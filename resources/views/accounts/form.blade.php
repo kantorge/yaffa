@@ -205,6 +205,51 @@
                     </select>
                 </div>
             </div>
+            <div class="row mb-3">
+                <label for="preferred_file_import_profile_id" class="col-form-label col-sm-3">
+                    {{ __('Default import profile') }}
+                </label>
+                <div class="col-sm-9">
+                    <div class="input-group">
+                        <select
+                            class="form-select"
+                            id="preferred_file_import_profile_id"
+                            name="preferred_file_import_profile_id"
+                        >
+                            <option value="">{{ __('— None —') }}</option>
+                            @foreach ($allFileImportProfiles->groupBy('file_type') as $fileType => $profiles)
+                                <optgroup label="{{ strtoupper($fileType) }}">
+                                    @foreach ($profiles as $profile)
+                                        <option
+                                            value="{{ $profile->id }}"
+                                            @if (old())
+                                                @if (old('preferred_file_import_profile_id') == $profile->id)
+                                                    selected="selected"
+                                                @endif
+                                            @elseif(isset($account))
+                                                @if (($account->preferred_file_import_profile_id ?? null) == $profile->id)
+                                                    selected="selected"
+                                                @endif
+                                            @endif
+                                        >
+                                            {{ $profile->name }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        <button
+                            type="button"
+                            class="btn btn-outline-info"
+                            data-coreui-toggle="tooltip"
+                            data-coreui-placement="top"
+                            title="{{ __('This profile will be pre-selected when you import QIF or CSV transactions for this account.') }}"
+                        >
+                            <i class="fa fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             @csrf

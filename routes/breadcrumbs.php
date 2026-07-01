@@ -30,7 +30,7 @@ Breadcrumbs::for('account-groups.edit', function (BreadcrumbTrail $trail, $accou
 Breadcrumbs::for('account-entity.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     // Based on the type in the request, the title of the breadcrumb will be different
-    $type = request()->get('type');
+    $type = request()->query('type');
     if ($type === 'account') {
         $trail->push(__('Accounts'), route('account-entity.index', ['type' => 'account']));
     } elseif ($type === 'payee') {
@@ -235,10 +235,10 @@ Breadcrumbs::for('search', function (BreadcrumbTrail $trail) {
 });
 
 // Import CSV
-Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('import.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
-    $trail->push(__('Import transactions'), route('import.csv'));
+    $trail->push(__('Import transactions'), route('import.index'));
 });
 
 // AI documents

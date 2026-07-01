@@ -10,6 +10,7 @@ use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
+use App\Http\Requests\API\FindTransactionsRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
@@ -120,8 +121,8 @@ class TransactionApiController extends Controller implements HasMiddleware
         $categories = $this->categoryService->getChildCategories($request);
 
         // Get the account selection properties
-        $accountSelection = $request->get('accountSelection');
-        $accountEntity = $request->get('accountEntity');
+        $accountSelection = $request->query('accountSelection');
+        $accountEntity = $request->query('accountEntity');
 
         // Get all standard transactions
         $standardTransactions = Transaction::with([
@@ -221,7 +222,7 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Search transactions by date range and related entities.
      */
-    public function findTransactions(Request $request): JsonResponse
+    public function findTransactions(FindTransactionsRequest $request): JsonResponse
     {
         /**
          * @get("/api/transactions")
@@ -256,42 +257,42 @@ class TransactionApiController extends Controller implements HasMiddleware
             ->byScheduleType('none')
             ->byType('standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
-                $query->where('date', '>=', $request->get('date_from'));
+                $query->where('date', '>=', $request->validated('date_from'));
             })
             ->when($request->has('date_to'), function ($query) use ($request) {
-                $query->where('date', '<=', $request->get('date_to'));
+                $query->where('date', '<=', $request->validated('date_to'));
             })
-            ->when($request->has('accounts') && $request->get('accounts'), function ($query) use ($request) {
+            ->when($request->has('accounts') && $request->validated('accounts'), function ($query) use ($request) {
                 $query->whereIn('config_id', function ($query) use ($request) {
                     $query->select('id')
                         ->from('transaction_details_standard')
-                        ->whereIn('account_from_id', $request->get('accounts'))
-                        ->orWhereIn('account_to_id', $request->get('accounts'));
+                        ->whereIn('account_from_id', $request->validated('accounts'))
+                        ->orWhereIn('account_to_id', $request->validated('accounts'));
                 });
             })
-            ->when($request->has('payees') && $request->get('payees'), function ($query) use ($request) {
+            ->when($request->has('payees') && $request->validated('payees'), function ($query) use ($request) {
                 $query->whereIn('config_id', function ($query) use ($request) {
                     $query->select('id')
                         ->from('transaction_details_standard')
-                        ->whereIn('account_from_id', $request->get('payees'))
-                        ->orWhereIn('account_to_id', $request->get('payees'));
+                        ->whereIn('account_from_id', $request->validated('payees'))
+                        ->orWhereIn('account_to_id', $request->validated('payees'));
                 });
             })
-            ->when($request->has('categories') && $request->get('categories'), function ($query) use ($request) {
+            ->when($request->has('categories') && $request->validated('categories'), function ($query) use ($request) {
                 $query->whereIn('id', function ($query) use ($request) {
                     $query->select('transaction_id')
                         ->from('transaction_items')
-                        ->whereIn('category_id', $request->get('categories'));
+                        ->whereIn('category_id', $request->validated('categories'));
                 });
             })
-            ->when($request->has('tags') && $request->get('tags'), function ($query) use ($request) {
+            ->when($request->has('tags') && $request->validated('tags'), function ($query) use ($request) {
                 $query->whereIn('id', function ($query) use ($request) {
                     $query->select('transaction_id')
                         ->from('transaction_items')
                         ->whereIn('id', function ($query) use ($request) {
                             $query->select('transaction_item_id')
                                 ->from('transaction_items_tags')
-                                ->whereIn('tag_id', $request->get('tags'));
+                                ->whereIn('tag_id', $request->validated('tags'));
                         });
                 });
             });
@@ -304,16 +305,16 @@ class TransactionApiController extends Controller implements HasMiddleware
                 ->byScheduleType('none')
                 ->byType('investment')
                 ->when($request->has('date_from'), function ($query) use ($request) {
-                    $query->where('date', '>=', $request->get('date_from'));
+                    $query->where('date', '>=', $request->validated('date_from'));
                 })
                 ->when($request->has('date_to'), function ($query) use ($request) {
-                    $query->where('date', '<=', $request->get('date_to'));
+                    $query->where('date', '<=', $request->validated('date_to'));
                 })
-                ->when($request->has('accounts') && $request->get('accounts'), function ($query) use ($request) {
+                ->when($request->has('accounts') && $request->validated('accounts'), function ($query) use ($request) {
                     $query->whereIn('config_id', function ($query) use ($request) {
                         $query->select('id')
                             ->from('transaction_details_investment')
-                            ->whereIn('account_id', $request->get('accounts'));
+                            ->whereIn('account_id', $request->validated('accounts'));
                     });
                 });
         } else {

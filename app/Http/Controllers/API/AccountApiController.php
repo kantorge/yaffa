@@ -43,10 +43,10 @@ class AccountApiController extends Controller implements HasMiddleware
          */
         $parameters = [
             'user' => $request->user(),
-            'query' => $request->get('q'),
-            'limit' => (int) ($request->get('limit') ?? 10),
-            'withInactive' => $request->get('withInactive', null),
-            'currency_id' => $request->get('currency_id', null),
+            'query' => $request->query('q'),
+            'limit' => (int) ($request->query('limit') ?? 10),
+            'withInactive' => $request->query('withInactive', null),
+            'currency_id' => $request->query('currency_id', null),
         ];
 
         if ($request->has('q')) {
@@ -56,8 +56,8 @@ class AccountApiController extends Controller implements HasMiddleware
             );
         }
 
-        $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
-        $transactionType = $request->get('transaction_type', null);
+        $type = ($request->query('account_type') === 'to' ? 'to' : 'from');
+        $transactionType = $request->query('transaction_type', null);
         if ($transactionType !== null && TransactionTypeEnum::tryFrom($transactionType) === null) {
             // If transaction type is provided but not valid, return a bad request response
             return response()->json(
@@ -177,22 +177,22 @@ class AccountApiController extends Controller implements HasMiddleware
          */
         $user = $request->user();
 
-        if ($request->get('q')) {
+        if ($request->query('q')) {
             $accounts = $user
                 ->accounts()
                 ->active()
-                ->when($request->get('currency_id'), function ($query) use ($request) {
+                ->when($request->query('currency_id'), function ($query) use ($request) {
                     // Get account entity with config having the same currency as the one provided
                     $query->whereHasMorph(
                         'config',
                         [Account::class],
                         function (Builder $query) use ($request) {
-                            $query->where('currency_id', $request->get('currency_id'));
+                            $query->where('currency_id', $request->query('currency_id'));
                         }
                     );
                 })
                 ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', '%' . $request->get('q') . '%')
+                ->where('name', 'LIKE', '%' . $request->query('q') . '%')
                 ->where('active', true)
                 ->orderBy('name')
                 ->take(10)
@@ -215,7 +215,7 @@ class AccountApiController extends Controller implements HasMiddleware
                 ->where('account_entities.active', true)
                 ->where('transactions.user_id', $user->id)
                 ->where('account_entities.user_id', $user->id)
-                ->when($request->get('currency_id'), fn ($query) => $query
+                ->when($request->query('currency_id'), fn ($query) => $query
                     ->join(
                         'accounts',
                         'accounts.id',
@@ -224,12 +224,12 @@ class AccountApiController extends Controller implements HasMiddleware
                     )->where(
                         'accounts.currency_id',
                         '=',
-                        $request->get('currency_id')
+                        $request->query('currency_id')
                     ))
                 ->where(
                     'transaction_type',
                     '=',
-                    $request->get('transaction_type')
+                    $request->query('transaction_type')
                 )
                 ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')

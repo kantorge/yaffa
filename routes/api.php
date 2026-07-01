@@ -9,7 +9,9 @@ use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
+use App\Http\Controllers\API\FileImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
+use App\Http\Controllers\API\ImportApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
@@ -129,6 +131,20 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('documents.checkDuplicates');
     Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
         ->name('documents.destroy');
+
+    // Import endpoints
+    Route::post('/imports/parse', [ImportApiController::class, 'parse'])
+        ->name('imports.parse');
+    Route::get('/imports/file-profiles', [FileImportProfileApiController::class, 'index'])
+        ->name('imports.file-profiles.index');
+    Route::post('/imports/file-profiles', [FileImportProfileApiController::class, 'store'])
+        ->name('imports.file-profiles.store');
+    Route::post('/imports/file-profiles/suggest', [FileImportProfileApiController::class, 'suggest'])
+        ->name('imports.file-profiles.suggest');
+    Route::patch('/imports/file-profiles/{profile}', [FileImportProfileApiController::class, 'update'])
+        ->name('imports.file-profiles.update');
+    Route::delete('/imports/file-profiles/{profile}', [FileImportProfileApiController::class, 'destroy'])
+        ->name('imports.file-profiles.destroy');
 
     // Account endpoints
     Route::get('/accounts', [AccountApiController::class, 'getList'])
