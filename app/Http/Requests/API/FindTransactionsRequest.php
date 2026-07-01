@@ -11,6 +11,21 @@ class FindTransactionsRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        foreach (['accounts', 'payees', 'categories', 'tags'] as $field) {
+            if ($this->has($field) && is_array($this->input($field)) && empty($this->input($field))) {
+                $this->request->remove($field);
+                $this->query->remove($field);
+            }
+        }
+
+        if ($this->has('only_count') && ! $this->boolean('only_count')) {
+            $this->request->remove('only_count');
+            $this->query->remove('only_count');
+        }
+    }
+
     public function rules(): array
     {
         return [

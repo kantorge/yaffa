@@ -5,7 +5,6 @@ namespace App\Services\Import;
 use App\Models\FileImportProfile;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
-use SplFileObject;
 
 class QifParserService
 {
@@ -66,24 +65,11 @@ class QifParserService
         [$normalizedContent, $encodingWarning] = $this->normalizeContentToUtf8($content);
         unset($content);
 
-        $tmpPath = tempnam(sys_get_temp_dir(), 'qif_import_');
-        if ($tmpPath === false) {
-            throw new RuntimeException('Unable to create temporary file for QIF parsing.');
-        }
-
         try {
-            if (file_put_contents($tmpPath, $normalizedContent) === false) {
-                throw new RuntimeException('Unable to write normalized content to temporary QIF file.');
-            }
-            unset($normalizedContent);
-
-            $fileObj = new SplFileObject($tmpPath);
-            $fileObj->setFlags(SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE);
-
-            $parsed = $this->doParseLines($fileObj);
+            $lines = preg_split('/\r\n|\r|\n/', $normalizedContent) ?: [];
+            $parsed = $this->doParseLines($lines);
         } finally {
-            unset($fileObj);
-            @unlink($tmpPath);
+            unset($normalizedContent);
         }
 
         if ($encodingWarning !== null) {

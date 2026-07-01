@@ -85,16 +85,26 @@ class FileImportProfileRequest extends FormRequest
                     return;
                 }
 
-                if (! $this->has('mapping_json')) {
-                    return;
-                }
-
                 $profile = $this->route('profile');
                 $fileType = $profile instanceof FileImportProfile
                     ? $profile->file_type
                     : (string) $this->input('file_type', 'csv');
 
                 if ($fileType !== 'csv') {
+                    return;
+                }
+
+                $hasHeaderRow = $this->has('has_header_row')
+                    ? $this->boolean('has_header_row')
+                    : ($profile instanceof FileImportProfile ? (bool) $profile->has_header_row : true);
+
+                if (! $hasHeaderRow && ! $this->has('mapping_json')) {
+                    $validator->errors()->add('mapping_json', 'A column map is required for CSV profiles without a header row.');
+
+                    return;
+                }
+
+                if (! $this->has('mapping_json')) {
                     return;
                 }
 

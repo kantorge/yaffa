@@ -392,7 +392,16 @@ class CsvParserService
         if (array_key_exists('all', $conditions)) {
             $all = is_array($conditions['all']) ? $conditions['all'] : [];
             foreach ($all as $condition) {
-                if (! is_array($condition) || ! $this->matchesSingleCondition($facts, $output, $condition)) {
+                if (! is_array($condition)) {
+                    return false;
+                }
+
+                $isGroup = array_key_exists('all', $condition) || array_key_exists('any', $condition);
+                if ($isGroup) {
+                    if (! $this->matchesConditions($facts, $output, $condition)) {
+                        return false;
+                    }
+                } elseif (! $this->matchesSingleCondition($facts, $output, $condition)) {
                     return false;
                 }
             }

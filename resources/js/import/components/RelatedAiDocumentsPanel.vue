@@ -80,12 +80,19 @@
         try {
           const parts = dateString.split('-');
           if (parts.length === 3) {
-            const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-            return date.toLocaleDateString(window.YAFFA?.userSettings?.locale || undefined, {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            });
+            const year = Number(parts[0]);
+            const month = Number(parts[1]) - 1;
+            const day = Number(parts[2]);
+            if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
+              const date = new Date(year, month, day);
+              if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString(window.YAFFA?.userSettings?.locale || undefined, {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+              }
+            }
           }
         } catch {
           // fall through
@@ -121,6 +128,6 @@
     background-color: rgba(var(--cui-info-rgb, 13, 202, 240), 0.08);
   }
   .ai-doc-card:hover {
-    box-shadow: 0 0 0 2px rgba(13, 202, 240, 0.4);
+    box-shadow: 0 0 0 2px rgba(var(--cui-info-rgb, 13, 202, 240), 0.4);
   }
 </style>
