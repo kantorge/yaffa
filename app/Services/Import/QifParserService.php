@@ -25,6 +25,14 @@ class QifParserService
 
     public function applyProfile(FileImportProfile $profile): void
     {
+        $this->fieldMap = [
+            'payee' => 'P',
+            'comment' => 'M',
+            'category' => 'L',
+            'reference' => 'N',
+        ];
+        $this->amountSign = 'normal';
+
         $options = $profile->options_json ?? [];
 
         if (isset($options['field_map']) && is_array($options['field_map'])) {
@@ -64,7 +72,9 @@ class QifParserService
         }
 
         try {
-            file_put_contents($tmpPath, $normalizedContent);
+            if (file_put_contents($tmpPath, $normalizedContent) === false) {
+                throw new RuntimeException('Unable to write normalized content to temporary QIF file.');
+            }
             unset($normalizedContent);
 
             $fileObj = new SplFileObject($tmpPath);
@@ -221,6 +231,13 @@ class QifParserService
                 'The last QIF entry was missing the terminator (^) and was imported at end of file.',
             );
             $entries[] = $this->finalizeEntry($currentEntry);
+
+            $maxRows = max(1, (int) config('yaffa.import_max_rows', 5000));
+            if (count($entries) > $maxRows) {
+                throw new RuntimeException(
+                    sprintf('QIF import exceeds the configured maximum entry count of %d.', $maxRows),
+                );
+            }
         }
 
         return [

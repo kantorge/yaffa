@@ -70,7 +70,6 @@
 
 <script>
   import axios from 'axios';
-  import { ref } from 'vue';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
@@ -85,12 +84,19 @@
         default: null,
       },
     },
-    setup(props) {
-      const loadingTransactionId = ref(null);
-
-      const hasDraftAmount = props.draftAmount !== null && props.draftAmount !== undefined;
-
-      const transactionUrl = (transactionId) => {
+    data() {
+      return {
+        loadingTransactionId: null,
+      };
+    },
+    computed: {
+      hasDraftAmount() {
+        return this.draftAmount !== null && this.draftAmount !== undefined;
+      },
+    },
+    methods: {
+      __,
+      transactionUrl(transactionId) {
         if (!transactionId || !window.route) {
           return '#';
         }
@@ -98,9 +104,8 @@
           transaction: transactionId,
           action: 'show',
         });
-      };
-
-      const formatDate = (dateString) => {
+      },
+      formatDate(dateString) {
         if (!dateString) return __('Unknown');
         try {
           const parts = dateString.split('-');
@@ -116,9 +121,8 @@
           // fall through
         }
         return dateString;
-      };
-
-      const formatAmount = (amount) => {
+      },
+      formatAmount(amount) {
         if (amount === null || amount === undefined) return __('Unknown');
         const value = Number(amount);
         if (Number.isNaN(value)) return __('Unknown');
@@ -126,16 +130,14 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      };
-
-      const amountMismatch = (candidate) => {
-        if (!hasDraftAmount) return false;
-        const draft = Math.abs(Number(props.draftAmount));
+      },
+      amountMismatch(candidate) {
+        if (!this.hasDraftAmount) return false;
+        const draft = Math.abs(Number(this.draftAmount));
         const existing = Math.abs(Number(candidate.summary?.amount));
         return Math.abs(draft - existing) > 0.005;
-      };
-
-      const signalLabel = (signal) => {
+      },
+      signalLabel(signal) {
         const labels = {
           amount: __('amount'),
           date: __('date'),
@@ -145,23 +147,20 @@
           account_to: __('account to'),
         };
         return labels[signal] ?? signal;
-      };
-
-      const confidenceCardClass = (score) => {
+      },
+      confidenceCardClass(score) {
         if (score >= 0.9) return 'border-danger bg-danger-subtle';
         if (score >= 0.7) return 'border-warning bg-warning-subtle';
         return 'border-secondary bg-light';
-      };
-
-      const confidenceBadgeClass = (score) => {
+      },
+      confidenceBadgeClass(score) {
         if (score >= 0.9) return 'bg-danger';
         if (score >= 0.7) return 'bg-warning text-dark';
         return 'bg-secondary';
-      };
-
-      const viewTransaction = async (transactionId) => {
-        if (!transactionId || loadingTransactionId.value) return;
-        loadingTransactionId.value = transactionId;
+      },
+      async viewTransaction(transactionId) {
+        if (!transactionId || this.loadingTransactionId) return;
+        this.loadingTransactionId = transactionId;
         try {
           const response = await axios.get(`/api/v1/transactions/${transactionId}`);
           const transaction = response.data.transaction;
@@ -184,24 +183,11 @@
             },
           }));
         } catch {
-          window.open(transactionUrl(transactionId), '_blank', 'noopener,noreferrer');
+          window.open(this.transactionUrl(transactionId), '_blank', 'noopener,noreferrer');
         } finally {
-          loadingTransactionId.value = null;
+          this.loadingTransactionId = null;
         }
-      };
-
-      return {
-        loadingTransactionId,
-        hasDraftAmount,
-        formatDate,
-        formatAmount,
-        amountMismatch,
-        signalLabel,
-        confidenceCardClass,
-        confidenceBadgeClass,
-        viewTransaction,
-        __,
-      };
+      },
     },
   };
 </script>

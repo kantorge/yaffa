@@ -721,20 +721,34 @@
 
   const DELIMITER_CANDIDATES = [',', ';', '\t', '|'];
 
-  /** Parse one CSV line respecting double-quoted fields and escaped quotes. */
-  function parseCsvLine(line, delimiter) {
-    const result = [];
+  /**
+   * Parse CSV text into records, correctly handling quoted fields that contain
+   * embedded newlines. Returns an array of records (each record is a string[]).
+   * Empty records (all-empty fields) are skipped.
+   */
+  function parseCsvRecords(text, delimiter) {
+    const records = [];
     let field = '';
     let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
+    let currentRecord = [];
+    const len = text.length;
+
+    for (let i = 0; i < len; i++) {
+      const c = text[i];
+
       if (inQuotes) {
         if (c === '"') {
-          if (i + 1 < line.length && line[i + 1] === '"') {
+          if (i + 1 < len && text[i + 1] === '"') {
             field += '"';
             i++;
           } else {
             inQuotes = false;
+          }
+        } else if (c === '\r') {
+          // Normalize CRLF → LF inside quoted fields; skip bare CR.
+          if (i + 1 < len && text[i + 1] === '\n') {
+            field += '\n';
+            i++;
           }
         } else {
           field += c;
@@ -742,14 +756,24 @@
       } else if (c === '"') {
         inQuotes = true;
       } else if (c === delimiter) {
-        result.push(field.trim());
+        currentRecord.push(field.trim());
         field = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && i + 1 < len && text[i + 1] === '\n') i++;
+        currentRecord.push(field.trim());
+        field = '';
+        if (currentRecord.some((f) => f !== '')) records.push(currentRecord);
+        currentRecord = [];
       } else {
         field += c;
       }
     }
-    result.push(field.trim());
-    return result;
+
+    // Flush any trailing content not terminated by a newline.
+    currentRecord.push(field.trim());
+    if (currentRecord.some((f) => f !== '')) records.push(currentRecord);
+
+    return records;
   }
 
   /** Score each candidate delimiter and return the winner. */
@@ -874,7 +898,7 @@
 
         // ── File / raw data
         sampleFile: null,
-        rawLines: [], // first 20 non-empty raw lines
+        rawText: '', // raw file text (first ~20 non-empty lines worth)
 
         // ── Auto-detected values
         detectedDelimiter: ',',
@@ -920,6 +944,7 @@
     created() {
       if (this.initialProfile && this.editProfileId) {
         this.initFromProfile(this.initialProfile);
+        this.currentStep = 2;
       }
     },
 
@@ -1013,6 +1038,9 @@
 
       canAdvance() {
         if (this.currentStep === 1) {
+          if (this.isEditMode && this.headers.length > 0) {
+            return !this.aiSuggesting;
+          }
           return (
             this.sampleFile !== null &&
             this.headers.length > 0 &&
@@ -1105,17 +1133,16 @@
           );
           return;
         }
-        const lines = text
-          .split(/\r?\n/)
-          .filter((l) => l.trim().length > 0)
-          .slice(0, 20);
-        this.rawLines = lines;
+        this.rawText = text;
 
-        // Auto-detect
-        const delim = detectDelimiter(lines);
+        // Auto-detect (use naive line split only for the delimiter heuristic)
+        const linesForDetection = text
+          .split(/\r?\n/)
+          .filter((l) => l.trim().length > 0);
+        const delim = detectDelimiter(linesForDetection);
         this.detectedDelimiter = delim;
 
-        const allParsed = lines.map((l) => parseCsvLine(l, delim));
+        const allParsed = parseCsvRecords(text, delim);
         this.detectedHasHeader = detectHasHeader(allParsed);
 
         // Apply detected values to settings (only on first file load)
@@ -1134,7 +1161,7 @@
           this.decimalSeparator = detectedDecimal;
         }
 
-        this.rebuildParsedState(lines, delim, this.hasHeaderRow);
+        this.rebuildParsedState(text, delim, this.hasHeaderRow);
       },
 
       readFileAsText(file, maxLines) {
@@ -1201,15 +1228,20 @@
         });
       },
 
-      rebuildParsedState(lines, delimiter, hasHeader) {
-        if (!lines || lines.length === 0) {
+      rebuildParsedState(rawText, delimiter, hasHeader) {
+        if (!rawText) {
+          // No file loaded yet (e.g. edit mode before a new file is selected) —
+          // preserve existing state rather than wiping headers/mappings.
+          return;
+        }
+
+        const parsed = parseCsvRecords(rawText, delimiter);
+        if (parsed.length === 0) {
           this.headers = [];
           this.dataRows = [];
           this.parsedAllRows = [];
           return;
         }
-
-        const parsed = lines.map((l) => parseCsvLine(l, delimiter));
         this.parsedAllRows = parsed;
 
         const colCount = Math.max(...parsed.map((r) => r.length));
@@ -1242,7 +1274,7 @@
 
       onSettingsChange() {
         this.rebuildParsedState(
-          this.rawLines,
+          this.rawText,
           this.effectiveDelimiter,
           this.hasHeaderRow,
         );
@@ -1468,9 +1500,9 @@
         }
 
         // Rebuild parsed state with new delimiter/header settings
-        if (this.rawLines.length > 0) {
+        if (this.rawText) {
           this.rebuildParsedState(
-            this.rawLines,
+            this.rawText,
             this.effectiveDelimiter,
             this.hasHeaderRow,
           );

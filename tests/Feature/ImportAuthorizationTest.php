@@ -159,7 +159,7 @@ class ImportAuthorizationTest extends TestCase
         $this->assertIsArray($accountEntities);
         $this->assertCount(1, $accountEntities);
         $this->assertSame($ownAccount->id, $accountEntities[0]['id']);
-        $this->assertArrayNotHasKey($otherAccount->id, array_column($accountEntities, 'id'));
+        $this->assertNotContains($otherAccount->id, array_column($accountEntities, 'id'));
     }
 
     public function test_cannot_delete_profile_in_use_by_an_account(): void

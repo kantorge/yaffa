@@ -4,8 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Exceptions\AiProviderFailureException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\FileImportProfileStoreRequest;
-use App\Http\Requests\FileImportProfileUpdateRequest;
+use App\Http\Requests\FileImportProfileRequest;
 use App\Http\Requests\SuggestFileImportProfileRequest;
 use App\Models\AccountEntity;
 use App\Models\AiProviderConfig;
@@ -54,7 +53,7 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         ], Response::HTTP_OK);
     }
 
-    public function store(FileImportProfileStoreRequest $request): JsonResponse
+    public function store(FileImportProfileRequest $request): JsonResponse
     {
         Gate::authorize('create', FileImportProfile::class);
 
@@ -80,7 +79,7 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_CREATED);
     }
 
-    public function update(FileImportProfileUpdateRequest $request, FileImportProfile $profile): JsonResponse
+    public function update(FileImportProfileRequest $request, FileImportProfile $profile): JsonResponse
     {
         Gate::authorize('update', $profile);
 

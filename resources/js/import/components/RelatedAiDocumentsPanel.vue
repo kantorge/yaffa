@@ -12,7 +12,6 @@
         target="_blank"
         rel="noopener noreferrer"
         class="ai-doc-card border border-info rounded p-2 text-decoration-none text-body"
-        style="background-color: rgba(var(--cui-info-rgb, 13, 202, 240), 0.08);"
       >
         <!-- Header: merchant + amount -->
         <div class="d-flex justify-content-between align-items-start mb-1">
@@ -70,13 +69,13 @@
         required: true,
       },
     },
-    setup() {
-      const documentUrl = (aiDocumentId) => {
+    methods: {
+      __,
+      documentUrl(aiDocumentId) {
         if (!aiDocumentId || !window.route) return '#';
         return window.route('ai-documents.show', { aiDocument: aiDocumentId });
-      };
-
-      const formatDate = (dateString) => {
+      },
+      formatDate(dateString) {
         if (!dateString) return __('Unknown');
         try {
           const parts = dateString.split('-');
@@ -92,9 +91,8 @@
           // fall through
         }
         return dateString;
-      };
-
-      const formatAmount = (amount) => {
+      },
+      formatAmount(amount) {
         if (amount === null || amount === undefined) return __('Unknown');
         const value = Number(amount);
         if (Number.isNaN(value)) return __('Unknown');
@@ -102,9 +100,8 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      };
-
-      const signalLabel = (signal) => {
+      },
+      signalLabel(signal) {
         const labels = {
           amount: __('amount'),
           date: __('date'),
@@ -112,9 +109,7 @@
           merchant: __('merchant'),
         };
         return labels[signal] ?? signal;
-      };
-
-      return { documentUrl, formatDate, formatAmount, signalLabel, __ };
+      },
     },
   };
 </script>
@@ -123,6 +118,7 @@
   .ai-doc-card {
     font-size: 0.875rem;
     transition: box-shadow 0.15s ease;
+    background-color: rgba(var(--cui-info-rgb, 13, 202, 240), 0.08);
   }
   .ai-doc-card:hover {
     box-shadow: 0 0 0 2px rgba(13, 202, 240, 0.4);

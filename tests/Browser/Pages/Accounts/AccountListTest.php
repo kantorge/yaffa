@@ -25,7 +25,7 @@ class AccountListTest extends DuskTestCase
         /** @var User $user */
         $user = User::factory()->create();
         Currency::factory()->for($user)->create(['base' => true]);
-        AccountGroup::factory()->for($user)->create();
+        AccountGroup::factory()->for($user)->create(['name' => 'Default Group']);
 
         // Create 5 active accounts and 3 inactive accounts for the user
         AccountEntity::factory()

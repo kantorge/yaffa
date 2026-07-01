@@ -472,7 +472,6 @@
 <script>
   import Swal from 'sweetalert2';
   import axios from 'axios';
-  import { computed, nextTick, ref, watch } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import {
     escapeHtml,
@@ -505,37 +504,49 @@
       },
     },
     emits: ['profiles-updated'],
-    setup(props, { emit }) {
-      const editingProfile = ref(null);
-      const saving = ref(false);
-      const deletingId = ref(null);
-      const mappingJsonError = ref(null);
-      const showWizard = ref(false);
-      const profilesTable = ref(null);
-
-      // AI suggestion state (edit mode)
-      const showEditAiPanel = ref(false);
-      const editAiFile = ref(null);
-      const aiSuggesting = ref(false);
-      const aiError = ref(null);
-
-      const hasAiProvider =
-        typeof window.hasAiProvider === 'boolean'
-          ? window.hasAiProvider
-          : false;
-
-      const collapseId = computed(() =>
-        props.fileType === 'qif'
+    data() {
+      return {
+        editingProfile: null,
+        saving: false,
+        deletingId: null,
+        mappingJsonError: null,
+        showWizard: false,
+        showEditAiPanel: false,
+        editAiFile: null,
+        aiSuggesting: false,
+        aiError: null,
+        hasAiProvider:
+          typeof window.hasAiProvider === 'boolean'
+            ? window.hasAiProvider
+            : false,
+        mappingJsonPlaceholder,
+      };
+    },
+    computed: {
+      collapseId() {
+        return this.fileType === 'qif'
           ? 'qifProfileManagerBody'
-          : 'csvProfileManagerBody',
-      );
-
-      const userProfiles = computed(() =>
-        props.profiles.filter((p) => p.type === 'user'),
-      );
-
-      const buildEditingState = (profile) => {
-        if (props.fileType === 'qif') {
+          : 'csvProfileManagerBody';
+      },
+      userProfiles() {
+        return this.profiles.filter((p) => p.type === 'user');
+      },
+    },
+    watch: {
+      profiles: {
+        async handler() {
+          await this.$nextTick();
+          if (this.$refs.profilesTable) {
+            initializeBootstrapTooltips(this.$refs.profilesTable);
+          }
+        },
+        deep: false,
+      },
+    },
+    methods: {
+      __,
+      buildEditingState(profile) {
+        if (this.fileType === 'qif') {
           const fieldMap = profile?.options_json?.field_map || {};
           return {
             id: profile?.id || null,
@@ -563,143 +574,125 @@
             2,
           ),
         };
-      };
-
-      const deleteDisabledTooltip = (profile) => {
+      },
+      deleteDisabledTooltip(profile) {
         const names = (profile.account_entities || [])
           .map((a) => a.name)
           .join(', ');
         return __('Used as default profile by: :accounts', { accounts: names });
-      };
-
-      watch(
-        () => props.profiles,
-        async () => {
-          await nextTick();
-          if (profilesTable.value) {
-            initializeBootstrapTooltips(profilesTable.value);
-          }
-        },
-        { deep: false },
-      );
-
-      const startCreate = () => {
-        mappingJsonError.value = null;
-        if (props.fileType === 'csv') {
-          showWizard.value = true;
+      },
+      startCreate() {
+        this.mappingJsonError = null;
+        if (this.fileType === 'csv') {
+          this.showWizard = true;
         } else {
-          editingProfile.value = buildEditingState(null);
+          this.editingProfile = this.buildEditingState(null);
         }
-      };
+      },
+      startEdit(profile) {
+        this.mappingJsonError = null;
+        this.showEditAiPanel = false;
+        this.editAiFile = null;
+        this.aiError = null;
 
-      const startEdit = (profile) => {
-        mappingJsonError.value = null;
-        showEditAiPanel.value = false;
-        editAiFile.value = null;
-        aiError.value = null;
-
-        const state = buildEditingState(profile);
+        const state = this.buildEditingState(profile);
         state._raw = profile;
-        editingProfile.value = state;
+        this.editingProfile = state;
 
         // CSV profiles use the wizard; QIF profiles use the form
-        showWizard.value = props.fileType === 'csv';
-      };
-
-      const cancelEdit = () => {
-        editingProfile.value = null;
-        showWizard.value = false;
-        mappingJsonError.value = null;
-        showEditAiPanel.value = false;
-        aiError.value = null;
-      };
-
-      const onWizardSaved = () => {
-        showWizard.value = false;
-        editingProfile.value = null;
-        emit('profiles-updated');
-      };
-
-      const validateMappingJson = () => {
-        if (!editingProfile.value) return;
-        const text = editingProfile.value.mapping_json_text.trim();
+        this.showWizard = this.fileType === 'csv';
+      },
+      cancelEdit() {
+        this.editingProfile = null;
+        this.showWizard = false;
+        this.mappingJsonError = null;
+        this.showEditAiPanel = false;
+        this.aiError = null;
+      },
+      onWizardSaved() {
+        this.showWizard = false;
+        this.editingProfile = null;
+        this.$emit('profiles-updated');
+      },
+      validateMappingJson() {
+        if (!this.editingProfile) return;
+        const text = this.editingProfile.mapping_json_text.trim();
         if (!text) {
-          mappingJsonError.value = __('Column mapping is required.');
+          this.mappingJsonError = __('Column mapping is required.');
           return;
         }
         try {
           const parsed = JSON.parse(text);
           if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-            mappingJsonError.value = __(
+            this.mappingJsonError = __(
               'Must be a JSON object mapping column names to field names.',
             );
             return;
           }
-          mappingJsonError.value = null;
+          this.mappingJsonError = null;
         } catch (_e) {
-          mappingJsonError.value = __('Invalid JSON. Please check the format.');
+          this.mappingJsonError = __('Invalid JSON. Please check the format.');
         }
-      };
-
-      const saveProfile = async () => {
-        if (!editingProfile.value) return;
+      },
+      async saveProfile() {
+        if (!this.editingProfile) return;
 
         let payload;
 
-        if (props.fileType === 'qif') {
+        if (this.fileType === 'qif') {
           payload = {
-            name: editingProfile.value.name,
+            name: this.editingProfile.name,
             options_json: {
               field_map: {
-                payee: editingProfile.value.payee_marker,
-                comment: editingProfile.value.comment_marker,
-                category: editingProfile.value.category_marker,
-                reference: editingProfile.value.reference_marker,
+                payee: this.editingProfile.payee_marker,
+                comment: this.editingProfile.comment_marker,
+                category: this.editingProfile.category_marker,
+                reference: this.editingProfile.reference_marker,
               },
-              amount_sign: editingProfile.value.amount_sign,
+              amount_sign: this.editingProfile.amount_sign,
             },
           };
-          if (!editingProfile.value.id) payload.file_type = 'qif';
+          if (!this.editingProfile.id) payload.file_type = 'qif';
         } else {
-          validateMappingJson();
-          if (mappingJsonError.value) return;
+          this.validateMappingJson();
+          if (this.mappingJsonError) return;
 
           let mappingJson;
           try {
-            mappingJson = JSON.parse(editingProfile.value.mapping_json_text);
+            mappingJson = JSON.parse(this.editingProfile.mapping_json_text);
           } catch (_e) {
-            mappingJsonError.value = __(
+            this.mappingJsonError = __(
               'Invalid JSON. Please check the format.',
             );
             return;
           }
 
           payload = {
-            name: editingProfile.value.name,
-            delimiter: editingProfile.value.delimiter || ',',
-            has_header_row: editingProfile.value.has_header_row,
-            date_format: editingProfile.value.date_format || null,
-            decimal_separator: editingProfile.value.decimal_separator || null,
-            thousand_separator: editingProfile.value.thousand_separator || null,
-            sign_handling: editingProfile.value.sign_handling || null,
+            name: this.editingProfile.name,
+            delimiter: this.editingProfile.delimiter || ',',
+            has_header_row: this.editingProfile.has_header_row,
+            date_format: this.editingProfile.date_format || null,
+            decimal_separator: this.editingProfile.decimal_separator || null,
+            thousand_separator: this.editingProfile.thousand_separator || null,
+            sign_handling: this.editingProfile.sign_handling || null,
             mapping_json: mappingJson,
           };
         }
 
-        saving.value = true;
+        this.saving = true;
 
         try {
-          if (editingProfile.value.id) {
+          if (this.editingProfile.id) {
             await axios.patch(
-              `/api/v1/imports/file-profiles/${editingProfile.value.id}`,
+              `/api/v1/imports/file-profiles/${this.editingProfile.id}`,
               payload,
             );
           } else {
             await axios.post('/api/v1/imports/file-profiles', payload);
           }
-          editingProfile.value = null;
-          mappingJsonError.value = null;
-          emit('profiles-updated');
+          this.editingProfile = null;
+          this.mappingJsonError = null;
+          this.$emit('profiles-updated');
         } catch (err) {
           let message;
           if (err?.response?.data?.errors) {
@@ -714,11 +707,10 @@
           }
           showErrorToast(message);
         } finally {
-          saving.value = false;
+          this.saving = false;
         }
-      };
-
-      const deleteProfile = async (profile) => {
+      },
+      async deleteProfile(profile) {
         const affectedAccounts = Array.isArray(profile.account_entities)
           ? profile.account_entities
           : [];
@@ -761,12 +753,12 @@
           return;
         }
 
-        deletingId.value = profile.id;
+        this.deletingId = profile.id;
 
         try {
           await axios.delete(`/api/v1/imports/file-profiles/${profile.id}`);
           showSuccessToast(__('Profile deleted successfully.'));
-          emit('profiles-updated');
+          this.$emit('profiles-updated');
         } catch (err) {
           showErrorToast(
             err?.response?.data?.message ||
@@ -774,11 +766,10 @@
               __('Delete failed. Please try again.'),
           );
         } finally {
-          deletingId.value = null;
+          this.deletingId = null;
         }
-      };
-
-      const exportProfile = (profile) => {
+      },
+      exportProfile(profile) {
         const exportData = {
           type: profile.type,
           file_type: profile.file_type,
@@ -805,24 +796,20 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      };
+      },
+      onEditAiFileChange(event) {
+        this.editAiFile = event.target.files?.[0] || null;
+        this.aiError = null;
+      },
+      async requestEditAiSuggestion() {
+        if (!this.editAiFile || !this.editingProfile) return;
 
-      // ── AI re-suggestion (edit mode) ──────────────────────────────────────
-
-      const onEditAiFileChange = (event) => {
-        editAiFile.value = event.target.files?.[0] || null;
-        aiError.value = null;
-      };
-
-      const requestEditAiSuggestion = async () => {
-        if (!editAiFile.value || !editingProfile.value) return;
-
-        aiSuggesting.value = true;
-        aiError.value = null;
+        this.aiSuggesting = true;
+        this.aiError = null;
 
         try {
           const formData = new FormData();
-          formData.append('file', editAiFile.value);
+          formData.append('file', this.editAiFile);
 
           const response = await axios.post(
             '/api/v1/imports/file-profiles/suggest',
@@ -832,79 +819,49 @@
 
           const data = response.data.data;
 
-          // Apply settings to edit form
-          if (data.delimiter) editingProfile.value.delimiter = data.delimiter;
+          if (data.delimiter) this.editingProfile.delimiter = data.delimiter;
           if (typeof data.has_header_row === 'boolean')
-            editingProfile.value.has_header_row = data.has_header_row;
+            this.editingProfile.has_header_row = data.has_header_row;
           if (data.date_format !== undefined)
-            editingProfile.value.date_format = data.date_format;
+            this.editingProfile.date_format = data.date_format;
           if (data.decimal_separator)
-            editingProfile.value.decimal_separator = data.decimal_separator;
+            this.editingProfile.decimal_separator = data.decimal_separator;
           if (data.thousand_separator !== undefined)
-            editingProfile.value.thousand_separator = data.thousand_separator;
+            this.editingProfile.thousand_separator = data.thousand_separator;
           if (data.sign_handling)
-            editingProfile.value.sign_handling = data.sign_handling;
+            this.editingProfile.sign_handling = data.sign_handling;
           if (data.mapping_json && typeof data.mapping_json === 'object') {
-            editingProfile.value.mapping_json_text = JSON.stringify(
+            this.editingProfile.mapping_json_text = JSON.stringify(
               data.mapping_json,
               null,
               2,
             );
-            mappingJsonError.value = null;
+            this.mappingJsonError = null;
           }
 
-          showEditAiPanel.value = false;
+          this.showEditAiPanel = false;
         } catch (err) {
           if (err?.response?.status === 422) {
             const errors = err.response.data?.errors;
             if (errors) {
               const firstKey = Object.keys(errors)[0];
-              aiError.value = errors[firstKey]?.[0] || __('Invalid request.');
+              this.aiError = errors[firstKey]?.[0] || __('Invalid request.');
             } else {
-              aiError.value =
+              this.aiError =
                 err.response.data?.error?.message ||
                 err.response.data?.message ||
                 __('Invalid request.');
             }
           } else {
-            aiError.value =
+            this.aiError =
               err?.response?.data?.error?.message ||
               err?.response?.data?.message ||
               __('AI provider request failed. Please try again.');
           }
         } finally {
-          aiSuggesting.value = false;
+          this.aiSuggesting = false;
         }
-      };
-
-      return {
-        editingProfile,
-        saving,
-        deletingId,
-        mappingJsonError,
-        profilesTable,
-        deleteDisabledTooltip,
-        mappingJsonPlaceholder,
-        showWizard,
-        hasAiProvider,
-        showEditAiPanel,
-        editAiFile,
-        aiSuggesting,
-        aiError,
-        collapseId,
-        userProfiles,
-        startCreate,
-        startEdit,
-        cancelEdit,
-        onWizardSaved,
-        validateMappingJson,
-        saveProfile,
-        deleteProfile,
-        exportProfile,
-        onEditAiFileChange,
-        requestEditAiSuggestion,
-        __,
-      };
+      },
     },
   };
 </script>

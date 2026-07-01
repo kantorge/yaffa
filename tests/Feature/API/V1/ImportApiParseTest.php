@@ -200,8 +200,10 @@ CSV;
                 'Memo' => 'memo',
             ],
             'options_json' => [
-                'trim_strings' => true,
-                'skip_empty_rows' => true,
+                'parser_settings' => [
+                    'trim_strings' => true,
+                    'skip_empty_rows' => true,
+                ],
             ],
         ]);
 
