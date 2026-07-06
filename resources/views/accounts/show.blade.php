@@ -131,6 +131,75 @@
             >
                 <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
             </button>
+            <div class="card mb-3" id="advancedReconcileCard">
+                <div class="card-header">
+                    <div class="card-title collapsed collapse-control" data-coreui-toggle="collapse"
+                        data-coreui-target="#advancedReconcileBody">
+                        <i class="fa fa-angle-down"></i>
+                        {{ __('Advanced reconcile') }}
+                    </div>
+                </div>
+                <div class="collapse" aria-expanded="false" id="advancedReconcileBody">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-4">
+                                <h3 class="h6">{{ __('Cash') }}</h3>
+                                <dl class="row mb-2" data-reconcile-section="cash"></dl>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-checkpoint-type="cash">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                    {{ __('Set checkpoint') }}
+                                </button>
+                            </div>
+                            <div class="col-12 col-xl-4">
+                                <h3 class="h6">{{ __('Investments') }}</h3>
+                                <dl class="row mb-2" data-reconcile-section="investment"></dl>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-checkpoint-type="investment">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                    {{ __('Set checkpoint') }}
+                                </button>
+                            </div>
+                            <div class="col-12 col-xl-4">
+                                <h3 class="h6">{{ __('Total') }}</h3>
+                                <dl class="row mb-2" data-reconcile-section="total"></dl>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-checkpoint-type="total">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                    {{ __('Set checkpoint') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-secondary collapsed" type="button"
+                                data-coreui-toggle="collapse" data-coreui-target="#advancedReconcileHoldings">
+                                <i class="fa-solid fa-layer-group"></i>
+                                {{ __('Investment holdings') }}
+                            </button>
+                            <div class="collapse mt-2" id="advancedReconcileHoldings">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ __('Investment') }}</th>
+                                                <th>{{ __('Open qty') }}</th>
+                                                <th>{{ __('Close qty') }}</th>
+                                                <th>{{ __('Buys') }}</th>
+                                                <th>{{ __('Sells') }}</th>
+                                                <th>{{ __('Open price') }}</th>
+                                                <th>{{ __('Close price') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="advancedReconcileHoldingsBody">
+                                            <tr>
+                                                <td colspan="7"><i class="fa fa-fw fa-spinner fa-spin"></i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card left-control-panel-toggle-card">
                 <div class="card-header d-flex justify-content-between left-control-panel-toggle-header">
                     <div class="card-title">

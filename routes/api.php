@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AccountApiController;
+use App\Http\Controllers\API\AccountBalanceCheckpointApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\AiDocumentApiController;
@@ -140,6 +141,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/accounts/{accountEntity}/balance', [AccountApiController::class, 'getAccountBalance'])
         ->whereNumber('accountEntity')
         ->name('accounts.balance.show');
+    Route::get('/accounts/{accountEntity}/advanced-reconcile', [AccountBalanceCheckpointApiController::class, 'accountSummary'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.advanced-reconcile.show');
+    Route::post('/accounts/{accountEntity}/balance-checkpoints', [AccountBalanceCheckpointApiController::class, 'store'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.balance-checkpoints.store');
     Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
         ->whereNumber('accountEntity')
         ->name('accounts.show');
@@ -262,6 +269,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('reports.budget-chart');
     Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])
         ->name('reports.cashflow');
+    Route::get('/reports/advanced-reconcile', [AccountBalanceCheckpointApiController::class, 'dashboard'])
+        ->name('reports.advanced-reconcile');
     Route::get(
         '/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}',
         [ReportApiController::class, 'getCategoryWaterfallData']

@@ -105,6 +105,8 @@ Route::resource('transactions', TransactionController::class)
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
 Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
+Route::get('/reports/advanced-reconcile', [ReportController::class, 'advancedReconcile'])
+    ->name('reports.advanced-reconcile');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
 Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
