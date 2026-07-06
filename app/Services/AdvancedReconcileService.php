@@ -225,15 +225,16 @@ class AdvancedReconcileService
     private function investmentValueAt(AccountEntity $accountEntity, Carbon $date): array
     {
         $quantities = $this->quantitiesAt($accountEntity, $date);
+        $investments = Investment::whereIn('id', $quantities->pluck('investment_id'))->get()->keyBy('id');
         $missingPriceCount = 0;
 
-        $value = $quantities->sum(function (object $item) use ($date, &$missingPriceCount): float {
+        $value = $quantities->sum(function (object $item) use ($date, $investments, &$missingPriceCount): float {
             $quantity = (float) $item->quantity;
             if ($quantity === 0.0) {
                 return 0.0;
             }
 
-            $investment = Investment::find($item->investment_id);
+            $investment = $investments->get($item->investment_id);
             if ($investment === null) {
                 return 0.0;
             }
