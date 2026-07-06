@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.4.1](https://github.com/kantorge/yaffa/compare/v3.4.0...v3.4.1) (2026-07-06)
+
+### 🐛 Bug Fixes
+
+* Ensures consistent date and timezone handling ([d5345be](https://github.com/kantorge/yaffa/commit/d5345beb41f2fad4f7602044f6700aac3972c2a6))
+
+### 🛠️ Chores
+
+* **deps:** bump form-data in the npm_and_yarn group across 1 directory ([#498](https://github.com/kantorge/yaffa/issues/498)) ([453e665](https://github.com/kantorge/yaffa/commit/453e66573347449e44807ccf192fc5154a4fc89b))
+* reduce sandbox footprint ([a184179](https://github.com/kantorge/yaffa/commit/a184179740047d39010cbf42301193393f4302c3))
+* security fixes ([1ae8387](https://github.com/kantorge/yaffa/commit/1ae83879821bf8f8c740e4fea795f9e57f98ef66))
+
 ## [3.4.0](https://github.com/kantorge/yaffa/compare/v3.3.0...v3.4.0) (2026-06-17)
 
 
