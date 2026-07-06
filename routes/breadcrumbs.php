@@ -227,6 +227,11 @@ Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail
     $trail->push(__('Investments'), route('investments.index'));
     $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
 });
+Breadcrumbs::for('reports.advanced-reconcile', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Reports'), route('investments.index'));
+    $trail->push(__('Advanced Reconcile'), route('reports.advanced-reconcile'));
+});
 
 // Search
 Breadcrumbs::for('search', function (BreadcrumbTrail $trail) {

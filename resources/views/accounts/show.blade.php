@@ -186,6 +186,8 @@
                                                 <th>{{ __('Sells') }}</th>
                                                 <th>{{ __('Open price') }}</th>
                                                 <th>{{ __('Close price') }}</th>
+                                                <th>{{ __('Open value') }}</th>
+                                                <th>{{ __('Close value') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody id="advancedReconcileHoldingsBody">
