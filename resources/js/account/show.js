@@ -630,7 +630,13 @@ function loadAdvancedReconcile() {
             'X-CSRF-TOKEN': window.csrfToken,
         },
     })
-        .then(response => response.json())
+        .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || response.statusText);
+            }
+            return data;
+        })
         .then(renderAdvancedReconcile)
         .catch(error => toastHelpers.showErrorToast(error.message));
 }
