@@ -577,6 +577,8 @@ function renderAdvancedReconcileHoldings(holdings) {
             '<td class="text-end">' + holding.sells + '</td>' +
             '<td class="text-end">' + renderHoldingPriceButton(holding, 'open') + '</td>' +
             '<td class="text-end">' + renderHoldingPriceButton(holding, 'close') + '</td>' +
+             '<td class="text-end">' + formatAccountCurrency(holding.open_value)  + '</td>' +
+            '<td class="text-end">' + formatAccountCurrency(holding.close_value) + '</td>' +
             '</tr>';
     }).join('');
 }
