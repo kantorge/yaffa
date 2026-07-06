@@ -660,7 +660,7 @@ document.querySelectorAll('[data-checkpoint-type]').forEach((button) => {
             toastHelpers.showSuccessToast(__('Checkpoint saved'));
             loadAdvancedReconcile();
         }).catch((error) => {
-            toastHelpers.showErrorToast(error.message);
+            toastHelpers.showErrorToast(error.response?.data?.message || error.message);
         });
     });
 });
