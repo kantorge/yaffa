@@ -68,6 +68,7 @@
     escapeHtml,
     escapeHtmlWithLineBreaks,
     getTransactionTypeConfig,
+    parseIsoDate,
   } from '@/shared/lib/helpers';
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
@@ -580,7 +581,7 @@
               return {
                 key: index + 1,
                 customData: transaction,
-                dates: new Date(transaction.transaction_schedule.next_date),
+                dates: parseIsoDate(transaction.transaction_schedule.next_date),
               };
             });
 

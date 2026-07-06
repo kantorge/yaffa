@@ -7,7 +7,7 @@
 import 'datatables.net-bs5';
 import * as dataTableHelpers from '@/shared/lib/datatable'
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
-import { toIsoDateString } from '@/shared/lib/helpers';
+import { toIsoDateString, parseIsoDate } from '@/shared/lib/helpers';
 
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
@@ -166,7 +166,7 @@ function collectSimilarTransactions() {
         })
         .then(data => {
             let existingTransactions = data.data.map(transaction => {
-                transaction.date = new Date(transaction.date);
+                transaction.date = parseIsoDate(transaction.date);
                 return transaction;
             });
 
@@ -574,19 +574,19 @@ $(tableSelector).on('click', 'button.transaction-similar.transaction-basic.trans
         .then(function (data) {
             let transaction = data.transaction;
 
-            // Convert dates to Date objects
+            // Convert ISO date strings to local-timezone Date objects.
             if (transaction.date) {
-                transaction.date = new Date(transaction.date);
+                transaction.date = parseIsoDate(transaction.date);
             }
             if (transaction.transaction_schedule) {
                 if (transaction.transaction_schedule.start_date) {
-                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                    transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
                 }
                 if (transaction.transaction_schedule.end_date) {
-                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                    transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
                 }
                 if (transaction.transaction_schedule.next_date) {
-                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+                    transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
                 }
             }
 
@@ -639,19 +639,19 @@ $(tableSelector).on('click', 'button.transaction-related.transaction-quickview',
         .then(function (data) {
             let transaction = data.transaction;
 
-            // Convert dates to Date objects
+            // Convert ISO date strings to local-timezone Date objects.
             if (transaction.date) {
-                transaction.date = new Date(transaction.date);
+                transaction.date = parseIsoDate(transaction.date);
             }
             if (transaction.transaction_schedule) {
                 if (transaction.transaction_schedule.start_date) {
-                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                    transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
                 }
                 if (transaction.transaction_schedule.end_date) {
-                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                    transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
                 }
                 if (transaction.transaction_schedule.next_date) {
-                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+                    transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
                 }
             }
 
@@ -823,12 +823,12 @@ fetch('/api/v1/transactions/scheduled-items?type=schedule')
             // Take only transactions with a next date
             .filter(transaction => transaction.schedule_config.next_date)
             .map(function (transaction) {
-                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                transaction.schedule_config.start_date = parseIsoDate(transaction.schedule_config.start_date);
                 if (transaction.schedule_config.next_date) {
-                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
+                    transaction.schedule_config.next_date = parseIsoDate(transaction.schedule_config.next_date);
                 }
                 if (transaction.schedule_config.end_date) {
-                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
+                    transaction.schedule_config.end_date = parseIsoDate(transaction.schedule_config.end_date);
                 }
 
                 // Create rule

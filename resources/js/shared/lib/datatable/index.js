@@ -1,5 +1,5 @@
 import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '@/shared/lib/i18n';
-import { getTransactionTypeConfig } from '@/shared/lib/helpers';
+import { getTransactionTypeConfig, parseIsoDate } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 
 const route = window.route;
@@ -536,19 +536,19 @@ export function initializeQuickViewButton(selector) {
             .then(function (data) {
                 let transaction = data.transaction;
 
-                // Convert dates to Date objects
+                // Convert ISO date strings to local-timezone Date objects.
                 if (transaction.date) {
-                    transaction.date = new Date(transaction.date);
+                    transaction.date = parseIsoDate(transaction.date);
                 }
                 if (transaction.transaction_schedule) {
                     if (transaction.transaction_schedule.start_date) {
-                        transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
                     }
                     if (transaction.transaction_schedule.end_date) {
-                        transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
                     }
                     if (transaction.transaction_schedule.next_date) {
-                        transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+                        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
                     }
                 }
 

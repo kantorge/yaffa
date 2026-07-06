@@ -29,14 +29,3 @@
         })(window,document,'script','dataLayer','{{config('yaffa.gtm_container_id')}}');</script>
     <!-- End Google Tag Manager -->
 @endif
-
-{{-- Conditionally load CookieYes, which is the CMP used by the sandbox --}}
-@if(config('yaffa.cookieyes_id'))
-    <!-- Start cookieyes banner -->
-    <script
-            id="cookieyes"
-            type="text/javascript"
-            src="https://cdn-cookieyes.com/client_data/{{config('yaffa.cookieyes_id')}}/script.js"
-    ></script>
-    <!-- End cookieyes banner -->
-@endif
