@@ -229,7 +229,7 @@ Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail
 });
 Breadcrumbs::for('reports.advanced-reconcile', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Reports'), route('investments.index'));
+    $trail->push(__('Reports'));
     $trail->push(__('Advanced Reconcile'), route('reports.advanced-reconcile'));
 });
 
