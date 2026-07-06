@@ -2,6 +2,9 @@
 
 ## [3.4.1](https://github.com/kantorge/yaffa/compare/v3.4.0...v3.4.1) (2026-07-06)
 
+### 🐛 Bug Fixes
+
+* Ensures consistent date and timezone handling ([d5345be](https://github.com/kantorge/yaffa/commit/d5345beb41f2fad4f7602044f6700aac3972c2a6))
 
 ### 🛠️ Chores
 
