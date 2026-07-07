@@ -202,15 +202,17 @@ class InvestmentApiController extends Controller implements HasMiddleware
             ])
             ->get();
 
-        // Aggregate transactions into positions
-        $positions = [];
+        // Build the holding periods first, without resolving prices yet. Each period
+        // records which (investment, as-of date) price it needs; a null date means
+        // "current/latest price" for a still-open position.
+        $periods = [];
+        $priceRequests = collect();
 
-        // Loop through investments and get related transactions
         $investments->map(fn ($investment) => $investment instanceof Investment
             ? $this->investmentService->enrichInvestmentWithQuantityHistory($investment)
             : null)
             ->filter(fn ($investment) => $investment instanceof Investment)
-            ->each(function (Investment $investment) use (&$positions, $request) {
+            ->each(function (Investment $investment) use (&$periods, &$priceRequests, $request) {
                 $start = true;
                 $period = [];
 
@@ -233,8 +235,10 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
                     if (! $start && $item['schedule'] === 0.0) {
                         $period['end'] = $item['date'];
-                        $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined', new Carbon($item['date']));
-                        $positions[] = $period;
+                        $period['_price_investment'] = $investment;
+                        $period['_price_as_of'] = new Carbon($item['date']);
+                        $priceRequests->push(['investment' => $investment, 'date' => $period['_price_as_of']]);
+                        $periods[] = $period;
                         $period = [];
 
                         $start = true;
@@ -248,10 +252,27 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 // If period start was set but the end date is missing, then set it to the app config end date
                 if (Arr::has($period, 'start') && ! Arr::has($period, 'end')) {
                     $period['end'] = $request->user()->end_date;
-                    $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined');
-                    $positions[] = $period;
+                    $period['_price_investment'] = $investment;
+                    $period['_price_as_of'] = null;
+                    $priceRequests->push(['investment' => $investment, 'date' => null]);
+                    $periods[] = $period;
                 }
             });
+
+        // Resolve every period's price in a small constant number of queries, instead of
+        // up to 2 queries per holding period across the whole portfolio.
+        $priceMap = $this->investmentService->getLatestPricesBatch($priceRequests);
+
+        $positions = array_map(function (array $period) use ($priceMap) {
+            $investment = $period['_price_investment'];
+            $asOfDate = $period['_price_as_of'];
+
+            $period['last_price'] = $priceMap[$this->investmentService->priceBatchKey($investment->id, $asOfDate)] ?? null;
+
+            unset($period['_price_investment'], $period['_price_as_of']);
+
+            return $period;
+        }, $periods);
 
         return response()
             ->json(

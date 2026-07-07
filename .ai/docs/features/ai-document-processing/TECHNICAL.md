@@ -524,7 +524,8 @@ A few notes on the statuses
   - Remove inline SVG elements
   - Remove base64-encoded data URIs
   - Strip unnecessary HTML tags while preserving text structure
-  - HTML cleanup now performed in CreateAiDocumentFromSource listener before storing email content
+  - This lossy text-oriented cleanup (`CreateAiDocumentFromSource::cleanHtmlContent()`) is only applied to the copy used for the AI prompt, never to `ReceivedMail.html` itself
+  - `ReceivedMail.html` (the column rendered to the user via `v-html` in `AiDocumentEmailViewer.vue`) is sanitized separately: `MailHandler` runs the raw inbound HTML through `EmailHtmlSanitizerService` (HTMLPurifier, allowlist-based) before it is ever persisted, and the frontend re-sanitizes with DOMPurify before rendering, as defense in depth
 
 ## Testing & Development Tools
 

@@ -17,6 +17,7 @@
         "dedoc/scramble": "^0.13.22",
         "diglactic/laravel-breadcrumbs": "^10.0",
         "edgaras/strsim": "^1.1",
+        "ezyang/htmlpurifier": "^4.19",
         "google/apiclient": "^2.19",
         "guzzlehttp/guzzle": "^7.10",
         "intervention/image": "^3.11",

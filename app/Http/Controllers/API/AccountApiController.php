@@ -9,6 +9,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -307,9 +308,8 @@ class AccountApiController extends Controller implements HasMiddleware
 
         $baseCurrency = $this->getBaseCurrency();
 
-        // Get all currencies for rate calculation
-        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Currency> $currencies */
-        $currencies = $user->currencies()->get();
+        // Get the cached monthly average rates for all currencies, to avoid a per-account rate query
+        $allRatesMap = $this->allCurrencyRatesByMonth();
 
         // Load all accounts or the selected one
         /** @var \Illuminate\Database\Eloquent\Collection<int, AccountEntity> $accounts */
@@ -374,7 +374,7 @@ class AccountApiController extends Controller implements HasMiddleware
             ->get();
 
         $accounts
-            ->map(function (AccountEntity $account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+            ->map(function (AccountEntity $account) use ($allRatesMap, $baseCurrency, $standardSummary, $investmentSummary) {
                 if (! $account->config instanceof Account) {
                     return $account;
                 }
@@ -401,7 +401,12 @@ class AccountApiController extends Controller implements HasMiddleware
                     return $account;
                 }
 
-                $rate = $currencies->find($account->config->currency_id)->rate() ?? 1;
+                $rate = $this->getLatestRateFromMap(
+                    $account->config->currency_id,
+                    Carbon::now(),
+                    $allRatesMap,
+                    $baseCurrency->id
+                ) ?? 1;
 
                 $account['sum_foreign'] = $account['sum'];
                 $account['sum'] *= $rate;

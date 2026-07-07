@@ -14,6 +14,8 @@ class ScraperService
      */
     public function scrape(string $url, string $selector): array
     {
+        PublicEndpointUrlValidator::assertPublic($url);
+
         return Roach::collectSpider(
             InvestmentPriceScraper::class,
             new Overrides(

@@ -5,7 +5,9 @@ namespace App\Services\InvestmentPriceProviders;
 use App\Contracts\InvestmentPriceProvider;
 use App\Exceptions\InvalidPriceDataException;
 use App\Exceptions\PriceProviderException;
+use App\Exceptions\UnsafeEndpointUrlException;
 use App\Models\Investment;
+use App\Services\PublicEndpointUrlValidator;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -45,7 +47,7 @@ class GenericApiProvider implements InvestmentPriceProvider
         ];
 
         $resolvedEndpointUrl = $this->interpolate((string) $endpointUrl, $placeholders);
-        $this->assertPublicEndpointUrl($resolvedEndpointUrl, $investment->symbol);
+        $resolvedIps = $this->assertPublicEndpointUrl($resolvedEndpointUrl, $investment->symbol);
 
         $headers = $this->parseJsonObjectCredential($credentials, 'headers_json', $placeholders, $investment);
         $query = $this->parseJsonObjectCredential($credentials, 'query_json', $placeholders, $investment);
@@ -56,7 +58,15 @@ class GenericApiProvider implements InvestmentPriceProvider
                 'query' => $query,
                 'headers' => $headers,
                 'timeout' => 30,
+                // Never follow redirects: a validated public host could redirect the
+                // actual request to an internal address, bypassing the check above.
+                'allow_redirects' => false,
             ];
+
+            $pinnedCurlOptions = $this->buildDnsPinningCurlOptions($resolvedEndpointUrl, $resolvedIps);
+            if ($pinnedCurlOptions !== []) {
+                $requestOptions['curl'] = $pinnedCurlOptions;
+            }
 
             if ($method === 'POST' && $body !== []) {
                 $requestOptions['json'] = $body;
@@ -475,95 +485,53 @@ class GenericApiProvider implements InvestmentPriceProvider
         return strtr($value, $placeholders);
     }
 
-    private function assertPublicEndpointUrl(string $endpointUrl, ?string $investmentSymbol): void
+    /**
+     * @return array<int, string> the IP addresses the host resolved to, for DNS pinning
+     */
+    private function assertPublicEndpointUrl(string $endpointUrl, ?string $investmentSymbol): array
     {
-        $host = parse_url($endpointUrl, PHP_URL_HOST);
-
-        if (! is_string($host) || Str::trim($host) === '') {
+        try {
+            return PublicEndpointUrlValidator::assertPublic($endpointUrl);
+        } catch (UnsafeEndpointUrlException $exception) {
             throw new PriceProviderException(
-                'Endpoint URL must include a valid host.',
+                $exception->getMessage(),
                 'generic_api',
-                $investmentSymbol
+                $investmentSymbol,
+                $exception
             );
-        }
-
-        $normalizedHost = Str::lower(mb_trim($host, '[]'));
-
-        if ($normalizedHost === 'localhost') {
-            throw new PriceProviderException(
-                'Endpoint URL must resolve to a public IP address.',
-                'generic_api',
-                $investmentSymbol
-            );
-        }
-
-        $resolvedIps = $this->resolveEndpointIps($normalizedHost);
-
-        if ($resolvedIps === []) {
-            return;
-        }
-
-        foreach ($resolvedIps as $resolvedIp) {
-            if ($this->isDisallowedIp($resolvedIp)) {
-                throw new PriceProviderException(
-                    'Endpoint URL must resolve to a public IP address.',
-                    'generic_api',
-                    $investmentSymbol
-                );
-            }
         }
     }
 
     /**
-     * @return array<int, string>
+     * Pins the connection to the already-validated IP address(es) so a short-TTL DNS
+     * record can't resolve to a different (internal) address between validation and
+     * the actual request (DNS-rebinding TOCTOU).
+     *
+     * @param  array<int, string>  $resolvedIps
+     * @return array<int, mixed>
      */
-    private function resolveEndpointIps(string $host): array
+    private function buildDnsPinningCurlOptions(string $endpointUrl, array $resolvedIps): array
     {
-        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            return [$host];
-        }
-
-        $resolvedIps = [];
-
-        $records = dns_get_record($host, DNS_A | DNS_AAAA);
-        if (is_array($records)) {
-            foreach ($records as $record) {
-                $ipAddress = $record['ip'] ?? $record['ipv6'] ?? null;
-
-                if (is_string($ipAddress) && $ipAddress !== '') {
-                    $resolvedIps[] = $ipAddress;
-                }
-            }
-        }
-
         if ($resolvedIps === []) {
-            $ipv4Addresses = gethostbynamel($host);
-
-            if (is_array($ipv4Addresses)) {
-                foreach ($ipv4Addresses as $ipv4Address) {
-                    if ($ipv4Address !== '') {
-                        $resolvedIps[] = $ipv4Address;
-                    }
-                }
-            }
+            return [];
         }
 
-        return array_values(array_unique($resolvedIps));
-    }
-
-    private function isDisallowedIp(string $ipAddress): bool
-    {
-        $normalizedIpAddress = Str::lower($ipAddress);
-
-        if (in_array($normalizedIpAddress, ['::1', '0:0:0:0:0:0:0:1'], true)) {
-            return true;
+        $host = parse_url($endpointUrl, PHP_URL_HOST);
+        if (! is_string($host) || $host === '') {
+            return [];
         }
 
-        return filter_var(
-            $ipAddress,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
-        ) === false;
+        $scheme = parse_url($endpointUrl, PHP_URL_SCHEME);
+        $port = parse_url($endpointUrl, PHP_URL_PORT) ?? (Str::lower((string) $scheme) === 'http' ? 80 : 443);
+
+        $addresses = array_map(
+            static fn (string $ip): string => str_contains($ip, ':') ? "[{$ip}]" : $ip,
+            $resolvedIps
+        );
+
+        return [
+            CURLOPT_RESOLVE => [sprintf('%s:%d:%s', mb_trim($host, '[]'), $port, implode(',', $addresses))],
+        ];
     }
 
     /**

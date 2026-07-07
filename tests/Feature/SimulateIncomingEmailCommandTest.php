@@ -40,4 +40,21 @@ class SimulateIncomingEmailCommandTest extends TestCase
         $file = AiDocumentFile::first();
         Storage::disk('local')->assertExists($file->file_path);
     }
+
+    public function test_command_sanitizes_html_body_before_storing_received_mail(): void
+    {
+        $user = User::factory()->create();
+
+        $this->artisan('app:simulate-incoming-email', [
+            '--from' => $user->email,
+            '--subject' => 'Test subject',
+            '--html' => '<p>Hello</p><script>alert(document.cookie)</script><img src=x onerror="alert(1)">',
+        ])->assertExitCode(0);
+
+        $receivedMail = ReceivedMail::firstOrFail();
+
+        $this->assertStringNotContainsString('<script', $receivedMail->html);
+        $this->assertStringNotContainsString('onerror', $receivedMail->html);
+        $this->assertStringContainsString('Hello', $receivedMail->html);
+    }
 }

@@ -2,9 +2,15 @@
 
 namespace Tests\Feature\API;
 
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
+use App\Models\InvestmentPrice;
+use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -135,6 +141,73 @@ class InvestmentApiControllerTest extends TestCase
             ->assertJsonPath('provider_settings.url', 'https://example.com/price')
             ->assertJsonPath('provider_settings.selector', '.price')
             ->assertJsonPath('provider_settings.decimal_separator', ',');
+    }
+
+    public function test_timeline_resolves_closed_and_open_holding_periods_with_prices(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        $account = AccountEntity::factory()
+            ->for($this->user)
+            ->for(
+                Account::factory()->create([
+                    'currency_id' => $investment->currency_id,
+                    'account_group_id' => AccountGroup::factory()->for($this->user)->create()->id,
+                ]),
+                'config'
+            )
+            ->create();
+
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-10', 'price' => 100.00]);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-02-15', 'price' => 120.00]);
+
+        // Build TransactionDetailInvestment rows directly: the factory's definition() has a
+        // side effect that spins up an unrelated scratch user/account/currency on every call,
+        // which isn't needed here and can collide with the currencies just created above.
+        $buyConfig = fn (float $quantity) => TransactionDetailInvestment::create([
+            'account_id' => $account->id,
+            'investment_id' => $investment->id,
+            'price' => null,
+            'quantity' => $quantity,
+            'commission' => null,
+            'tax' => null,
+            'dividend' => null,
+        ]);
+
+        // Closed holding period: bought then fully sold.
+        Transaction::factory()
+            ->for($this->user)
+            ->for($buyConfig(10), 'config')
+            ->create(['date' => '2024-01-05', 'transaction_type' => 'buy', 'schedule' => false]);
+
+        Transaction::factory()
+            ->for($this->user)
+            ->for($buyConfig(10), 'config')
+            ->create(['date' => '2024-01-18', 'transaction_type' => 'sell', 'schedule' => false]);
+
+        // Open holding period: bought, never sold.
+        Transaction::factory()
+            ->for($this->user)
+            ->for($buyConfig(5), 'config')
+            ->create(['date' => '2024-02-01', 'transaction_type' => 'buy', 'schedule' => false]);
+
+        $response = $this->getJson(route('api.v1.investments.timeline'));
+
+        $response->assertOk();
+
+        $positions = $response->json();
+        $this->assertCount(2, $positions);
+
+        $closedPeriod = collect($positions)->firstWhere('end', '2024-01-18');
+        $this->assertNotNull($closedPeriod);
+        $this->assertEquals(10, $closedPeriod['quantity']);
+        $this->assertEquals(100.00, $closedPeriod['last_price']);
+
+        $openPeriod = collect($positions)->firstWhere('end', '!=', '2024-01-18');
+        $this->assertNotNull($openPeriod);
+        $this->assertEquals(5, $openPeriod['quantity']);
+        $this->assertEquals(120.00, $openPeriod['last_price']);
     }
 
     private function createInvestmentForUser(User $user): Investment
