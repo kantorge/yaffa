@@ -9,7 +9,7 @@ use App\Services\GoogleDriveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class GoogleDriveConfigApiControllerTest extends TestCase

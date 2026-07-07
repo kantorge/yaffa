@@ -15,7 +15,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use Prism\Prism\Facades\Prism;
 use Symfony\Component\HttpFoundation\Response;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class AiProviderConfigApiController extends Controller implements HasMiddleware
 {
