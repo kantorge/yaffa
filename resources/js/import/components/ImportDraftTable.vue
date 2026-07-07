@@ -232,6 +232,7 @@
                       <DuplicateCandidatesPanel
                         :candidates="draft.duplicate_candidates"
                         :draft-amount="draft.amount"
+                        :account-currency="accountCurrency"
                       />
                     </div>
                     <!-- Related AI documents -->

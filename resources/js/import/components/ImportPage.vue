@@ -306,7 +306,7 @@
           try {
             const accountResponse = await axios.get(`/api/v1/accounts/${value}`);
             this.selectedAccountCurrency =
-              accountResponse.data?.config?.currency?.iso_code ?? null;
+              accountResponse.data?.config?.currency ?? null;
           } catch {
             // Non-critical, amounts will format without currency symbol
           }
