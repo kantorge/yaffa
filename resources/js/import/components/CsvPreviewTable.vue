@@ -16,19 +16,22 @@
       </thead>
       <tbody class="table-group-divider">
         <tr v-if="dataRows.length === 0">
-          <td :colspan="headers.length || 1" class="text-muted text-center py-2">
+          <td
+            :colspan="headers.length || 1"
+            class="text-muted text-center py-2"
+          >
             {{ __('No data rows to preview') }}
           </td>
         </tr>
-        <tr v-for="(row, ri) in dataRows" :key="ri">
+        <tr v-for="(row, row_index) in dataRows" :key="row_index">
           <td
-            v-for="(cell, ci) in normalizedRow(row, headers.length)"
-            :key="ci"
+            v-for="(cell, cell_index) in normalizedRow(row, headers.length)"
+            :key="cell_index"
             class="text-nowrap"
             style="max-width: 200px; overflow: hidden; text-overflow: ellipsis"
             :title="cell"
           >
-            {{ cell !== '' ? cell : '—' }}
+            {{ formatCellValue(cell) !== '' ? formatCellValue(cell) : '—' }}
           </td>
         </tr>
       </tbody>
@@ -37,7 +40,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
 
   export default {
     name: 'CsvPreviewTable',
@@ -50,6 +53,10 @@
         type: Array,
         default: () => [],
       },
+      accountCurrency: {
+        type: Object,
+        default: null,
+      },
     },
     methods: {
       __,
@@ -57,6 +64,31 @@
         const arr = Array.isArray(row) ? [...row] : [];
         while (arr.length < length) arr.push('');
         return arr.slice(0, length);
+      },
+      formatCellValue(cell) {
+        if (cell === '' || cell === null || cell === undefined) {
+          return cell;
+        }
+
+        const stringValue = String(cell).trim();
+        if (!stringValue) {
+          return cell;
+        }
+
+        const numValue = Number(stringValue);
+        if (Number.isNaN(numValue)) {
+          return cell;
+        }
+
+        if (!this.accountCurrency) {
+          return stringValue;
+        }
+
+        return toFormattedCurrency(
+          numValue,
+          window.YAFFA?.userSettings?.locale || undefined,
+          this.accountCurrency,
+        );
       },
     },
   };

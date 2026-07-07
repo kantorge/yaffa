@@ -59,7 +59,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
 
   export default {
     name: 'RelatedAiDocumentsPanel',
@@ -67,6 +67,10 @@
       candidates: {
         type: Array,
         required: true,
+      },
+      accountCurrency: {
+        type: Object,
+        default: null,
       },
     },
     methods: {
@@ -100,13 +104,20 @@
         return dateString;
       },
       formatAmount(amount) {
-        if (amount === null || amount === undefined) return __('Unknown');
+        if (amount === null || amount === undefined) {
+          return __('Unknown');
+        }
+
         const value = Number(amount);
-        if (Number.isNaN(value)) return __('Unknown');
-        return value.toLocaleString(window.YAFFA?.userSettings?.locale || undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+        if (Number.isNaN(value)) {
+          return __('Unknown');
+        }
+
+        return toFormattedCurrency(
+          value,
+          window.YAFFA?.userSettings?.locale || undefined,
+          this.accountCurrency,
+        );
       },
       signalLabel(signal) {
         const labels = {

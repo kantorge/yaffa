@@ -240,7 +240,10 @@
                       v-if="draft.related_ai_documents && draft.related_ai_documents.length"
                       class="col-12 col-md-6 col-lg-4"
                     >
-                      <RelatedAiDocumentsPanel :candidates="draft.related_ai_documents" />
+                      <RelatedAiDocumentsPanel
+                        :candidates="draft.related_ai_documents"
+                        :account-currency="accountCurrency"
+                      />
                     </div>
                   </div>
                 </td>
