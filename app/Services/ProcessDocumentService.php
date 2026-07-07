@@ -54,9 +54,7 @@ class ProcessDocumentService
             $user = $document->user;
             $config = $user->aiProviderConfigs()->first();
 
-            if (! $config) {
-                throw new Exception('No AI provider configured for user');
-            }
+            throw_unless($config, new Exception('No AI provider configured for user'));
 
             $resolvedSettings = $this->resolveAiUserSettings($user);
             $this->promptChatHistoryEnabled = (bool) ($resolvedSettings['prompt_chat_history_enabled'] ?? true);
@@ -69,9 +67,7 @@ class ProcessDocumentService
             // Step 1: Extract text from all files
             $extractedText = $this->extractTextFromFiles($document, $config, $resolvedSettings);
 
-            if (empty($extractedText)) {
-                throw new Exception('No text could be extracted from document files');
-            }
+            throw_if(empty($extractedText), new Exception('No text could be extracted from document files'));
 
             // Step 2: Extract core transaction data
             $rawData = $this->extractTransactionData(

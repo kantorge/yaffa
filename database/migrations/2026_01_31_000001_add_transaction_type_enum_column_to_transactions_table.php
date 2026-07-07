@@ -33,12 +33,10 @@ return new class () extends Migration {
             ->whereIn('transaction_type_id', $unsupportedTransactionTypes)
             ->count();
 
-        if ($unsupportedTransactionCount > 0) {
-            throw new RuntimeException(
+        throw_if($unsupportedTransactionCount > 0, new RuntimeException(
                 'Unsupported legacy transaction types found in ' . $unsupportedTransactionCount . ' transactions. '
                 . 'Only mapped enum values can be migrated. Please fix the data before re-running migration.'
-            );
-        }
+            ));
 
         // Start performing the migration
         Schema::table('transactions', function (Blueprint $table) use ($supportedTransactionTypes) {
@@ -70,11 +68,9 @@ return new class () extends Migration {
             ->whereNull('transaction_type')
             ->count();
 
-        if ($unmigratedTransactions > 0) {
-            throw new RuntimeException(
+        throw_if($unmigratedTransactions > 0, new RuntimeException(
                 "Transaction type migration failed: {$unmigratedTransactions} transactions could not be mapped."
-            );
-        }
+            ));
 
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropForeign('transactions_transaction_type_id_foreign');

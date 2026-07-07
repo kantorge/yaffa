@@ -37,21 +37,17 @@ class WebScrapingProvider implements InvestmentPriceProvider
             ? $providerSettings['decimal_separator']
             : '.';
 
-        if (empty($scrapeUrl)) {
-            throw new InvalidPriceDataException(
+        throw_if(empty($scrapeUrl), new InvalidPriceDataException(
                 'Missing scrape URL for web scraping',
                 'web_scraping',
                 $investment->symbol
-            );
-        }
+            ));
 
-        if (empty($scrapeSelector)) {
-            throw new InvalidPriceDataException(
+        throw_if(empty($scrapeSelector), new InvalidPriceDataException(
                 'Missing scrape selector for web scraping',
                 'web_scraping',
                 $investment->symbol
-            );
-        }
+            ));
 
         try {
             $result = $this->scraperService->scrape(
@@ -59,13 +55,11 @@ class WebScrapingProvider implements InvestmentPriceProvider
                 $scrapeSelector
             );
 
-            if (empty($result)) {
-                throw new InvalidPriceDataException(
+            throw_if(empty($result), new InvalidPriceDataException(
                     'Web scraping returned no results - selector may be invalid or page structure changed',
                     'web_scraping',
                     $investment->symbol
-                );
-            }
+                ));
 
             $price = $this->parsePriceValue(
                 $result[0]->get('price'),
@@ -73,13 +67,11 @@ class WebScrapingProvider implements InvestmentPriceProvider
                 $investment->symbol
             );
 
-            if ($price <= 0) {
-                throw new InvalidPriceDataException(
+            throw_if($price <= 0, new InvalidPriceDataException(
                     "Invalid price value from web scraping: {$price}",
                     'web_scraping',
                     $investment->symbol
-                );
-            }
+                ));
 
             return [
                 [
@@ -204,24 +196,20 @@ class WebScrapingProvider implements InvestmentPriceProvider
             return (float) $priceValue;
         }
 
-        if (! is_string($priceValue)) {
-            throw new InvalidPriceDataException(
+        throw_unless(is_string($priceValue), new InvalidPriceDataException(
                 'Invalid price format from web scraping: ' . get_debug_type($priceValue),
                 'web_scraping',
                 $symbol
-            );
-        }
+            ));
 
         $isNegative = preg_match('/[-−]/u', $priceValue) === 1;
         $sanitized = preg_replace('/[^0-9' . preg_quote($decimalSeparator, '/') . ']/u', '', mb_trim($priceValue));
 
-        if (! is_string($sanitized) || $sanitized === '') {
-            throw new InvalidPriceDataException(
+        throw_if(! is_string($sanitized) || $sanitized === '', new InvalidPriceDataException(
                 "Invalid price format from web scraping: {$priceValue}",
                 'web_scraping',
                 $symbol
-            );
-        }
+            ));
 
         $normalized = $decimalSeparator === ','
             ? str_replace(',', '.', $sanitized)
@@ -231,13 +219,11 @@ class WebScrapingProvider implements InvestmentPriceProvider
             $normalized = '-' . $normalized;
         }
 
-        if (preg_match('/^-?\d+(?:\.\d+)?$/', $normalized) !== 1) {
-            throw new InvalidPriceDataException(
+        throw_if(preg_match('/^-?\d+(?:\.\d+)?$/', $normalized) !== 1, new InvalidPriceDataException(
                 "Invalid price format from web scraping: {$priceValue}",
                 'web_scraping',
                 $symbol
-            );
-        }
+            ));
 
         return (float) $normalized;
     }

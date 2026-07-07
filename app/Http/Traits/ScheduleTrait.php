@@ -26,13 +26,9 @@ trait ScheduleTrait
         ?int $virtualLimit = 500
     ): Collection {
         // Validate start type
-        if (! in_array($startType, ['start', 'next', 'custom'])) {
-            throw new InvalidArgumentException('Invalid start type');
-        }
+        throw_unless(in_array($startType, ['start', 'next', 'custom']), new InvalidArgumentException('Invalid start type'));
 
-        if ($startType === 'custom' && ! $customStart) {
-            throw new InvalidArgumentException('Custom start date is required for custom start type');
-        }
+        throw_if($startType === 'custom' && ! $customStart, new InvalidArgumentException('Custom start date is required for custom start type'));
 
         $scheduleInstances = new Collection();
 

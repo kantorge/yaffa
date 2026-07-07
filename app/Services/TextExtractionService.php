@@ -69,12 +69,10 @@ class TextExtractionService
         }
 
         // Check if document had images but no text was extracted (OCR would have been needed)
-        if ($imageCount > 0 && empty($texts)) {
-            throw new OcrUnavailableException(
+        throw_if($imageCount > 0 && empty($texts), new OcrUnavailableException(
                 'Document contains ' . $imageCount . ' image(s) but no text could be extracted. '
                 . 'Please enable OCR (Tesseract or Vision AI) to process this document.'
-            );
-        }
+            ));
 
         return implode("\n\n---\n\n", $texts);
     }
@@ -138,9 +136,7 @@ class TextExtractionService
     {
         try {
             $content = file_get_contents($fullPath);
-            if ($content === false) {
-                throw new Exception('Could not read file contents');
-            }
+            throw_if($content === false, new Exception('Could not read file contents'));
 
             return $content;
         } catch (Exception $e) {

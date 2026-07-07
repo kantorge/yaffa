@@ -30,32 +30,26 @@ class InvestmentPriceProviderContextResolver
     {
         $providerKey = $investment->investment_price_provider;
 
-        if (! is_string($providerKey) || $providerKey === '') {
-            throw new PriceProviderException(
+        throw_if(! is_string($providerKey) || $providerKey === '', new PriceProviderException(
                 'Investment has no price provider configured',
                 'none',
                 $investment->symbol
-            );
-        }
+            ));
 
-        if (! $this->providerRegistry->has($providerKey)) {
-            throw new PriceProviderException(
+        throw_unless($this->providerRegistry->has($providerKey), new PriceProviderException(
                 "Investment has unknown provider: {$providerKey}",
                 $providerKey,
                 $investment->symbol
-            );
-        }
+            ));
 
         $provider = $this->providerRegistry->get($providerKey);
         $providerMetadata = $this->providerRegistry->getMetadata($providerKey);
 
-        if (mb_trim((string) $investment->symbol) === '') {
-            throw new PriceProviderException(
+        throw_if(mb_trim((string) $investment->symbol) === '', new PriceProviderException(
                 'Missing required investment symbol',
                 $providerKey,
                 $investment->symbol
-            );
-        }
+            ));
 
         /** @var InvestmentProviderConfig|null $providerConfig */
         $providerConfig = $this->resolveProviderConfig($investment, $providerKey);
@@ -109,13 +103,11 @@ class InvestmentPriceProviderContextResolver
         $requiredFields = is_array($schema['required'] ?? null) ? $schema['required'] : [];
 
         foreach ($requiredFields as $requiredField) {
-            if (! isset($settings[$requiredField]) || $settings[$requiredField] === '') {
-                throw new PriceProviderException(
+            throw_if(! isset($settings[$requiredField]) || $settings[$requiredField] === '', new PriceProviderException(
                     'Missing required investment provider setting: ' . $requiredField,
                     $providerKey,
                     $investment->symbol
-                );
-            }
+                ));
         }
 
         $properties = is_array($schema['properties'] ?? null) ? $schema['properties'] : [];
@@ -127,21 +119,17 @@ class InvestmentPriceProviderContextResolver
             $value = $settings[$field];
             $type = $fieldSchema['type'] ?? null;
 
-            if ($type === 'string' && ! is_string($value)) {
-                throw new PriceProviderException(
+            throw_if($type === 'string' && ! is_string($value), new PriceProviderException(
                     'Invalid provider setting type for ' . $field,
                     $providerKey,
                     $investment->symbol
-                );
-            }
+                ));
 
-            if (($fieldSchema['format'] ?? null) === 'url' && is_string($value) && ! filter_var($value, FILTER_VALIDATE_URL)) {
-                throw new PriceProviderException(
+            throw_if(($fieldSchema['format'] ?? null) === 'url' && is_string($value) && ! filter_var($value, FILTER_VALIDATE_URL), new PriceProviderException(
                     'Invalid URL format for provider setting ' . $field,
                     $providerKey,
                     $investment->symbol
-                );
-            }
+                ));
         }
 
         return $settings;
@@ -163,13 +151,11 @@ class InvestmentPriceProviderContextResolver
         foreach ($requiredFields as $requiredField) {
             $value = array_key_exists($requiredField, $credentials) ? $credentials[$requiredField] : null;
 
-            if ($value === null || (is_string($value) && mb_trim($value) === '')) {
-                throw new PriceProviderException(
+            throw_if($value === null || (is_string($value) && mb_trim($value) === ''), new PriceProviderException(
                     'Missing required provider credentials: ' . $requiredField,
                     $providerKey,
                     $investment->symbol
-                );
-            }
+                ));
         }
     }
 }

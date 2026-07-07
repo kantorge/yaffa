@@ -281,9 +281,7 @@ class AccountApiController extends Controller implements HasMiddleware
         $user = $request->user();
 
         // Validate the account entity and the user
-        if ($accountEntity !== null && $accountEntity->user_id !== $user->id) {
-            throw new AuthorizationException('You do not have permission to access this account entity.');
-        }
+        throw_if($accountEntity !== null && $accountEntity->user_id !== $user->id, new AuthorizationException('You do not have permission to access this account entity.'));
 
         // Before proceeding with any calculation, check if any batch jobs are running for this user for fact data
         $batchJobsCount = DB::table('job_batches')

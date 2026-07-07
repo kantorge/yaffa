@@ -30,13 +30,11 @@ class GenericApiProvider implements InvestmentPriceProvider
         $endpointUrl = $this->requiredStringCredential($credentials, 'endpoint_url', $investment);
 
         $method = mb_strtoupper((string) ($credentials['http_method'] ?? 'GET'));
-        if (! in_array($method, ['GET', 'POST'], true)) {
-            throw new InvalidPriceDataException(
+        throw_unless(in_array($method, ['GET', 'POST'], true), new InvalidPriceDataException(
                 'Unsupported HTTP method. Allowed values are GET and POST.',
                 'generic_api',
                 $investment->symbol
-            );
-        }
+            ));
 
         $placeholders = [
             '{symbol}' => $investment->symbol,
@@ -65,13 +63,11 @@ class GenericApiProvider implements InvestmentPriceProvider
             $response = $this->httpClient->request($method, $resolvedEndpointUrl, $requestOptions);
             $decodedBody = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
-            if (! is_array($decodedBody)) {
-                throw new InvalidPriceDataException(
+            throw_unless(is_array($decodedBody), new InvalidPriceDataException(
                     'Generic API returned an invalid JSON payload.',
                     'generic_api',
                     $investment->symbol
-                );
-            }
+                ));
 
             $prices = [];
             $dateFormat = isset($credentials['date_format']) && is_string($credentials['date_format'])
@@ -89,13 +85,11 @@ class GenericApiProvider implements InvestmentPriceProvider
                 $dateValues = data_get($decodedBody, $dateValuesPath);
                 $priceValues = data_get($decodedBody, $priceValuesPath);
 
-                if (! is_array($dateValues) || ! is_array($priceValues) || $dateValues === [] || $priceValues === []) {
-                    throw new InvalidPriceDataException(
+                throw_if(! is_array($dateValues) || ! is_array($priceValues) || $dateValues === [] || $priceValues === [], new InvalidPriceDataException(
                         'No usable date/price arrays found at the configured parallel paths.',
                         'generic_api',
                         $investment->symbol
-                    );
-                }
+                    ));
 
                 $dateValues = array_values($dateValues);
                 $priceValues = array_values($priceValues);
@@ -127,13 +121,11 @@ class GenericApiProvider implements InvestmentPriceProvider
                     ? (isset($decodedBody[0]) && is_array($decodedBody[0]) ? $decodedBody : [$decodedBody])
                     : data_get($decodedBody, $itemsPath);
 
-                if (! is_array($items) || $items === []) {
-                    throw new InvalidPriceDataException(
+                throw_if(! is_array($items) || $items === [], new InvalidPriceDataException(
                         'No price records found at the configured items path.',
                         'generic_api',
                         $investment->symbol
-                    );
-                }
+                    ));
 
                 foreach ($items as $item) {
                     if (! is_array($item)) {
@@ -157,13 +149,11 @@ class GenericApiProvider implements InvestmentPriceProvider
                 }
             }
 
-            if ($prices === []) {
-                throw new InvalidPriceDataException(
+            throw_if($prices === [], new InvalidPriceDataException(
                     'No valid prices found in the API response.',
                     'generic_api',
                     $investment->symbol
-                );
-            }
+                ));
 
             return $prices;
         } catch (InvalidPriceDataException $exception) {
@@ -194,9 +184,7 @@ class GenericApiProvider implements InvestmentPriceProvider
             ? Str::trim($credentials['endpoint_url'])
             : '';
 
-        if ($endpointUrl === '') {
-            throw new PriceProviderException('Endpoint URL is required.', 'generic_api');
-        }
+        throw_if($endpointUrl === '', new PriceProviderException('Endpoint URL is required.', 'generic_api'));
 
         $resolvedEndpointUrl = strtr($endpointUrl, [
             '{symbol}' => 'AAPL',
@@ -204,9 +192,7 @@ class GenericApiProvider implements InvestmentPriceProvider
             '{to}' => '2024-01-02',
         ]);
 
-        if (! filter_var($resolvedEndpointUrl, FILTER_VALIDATE_URL)) {
-            throw new PriceProviderException('Endpoint URL must be a valid URL.', 'generic_api');
-        }
+        throw_unless(filter_var($resolvedEndpointUrl, FILTER_VALIDATE_URL), new PriceProviderException('Endpoint URL must be a valid URL.', 'generic_api'));
 
         $this->assertPublicEndpointUrl($resolvedEndpointUrl, null);
 
@@ -226,9 +212,7 @@ class GenericApiProvider implements InvestmentPriceProvider
             : '';
 
         if ($dateValuesPath !== '' || $priceValuesPath !== '') {
-            if ($dateValuesPath === '' || $priceValuesPath === '') {
-                throw new PriceProviderException('Both date_values_path and price_values_path are required when using parallel array mode.', 'generic_api');
-            }
+            throw_if($dateValuesPath === '' || $priceValuesPath === '', new PriceProviderException('Both date_values_path and price_values_path are required when using parallel array mode.', 'generic_api'));
         } elseif ($datePath === '' || $pricePath === '') {
             throw new PriceProviderException('Date path and price path are required.', 'generic_api');
         }
@@ -237,9 +221,7 @@ class GenericApiProvider implements InvestmentPriceProvider
             ? Str::upper(Str::trim($credentials['http_method']))
             : 'GET';
 
-        if (! in_array($method, ['GET', 'POST'], true)) {
-            throw new PriceProviderException('HTTP method must be GET or POST.', 'generic_api');
-        }
+        throw_unless(in_array($method, ['GET', 'POST'], true), new PriceProviderException('HTTP method must be GET or POST.', 'generic_api'));
 
         $this->assertJsonObjectCredential($credentials, 'headers_json');
         $this->assertJsonObjectCredential($credentials, 'query_json');
@@ -381,13 +363,11 @@ class GenericApiProvider implements InvestmentPriceProvider
             ? Str::trim($credentials[$key])
             : '';
 
-        if ($value === '') {
-            throw new InvalidPriceDataException(
+        throw_if($value === '', new InvalidPriceDataException(
                 __('Missing required configuration field: :field', ['field' => $key]),
                 'generic_api',
                 $investment->symbol
-            );
-        }
+            ));
 
         return $value;
     }
@@ -424,13 +404,11 @@ class GenericApiProvider implements InvestmentPriceProvider
             );
         }
 
-        if (! is_array($decoded)) {
-            throw new InvalidPriceDataException(
+        throw_unless(is_array($decoded), new InvalidPriceDataException(
                 __('Field :field must contain a JSON object.', ['field' => $key]),
                 'generic_api',
                 $investment->symbol
-            );
-        }
+            ));
 
         return $decoded;
     }
@@ -459,12 +437,10 @@ class GenericApiProvider implements InvestmentPriceProvider
             );
         }
 
-        if (! is_array($decoded)) {
-            throw new PriceProviderException(
+        throw_unless(is_array($decoded), new PriceProviderException(
                 __('Field :field must contain a JSON object.', ['field' => $key]),
                 'generic_api'
-            );
-        }
+            ));
     }
 
     /**
@@ -479,23 +455,19 @@ class GenericApiProvider implements InvestmentPriceProvider
     {
         $host = parse_url($endpointUrl, PHP_URL_HOST);
 
-        if (! is_string($host) || Str::trim($host) === '') {
-            throw new PriceProviderException(
+        throw_if(! is_string($host) || Str::trim($host) === '', new PriceProviderException(
                 'Endpoint URL must include a valid host.',
                 'generic_api',
                 $investmentSymbol
-            );
-        }
+            ));
 
         $normalizedHost = Str::lower(mb_trim($host, '[]'));
 
-        if ($normalizedHost === 'localhost') {
-            throw new PriceProviderException(
+        throw_if($normalizedHost === 'localhost', new PriceProviderException(
                 'Endpoint URL must resolve to a public IP address.',
                 'generic_api',
                 $investmentSymbol
-            );
-        }
+            ));
 
         $resolvedIps = $this->resolveEndpointIps($normalizedHost);
 
@@ -504,13 +476,11 @@ class GenericApiProvider implements InvestmentPriceProvider
         }
 
         foreach ($resolvedIps as $resolvedIp) {
-            if ($this->isDisallowedIp($resolvedIp)) {
-                throw new PriceProviderException(
+            throw_if($this->isDisallowedIp($resolvedIp), new PriceProviderException(
                     'Endpoint URL must resolve to a public IP address.',
                     'generic_api',
                     $investmentSymbol
-                );
-            }
+                ));
         }
     }
 

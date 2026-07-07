@@ -43,9 +43,7 @@ class AiStepGateway
             );
 
             $structuredPayload = $response['structured'] ?? null;
-            if (! is_array($structuredPayload)) {
-                throw new AiResponseParseException($step, 'Main extraction structured payload is not an object.');
-            }
+            throw_unless(is_array($structuredPayload), new AiResponseParseException($step, 'Main extraction structured payload is not an object.'));
 
             $textResponse = json_encode($structuredPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: 'null';
             $this->processingHistoryRecorder->appendProcessingHistory($document, $step, $prompt, $textResponse);
@@ -87,14 +85,10 @@ class AiStepGateway
             );
 
             $structuredPayload = $response['structured'] ?? null;
-            if (! is_array($structuredPayload)) {
-                throw new AiResponseParseException($step, 'Category batch structured payload is not an object.');
-            }
+            throw_unless(is_array($structuredPayload), new AiResponseParseException($step, 'Category batch structured payload is not an object.'));
 
             $matchesPayload = $structuredPayload['matches'] ?? null;
-            if (! is_array($matchesPayload)) {
-                throw new AiResponseParseException($step, 'Category batch structured payload must contain a matches array.');
-            }
+            throw_unless(is_array($matchesPayload), new AiResponseParseException($step, 'Category batch structured payload must contain a matches array.'));
 
             $textResponse = json_encode($matchesPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]';
             $this->processingHistoryRecorder->appendProcessingHistory($document, $step, $prompt, $textResponse);

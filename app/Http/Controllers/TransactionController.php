@@ -88,9 +88,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
-        if (!in_array($action, $availableActions)) {
-            abort(404);
-        }
+        abort_unless(in_array($action, $availableActions), 404);
 
         // Load all relevant relations
         $transaction->loadDetails();

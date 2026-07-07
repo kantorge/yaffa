@@ -43,13 +43,11 @@ return new class () extends Migration {
                     }
 
                     $encodedSettings = json_encode($settings);
-                    if ($encodedSettings === false) {
-                        throw new RuntimeException(sprintf(
+                    throw_if($encodedSettings === false, new RuntimeException(sprintf(
                             'Failed to encode provider_settings for investment id %d: %s',
                             (int) $investment->id,
                             json_last_error_msg()
-                        ));
-                    }
+                        )));
 
                     DB::table('investments')
                         ->where('id', $investment->id)
