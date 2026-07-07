@@ -13,7 +13,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\DuplicateDetectionService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

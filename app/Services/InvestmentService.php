@@ -12,7 +12,7 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;

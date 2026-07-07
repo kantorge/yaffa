@@ -6,7 +6,7 @@ use App\Exceptions\InvalidPriceDataException;
 use App\Exceptions\PriceProviderException;
 use App\Models\Investment;
 use App\Services\InvestmentPriceProviders\AlphaVantageProvider;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;

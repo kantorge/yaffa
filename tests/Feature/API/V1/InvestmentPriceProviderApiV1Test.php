@@ -6,7 +6,7 @@ use App\Models\InvestmentProviderConfig;
 use App\Models\User;
 use App\Contracts\InvestmentPriceProvider;
 use App\Services\InvestmentPriceProviderContextResolver;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;

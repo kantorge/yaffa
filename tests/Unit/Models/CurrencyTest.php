@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Models\Currency;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kantorge\CurrencyExchangeRates\ApiClients\ExchangeRateApiClientInterface;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;

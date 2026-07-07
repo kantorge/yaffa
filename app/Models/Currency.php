@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ModelOwnedByUserTrait;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Database\Factories\CurrencyFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;

@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Support\Facades\Artisan;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;

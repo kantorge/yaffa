@@ -11,7 +11,7 @@ use App\Models\AccountGroup;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;

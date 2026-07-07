@@ -8,7 +8,7 @@ use App\Models\Investment;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderAvailabilityService;
 use App\Services\InvestmentPriceProviderRegistry;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;

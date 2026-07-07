@@ -6,7 +6,7 @@ use App\Jobs\GetInvestmentPrices as GetInvestmentPricesJob;
 use App\Models\Investment;
 use App\Services\InvestmentProviderPreflightService;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Console\Command;
 

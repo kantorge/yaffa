@@ -13,7 +13,7 @@ use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

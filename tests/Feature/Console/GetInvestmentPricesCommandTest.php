@@ -7,7 +7,7 @@ use App\Jobs\GetInvestmentPrices as GetInvestmentPricesJob;
 use App\Models\Investment;
 use App\Models\InvestmentProviderConfig;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;

@@ -6,7 +6,7 @@ use App\Contracts\InvestmentPriceProvider;
 use App\Exceptions\InvalidPriceDataException;
 use App\Exceptions\PriceProviderException;
 use App\Models\Investment;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;

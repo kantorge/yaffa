@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

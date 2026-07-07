@@ -6,7 +6,7 @@ use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;

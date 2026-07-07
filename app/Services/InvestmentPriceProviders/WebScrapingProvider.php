@@ -7,7 +7,7 @@ use App\Exceptions\InvalidPriceDataException;
 use App\Exceptions\PriceProviderException;
 use App\Models\Investment;
 use App\Services\ScraperService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Exception;
 

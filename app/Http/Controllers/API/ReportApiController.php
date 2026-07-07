@@ -11,7 +11,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

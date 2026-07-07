@@ -2,7 +2,7 @@
 
 namespace App\Http\Traits;
 
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use App\Models\Transaction;

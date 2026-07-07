@@ -3,7 +3,7 @@
 namespace App\Contracts;
 
 use App\Models\Investment;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 
 interface InvestmentPriceProvider
 {

@@ -6,7 +6,7 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Database\Factories\TransactionFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;

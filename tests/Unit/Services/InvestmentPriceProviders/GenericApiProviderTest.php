@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\InvestmentPriceProviders;
 use App\Exceptions\PriceProviderException;
 use App\Models\Investment;
 use App\Services\InvestmentPriceProviders\GenericApiProvider;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;

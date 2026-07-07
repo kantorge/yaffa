@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\CurrencyRate;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class CurrencyRateService
