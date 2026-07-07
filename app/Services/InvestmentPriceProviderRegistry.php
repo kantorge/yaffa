@@ -17,9 +17,9 @@ class InvestmentPriceProviderRegistry
     public function get(string $key): InvestmentPriceProvider
     {
         throw_unless(isset($this->providers[$key]), new PriceProviderException(
-                "Unknown price provider: {$key}",
-                $key
-            ));
+            "Unknown price provider: {$key}",
+            $key
+        ));
 
         return $this->providers[$key];
     }

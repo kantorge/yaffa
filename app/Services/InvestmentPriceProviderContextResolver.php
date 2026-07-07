@@ -31,25 +31,25 @@ class InvestmentPriceProviderContextResolver
         $providerKey = $investment->investment_price_provider;
 
         throw_if(! is_string($providerKey) || $providerKey === '', new PriceProviderException(
-                'Investment has no price provider configured',
-                'none',
-                $investment->symbol
-            ));
+            'Investment has no price provider configured',
+            'none',
+            $investment->symbol
+        ));
 
         throw_unless($this->providerRegistry->has($providerKey), new PriceProviderException(
-                "Investment has unknown provider: {$providerKey}",
-                $providerKey,
-                $investment->symbol
-            ));
+            "Investment has unknown provider: {$providerKey}",
+            $providerKey,
+            $investment->symbol
+        ));
 
         $provider = $this->providerRegistry->get($providerKey);
         $providerMetadata = $this->providerRegistry->getMetadata($providerKey);
 
         throw_if(mb_trim((string) $investment->symbol) === '', new PriceProviderException(
-                'Missing required investment symbol',
-                $providerKey,
-                $investment->symbol
-            ));
+            'Missing required investment symbol',
+            $providerKey,
+            $investment->symbol
+        ));
 
         /** @var InvestmentProviderConfig|null $providerConfig */
         $providerConfig = $this->resolveProviderConfig($investment, $providerKey);
@@ -104,10 +104,10 @@ class InvestmentPriceProviderContextResolver
 
         foreach ($requiredFields as $requiredField) {
             throw_if(! isset($settings[$requiredField]) || $settings[$requiredField] === '', new PriceProviderException(
-                    'Missing required investment provider setting: ' . $requiredField,
-                    $providerKey,
-                    $investment->symbol
-                ));
+                'Missing required investment provider setting: ' . $requiredField,
+                $providerKey,
+                $investment->symbol
+            ));
         }
 
         $properties = is_array($schema['properties'] ?? null) ? $schema['properties'] : [];
@@ -120,16 +120,16 @@ class InvestmentPriceProviderContextResolver
             $type = $fieldSchema['type'] ?? null;
 
             throw_if($type === 'string' && ! is_string($value), new PriceProviderException(
-                    'Invalid provider setting type for ' . $field,
-                    $providerKey,
-                    $investment->symbol
-                ));
+                'Invalid provider setting type for ' . $field,
+                $providerKey,
+                $investment->symbol
+            ));
 
             throw_if(($fieldSchema['format'] ?? null) === 'url' && is_string($value) && ! filter_var($value, FILTER_VALIDATE_URL), new PriceProviderException(
-                    'Invalid URL format for provider setting ' . $field,
-                    $providerKey,
-                    $investment->symbol
-                ));
+                'Invalid URL format for provider setting ' . $field,
+                $providerKey,
+                $investment->symbol
+            ));
         }
 
         return $settings;
@@ -152,10 +152,10 @@ class InvestmentPriceProviderContextResolver
             $value = array_key_exists($requiredField, $credentials) ? $credentials[$requiredField] : null;
 
             throw_if($value === null || (is_string($value) && mb_trim($value) === ''), new PriceProviderException(
-                    'Missing required provider credentials: ' . $requiredField,
-                    $providerKey,
-                    $investment->symbol
-                ));
+                'Missing required provider credentials: ' . $requiredField,
+                $providerKey,
+                $investment->symbol
+            ));
         }
     }
 }

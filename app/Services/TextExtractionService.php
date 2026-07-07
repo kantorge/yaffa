@@ -70,9 +70,9 @@ class TextExtractionService
 
         // Check if document had images but no text was extracted (OCR would have been needed)
         throw_if($imageCount > 0 && empty($texts), new OcrUnavailableException(
-                'Document contains ' . $imageCount . ' image(s) but no text could be extracted. '
+            'Document contains ' . $imageCount . ' image(s) but no text could be extracted. '
                 . 'Please enable OCR (Tesseract or Vision AI) to process this document.'
-            ));
+        ));
 
         return implode("\n\n---\n\n", $texts);
     }

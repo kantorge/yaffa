@@ -29,8 +29,8 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @property bool $auto_update
  * @property int|null $generic_decimal_precision
  * @property int|null $detailed_decimal_precision
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read User $user
  * @method static Builder|Currency autoUpdate()
  * @method static Builder|Currency base()

@@ -96,13 +96,13 @@ class TransactionItemMergeService
         $newTotal += $nonMergeable->sum('amount');
 
         throw_if(abs($originalTotal - $newTotal) > self::AMOUNT_COMPARISON_EPSILON, new RuntimeException(
-                sprintf(
-                    'Transaction item merge aborted: amount mismatch for transaction %d (original %.4f vs new %.4f).',
-                    $transaction->id,
-                    $originalTotal,
-                    $newTotal,
-                )
-            ));
+            sprintf(
+                'Transaction item merge aborted: amount mismatch for transaction %d (original %.4f vs new %.4f).',
+                $transaction->id,
+                $originalTotal,
+                $newTotal,
+            )
+        ));
 
         // Apply changes inside a DB transaction
         $removedCount = 0;

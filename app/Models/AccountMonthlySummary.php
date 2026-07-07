@@ -15,13 +15,13 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @property int $id
- * @property \Illuminate\Support\Carbon $date
+ * @property Carbon $date
  * @property int $user_id
  * @property int|null $account_entity_id
  * @property string $transaction_type
  * @property string $data_type
  * @property float $amount
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $updated_at
  * @property-read AccountEntity|null $accountEntity
  * @property-read User $user
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary newModelQuery()

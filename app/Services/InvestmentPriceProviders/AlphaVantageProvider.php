@@ -50,16 +50,16 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             if (! isset($data->{'Time Series (Daily)'})) {
                 // Check for error messages from API
                 throw_if(isset($data->{'Error Message'}), new InvalidPriceDataException(
-                        "Alpha Vantage API error: {$data->{'Error Message'}}",
-                        'alpha_vantage',
-                        $investment->symbol
-                    ));
+                    "Alpha Vantage API error: {$data->{'Error Message'}}",
+                    'alpha_vantage',
+                    $investment->symbol
+                ));
 
                 throw_if(isset($data->Note), new PriceProviderException(
-                        "Alpha Vantage rate limit: {$data->Note}",
-                        'alpha_vantage',
-                        $investment->symbol
-                    ));
+                    "Alpha Vantage rate limit: {$data->Note}",
+                    'alpha_vantage',
+                    $investment->symbol
+                ));
 
                 throw new InvalidPriceDataException(
                     'Missing Time Series data in Alpha Vantage response',
@@ -124,9 +124,9 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             : '';
 
         throw_if($apiKey === '', new PriceProviderException(
-                'Missing API key for Alpha Vantage.',
-                'alpha_vantage'
-            ));
+            'Missing API key for Alpha Vantage.',
+            'alpha_vantage'
+        ));
 
         try {
             $response = $this->httpClient->request(
@@ -146,19 +146,19 @@ class AlphaVantageProvider implements InvestmentPriceProvider
             $data = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
 
             throw_if(isset($data->{'Error Message'}), new PriceProviderException(
-                    "Alpha Vantage API error: {$data->{'Error Message'}}",
-                    'alpha_vantage'
-                ));
+                "Alpha Vantage API error: {$data->{'Error Message'}}",
+                'alpha_vantage'
+            ));
 
             throw_if(isset($data->Note), new PriceProviderException(
-                    "Alpha Vantage rate limit: {$data->Note}",
-                    'alpha_vantage'
-                ));
+                "Alpha Vantage rate limit: {$data->Note}",
+                'alpha_vantage'
+            ));
 
             throw_if(! isset($data->Symbol) || ! is_string($data->Symbol) || mb_trim($data->Symbol) === '', new PriceProviderException(
-                    'Alpha Vantage validation failed: unexpected response payload.',
-                    'alpha_vantage'
-                ));
+                'Alpha Vantage validation failed: unexpected response payload.',
+                'alpha_vantage'
+            ));
         } catch (GuzzleException $e) {
             throw new PriceProviderException(
                 "Failed to validate Alpha Vantage credentials: {$e->getMessage()}",
