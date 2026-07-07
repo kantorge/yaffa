@@ -17,7 +17,7 @@ class SyncSystemFileImportProfilesCommand extends Command
         $count = 0;
 
         foreach ($registry->profiles() as $profile) {
-            $record = FileImportProfile::query()->firstOrNew(['key' => $profile['key']]);
+            $record = FileImportProfile::query()->where('key', $profile['key'])->firstOrNew();
             $record->fill([
                 'file_type' => $profile['file_type'] ?? 'csv',
                 'name' => $profile['name'],

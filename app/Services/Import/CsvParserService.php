@@ -155,8 +155,11 @@ class CsvParserService
         $canonical = [];
 
         foreach ($record as $header => $value) {
-            $headerKey = $header;
-            $targetKey = $mapping[$headerKey] ?? $headerKey;
+            if (! array_key_exists($header, $mapping)) {
+                continue;
+            }
+
+            $targetKey = $mapping[$header];
 
             if ($targetKey !== '' && $targetKey !== ImportCanonicalField::Ignore->value) {
                 $canonical[$targetKey] = $value;
