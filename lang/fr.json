@@ -792,7 +792,6 @@
     "Only category learning entries from the same category can be merged.": "Seules les entrées d'apprentissage de catégorie de la même catégorie peuvent être fusionnées.",
     "Only QIF and CSV imports are supported.": "Seules les importations QIF et CSV sont prises en charge.",
     "Open": "Ouvrir",
-    "Open a document above to use the AI finalization flow instead of creating a new transaction.": "Ouvrez un document ci-dessus pour utiliser le flux de finalisation IA au lieu de créer une nouvelle transaction.",
     "Open AI document": "Ouvrir le document IA",
     "Open AI settings": "Paramètres d'Open AI",
     "Open linked transaction": "Ouvrir la transaction liée",
@@ -1447,10 +1446,11 @@
     "Zoom in": "Zoomer",
     "— Default (as-is) —": "— Par défaut (tel quel) —",
     "— Ignore —": "— Ignorer —",
-    "— ignore —": "— ignorer —",
     "— None —": "— Aucun —",
     "— or click Next to configure manually": "— ou cliquez sur Suivant pour configurer manuellement",
     "— Select a profile —": "— Sélectionner un profil —",
     "— source header: canonical field": "— en-tête source : champ canonique",
-    "— Standard QIF mapping (default) —": "— Mappage QIF standard (par défaut) —"
+    "— Standard QIF mapping (default) —": "— Mappage QIF standard (par défaut) —",
+    "Getting started with import": "Commencer avec l'importation",
+    "No custom profiles yet. Create one to define your own QIF field mappings.": "Aucun profil personnalisé pour le moment. Créez-en un pour définir vos propres mappages de champs QIF."
 }

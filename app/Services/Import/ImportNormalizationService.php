@@ -21,6 +21,8 @@ class ImportNormalizationService
 
     private const int RELATED_AI_DOCUMENT_RESULTS_PER_DRAFT = 3;
 
+    private const float RELATED_AI_DOCUMENT_MIN_CONFIDENCE = 0.35;
+
     /**
      * @param  list<array<string, mixed>>  $entries
      * @return list<array<string, mixed>>
@@ -397,7 +399,11 @@ class ImportNormalizationService
                 }
             }
 
-            if ($score <= 0.0 || $matchedOn === []) {
+            if ($matchedOn === []) {
+                continue;
+            }
+
+            if ($score < self::RELATED_AI_DOCUMENT_MIN_CONFIDENCE && count($matchedOn) < 2) {
                 continue;
             }
 

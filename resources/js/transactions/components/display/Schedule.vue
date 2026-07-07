@@ -110,8 +110,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
-  import { parseIsoDate } from '@/shared/lib/helpers';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
 
   /**
    * @property {Object} schedule
@@ -149,12 +148,7 @@
           return;
         }
 
-        const newDate = typeof date === 'string' ? parseIsoDate(date) : (typeof date === 'number' ? new Date(date) : date);
-        if (!(newDate instanceof Date) || Number.isNaN(newDate.getTime())) {
-          return '';
-        }
-
-        return newDate.toLocaleDateString(this.locale);
+        return toFormattedDate(date, this.locale, '', true);
       },
       __,
     },

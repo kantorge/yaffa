@@ -160,7 +160,7 @@ class SystemFileImportProfileRegistry
                 'key' => 'qif_swap_p_m_v1',
                 'type' => 'system',
                 'file_type' => 'qif',
-                'name' => 'QIF – Swapped P/M fields (P=type, M=payee)',
+                'name' => 'Raiffeisen Hungary (swap P/M)',
                 'delimiter' => null,
                 'has_header_row' => false,
                 'date_format' => null,

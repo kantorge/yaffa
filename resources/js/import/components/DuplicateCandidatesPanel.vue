@@ -85,7 +85,7 @@
 
 <script>
   import axios from 'axios';
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     name: 'DuplicateCandidatesPanel',
@@ -125,41 +125,17 @@
         });
       },
       formatDate(dateString) {
-        if (!dateString) return __('Unknown');
-        try {
-          const parts = dateString.split('-');
-          if (parts.length === 3) {
-            const date = new Date(
-              Number(parts[0]),
-              Number(parts[1]) - 1,
-              Number(parts[2]),
-            );
-            return date.toLocaleDateString(
-              window.YAFFA?.userSettings?.locale || undefined,
-              {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              },
-            );
-          }
-        } catch {
-          // fall through
-        }
-        return dateString;
+        return toFormattedDate(
+          dateString,
+          window.YAFFA?.userSettings?.locale || undefined,
+          __('Unknown'),
+          true,
+          { year: 'numeric', month: 'short', day: 'numeric' },
+        );
       },
       formatAmount(amount) {
-        if (amount === null || amount === undefined) {
-          return __('Unknown');
-        }
-
-        const value = Number(amount);
-        if (Number.isNaN(value)) {
-          return __('Unknown');
-        }
-
         return toFormattedCurrency(
-          value,
+          amount,
           window.YAFFA?.userSettings?.locale || undefined,
           this.accountCurrency,
         );

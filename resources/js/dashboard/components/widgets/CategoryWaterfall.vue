@@ -107,7 +107,7 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
@@ -399,7 +399,7 @@
 
       dateLabel() {
         const date = new Date(this.year, this.month - 1, 1);
-        return date.toLocaleDateString(window.YAFFA.userSettings.locale, {
+        return toFormattedDate(date, window.YAFFA.userSettings.locale, '', false, {
           year: 'numeric',
           month: 'long',
         });

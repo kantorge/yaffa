@@ -184,4 +184,86 @@ class ImportNormalizationServiceTest extends TestCase
         $this->assertCount(3, $drafts[0]['related_ai_documents']);
         $this->assertNotContains($oldDocument->id, array_column($drafts[0]['related_ai_documents'], 'ai_document_id'));
     }
+
+    public function test_related_ai_document_matching_excludes_a_lone_weak_signal(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        // Only a loose date match (4-7 days apart): unrelated amount and payee.
+        AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now(),
+            'processed_transaction_data' => [
+                'date' => '2025-01-12',
+                'payee' => 'Unrelated Merchant',
+                'amount' => 480.93,
+            ],
+        ]);
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 9450.00,
+            'payee' => 'Card Transaction',
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertSame([], $drafts[0]['related_ai_documents']);
+    }
+
+    public function test_related_ai_document_matching_includes_a_lone_strong_amount_signal(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        // Exact amount match, but unrelated date and payee.
+        $document = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now(),
+            'processed_transaction_data' => [
+                'date' => '2025-02-20',
+                'payee' => 'Unrelated Merchant',
+                'amount' => 9450.00,
+            ],
+        ]);
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 9450.00,
+            'payee' => 'Card Transaction',
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertCount(1, $drafts[0]['related_ai_documents']);
+        $this->assertSame($document->id, $drafts[0]['related_ai_documents'][0]['ai_document_id']);
+        $this->assertSame(['amount'], $drafts[0]['related_ai_documents'][0]['matched_on']);
+    }
+
+    public function test_related_ai_document_matching_includes_two_combined_weak_signals(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        // Loose date match (within 7 days) plus a fuzzy payee match; amount unrelated.
+        $document = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now(),
+            'processed_transaction_data' => [
+                'date' => '2025-01-12',
+                'payee' => 'Grocery Store',
+                'amount' => 1.23,
+            ],
+        ]);
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 9450.00,
+            'payee' => 'Grocery Store',
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertCount(1, $drafts[0]['related_ai_documents']);
+        $this->assertSame($document->id, $drafts[0]['related_ai_documents'][0]['ai_document_id']);
+        $this->assertSame(['date', 'payee'], $drafts[0]['related_ai_documents'][0]['matched_on']);
+    }
 }

@@ -813,23 +813,25 @@ Both paths produce a standard `type = user` profile saved via the existing `POST
 
 The following canonical field names are the closed, enumerated set of valid mapping targets for user profile `mapping_json`. These names are used in the wizard column mapping dropdowns, validated by the backend on save, and documented in the AI suggestion prompt.
 
-| Canonical name | Destination in normalized output | Description |
-|---|---|---|
-| `date` | `normalized_transaction.date` | Transaction date |
-| `amount` | `normalized_transaction.amount` | Single amount column; sign is applied according to `sign_handling` |
-| `payee` | `normalized_transaction.payee` | Counterparty or merchant name |
-| `comment` | `normalized_transaction.comment` | Free-text memo or description; multiple columns concatenated in mapping order |
-| `reference` | `normalized_transaction.comment` | Bank reference number or transaction ID; treated as a secondary comment and appended to `comment` with a separator if `comment` is also mapped |
-| `category` | draft `source_category` field (advisory) | Bank-assigned category label; **not** placed in `normalized_transaction` and not auto-matched to a YAFFA category; shown as a hint column in the draft review table to assist manual category selection during finalization |
-| `ignore` | — | Column present in the source file but not imported |
+| Canonical name | Destination in normalized output         | Description                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `date`         | `normalized_transaction.date`            | Transaction date                                                                                                                                                                                                            |
+| `amount`       | `normalized_transaction.amount`          | Single amount column; sign is applied according to `sign_handling`                                                                                                                                                          |
+| `payee`        | `normalized_transaction.payee`           | Counterparty or merchant name                                                                                                                                                                                               |
+| `comment`      | `normalized_transaction.comment`         | Free-text memo or description; multiple columns concatenated in mapping order                                                                                                                                               |
+| `reference`    | `normalized_transaction.comment`         | Bank reference number or transaction ID; treated as a secondary comment and appended to `comment` with a separator if `comment` is also mapped                                                                              |
+| `category`     | draft `source_category` field (advisory) | Bank-assigned category label; **not** placed in `normalized_transaction` and not auto-matched to a YAFFA category; shown as a hint column in the draft review table to assist manual category selection during finalization |
+| `ignore`       | —                                        | Column present in the source file but not imported                                                                                                                                                                          |
 
 **`sign_handling` valid values for user profiles:**
+
 - `as_is` — use the parsed signed value directly as-is (positive values are treated as the import direction implied by the account type and transaction context).
 - `inverted` — negate the parsed value; for banks that export debits as positive numbers using a sign convention opposite to YAFFA's expectation.
 
 **Banks with separate credit and debit columns** (two positive-value columns representing income and expense) cannot be handled by a user profile. That pattern requires conditional column logic (`if credit > 0 → deposit; if debit > 0 → withdrawal`), which is a `matching_rules` capability belonging to system profiles only. Users with such a bank export should request a system profile for their institution via the community contribution path.
 
 **Validation rules:**
+
 - `date` must be mapped.
 - `amount` must be mapped.
 - `reference` is treated as a comment-type field; if both `comment` and `reference` are mapped, their values are concatenated in the order they appear in `mapping_json`.
@@ -844,7 +846,7 @@ The wizard is browser-driven. CSV analysis runs entirely in JavaScript using the
 
 Auto-detection is designed to provide useful defaults, not to be authoritative. All detected values are displayed as editable fields so the user can correct any mis-detection before saving.
 
-The same four-step wizard is used for both creating a new profile and editing an existing one. When editing, the wizard pre-populates all fields from the saved profile (parser settings, column mappings, date format, etc.) but still requires a CSV sample file in Step 1. The sample file is needed for live previews in Steps 2–3 and for the AI suggestion feature; without it the column mapping table would be static and the auto-detection indicators would be absent.
+The same four-step wizard is used for both creating a new profile and editing an existing one. When editing, the wizard pre-populates all fields from the saved profile (parser settings, column mappings, date format, etc.) but still requires a CSV sample file in Step 1. The sample file is needed for live previews in Steps 2-3 and for the AI suggestion feature; without it the column mapping table would be static and the auto-detection indicators would be absent.
 
 #### Step 1: File Selection and Auto-Detection
 
@@ -912,7 +914,7 @@ Vision capability is not required; text-only models are sufficient. The feature 
 1. User clicks "Suggest with AI".
 2. A file picker appears for a CSV sample file (separate from the main import file field on the import page).
 3. User selects a CSV export from their bank. It may be the same file they intend to import, or any representative sample.
-4. A brief privacy notice is shown: *"The first 10 rows of your sample will be sent to [provider name] using your configured AI API key."*
+4. A brief privacy notice is shown: _"The first 10 rows of your sample will be sent to [provider name] using your configured AI API key."_
 5. User confirms.
 6. Browser uploads the file to `POST /api/v1/imports/file-profiles/suggest`.
 7. Backend reads and trims the file to the first 10 data rows; remaining rows are discarded before the AI call.
@@ -949,7 +951,7 @@ Structured output schema (Prism `ObjectSchema`):
 #### Frontend Behavior After Suggestion
 
 - All suggested field values are written into the wizard form.
-- `confidence_notes` are rendered as helper text beneath the corresponding form field (e.g., *"Date column detected as `Értéknap` with format `Y.m.d.` based on sample value `2024.01.15.`"*).
+- `confidence_notes` are rendered as helper text beneath the corresponding form field (e.g., _"Date column detected as `Értéknap` with format `Y.m.d.` based on sample value `2024.01.15.`"_).
 - Fields where the AI returned a low-confidence note are visually highlighted to prompt the user to verify.
 - The live preview table updates from the pre-filled delimiter and header settings so the user can immediately see whether the suggestion is correct.
 - All pre-filled values remain editable.
@@ -957,13 +959,13 @@ Structured output schema (Prism `ObjectSchema`):
 
 #### Error Handling
 
-| Condition | Response |
-|---|---|
-| No `AiProviderConfig` for user | 422 with message linking to AI settings |
-| Uploaded file is not parseable as text CSV | 422 with clear user-facing message |
-| AI provider call fails or times out | 502 with user-facing message; form not pre-filled |
+| Condition                                                         | Response                                                                                                      |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| No `AiProviderConfig` for user                                    | 422 with message linking to AI settings                                                                       |
+| Uploaded file is not parseable as text CSV                        | 422 with clear user-facing message                                                                            |
+| AI provider call fails or times out                               | 502 with user-facing message; form not pre-filled                                                             |
 | AI returns an unrecognised canonical field name in `mapping_json` | Backend strips unknown keys from the suggestion before returning; a warning is included in `confidence_notes` |
-| AI returns a structurally invalid response | 502; Prism structured output failure surface |
+| AI returns a structurally invalid response                        | 502; Prism structured output failure surface                                                                  |
 
 ### Profile Export and Community Contribution
 

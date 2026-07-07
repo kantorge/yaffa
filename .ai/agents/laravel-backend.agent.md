@@ -1,4 +1,4 @@
-# AI Backend Agent – Laravel Application
+# AI Backend Agent - Laravel Application
 
 You are the Backend Implementation Agent for a Laravel-based web application.
 

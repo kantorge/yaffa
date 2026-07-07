@@ -24,13 +24,19 @@
         </div>
 
         <!-- Date -->
-        <div v-if="candidate.summary.document_date" class="text-muted small mb-1">
+        <div
+          v-if="candidate.summary.document_date"
+          class="text-muted small mb-1"
+        >
           <i class="fa fa-calendar me-1"></i>
           {{ formatDate(candidate.summary.document_date) }}
         </div>
 
         <!-- Matched signals -->
-        <div v-if="candidate.matched_on && candidate.matched_on.length" class="d-flex flex-wrap gap-1 mb-2">
+        <div
+          v-if="candidate.matched_on && candidate.matched_on.length"
+          class="d-flex flex-wrap gap-1 mb-2"
+        >
           <span
             v-for="signal in candidate.matched_on"
             :key="signal"
@@ -43,7 +49,8 @@
         <!-- Footer: confidence + open link -->
         <div class="d-flex justify-content-between align-items-center">
           <span class="badge bg-info text-dark">
-            {{ Math.round(candidate.confidence_score * 100) }}% {{ __('match') }}
+            {{ Math.round(candidate.confidence_score * 100) }}%
+            {{ __('match') }}
           </span>
           <span class="small text-info">
             <i class="fa fa-external-link me-1"></i>{{ __('Open AI document') }}
@@ -51,15 +58,11 @@
         </div>
       </a>
     </div>
-    <div class="mt-2 small text-muted">
-      <i class="fa fa-circle-info me-1"></i>
-      {{ __('Open a document above to use the AI finalization flow instead of creating a new transaction.') }}
-    </div>
   </div>
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     name: 'RelatedAiDocumentsPanel',
@@ -80,41 +83,17 @@
         return window.route('ai-documents.show', { aiDocument: aiDocumentId });
       },
       formatDate(dateString) {
-        if (!dateString) return __('Unknown');
-        try {
-          const parts = dateString.split('-');
-          if (parts.length === 3) {
-            const year = Number(parts[0]);
-            const month = Number(parts[1]) - 1;
-            const day = Number(parts[2]);
-            if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
-              const date = new Date(year, month, day);
-              if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString(window.YAFFA?.userSettings?.locale || undefined, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                });
-              }
-            }
-          }
-        } catch {
-          // fall through
-        }
-        return dateString;
+        return toFormattedDate(
+          dateString,
+          window.YAFFA?.userSettings?.locale || undefined,
+          __('Unknown'),
+          true,
+          { year: 'numeric', month: 'short', day: 'numeric' },
+        );
       },
       formatAmount(amount) {
-        if (amount === null || amount === undefined) {
-          return __('Unknown');
-        }
-
-        const value = Number(amount);
-        if (Number.isNaN(value)) {
-          return __('Unknown');
-        }
-
         return toFormattedCurrency(
-          value,
+          amount,
           window.YAFFA?.userSettings?.locale || undefined,
           this.accountCurrency,
         );

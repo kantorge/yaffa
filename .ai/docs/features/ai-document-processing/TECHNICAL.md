@@ -99,7 +99,7 @@ This file contains the implementation-oriented material extracted from the main 
   - `AiUserSettingsApiController`
     - `GET /api/v1/ai/settings` → `api.v1.ai.settings.show` — returns fully resolved settings for the authenticated user; includes non-blocking warning payload when `warn_on_child_mode_without_children` is true and no active child categories exist
     - `PATCH /api/v1/ai/settings` → `api.v1.ai.settings.update` — partial update; returns updated resolved settings; PATCH-only, no dedicated reset-to-defaults endpoint
-    - Validation via `AiUserSettingsRequest` (thresholds 0.0–1.0, amount tolerance 0.0–100.0, `category_matching_mode` in allowed enum; upload limits validated from global config only)
+    - Validation via `AiUserSettingsRequest` (thresholds 0.0-1.0, amount tolerance 0.0-100.0, `category_matching_mode` in allowed enum; upload limits validated from global config only)
     - Serialization: `AiUserSettingsResource`; authorization: `AiUserSettingsPolicy`
 
 - Services / Jobs:

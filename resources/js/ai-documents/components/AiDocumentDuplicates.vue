@@ -58,7 +58,7 @@
 <script setup>
   import { nextTick, onMounted, ref, watch } from 'vue';
   import { initializeBootstrapTooltips, parseIsoDate } from '@/shared/lib/helpers';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
 
   const props = defineProps({
     aiDocumentId: {
@@ -113,12 +113,7 @@
       return __('Not set');
     }
 
-    const date = typeof value === 'string' ? parseIsoDate(value) : (typeof value === 'number' ? new Date(value) : value);
-    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return date.toLocaleDateString(locale);
+    return toFormattedDate(value, locale, value, true);
   };
 
   const openTransactionModal = async (transactionId) => {

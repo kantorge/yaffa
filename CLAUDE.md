@@ -1,4 +1,4 @@
-# YAFFA – Claude Code Context
+# YAFFA - Claude Code Context
 
 ## Project Overview
 

@@ -15,7 +15,9 @@
             />
             <label class="form-check-label small" for="show-drafts-filter">
               {{ __('Show drafts') }}
-              <span v-if="draftCount" class="badge bg-info text-dark ms-1">{{ draftCount }}</span>
+              <span v-if="draftCount" class="badge bg-info text-dark ms-1">{{
+                draftCount
+              }}</span>
             </label>
           </div>
           <div class="form-check form-check-inline mb-0">
@@ -27,7 +29,9 @@
             />
             <label class="form-check-label small" for="show-ignored-filter">
               {{ __('Show ignored') }}
-              <span v-if="ignoredCount" class="badge bg-secondary ms-1">{{ ignoredCount }}</span>
+              <span v-if="ignoredCount" class="badge bg-secondary ms-1">{{
+                ignoredCount
+              }}</span>
             </label>
           </div>
           <div class="form-check form-check-inline mb-0">
@@ -39,7 +43,9 @@
             />
             <label class="form-check-label small" for="show-finalized-filter">
               {{ __('Show finalized') }}
-              <span v-if="finalizedCount" class="badge bg-success ms-1">{{ finalizedCount }}</span>
+              <span v-if="finalizedCount" class="badge bg-success ms-1">{{
+                finalizedCount
+              }}</span>
             </label>
           </div>
         </div>
@@ -61,7 +67,10 @@
           <thead>
             <tr>
               <th class="col-expand"></th>
-              <th class="col-type text-center" :title="__('Transaction type')"></th>
+              <th
+                class="col-type text-center"
+                :title="__('Transaction type')"
+              ></th>
               <th class="text-nowrap">{{ __('Draft') }}</th>
               <th class="text-nowrap">{{ __('Date') }}</th>
               <th class="text-nowrap">{{ __('Amount') }}</th>
@@ -101,20 +110,36 @@
                     <i
                       v-if="draft.matched_payee.similarity >= 0.9"
                       class="fa fa-check-circle text-success ms-1"
-                      :title="__('Matched database entity (:pct%)', { pct: Math.round(draft.matched_payee.similarity * 100) })"
+                      :title="
+                        __('Matched database entity (:pct%)', {
+                          pct: Math.round(draft.matched_payee.similarity * 100),
+                        })
+                      "
                     ></i>
                     <i
                       v-else
                       class="fa fa-circle-half-stroke text-warning ms-1"
-                      :title="__('Similarity match (~:pct%)', { pct: Math.round(draft.matched_payee.similarity * 100) })"
+                      :title="
+                        __('Similarity match (~:pct%)', {
+                          pct: Math.round(draft.matched_payee.similarity * 100),
+                        })
+                      "
                     ></i>
-                    <div v-if="draft.payee" class="text-muted small mt-1">{{ draft.payee }}</div>
+                    <div v-if="draft.payee" class="text-muted small mt-1">
+                      {{ draft.payee }}
+                    </div>
                   </template>
                   <template v-else-if="draft.payee">
                     {{ draft.payee }}
-                    <span class="badge bg-secondary ms-1" :title="__('No database match found')">{{ __('Text') }}</span>
+                    <span
+                      class="badge bg-secondary ms-1"
+                      :title="__('No database match found')"
+                      >{{ __('Text') }}</span
+                    >
                   </template>
-                  <span v-else class="text-muted fst-italic">{{ __('Not set') }}</span>
+                  <span v-else class="text-muted fst-italic">{{
+                    __('Not set')
+                  }}</span>
                 </td>
                 <td>
                   <span :class="statusClass(draft.status)">
@@ -130,23 +155,36 @@
                     <i class="fa fa-warning"></i> {{ draft.warnings.length }}
                   </span>
                   <span
-                    v-if="draft.duplicate_candidates && draft.duplicate_candidates.length"
+                    v-if="
+                      draft.duplicate_candidates &&
+                      draft.duplicate_candidates.length
+                    "
                     class="badge bg-danger me-1"
                     :title="__('Potential duplicates')"
                   >
-                    <i class="fa fa-copy"></i> {{ draft.duplicate_candidates.length }}
+                    <i class="fa fa-copy"></i>
+                    {{ draft.duplicate_candidates.length }}
                   </span>
                   <span
-                    v-if="draft.related_ai_documents && draft.related_ai_documents.length"
+                    v-if="
+                      draft.related_ai_documents &&
+                      draft.related_ai_documents.length
+                    "
                     class="badge bg-info text-dark"
                     :title="__('Related AI documents')"
                   >
-                    <i class="fa fa-file-lines"></i> {{ draft.related_ai_documents.length }}
+                    <i class="fa fa-file-lines"></i>
+                    {{ draft.related_ai_documents.length }}
                   </span>
                   <span
-                    v-if="!draft.warnings?.length && !draft.duplicate_candidates?.length && !draft.related_ai_documents?.length"
+                    v-if="
+                      !draft.warnings?.length &&
+                      !draft.duplicate_candidates?.length &&
+                      !draft.related_ai_documents?.length
+                    "
                     class="text-muted"
-                  >—</span>
+                    >—</span
+                  >
                 </td>
                 <td class="text-nowrap" @click.stop>
                   <button
@@ -177,7 +215,10 @@
                       <div class="fw-semibold mb-1">{{ __('Raw entry') }}</div>
                       <!-- CSV: key-value table -->
                       <table
-                        v-if="draft.source_type === 'csv' && csvRawFields(draft.raw_entry).length"
+                        v-if="
+                          draft.source_type === 'csv' &&
+                          csvRawFields(draft.raw_entry).length
+                        "
                         class="table table-sm table-bordered mb-0 small"
                       >
                         <tbody>
@@ -185,14 +226,24 @@
                             v-for="[key, val] in csvRawFields(draft.raw_entry)"
                             :key="key"
                           >
-                            <th class="bg-body-tertiary fw-semibold text-nowrap" style="width:40%">{{ key }}</th>
-                            <td>{{ (val !== null && val !== '') ? val : '—' }}</td>
+                            <th
+                              class="bg-body-tertiary fw-semibold text-nowrap"
+                              style="width: 40%"
+                            >
+                              {{ key }}
+                            </th>
+                            <td>
+                              {{ val !== null && val !== '' ? val : '—' }}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
                       <!-- QIF: marker table -->
                       <table
-                        v-else-if="draft.source_type === 'qif' && qifRawFields(draft.raw_entry).length"
+                        v-else-if="
+                          draft.source_type === 'qif' &&
+                          qifRawFields(draft.raw_entry).length
+                        "
                         class="table table-sm table-bordered mb-0 small"
                       >
                         <tbody>
@@ -200,14 +251,26 @@
                             v-for="(field, fi) in qifRawFields(draft.raw_entry)"
                             :key="fi"
                           >
-                            <th class="bg-body-tertiary text-center fw-bold text-nowrap" style="width:2rem">{{ field.marker }}</th>
-                            <td class="text-muted text-nowrap" style="width:30%">{{ field.label }}</td>
+                            <th
+                              class="bg-body-tertiary text-center fw-bold text-nowrap"
+                              style="width: 2rem"
+                            >
+                              {{ field.marker }}
+                            </th>
+                            <td
+                              class="text-muted text-nowrap"
+                              style="width: 30%"
+                            >
+                              {{ field.label }}
+                            </td>
                             <td>{{ field.value || '—' }}</td>
                           </tr>
                         </tbody>
                       </table>
                       <!-- Fallback -->
-                      <pre v-else class="mb-0 small text-wrap">{{ draft.raw_entry || __('Not available') }}</pre>
+                      <pre v-else class="mb-0 small text-wrap">{{
+                        draft.raw_entry || __('Not available')
+                      }}</pre>
                     </div>
                     <!-- Warnings -->
                     <div
@@ -226,7 +289,10 @@
                     </div>
                     <!-- Duplicate candidates -->
                     <div
-                      v-if="draft.duplicate_candidates && draft.duplicate_candidates.length"
+                      v-if="
+                        draft.duplicate_candidates &&
+                        draft.duplicate_candidates.length
+                      "
                       class="col-12 col-md-6 col-lg-4"
                     >
                       <DuplicateCandidatesPanel
@@ -237,7 +303,10 @@
                     </div>
                     <!-- Related AI documents -->
                     <div
-                      v-if="draft.related_ai_documents && draft.related_ai_documents.length"
+                      v-if="
+                        draft.related_ai_documents &&
+                        draft.related_ai_documents.length
+                      "
                       class="col-12 col-md-6 col-lg-4"
                     >
                       <RelatedAiDocumentsPanel
@@ -257,7 +326,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
   import DuplicateCandidatesPanel from './DuplicateCandidatesPanel.vue';
   import RelatedAiDocumentsPanel from './RelatedAiDocumentsPanel.vue';
 
@@ -319,9 +388,11 @@
     methods: {
       transactionTypeIconClass(draft) {
         const type = draft.transaction_type;
-        if (type === 'withdrawal') return ['fa', 'fa-circle-minus', 'text-danger'];
+        if (type === 'withdrawal')
+          return ['fa', 'fa-circle-minus', 'text-danger'];
         if (type === 'deposit') return ['fa', 'fa-circle-plus', 'text-success'];
-        if (type === 'transfer') return ['fa', 'fa-exchange-alt', 'text-primary'];
+        if (type === 'transfer')
+          return ['fa', 'fa-exchange-alt', 'text-primary'];
         // For QIF: infer from amount sign when type is generic/other
         if (draft.amount !== null && draft.amount !== undefined) {
           return Number(draft.amount) >= 0
@@ -374,23 +445,13 @@
         if (!dateString) {
           return __('Invalid');
         }
-        try {
-          const parts = dateString.split('-');
-          if (parts.length === 3) {
-            const date = new Date(
-              Number(parts[0]),
-              Number(parts[1]) - 1,
-              Number(parts[2]),
-            );
-            return date.toLocaleDateString(
-              window.YAFFA?.userSettings?.locale || undefined,
-              { year: 'numeric', month: 'short', day: 'numeric' },
-            );
-          }
-        } catch {
-          // fall through
-        }
-        return dateString;
+        return toFormattedDate(
+          dateString,
+          window.YAFFA?.userSettings?.locale || undefined,
+          dateString,
+          true,
+          { year: 'numeric', month: 'short', day: 'numeric' },
+        );
       },
       formatAmount(amount) {
         if (amount === null || amount === undefined) {

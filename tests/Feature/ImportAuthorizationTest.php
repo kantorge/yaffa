@@ -209,7 +209,7 @@ class ImportAuthorizationTest extends TestCase
                         'trim_strings' => true,
                         'skip_empty_rows' => false,
                     ],
-                    'comment_separator' => ' – ',
+                    'comment_separator' => ' - ',
                 ],
             ])
             ->assertCreated();

@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
-import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
 
 import * as toastHelpers from '@/shared/lib/toast';
 
@@ -466,9 +466,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __('First transaction'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data
-                        ? data.toLocaleDateString(window.YAFFA.userSettings.locale)
-                        : __('Never used');
+                    return toFormattedDate(data, window.YAFFA.userSettings.locale, __('Never used'));
                 }
 
                 return data || null;
@@ -480,9 +478,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Last transaction'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data
-                        ? data.toLocaleDateString(window.YAFFA.userSettings.locale)
-                        : __('Never used');
+                    return toFormattedDate(data, window.YAFFA.userSettings.locale, __('Never used'));
                 }
 
                 return data || null;

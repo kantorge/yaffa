@@ -11,6 +11,8 @@
  *
  * @type {string}
  */
+import { parseIsoDate } from '@/shared/lib/helpers';
+
 export function toFormattedCurrency(input, locale, currencySettings, precision = 'generic') {
     // Fallback to raw input if currency settings are missing
     if (!currencySettings || !currencySettings.iso_code) {
@@ -47,6 +49,39 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
             maximumFractionDigits: maxDigits,
         }
     );
+}
+
+/**
+ * @param {*} input The value to be formatted as a date. Accepted as-is if already a Date. Otherwise
+ * parsed via parseIsoDate (when allowIsoParse is true and input is a string) or via the native Date
+ * constructor.
+ * @param {string} locale The locale to be used for formatting.
+ * @param {*} fallback Value returned when input is null/undefined, or does not resolve to a valid Date.
+ * @param {boolean} [allowIsoParse=false] Whether to parse a string input as a "YYYY-MM-DD" date-only
+ * value via parseIsoDate, so it lands on the correct local calendar day instead of being shifted by
+ * the UTC-midnight interpretation the native Date constructor applies to such strings.
+ * @param {Object} [dateOptions] Options object forwarded to toLocaleDateString (e.g. { year: 'numeric', month: 'short', day: 'numeric' }).
+ *
+ * @type {string}
+ */
+export function toFormattedDate(input, locale, fallback, allowIsoParse = false, dateOptions = undefined) {
+    if (input === null || input === undefined) {
+        return fallback;
+    }
+
+    let date = input;
+
+    if (!(date instanceof Date)) {
+        date = (allowIsoParse && typeof input === 'string')
+            ? parseIsoDate(input)
+            : new Date(input);
+    }
+
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return fallback;
+    }
+
+    return date.toLocaleDateString(locale, dateOptions);
 }
 
 /**

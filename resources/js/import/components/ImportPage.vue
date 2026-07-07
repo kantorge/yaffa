@@ -304,7 +304,9 @@
 
         if (value) {
           try {
-            const accountResponse = await axios.get(`/api/v1/accounts/${value}`);
+            const accountResponse = await axios.get(
+              `/api/v1/accounts/${value}`,
+            );
             this.selectedAccountCurrency =
               accountResponse.data?.config?.currency ?? null;
           } catch {
@@ -342,10 +344,7 @@
         if (this.sourceType === 'csv' && this.selectedProfileId) {
           formData.append('file_import_profile_id', this.selectedProfileId);
         } else if (this.sourceType === 'qif' && this.selectedQifProfileId) {
-          formData.append(
-            'file_import_profile_id',
-            this.selectedQifProfileId,
-          );
+          formData.append('file_import_profile_id', this.selectedQifProfileId);
         }
 
         this.loading = true;

@@ -1,4 +1,4 @@
-# Backend Context – YAFFA (`app/`)
+# Backend Context - YAFFA (`app/`)
 
 See root [CLAUDE.md](../CLAUDE.md) for project overview and commands.
 See [.ai/agents/laravel-backend.agent.md](../.ai/agents/laravel-backend.agent.md) for full backend implementation rules.

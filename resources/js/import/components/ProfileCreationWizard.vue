@@ -442,7 +442,7 @@
         {{ mappingValidationError }}
       </div>
 
-      <!-- Date format panel – shown above the table once a date column is selected -->
+      <!-- Date format panel - shown above the table once a date column is selected -->
       <div
         v-if="dateMappedIndex >= 0"
         class="mb-3 p-3 bg-body-secondary border rounded"
@@ -496,13 +496,13 @@
                   :class="col.canonical !== 'ignore' ? 'border-success' : ''"
                   @change="updateMapping(i, $event.target.value)"
                 >
-                  <option value="ignore">{{ __('— ignore —') }}</option>
-                  <option value="date">date</option>
-                  <option value="amount">amount</option>
-                  <option value="payee">payee</option>
-                  <option value="comment">comment</option>
-                  <option value="reference">reference</option>
-                  <option value="category">category</option>
+                  <option value="ignore">{{ __('— Ignore —') }}</option>
+                  <option value="date">{{ __('date') }}</option>
+                  <option value="amount">{{ __('amount') }}</option>
+                  <option value="payee">{{ __('payee') }}</option>
+                  <option value="comment">{{ __('comment') }}</option>
+                  <option value="reference">{{ __('reference') }}</option>
+                  <option value="category">{{ __('category') }}</option>
                 </select>
 
                 <div

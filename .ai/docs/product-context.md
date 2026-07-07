@@ -1,4 +1,4 @@
-# YAFFA – Product Context (for AI Agents)
+# YAFFA - Product Context (for AI Agents)
 
 ## Product Overview
 
