@@ -14,7 +14,7 @@ use App\Models\Investment;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

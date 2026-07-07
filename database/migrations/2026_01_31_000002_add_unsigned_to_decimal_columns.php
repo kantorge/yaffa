@@ -42,13 +42,11 @@ return new class () extends Migration {
             }
         }
 
-        if ($negativeValueViolations !== []) {
-            throw new RuntimeException(
-                'Negative values were found in decimal columns that must become unsigned: '
+        throw_if($negativeValueViolations !== [], new RuntimeException(
+            'Negative values were found in decimal columns that must become unsigned: '
                 . implode(', ', $negativeValueViolations)
                 . '. Please clean up data before re-running this migration.'
-            );
-        }
+        ));
 
         foreach ($targetColumns as $targetColumn) {
             $tableName = $targetColumn['table'];

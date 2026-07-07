@@ -48,9 +48,7 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
 
         Gate::authorize('view', $categoryLearning);
 
-        if ($categoryLearning->user_id !== $user->id) {
-            abort(Response::HTTP_FORBIDDEN);
-        }
+        abort_if($categoryLearning->user_id !== $user->id, Response::HTTP_FORBIDDEN);
 
         return response()->json(
             new CategoryLearningResource($categoryLearning->load('category'))->resolve(),

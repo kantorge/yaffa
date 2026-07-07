@@ -15,7 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class AiProcessingJob implements ShouldQueue, ShouldBeUnique
 {

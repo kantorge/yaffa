@@ -3,7 +3,7 @@
 namespace App\Http\Traits;
 
 use App\Models\Currency;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 

@@ -46,10 +46,8 @@ class AccountEntityController extends Controller implements HasMiddleware
      */
     private function checkTypeParam(Request $request): void
     {
-        if (!app()->runningInConsole()
-            && (!$request->has('type') || !in_array($request->type, ['account', 'payee']))) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        abort_if(!app()->runningInConsole()
+            && (!$request->has('type') || !in_array($request->type, ['account', 'payee'])), Response::HTTP_NOT_FOUND);
     }
 
     public function show(AccountEntity $accountEntity, Request $request): View|RedirectResponse

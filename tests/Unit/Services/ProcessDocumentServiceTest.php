@@ -23,7 +23,7 @@ use App\Services\CategoryLearningService;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\ProcessDocumentService;
 use App\Services\TextExtractionService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use RuntimeException;

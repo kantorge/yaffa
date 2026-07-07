@@ -105,14 +105,10 @@ class ImagePreprocessingService
         string $target,
     ): string {
         try {
-            if (! is_file($filePath) || ! is_readable($filePath)) {
-                throw new Exception("Image file is not readable: {$filePath}");
-            }
+            throw_if(! is_file($filePath) || ! is_readable($filePath), new Exception("Image file is not readable: {$filePath}"));
 
             $fileSize = filesize($filePath);
-            if ($fileSize === false || $fileSize === 0) {
-                throw new Exception("Image file is empty or size unavailable: {$filePath}");
-            }
+            throw_if($fileSize === false || $fileSize === 0, new Exception("Image file is empty or size unavailable: {$filePath}"));
 
             $image = $this->imageManager->read($filePath);
 

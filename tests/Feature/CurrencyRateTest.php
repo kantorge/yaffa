@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 use Tests\TestCase;
 

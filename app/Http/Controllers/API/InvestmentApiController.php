@@ -11,7 +11,7 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Services\InvestmentProviderSettingsResolver;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

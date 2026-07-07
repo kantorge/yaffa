@@ -8,7 +8,7 @@ use App\Models\AccountEntity;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;

@@ -13,7 +13,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;

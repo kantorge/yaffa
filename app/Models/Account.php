@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;

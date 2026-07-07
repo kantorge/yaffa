@@ -246,13 +246,9 @@ class AiDocumentController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         $this->authorize('view', $aiDocument);
-        if ($aiDocumentFile->ai_document_id !== $aiDocument->id) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        abort_if($aiDocumentFile->ai_document_id !== $aiDocument->id, Response::HTTP_NOT_FOUND);
 
-        if (!Storage::disk('local')->exists($aiDocumentFile->file_path)) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        abort_unless(Storage::disk('local')->exists($aiDocumentFile->file_path), Response::HTTP_NOT_FOUND);
 
         if ($request->boolean('download')) {
             return Storage::disk('local')->download($aiDocumentFile->file_path, $aiDocumentFile->file_name);

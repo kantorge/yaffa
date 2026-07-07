@@ -121,9 +121,7 @@ class OcrService
             $process->setTimeout(30); // Tesseract can take time on large images
             $process->run();
 
-            if (! $process->isSuccessful()) {
-                throw new ProcessFailedException($process);
-            }
+            throw_unless($process->isSuccessful(), new ProcessFailedException($process));
 
             $output = $process->getOutput();
 
@@ -163,9 +161,7 @@ class OcrService
 
             // Read image and convert to base64
             $imageData = file_get_contents($filePath);
-            if ($imageData === false) {
-                throw new Exception("Failed to read image file: {$filePath}");
-            }
+            throw_if($imageData === false, new Exception("Failed to read image file: {$filePath}"));
 
             $imageBase64 = base64_encode($imageData);
 
@@ -181,9 +177,7 @@ class OcrService
 
             $result = json_decode((string) $response->getBody(), true);
 
-            if (! is_array($result)) {
-                throw new Exception('Invalid response from Tesseract server');
-            }
+            throw_unless(is_array($result), new Exception('Invalid response from Tesseract server'));
 
             if (($result['status'] ?? null) === 'success') {
                 $text = $result['text'] ?? '';

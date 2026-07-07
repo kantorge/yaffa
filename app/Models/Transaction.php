@@ -6,7 +6,7 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Database\Factories\TransactionFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +27,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  *
  * @property int $id
  * @property int $user_id
- * @property \Illuminate\Support\Carbon|null $date
+ * @property Carbon|null $date
  * @property TransactionTypeEnum $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
@@ -36,8 +36,8 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property string|null $config_type
  * @property int|null $config_id
  * @property int|null $currency_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read TransactionDetailInvestment|TransactionDetailStandard|Model|Eloquent|null $config
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
@@ -408,7 +408,7 @@ class Transaction extends Model
             $newTransaction = $this->replicate();
 
             $newTransaction->originalId = $this->id;
-            $newTransaction->date = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $newTransaction->date = Carbon::instance($instance->getStart());
             $newTransaction->transactionGroup = 'forecast';
             $newTransaction->schedule_first_instance = $first;
 

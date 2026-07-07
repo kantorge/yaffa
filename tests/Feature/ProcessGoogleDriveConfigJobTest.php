@@ -214,9 +214,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
             ],
             'downloadFile' => function ($fileId, $creds, $dest) use (&$downloadCallCount) {
                 $downloadCallCount++;
-                if ($fileId === 'file-fail') {
-                    throw new Exception('Download failed');
-                }
+                throw_if($fileId === 'file-fail', new Exception('Download failed'));
                 if (!file_exists(dirname($dest))) {
                     mkdir(dirname($dest), 0755, true);
                 }

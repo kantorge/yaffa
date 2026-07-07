@@ -17,7 +17,7 @@ use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderRateLimitPolicyResolver;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Bus\PendingBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;

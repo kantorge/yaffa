@@ -123,7 +123,7 @@ class PayeeStatsApiControllerTest extends TestCase
         int $accountId,
         int $payeeId,
         int $categoryId,
-        \Carbon\Carbon $date,
+        \Illuminate\Support\Carbon $date,
         TransactionTypeEnum $transactionType = TransactionTypeEnum::WITHDRAWAL,
     ): void {
         $detail = TransactionDetailStandard::query()->create([

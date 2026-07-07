@@ -91,7 +91,7 @@ class PayeeStatsApiControllerTest extends TestCase
         int $accountId,
         int $payeeId,
         int $categoryId,
-        \Carbon\Carbon $date
+        \Illuminate\Support\Carbon $date
     ): void {
         $detail = TransactionDetailStandard::query()->create([
             'account_from_id' => $accountId,

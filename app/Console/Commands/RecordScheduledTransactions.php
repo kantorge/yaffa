@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\RecordScheduledTransaction;
 use App\Models\Transaction;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
 
 class RecordScheduledTransactions extends Command
