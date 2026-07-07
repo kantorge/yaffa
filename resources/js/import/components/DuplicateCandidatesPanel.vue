@@ -158,16 +158,6 @@
           return __('Unknown');
         }
 
-        if (!this.accountCurrency) {
-          return value.toLocaleString(
-            window.YAFFA?.userSettings?.locale || undefined,
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            },
-          );
-        }
-
         return toFormattedCurrency(
           value,
           window.YAFFA?.userSettings?.locale || undefined,
