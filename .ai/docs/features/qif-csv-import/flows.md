@@ -14,8 +14,9 @@ Only flows that touch permissions, data integrity, external calls, or privacy ar
 6. `CsvParserService::parseFile()` reads the file server-side, normalizes encoding, applies the account's/system's mapping and (for system profiles) `matching_rules`/`actions`, enforcing `import_max_rows`; throws `RuntimeException` → `422 IMPORT_PARSE_FAILED` if the cap is exceeded or the CSV is unparseable.
 7. `ImportNormalizationService::enrichDraftsWithPayeeMatches($user, ...)` — reads only `$user->payees()` (`ImportNormalizationService.php:94`, via `$user->payees()` relation — owner-scoped).
 8. `ImportDuplicateDetectionService::enrichDrafts($user, ...)` — reads only `$user->transactions()` within the combined draft date window (`ImportDuplicateDetectionService.php:119`).
-9. `ImportNormalizationService::enrichDraftsWithRelatedAiDocuments($user, ...)` — reads only `AiDocument::where('user_id', $user->id)` (`ImportNormalizationService.php:305`).
-10. Response returned to browser. **Side effects**: none (no DB writes). **Trust boundary crossings**: browser→server file read only; no outbound calls.
+9. `ImportDuplicateDetectionService::enrichDraftsWithScheduleCandidates($user, ...)` — reads only `$user->transactions()->where('schedule', true)->whereHas('transactionSchedule', ...)`, windowed on the schedule's `next_date` rather than the transaction's `date`, using the same scoring engine/settings as step 8 (`ImportDuplicateDetectionService::loadScheduleWindow()`).
+10. `ImportNormalizationService::enrichDraftsWithRelatedAiDocuments($user, ...)` — reads only `AiDocument::where('user_id', $user->id)` (`ImportNormalizationService.php:305`).
+11. Response returned to browser. **Side effects**: none (no DB writes). **Trust boundary crossings**: browser→server file read only; no outbound calls.
 
 ## b) Parse-upload flow — QIF
 
@@ -24,7 +25,7 @@ Same entry point and same account-ownership check (step 3 above) as the CSV flow
 1. `source_type=qif`; profile is optional (QIF works without one). If `file_import_profile_id` given, `resolveQifImportProfile` (`ImportApiController.php:114`) re-runs the same `Gate::authorize('view', $profile)` check and additionally requires `$profile->file_type === 'qif'`.
 2. `QifParserService::parseFile()` reads the file, line-parses `!Type:Bank/Cash/CCard` sections (other section types are skipped with a warning, not rejected), applies the profile's `field_map`/`amount_sign` overrides if a profile was supplied, and enforces `import_max_rows` on entry count (`QifParserService.php:151,221`).
 3. `ImportNormalizationService::normalizeQifEntries()` converts raw QIF fields to the same draft shape as the CSV path (no `AccountEntity`/user lookups at this stage — normalization is pure).
-4. Same three enrichment steps as the CSV flow (payee match, duplicate detection, related AI documents) run identically afterward.
+4. Same four enrichment steps as the CSV flow (payee match, duplicate detection, scheduled-transaction matching, related AI documents) run identically afterward.
 
 ## c) User profile CRUD (create / update / delete + affected-accounts warning)
 
@@ -58,7 +59,20 @@ Same entry point and same account-ownership check (step 3 above) as the CSV flow
 4. **No import-specific write happens anywhere in this flow.** There is no linkage recorded between the finalized transaction and its source draft/file (matches `SPECIFICATION.md`'s "Storage and Retention" section, which explicitly says this is acceptable because sessions are one-off). **Side effect**: one `Transaction` (+ items) row via the existing endpoint's own logic.
 5. **Idempotency**: no server-side guard against a rapid double-click creating two transactions from the same draft; the spec explicitly delegates this to the frontend disabling the finalize control after first click (`SPECIFICATION.md` § Concurrency and Idempotency), and the shipped `ImportPage.vue` tracks `finalizingDraftIndex` but does not visibly disable the button while a create request from the *other* island is in flight — this coupling across two independently-written Vue islands is worth a closer look before shipping (flagged, not confirmed as broken, since the create-modal itself may have its own submit-guard that is out of scope here).
 
-## f) System profile sync on deploy
+## f) Enter a matched scheduled instance from import
+
+**Actor**: authenticated user reviewing drafts from flow (a) or (b), where a draft has ≥1 `schedule_candidates` entry. **Precondition**: the candidate's source `Transaction` (`schedule = true`) still exists and its `TransactionSchedule` is still `active`. **Success outcome**: exactly one new `Transaction` row created (same as manual entry), and the source schedule's `next_date` advances — no separate draft row is added for this import line.
+
+1. User clicks "Enter this scheduled transaction" on a `ScheduleCandidatesPanel` card → `ScheduleCandidatesPanel.vue::enterSchedule(transactionId)` calls `GET /api/v1/transactions/{id}` (`TransactionApiController::getItem`, reused unmodified — its own `Gate::authorize('view', $transaction)` applies here, scoped to the caller's own transaction).
+2. The component forces `schedule = false`, `budget = false`, `date = transaction_schedule.next_date` on the fetched object (client-side only) and dispatches `window.dispatchEvent(new CustomEvent('initiateEnterInstance', { detail: { transaction } }))` — the same event the account schedule table and dashboard schedule calendar already dispatch elsewhere in the app.
+3. `ModalStandard.vue::handleInitiateEnterInstance` (pre-existing, not part of this feature's diff) opens the transaction form with `action: 'enter'` and the source transaction's `id` retained in `form.id`.
+4. On submit, POSTs to `POST /api/v1/transactions/store-standard` with `action: 'enter'` — same endpoint/validation/authz as manual entry.
+5. `TransactionApiController::handleSourceTransactionUpdates()` (unchanged, line 779) re-fetches the source transaction scoped to `$user->id`, re-checks `Gate::authorize('update', $sourceTransaction)`, then calls `TransactionSchedule::skipNextInstance()` to advance `next_date`, and fires `TransactionUpdated`.
+6. The transaction-create island fires `transaction-created`; `ImportPage.vue::onEnterScheduleDraft()` had already recorded `finalizingDraftIndex` when the button was clicked, so the existing `onTransactionCreated()` handler marks that draft `status: 'finalized'` in local state only — no new event-tracking code was needed for this.
+7. **Known limitation** (see `architecture.md` § Known Risks): other drafts already parsed in the same batch that also reference this schedule keep their stale `next_date`/candidate summary until the file is re-parsed — this is accepted, not fixed.
+8. **Side effect**: one new `Transaction` (+ items) row, plus a `next_date` update on the source schedule's `TransactionSchedule` row — both via pre-existing, unmodified code paths.
+
+## g) System profile sync on deploy
 
 **Actor**: none (deploy-time automation, runs as the container's entrypoint user). **Precondition**: container starts. **Success outcome**: `file_import_profiles` rows with `type='system'` reflect exactly what's hardcoded in `SystemFileImportProfileRegistry::profiles()`.
 

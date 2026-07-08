@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use Closure;
 
 class DuplicateDetectionService
 {
@@ -64,6 +65,7 @@ class DuplicateDetectionService
      *
      * @param  array{date: string, amount?: float, config_type?: string, account_from_id?: int, account_to_id?: int}  $extractedData
      * @param  \Illuminate\Database\Eloquent\Collection<int, Transaction>  $windowTransactions
+     * @param  Closure(Transaction): (\Illuminate\Support\Carbon|null)|null  $candidateDateResolver  Resolves the comparison date for a candidate transaction. Defaults to the transaction's own `date`; pass e.g. `fn (Transaction $t) => $t->transactionSchedule?->next_date` to window/score against a schedule's next occurrence instead.
      * @return array<int, array{id: int, similarity: float}>
      */
     public function findDuplicatesFromWindow(
@@ -72,7 +74,10 @@ class DuplicateDetectionService
         float $amountTolerancePercent,
         float $similarityThreshold,
         int $dateWindowDays,
+        ?Closure $candidateDateResolver = null,
     ): array {
+        $candidateDateResolver ??= static fn (Transaction $transaction) => $transaction->date;
+
         try {
             $date = \Carbon\Carbon::parse($extractedData['date']);
         } catch (\Carbon\Exceptions\InvalidFormatException) {
@@ -84,8 +89,8 @@ class DuplicateDetectionService
         $configType = $extractedData['config_type'] ?? null;
 
         $candidates = $windowTransactions->filter(
-            function (Transaction $transaction) use ($startDate, $endDate, $configType): bool {
-                $txDate = $transaction->date;
+            function (Transaction $transaction) use ($startDate, $endDate, $configType, $candidateDateResolver): bool {
+                $txDate = $candidateDateResolver($transaction);
 
                 if (! ($txDate instanceof \Carbon\Carbon)) {
                     return false;

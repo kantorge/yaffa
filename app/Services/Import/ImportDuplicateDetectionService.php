@@ -88,6 +88,86 @@ class ImportDuplicateDetectionService
     }
 
     /**
+     * Enrich drafts with candidate scheduled transactions (schedule = true, with an active
+     * TransactionSchedule) whose next_date falls within the same window that duplicate
+     * detection uses for the transaction's own date. Uses the exact same scoring engine and
+     * settings as enrichDrafts() — only the candidate pool and the date being compared against
+     * (next_date instead of date) differ.
+     *
+     * @param  list<array<string, mixed>>  $drafts
+     * @return list<array<string, mixed>>
+     */
+    public function enrichDraftsWithScheduleCandidates(User $user, array $drafts): array
+    {
+        $settings = $this->duplicateDetectionService->resolveSettingsForUser($user);
+        $dateWindowDays = max(1, (int) ($settings['duplicate_date_window_days'] ?? 3));
+        $amountTolerancePercent = (float) ($settings['duplicate_amount_tolerance_percent'] ?? 10.0);
+        $similarityThreshold = (float) ($settings['duplicate_similarity_threshold'] ?? 0.5);
+
+        $scheduleWindow = $this->loadScheduleWindow($user, $drafts, $dateWindowDays);
+        $scheduleWindowById = $scheduleWindow->keyBy('id');
+
+        $enriched = [];
+
+        foreach ($drafts as $draft) {
+            $input = $this->toDuplicateDetectionInput($draft);
+
+            if ($input === null) {
+                $draft['schedule_candidates'] = [];
+                $enriched[] = $draft;
+                continue;
+            }
+
+            try {
+                $matches = $this->duplicateDetectionService->findDuplicatesFromWindow(
+                    $input,
+                    $scheduleWindow,
+                    $amountTolerancePercent,
+                    $similarityThreshold,
+                    $dateWindowDays,
+                    static fn (Transaction $transaction) => $transaction->transactionSchedule?->next_date,
+                );
+            } catch (Throwable) {
+                $draft['schedule_candidates'] = [];
+                $draft['warnings'] = array_merge((array) ($draft['warnings'] ?? []), [
+                    __('Scheduled transaction matching skipped for this row due to an unexpected error.'),
+                ]);
+                $enriched[] = $draft;
+                continue;
+            }
+
+            $draft['schedule_candidates'] = collect($matches)
+                ->take(10)
+                ->map(function (array $match) use ($draft, $scheduleWindowById): array {
+                    $transactionId = (int) $match['id'];
+                    /** @var Transaction|null $transaction */
+                    $transaction = $scheduleWindowById->get($transactionId);
+
+                    $similarity = (float) $match['similarity'];
+
+                    return [
+                        'transaction_id' => $transactionId,
+                        'confidence_score' => round($similarity, 3),
+                        'similarity_score' => round($similarity, 3),
+                        'matched_on' => $this->buildMatchedOnSignals($draft, $transaction),
+                        'summary' => [
+                            'next_date' => $transaction?->transactionSchedule?->next_date?->format('Y-m-d'),
+                            'comment' => $transaction?->comment,
+                            'amount' => $transaction ? (float) $transaction->transactionItems->sum('amount') : null,
+                            'frequency' => $transaction?->transactionSchedule?->frequency,
+                        ],
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $enriched[] = $draft;
+        }
+
+        return $enriched;
+    }
+
+    /**
      * Load all transactions that fall within the combined date window of the given drafts.
      * Eager-loads config and transactionItems to prevent N+1 queries during scoring.
      *
@@ -120,6 +200,49 @@ class ImportDuplicateDetectionService
             ->whereBetween('date', [$windowStart, $windowEnd])
             ->select(['id', 'date', 'config_type', 'config_id'])
             ->with(['config', 'transactionItems'])
+            ->get();
+
+        return $result;
+    }
+
+    /**
+     * Load all schedule-owning transactions (schedule = true, with an active TransactionSchedule)
+     * whose next_date falls within the combined date window of the given drafts.
+     * Eager-loads config, transactionItems and transactionSchedule to prevent N+1 queries during scoring.
+     *
+     * @param  list<array<string, mixed>>  $drafts
+     * @return \Illuminate\Database\Eloquent\Collection<int, Transaction>
+     */
+    private function loadScheduleWindow(User $user, array $drafts, int $dateWindowDays): \Illuminate\Database\Eloquent\Collection
+    {
+        $draftDates = collect($drafts)
+            ->pluck('date')
+            ->filter(fn (mixed $d): bool => is_string($d) && $d !== '')
+            ->map(function (string $d): ?\Carbon\Carbon {
+                try {
+                    return \Carbon\Carbon::parse($d);
+                } catch (Throwable) {
+                    return null;
+                }
+            })
+            ->filter();
+
+        if ($draftDates->isEmpty()) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        $windowStart = $draftDates->min()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
+        $result = $user->transactions()
+            ->where('schedule', true)
+            ->whereHas('transactionSchedule', function ($query) use ($windowStart, $windowEnd): void {
+                $query->where('active', true)
+                    ->whereBetween('next_date', [$windowStart, $windowEnd]);
+            })
+            ->select(['id', 'date', 'config_type', 'config_id'])
+            ->with(['config', 'transactionItems', 'transactionSchedule'])
             ->get();
 
         return $result;

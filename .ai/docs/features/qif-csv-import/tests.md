@@ -18,6 +18,9 @@ Status is only ever **existing** when a test in the repo asserts it today. A rul
 | 8 | Parse — payee fuzzy-match enrichment, owner-scoped | `enrichDraftsWithPayeeMatches` reads only `$user->payees()` | Draft gets `matched_payee` from the caller's own payees; another user's identically-named payee never matches | `flows.md` a.7; `permissions.md` § Enrichment Read Scoping; `ImportNormalizationService.php:92-94` | unit | none |
 | 9a | Parse — duplicate-candidate scoring and bounding | `ImportDuplicateDetectionService::enrichDrafts` scores/bounds candidates (≤10) within a date window | Matching transaction surfaces as a candidate with a score; result set is capped | `flows.md` a.8; `ImportDuplicateDetectionService.php:119` | integration | existing |
 | 9b | Parse — duplicate-candidate scoring, cross-user isolation | Same service reads only `$user->transactions()` | Another user's transaction with identical date/amount never appears as a candidate | `permissions.md` § Enrichment Read Scoping | integration | none |
+| 9c | Parse — scheduled-transaction candidate scoring and bounding | `ImportDuplicateDetectionService::enrichDraftsWithScheduleCandidates` scores/bounds candidates (≤10) within a `next_date` window, same engine/settings as 9a | Matching schedule-owning transaction surfaces as a `schedule_candidates` entry keyed on `next_date` (not `date`); result set is capped | `flows.md` a.9, f; `ImportDuplicateDetectionService.php` (`enrichDraftsWithScheduleCandidates`, `loadScheduleWindow`) | integration | existing |
+| 9d | Parse — scheduled-transaction candidates exclude inactive schedules and non-schedule transactions | Query requires `schedule = true` and `transactionSchedule.active = true` | An inactive schedule, or a plain (non-schedule) transaction matching on date/amount, never appears in `schedule_candidates` | `architecture.md` § Known Risks; `ImportDuplicateDetectionService::loadScheduleWindow()` | integration | existing |
+| 9e | Parse — scheduled-transaction candidates, cross-user isolation | Same `$user->transactions()` owner-scoped relation as 9b | Another user's matching active schedule never appears as a candidate | `permissions.md` § Enrichment Read Scoping | integration | existing |
 | 10 | Parse — related-AI-document enrichment, scoped + bounded | `enrichDraftsWithRelatedAiDocuments` reads only `AiDocument::where('user_id', $user->id)`, bounded by time window and result count | Best match ranked first by confidence; old/excess/foreign-user documents excluded | `flows.md` a.9; `permissions.md` § Enrichment Read Scoping; `ImportNormalizationService.php:305` | unit | existing |
 | 11 | Profile create — server-controlled ownership fields | `user_id`/`key`/`type` are `prohibited` in the request; controller hard-sets `type='user'`, `user_id=$user->id` regardless of what else the client sends | Deny/ignore: client-submitted `type=system` or `user_id=<other>` in the create/update body never takes effect | `flows.md` c (Create); `permissions.md` Create row; `FileImportProfileRequest.php:36-38`; `FileImportProfileApiController.php:75-76` | integration | proposed |
 | 12a | Profile update — foreign profile denied | `FileImportProfilePolicy::update` = `isUserOwnedBy` | Deny: PATCH another user's `type=user` profile → 403 | `flows.md` c (Update); `permissions.md` Update row | integration | existing |
@@ -58,6 +61,13 @@ Status is only ever **existing** when a test in the repo asserts it today. A rul
 **Duplicate detection**
 - Candidate returned with score/summary shape → `ImportDuplicateDetectionTest::test_csv_parse_enriches_drafts_with_duplicate_candidates_and_similarity_scores`
 - Candidate list bounded to 10 → `::test_csv_duplicate_candidates_are_bounded`
+
+**Scheduled-transaction matching**
+- Candidate returned with score/summary shape (`next_date`, `frequency`) → `ImportScheduleSimilarityTest::test_csv_parse_enriches_drafts_with_schedule_candidates_and_similarity_scores`
+- Candidate list bounded to 10 → `::test_csv_schedule_candidates_are_bounded`
+- Inactive schedule excluded → `::test_inactive_schedule_is_excluded_from_candidates`
+- Non-schedule transaction excluded (and still surfaces as a regular duplicate candidate) → `::test_non_schedule_transaction_does_not_appear_as_schedule_candidate`
+- Cross-user isolation → `::test_schedule_candidates_are_isolated_per_user`
 
 **Related AI documents**
 - Ranking by confidence, `matched_on` signals, and implicit cross-user exclusion (a document without `->for($user)` is excluded from the 2-item result) → `ImportNormalizationServiceTest::test_enrichs_drafts_with_related_ai_document_candidates_using_matching_signals`

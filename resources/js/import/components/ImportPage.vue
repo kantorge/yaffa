@@ -68,6 +68,7 @@
           :class="parseWarnings.length ? 'mt-3' : ''"
           @ignore-draft="onIgnoreDraft"
           @finalize-draft="onFinalizeDraft"
+          @enter-schedule-draft="onEnterScheduleDraft"
         />
 
         <FileImportProfileManager
@@ -452,6 +453,12 @@
             detail: { type: 'standard', transaction },
           }),
         );
+      },
+      onEnterScheduleDraft(draftIndex) {
+        // ScheduleCandidatesPanel already fetched the source transaction and dispatched
+        // initiateEnterInstance; we only need to track which draft to mark as finalized
+        // once the resulting transaction-created event fires.
+        this.finalizingDraftIndex = draftIndex;
       },
       onTransactionCreated() {
         if (this.finalizingDraftIndex === null) {

@@ -167,6 +167,17 @@
                   </span>
                   <span
                     v-if="
+                      draft.schedule_candidates &&
+                      draft.schedule_candidates.length
+                    "
+                    class="badge bg-primary me-1"
+                    :title="__('Matching scheduled transactions')"
+                  >
+                    <i class="fa fa-calendar-check"></i>
+                    {{ draft.schedule_candidates.length }}
+                  </span>
+                  <span
+                    v-if="
                       draft.related_ai_documents &&
                       draft.related_ai_documents.length
                     "
@@ -180,6 +191,7 @@
                     v-if="
                       !draft.warnings?.length &&
                       !draft.duplicate_candidates?.length &&
+                      !draft.schedule_candidates?.length &&
                       !draft.related_ai_documents?.length
                     "
                     class="text-muted"
@@ -301,6 +313,21 @@
                         :account-currency="accountCurrency"
                       />
                     </div>
+                    <!-- Matching scheduled transactions -->
+                    <div
+                      v-if="
+                        draft.schedule_candidates &&
+                        draft.schedule_candidates.length
+                      "
+                      class="col-12 col-md-6 col-lg-4"
+                    >
+                      <ScheduleCandidatesPanel
+                        :candidates="draft.schedule_candidates"
+                        :draft-amount="draft.amount"
+                        :account-currency="accountCurrency"
+                        @enter-schedule="$emit('enter-schedule-draft', draft.draft_index)"
+                      />
+                    </div>
                     <!-- Related AI documents -->
                     <div
                       v-if="
@@ -328,12 +355,14 @@
 <script>
   import { __, toFormattedDate } from '@/shared/lib/i18n';
   import DuplicateCandidatesPanel from './DuplicateCandidatesPanel.vue';
+  import ScheduleCandidatesPanel from './ScheduleCandidatesPanel.vue';
   import RelatedAiDocumentsPanel from './RelatedAiDocumentsPanel.vue';
 
   export default {
     name: 'ImportDraftTable',
     components: {
       DuplicateCandidatesPanel,
+      ScheduleCandidatesPanel,
       RelatedAiDocumentsPanel,
     },
     props: {
@@ -346,7 +375,7 @@
         default: null,
       },
     },
-    emits: ['ignore-draft', 'finalize-draft'],
+    emits: ['ignore-draft', 'finalize-draft', 'enter-schedule-draft'],
     data() {
       return {
         expandedRows: new Set(),

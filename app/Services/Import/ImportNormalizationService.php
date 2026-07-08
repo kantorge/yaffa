@@ -80,6 +80,7 @@ class ImportNormalizationService
                 ],
                 'warnings' => $warnings,
                 'duplicate_candidates' => [],
+                'schedule_candidates' => [],
                 'related_ai_documents' => [],
             ];
         }

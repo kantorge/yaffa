@@ -91,6 +91,7 @@ class ImportApiController extends Controller implements HasMiddleware
 
         $drafts = $this->importNormalizationService->enrichDraftsWithPayeeMatches($request->user(), $drafts);
         $drafts = $this->importDuplicateDetectionService->enrichDrafts($request->user(), $drafts);
+        $drafts = $this->importDuplicateDetectionService->enrichDraftsWithScheduleCandidates($request->user(), $drafts);
         $drafts = $this->importNormalizationService->enrichDraftsWithRelatedAiDocuments($request->user(), $drafts);
 
         $draftWarningCount = 0;

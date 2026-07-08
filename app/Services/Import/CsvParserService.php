@@ -857,6 +857,7 @@ class CsvParserService
             ],
             'warnings' => array_values(array_unique($warnings)),
             'duplicate_candidates' => [],
+            'schedule_candidates' => [],
             'related_ai_documents' => [],
         ];
     }

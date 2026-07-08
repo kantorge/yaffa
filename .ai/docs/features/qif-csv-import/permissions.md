@@ -46,6 +46,7 @@ Every read performed during draft enrichment is scoped to the requesting user, w
 
 - Payee matching: `$user->payees()` (`ImportNormalizationService.php:94`)
 - Duplicate detection: `$user->transactions()->whereBetween('date', ...)` (`ImportDuplicateDetectionService.php:119`)
+- Scheduled-transaction matching: `$user->transactions()->where('schedule', true)->whereHas('transactionSchedule', ...)` (`ImportDuplicateDetectionService::loadScheduleWindow()`) — same `$user->transactions()` owner-scoped relation as duplicate detection, additionally filtered to schedule-owning rows with an active `TransactionSchedule` whose `next_date` falls in the window
 - Related AI documents: `AiDocument::where('user_id', $user->id)` (`ImportNormalizationService.php:305`)
 
 None of these use a Policy class — they're inline `Eloquent` relationship/query scoping in the service layer. This is consistent with the rest of the codebase's approach to "list my own X" endpoints (see `.ai/docs/assets/account/overview.md` for the same `user_id`-scoping pattern elsewhere), but it means a regression here (e.g. someone changing `$user->transactions()` to `Transaction::query()`) would not be caught by a Policy test — only by a Feature test that asserts cross-user isolation.
