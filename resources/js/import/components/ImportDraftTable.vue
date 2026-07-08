@@ -353,7 +353,7 @@
 </template>
 
 <script>
-  import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
   import DuplicateCandidatesPanel from './DuplicateCandidatesPanel.vue';
   import ScheduleCandidatesPanel from './ScheduleCandidatesPanel.vue';
   import RelatedAiDocumentsPanel from './RelatedAiDocumentsPanel.vue';
@@ -371,7 +371,7 @@
         required: true,
       },
       accountCurrency: {
-        type: String,
+        type: Object,
         default: null,
       },
     },
@@ -490,23 +490,11 @@
         if (Number.isNaN(value)) {
           return __('Invalid');
         }
-        const locale = window.YAFFA?.userSettings?.locale || undefined;
-        if (this.accountCurrency) {
-          try {
-            return value.toLocaleString(locale, {
-              style: 'currency',
-              currency: this.accountCurrency,
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          } catch {
-            // fall through to plain format
-          }
-        }
-        return value.toLocaleString(locale, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+        return toFormattedCurrency(
+          value,
+          window.YAFFA?.userSettings?.locale || undefined,
+          this.accountCurrency,
+        );
       },
       rowClass(status) {
         if (status === 'ignored') {
