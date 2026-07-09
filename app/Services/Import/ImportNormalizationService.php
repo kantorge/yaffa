@@ -99,6 +99,9 @@ class ImportNormalizationService
         if ($payees->isEmpty()) {
             foreach ($drafts as $index => $draft) {
                 $drafts[$index]['matched_payee'] = null;
+                $drafts[$index]['payee_cleaned'] = $this->cleanPayeeForDisplay(
+                    is_string($draft['payee'] ?? null) ? $draft['payee'] : null,
+                );
             }
 
             return $drafts;
@@ -140,24 +143,68 @@ class ImportNormalizationService
 
             if ($rawPayee === null) {
                 $drafts[$index]['matched_payee'] = null;
+                $drafts[$index]['payee_cleaned'] = null;
                 continue;
             }
 
+            // Bank-generated payee text is often padded with account/reference numbers and
+            // formatted amounts that dilute matching against short, clean payee names/aliases.
+            // Strip that numeric noise before matching; fall back to the raw text if nothing remains.
+            // The cleaned text is also surfaced on the draft for display, so the review UI can
+            // show it instead of the raw noisy string while the raw entry stays untouched.
+            $matchCandidate = (string) $this->cleanPayeeForDisplay($rawPayee);
+            $drafts[$index]['payee_cleaned'] = $matchCandidate;
+
             // Fast path: exact case-insensitive match on name or alias.
-            $normalizedRaw = mb_strtolower(mb_trim($rawPayee));
+            $normalizedRaw = mb_strtolower(mb_trim($matchCandidate));
             if ($normalizedRaw !== '' && isset($exactLookup[$normalizedRaw])) {
                 $drafts[$index]['matched_payee'] = $exactLookup[$normalizedRaw];
                 continue;
             }
 
             // Slow path: fuzzy Jaro-Winkler similarity.
-            $match = $matchingService->matchBestPayeeFromCollection($rawPayee, $payees);
+            $match = $matchingService->matchBestPayeeFromCollection($matchCandidate, $payees);
             $drafts[$index]['matched_payee'] = ($match !== null && $match['similarity'] >= self::IMPORT_PAYEE_SIMILARITY_THRESHOLD)
                 ? $match
                 : null;
         }
 
         return $drafts;
+    }
+
+    /**
+     * Produce the noise-stripped payee text used both for matching and for display, falling
+     * back to the original raw text when stripping would leave nothing (e.g. an entry whose
+     * payee text is entirely numeric).
+     */
+    private function cleanPayeeForDisplay(?string $rawPayee): ?string
+    {
+        if ($rawPayee === null || $rawPayee === '') {
+            return null;
+        }
+
+        $stripped = $this->stripNumericNoise($rawPayee);
+
+        return $stripped !== '' ? $stripped : $rawPayee;
+    }
+
+    /**
+     * Strip structural numeric noise from bank-generated payee text before matching.
+     *
+     * Targets patterns identifiable by shape rather than vocabulary, so it generalizes across
+     * banks/locales without a maintained per-bank stopword list: formatted amounts (e.g.
+     * "22.515,00") and long digit runs (account numbers, reference codes, YYYYMMDD dates).
+     * Currency codes and language-specific boilerplate words are intentionally left untouched.
+     */
+    private function stripNumericNoise(string $value): string
+    {
+        // Formatted amounts: digits grouped with thousand/decimal separators (.,) e.g. "22.515,00".
+        $stripped = preg_replace('/\d+(?:[.,]\d+)+/u', ' ', $value) ?? $value;
+
+        // Long standalone digit runs: account numbers, reference codes, YYYYMMDD dates.
+        $stripped = preg_replace('/\d{6,}/u', ' ', $stripped) ?? $stripped;
+
+        return mb_trim(preg_replace('/\s+/u', ' ', $stripped) ?? $stripped);
     }
 
     /**

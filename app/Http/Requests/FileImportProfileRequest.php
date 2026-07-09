@@ -55,6 +55,12 @@ class FileImportProfileRequest extends FormRequest
             'options_json.parser_settings.trim_strings' => ['sometimes', 'boolean'],
             'options_json.parser_settings.skip_empty_rows' => ['sometimes', 'boolean'],
             'options_json.comment_separator' => ['sometimes', 'string', 'max:32'],
+            'options_json.field_map' => ['sometimes', 'array'],
+            'options_json.field_map.payee' => ['sometimes', 'string', 'max:1'],
+            'options_json.field_map.comment' => ['sometimes', 'string', 'max:1'],
+            'options_json.field_map.category' => ['sometimes', 'string', 'max:1'],
+            'options_json.field_map.reference' => ['sometimes', 'string', 'max:1'],
+            'options_json.amount_sign' => ['sometimes', Rule::in(['normal', 'inverted'])],
             'options_json.defaults' => ['prohibited'],
             'options_json.matching_rules' => ['prohibited'],
             'options_json.actions' => ['prohibited'],
@@ -148,7 +154,7 @@ class FileImportProfileRequest extends FormRequest
      */
     private function validateOptionsJsonKeys(Validator $validator, array $options): void
     {
-        $allowed = ['parser_settings', 'comment_separator'];
+        $allowed = ['parser_settings', 'comment_separator', 'field_map', 'amount_sign'];
 
         foreach (array_keys($options) as $key) {
             if (! in_array($key, $allowed, true)) {
@@ -166,6 +172,18 @@ class FileImportProfileRequest extends FormRequest
                     $validator->errors()->add(
                         'options_json.parser_settings',
                         sprintf('The options_json.parser_settings key "%s" is not allowed. Allowed keys are: %s.', $key, implode(', ', $allowedParserSettings)),
+                    );
+                }
+            }
+        }
+
+        if (isset($options['field_map']) && is_array($options['field_map'])) {
+            $allowedFieldMapKeys = ['payee', 'comment', 'category', 'reference'];
+            foreach (array_keys($options['field_map']) as $key) {
+                if (! in_array($key, $allowedFieldMapKeys, true)) {
+                    $validator->errors()->add(
+                        'options_json.field_map',
+                        sprintf('The options_json.field_map key "%s" is not allowed. Allowed keys are: %s.', $key, implode(', ', $allowedFieldMapKeys)),
                     );
                 }
             }

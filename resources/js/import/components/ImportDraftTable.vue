@@ -126,11 +126,11 @@
                       "
                     ></i>
                     <div v-if="draft.payee" class="text-muted small mt-1">
-                      {{ draft.payee }}
+                      {{ draft.payee_cleaned || draft.payee }}
                     </div>
                   </template>
                   <template v-else-if="draft.payee">
-                    {{ draft.payee }}
+                    {{ draft.payee_cleaned || draft.payee }}
                     <span
                       class="badge bg-secondary ms-1"
                       :title="__('No database match found')"

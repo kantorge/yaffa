@@ -227,11 +227,70 @@ class ImportAuthorizationTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'options_json' => [
-                    'field_map' => ['payee' => 'M'],
+                    'bogus_key' => 'not allowed',
                 ],
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['options_json']);
+    }
+
+    public function test_store_accepts_qif_field_map_and_amount_sign_options(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('api.v1.imports.file-profiles.store'), [
+                'name' => 'Custom QIF Profile',
+                'file_type' => 'qif',
+                'options_json' => [
+                    'field_map' => [
+                        'payee' => 'M',
+                        'comment' => 'P',
+                    ],
+                    'amount_sign' => 'inverted',
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.options_json.field_map.payee', 'M')
+            ->assertJsonPath('data.options_json.amount_sign', 'inverted');
+    }
+
+    public function test_update_rejects_unknown_field_map_key(): void
+    {
+        $user = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->qif()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
+                'options_json' => [
+                    'field_map' => ['unknown_field' => 'M'],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['options_json.field_map']);
+    }
+
+    public function test_update_rejects_invalid_amount_sign(): void
+    {
+        $user = User::factory()->create();
+
+        $profile = FileImportProfile::factory()->qif()->create([
+            'user_id' => $user->id,
+            'type' => 'user',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
+                'options_json' => [
+                    'amount_sign' => 'sideways',
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['options_json.amount_sign']);
     }
 
     private function createSystemProfile(): FileImportProfile

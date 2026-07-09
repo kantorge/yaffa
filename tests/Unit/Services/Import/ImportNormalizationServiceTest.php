@@ -2,7 +2,10 @@
 
 namespace Tests\Unit\Services\Import;
 
+use App\Models\AccountEntity;
 use App\Models\AiDocument;
+use App\Models\AiUserSettings;
+use App\Models\Payee;
 use App\Models\User;
 use App\Services\Import\ImportNormalizationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -265,5 +268,95 @@ class ImportNormalizationServiceTest extends TestCase
         $this->assertCount(1, $drafts[0]['related_ai_documents']);
         $this->assertSame($document->id, $drafts[0]['related_ai_documents'][0]['ai_document_id']);
         $this->assertSame(['date', 'payee'], $drafts[0]['related_ai_documents'][0]['matched_on']);
+    }
+
+    public function test_enrich_drafts_with_payee_matches_strips_numeric_noise_before_fuzzy_matching(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'asset_similarity_threshold' => 0.5,
+            'asset_max_suggestions' => 10,
+        ]);
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => 'Orlen',
+                'alias' => null,
+            ]);
+
+        // A short, unrelated payee that should not win purely because the noisy
+        // string is uniformly dissimilar to every stored payee name.
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => '444',
+                'alias' => 'Magyar Jeti',
+            ]);
+
+        $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
+            'payee' => '4003220005087393 20260508 04000304 Orlen HU Budaors 22.515,00 HUF Vásárlás',
+        ]]);
+
+        $this->assertSame('Orlen HU Budaors HUF Vásárlás', $drafts[0]['payee_cleaned']);
+        $this->assertNotNull($drafts[0]['matched_payee']);
+        $this->assertSame('Orlen', $drafts[0]['matched_payee']['name']);
+    }
+
+    public function test_enrich_drafts_with_payee_matches_exact_match_survives_numeric_noise(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => 'Orlen',
+                'alias' => null,
+            ]);
+
+        $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
+            'payee' => '20260508  Orlen  04000304',
+        ]]);
+
+        $this->assertNotNull($drafts[0]['matched_payee']);
+        $this->assertSame(1.0, $drafts[0]['matched_payee']['similarity']);
+        $this->assertSame('Orlen', $drafts[0]['matched_payee']['name']);
+    }
+
+    public function test_payee_cleaned_falls_back_to_raw_text_when_stripping_leaves_nothing(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => 'Orlen',
+                'alias' => null,
+            ]);
+
+        $drafts = $service->enrichDraftsWithPayeeMatches($user, [
+            ['payee' => '123456789012'],
+            ['payee' => null],
+        ]);
+
+        $this->assertSame('123456789012', $drafts[0]['payee_cleaned']);
+        $this->assertNull($drafts[1]['payee_cleaned']);
     }
 }
