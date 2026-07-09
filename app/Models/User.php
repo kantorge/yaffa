@@ -224,6 +224,15 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
+     * @return HasMany<FileImportProfile, $this>
+     */
+    public function fileImportProfiles(): HasMany
+    {
+        return $this->hasMany(FileImportProfile::class)
+            ->where('type', 'user');
+    }
+
+    /**
      * @return HasMany<AiProviderConfig, $this>
      */
     public function aiProviderConfigs(): HasMany

@@ -8,6 +8,7 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\FileImportProfile;
 use App\Models\Category;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\PayeePersistenceService;
@@ -64,16 +65,16 @@ class AccountEntityController extends Controller implements HasMiddleware
             // Get preset filters from query string
             $filters = [];
             if ($request->has('date_from')) {
-                $filters['date_from'] = $request->get('date_from');
+                $filters['date_from'] = $request->query('date_from');
             }
             if ($request->has('date_to')) {
-                $filters['date_to'] = $request->get('date_to');
+                $filters['date_to'] = $request->query('date_to');
             }
 
             // If neither date_from nor date_to is set, check for date_preset or use default
             if (!$request->has('date_from') && !$request->has('date_to')) {
                 if ($request->has('date_preset')) {
-                    $filters['date_preset'] = $request->get('date_preset');
+                    $filters['date_preset'] = $request->query('date_preset');
                 } else {
                     $filters['date_preset'] = $accountEntity->config->default_date_range
                     ?? $request->user()->account_details_date_range
@@ -113,7 +114,7 @@ class AccountEntityController extends Controller implements HasMiddleware
          */
         $this->checkTypeParam($request);
 
-        return $this->{'index' . Str::ucfirst($request->get('type'))}();
+        return $this->{'index' . Str::ucfirst($request->query('type'))}();
     }
 
     private function indexAccount(): View
@@ -202,8 +203,10 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     private function createAccount(): View|RedirectResponse
     {
+        $user = Auth::user();
+
         // Redirect to account group form, if empty
-        if (Auth::user()->accountGroups()->count() === 0) {
+        if ($user->accountGroups()->count() === 0) {
             $this->addMessage(
                 __('account.requirement.accountGroup'),
                 'info',
@@ -215,7 +218,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         // Redirect to currency form, if empty
-        if (Auth::user()->currencies()->count() === 0) {
+        if ($user->currencies()->count() === 0) {
             $this->addMessage(
                 __('account.requirement.currency'),
                 'info',
@@ -226,7 +229,16 @@ class AccountEntityController extends Controller implements HasMiddleware
             return to_route('currencies.create');
         }
 
-        return view('accounts.form');
+        return view('accounts.form', [
+            'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
+            'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+            'allFileImportProfiles' => FileImportProfile::query()
+                ->selectableForUser($user)
+                ->orderBy('file_type')
+                ->orderByDesc('type')
+                ->orderBy('name')
+                ->get(),
+        ]);
     }
 
     private function createPayee(): View
@@ -304,18 +316,20 @@ class AccountEntityController extends Controller implements HasMiddleware
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
-        // Get all account groups of the user
-        $allAccountGroups = Auth::user()->accountGroups()->pluck('name', 'id')->all();
-
-        // Get all currencies of the user
-        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
+        $user = Auth::user();
 
         return view(
             'accounts.form',
             [
                 'account' => $accountEntity,
-                'allAccountGroups' => $allAccountGroups,
-                'allCurrencies' => $allCurrencies,
+                'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
+                'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+                'allFileImportProfiles' => FileImportProfile::query()
+                    ->selectableForUser($user)
+                    ->orderBy('file_type')
+                    ->orderByDesc('type')
+                    ->orderBy('name')
+                    ->get(),
             ]
         );
     }

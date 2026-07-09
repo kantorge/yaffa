@@ -9,6 +9,7 @@ use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class GoogleDriveService
 {
@@ -28,6 +29,47 @@ class GoogleDriveService
      * @var array<int, string>
      */
     public const DISPOSITION_ACTIONS = ['delete', 'trash', 'move_to_processed', 'rename_processed'];
+
+    /**
+     * Google OAuth endpoints a service account JSON's token_uri is allowed to use.
+     *
+     * @var array<int, string>
+     */
+    private const TRUSTED_TOKEN_URIS = [
+        'https://oauth2.googleapis.com/token',
+    ];
+
+    /**
+     * Google OAuth endpoints a service account JSON's auth_uri is allowed to use.
+     *
+     * @var array<int, string>
+     */
+    private const TRUSTED_AUTH_URIS = [
+        'https://accounts.google.com/o/oauth2/auth',
+    ];
+
+    /**
+     * Reject service account credentials whose token_uri/auth_uri don't point at a
+     * known Google OAuth endpoint. Without this, a crafted service account JSON can
+     * make the server send an authenticated request to arbitrary internal infrastructure
+     * (SSRF) as soon as the Google client tries to authenticate.
+     *
+     * @param  array<string, mixed>  $credentials
+     */
+    public static function assertTrustedAuthEndpoints(array $credentials): void
+    {
+        $tokenUri = $credentials['token_uri'] ?? null;
+
+        if (! is_string($tokenUri) || ! in_array($tokenUri, self::TRUSTED_TOKEN_URIS, true)) {
+            throw new InvalidArgumentException('The service account token_uri must be a trusted Google OAuth endpoint.');
+        }
+
+        $authUri = $credentials['auth_uri'] ?? null;
+
+        if (! is_string($authUri) || ! in_array($authUri, self::TRUSTED_AUTH_URIS, true)) {
+            throw new InvalidArgumentException('The service account auth_uri must be a trusted Google OAuth endpoint.');
+        }
+    }
 
     /**
      * List files in the Google Drive folder, by default since last_sync_at.
@@ -890,6 +932,8 @@ class GoogleDriveService
      */
     protected function createClient(array $credentials): Client
     {
+        self::assertTrustedAuthEndpoints($credentials);
+
         $client = new Client();
         $client->setAuthConfig($credentials);
         $client->addScope(Drive::DRIVE);

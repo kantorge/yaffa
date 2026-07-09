@@ -119,6 +119,66 @@ class DuplicateDetectionServiceTest extends TestCase
         ]);
     }
 
+    public function test_exact_amount_match_scores_higher_than_tolerance_match(): void
+    {
+        $user = User::factory()->create();
+
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'duplicate_date_window_days' => 3,
+            'duplicate_amount_tolerance_percent' => 10,
+            'duplicate_similarity_threshold' => 0.0,
+        ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'account',
+                'active' => true,
+            ]);
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+            ]);
+
+        $transaction = $this->createStandardTransaction(
+            user: $user,
+            accountFromId: $account->id,
+            accountToId: $payee->id,
+            amount: 100,
+            date: now(),
+        );
+
+        $service = new DuplicateDetectionService();
+
+        $exactMatches = $service->findDuplicates($user, [
+            'date' => now()->toDateString(),
+            'amount' => 100,
+            'config_type' => 'standard',
+            'account_from_id' => $account->id,
+            'account_to_id' => $payee->id,
+        ]);
+
+        $toleranceMatches = $service->findDuplicates($user, [
+            'date' => now()->toDateString(),
+            'amount' => 105,
+            'config_type' => 'standard',
+            'account_from_id' => $account->id,
+            'account_to_id' => $payee->id,
+        ]);
+
+        $this->assertCount(1, $exactMatches);
+        $this->assertCount(1, $toleranceMatches);
+        $this->assertSame($transaction->id, $exactMatches[0]['id']);
+        $this->assertSame(1.0, $exactMatches[0]['similarity']);
+        $this->assertLessThan($exactMatches[0]['similarity'], $toleranceMatches[0]['similarity']);
+    }
+
     private function createStandardTransaction(
         User $user,
         int $accountFromId,

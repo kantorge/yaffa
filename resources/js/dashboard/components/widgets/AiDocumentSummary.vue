@@ -86,7 +86,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     name: 'AiDocumentSummary',
@@ -119,9 +119,7 @@
         if (!this.summary.oldest_created_at) {
           return null;
         }
-        return new Date(this.summary.oldest_created_at).toLocaleDateString(
-          this.locale,
-        );
+        return toFormattedDate(new Date(this.summary.oldest_created_at), this.locale, null);
       },
     },
 

@@ -57,7 +57,7 @@ const routeMap = new Map([
     ['reports.transactions', 'reports/transactions'],
     ['reports.investment_timeline', 'reports/investment-timeline'],
     ['search', 'search/search'],
-    ['import.csv', 'import/csv'],
+    ['import.index', 'import/index'],
     ['ai-documents.index', 'ai-documents/index'],
     ['ai-documents.show', 'ai-documents/show'],
     ['register', 'auth/register'],
@@ -96,6 +96,10 @@ if (current === 'account-entity.index' && ['account', 'payee'].includes(route().
 
 if (current === 'account-entity.show') {
     loadModule('account/show');
+}
+
+if ((current === 'account-entity.create' || current === 'account-entity.edit') && route().params.type === 'account') {
+    loadModule('account/form');
 }
 
 if ((current === 'account-entity.create' || current === 'account-entity.edit') && route().params.type === 'payee') {

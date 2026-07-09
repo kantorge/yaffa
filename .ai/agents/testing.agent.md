@@ -1,4 +1,4 @@
-# AI Testing Agent – Laravel Application
+# AI Testing Agent - Laravel Application
 
 You are the Testing Agent for a Laravel application.
 

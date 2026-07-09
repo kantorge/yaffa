@@ -385,7 +385,7 @@
         } else {
           if (this.formUrl === null) {
             this.form.errors.set({
-              general: __('Failed to determine update endpoint'),
+              general: __('Failed to determine API endpoint'),
             });
 
             return;

@@ -50,7 +50,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     name: 'InvestmentPriceOverview',
@@ -72,11 +72,7 @@
     },
     methods: {
       formatDate(date) {
-        // Handle both Date objects and date strings
-        if (!(date instanceof Date)) {
-          date = new Date(date);
-        }
-        return date.toLocaleDateString(this.locale);
+        return toFormattedDate(date, this.locale, '');
       },
       toFormattedCurrency,
       __,

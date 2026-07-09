@@ -14,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -339,6 +340,15 @@ class InvestmentService
         $price = $this->getLatestStoredPrice($investment, $onOrBefore);
         $transaction = $this->getLatestTransactionWithPrice($investment, $onOrBefore);
 
+        return $this->resolveCombinedPrice($price, $transaction);
+    }
+
+    /**
+     * Pick the winning price between a stored price row and a priced transaction,
+     * whichever is newer. Shared by the single-lookup and batch-lookup paths.
+     */
+    private function resolveCombinedPrice(?InvestmentPrice $price, ?Transaction $transaction): ?float
+    {
         if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
             if ($price->date > $transaction->date) {
                 return $price->price;
@@ -358,6 +368,104 @@ class InvestmentService
         }
 
         return null;
+    }
+
+    /**
+     * Build a stable lookup key for a (investment, as-of date) price request, used by
+     * getLatestPricesBatch().
+     */
+    public function priceBatchKey(int $investmentId, ?Carbon $onOrBefore): string
+    {
+        return $investmentId . '|' . ($onOrBefore?->format('Y-m-d') ?? '');
+    }
+
+    /**
+     * Resolve the "combined" latest price (stored price vs. priced transaction, whichever
+     * is newer) for many (investment, as-of date) pairs at once.
+     *
+     * Replaces N calls to getLatestPrice('combined', ...) - each of which issues up to 2
+     * queries - with 2 bulk queries total, regardless of how many investments or holding
+     * periods are being resolved. Intended for report/timeline views that need the price
+     * as of many different dates across a user's whole portfolio.
+     *
+     * @param  Collection<int, array{investment: Investment, date: Carbon|null}>  $requests
+     * @return array<string, float|null> Map keyed by priceBatchKey() to the resolved price
+     */
+    public function getLatestPricesBatch(Collection $requests): array
+    {
+        if ($requests->isEmpty()) {
+            return [];
+        }
+
+        $investmentIds = $requests->pluck('investment.id')->unique()->values();
+
+        $storedPricesByInvestment = InvestmentPrice::whereIn('investment_id', $investmentIds)
+            ->orderBy('date')
+            ->get(['investment_id', 'date', 'price'])
+            ->groupBy('investment_id');
+
+        $pricedTransactionsByInvestment = Transaction::with('config')
+            ->byScheduleType('none')
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($investmentIds) {
+                    $query->whereIn('investment_id', $investmentIds)
+                        ->whereNotNull('price');
+                }
+            )
+            ->orderBy('date')
+            ->get()
+            ->filter(function (Transaction $transaction) {
+                $config = $transaction->config;
+
+                return $config instanceof TransactionDetailInvestment;
+            })
+            ->groupBy(function (Transaction $transaction) {
+                $config = $transaction->config;
+
+                return $config instanceof TransactionDetailInvestment ? $config->investment_id : null;
+            });
+
+        $results = [];
+
+        foreach ($requests as $request) {
+            $investment = $request['investment'];
+            $onOrBefore = $request['date'];
+            $key = $this->priceBatchKey($investment->id, $onOrBefore);
+
+            if (array_key_exists($key, $results)) {
+                continue;
+            }
+
+            $price = $this->latestOnOrBefore($storedPricesByInvestment->get($investment->id), $onOrBefore);
+            $transaction = $this->latestOnOrBefore($pricedTransactionsByInvestment->get($investment->id), $onOrBefore);
+
+            $results[$key] = $this->resolveCombinedPrice($price, $transaction);
+        }
+
+        return $results;
+    }
+
+    /**
+     * From a date-ascending collection, pick the item with the highest date on or before
+     * $onOrBefore (or the overall last item when no date bound is given).
+     *
+     * @template TItem of InvestmentPrice|Transaction
+     * @param  Collection<int, TItem>|null  $items
+     * @return TItem|null
+     */
+    private function latestOnOrBefore(?Collection $items, ?Carbon $onOrBefore): InvestmentPrice|Transaction|null
+    {
+        if ($items === null || $items->isEmpty()) {
+            return null;
+        }
+
+        if ($onOrBefore === null) {
+            return $items->last();
+        }
+
+        return $items->last(fn ($item) => $item->date <= $onOrBefore);
     }
 
     private function extractTransactionPrice(?Transaction $transaction): ?float

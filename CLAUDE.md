@@ -1,4 +1,4 @@
-# YAFFA – Claude Code Context
+# YAFFA - Claude Code Context
 
 ## Project Overview
 
@@ -33,6 +33,7 @@ vendor/bin/sail bin pint --dirty          # fix PHP code style
 - Always run Pint before finalizing PHP changes
 - Run only the minimum affected tests, then ask if the full suite should follow
 - Do not add dependencies or restructure directories without user approval
+- **QIF/CSV import — system profiles are code-only**: `FileImportProfile` rows of `type = system` (with executable `matching_rules`) are defined solely in `SystemFileImportProfileRegistry` and applied via `artisan app:import:sync-system-profiles` at deploy time. Never add an API/UI path that lets a user create or mutate a `system`-typed profile or set `options_json.matching_rules`/`actions` on a `user`-typed one — see `.ai/docs/features/qif-csv-import/permissions.md` and `architecture.md` (ReDoS risk note).
 
 ## Domain Documentation
 
@@ -84,3 +85,20 @@ tests/Browser/          Dusk E2E tests
 .ai/docs/               domain documentation
 .ai/agents/             agent role instructions
 ```
+
+## Linting
+
+**Run linters before committing code to catch style and quality issues.**
+
+```bash
+# PHP linting (PSR-12 code style)
+./vendor/bin/pint              # Auto-fixes style issues
+
+# PHP static analysis (PHPStan Level 5)
+./vendor/bin/phpstan analyse   # Finds type errors and bugs
+
+# JavaScript/Vue linting
+npx eslint resources/js --ext .js,.vue
+```
+
+**Note:** Pint excludes `vendor/`, `public/`, `storage/`, `bootstrap/` directories. PHPStan analyzes `app/` directory only.

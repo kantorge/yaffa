@@ -1,15 +1,15 @@
-# Testing Context – YAFFA (`tests/`)
+# Testing Context - YAFFA (`tests/`)
 
 See root [CLAUDE.md](../CLAUDE.md) for project overview and commands.
 See [.ai/agents/testing.agent.md](../.ai/agents/testing.agent.md) for full testing rules.
 
 ## Test Level Guide
 
-| Level | Location | Use when |
-|-------|----------|----------|
-| Unit | `tests/Unit/` | Pure isolated logic, no DB or HTTP |
-| Feature | `tests/Feature/` | HTTP endpoints, policies, validation, DB |
-| Browser (Dusk) | `tests/Browser/` | Critical E2E user journeys only |
+| Level          | Location         | Use when                                 |
+| -------------- | ---------------- | ---------------------------------------- |
+| Unit           | `tests/Unit/`    | Pure isolated logic, no DB or HTTP       |
+| Feature        | `tests/Feature/` | HTTP endpoints, policies, validation, DB |
+| Browser (Dusk) | `tests/Browser/` | Critical E2E user journeys only          |
 
 Prefer Feature tests. Use Dusk sparingly — only when a full browser interaction is essential.
 

@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Services\GoogleDriveService;
 use PHPUnit\Framework\TestCase;
+use InvalidArgumentException;
 
 class GoogleDriveServiceTest extends TestCase
 {
@@ -65,5 +66,46 @@ class GoogleDriveServiceTest extends TestCase
         $this->assertTrue($this->service->isExcludedFromImport('processed_photo.jpg'));
         $this->assertTrue($this->service->isExcludedFromImport('processed_scan.png'));
         $this->assertTrue($this->service->isExcludedFromImport('processed_document.txt'));
+    }
+
+    // ===== assertTrustedAuthEndpoints() - SSRF guard on service account JSON =====
+
+    public function test_assert_trusted_auth_endpoints_allows_real_google_endpoints(): void
+    {
+        GoogleDriveService::assertTrustedAuthEndpoints([
+            'token_uri' => 'https://oauth2.googleapis.com/token',
+            'auth_uri' => 'https://accounts.google.com/o/oauth2/auth',
+        ]);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_assert_trusted_auth_endpoints_rejects_untrusted_token_uri(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('token_uri');
+
+        GoogleDriveService::assertTrustedAuthEndpoints([
+            'token_uri' => 'http://169.254.169.254/latest/meta-data/',
+            'auth_uri' => 'https://accounts.google.com/o/oauth2/auth',
+        ]);
+    }
+
+    public function test_assert_trusted_auth_endpoints_rejects_untrusted_auth_uri(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('auth_uri');
+
+        GoogleDriveService::assertTrustedAuthEndpoints([
+            'token_uri' => 'https://oauth2.googleapis.com/token',
+            'auth_uri' => 'http://internal.attacker.example/oauth',
+        ]);
+    }
+
+    public function test_assert_trusted_auth_endpoints_rejects_missing_uris(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        GoogleDriveService::assertTrustedAuthEndpoints([]);
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\GoogleDriveConfig;
+use App\Services\GoogleDriveService;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 class GoogleDriveConfigRequest extends FormRequest
 {
@@ -158,6 +160,15 @@ class GoogleDriveConfigRequest extends FormRequest
         // Validate type is "service_account"
         if ($decoded['type'] !== 'service_account') {
             $fail(__('The :attribute must be a service account JSON key file.', ['attribute' => $attribute]));
+            return;
+        }
+
+        // Reject service accounts whose auth endpoints aren't Google's own, which would
+        // otherwise let the server be tricked into sending authenticated requests elsewhere (SSRF)
+        try {
+            GoogleDriveService::assertTrustedAuthEndpoints($decoded);
+        } catch (InvalidArgumentException $exception) {
+            $fail($exception->getMessage());
         }
     }
 }

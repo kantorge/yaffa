@@ -97,6 +97,34 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['service_account_json']);
     }
 
+    public function test_create_rejects_untrusted_token_uri(): void
+    {
+        $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"http://169.254.169.254/latest/meta-data/"}';
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.store'), [
+                'service_account_json' => $maliciousJson,
+                'folder_id' => 'test-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['service_account_json']);
+    }
+
+    public function test_create_rejects_untrusted_auth_uri(): void
+    {
+        $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"http://internal.attacker.example/oauth","token_uri":"https://oauth2.googleapis.com/token"}';
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.store'), [
+                'service_account_json' => $maliciousJson,
+                'folder_id' => 'test-folder-id',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['service_account_json']);
+    }
+
     public function test_create_accepts_valid_service_account_json(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')

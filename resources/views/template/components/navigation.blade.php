@@ -110,7 +110,7 @@
                 text="{{ __('AI documents') }}"
             />
             <x-nav-link
-                    href="{{ route('import.csv') }}"
+                    href="{{ route('import.index') }}"
                     iconClasses="fa-solid fa-upload"
                     text="{{ __('Import transactions') }}"
             />

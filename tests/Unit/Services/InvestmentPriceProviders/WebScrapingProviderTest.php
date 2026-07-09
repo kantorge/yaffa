@@ -151,6 +151,51 @@ class WebScrapingProviderTest extends TestCase
         $provider->fetchPrices($investment);
     }
 
+    public function test_invalid_price_format_does_not_leak_scraped_page_content(): void
+    {
+        $investment = $this->makeInvestment();
+        $scrapedPageContent = '<html><body>Internal admin panel secret-token-abc123</body></html>';
+
+        $scraperService = Mockery::mock(ScraperService::class);
+        $scraperService->shouldReceive('scrape')
+            ->once()
+            ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
+            ->andReturn([new Item(['price' => $scrapedPageContent])]);
+
+        $provider = new WebScrapingProvider($scraperService);
+
+        try {
+            $provider->fetchPrices($investment);
+            $this->fail('Expected an InvalidPriceDataException to be thrown.');
+        } catch (InvalidPriceDataException $exception) {
+            $this->assertStringNotContainsString('secret-token-abc123', $exception->getMessage());
+            $this->assertStringNotContainsString('<html>', $exception->getMessage());
+        }
+    }
+
+    public function test_wraps_ssrf_rejection_from_scraper_service(): void
+    {
+        $investment = $this->makeInvestment([
+            'provider_settings' => [
+                'url' => 'http://169.254.169.254/latest/meta-data/',
+                'selector' => 'body',
+            ],
+        ]);
+
+        $scraperService = Mockery::mock(ScraperService::class);
+        $scraperService->shouldReceive('scrape')
+            ->once()
+            ->with('http://169.254.169.254/latest/meta-data/', 'body')
+            ->andThrow(new \App\Exceptions\UnsafeEndpointUrlException('Endpoint URL must resolve to a public IP address.'));
+
+        $provider = new WebScrapingProvider($scraperService);
+
+        $this->expectException(PriceProviderException::class);
+        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+
+        $provider->fetchPrices($investment);
+    }
+
     public function test_handles_negative_price(): void
     {
         $investment = $this->makeInvestment();

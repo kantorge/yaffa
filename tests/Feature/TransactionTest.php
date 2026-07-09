@@ -555,4 +555,40 @@ class TransactionTest extends TestCase
         $this->assertSame(0.82, $item->getAttribute('confidence_score'));
         $this->assertSame($recommendedCategory->full_name, $item->getAttribute('recommended_category_full_name'));
     }
+
+    public function test_create_from_draft_does_not_leak_other_users_account_entity(): void
+    {
+        $otherUser = User::factory()->create();
+        $otherAccount = AccountEntity::factory()
+            ->for($otherUser)
+            ->for(
+                \App\Models\Account::factory()->withUser($otherUser),
+                'config'
+            )
+            ->create(['active' => true, 'name' => 'Other User Secret Account']);
+
+        $draftData = [
+            'config_type' => 'standard',
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+            'date' => now()->format('Y-m-d'),
+            'config' => [
+                'account_from_id' => $otherAccount->id,
+                'account_to_id' => null,
+                'amount_from' => 100,
+                'amount_to' => 100,
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('transactions.createFromDraft'), [
+                'transaction' => json_encode($draftData),
+            ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        /** @var Transaction $transaction */
+        $transaction = $response->viewData('transaction');
+        $this->assertNull($transaction->config->getRelation('account_from'));
+        $response->assertDontSee('Other User Secret Account');
+    }
 }

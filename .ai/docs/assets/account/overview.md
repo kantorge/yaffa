@@ -71,7 +71,7 @@ The `account.history` route (`MainController::account_details`) loads all transa
 
 ### User-provided when creating or editing an account:
 
-- **Name** — required, unique per user + type, 3–255 characters
+- **Name** — required, unique per user + type, 3-255 characters
 - **Active** — boolean toggle; defaults to true
 - **Opening balance** — numeric, fits in signed `DECIMAL(30,10)`; represents the account value at the start of tracking
 - **Account group** — must be one of the user's own account groups (pre-condition: at least one group must exist)

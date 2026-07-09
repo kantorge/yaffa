@@ -97,6 +97,7 @@ class AssetMatchingService
 
         $payees = $this->user
             ->payees()
+            ->where('active', true)
             ->select('id', 'name', 'alias')
             ->get();
 
@@ -355,6 +356,43 @@ class AssetMatchingService
             'applied_category_matching_mode' => $appliedCategoryMatchingMode,
             'used_mode_fallback' => $usedModeFallback,
         ];
+    }
+
+    /**
+     * Find the single best-matching payee from a pre-loaded collection.
+     *
+     * Callers that need to match many strings (e.g. import enrichment) should load the
+     * payee collection once and pass it here to avoid one DB query per draft.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \App\Models\AccountEntity>  $payees
+     * @return array{id: int, name: string, similarity: float}|null
+     */
+    public function matchBestPayeeFromCollection(string $payeeName, \Illuminate\Database\Eloquent\Collection $payees): ?array
+    {
+        if ($payeeName === '' || $payees->isEmpty()) {
+            return null;
+        }
+
+        $threshold = $this->resolveSimilarityThreshold();
+        $best = null;
+
+        foreach ($payees as $payee) {
+            $secondaryParts = $payee->alias
+                ? array_filter(array_map('trim', explode("\n", $payee->alias)))
+                : [];
+
+            $similarity = $this->calculatePartialSimilarity($payeeName, $payee->name, $secondaryParts ?: null);
+
+            if ($similarity >= $threshold && ($best === null || $similarity > $best['similarity'])) {
+                $best = [
+                    'id' => (int) $payee->id,
+                    'name' => $payee->name . ($payee->alias ? ' (' . $payee->alias . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        return $best;
     }
 
     /**
