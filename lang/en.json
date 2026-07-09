@@ -353,7 +353,6 @@
     "dot": "dot",
     "Download": "Download",
     "Draft": "Draft",
-    "Draft is :amount; existing is :existing": "Draft is :amount; existing is :existing",
     "Drag and drop files here, or click to select": "Drag and drop files here, or click to select",
     "Duplicate detection skipped for this row due to an unexpected error.": "Duplicate detection skipped for this row due to an unexpected error.",
     "Duplicate mapping": "Duplicate mapping",

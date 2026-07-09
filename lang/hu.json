@@ -353,7 +353,6 @@
     "dot": "pont",
     "Download": "Letöltés",
     "Draft": "Tervezet",
-    "Draft is :amount; existing is :existing": "A tervezet :amount; a meglévő :existing",
     "Drag and drop files here, or click to select": "Húzd ide a fájlokat, vagy kattints a kiválasztáshoz",
     "Duplicate detection skipped for this row due to an unexpected error.": "Az ismétlődés-észlelés kihagyva ennél a sornál váratlan hiba miatt.",
     "Duplicate mapping": "Ismétlődő leképezés",

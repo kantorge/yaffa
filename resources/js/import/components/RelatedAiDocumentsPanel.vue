@@ -11,10 +11,18 @@
         :href="documentUrl(candidate.ai_document_id)"
         target="_blank"
         rel="noopener noreferrer"
-        class="ai-doc-card border border-info rounded p-2 text-decoration-none text-body"
+        class="ai-doc-card border border-info rounded p-2 text-decoration-none text-body position-relative"
       >
+        <button
+          type="button"
+          class="btn-close position-absolute top-0 end-0 m-2"
+          :aria-label="__('Dismiss this suggestion')"
+          :title="__('Dismiss this suggestion')"
+          @click.stop.prevent="$emit('dismiss', candidate.ai_document_id)"
+        ></button>
+
         <!-- Header: merchant + amount -->
-        <div class="d-flex justify-content-between align-items-start mb-1">
+        <div class="d-flex justify-content-between align-items-start mb-1 pe-4">
           <span class="fw-semibold text-break me-2">
             {{ candidate.summary.merchant || __('Unknown merchant') }}
           </span>
@@ -76,6 +84,7 @@
         default: null,
       },
     },
+    emits: ['dismiss'],
     methods: {
       __,
       documentUrl(aiDocumentId) {

@@ -106,6 +106,32 @@ class AssetMatchingServiceTest extends TestCase
         $this->assertCount(0, $matches);
     }
 
+    public function test_match_payees_excludes_inactive_payees(): void
+    {
+        $user = User::factory()->create();
+
+        AiUserSettings::factory()->create([
+            'user_id' => $user->id,
+            'asset_similarity_threshold' => 0.5,
+            'asset_max_suggestions' => 10,
+        ]);
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => false,
+                'name' => 'Amazon',
+                'alias' => null,
+            ]);
+
+        $service = new AssetMatchingService($user);
+        $matches = $service->matchPayees('AMAZON MARKETPLACE EU SARL');
+
+        $this->assertCount(0, $matches);
+    }
+
     public function test_match_payees_uses_user_similarity_threshold(): void
     {
         $user = User::factory()->create();

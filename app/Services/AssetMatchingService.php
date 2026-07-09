@@ -97,6 +97,7 @@ class AssetMatchingService
 
         $payees = $this->user
             ->payees()
+            ->where('active', true)
             ->select('id', 'name', 'alias')
             ->get();
 

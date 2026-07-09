@@ -8,11 +8,19 @@
       <div
         v-for="(candidate, index) in candidates"
         :key="index"
-        class="duplicate-card border rounded p-2"
+        class="duplicate-card border rounded p-2 position-relative"
         :class="confidenceCardClass(candidate.confidence_score)"
       >
+        <button
+          type="button"
+          class="btn-close position-absolute top-0 end-0 m-2"
+          :aria-label="__('Dismiss this suggestion')"
+          :title="__('Dismiss this suggestion')"
+          @click="$emit('dismiss', candidate.transaction_id)"
+        ></button>
+
         <!-- Header row: confidence + amount -->
-        <div class="d-flex justify-content-between align-items-start mb-1">
+        <div class="d-flex justify-content-between align-items-start mb-1 pe-4">
           <span
             class="badge duplicate-confidence-badge"
             :class="confidenceBadgeClass(candidate.confidence_score)"
@@ -23,20 +31,6 @@
           <span class="fw-bold fs-6 text-nowrap">
             {{ formatAmount(candidate.summary.amount) }}
           </span>
-        </div>
-
-        <!-- Amount mismatch explanation -->
-        <div
-          v-if="hasDraftAmount && amountMismatch(candidate)"
-          class="text-muted small mb-1"
-        >
-          <i class="fa fa-info-circle me-1"></i>
-          {{
-            __('Draft is :amount; existing is :existing', {
-              amount: formatAmount(draftAmount),
-              existing: formatAmount(candidate.summary.amount),
-            })
-          }}
         </div>
 
         <!-- Date -->
@@ -103,6 +97,7 @@
         default: null,
       },
     },
+    emits: ['dismiss'],
     data() {
       return {
         loadingTransactionId: null,

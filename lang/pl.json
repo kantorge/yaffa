@@ -353,7 +353,6 @@
     "dot": "kropka",
     "Download": "Pobierać",
     "Draft": "Szkic",
-    "Draft is :amount; existing is :existing": "Szkic wynosi :amount; istniejący wynosi :existing",
     "Drag and drop files here, or click to select": "Przeciągnij i upuść pliki tutaj lub kliknij, aby je wybrać",
     "Duplicate detection skipped for this row due to an unexpected error.": "Wykrywanie duplikatów zostało pominięte dla tego wiersza z powodu nieoczekiwanego błędu.",
     "Duplicate mapping": "Duplikat mapowania",

@@ -117,6 +117,15 @@
                       "
                     ></i>
                     <i
+                      v-else-if="draft.matched_payee.similarity >= 0.8"
+                      class="fa fa-check-double text-info ms-1"
+                      :title="
+                        __('High-confidence similarity match (:pct%)', {
+                          pct: Math.round(draft.matched_payee.similarity * 100),
+                        })
+                      "
+                    ></i>
+                    <i
                       v-else
                       class="fa fa-circle-half-stroke text-warning ms-1"
                       :title="
@@ -155,44 +164,37 @@
                     <i class="fa fa-warning"></i> {{ draft.warnings.length }}
                   </span>
                   <span
-                    v-if="
-                      draft.duplicate_candidates &&
-                      draft.duplicate_candidates.length
-                    "
-                    class="badge bg-danger me-1"
+                    v-if="visibleDuplicates(draft).length"
+                    class="badge me-1"
+                    :class="duplicateBadgeClass(draft)"
                     :title="__('Potential duplicates')"
                   >
                     <i class="fa fa-copy"></i>
-                    {{ draft.duplicate_candidates.length }}
+                    {{ visibleDuplicates(draft).length }}
                   </span>
                   <span
-                    v-if="
-                      draft.schedule_candidates &&
-                      draft.schedule_candidates.length
-                    "
-                    class="badge bg-primary me-1"
+                    v-if="visibleSchedules(draft).length"
+                    class="badge me-1"
+                    :class="scheduleBadgeClass(draft)"
                     :title="__('Matching scheduled transactions')"
                   >
                     <i class="fa fa-calendar-check"></i>
-                    {{ draft.schedule_candidates.length }}
+                    {{ visibleSchedules(draft).length }}
                   </span>
                   <span
-                    v-if="
-                      draft.related_ai_documents &&
-                      draft.related_ai_documents.length
-                    "
+                    v-if="visibleAiDocuments(draft).length"
                     class="badge bg-info text-dark"
                     :title="__('Related AI documents')"
                   >
                     <i class="fa fa-file-lines"></i>
-                    {{ draft.related_ai_documents.length }}
+                    {{ visibleAiDocuments(draft).length }}
                   </span>
                   <span
                     v-if="
                       !draft.warnings?.length &&
-                      !draft.duplicate_candidates?.length &&
-                      !draft.schedule_candidates?.length &&
-                      !draft.related_ai_documents?.length
+                      !visibleDuplicates(draft).length &&
+                      !visibleSchedules(draft).length &&
+                      !visibleAiDocuments(draft).length
                     "
                     class="text-muted"
                     >—</span
@@ -206,7 +208,7 @@
                     :title="__('Finalize this draft as a transaction')"
                     @click="$emit('finalize-draft', draft.draft_index)"
                   >
-                    <i class="fa fa-check"></i>
+                    <i class="fa fa-pencil"></i>
                   </button>
                   <button
                     v-if="draft.status === 'pending_review'"
@@ -222,8 +224,8 @@
               <tr v-if="isRawVisible(draft.draft_index)">
                 <td colspan="9" class="bg-body-secondary p-3">
                   <div class="row g-3">
-                    <!-- Structured raw entry -->
-                    <div class="col-12 col-lg-6">
+                    <!-- Left column: structured raw entry + warnings -->
+                    <div class="col-12 col-lg-5">
                       <div class="fw-semibold mb-1">{{ __('Raw entry') }}</div>
                       <!-- CSV: key-value table -->
                       <table
@@ -283,63 +285,50 @@
                       <pre v-else class="mb-0 small text-wrap">{{
                         draft.raw_entry || __('Not available')
                       }}</pre>
+
+                      <!-- Warnings -->
+                      <div
+                        v-if="draft.warnings && draft.warnings.length"
+                        class="mt-3"
+                      >
+                        <div class="fw-semibold mb-1">{{ __('Warnings') }}</div>
+                        <ul class="mb-0 ps-3 small">
+                          <li
+                            v-for="(warning, warningIndex) in draft.warnings"
+                            :key="`${draft.draft_index}-warning-${warningIndex}`"
+                          >
+                            {{ warning }}
+                          </li>
+                        </ul>
+                      </div>
                     </div>
-                    <!-- Warnings -->
-                    <div
-                      v-if="draft.warnings && draft.warnings.length"
-                      class="col-12 col-lg-2"
-                    >
-                      <div class="fw-semibold mb-1">{{ __('Warnings') }}</div>
-                      <ul class="mb-0 ps-3 small">
-                        <li
-                          v-for="(warning, warningIndex) in draft.warnings"
-                          :key="`${draft.draft_index}-warning-${warningIndex}`"
-                        >
-                          {{ warning }}
-                        </li>
-                      </ul>
-                    </div>
-                    <!-- Duplicate candidates -->
-                    <div
-                      v-if="
-                        draft.duplicate_candidates &&
-                        draft.duplicate_candidates.length
-                      "
-                      class="col-12 col-md-6 col-lg-4"
-                    >
-                      <DuplicateCandidatesPanel
-                        :candidates="draft.duplicate_candidates"
-                        :draft-amount="draft.amount"
-                        :account-currency="accountCurrency"
-                      />
-                    </div>
-                    <!-- Matching scheduled transactions -->
-                    <div
-                      v-if="
-                        draft.schedule_candidates &&
-                        draft.schedule_candidates.length
-                      "
-                      class="col-12 col-md-6 col-lg-4"
-                    >
-                      <ScheduleCandidatesPanel
-                        :candidates="draft.schedule_candidates"
-                        :draft-amount="draft.amount"
-                        :account-currency="accountCurrency"
-                        @enter-schedule="$emit('enter-schedule-draft', draft.draft_index)"
-                      />
-                    </div>
-                    <!-- Related AI documents -->
-                    <div
-                      v-if="
-                        draft.related_ai_documents &&
-                        draft.related_ai_documents.length
-                      "
-                      class="col-12 col-md-6 col-lg-4"
-                    >
-                      <RelatedAiDocumentsPanel
-                        :candidates="draft.related_ai_documents"
-                        :account-currency="accountCurrency"
-                      />
+
+                    <!-- Right column: stacked insight panels, aligned consistently for CSV and QIF -->
+                    <div class="col-12 col-lg-7 d-flex flex-column gap-3">
+                      <div v-if="visibleDuplicates(draft).length">
+                        <DuplicateCandidatesPanel
+                          :candidates="visibleDuplicates(draft)"
+                          :draft-amount="draft.amount"
+                          :account-currency="accountCurrency"
+                          @dismiss="dismissCandidate('duplicate', draft.draft_index, $event)"
+                        />
+                      </div>
+                      <div v-if="visibleSchedules(draft).length">
+                        <ScheduleCandidatesPanel
+                          :candidates="visibleSchedules(draft)"
+                          :draft-amount="draft.amount"
+                          :account-currency="accountCurrency"
+                          @enter-schedule="$emit('enter-schedule-draft', draft.draft_index)"
+                          @dismiss="dismissCandidate('schedule', draft.draft_index, $event)"
+                        />
+                      </div>
+                      <div v-if="visibleAiDocuments(draft).length">
+                        <RelatedAiDocumentsPanel
+                          :candidates="visibleAiDocuments(draft)"
+                          :account-currency="accountCurrency"
+                          @dismiss="dismissCandidate('aiDocument', draft.draft_index, $event)"
+                        />
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -382,11 +371,15 @@
         showDraftRows: true,
         showIgnoredRows: false,
         showFinalizedRows: false,
+        // Session-only dismissal of insight suggestions (duplicates/schedules/AI documents).
+        // Nothing is persisted; this simply hides a card for the current review session.
+        dismissedKeys: new Set(),
       };
     },
     watch: {
       drafts() {
         this.expandedRows = new Set();
+        this.dismissedKeys = new Set();
       },
     },
     computed: {
@@ -452,6 +445,56 @@
       isRawVisible(draftIndex) {
         return this.expandedRows.has(draftIndex);
       },
+      candidateKey(type, draftIndex, candidateId) {
+        return `${type}:${draftIndex}:${candidateId}`;
+      },
+      dismissCandidate(type, draftIndex, candidateId) {
+        this.dismissedKeys.add(this.candidateKey(type, draftIndex, candidateId));
+        // Trigger reactivity for the Set mutation
+        this.dismissedKeys = new Set(this.dismissedKeys);
+      },
+      visibleDuplicates(draft) {
+        return (draft.duplicate_candidates || []).filter(
+          (candidate) =>
+            !this.dismissedKeys.has(
+              this.candidateKey('duplicate', draft.draft_index, candidate.transaction_id),
+            ),
+        );
+      },
+      visibleSchedules(draft) {
+        return (draft.schedule_candidates || []).filter(
+          (candidate) =>
+            !this.dismissedKeys.has(
+              this.candidateKey('schedule', draft.draft_index, candidate.transaction_id),
+            ),
+        );
+      },
+      visibleAiDocuments(draft) {
+        return (draft.related_ai_documents || []).filter(
+          (candidate) =>
+            !this.dismissedKeys.has(
+              this.candidateKey('aiDocument', draft.draft_index, candidate.ai_document_id),
+            ),
+        );
+      },
+      strongestConfidence(candidates) {
+        if (!candidates.length) return null;
+        return Math.max(...candidates.map((c) => c.confidence_score));
+      },
+      duplicateBadgeClass(draft) {
+        const score = this.strongestConfidence(this.visibleDuplicates(draft));
+        if (score === null) return 'bg-danger';
+        if (score >= 0.9) return 'bg-danger';
+        if (score >= 0.7) return 'bg-warning text-dark';
+        return 'bg-secondary';
+      },
+      scheduleBadgeClass(draft) {
+        const score = this.strongestConfidence(this.visibleSchedules(draft));
+        if (score === null) return 'bg-success';
+        if (score >= 0.9) return 'bg-success';
+        if (score >= 0.7) return 'bg-warning text-dark';
+        return 'bg-secondary';
+      },
       statusLabel(status) {
         const labels = {
           pending_review: __('Pending review'),
@@ -463,12 +506,12 @@
       },
       statusClass(status) {
         const classes = {
-          pending_review: 'badge bg-info text-dark',
-          ignored: 'badge bg-secondary',
-          finalized: 'badge bg-success',
-          failed_validation: 'badge bg-danger',
+          pending_review: 'badge text-bg-info',
+          ignored: 'badge text-bg-secondary',
+          finalized: 'badge text-bg-success',
+          failed_validation: 'badge text-bg-danger',
         };
-        return classes[status] || 'badge bg-secondary';
+        return classes[status] || 'badge text-bg-secondary';
       },
       formatDate(dateString) {
         if (!dateString) {

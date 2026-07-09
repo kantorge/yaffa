@@ -94,7 +94,7 @@ class ImportNormalizationService
      */
     public function enrichDraftsWithPayeeMatches(User $user, array $drafts): array
     {
-        $payees = $user->payees()->select('id', 'name', 'alias')->get();
+        $payees = $user->payees()->where('active', true)->select('id', 'name', 'alias')->get();
 
         if ($payees->isEmpty()) {
             foreach ($drafts as $index => $draft) {

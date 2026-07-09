@@ -359,4 +359,26 @@ class ImportNormalizationServiceTest extends TestCase
         $this->assertSame('123456789012', $drafts[0]['payee_cleaned']);
         $this->assertNull($drafts[1]['payee_cleaned']);
     }
+
+    public function test_enrich_drafts_with_payee_matches_excludes_inactive_payees(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => false,
+                'name' => 'Orlen',
+                'alias' => null,
+            ]);
+
+        $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
+            'payee' => 'Orlen',
+        ]]);
+
+        $this->assertNull($drafts[0]['matched_payee']);
+    }
 }

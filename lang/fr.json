@@ -353,7 +353,6 @@
     "dot": "point",
     "Download": "Télécharger",
     "Draft": "Brouillon",
-    "Draft is :amount; existing is :existing": "Le brouillon est :amount ; l'existant est :existing",
     "Drag and drop files here, or click to select": "Glissez-déposez les fichiers ici, ou cliquez pour sélectionner",
     "Duplicate detection skipped for this row due to an unexpected error.": "La détection des doublons a été ignorée pour cette ligne en raison d'une erreur inattendue.",
     "Duplicate mapping": "Mappage en double",

@@ -2,17 +2,29 @@
   <div v-if="candidates && candidates.length">
     <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
       <i class="fa fa-calendar-check text-primary"></i>
-      <span>{{ __('Matching scheduled transactions') }} ({{ candidates.length }})</span>
+      <span
+        >{{ __('Matching scheduled transactions') }} ({{
+          candidates.length
+        }})</span
+      >
     </div>
     <div class="schedule-list d-flex flex-column gap-2">
       <div
         v-for="(candidate, index) in candidates"
         :key="index"
-        class="schedule-card border rounded p-2"
+        class="schedule-card border rounded p-2 position-relative"
         :class="confidenceCardClass(candidate.confidence_score)"
       >
+        <button
+          type="button"
+          class="btn-close position-absolute top-0 end-0 m-2"
+          :aria-label="__('Dismiss this suggestion')"
+          :title="__('Dismiss this suggestion')"
+          @click="$emit('dismiss', candidate.transaction_id)"
+        ></button>
+
         <!-- Header row: confidence + amount -->
-        <div class="d-flex justify-content-between align-items-start mb-1">
+        <div class="d-flex justify-content-between align-items-start mb-1 pe-4">
           <span
             class="badge schedule-confidence-badge"
             :class="confidenceBadgeClass(candidate.confidence_score)"
@@ -25,27 +37,16 @@
           </span>
         </div>
 
-        <!-- Amount mismatch explanation -->
-        <div
-          v-if="hasDraftAmount && amountMismatch(candidate)"
-          class="text-muted small mb-1"
-        >
-          <i class="fa fa-info-circle me-1"></i>
-          {{
-            __('Draft is :amount; scheduled is :existing', {
-              amount: formatAmount(draftAmount),
-              existing: formatAmount(candidate.summary.amount),
-            })
-          }}
-        </div>
-
         <!-- Next date -->
         <div class="text-muted small mb-1">
           <i class="fa fa-calendar me-1"></i>
           {{
             __('Next: :date', { date: formatDate(candidate.summary.next_date) })
           }}
-          <span v-if="candidate.summary.frequency" class="badge bg-secondary ms-1">
+          <span
+            v-if="candidate.summary.frequency"
+            class="badge bg-secondary ms-1"
+          >
             {{ frequencyLabel(candidate.summary.frequency) }}
           </span>
         </div>
@@ -108,7 +109,7 @@
         default: null,
       },
     },
-    emits: ['enter-schedule'],
+    emits: ['enter-schedule', 'dismiss'],
     data() {
       return {
         loadingTransactionId: null,
@@ -172,12 +173,12 @@
         return labels[frequency] ?? frequency;
       },
       confidenceCardClass(score) {
-        if (score >= 0.9) return 'border-primary bg-primary-subtle';
+        if (score >= 0.9) return 'border-success bg-success-subtle';
         if (score >= 0.7) return 'border-warning bg-warning-subtle';
         return 'border-secondary bg-light';
       },
       confidenceBadgeClass(score) {
-        if (score >= 0.9) return 'bg-primary';
+        if (score >= 0.9) return 'bg-success';
         if (score >= 0.7) return 'bg-warning text-dark';
         return 'bg-secondary';
       },
@@ -244,8 +245,8 @@
     font-size: 0.8rem;
   }
 
-  :global([data-coreui-theme='dark'] .schedule-card.bg-primary-subtle) {
-    background-color: rgba(var(--cui-primary-rgb), 0.15) !important;
+  :global([data-coreui-theme='dark'] .schedule-card.bg-success-subtle) {
+    background-color: rgba(var(--cui-success-rgb), 0.15) !important;
   }
 
   :global([data-coreui-theme='dark'] .schedule-card.bg-warning-subtle) {
