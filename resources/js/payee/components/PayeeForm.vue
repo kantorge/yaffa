@@ -610,7 +610,7 @@
         } else {
           if (this.formUrl === null) {
             this.form.errors.set({
-              general: __('Failed to determine payee update endpoint'),
+              general: __('Failed to determine API endpoint'),
             });
 
             return;
