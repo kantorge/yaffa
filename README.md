@@ -28,24 +28,24 @@ Read more about YAFFA at https://yaffa.cc
 - Add your investments, to calculate gain and loss.
   - Automatically retrieve investment prices.
   - This is based on the alphavantage.co service. You need to register and get your free API key.
+- Import transactions from QIF and CSV files. Customizable import rules to support country and bank specific formats.
 
 There are several features **planned** to be implemented:
 
 - Further charts, reports and dashboards.
 - Handling multiple users as a family in one app instance.
 - Better onboarding experience, or a tutorial.
-- Flexible or universal QIF/CSV file imports
 - YAFFA is not using dedicated libraries for precise decimal calculations for monetary values. As it is not an accounting software, but a personal finance application, this should not be a real problem. It is planned to be implemented in the future, to avoid any potential issues with calculations and currency conversions. In the meantime, be aware, if this is a concern for you.
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
-If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the best choice for you.
+If you are looking to have these in a budget app or expense tracker, then YAFFA might not be the best choice for you.
 
 - Downloading transaction data directly from banks
   - The philosophy of expense tracking is to be conscious about your spending and financial habits, which requires the review and manual adjustment of transactions.
     Thus, automatic downloading of transactions from banks would save some time, but would not help to achieve the goal of expense tracking and budgeting.
   - Also, YAFFA supports automatic creation of scheduled transactions and entry of simple recurring transactions, to speed up the process of recording transactions.
 - Native mobile app
-  - Yaffa is optimized for desktop browsers, but the interface is responsive to support mobile view.
+  - YAFFA is optimized for desktop browsers. The interface is responsive to support mobile view, but not fully optimized for mobile devices.
 
 Read more about the [features of YAFFA](https://yaffa.cc/features-of-yaffa-personal-finance-application/)
 
@@ -80,4 +80,4 @@ Thanks to these people for helping improve this project:
 
 ## License
 
-Yaffa is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+YAFFA is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
