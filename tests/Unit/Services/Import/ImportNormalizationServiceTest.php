@@ -148,6 +148,39 @@ class ImportNormalizationServiceTest extends TestCase
         $this->assertSame($secondaryMatch->id, $drafts[0]['related_ai_documents'][1]['ai_document_id']);
     }
 
+    public function test_related_ai_document_matching_uses_identified_payee_id_regardless_of_text_similarity(): void
+    {
+        $service = new ImportNormalizationService();
+        $user = User::factory()->create();
+
+        $document = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'processed_at' => now(),
+            'processed_transaction_data' => [
+                'date' => '2025-01-05',
+                'merchant' => 'Completely Different Name Ltd',
+                'transaction_type' => 'withdrawal',
+                'config' => [
+                    'amount_from' => 50.0,
+                    'amount_to' => 50.0,
+                    'account_to_id' => 777,
+                ],
+            ],
+        ]);
+
+        $drafts = $service->enrichDraftsWithRelatedAiDocuments($user, [[
+            'date' => '2025-01-05',
+            'amount' => 50.0,
+            'payee' => 'Totally Unrelated Text',
+            'matched_payee' => ['id' => 777, 'name' => 'Grocery Store', 'similarity' => 0.62],
+            'related_ai_documents' => [],
+        ]]);
+
+        $this->assertCount(1, $drafts[0]['related_ai_documents']);
+        $this->assertSame($document->id, $drafts[0]['related_ai_documents'][0]['ai_document_id']);
+        $this->assertContains('payee', $drafts[0]['related_ai_documents'][0]['matched_on']);
+    }
+
     public function test_related_ai_document_matching_is_bounded_by_time_window_and_result_count(): void
     {
         $service = new ImportNormalizationService();

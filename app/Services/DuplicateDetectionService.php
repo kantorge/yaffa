@@ -16,6 +16,9 @@ class DuplicateDetectionService
 
     private const float DEFAULT_SIMILARITY_THRESHOLD = 0.5;
 
+    /** Amount difference below this is treated as an exact match rather than a tolerance match. */
+    private const float EXACT_AMOUNT_EPSILON = 0.005;
+
     private ?AiUserSettingsResolver $settingsResolver = null;
 
     public function __construct(?AiUserSettingsResolver $settingsResolver = null)
@@ -133,17 +136,22 @@ class DuplicateDetectionService
             $score += 1;
         }
 
-        // Amount match (within tolerance = 1 point)
+        // Amount match: an exact match is a much stronger signal than merely falling
+        // within tolerance, so it is weighted twice as heavily (2 points vs 1).
         if (isset($extractedData['amount'])) {
-            $maxScore += 1;
+            $maxScore += 2;
             $extractedAmount = abs((float) $extractedData['amount']);
 
             // Get transaction amount
             $transactionAmount = $this->getTransactionAmount($transaction);
 
             if ($transactionAmount > 0) {
+                $difference = abs($extractedAmount - $transactionAmount);
                 $tolerance = $transactionAmount * ($amountTolerancePercent / 100);
-                if (abs($extractedAmount - $transactionAmount) <= $tolerance) {
+
+                if ($difference < self::EXACT_AMOUNT_EPSILON) {
+                    $score += 2;
+                } elseif ($difference <= $tolerance) {
                     $score += 1;
                 }
             }

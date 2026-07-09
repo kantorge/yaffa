@@ -376,6 +376,7 @@ class ImportNormalizationService
                     'merchant' => $this->extractDocumentMerchant($payload),
                     'amount' => $this->extractDocumentAmount($payload),
                     'date' => $this->extractDocumentDate($payload),
+                    'payee_account_id' => $this->extractDocumentPayeeAccountId($payload),
                 ];
             })
             ->values()
@@ -433,18 +434,36 @@ class ImportNormalizationService
                 }
             }
 
+            // The identified payee (if any, regardless of match confidence) is compared by
+            // identity against the document's own resolved counterparty account — a much
+            // stronger signal than raw merchant-text similarity. Both are evaluated and the
+            // stronger of the two wins; they represent the same conceptual "payee" signal,
+            // so their scores are not additive.
+            $payeeScore = 0.0;
+
+            $matchedPayeeId = data_get($draft, 'matched_payee.id');
+            $matchedPayeeId = is_int($matchedPayeeId) ? $matchedPayeeId : null;
+            $candidatePayeeAccountId = is_int($candidate['payee_account_id'] ?? null) ? $candidate['payee_account_id'] : null;
+
+            if ($matchedPayeeId !== null && $candidatePayeeAccountId !== null && $matchedPayeeId === $candidatePayeeAccountId) {
+                $payeeScore = 0.3;
+            }
+
             $draftPayee = $this->normalizeComparableText(is_string($draft['payee'] ?? null) ? $draft['payee'] : null);
             $candidateMerchant = $this->normalizeComparableText(is_string($candidate['merchant'] ?? null) ? $candidate['merchant'] : null);
             if ($draftPayee !== null && $candidateMerchant !== null) {
                 similar_text($draftPayee, $candidateMerchant, $similarityPercent);
 
                 if ($draftPayee === $candidateMerchant) {
-                    $score += 0.2;
-                    $matchedOn[] = 'payee';
+                    $payeeScore = max($payeeScore, 0.2);
                 } elseif (str_contains($candidateMerchant, $draftPayee) || str_contains($draftPayee, $candidateMerchant) || $similarityPercent >= 70.0) {
-                    $score += 0.12;
-                    $matchedOn[] = 'payee';
+                    $payeeScore = max($payeeScore, 0.12);
                 }
+            }
+
+            if ($payeeScore > 0.0) {
+                $score += $payeeScore;
+                $matchedOn[] = 'payee';
             }
 
             if ($matchedOn === []) {
@@ -503,6 +522,26 @@ class ImportNormalizationService
             ?? data_get($payload, 'raw.amount');
 
         return is_numeric($amount) ? abs((float) $amount) : null;
+    }
+
+    /**
+     * Resolve the AI document's identified payee/counterparty account id, based on which
+     * side of the transaction direction represents the counterparty (mirrors the same
+     * withdrawal/deposit convention used for import drafts).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractDocumentPayeeAccountId(array $payload): ?int
+    {
+        $transactionType = is_string($payload['transaction_type'] ?? null) ? $payload['transaction_type'] : null;
+
+        $accountId = match ($transactionType) {
+            TransactionType::WITHDRAWAL->value => data_get($payload, 'config.account_to_id'),
+            TransactionType::DEPOSIT->value => data_get($payload, 'config.account_from_id'),
+            default => null,
+        };
+
+        return is_int($accountId) ? $accountId : null;
     }
 
     /**

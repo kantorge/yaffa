@@ -87,6 +87,45 @@ CSV;
         $this->assertLessThanOrEqual(10, count($candidates));
     }
 
+    public function test_qif_duplicate_candidate_labels_identified_payee_as_payee_signal(): void
+    {
+        $user = User::factory()->create();
+        $accountEntity = $this->createAccountEntity($user);
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(\App\Models\Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => 'Grocery Store',
+            ]);
+
+        $existing = $this->createStandardTransaction($user, $accountEntity->id, $payee->id, 50.00, '2025-01-20');
+
+        $qif = <<<'QIF'
+!Type:Bank
+D2025-01-20
+T-50.00
+PGrocery Store
+^
+QIF;
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.v1.imports.parse'), [
+                'source_type' => 'qif',
+                'account_id' => $accountEntity->id,
+                'file' => UploadedFile::fake()->createWithContent('import.qif', $qif),
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('drafts.0.duplicate_candidates.0.transaction_id', $existing->id);
+
+        $matchedOn = $response->json('drafts.0.duplicate_candidates.0.matched_on');
+        $this->assertContains('payee', $matchedOn);
+        $this->assertNotContains('account_to', $matchedOn);
+    }
+
     private function createAccountEntity(User $user): AccountEntity
     {
         return AccountEntity::factory()

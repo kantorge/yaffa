@@ -4,52 +4,119 @@
       class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"
     >
       <div class="card-title mb-0">{{ __('Parsed drafts') }}</div>
-      <div class="d-flex align-items-center gap-3">
-        <div id="import-draft-filters" class="d-flex gap-3">
-          <div class="form-check form-check-inline mb-0">
-            <input
-              id="show-drafts-filter"
-              v-model="showDraftRows"
-              type="checkbox"
-              class="form-check-input"
-            />
-            <label class="form-check-label small" for="show-drafts-filter">
-              {{ __('Show drafts') }}
-              <span v-if="draftCount" class="badge bg-info text-dark ms-1">{{
-                draftCount
-              }}</span>
-            </label>
-          </div>
-          <div class="form-check form-check-inline mb-0">
-            <input
-              id="show-ignored-filter"
-              v-model="showIgnoredRows"
-              type="checkbox"
-              class="form-check-input"
-            />
-            <label class="form-check-label small" for="show-ignored-filter">
-              {{ __('Show ignored') }}
-              <span v-if="ignoredCount" class="badge bg-secondary ms-1">{{
-                ignoredCount
-              }}</span>
-            </label>
-          </div>
-          <div class="form-check form-check-inline mb-0">
-            <input
-              id="show-finalized-filter"
-              v-model="showFinalizedRows"
-              type="checkbox"
-              class="form-check-input"
-            />
-            <label class="form-check-label small" for="show-finalized-filter">
-              {{ __('Show finalized') }}
-              <span v-if="finalizedCount" class="badge bg-success ms-1">{{
-                finalizedCount
-              }}</span>
-            </label>
-          </div>
+      <span class="badge bg-secondary">{{ drafts.length }}</span>
+    </div>
+
+    <div
+      v-if="drafts.length"
+      id="import-draft-filters"
+      class="filter-row px-3 py-2 border-bottom bg-body d-flex flex-wrap align-items-center gap-4"
+      :style="{ top: stickyTop + 'px' }"
+    >
+      <div class="d-flex flex-wrap gap-3">
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="show-drafts-filter"
+            v-model="showDraftRows"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="show-drafts-filter">
+            {{ __('Show drafts') }}
+            <span v-if="draftCount" class="badge bg-info text-dark ms-1">{{
+              draftCount
+            }}</span>
+          </label>
         </div>
-        <span class="badge bg-secondary">{{ drafts.length }}</span>
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="show-ignored-filter"
+            v-model="showIgnoredRows"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="show-ignored-filter">
+            {{ __('Show ignored') }}
+            <span v-if="ignoredCount" class="badge bg-secondary ms-1">{{
+              ignoredCount
+            }}</span>
+          </label>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="show-finalized-filter"
+            v-model="showFinalizedRows"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="show-finalized-filter">
+            {{ __('Show finalized') }}
+            <span v-if="finalizedCount" class="badge bg-success ms-1">{{
+              finalizedCount
+            }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="vr d-none d-md-block"></div>
+
+      <div class="d-flex flex-wrap gap-3">
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="filter-no-similarity"
+            v-model="filterNoSimilarity"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="filter-no-similarity">
+            {{ __('No similarity') }}
+            <span v-if="noSimilarityCount" class="badge bg-secondary ms-1">{{
+              noSimilarityCount
+            }}</span>
+          </label>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="filter-has-duplicate"
+            v-model="filterHasDuplicate"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="filter-has-duplicate">
+            {{ __('Has duplicate match') }}
+            <span v-if="hasDuplicateCount" class="badge bg-danger ms-1">{{
+              hasDuplicateCount
+            }}</span>
+          </label>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="filter-has-schedule"
+            v-model="filterHasSchedule"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="filter-has-schedule">
+            {{ __('Has scheduled match') }}
+            <span v-if="hasScheduleCount" class="badge bg-success ms-1">{{
+              hasScheduleCount
+            }}</span>
+          </label>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input
+            id="filter-has-ai-document"
+            v-model="filterHasAiDocument"
+            type="checkbox"
+            class="form-check-input"
+          />
+          <label class="form-check-label small" for="filter-has-ai-document">
+            {{ __('Has AI document match') }}
+            <span v-if="hasAiDocumentCount" class="badge bg-info text-dark ms-1">{{
+              hasAiDocumentCount
+            }}</span>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -374,6 +441,12 @@
         // Session-only dismissal of insight suggestions (duplicates/schedules/AI documents).
         // Nothing is persisted; this simply hides a card for the current review session.
         dismissedKeys: new Set(),
+        // Match-type filters: presence/absence of candidates, regardless of scoring or dismissal.
+        filterNoSimilarity: false,
+        filterHasDuplicate: false,
+        filterHasSchedule: false,
+        filterHasAiDocument: false,
+        stickyTop: 0,
       };
     },
     watch: {
@@ -382,7 +455,22 @@
         this.dismissedKeys = new Set();
       },
     },
+    mounted() {
+      this.updateStickyOffset();
+      window.addEventListener('resize', this.updateStickyOffset);
+    },
+    beforeUnmount() {
+      window.removeEventListener('resize', this.updateStickyOffset);
+    },
     computed: {
+      anyMatchFilterActive() {
+        return (
+          this.filterNoSimilarity ||
+          this.filterHasDuplicate ||
+          this.filterHasSchedule ||
+          this.filterHasAiDocument
+        );
+      },
       visibleDrafts() {
         return this.drafts.filter((draft) => {
           if (draft.status === 'pending_review' && !this.showDraftRows) {
@@ -394,6 +482,20 @@
           if (draft.status === 'finalized' && !this.showFinalizedRows) {
             return false;
           }
+
+          if (this.anyMatchFilterActive) {
+            const flags = this.matchFlags(draft);
+            const matchesAnyActiveFilter =
+              (this.filterNoSimilarity && flags.hasNone) ||
+              (this.filterHasDuplicate && flags.hasDuplicate) ||
+              (this.filterHasSchedule && flags.hasSchedule) ||
+              (this.filterHasAiDocument && flags.hasAiDocument);
+
+            if (!matchesAnyActiveFilter) {
+              return false;
+            }
+          }
+
           return true;
         });
       },
@@ -406,8 +508,36 @@
       finalizedCount() {
         return this.drafts.filter((d) => d.status === 'finalized').length;
       },
+      noSimilarityCount() {
+        return this.drafts.filter((d) => this.matchFlags(d).hasNone).length;
+      },
+      hasDuplicateCount() {
+        return this.drafts.filter((d) => this.matchFlags(d).hasDuplicate).length;
+      },
+      hasScheduleCount() {
+        return this.drafts.filter((d) => this.matchFlags(d).hasSchedule).length;
+      },
+      hasAiDocumentCount() {
+        return this.drafts.filter((d) => this.matchFlags(d).hasAiDocument).length;
+      },
     },
     methods: {
+      updateStickyOffset() {
+        const header = document.querySelector('.header.header-sticky');
+        this.stickyTop = header ? Math.ceil(header.getBoundingClientRect().height) : 0;
+      },
+      matchFlags(draft) {
+        const hasDuplicate = (draft.duplicate_candidates || []).length > 0;
+        const hasSchedule = (draft.schedule_candidates || []).length > 0;
+        const hasAiDocument = (draft.related_ai_documents || []).length > 0;
+
+        return {
+          hasDuplicate,
+          hasSchedule,
+          hasAiDocument,
+          hasNone: !hasDuplicate && !hasSchedule && !hasAiDocument,
+        };
+      },
       transactionTypeIconClass(draft) {
         const type = draft.transaction_type;
         if (type === 'withdrawal')
@@ -592,5 +722,9 @@
   }
   .row-expandable {
     cursor: pointer;
+  }
+  .filter-row {
+    position: sticky;
+    z-index: 10;
   }
 </style>

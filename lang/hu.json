@@ -456,7 +456,7 @@
     "Failed to load payee data": "Nem sikerült betölteni a kedvezményezett adatait",
     "Failed to store investment price": "Nem sikerült tárolni a befektetési árat",
     "Failed to trigger sync. Please try again.": "Nem sikerült elindítani a szinkronizálást. Próbáld újra.",
-    "Failed validation": "Sikertelen érvényesítés",
+    "Failed validation": "Sikertelen ellenőrzés",
     "File": "Fájl",
     "file": "fájl",
     "File selection": "Fájlkiválasztás",

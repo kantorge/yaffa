@@ -269,10 +269,6 @@ class ImportDuplicateDetectionService
             return null;
         }
 
-        $transactionType = is_string($draft['transaction_type'] ?? null)
-            ? $draft['transaction_type']
-            : TransactionType::WITHDRAWAL->value;
-
         $configType = is_string($draft['config_type'] ?? null)
             ? $draft['config_type']
             : 'standard';
@@ -283,31 +279,68 @@ class ImportDuplicateDetectionService
             'config_type' => $configType,
         ];
 
-        $accountFromId = data_get($draft, 'config.account_from_id');
-        if (is_int($accountFromId)) {
-            $input['account_from_id'] = $accountFromId;
+        $resolved = $this->resolveDraftAccountIds($draft);
+
+        if ($resolved['account_from_id'] !== null) {
+            $input['account_from_id'] = $resolved['account_from_id'];
         }
 
-        $accountToId = data_get($draft, 'config.account_to_id');
-        if (is_int($accountToId)) {
-            $input['account_to_id'] = $accountToId;
-        }
-
-        if (! isset($input['account_to_id']) && $transactionType === TransactionType::WITHDRAWAL->value) {
-            $matchedPayeeId = data_get($draft, 'matched_payee.id');
-            if (is_int($matchedPayeeId)) {
-                $input['account_to_id'] = $matchedPayeeId;
-            }
-        }
-
-        if (! isset($input['account_from_id']) && $transactionType === TransactionType::DEPOSIT->value) {
-            $matchedPayeeId = data_get($draft, 'matched_payee.id');
-            if (is_int($matchedPayeeId)) {
-                $input['account_from_id'] = $matchedPayeeId;
-            }
+        if ($resolved['account_to_id'] !== null) {
+            $input['account_to_id'] = $resolved['account_to_id'];
         }
 
         return $input;
+    }
+
+    /**
+     * Resolve the effective account_from_id/account_to_id used for comparison.
+     *
+     * Explicit parser-set config values (e.g. from a system CSV profile's matching rules)
+     * take precedence. Otherwise, the identified payee is used as a fallback — regardless
+     * of match confidence — on whichever side the transaction direction implies is the
+     * counterparty. The `payee_from_matched`/`payee_to_matched` flags record which side (if
+     * any) came from that fallback, so callers can label the signal as "payee" rather than
+     * a generic account match.
+     *
+     * @param  array<string, mixed>  $draft
+     * @return array{account_from_id: int|null, account_to_id: int|null, payee_from_matched: bool, payee_to_matched: bool}
+     */
+    private function resolveDraftAccountIds(array $draft): array
+    {
+        $transactionType = is_string($draft['transaction_type'] ?? null)
+            ? $draft['transaction_type']
+            : TransactionType::WITHDRAWAL->value;
+
+        $accountFromId = data_get($draft, 'config.account_from_id');
+        $accountFromId = is_int($accountFromId) ? $accountFromId : null;
+
+        $accountToId = data_get($draft, 'config.account_to_id');
+        $accountToId = is_int($accountToId) ? $accountToId : null;
+
+        $payeeFromMatched = false;
+        $payeeToMatched = false;
+
+        $matchedPayeeId = data_get($draft, 'matched_payee.id');
+        $matchedPayeeId = is_int($matchedPayeeId) ? $matchedPayeeId : null;
+
+        if ($matchedPayeeId !== null) {
+            if ($accountToId === null && $transactionType === TransactionType::WITHDRAWAL->value) {
+                $accountToId = $matchedPayeeId;
+                $payeeToMatched = true;
+            }
+
+            if ($accountFromId === null && $transactionType === TransactionType::DEPOSIT->value) {
+                $accountFromId = $matchedPayeeId;
+                $payeeFromMatched = true;
+            }
+        }
+
+        return [
+            'account_from_id' => $accountFromId,
+            'account_to_id' => $accountToId,
+            'payee_from_matched' => $payeeFromMatched,
+            'payee_to_matched' => $payeeToMatched,
+        ];
     }
 
     /**
@@ -325,19 +358,24 @@ class ImportDuplicateDetectionService
         $draftAmount = is_numeric($draft['amount'] ?? null) ? (float) $draft['amount'] : null;
         $transactionAmount = (float) $transaction->transactionItems->sum('amount');
 
-        if ($draftAmount !== null && abs($draftAmount - $transactionAmount) < 0.00001) {
+        if ($draftAmount !== null && abs($draftAmount - $transactionAmount) < 0.005) {
             $signals[] = 'amount';
         }
 
-        $draftFrom = data_get($draft, 'config.account_from_id');
-        $draftTo = data_get($draft, 'config.account_to_id');
-
-        if (is_int($draftFrom) && $transaction->isStandard() && (int) data_get($transaction->config, 'account_from_id') === $draftFrom) {
-            $signals[] = 'account_from';
+        if (! $transaction->isStandard()) {
+            return array_values(array_unique($signals));
         }
 
-        if (is_int($draftTo) && $transaction->isStandard() && (int) data_get($transaction->config, 'account_to_id') === $draftTo) {
-            $signals[] = 'account_to';
+        $resolved = $this->resolveDraftAccountIds($draft);
+
+        $transactionFromId = data_get($transaction->config, 'account_from_id');
+        if ($resolved['account_from_id'] !== null && is_int($transactionFromId) && $transactionFromId === $resolved['account_from_id']) {
+            $signals[] = $resolved['payee_from_matched'] ? 'payee' : 'account_from';
+        }
+
+        $transactionToId = data_get($transaction->config, 'account_to_id');
+        if ($resolved['account_to_id'] !== null && is_int($transactionToId) && $transactionToId === $resolved['account_to_id']) {
+            $signals[] = $resolved['payee_to_matched'] ? 'payee' : 'account_to';
         }
 
         return array_values(array_unique($signals));
