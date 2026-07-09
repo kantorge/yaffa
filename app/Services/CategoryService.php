@@ -48,7 +48,7 @@ class CategoryService
 
         $requestedCategories = Auth::user()
             ->categories()
-            ->whereIn('id', $request->get('categories'))
+            ->whereIn('id', $request->query('categories'))
             ->get();
 
         $requestedCategories->each(function ($category) use (&$categories) {

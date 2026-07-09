@@ -137,7 +137,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     name: 'ReportingCanvasFindTransactionsSummary',
@@ -283,12 +283,7 @@
           : null;
       },
       minDateFormatted() {
-        if (!this.minDate || !this.minDate.toLocaleDateString) {
-          return null;
-        }
-        return this.minDate.toLocaleDateString(
-          window.YAFFA.userSettings.locale,
-        );
+        return toFormattedDate(this.minDate, window.YAFFA.userSettings.locale, null);
       },
       maxDate() {
         return this.transactions.length
@@ -298,12 +293,7 @@
           : null;
       },
       maxDateFormatted() {
-        if (!this.maxDate || !this.maxDate.toLocaleDateString) {
-          return null;
-        }
-        return this.maxDate.toLocaleDateString(
-          window.YAFFA.userSettings.locale,
-        );
+        return toFormattedDate(this.maxDate, window.YAFFA.userSettings.locale, null);
       },
     },
     methods: {

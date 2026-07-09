@@ -17,6 +17,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use InvalidArgumentException;
 
 class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 {
@@ -538,6 +539,16 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         if (($decoded['type'] ?? null) !== 'service_account') {
             $fail(__('The :attribute must be a service account JSON key file.', ['attribute' => $attribute]));
+
+            return;
+        }
+
+        // Reject service accounts whose auth endpoints aren't Google's own, which would
+        // otherwise let the server be tricked into sending authenticated requests elsewhere (SSRF)
+        try {
+            GoogleDriveService::assertTrustedAuthEndpoints($decoded);
+        } catch (InvalidArgumentException $exception) {
+            $fail($exception->getMessage());
         }
     }
 }

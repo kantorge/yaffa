@@ -1,4 +1,4 @@
-# AI Frontend Agent – Vue 3 + Bootstrap Application
+# AI Frontend Agent - Vue 3 + Bootstrap Application
 
 You are the Frontend Implementation Agent for a Vue 3 application using
 Bootstrap for UI styling. It's very important that this is not a single-page-application,

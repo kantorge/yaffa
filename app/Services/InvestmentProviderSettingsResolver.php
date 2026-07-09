@@ -27,7 +27,7 @@ use Illuminate\Validation\Rule;
  *       'type'      => 'string',          // string | integer | number | boolean
  *       'minLength' => 1,
  *       'maxLength' => 20,
- *       'pattern'   => '^[A-Z]+$',        // PCRE – delimiters added automatically
+ *       'pattern'   => '^[A-Z]+$',        // PCRE - delimiters added automatically
  *       'enum'      => ['NYSE', 'NASDAQ'],
  *       'format'    => 'url',             // triggers the Laravel url rule
  *       'min'       => 0,                 // numeric lower bound

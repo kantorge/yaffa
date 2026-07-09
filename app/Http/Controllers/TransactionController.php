@@ -199,10 +199,16 @@ class TransactionController extends Controller implements HasMiddleware
 
             // Try to add relation for account and payee, if they exist
             if (($transactionData['config']['account_from_id'] ?? null) !== null) {
-                $transaction->config->setRelation('account_from', AccountEntity::find($transactionData['config']['account_from_id']));
+                $transaction->config->setRelation(
+                    'account_from',
+                    AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_from_id'])
+                );
             }
             if (($transactionData['config']['account_to_id'] ?? null) !== null) {
-                $transaction->config->setRelation('account_to', AccountEntity::find($transactionData['config']['account_to_id']));
+                $transaction->config->setRelation(
+                    'account_to',
+                    AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_to_id'])
+                );
             }
         }
 

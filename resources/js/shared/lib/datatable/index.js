@@ -1,4 +1,4 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '@/shared/lib/i18n';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate } from '@/shared/lib/i18n';
 import { getTransactionTypeConfig, parseIsoDate } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 
@@ -232,8 +232,8 @@ export const transactionColumnDefinition = {
             data: fieldName,
             title: title,
             render: function (data, type) {
-                if (type === 'display' && data && data.toLocaleDateString) {
-                    return data.toLocaleDateString(locale);
+                if (type === 'display') {
+                    return toFormattedDate(data, locale, data);
                 }
 
                 return data;

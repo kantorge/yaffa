@@ -1,4 +1,4 @@
-# Frontend Context – YAFFA (`resources/js/`)
+# Frontend Context - YAFFA (`resources/js/`)
 
 See root [CLAUDE.md](../../CLAUDE.md) for project overview and commands.
 See [.ai/agents/frontend.agent.md](../../.ai/agents/frontend.agent.md) for full frontend implementation rules.

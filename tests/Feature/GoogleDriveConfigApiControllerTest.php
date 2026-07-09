@@ -656,6 +656,20 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->assertJson(['folder_name' => 'My Import Folder']);
     }
 
+    public function test_folder_name_by_credentials_rejects_untrusted_token_uri(): void
+    {
+        $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"http://169.254.169.254/latest/meta-data/"}';
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.v1.google-drive.config.folder-name-by-credentials'), [
+                'folder_id' => 'real-folder-id',
+                'service_account_json' => $maliciousJson,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['service_account_json']);
+    }
+
     // ===== FOLDER BROWSER ENDPOINT (GET /api/v1/google-drive/config/{id}/folders) =====
 
     public function test_folders_requires_authentication(): void

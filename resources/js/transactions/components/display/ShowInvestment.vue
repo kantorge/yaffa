@@ -196,7 +196,7 @@
 
 <script>
   import TransactionSchedule from './Schedule.vue';
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
     components: {
@@ -247,13 +247,7 @@
       toFormattedCurrency,
       route,
       formattedDate(date) {
-        if (typeof date === 'undefined') {
-          return;
-        }
-
-        const newDate = new Date(date);
-
-        return newDate.toLocaleDateString(this.locale);
+        return toFormattedDate(date, this.locale, undefined);
       },
     },
   };

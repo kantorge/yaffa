@@ -54,7 +54,7 @@
             role="tabpanel"
             aria-labelledby="nav-email-tab-html"
             tabindex="0"
-            v-html="receivedMail.html"
+            v-html="sanitizedHtml"
           ></div>
           <div
             v-else
@@ -99,6 +99,7 @@
 
 <script setup>
   import { computed } from 'vue';
+  import DOMPurify from 'dompurify';
   import { __ } from '@/shared/lib/i18n';
 
   const props = defineProps({
@@ -110,4 +111,5 @@
 
   const hasHtml = computed(() => !!props.receivedMail?.html);
   const hasText = computed(() => !!props.receivedMail?.text);
+  const sanitizedHtml = computed(() => DOMPurify.sanitize(props.receivedMail?.html ?? ''));
 </script>

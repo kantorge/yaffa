@@ -9,6 +9,8 @@ return [
     'incoming_receipts_email' => env('INCOMING_RECEIPTS_EMAIL'),
     'email_verification_required' => env('EMAIL_VERIFICATION_REQUIRED', false),
     'runs_scheduler' => env('RUNS_SCHEDULER', false),
+    'import_max_file_size_mb' => (int) env('IMPORT_MAX_FILE_SIZE_MB', 2),
+    'import_max_rows' => (int) env('IMPORT_MAX_ROWS', 5000),
 
     // Optional settings, used primarily for the public facing Sandbox environment
     'sandbox_mode' => env('SANDBOX_MODE', false),

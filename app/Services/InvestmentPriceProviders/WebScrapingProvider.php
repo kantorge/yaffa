@@ -9,6 +9,7 @@ use App\Models\Investment;
 use App\Services\ScraperService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Exception;
 
 class WebScrapingProvider implements InvestmentPriceProvider
@@ -216,8 +217,13 @@ class WebScrapingProvider implements InvestmentPriceProvider
         $sanitized = preg_replace('/[^0-9' . preg_quote($decimalSeparator, '/') . ']/u', '', mb_trim($priceValue));
 
         if (! is_string($sanitized) || $sanitized === '') {
+            Log::warning('Web scraping returned an unparseable price value', [
+                'symbol' => $symbol,
+                'value' => Str::limit($priceValue, 200),
+            ]);
+
             throw new InvalidPriceDataException(
-                "Invalid price format from web scraping: {$priceValue}",
+                'Invalid price format from web scraping.',
                 'web_scraping',
                 $symbol
             );
@@ -232,8 +238,13 @@ class WebScrapingProvider implements InvestmentPriceProvider
         }
 
         if (preg_match('/^-?\d+(?:\.\d+)?$/', $normalized) !== 1) {
+            Log::warning('Web scraping returned an unparseable price value', [
+                'symbol' => $symbol,
+                'value' => Str::limit($priceValue, 200),
+            ]);
+
             throw new InvalidPriceDataException(
-                "Invalid price format from web scraping: {$priceValue}",
+                'Invalid price format from web scraping.',
                 'web_scraping',
                 $symbol
             );

@@ -405,6 +405,87 @@ class InvestmentServicePriceTest extends TestCase
         $this->assertNull($price);
     }
 
+    public function test_get_latest_prices_batch_matches_single_lookups_across_multiple_investments(): void
+    {
+        $user = User::factory()->create();
+        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+
+        // Investment A: stored price wins over an older transaction price
+        $investmentA = Investment::factory()->for($user)->withUser($user)->create();
+        InvestmentPrice::factory()->for($investmentA)->create(['date' => '2024-01-16', 'price' => 151.00]);
+        Transaction::factory()
+            ->for($user)
+            ->for(TransactionDetailInvestment::factory()->for($investmentA)->for($account, 'account')->state(['price' => 148.75]), 'config')
+            ->create(['date' => '2024-01-15', 'transaction_type' => 'buy', 'schedule' => false]);
+
+        // Investment B: transaction price wins over an older stored price
+        $investmentB = Investment::factory()->for($user)->withUser($user)->create();
+        InvestmentPrice::factory()->for($investmentB)->create(['date' => '2024-01-14', 'price' => 149.00]);
+        Transaction::factory()
+            ->for($user)
+            ->for(TransactionDetailInvestment::factory()->for($investmentB)->for($account, 'account')->state(['price' => 150.50]), 'config')
+            ->create(['date' => '2024-01-16', 'transaction_type' => 'buy', 'schedule' => false]);
+
+        // Investment C: no price data at all
+        $investmentC = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $requests = collect([
+            ['investment' => $investmentA, 'date' => null],
+            ['investment' => $investmentB, 'date' => null],
+            ['investment' => $investmentC, 'date' => null],
+        ]);
+
+        $batchResults = $service->getLatestPricesBatch($requests);
+
+        $this->assertEquals(
+            $service->getLatestPrice($investmentA, 'combined'),
+            $batchResults[$service->priceBatchKey($investmentA->id, null)]
+        );
+        $this->assertEquals(
+            $service->getLatestPrice($investmentB, 'combined'),
+            $batchResults[$service->priceBatchKey($investmentB->id, null)]
+        );
+        $this->assertNull($batchResults[$service->priceBatchKey($investmentC->id, null)]);
+
+        $this->assertEquals(151.00, $batchResults[$service->priceBatchKey($investmentA->id, null)]);
+        $this->assertEquals(150.50, $batchResults[$service->priceBatchKey($investmentB->id, null)]);
+    }
+
+    public function test_get_latest_prices_batch_respects_on_or_before_date_per_request(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-20', 'price' => 155.00]);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-15', 'price' => 150.25]);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-10', 'price' => 145.00]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        // Two different as-of dates for the same investment must resolve independently.
+        $requests = collect([
+            ['investment' => $investment, 'date' => Carbon::parse('2024-01-16')],
+            ['investment' => $investment, 'date' => Carbon::parse('2024-01-11')],
+        ]);
+
+        $batchResults = $service->getLatestPricesBatch($requests);
+
+        $this->assertEquals(150.25, $batchResults[$service->priceBatchKey($investment->id, Carbon::parse('2024-01-16'))]);
+        $this->assertEquals(145.00, $batchResults[$service->priceBatchKey($investment->id, Carbon::parse('2024-01-11'))]);
+    }
+
+    public function test_get_latest_prices_batch_returns_empty_array_for_empty_requests(): void
+    {
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $this->assertSame([], $service->getLatestPricesBatch(collect()));
+    }
+
     public function test_recalculate_related_accounts_dispatches_batch_jobs_for_each_account(): void
     {
         Bus::fake();

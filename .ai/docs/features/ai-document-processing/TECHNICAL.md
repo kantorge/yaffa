@@ -99,7 +99,7 @@ This file contains the implementation-oriented material extracted from the main 
   - `AiUserSettingsApiController`
     - `GET /api/v1/ai/settings` → `api.v1.ai.settings.show` — returns fully resolved settings for the authenticated user; includes non-blocking warning payload when `warn_on_child_mode_without_children` is true and no active child categories exist
     - `PATCH /api/v1/ai/settings` → `api.v1.ai.settings.update` — partial update; returns updated resolved settings; PATCH-only, no dedicated reset-to-defaults endpoint
-    - Validation via `AiUserSettingsRequest` (thresholds 0.0–1.0, amount tolerance 0.0–100.0, `category_matching_mode` in allowed enum; upload limits validated from global config only)
+    - Validation via `AiUserSettingsRequest` (thresholds 0.0-1.0, amount tolerance 0.0-100.0, `category_matching_mode` in allowed enum; upload limits validated from global config only)
     - Serialization: `AiUserSettingsResource`; authorization: `AiUserSettingsPolicy`
 
 - Services / Jobs:
@@ -524,7 +524,8 @@ A few notes on the statuses
   - Remove inline SVG elements
   - Remove base64-encoded data URIs
   - Strip unnecessary HTML tags while preserving text structure
-  - HTML cleanup now performed in CreateAiDocumentFromSource listener before storing email content
+  - This lossy text-oriented cleanup (`CreateAiDocumentFromSource::cleanHtmlContent()`) is only applied to the copy used for the AI prompt, never to `ReceivedMail.html` itself
+  - `ReceivedMail.html` (the column rendered to the user via `v-html` in `AiDocumentEmailViewer.vue`) is sanitized separately: `MailHandler` runs the raw inbound HTML through `EmailHtmlSanitizerService` (HTMLPurifier, allowlist-based) before it is ever persisted, and the frontend re-sanitizes with DOMPurify before rendering, as defense in depth
 
 ## Testing & Development Tools
 

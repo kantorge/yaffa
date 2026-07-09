@@ -18,7 +18,7 @@
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+  import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -130,12 +130,7 @@
       return __('Not available');
     }
 
-    const parsedDate = new Date(`${isoDate}T00:00:00`);
-    if (Number.isNaN(parsedDate.getTime())) {
-      return isoDate;
-    }
-
-    return parsedDate.toLocaleDateString(window.YAFFA.userSettings.locale);
+    return toFormattedDate(isoDate, window.YAFFA.userSettings.locale, isoDate, true);
   };
 
   const getDraftData = (document) => document?.processed_transaction_data || {};

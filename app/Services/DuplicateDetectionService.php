@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use Closure;
 
 class DuplicateDetectionService
 {
@@ -14,6 +15,9 @@ class DuplicateDetectionService
     private const float DEFAULT_AMOUNT_TOLERANCE_PERCENT = 10.0;
 
     private const float DEFAULT_SIMILARITY_THRESHOLD = 0.5;
+
+    /** Amount difference below this is treated as an exact match rather than a tolerance match. */
+    private const float EXACT_AMOUNT_EPSILON = 0.005;
 
     private ?AiUserSettingsResolver $settingsResolver = null;
 
@@ -35,42 +39,87 @@ class DuplicateDetectionService
         $amountTolerancePercent = (float) ($resolvedSettings['duplicate_amount_tolerance_percent'] ?? self::DEFAULT_AMOUNT_TOLERANCE_PERCENT);
         $similarityThreshold = (float) ($resolvedSettings['duplicate_similarity_threshold'] ?? self::DEFAULT_SIMILARITY_THRESHOLD);
 
-        $date = \Carbon\Carbon::parse($extractedData['date']);
+        try {
+            $date = \Carbon\Carbon::parse($extractedData['date']);
+        } catch (\Carbon\Exceptions\InvalidFormatException) {
+            return [];
+        }
+
         $startDate = $date->clone()->subDays($dateWindowDays);
         $endDate = $date->clone()->addDays($dateWindowDays);
 
-        // Base query
         $query = $user->transactions()
             ->whereBetween('date', [$startDate, $endDate]);
 
-        // Filter by transaction type if provided
         if (isset($extractedData['config_type'])) {
             $query->where('config_type', $extractedData['config_type']);
         }
 
-        $potentialMatches = $query->get();
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $potentialMatches */
+        $potentialMatches = $query->with(['config', 'transactionItems'])->get();
 
-        $matches = [];
+        return $this->scoreTransactions($extractedData, $potentialMatches, $amountTolerancePercent, $similarityThreshold);
+    }
 
-        foreach ($potentialMatches as $transaction) {
-            if (! $transaction instanceof Transaction) {
-                continue;
-            }
+    /**
+     * Find potential duplicates by scoring against a pre-loaded in-memory transaction window.
+     * Use this instead of findDuplicates() when processing many drafts in a single request
+     * to avoid O(n) database round-trips.
+     *
+     * @param  array{date: string, amount?: float, config_type?: string, account_from_id?: int, account_to_id?: int}  $extractedData
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Transaction>  $windowTransactions
+     * @param  Closure(Transaction): (\Illuminate\Support\Carbon|null)|null  $candidateDateResolver  Resolves the comparison date for a candidate transaction. Defaults to the transaction's own `date`; pass e.g. `fn (Transaction $t) => $t->transactionSchedule?->next_date` to window/score against a schedule's next occurrence instead.
+     * @return array<int, array{id: int, similarity: float}>
+     */
+    public function findDuplicatesFromWindow(
+        array $extractedData,
+        \Illuminate\Database\Eloquent\Collection $windowTransactions,
+        float $amountTolerancePercent,
+        float $similarityThreshold,
+        int $dateWindowDays,
+        ?Closure $candidateDateResolver = null,
+    ): array {
+        $candidateDateResolver ??= static fn (Transaction $transaction) => $transaction->date;
 
-            $similarity = $this->calculateSimilarity($extractedData, $transaction, $amountTolerancePercent);
-
-            if ($similarity > $similarityThreshold) {
-                $matches[] = [
-                    'id' => $transaction->id,
-                    'similarity' => round($similarity, 3),
-                ];
-            }
+        try {
+            $date = \Carbon\Carbon::parse($extractedData['date']);
+        } catch (\Carbon\Exceptions\InvalidFormatException) {
+            return [];
         }
 
-        // Sort by similarity descending
-        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+        $startDate = $date->clone()->subDays($dateWindowDays);
+        $endDate = $date->clone()->addDays($dateWindowDays);
+        $configType = $extractedData['config_type'] ?? null;
 
-        return $matches;
+        $candidates = $windowTransactions->filter(
+            function (Transaction $transaction) use ($startDate, $endDate, $configType, $candidateDateResolver): bool {
+                $txDate = $candidateDateResolver($transaction);
+
+                if (! ($txDate instanceof \Carbon\Carbon)) {
+                    return false;
+                }
+
+                if ($txDate->lt($startDate) || $txDate->gt($endDate)) {
+                    return false;
+                }
+
+                return ! ($configType !== null && $transaction->config_type !== $configType)
+
+
+
+                ;
+            }
+        );
+
+        return $this->scoreTransactions($extractedData, $candidates, $amountTolerancePercent, $similarityThreshold);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function resolveSettingsForUser(User $user): array
+    {
+        return $this->resolveSettings($user);
     }
 
     /**
@@ -87,17 +136,22 @@ class DuplicateDetectionService
             $score += 1;
         }
 
-        // Amount match (within tolerance = 1 point)
+        // Amount match: an exact match is a much stronger signal than merely falling
+        // within tolerance, so it is weighted twice as heavily (2 points vs 1).
         if (isset($extractedData['amount'])) {
-            $maxScore += 1;
+            $maxScore += 2;
             $extractedAmount = abs((float) $extractedData['amount']);
 
             // Get transaction amount
             $transactionAmount = $this->getTransactionAmount($transaction);
 
             if ($transactionAmount > 0) {
+                $difference = abs($extractedAmount - $transactionAmount);
                 $tolerance = $transactionAmount * ($amountTolerancePercent / 100);
-                if (abs($extractedAmount - $transactionAmount) <= $tolerance) {
+
+                if ($difference < self::EXACT_AMOUNT_EPSILON) {
+                    $score += 2;
+                } elseif ($difference <= $tolerance) {
                     $score += 1;
                 }
             }
@@ -134,17 +188,6 @@ class DuplicateDetectionService
             if (isset($extractedData['account_to_id']) && $config->account_to_id === $extractedData['account_to_id']) {
                 $matches++;
             }
-
-            // Check payee
-            if (isset($extractedData['payee_id'])) {
-                $hasPayeeMatch = $transaction->transactionItems()
-                    ->where('payee_id', $extractedData['payee_id'])
-                    ->exists();
-
-                if ($hasPayeeMatch) {
-                    $matches++;
-                }
-            }
         } elseif ($transaction->isInvestment()) {
             $config = $transaction->config;
 
@@ -167,13 +210,38 @@ class DuplicateDetectionService
     }
 
     /**
-     * Get transaction total amount
+     * Score an iterable of transactions against extracted data and return matches above threshold.
+     *
+     * @param  iterable<Transaction>  $transactions
+     * @return array<int, array{id: int, similarity: float}>
+     */
+    private function scoreTransactions(array $extractedData, iterable $transactions, float $amountTolerancePercent, float $similarityThreshold): array
+    {
+        $matches = [];
+
+        foreach ($transactions as $transaction) {
+            $similarity = $this->calculateSimilarity($extractedData, $transaction, $amountTolerancePercent);
+
+            if ($similarity > $similarityThreshold) {
+                $matches[] = [
+                    'id' => $transaction->id,
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        return $matches;
+    }
+
+    /**
+     * Get transaction total amount using the already-loaded transactionItems relation.
      */
     private function getTransactionAmount(Transaction $transaction): float
     {
         if ($transaction->isStandard()) {
-            return (float) $transaction->transactionItems()
-                ->sum('amount');
+            return (float) $transaction->transactionItems->sum('amount');
         }
 
         return 0;

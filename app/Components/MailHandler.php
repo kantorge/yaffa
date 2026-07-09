@@ -5,10 +5,15 @@ namespace App\Components;
 use App\Events\EmailReceived;
 use App\Models\ReceivedMail;
 use App\Models\User;
+use App\Services\EmailHtmlSanitizerService;
 use BeyondCode\Mailbox\InboundEmail;
 
 class MailHandler
 {
+    public function __construct(private readonly EmailHtmlSanitizerService $sanitizer)
+    {
+    }
+
     public function __invoke(InboundEmail $email): void
     {
         // Ignore emails sent by non-existing users (verification is not required)
@@ -22,7 +27,7 @@ class MailHandler
             'message_id' => $email->id(),
             'user_id' => $user->id,
             'subject' => $email->subject(),
-            'html' => $email->html(),
+            'html' => $email->html() ? $this->sanitizer->sanitize($email->html()) : $email->html(),
             'text' => $email->text(),
         ]);
 

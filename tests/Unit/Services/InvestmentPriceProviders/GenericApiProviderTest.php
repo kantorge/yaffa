@@ -29,6 +29,7 @@ class GenericApiProviderTest extends TestCase
                         'Accept' => 'application/json',
                     ],
                     'timeout' => 30,
+                    'allow_redirects' => false,
                 ]
             )
             ->willReturn(new Response(200, [], json_encode([
@@ -177,5 +178,46 @@ class GenericApiProviderTest extends TestCase
         $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
 
         $provider->fetchPrices($investment);
+    }
+
+    public function test_fetch_prices_disables_redirects_and_pins_resolved_ip(): void
+    {
+        // Using a literal IP endpoint keeps this test deterministic (no live DNS lookup):
+        // the validated IP and the pinned IP are guaranteed to be the same value.
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                'https://8.8.8.8/prices',
+                $this->callback(function (array $options) {
+                    $this->assertSame(false, $options['allow_redirects'] ?? null);
+                    $this->assertSame(
+                        ['8.8.8.8:443:8.8.8.8'],
+                        $options['curl'][CURLOPT_RESOLVE] ?? null
+                    );
+
+                    return true;
+                })
+            )
+            ->willReturn(new Response(200, [], json_encode([
+                'data' => [
+                    ['date' => '2026-06-06', 'close' => '123.45'],
+                ],
+            ], JSON_THROW_ON_ERROR)));
+
+        $provider = new GenericApiProvider($client);
+
+        $investment = new Investment(['symbol' => 'AAPL']);
+        $investment->provider_credentials = [
+            'endpoint_url' => 'https://8.8.8.8/prices',
+            'items_path' => 'data',
+            'date_path' => 'date',
+            'price_path' => 'close',
+            'date_format' => 'Y-m-d',
+        ];
+
+        $provider->fetchPrices($investment, Carbon::create(2026, 6, 1));
     }
 }
