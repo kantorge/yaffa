@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.5.0](https://github.com/kantorge/yaffa/compare/v3.4.1...v3.5.0) (2026-07-09)
+
+
+### 📚 Documentation
+
+* small tweaks to the readme ([bf512e8](https://github.com/kantorge/yaffa/commit/bf512e8fb71f92e4571449632064cfd7c1f68e6a))
+
+
+### ✨ Features
+
+* introduces CSV/QIF file import with custom profiles and enhanced review ([#497](https://github.com/kantorge/yaffa/issues/497)) ([11291d0](https://github.com/kantorge/yaffa/commit/11291d065ea791df00f53340c262b9a2b8fab3bd))
+
+
+### 🐛 Bug Fixes
+
+* minor translation changes ([5e583b8](https://github.com/kantorge/yaffa/commit/5e583b80f816af68a2e055ee6600a1ed6ce32d67))
+
 ## [3.4.1](https://github.com/kantorge/yaffa/compare/v3.4.0...v3.4.1) (2026-07-06)
 
 ### 🐛 Bug Fixes
