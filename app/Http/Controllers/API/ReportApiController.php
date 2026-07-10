@@ -451,21 +451,24 @@ class ReportApiController extends Controller implements HasMiddleware
                 'account_entities',
                 'account_monthly_summaries.account_entity_id',
                 '=',
-                'account_entities.id'
+                'account_entities.id',
+                // This ensures that we get budget summaries not associated with any account
+                'left'
             )
             // At this point we assume that only accounts are provided
             ->join(
                 'accounts',
                 'account_entities.config_id',
                 '=',
-                'accounts.id'
+                'accounts.id',
+                'left'
             )
             ->where('account_monthly_summaries.user_id', $user->id)
             ->when(
                 !$withForecast,
                 fn ($query) => $query->where('data_type', '=', 'fact')
             )
-            // Optionally filter by accountEntity
+            // Optionally filter by account (using accountEntity)
             ->when(
                 $request->query('accountEntity'),
                 fn ($query) => $query->where('account_entity_id', '=', $request->query('accountEntity'))
