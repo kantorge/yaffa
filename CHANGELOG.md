@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.5.1](https://github.com/kantorge/yaffa/compare/v3.5.0...v3.5.1) (2026-07-10)
+
+
+### 🐛 Bug Fixes
+
+* cashflow forecast calculation ([5ce37f5](https://github.com/kantorge/yaffa/commit/5ce37f56d93e99c73fe7c015dbc1bbc0e6b0375b))
+* sandbox data date adjustment ([bab8014](https://github.com/kantorge/yaffa/commit/bab8014f630d25c747c0e469a28113ec9ea09d25))
+* sandbox data date adjustment ([b815395](https://github.com/kantorge/yaffa/commit/b815395c534ee99ce4e0631e45cd097edb4faa83))
+* sandbox data enrichment ([09d40b9](https://github.com/kantorge/yaffa/commit/09d40b970f7308d6b009234aca49aea4a5e344fe))
+
 ## [3.5.0](https://github.com/kantorge/yaffa/compare/v3.4.1...v3.5.0) (2026-07-09)
 
 
