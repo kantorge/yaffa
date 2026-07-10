@@ -111,6 +111,7 @@
                 :initial-date-from="initialDateFrom"
                 :initial-date-to="initialDateTo"
                 :initial-preset="initialPreset"
+                :preset-groups="presetGroups"
                 :update-url="true"
                 ref="dateFilter"
                 @update="onDateRangeUpdated"

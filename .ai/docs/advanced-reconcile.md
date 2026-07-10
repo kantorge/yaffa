@@ -30,7 +30,7 @@ Checkpoint records are stored in `account_balance_checkpoints`.
 - `checkpoint_type` is one of `cash`, `investment`, or `total`.
 - `checkpoint_date` represents the statement/checkpoint date.
 - Multiple manual checkpoints are allowed; the latest active checkpoint for the same account, type, and date is used on the account page.
-- Source document uniqueness is reserved for document-imported checkpoints with `source` and `source_document_id`.
+- Source document uniqueness is reserved for document-imported checkpoints and is scoped by account, `source`, and `source_document_id` so different accounts can reference the same external document identifier.
 
 ## Dashboard
 

@@ -59,25 +59,24 @@ class AdvancedReconcileApiTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_user_can_summarize_cash_reconciliation_and_save_matching_checkpoint(): void
+    public function test_user_can_summarize_cash_reconciliation_without_checkpoint(): void
     {
         Sanctum::actingAs($this->user);
 
-        $this->createWithdrawal('2026-07-03', 30);
-        $this->createDeposit('2026-07-05', 50);
+        $this->createJulyCashMovements();
 
-        $summaryResponse = $this->getJson(route('api.v1.accounts.advanced-reconcile.show', [
-            'accountEntity' => $this->account,
-            'date_from' => '2026-07-01',
-            'date_to' => '2026-07-31',
-        ]));
-
+        $summaryResponse = $this->getJulySummary();
         $summaryResponse->assertOk();
         $summaryResponse->assertJsonPath('cash.opening_balance', 100);
         $summaryResponse->assertJsonPath('cash.total_withdrawals', 30);
         $summaryResponse->assertJsonPath('cash.total_deposits', 50);
         $summaryResponse->assertJsonPath('cash.balance', 120);
         $summaryResponse->assertJsonPath('cash.status', 'no_checkpoint');
+    }
+
+    public function test_user_can_save_matching_cash_checkpoint(): void
+    {
+        Sanctum::actingAs($this->user);
 
         $checkpointResponse = $this->postJson(route('api.v1.accounts.balance-checkpoints.store', [
             'accountEntity' => $this->account,
@@ -95,12 +94,23 @@ class AdvancedReconcileApiTest extends TestCase
             'balance' => 120,
             'note' => 'July statement',
         ]);
+    }
 
-        $this->getJson(route('api.v1.accounts.advanced-reconcile.show', [
+    public function test_saved_matching_cash_checkpoint_marks_summary_as_matched(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->createJulyCashMovements();
+        $this->postJson(route('api.v1.accounts.balance-checkpoints.store', [
             'accountEntity' => $this->account,
-            'date_from' => '2026-07-01',
-            'date_to' => '2026-07-31',
-        ]))
+        ]), [
+            'checkpoint_date' => '2026-07-31',
+            'checkpoint_type' => 'cash',
+            'balance' => 120,
+            'note' => 'July statement',
+        ])->assertCreated();
+
+        $this->getJulySummary()
             ->assertOk()
             ->assertJsonPath('cash.status', 'matched')
             ->assertJsonPath('cash.variance', 0);
@@ -181,6 +191,65 @@ class AdvancedReconcileApiTest extends TestCase
         ]);
 
         $response->assertForbidden();
+    }
+
+    public function test_checkpoint_type_must_be_valid_when_saving_checkpoint(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->postJson(route('api.v1.accounts.balance-checkpoints.store', [
+            'accountEntity' => $this->account,
+        ]), [
+            'checkpoint_date' => '2026-07-31',
+            'checkpoint_type' => 'other',
+            'balance' => 120,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('checkpoint_type');
+    }
+
+    public function test_balance_is_required_when_saving_checkpoint(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->postJson(route('api.v1.accounts.balance-checkpoints.store', [
+            'accountEntity' => $this->account,
+        ]), [
+            'checkpoint_date' => '2026-07-31',
+            'checkpoint_type' => 'cash',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('balance');
+    }
+
+    public function test_checkpoint_date_must_be_a_valid_date_when_saving_checkpoint(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->postJson(route('api.v1.accounts.balance-checkpoints.store', [
+            'accountEntity' => $this->account,
+        ]), [
+            'checkpoint_date' => 'not-a-date',
+            'checkpoint_type' => 'cash',
+            'balance' => 120,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('checkpoint_date');
+    }
+
+    private function getJulySummary(): \Illuminate\Testing\TestResponse
+    {
+        return $this->getJson(route('api.v1.accounts.advanced-reconcile.show', [
+            'accountEntity' => $this->account,
+            'date_from' => '2026-07-01',
+            'date_to' => '2026-07-31',
+        ]));
+    }
+
+    private function createJulyCashMovements(): void
+    {
+        $this->createWithdrawal('2026-07-03', 30);
+        $this->createDeposit('2026-07-05', 50);
     }
 
     private function createWithdrawal(string $date, float $amount): void

@@ -2,15 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\CheckpointType;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountBalanceCheckpoint;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class AdvancedReconcileService
 {
@@ -45,12 +48,15 @@ class AdvancedReconcileService
     /**
      * @return array<string, mixed>
      */
-    public function dashboard(AccountEntity $accountEntity, Carbon $month, string $checkpointType): array
+    public function dashboard(AccountEntity $accountEntity, Carbon $month, CheckpointType $checkpointType): array
     {
         $checkpoint = AccountBalanceCheckpoint::where('account_entity_id', $accountEntity->id)
-            ->where('checkpoint_type', $checkpointType)
+            ->where('checkpoint_type', $checkpointType->value)
             ->where('active', true)
-            ->whereBetween('checkpoint_date', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->whereBetween('checkpoint_date', [
+                $month->copy()->startOfMonth()->toDateString(),
+                $month->copy()->endOfMonth()->toDateString(),
+            ])
             ->latest('checkpoint_date')
             ->latest('id')
             ->first();
@@ -67,7 +73,7 @@ class AdvancedReconcileService
         }
 
         $previousCheckpointDate = AccountBalanceCheckpoint::where('account_entity_id', $accountEntity->id)
-            ->where('checkpoint_type', $checkpointType)
+            ->where('checkpoint_type', $checkpointType->value)
             ->where('active', true)
             ->where('checkpoint_date', '<', $checkpoint->checkpoint_date)
             ->latest('checkpoint_date')
@@ -90,21 +96,39 @@ class AdvancedReconcileService
         ];
     }
 
-    public function calculatedBalanceAt(AccountEntity $accountEntity, Carbon $date, string $checkpointType): float
+    public function calculatedBalanceAt(AccountEntity $accountEntity, Carbon $date, CheckpointType $checkpointType): float
     {
         $cashBalance = $this->cashBalanceAt($accountEntity, $date);
 
-        if ($checkpointType === 'cash') {
+        if ($checkpointType === CheckpointType::CASH) {
             return $cashBalance;
         }
 
         $investmentBalance = $this->investmentValueAt($accountEntity, $date)['value'];
 
-        if ($checkpointType === 'investment') {
+        if ($checkpointType === CheckpointType::INVESTMENT) {
             return $investmentBalance;
         }
 
         return round($cashBalance + $investmentBalance, 2);
+    }
+
+    /**
+     * @param array{checkpoint_date: string, checkpoint_type: string, balance: numeric, note?: string|null, source?: string|null, source_document_id?: string|null} $data
+     */
+    public function storeCheckpoint(User $user, AccountEntity $accountEntity, array $data): AccountBalanceCheckpoint
+    {
+        return AccountBalanceCheckpoint::create([
+            'user_id' => $user->id,
+            'account_entity_id' => $accountEntity->id,
+            'checkpoint_date' => $data['checkpoint_date'],
+            'checkpoint_type' => CheckpointType::from($data['checkpoint_type'])->value,
+            'balance' => $data['balance'],
+            'note' => $data['note'] ?? null,
+            'active' => true,
+            'source' => $data['source'] ?? 'manual',
+            'source_document_id' => $data['source_document_id'] ?? null,
+        ]);
     }
 
     /**
@@ -118,7 +142,7 @@ class AdvancedReconcileService
         $totalDeposits = round($movements->filter(fn (float $amount): bool => $amount > 0)->sum(), 2);
         $totalWithdrawals = round(abs($movements->filter(fn (float $amount): bool => $amount < 0)->sum()), 2);
         $balance = round($openingBalance + $totalDeposits - $totalWithdrawals, 2);
-        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, 'cash');
+        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, CheckpointType::CASH);
 
         return $this->withCheckpointState([
             'opening_balance' => $openingBalance,
@@ -136,7 +160,7 @@ class AdvancedReconcileService
         $opening = $this->investmentValueAt($accountEntity, $dateFrom->copy()->subDay());
         $closing = $this->investmentValueAt($accountEntity, $dateTo);
         $holdings = $this->investmentHoldings($accountEntity, $dateFrom, $dateTo);
-        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, 'investment');
+        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, CheckpointType::INVESTMENT);
 
         return $this->withCheckpointState([
             'opening_value' => $opening['value'],
@@ -155,7 +179,7 @@ class AdvancedReconcileService
     private function totalSection(AccountEntity $accountEntity, Carbon $dateTo, array $cash, array $investments): array
     {
         $balance = round($cash['balance'] + $investments['balance'], 2);
-        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, 'total');
+        $checkpoint = $this->checkpointForDate($accountEntity, $dateTo, CheckpointType::TOTAL);
 
         return $this->withCheckpointState([
             'balance' => $balance,
@@ -183,36 +207,36 @@ class AdvancedReconcileService
      */
     private function cashMovements(AccountEntity $accountEntity, ?Carbon $dateFrom, Carbon $dateTo): Collection
     {
-        $standardFrom = DB::table('transactions')
-            ->join('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
+        $standardFrom = TransactionDetailStandard::query()
+            ->join('transactions', 'transaction_details_standard.id', '=', 'transactions.config_id')
             ->where('transactions.config_type', 'standard')
             ->where('transactions.schedule', 0)
             ->where('transactions.budget', 0)
             ->where('transaction_details_standard.account_from_id', $accountEntity->id)
-            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom))
-            ->where('transactions.date', '<=', $dateTo)
+            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom->toDateString()))
+            ->where('transactions.date', '<=', $dateTo->toDateString())
             ->pluck('transaction_details_standard.amount_from')
             ->map(fn ($amount): float => -1 * (float) $amount);
 
-        $standardTo = DB::table('transactions')
-            ->join('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
+        $standardTo = TransactionDetailStandard::query()
+            ->join('transactions', 'transaction_details_standard.id', '=', 'transactions.config_id')
             ->where('transactions.config_type', 'standard')
             ->where('transactions.schedule', 0)
             ->where('transactions.budget', 0)
             ->where('transaction_details_standard.account_to_id', $accountEntity->id)
-            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom))
-            ->where('transactions.date', '<=', $dateTo)
+            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom->toDateString()))
+            ->where('transactions.date', '<=', $dateTo->toDateString())
             ->pluck('transaction_details_standard.amount_to')
             ->map(fn ($amount): float => (float) $amount);
 
-        $investment = DB::table('transactions')
-            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+        $investment = TransactionDetailInvestment::query()
+            ->join('transactions', 'transaction_details_investment.id', '=', 'transactions.config_id')
             ->where('transactions.config_type', 'investment')
             ->where('transactions.schedule', 0)
             ->where('transactions.budget', 0)
             ->where('transaction_details_investment.account_id', $accountEntity->id)
-            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom))
-            ->where('transactions.date', '<=', $dateTo)
+            ->when($dateFrom, fn ($query) => $query->where('transactions.date', '>=', $dateFrom->toDateString()))
+            ->where('transactions.date', '<=', $dateTo->toDateString())
             ->pluck('transactions.cashflow_value')
             ->map(fn ($amount): float => (float) $amount);
 
@@ -263,13 +287,16 @@ class AdvancedReconcileService
         $closingQuantities = $this->quantitiesAt($accountEntity, $dateTo)->keyBy('investment_id');
         $periodQuantityChanges = $this->periodInvestmentQuantityChanges($accountEntity, $dateFrom, $dateTo)->keyBy('investment_id');
 
-        return $openingQuantities
+        $investmentIds = $openingQuantities
             ->keys()
             ->merge($closingQuantities->keys())
             ->merge($periodQuantityChanges->keys())
-            ->unique()
-            ->map(function (int $investmentId) use ($openingQuantities, $closingQuantities, $periodQuantityChanges, $dateFrom, $dateTo): ?array {
-                $investment = Investment::find($investmentId);
+            ->unique();
+        $investments = Investment::whereIn('id', $investmentIds)->get()->keyBy('id');
+
+        return $investmentIds
+            ->map(function (int $investmentId) use ($investments, $openingQuantities, $closingQuantities, $periodQuantityChanges, $dateFrom, $dateTo): ?array {
+                $investment = $investments->get($investmentId);
                 if ($investment === null) {
                     return null;
                 }
@@ -305,8 +332,8 @@ class AdvancedReconcileService
                     'close_stored_price_id' => $closeStoredPrice?->id,
                     'open_value' => round($openQuantity * ($openPrice ?? 0), 2),
                     'close_value' => round($closeQuantity * ($closePrice ?? 0), 2),
-                    'has_missing_price' => ($openQuantity !== 0.0 && $openPrice === null)
-                        || ($closeQuantity !== 0.0 && $closePrice === null),
+                    'has_missing_price' => (($openQuantity !== 0.0 && $openPrice === null)
+                        || ($closeQuantity !== 0.0 && $closePrice === null)),
                 ];
             })
             ->filter()
@@ -326,20 +353,22 @@ class AdvancedReconcileService
      */
     private function quantitiesAt(AccountEntity $accountEntity, Carbon $date): Collection
     {
-        return DB::table('transactions')
+        return TransactionDetailInvestment::query()
             ->select(
                 'transaction_details_investment.investment_id',
-                DB::raw('SUM('
-                    . TransactionTypeEnum::getQuantityMultiplierSqlCase('transactions.transaction_type')
-                    . ' * IFNULL(transaction_details_investment.quantity, 0)) AS quantity')
             )
-            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->selectRaw(
+                'SUM('
+                . TransactionTypeEnum::getQuantityMultiplierSqlCase('transactions.transaction_type')
+                . ' * IFNULL(transaction_details_investment.quantity, 0)) AS quantity'
+            )
+            ->join('transactions', 'transaction_details_investment.id', '=', 'transactions.config_id')
             ->where('transactions.schedule', 0)
             ->where('transactions.budget', 0)
             ->where('transactions.config_type', 'investment')
             ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->where('transaction_details_investment.account_id', $accountEntity->id)
-            ->where('transactions.date', '<=', $date)
+            ->where('transactions.date', '<=', $date->toDateString())
             ->groupBy('transaction_details_investment.investment_id')
             ->get();
     }
@@ -349,26 +378,26 @@ class AdvancedReconcileService
      */
     private function periodInvestmentQuantityChanges(AccountEntity $accountEntity, Carbon $dateFrom, Carbon $dateTo): Collection
     {
-        return DB::table('transactions')
+        return TransactionDetailInvestment::query()
             ->select('transaction_details_investment.investment_id')
             ->selectRaw("SUM(CASE WHEN transactions.transaction_type IN ('buy', 'add_shares') THEN IFNULL(transaction_details_investment.quantity, 0) ELSE 0 END) AS buys")
             ->selectRaw("SUM(CASE WHEN transactions.transaction_type IN ('sell', 'remove_shares') THEN IFNULL(transaction_details_investment.quantity, 0) ELSE 0 END) AS sells")
-            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->join('transactions', 'transaction_details_investment.id', '=', 'transactions.config_id')
             ->where('transactions.schedule', 0)
             ->where('transactions.budget', 0)
             ->where('transactions.config_type', 'investment')
             ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->where('transaction_details_investment.account_id', $accountEntity->id)
-            ->whereBetween('transactions.date', [$dateFrom, $dateTo])
+            ->whereBetween('transactions.date', [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->groupBy('transaction_details_investment.investment_id')
             ->get();
     }
 
-    private function checkpointForDate(AccountEntity $accountEntity, Carbon $date, string $type): ?AccountBalanceCheckpoint
+    private function checkpointForDate(AccountEntity $accountEntity, Carbon $date, CheckpointType $type): ?AccountBalanceCheckpoint
     {
         return AccountBalanceCheckpoint::where('account_entity_id', $accountEntity->id)
-            ->where('checkpoint_type', $type)
-            ->where('checkpoint_date', $date)
+            ->where('checkpoint_type', $type->value)
+            ->where('checkpoint_date', $date->toDateString())
             ->where('active', true)
             ->latest('id')
             ->first();

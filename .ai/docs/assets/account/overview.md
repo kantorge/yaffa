@@ -78,6 +78,7 @@ The `account.history` route (`MainController::account_details`) loads all transa
 - **Currency** — must be one of the user's own currencies (pre-condition: at least one currency must exist)
 - **Import alias** — optional free-text field; newline-separated values matched against AI document processing account strings
 - **Default date range** — optional preset controlling how far back the account detail view loads by default; overrides the global user setting if set; can also be set to "Don't load data by default"
+- **Checkpoint window presets** — on account details, saved reconciliation checkpoints can add dynamic date preset options. Each window runs from the previous checkpoint date plus one day through the selected checkpoint date.
 
 ### System inputs:
 

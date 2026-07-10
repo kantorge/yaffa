@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CheckpointType;
 use Illuminate\Validation\Rule;
 
 class AccountBalanceCheckpointRequest extends FormRequest
@@ -13,7 +14,7 @@ class AccountBalanceCheckpointRequest extends FormRequest
     {
         return [
             'checkpoint_date' => ['required', 'date'],
-            'checkpoint_type' => ['required', Rule::in(['cash', 'investment', 'total'])],
+            'checkpoint_type' => ['required', Rule::in(CheckpointType::values())],
             'balance' => ['required', 'numeric', 'min:-9999999999999.99', 'max:9999999999999.99'],
             'note' => ['nullable', 'string'],
             'source' => ['nullable', 'string', 'max:191'],

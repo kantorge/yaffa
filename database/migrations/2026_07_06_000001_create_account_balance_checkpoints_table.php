@@ -23,7 +23,7 @@ return new class () extends Migration {
             $table->string('source_document_id')->nullable();
             $table->timestamps();
 
-            $table->unique(['source', 'source_document_id'], 'uniq_account_balance_checkpoint_source_document');
+            $table->unique(['account_entity_id', 'source', 'source_document_id'], 'uniq_account_balance_checkpoint_source_document');
             $table->index('user_id');
             $table->index('account_entity_id');
             $table->index(['account_entity_id', 'checkpoint_type', 'checkpoint_date'], 'idx_account_balance_checkpoint_lookup');

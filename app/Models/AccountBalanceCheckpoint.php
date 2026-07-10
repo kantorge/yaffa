@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CheckpointType;
 use Database\Factories\AccountBalanceCheckpointFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property int $account_entity_id
  * @property \Illuminate\Support\Carbon $checkpoint_date
- * @property string $checkpoint_type
+ * @property CheckpointType $checkpoint_type
  * @property float $balance
  * @property string|null $note
  * @property bool $active
@@ -45,6 +46,7 @@ class AccountBalanceCheckpoint extends Model
     {
         return [
             'checkpoint_date' => 'date',
+            'checkpoint_type' => CheckpointType::class,
             'balance' => 'float',
             'active' => 'boolean',
         ];

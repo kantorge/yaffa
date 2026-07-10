@@ -1,3 +1,4 @@
+import { escapeHtml, jsonFromResponse } from '@/shared/lib/helpers';
 import { __ } from '@/shared/lib/i18n';
 import { toFormattedCurrency } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
@@ -12,12 +13,6 @@ const statusLabels = {
     reconcile_required: __('Reconcile required'),
     no_checkpoint: __('No checkpoint'),
 };
-
-function escapeHtml(value) {
-    const element = document.createElement('div');
-    element.textContent = value ?? '';
-    return element.innerHTML;
-}
 
 function formatAmount(value, currency) {
     if (value === null || value === undefined) {
@@ -81,7 +76,7 @@ function loadDashboard() {
     });
 
     fetch(url)
-        .then(response => response.json())
+        .then(jsonFromResponse)
         .then(render)
         .catch((error) => {
             toastHelpers.showErrorToast(error.message);

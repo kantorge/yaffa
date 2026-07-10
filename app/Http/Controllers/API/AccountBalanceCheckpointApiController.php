@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\CheckpointType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AccountBalanceCheckpointRequest;
-use App\Models\AccountBalanceCheckpoint;
+use App\Http\Requests\AccountSummaryRequest;
+use App\Http\Requests\AdvancedReconcileDashboardRequest;
 use App\Models\AccountEntity;
 use App\Services\AdvancedReconcileService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
@@ -33,7 +34,7 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
     /**
      * @throws AuthorizationException
      */
-    public function accountSummary(Request $request, AccountEntity $accountEntity): JsonResponse
+    public function accountSummary(AccountSummaryRequest $request, AccountEntity $accountEntity): JsonResponse
     {
         Gate::authorize('view', $accountEntity);
 
@@ -43,10 +44,7 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $validated = $request->validate([
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
-        ]);
+        $validated = $request->validated();
 
         $dateTo = Carbon::parse($validated['date_to'] ?? now()->toDateString())->startOfDay();
         $dateFrom = Carbon::parse($validated['date_from'] ?? $dateTo->copy()->startOfMonth()->toDateString())->startOfDay();
@@ -70,19 +68,11 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $validated = $request->validated();
-
-        $checkpoint = AccountBalanceCheckpoint::create([
-            'user_id' => $request->user()->id,
-            'account_entity_id' => $accountEntity->id,
-            'checkpoint_date' => $validated['checkpoint_date'],
-            'checkpoint_type' => $validated['checkpoint_type'],
-            'balance' => $validated['balance'],
-            'note' => $validated['note'] ?? null,
-            'active' => true,
-            'source' => $validated['source'] ?? 'manual',
-            'source_document_id' => $validated['source_document_id'] ?? null,
-        ]);
+        $checkpoint = $this->advancedReconcileService->storeCheckpoint(
+            $request->user(),
+            $accountEntity,
+            $request->validated()
+        );
 
         return response()->json([
             'checkpoint' => $checkpoint,
@@ -90,17 +80,14 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
         ], Response::HTTP_CREATED);
     }
 
-    public function dashboard(Request $request): JsonResponse
+    public function dashboard(AdvancedReconcileDashboardRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'checkpoint_type' => ['nullable', 'in:cash,investment,total'],
-            'display' => ['nullable', 'in:status,balance'],
-        ]);
+        $validated = $request->validated();
+        $checkpointType = CheckpointType::from($validated['checkpoint_type'] ?? CheckpointType::TOTAL->value);
 
-        $checkpointType = $validated['checkpoint_type'] ?? 'total';
-
+        $now = now();
         $months = collect(range(0, 11))
-            ->map(fn (int $offset): Carbon => now()->startOfMonth()->subMonths($offset));
+            ->map(fn (int $offset): Carbon => $now->copy()->startOfMonth()->subMonths($offset));
 
         $accounts = $request->user()
             ->accounts()
@@ -121,7 +108,7 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
         ]);
 
         return response()->json([
-            'checkpoint_type' => $checkpointType,
+            'checkpoint_type' => $checkpointType->value,
             'display' => $validated['display'] ?? 'status',
             'months' => $months->map(fn (Carbon $month): array => [
                 'key' => $month->format('Y-m'),

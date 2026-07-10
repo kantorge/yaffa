@@ -79,6 +79,9 @@ If API behavior or UI requirements are unclear, STOP and ask for clarification.
 - Display server-side validation errors clearly
 - Do NOT duplicate complex backend validation logic
 - Handle network and authorization errors gracefully
+- Native `fetch` does not reject for HTTP 4xx/5xx responses; check `response.ok` before rendering successful data
+- Prefer shared escaping helpers for any value interpolated into HTML strings, including attribute values
+- When handling Axios failures, prefer Laravel's `error.response?.data?.message` before falling back to `error.message`
 
 ---
 

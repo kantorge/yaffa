@@ -14,16 +14,18 @@ class AccountBalanceCheckpointFactory extends Factory
 {
     public function definition(): array
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-
         return [
-            'user_id' => $user->id,
-            'account_entity_id' => AccountEntity::factory()
-                ->for($user)
-                ->for(Account::factory()->withUser($user), 'config')
-                ->create()
-                ->id,
+            'user_id' => User::factory(),
+            'account_entity_id' => function (array $attributes): int {
+                /** @var User $user */
+                $user = User::find($attributes['user_id']) ?? User::factory()->create();
+
+                return AccountEntity::factory()
+                    ->for($user)
+                    ->for(Account::factory()->withUser($user), 'config')
+                    ->create()
+                    ->id;
+            },
             'checkpoint_date' => $this->faker->date('Y-m-d'),
             'checkpoint_type' => $this->faker->randomElement(['cash', 'investment', 'total']),
             'balance' => $this->faker->randomFloat(2, 0, 10000),

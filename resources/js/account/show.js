@@ -3,6 +3,7 @@ import 'datatables.net-responsive-bs5';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import * as helpers from '@/shared/lib/helpers';
+import { escapeHtml, jsonFromResponse } from '@/shared/lib/helpers';
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
 import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
@@ -39,10 +40,6 @@ let advancedReconcileData = null;
 let advancedReconcilePriceModal = null;
 let advancedReconcilePriceContext = null;
 
-function escapeHtml(value) {
-    return $('<div>').text(value ?? '').html();
-}
-
 let currentDateFilters = {
     dateFrom: window.filters?.date_from || null,
     dateTo: window.filters?.date_to || null,
@@ -53,6 +50,28 @@ const hasInitialFilters =
     !!currentDateFilters.dateFrom ||
     !!currentDateFilters.dateTo ||
     (!!currentDateFilters.preset && currentDateFilters.preset !== 'none');
+
+function accountDatePresetGroups() {
+    const presetGroups = window.YAFFA?.config?.datePresets || [];
+    const checkpointWindows = window.checkpointWindows || [];
+
+    if (!checkpointWindows.length) {
+        return presetGroups;
+    }
+
+    return [
+        ...presetGroups,
+        {
+            label: 'Checkpoint windows',
+            options: checkpointWindows.map((windowOption) => ({
+                value: windowOption.value,
+                label: windowOption.label,
+                date_from: windowOption.date_from,
+                date_to: windowOption.date_to,
+            })),
+        },
+    ];
+}
 
 /**
  * Helper function to get adjusted cash flow in the context of the current account
@@ -493,6 +512,7 @@ const dateRangeApp = createApp({
             initialDateFrom: currentDateFilters.dateFrom,
             initialDateTo: currentDateFilters.dateTo,
             initialPreset: currentDateFilters.preset,
+            presetGroups: accountDatePresetGroups(),
         };
     },
     methods: {
@@ -630,13 +650,7 @@ function loadAdvancedReconcile() {
             'X-CSRF-TOKEN': window.csrfToken,
         },
     })
-        .then(async (response) => {
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || response.statusText);
-            }
-            return data;
-        })
+        .then(jsonFromResponse)
         .then(renderAdvancedReconcile)
         .catch(error => toastHelpers.showErrorToast(error.message));
 }
