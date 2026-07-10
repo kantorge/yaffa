@@ -8,6 +8,7 @@ use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\InvestmentPriceProviderRegistry;
+use App\Services\SandboxDemoDataExporter;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -187,34 +188,17 @@ class ResetDemoDatabase extends Command
         /**
          * Unless explicitly disabled, we need to adjust ALL dates in the database to be the current date.
          * Created_at and updated_at fields are ignored, as it is not used at the moment by the app.
-         * First, calculate the difference between the current date and the date hard coded here,
-         * which represents the latest date in the demo data. We need the difference in months.
-         * Then, add that difference to every date in the database.
+         * The shift amount and the affected tables/columns are shared with the sandbox dump/promote
+         * commands via config('demo.seed_date_shift_columns'), so both directions stay in sync.
          */
         if (!$this->option('skip-date-adjustment')) {
             $this->info('Adjusting dates in the database...');
-            $date = '2008-12-31';
-            $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
-            $diffMonths = $diff->y * 12 + $diff->m + 1;
+            $exporter = app(SandboxDemoDataExporter::class);
+            $diffMonths = $exporter->diffMonths();
             $this->info("Months used for difference: {$diffMonths}");
 
-            // Update all dates in the database
-            // transactions - date
-            $this->info('Adjusting dates - transactions...');
-            $affected = DB::table('transactions')
-                ->where('user_id', 1)
-                ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diffMonths} MONTH)")]);
-            $this->info("Transactions updated: {$affected}");
-
-            // transaction_schedules - start_date, next_date, end_date
-            $affected = DB::table('transaction_schedules')
-                // The schedules of the test user are also updated
-                ->update([
-                    'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diffMonths} MONTH)"),
-                    'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diffMonths} MONTH)"),
-                    'end_date' => DB::raw("DATE_ADD(end_date, INTERVAL {$diffMonths} MONTH)"),
-                ]);
-            $this->info("Transaction schedules updated: {$affected}");
+            $exporter->shiftDates($diffMonths);
+            $this->info('Dates adjusted.');
         }
 
         $this->info('Creating AI document duplicate scenario...');
