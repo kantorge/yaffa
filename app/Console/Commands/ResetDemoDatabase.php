@@ -196,6 +196,7 @@ class ResetDemoDatabase extends Command
             $date = '2008-12-31';
             $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
             $diffMonths = $diff->y * 12 + $diff->m + 1;
+            $this->info("Months used for difference: {$diffMonths}");
 
             // Update all dates in the database
             // transactions - date
