@@ -349,7 +349,7 @@ class AdvancedReconcileService
     }
 
     /**
-     * @return Collection<int, object>
+     * @return Collection<int, TransactionDetailInvestment>
      */
     private function quantitiesAt(AccountEntity $accountEntity, Carbon $date): Collection
     {
@@ -374,7 +374,7 @@ class AdvancedReconcileService
     }
 
     /**
-     * @return Collection<int, object>
+     * @return Collection<int, TransactionDetailInvestment>
      */
     private function periodInvestmentQuantityChanges(AccountEntity $accountEntity, Carbon $dateFrom, Carbon $dateTo): Collection
     {

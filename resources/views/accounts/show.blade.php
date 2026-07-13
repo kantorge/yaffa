@@ -193,7 +193,7 @@
                                         </thead>
                                         <tbody id="advancedReconcileHoldingsBody">
                                             <tr>
-                                                <td colspan="7"><i class="fa fa-fw fa-spinner fa-spin"></i></td>
+                                                <td colspan="9"><i class="fa fa-fw fa-spinner fa-spin"></i></td>
                                             </tr>
                                         </tbody>
                                     </table>

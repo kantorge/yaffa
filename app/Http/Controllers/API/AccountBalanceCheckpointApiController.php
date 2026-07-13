@@ -100,7 +100,7 @@ class AccountBalanceCheckpointApiController extends Controller implements HasMid
             'account' => [
                 'id' => $accountEntity->id,
                 'name' => $accountEntity->name,
-                'currency' => $accountEntity->config->currency ?? null,
+                'currency' => $accountEntity->config?->currency,
             ],
             'months' => $months->mapWithKeys(fn (Carbon $month): array => [
                 $month->format('Y-m') => $this->advancedReconcileService->dashboard($accountEntity, $month, $checkpointType),
