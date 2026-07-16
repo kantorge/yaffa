@@ -637,11 +637,15 @@
     computed: {
       total() {
         return (
-          (this.form.config.quantity || 0) * (this.form.config.price || 0) +
-          (this.form.config.dividend || 0) -
-          ((this.form.config.commission || 0) + (this.form.config.tax || 0)) *
-            // Taxes and commissions are added to the value when the transaction is a buy
-            this.transactionTypeSettings.amount_multiplier
+          (this.form.config.quantity || 0) *
+            (this.form.config.price || 0) *
+            (this.transactionTypeSettings.amount_multiplier || 0) +
+          (this.form.config.dividend || 0) *
+            (this.transactionTypeSettings.dividend_multiplier || 0) +
+          (this.form.config.commission || 0) *
+            (this.transactionTypeSettings.commission_multiplier || 0) +
+          (this.form.config.tax || 0) *
+            (this.transactionTypeSettings.tax_multiplier || 0)
         );
       },
 
@@ -703,8 +707,15 @@
             type.value,
           ),
           price: ['buy', 'sell'].includes(type.value),
-          dividend: ['dividend', 'interest_yield'].includes(type.value),
+          dividend: [
+            'dividend',
+            'interest_yield',
+            'purchased_interest',
+          ].includes(type.value),
           amount_multiplier: type.amount_multiplier,
+          dividend_multiplier: type.dividend_multiplier,
+          commission_multiplier: type.commission_multiplier,
+          tax_multiplier: type.tax_multiplier,
         }));
 
       // Copy values of existing transaction into component form data

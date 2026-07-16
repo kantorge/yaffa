@@ -2,8 +2,10 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\TransactionType;
 use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use App\Models\User;
 use App\Services\TransactionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -250,6 +252,34 @@ class TransactionServiceTest extends TestCase
         // 0 + 100 - 10 - 2 = 88
         $this->assertNotNull($cashFlow);
         $this->assertEquals(88, $cashFlow);
+    }
+
+    public function test_get_transaction_cash_flow_for_special_investment_transactions(): void
+    {
+        $cases = [
+            TransactionType::PURCHASED_INTEREST->value => [['dividend' => 100], -100],
+            TransactionType::PRODUCT_FEE->value => [['commission' => 25], -25],
+            TransactionType::TAX_RELIEF->value => [['tax' => 30], 30],
+        ];
+
+        foreach ($cases as $transactionType => [$configValues, $expectedCashFlow]) {
+            $config = TransactionDetailInvestment::factory()->create(array_merge([
+                'price' => null,
+                'quantity' => null,
+                'dividend' => null,
+                'commission' => null,
+                'tax' => null,
+            ], $configValues));
+
+            $transaction = Transaction::factory()->create([
+                'user_id' => $this->user->id,
+                'transaction_type' => $transactionType,
+                'config_type' => 'investment',
+                'config_id' => $config->id,
+            ]);
+
+            $this->assertEquals($expectedCashFlow, $this->service->getTransactionCashFlow($transaction));
+        }
     }
 
     /**
