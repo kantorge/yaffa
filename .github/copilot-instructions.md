@@ -232,7 +232,7 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 
 - **Style:** PSR-12 (enforced by Laravel Pint in `pint.json`)
 - **Static Analysis:** PHPStan Level 5
-- **Key Rules:** Strict comparison (`===`), arrow functions preferred, logical operators instead of symbolic, no Yoda conditions
+- **Key Rules:** Strict comparison (`===`), arrow functions preferred, symbolic operators instead of logical operators, no Yoda conditions
 - **Namespaces:** PSR-4 autoloading, `App\` namespace for application code
 
 ### JavaScript/Vue
