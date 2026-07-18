@@ -15,6 +15,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class ResetDemoDatabase extends Command
 {
@@ -40,7 +41,7 @@ class ResetDemoDatabase extends Command
     public function handle(): int
     {
         // This command cannot be run if sandbox mode is not enabled
-        if (!config('yaffa.sandbox_mode') && ! $this->option('force-sandbox')) {
+        if ((! config('yaffa.sandbox_mode')) && (! $this->option('force-sandbox'))) {
             $this->error('This command can only be run in sandbox mode.');
             return Command::FAILURE;
         }
@@ -91,9 +92,18 @@ class ResetDemoDatabase extends Command
 
         // Now we need to load the demo.sql file into the database.
         // We assume the database to be empty in terms of users and user related data, except the demo user (1).
+        // demo.sql wraps its own INSERT statements in START TRANSACTION/COMMIT and toggles
+        // FOREIGN_KEY_CHECKS itself; if a statement fails partway through, the ROLLBACK and
+        // re-enabled checks below undo the transaction and restore the session state, since the
+        // trailing COMMIT/SET FOREIGN_KEY_CHECKS=1 in the file itself would otherwise never run.
         $this->info('Loading demo data from file...');
         $file = base_path('database/seeders/demo.sql');
-        DB::unprepared(file_get_contents($file));
+        try {
+            DB::unprepared(file_get_contents($file));
+        } catch (Throwable $exception) {
+            DB::unprepared('ROLLBACK; SET FOREIGN_KEY_CHECKS=1;');
+            throw $exception;
+        }
         $this->info('Demo data loaded.');
 
         // Create AI Provider Config for demo user, if provided
@@ -191,7 +201,7 @@ class ResetDemoDatabase extends Command
          * The shift amount and the affected tables/columns are shared with the sandbox dump/promote
          * commands via config('demo.seed_date_shift_columns'), so both directions stay in sync.
          */
-        if (!$this->option('skip-date-adjustment')) {
+        if (! $this->option('skip-date-adjustment')) {
             $this->info('Adjusting dates in the database...');
             $exporter = app(SandboxDemoDataExporter::class);
             $diffMonths = $exporter->diffMonths();

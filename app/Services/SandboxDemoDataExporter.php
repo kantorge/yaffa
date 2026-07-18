@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 
 /**
  * Shared date-shift and dump logic for the sandbox demo data workflow, used by both
@@ -47,14 +49,18 @@ class SandboxDemoDataExporter
      */
     public function diffMonths(): int
     {
-        $anchor = (string) config('demo.seed_anchor_date');
-        $diff = date_diff(date_create($anchor), date_create(date('Y-m-d')));
+        $anchor = Carbon::parse((string) config('demo.seed_anchor_date'));
+        $today = Carbon::today();
 
-        return $diff->y * 12 + $diff->m + 1;
+        return ($today->year - $anchor->year) * 12 + ($today->month - $anchor->month);
     }
 
     /**
      * Shift every configured date column by the given number of months (negative to shift back).
+     *
+     * config('demo.seed_date_shift_columns') is keyed by table name, each entry shaped as
+     * array{columns: list<string>, scope: array<string, mixed>|null} - columns are the date
+     * columns to shift, scope is an optional where()-clause array restricting which rows are shifted.
      */
     public function shiftDates(int $months): void
     {
@@ -86,8 +92,10 @@ class SandboxDemoDataExporter
 
         // Table insert order below doesn't follow strict FK dependency order, so foreign key
         // checks are disabled for the load, matching how the previous mysqldump-based export
-        // behaved (mysqldump wraps dumps in SET FOREIGN_KEY_CHECKS=0 by default).
-        $sql = "SET FOREIGN_KEY_CHECKS=0;\n\n";
+        // behaved (mysqldump wraps dumps in SET FOREIGN_KEY_CHECKS=0 by default). The whole load
+        // is also wrapped in a transaction, so app:sandbox:reset-database can roll back cleanly
+        // if a statement fails partway through, instead of leaving a half-loaded database.
+        $sql = "START TRANSACTION;\nSET FOREIGN_KEY_CHECKS=0;\n\n";
 
         foreach (self::TABLES as $table) {
             $columns = array_values(array_diff(Schema::getColumnListing($table), ['created_at', 'updated_at']));
@@ -99,7 +107,7 @@ class SandboxDemoDataExporter
                     fn ($query) => $query->whereNull('created_at')
                 );
 
-            foreach ($this->orderColumns($table) as $orderColumn) {
+            foreach ($this->orderColumns($table, $columns) as $orderColumn) {
                 $query->orderBy($orderColumn);
             }
 
@@ -111,7 +119,19 @@ class SandboxDemoDataExporter
 
             $tuples = $rows->map(function ($row) use ($columns, $pdo): string {
                 $values = implode(',', array_map(
-                    fn (string $column) => $row->{$column} === null ? 'NULL' : $pdo->quote((string) $row->{$column}),
+                    function (string $column) use ($row, $pdo) {
+                        $value = $row->{$column};
+
+                        if ($value === null) {
+                            return 'NULL';
+                        }
+
+                        if (is_bool($value)) {
+                            return $value ? '1' : '0';
+                        }
+
+                        return $pdo->quote((string) $value);
+                    },
                     $columns
                 ));
 
@@ -123,9 +143,22 @@ class SandboxDemoDataExporter
             $sql .= $tuples->implode(",\n") . ";\n\n";
         }
 
-        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        $sql .= "SET FOREIGN_KEY_CHECKS=1;\nCOMMIT;\n";
 
-        file_put_contents($path, $sql);
+        $temporaryPath = dirname($path) . '/.' . basename($path) . '.' . uniqid('', true) . '.tmp';
+        $bytesWritten = file_put_contents($temporaryPath, $sql);
+
+        if ($bytesWritten === false || $bytesWritten !== mb_strlen($sql, '8bit')) {
+            @unlink($temporaryPath);
+
+            throw new RuntimeException("Failed to write demo data dump to {$temporaryPath}.");
+        }
+
+        if (! rename($temporaryPath, $path)) {
+            @unlink($temporaryPath);
+
+            throw new RuntimeException("Failed to move demo data dump into place at {$path}.");
+        }
     }
 
     /**
@@ -133,9 +166,10 @@ class SandboxDemoDataExporter
      * key if it has one, otherwise every column (covers plain pivot tables like
      * account_entity_category_preference, which has no primary key at all).
      *
+     * @param  list<string>  $fallbackColumns
      * @return list<string>
      */
-    private function orderColumns(string $table): array
+    private function orderColumns(string $table, array $fallbackColumns): array
     {
         foreach (Schema::getIndexes($table) as $index) {
             if ($index['primary']) {
@@ -143,23 +177,28 @@ class SandboxDemoDataExporter
             }
         }
 
-        return Schema::getColumnListing($table);
+        return $fallbackColumns;
     }
 
     /**
      * Shift seed dates back to the anchor baseline, dump to the given path, then restore
-     * the live dates. The restore always runs, even if the dump itself fails.
+     * the live dates. The whole operation runs inside a database transaction that is always
+     * rolled back - the shifted dates are never actually committed, so concurrent readers never
+     * see them and a killed process can never leave the database in a shifted state. The dump
+     * file itself is unaffected by the rollback, since it is a filesystem write.
      */
     public function export(string $path): void
     {
-        $months = $this->diffMonths();
-
-        $this->shiftDates(-$months);
+        DB::beginTransaction();
 
         try {
+            $months = $this->diffMonths();
+
+            $this->shiftDates(-$months);
             $this->dumpTo($path);
-        } finally {
             $this->shiftDates($months);
+        } finally {
+            DB::rollBack();
         }
     }
 }

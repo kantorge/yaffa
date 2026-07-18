@@ -28,7 +28,7 @@ class DumpDemoDatabase extends Command
     public function handle(SandboxDemoDataExporter $exporter): int
     {
         // This command cannot be run if sandbox mode is not enabled
-        if (!config('yaffa.sandbox_mode') && ! $this->option('force-sandbox')) {
+        if ((! config('yaffa.sandbox_mode')) && (! $this->option('force-sandbox'))) {
             $this->error('This command can only be run in sandbox mode.');
             return Command::FAILURE;
         }

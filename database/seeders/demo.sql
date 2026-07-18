@@ -1,3 +1,4 @@
+START TRANSACTION;
 SET FOREIGN_KEY_CHECKS=0;
 
 -- investments
@@ -1728,7 +1729,6 @@ INSERT INTO `transactions` (`id`,`ai_document_id`,`user_id`,`date`,`transaction_
 ('26995',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26120',NULL,'-15.0000'),
 ('26996',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26121',NULL,'-10.0000'),
 ('26997',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26122',NULL,'-500.0000'),
-('26998',NULL,'3','2026-07-10','withdrawal','0','0','0',NULL,'standard','26123',NULL,'-100.0000'),
 ('26999',NULL,'3',NULL,'withdrawal','0','0','1',NULL,'standard','26124',NULL,'-50.0000'),
 ('27000',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26125',NULL,'-100.0000'),
 ('27001',NULL,'1',NULL,'buy','0','1','0',NULL,'investment','30','1','-270.0000');
@@ -5787,7 +5787,6 @@ INSERT INTO `transaction_details_standard` (`id`,`account_from_id`,`account_to_i
 ('26120',NULL,NULL,'15.0000','15.0000'),
 ('26121',NULL,NULL,'10.0000','10.0000'),
 ('26122',NULL,NULL,'500.0000','500.0000'),
-('26123','586','587','100.0000','100.0000'),
 ('26124',NULL,NULL,'50.0000','50.0000'),
 ('26125',NULL,NULL,'100.0000','100.0000');
 
@@ -6245,3 +6244,4 @@ INSERT INTO `investment_prices` (`id`,`date`,`investment_id`,`price`) VALUES
 ('183','2026-01-01','10','15.0000000000');
 
 SET FOREIGN_KEY_CHECKS=1;
+COMMIT;
