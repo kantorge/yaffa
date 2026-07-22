@@ -379,15 +379,16 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
 
 * Additional rules for STANDARD TRANSACTIONS with multiple line items (most common for withdrawals/purchases provided as receipts):
   * If the document contains multiple line items that can be extracted, include them in the transaction_items array with their description and amount.
-  * The sum of the transaction_items amounts should ideally match the total amount, but if they don't match, still include the transaction_items as long as they are reasonably extracted from the document.
   * For each transaction item description, keep only the core item/service name.
-  * Use lowercase only for each transaction item description.
   * Remove quantity, size, measurement, and packaging fragments from description (examples: "2x", "x3", "500g", "1kg", "250ml", "1.5l", "pcs", "pack", plus language-specific/localized equivalents present in the document).
   * Exclude non-semantic receipt codes from item descriptions (for example PLU/SKU/internal register codes, barcode-like tokens, and random uppercase code fragments that are not meaningful product/service names).
+  * Ignore patterns like unit price * purchased quantity, and focus on the amount payable per line item.
   * Keep meaningful product qualifiers (brand/flavor/type/model) when they help categorization; remove only quantity/unit/packaging noise.
   * When extracting amounts, account for localization (especially for thousands separators and decimal marks), and make sure to capture the entire value. Convert the final amount to a plain number without any symbols, and use dot as decimal separator.
   * When the exact same description appears for multiple items in multiple line items, you can merge them using the same description and returning the total monetary amount for all those items combined. This is a preferred way of simplification as long as the similarity can be clearly identified.
-  * Validate your response to see if extracted amount and the sum of transaction_items amounts are consistent.
+  * Validate your response to see if extracted amount and the sum of transaction_items amounts are consistent. The sum of the transaction_items amounts should ideally match the total amount, but if they don't match, still include the transaction_items as long as they are reasonably extracted from the document.
+  * In the output include only actual items, and treat various discounts in a different way. If a discount can be clearly linked to a product or groupped products, then deduct the discounted amount from the respective groups amount. This applies even if the discounts are listed separately. Ignore the discounts that are too generic, cannot be linked to any items.
+  * For your output, use lowercase only for each transaction item description, regardless of the original letter casing.
 
 * Additional rules for INVESTMENT TRANSACTIONS:
   * For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
