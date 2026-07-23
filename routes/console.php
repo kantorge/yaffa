@@ -53,6 +53,9 @@ if (config('yaffa.runs_scheduler')) {
     // Batch job cleanup
     Schedule::command('queue:prune-batches')->daily();
 
+    // Prune expired personal access tokens
+    Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();
+
     // Keep the Laravel Telescope entries clean, if enabled
     if (config('telescope.enabled')) {
         Schedule::command('telescope:prune --hours=168')->daily();

@@ -6,14 +6,15 @@ use App\Components\MailHandler;
 use App\Jobs\GetInvestmentPrices;
 use App\Models\Account;
 use App\Models\Payee;
+use App\Models\User;
 use App\Policies\ImportPolicy;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Services\InvestmentPriceProviderContextResolver;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Routing\Router;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -40,16 +41,6 @@ class AppServiceProvider extends ServiceProvider
         if (config('telescope.enabled')) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
-        }
-
-        // Add throttling rule to the API routes, if running in production
-        if ($this->app->environment('production')) {
-            $router = $this->app->make(Router::class);
-            $router->middlewareGroup('api', [
-                \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-                \Illuminate\Routing\Middleware\SubstituteBindings::class,
-                \Illuminate\Routing\Middleware\ThrottleRequests::class . ':60:1',
-            ]);
         }
     }
 
@@ -124,11 +115,21 @@ class AppServiceProvider extends ServiceProvider
             return $limits;
         });
 
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+
         $this->bootEvent();
     }
 
     public function bootEvent(): void
     {
         Gate::define('import.parse', [ImportPolicy::class, 'parse']);
+
+        Gate::define('viewApiDocs', function (?User $user) {
+            return match (config('yaffa.scramble_prod_auth', 'none')) {
+                'guest' => true,
+                'user' => $user !== null && $user->hasVerifiedEmail(),
+                default => false,
+            };
+        });
     }
 }
