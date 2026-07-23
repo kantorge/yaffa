@@ -52,6 +52,13 @@ If something is unclear or missing, STOP and ask for clarification.
 - Use Form Requests for validation
 - Keep Eloquent relationships explicit
 - Avoid magic attributes unless already used
+- Keep controllers thin: validate with Form Requests, authorize, delegate to Services, and return responses
+- Put persistence that encodes feature behavior in Services rather than controllers
+- Prefer `Model::query()` / Eloquent entry points over `DB::table()` for application queries
+- Compare `date` columns with date strings (`toDateString()`) rather than Carbon datetime instances when the column is date-only
+- Capture time-dependent values such as `now()` once before loops to avoid boundary inconsistencies
+- Scope unique indexes to the owning domain entity when imported/source identifiers can repeat across accounts or users
+- Centralize repeated domain string sets in enums when the codebase already has enum conventions
 
 ---
 
@@ -61,6 +68,7 @@ If something is unclear or missing, STOP and ask for clarification.
 - Type hints where reasonable
 - Clear method and variable names
 - Small, composable methods
+- Array return PHPDoc should use array shapes for structured service payloads
 - Use database transactions where consistency matters
 - Handle failure paths explicitly
 

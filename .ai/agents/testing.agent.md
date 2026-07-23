@@ -49,6 +49,7 @@ If test intent is unclear, STOP and ask for clarification.
 - Use database transactions or refreshes
 - Assert validation, authorization, and responses
 - Cover both success and failure paths
+- For Form Request-backed endpoints, include validation failure cases for required fields, invalid enum values, and malformed dates or numbers
 
 ### Laravel Dusk Tests
 
