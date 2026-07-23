@@ -48,14 +48,13 @@ Two related hardening initiatives, shipped together because the second reduces t
   - No new Eloquent models for tokens (Sanctum's built-in `PersonalAccessToken` covers it).
 
 - Migrations:
-  - Publish Sanctum's `create_personal_access_tokens_table` (`vendor:publish --tag=sanctum-migrations`) and run it.
-  - 2FA package's migration adding `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at` to `users` (exact column set depends on chosen package; note candidate packages commonly reuse these Fortify-compatible column names).
+  - `personal_access_tokens` already existed via the squashed schema dump (`database/schema/mysql-schema.sql`) before this feature — no new migration was needed to make `createToken()` usable, only wiring it up.
+  - `laragear/two-factor`'s own migration (`database/migrations/*_create_two_factor_authentications_table.php`) creates a separate `two_factor_authentications` table (shared secret, recovery codes, enabled/confirmed timestamps, safe devices) rather than adding columns to `users` — a deviation from this spec's original Fortify-compatible-columns assumption below, accepted as the cleaner design once the package's real schema was inspected.
 
 - Controllers / APIs:
   - `App\Http\Controllers\API\ApiTokenApiController` (new) — `index`, `store`, `destroy` under `/api/v1/users/me/tokens*`, following the existing `UserApiController` (`/users/me/*`) naming convention.
-  - `App\Http\Controllers\Auth\TwoFactorChallengeController` (new, web) — shows the code-entry form mid-login and verifies it; mirrors the existing `App\Http\Controllers\Auth\LoginController` structure (`implements HasMiddleware`, `guest` middleware).
-  - `App\Http\Controllers\API\TwoFactorApiController` (new) — `enroll` (generate secret + QR), `confirm` (verify first code, return recovery codes once), `disable` (requires password re-entry), `regenerateRecoveryCodes`.
-  - `App\Http\Controllers\Auth\LoginController` (existing, modified) — intercept post-credential-check to redirect into the 2FA challenge when the user has confirmed 2FA, instead of completing login immediately.
+  - `App\Http\Controllers\API\TwoFactorApiController` (new) — `show` (status), `enroll` (generate secret + QR), `confirm` (verify first code, return recovery codes once), `disable` (requires password re-entry), `regenerateRecoveryCodes`.
+  - `App\Http\Controllers\Auth\LoginController` (existing, modified) — `attemptLogin()` delegates to `laragear/two-factor`'s `TwoFactorLoginHelper` instead of calling the guard directly; no separate challenge controller exists — see "Login Step-Up Flow" below for how the same `/login` route serves both steps.
 
 - Services / Jobs:
   - `App\Services\ApiTokenService` — wraps `$user->createToken()`/listing/revocation, centralizing ability-list validation and expiry-cap enforcement (keeps the controller thin, per `laravel-backend.agent.md`).
@@ -111,7 +110,7 @@ Two related hardening initiatives, shipped together because the second reduces t
   - `POST /api/v1/users/me/two-factor/confirm` — `{ code }`; on success sets `two_factor_confirmed_at`, returns recovery codes once.
   - `POST /api/v1/users/me/two-factor/disable` — `{ password }`.
   - `POST /api/v1/users/me/two-factor/recovery-codes` — `{ password }`; regenerates and returns a fresh set once.
-  - `GET /login/two-factor-challenge` / `POST /login/two-factor-challenge` (web, not `/api/v1`) — the mid-login code entry step.
+  - The mid-login code entry step reuses the existing `POST /login` route (web, not `/api/v1`) — there is no separate challenge route; see "Login Step-Up Flow" for how one endpoint serves both steps.
 
 - Payloads (high level):
   - Token creation response: `{ id, name, abilities: string[], expires_at: string|null, token: "<plaintext, shown once>" }`.
@@ -123,7 +122,7 @@ Two related hardening initiatives, shipped together because the second reduces t
 
 `App\Enums\ApiTokenAbility` defines a closed, resource-grouped whitelist mirroring the controller groups in `routes/api.php`, e.g.:
 
-```
+```text
 accounts:read, accounts:write,
 transactions:read, transactions:write,
 investments:read, investments:write,
@@ -141,9 +140,9 @@ settings:write,
 
 Adding `abilities:` middleware to every action of all ~24 `API` controllers in one pass is a large, mechanical diff with real regression risk (each controller currently declares `middleware()` once for the whole class; per-action ability gating needs `Illuminate\Routing\Controllers\Middleware::class->only([...])`, touched file-by-file).
 
-- **MVP (this iteration):** ship token issuance, listing, and revocation. Issued tokens carry real `abilities` (validated, stored, visible to the user) but **no controller yet enforces them** — functionally equivalent to a full-access token today, same effective reach as a logged-in session, scoped only by existing Policies/`user_id` ownership. This still delivers the core goal (external, revocable, nameable API access) safely, because ownership scoping is unaffected by how the request authenticated.
+- **MVP (this iteration):** ship token issuance, listing, and revocation. Issued tokens carry real `abilities` (validated, stored, visible to the user) but **no controller yet enforces them** — functionally equivalent to a full-access token today, same effective reach as a logged-in session, scoped only by existing Policies/`user_id` ownership. This still delivers the core goal (external, revocable, nameable API access) safely, because ownership scoping is unaffected by how the request authenticated. One exception: `ApiTokenApiController` itself (token issuance/listing/revocation) is session-only — a bearer token, however scoped, cannot call it at all, so a narrowly-scoped token cannot use these unenforced endpoints to mint itself a broader-access replacement.
 - **Follow-up (separate PR, tracked but out of scope here):** add `abilities:` middleware per action, prioritized by risk — start with the highest-blast-radius controllers: `GoogleDriveConfigApiController`, `AiProviderConfigApiController` (both handle third-party secrets), the `maintenance.*` routes, and `UserApiController::changePassword`. Read-list endpoints (`accounts.index`, `categories.index`, etc.) are lower priority since they're already ownership-scoped.
-- The UI ships the full ability picker from day one regardless, so users choosing "Read-only" today already get the *intended* restriction once enforcement lands — no re-issuance needed later.
+- The UI ships the full ability picker from day one regardless, so the abilities a user picks are recorded on the token now. **This is not yet a restriction** — until the follow-up above lands, every issued token has the same full effective reach within the user's own data no matter which abilities were selected; the UI copy discloses this. Once enforcement lands, previously-issued tokens start being restricted to what was recorded at creation time, with no re-issuance needed — but treat that as a future promise, not current behavior.
 
 ### Token Lifecycle
 
@@ -221,12 +220,12 @@ Per this project's package-governance convention (established in `qif-csv-import
 
 ### Login Step-Up Flow
 
-`LoginController` currently uses `AuthenticatesUsers` (from `laravel/ui`) largely unmodified apart from `validateLogin()` (reCAPTCHA hook). The standard interception pattern for adding 2FA to this trait without adopting Fortify:
+`LoginController` uses `AuthenticatesUsers` (from `laravel/ui`), with `validateLogin()` overridden for the reCAPTCHA hook and `attemptLogin()` overridden to delegate to `laragear/two-factor`'s own login helper instead of calling the guard directly — the package's built-in flow turned out to already implement the interception pattern this section originally proposed by hand, so it's reused rather than reimplemented:
 
-1. Normal credential check proceeds as today (`Auth::attempt()` under the hood).
-2. Override the trait's post-login hook (`authenticated($request, $user)`): if `$user->two_factor_confirmed_at` is set, immediately `Auth::logout()` (undo the just-established session), store `$user->id` in a short-lived, purpose-specific session key (not the real auth session), and redirect to the 2FA challenge route instead of `AppServiceProvider::HOME`.
-3. `TwoFactorChallengeController` (new, `guest`-gated like `LoginController`) reads the pending user id from that session key, accepts a TOTP code or a recovery code, and on success completes `Auth::login($user, $remember)` for real, then redirects home. On failure, the pending session key is left in place (no partial auth leak) and the attempt is throttled.
-4. The pending-login session key has its own short TTL (e.g. 5 minutes) independent of `SESSION_LIFETIME`, so an abandoned challenge doesn't leave a long-lived pre-auth state.
+1. `attemptLogin()` calls `app(TwoFactorLoginHelper::class)->attemptWhen($this->credentials($request), null, $request->boolean('remember'))`, resolved from the container rather than the `Auth2FA` facade (a facade-cached instance would otherwise hold a stale `Request` object across the two requests of a challenge). Wrong credentials fail exactly as before (`sendFailedLoginResponse()`), unaffected by 2FA.
+2. If credentials are valid and the user has no confirmed 2FA, `attemptWhen()` behaves exactly like `Auth::attempt()` and login completes immediately — no new step, matching the "unchanged when 2FA disabled" acceptance criterion.
+3. If credentials are valid and 2FA is confirmed, the helper does not log the user in. It flashes the encrypted credentials into the session under `config('two-factor.login.key')` (`_2fa_login`) and re-renders the same `POST /login` response as the configured challenge view (`config('two-factor.login.view')`, set to `auth.two-factor-challenge` in `config/two-factor.php`) — there is no separate `/login/two-factor-challenge` route or `TwoFactorChallengeController`; the existing `/login` endpoint serves both steps.
+4. `validateLogin()` is phase-aware: if the session already holds the flashed key, it only requires the `2fa_code` field (email/password/recaptcha are absent from that submission); otherwise it requires the normal credential fields. The challenge view posts back to the same URL with just `2fa_code`; the helper merges it with the previously-flashed credentials and re-attempts. A correct TOTP or recovery code completes `Auth::login()` for real; an incorrect code re-renders the challenge view with a validation error and leaves the flashed credentials in place for another attempt.
 
 ### Recovery Codes
 

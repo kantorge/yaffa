@@ -26,6 +26,14 @@
       </div>
 
       <div
+        v-else-if="loadError"
+        class="alert alert-danger mb-0"
+        role="alert"
+      >
+        {{ __('Unable to load API tokens.') }}
+      </div>
+
+      <div
         v-else-if="tokens.length === 0"
         class="alert alert-info mb-0"
         role="alert"
@@ -99,7 +107,7 @@
             <button
               type="button"
               class="btn-close"
-              :disabled="creating"
+              :disabled="creating || (createdToken && !acknowledged)"
               data-coreui-dismiss="modal"
               aria-label="Close"
               @click="resetForm"
@@ -313,6 +321,7 @@
     data: () => ({
       tokens: [],
       loading: false,
+      loadError: false,
       revokingId: null,
       abilityOptions: ABILITY_OPTIONS,
       preset: 'read',
@@ -340,11 +349,7 @@
       this.$nextTick(() => {
         const el = this.$refs.createModalEl;
         if (el) {
-          if (window.coreui && window.coreui.Modal) {
-            this.createModal = new window.coreui.Modal(el);
-          } else if (window.bootstrap && window.bootstrap.Modal) {
-            this.createModal = new window.bootstrap.Modal(el);
-          }
+          this.createModal = new window.coreui.Modal(el);
         }
       });
 
@@ -353,6 +358,7 @@
     methods: {
       async loadTokens() {
         this.loading = true;
+        this.loadError = false;
 
         try {
           const response = await axios.get(
@@ -361,6 +367,7 @@
           this.tokens = response.data?.data || [];
         } catch (error) {
           console.error(error);
+          this.loadError = true;
           toastHelpers.showErrorToast(__('Unable to load API tokens.'));
         } finally {
           this.loading = false;

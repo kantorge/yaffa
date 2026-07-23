@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ApiTokenRequest;
 use App\Models\User;
 use App\Services\ApiTokenService;
+use Closure;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Carbon;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiTokenApiController extends Controller implements HasMiddleware
 {
@@ -23,6 +25,17 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            // Token management must stay behind the first-party session: since no controller yet
+            // enforces per-token abilities (see the "Phased Ability Enforcement" spec section), a
+            // bearer token reaching these endpoints could mint itself a broader-access replacement,
+            // defeating the whole point of scoping it in the first place.
+            function (Request $request, Closure $next) {
+                if ($request->user()?->currentAccessToken() instanceof PersonalAccessToken) {
+                    abort(403, 'Managing API tokens is only available to first-party session requests.');
+                }
+
+                return $next($request);
+            },
         ];
     }
 
@@ -52,10 +65,19 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         /** @var User $user */
         $user = $request->user();
 
+        // Defense in depth alongside the session-only middleware() gate above: a token can never
+        // grant abilities it does not itself hold. This is a no-op for session requests, whose
+        // TransientToken::can() always returns true.
+        $currentToken = $user->currentAccessToken();
+        $abilities = array_values(array_filter(
+            $validated['abilities'],
+            fn (string $ability) => $currentToken->can($ability)
+        ));
+
         $newToken = $this->apiTokenService->create(
             $user,
             $validated['name'],
-            $validated['abilities'],
+            $abilities,
             isset($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null
         );
 
