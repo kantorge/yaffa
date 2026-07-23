@@ -24,6 +24,9 @@
         "sass": "^1.57.1",
         "vite": "^8.0.16"
     },
+    "overrides": {
+        "shell-quote": "^1.10.0"
+    },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.40",
         "@coreui/coreui": "^5.7.1",
