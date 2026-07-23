@@ -158,9 +158,9 @@ class TransactionService
             return $transaction->transaction_type->amountMultiplier()
                 * $config->price
                 * $config->quantity
-                + $config->dividend
-                - $config->tax
-                - $config->commission;
+                + $transaction->transaction_type->dividendMultiplier() * $config->dividend
+                + $transaction->transaction_type->taxMultiplier() * $config->tax
+                + $transaction->transaction_type->commissionMultiplier() * $config->commission;
         }
 
         return null;
