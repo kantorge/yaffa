@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class DisableTwoFactorAuth extends Command
 {
@@ -38,6 +39,12 @@ class DisableTwoFactorAuth extends Command
         }
 
         $user->disableTwoFactorAuth();
+
+        Log::warning('Two-factor authentication disabled via break-glass operator command', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'command' => $this->signature,
+        ]);
 
         $this->info(__('Two-factor authentication has been disabled for :email.', ['email' => $user->email]));
 

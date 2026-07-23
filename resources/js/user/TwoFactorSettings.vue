@@ -13,6 +13,14 @@
         {{ __('Loading two-factor authentication status...') }}
       </div>
 
+      <div
+        v-else-if="loadError"
+        class="alert alert-danger mb-0"
+        role="alert"
+      >
+        {{ __('Unable to load two-factor authentication status.') }}
+      </div>
+
       <template v-else>
         <div v-if="enabled" class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
@@ -203,6 +211,7 @@
     name: 'TwoFactorSettings',
     data: () => ({
       loading: false,
+      loadError: false,
       enabled: false,
       busy: false,
       enrollModal: null,
@@ -225,23 +234,21 @@
       this.$nextTick(() => {
         const el = this.$refs.enrollModalEl;
         if (el) {
-          if (window.coreui && window.coreui.Modal) {
-            this.enrollModal = new window.coreui.Modal(el);
-          } else if (window.bootstrap && window.bootstrap.Modal) {
-            this.enrollModal = new window.bootstrap.Modal(el);
-          }
+          this.enrollModal = new window.coreui.Modal(el);
         }
       });
     },
     methods: {
       async loadStatus() {
         this.loading = true;
+        this.loadError = false;
 
         try {
           const response = await axios.get(this.route('api.v1.users.me.two-factor.show'));
           this.enabled = Boolean(response.data?.enabled);
         } catch (error) {
           console.error(error);
+          this.loadError = true;
           toastHelpers.showErrorToast(__('Unable to load two-factor authentication status.'));
         } finally {
           this.loading = false;
