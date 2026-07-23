@@ -11,6 +11,8 @@ return [
     'runs_scheduler' => env('RUNS_SCHEDULER', false),
     'import_max_file_size_mb' => (int) env('IMPORT_MAX_FILE_SIZE_MB', 2),
     'import_max_rows' => (int) env('IMPORT_MAX_ROWS', 5000),
+    'api_token_max_lifetime_days' => (int) env('API_TOKEN_MAX_LIFETIME_DAYS', 365),
+    'scramble_prod_auth' => env('SCRAMBLE_PROD_AUTH', 'none'),
 
     // Optional settings, used primarily for the public facing Sandbox environment
     'sandbox_mode' => env('SANDBOX_MODE', false),

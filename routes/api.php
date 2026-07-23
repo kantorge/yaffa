@@ -6,6 +6,7 @@ use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
+use App\Http\Controllers\API\ApiTokenApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TwoFactorApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -311,4 +313,25 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('users.me.preferences.get');
     Route::put('/users/me/preferences/{key}', [UserApiController::class, 'setPreference'])
         ->name('users.me.preferences.set');
+
+    // API token endpoints
+    Route::get('/users/me/tokens', [ApiTokenApiController::class, 'index'])
+        ->name('users.me.tokens.index');
+    Route::post('/users/me/tokens', [ApiTokenApiController::class, 'store'])
+        ->name('users.me.tokens.store');
+    Route::delete('/users/me/tokens/{id}', [ApiTokenApiController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('users.me.tokens.destroy');
+
+    // Two-factor authentication endpoints
+    Route::get('/users/me/two-factor', [TwoFactorApiController::class, 'show'])
+        ->name('users.me.two-factor.show');
+    Route::post('/users/me/two-factor/enroll', [TwoFactorApiController::class, 'enroll'])
+        ->name('users.me.two-factor.enroll');
+    Route::post('/users/me/two-factor/confirm', [TwoFactorApiController::class, 'confirm'])
+        ->name('users.me.two-factor.confirm');
+    Route::post('/users/me/two-factor/disable', [TwoFactorApiController::class, 'disable'])
+        ->name('users.me.two-factor.disable');
+    Route::post('/users/me/two-factor/recovery-codes', [TwoFactorApiController::class, 'regenerateRecoveryCodes'])
+        ->name('users.me.two-factor.recovery-codes');
 });
