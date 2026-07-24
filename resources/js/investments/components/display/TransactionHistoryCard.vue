@@ -332,7 +332,7 @@
                   `<button class="btn btn-xs btn-danger data-delete" data-id="${id}" type="button" title="${vm.__(
                     'Delete',
                   )}"><i class="fa fa-fw fa-trash"></i></button> `;
-              } else {
+              } else if (row.schedule_first_instance) {
                 // Scheduled transaction actions
                 // For scheduled instances, use originalId (parent transaction ID)
                 const id = row.originalId || row.id;

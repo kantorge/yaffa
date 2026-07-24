@@ -233,7 +233,7 @@ class InvestmentController extends Controller implements HasMiddleware
                 && ($transaction->transactionSchedule?->active) === true);
 
         // Add all scheduled instances to list of transactions
-        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
         $transactions = $transactions->concat($scheduleInstances);
 
         return view('investments.show', [
