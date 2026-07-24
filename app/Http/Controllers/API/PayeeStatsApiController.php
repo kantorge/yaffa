@@ -10,6 +10,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 
 class PayeeStatsApiController extends Controller implements HasMiddleware
@@ -23,11 +24,17 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'categoryStats',
+            ]),
         ];
     }
 
     /**
-     * GET /api/ai/payees/{id}/category-stats - Get category usage stats for a payee
+     * Get payee category stats
+     *
+     * Returns the most frequently used categories for a payee, based on the
+     * payee's transaction history over a recent period.
      *
      * @throws AuthorizationException
      */

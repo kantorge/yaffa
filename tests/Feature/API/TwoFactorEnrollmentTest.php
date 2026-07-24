@@ -12,6 +12,13 @@ class TwoFactorEnrollmentTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['yaffa.sandbox_mode' => false]);
+    }
+
     public function test_status_is_disabled_by_default(): void
     {
         $user = User::factory()->create();
@@ -70,5 +77,41 @@ class TwoFactorEnrollmentTest extends TestCase
         $response = $this->getJson(route('api.v1.users.me.two-factor.show'));
 
         $this->assertUserNotAuthorized($response);
+    }
+
+    private function enableTwoFactorFor(User $user): void
+    {
+        $user->createTwoFactorAuth();
+        $user->confirmTwoFactorAuth($user->fresh()->makeTwoFactorCode());
+    }
+
+    public function test_confirm_on_already_enabled_account_is_rejected_without_leaking_recovery_codes(): void
+    {
+        $user = User::factory()->create();
+        $this->enableTwoFactorFor($user);
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.users.me.two-factor.confirm'), [
+            'code' => 'not-a-real-code',
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonMissingPath('recovery_codes');
+        $this->assertTrue($user->fresh()->hasTwoFactorEnabled());
+    }
+
+    public function test_enroll_on_already_enabled_account_is_rejected_without_wiping_existing_secret(): void
+    {
+        $user = User::factory()->create();
+        $this->enableTwoFactorFor($user);
+        $originalSecret = $user->fresh()->twoFactorAuth->shared_secret;
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.users.me.two-factor.enroll'));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $freshUser = $user->fresh();
+        $this->assertTrue($freshUser->hasTwoFactorEnabled());
+        $this->assertSame($originalSecret, $freshUser->twoFactorAuth->shared_secret);
     }
 }

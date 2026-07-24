@@ -24,13 +24,13 @@ Two related hardening initiatives, shipped together because the second reduces t
   - Remove the dead legacy `api` guard from `config/auth.php`.
   - Make the auto-generated API docs (`/docs/api`) production access explicitly configurable via a new `SCRAMBLE_PROD_AUTH` env var, instead of the current implicit all-or-nothing behavior.
   - Add optional, user-controlled TOTP 2FA on top of the existing `laravel/ui` login flow, with recovery codes.
+  - **Enforce the `abilities` recorded on a personal access token on every `/api/v1/*` controller, not just token management and 2FA management** — see "Full Ability Enforcement" below. This is in scope for MVP; it is not a follow-up.
   - Keep both features consistent with existing conventions: Services over controller logic, Form Requests for validation, Policies for authorization, `{Noun}ApiController` naming, Vue islands per page (`user/settings.js`).
 - Non-Goals:
   - OAuth2 / delegated third-party authorization (Passport). No current need for "app acting on behalf of a user without sharing credentials."
   - Migrating `laravel/ui` to Fortify.
   - SMS/email-based 2FA — TOTP only, to avoid new telco/infra dependencies (consistent with the self-hosted, no-third-party-data-sharing product philosophy).
   - Forcing 2FA org-wide — this is a self-hosted, typically single-user-or-family app; making 2FA mandatory is out of scope.
-  - Full per-endpoint ability enforcement across all ~24 API controllers in this iteration (see "Phased Ability Enforcement" below) — MVP ships tokens with a working, safe default and defers the fine-grained scoping refactor.
   - A public/marketplace API or published SDK. This is about a user accessing their own data, not third parties accessing it.
 
 ## Assumptions
@@ -90,7 +90,7 @@ Two related hardening initiatives, shipped together because the second reduces t
 - UX / validation rules:
   - The plaintext token is shown exactly once, immediately after creation, with a copy-to-clipboard button and an explicit "you will not be able to see this again" warning — never re-displayed, never logged.
   - Recovery codes follow the same one-time-reveal pattern.
-  - Ability selection defaults to a "Read-only" preset and a "Full access" preset, with an "Advanced" expand for per-resource-group checkboxes, to avoid overwhelming a non-technical self-hosting user with a raw ability list.
+  - Read access is a baseline every token carries — it is not a checkbox the user can toggle off, since even write-only work (e.g. creating a transaction) requires reading related accounts, payees, categories, and tags to reference them. The creation form shows this as a fixed note, plus two independent checkboxes: "Allow write access" and "Allow account & security settings changes," which can be combined in any way.
   - Token/2FA-disable actions that reduce security (revoke, disable 2FA) get a confirmation dialog; 2FA disable additionally requires re-entering the current password server-side (not just a client-side confirm).
 
 ## Data & API Design
@@ -120,29 +120,38 @@ Two related hardening initiatives, shipped together because the second reduces t
 
 ### Ability Model
 
-`App\Enums\ApiTokenAbility` defines a closed, resource-grouped whitelist mirroring the controller groups in `routes/api.php`, e.g.:
+`App\Enums\ApiTokenAbility` defines a closed, three-value whitelist:
 
 ```text
-accounts:read, accounts:write,
-transactions:read, transactions:write,
-investments:read, investments:write,
-categories:read, categories:write,
-payees:read, payees:write,
-tags:read, tags:write,
-reports:read,
-imports:write,
-settings:write,
+read,
+write,
+settings,
 ```
 
-`ApiTokenRequest` validates `abilities` against `ApiTokenAbility::values()`. `ApiTokenService::create()` rejects an empty ability list (a token must be scoped to *something* — no implicit `['*']` from the UI; `['*']` is only what a "Full access" preset expands to client-side before submission).
+Resource-level granularity (separate `accounts:*`, `transactions:*`, `investments:*`, `categories:*`, `payees:*`, `tags:*` abilities) was deliberately rejected: `Transaction` has foreign keys into accounts, payees, categories, and tags, so any token that writes transactions already needs read access to virtually every other resource just to reference them — per-resource checkboxes would add UI friction without a corresponding security benefit, since there's no adversarial third party requesting a scope here, only the user narrowing a token for their own use.
 
-### Phased Ability Enforcement
+- **`read`** is included on every token unconditionally — it is the baseline, not an optional tier. `ApiTokenRequest::prepareForValidation()` adds it automatically to any non-empty ability submission that omits it.
+- **`write`** grants write access to all financial data (accounts, transactions, investments, categories, payees, tags, import profiles).
+- **`settings`** grants account/security-settings changes (password, profile) — kept separate from `write` because it's a different risk category (account takeover) than financial-data CRUD, not merely a bigger version of the same thing.
 
-Adding `abilities:` middleware to every action of all ~24 `API` controllers in one pass is a large, mechanical diff with real regression risk (each controller currently declares `middleware()` once for the whole class; per-action ability gating needs `Illuminate\Routing\Controllers\Middleware::class->only([...])`, touched file-by-file).
+`write` and `settings` are independent and can be combined freely; neither implies the other. `ApiTokenRequest` validates `abilities` against `ApiTokenAbility::values()`. `ApiTokenService::create()` rejects a completely empty ability list (a token must ask for at least something — the read baseline is only added on top of a non-empty request, not conjured from nothing).
 
-- **MVP (this iteration):** ship token issuance, listing, and revocation. Issued tokens carry real `abilities` (validated, stored, visible to the user) but **no controller yet enforces them** — functionally equivalent to a full-access token today, same effective reach as a logged-in session, scoped only by existing Policies/`user_id` ownership. This still delivers the core goal (external, revocable, nameable API access) safely, because ownership scoping is unaffected by how the request authenticated. One exception: `ApiTokenApiController` itself (token issuance/listing/revocation) is session-only — a bearer token, however scoped, cannot call it at all, so a narrowly-scoped token cannot use these unenforced endpoints to mint itself a broader-access replacement.
-- **Follow-up (separate PR, tracked but out of scope here):** add `abilities:` middleware per action, prioritized by risk — start with the highest-blast-radius controllers: `GoogleDriveConfigApiController`, `AiProviderConfigApiController` (both handle third-party secrets), the `maintenance.*` routes, and `UserApiController::changePassword`. Read-list endpoints (`accounts.index`, `categories.index`, etc.) are lower priority since they're already ownership-scoped.
-- The UI ships the full ability picker from day one regardless, so the abilities a user picks are recorded on the token now. **This is not yet a restriction** — until the follow-up above lands, every issued token has the same full effective reach within the user's own data no matter which abilities were selected; the UI copy discloses this. Once enforcement lands, previously-issued tokens start being restricted to what was recorded at creation time, with no re-issuance needed — but treat that as a future promise, not current behavior.
+### Full Ability Enforcement (MVP requirement — implemented)
+
+**Status: done.** Every `API` controller now enforces the abilities recorded on a bearer token — not just `ApiTokenApiController` (session-only gate) and `TwoFactorApiController` (`abilities:settings` on its four mutating actions).
+
+The mechanism proven on `TwoFactorApiController` was repeated across the remaining ~24 controllers: each declares `auth:sanctum` + `verified` via a static `middleware()` method (`Illuminate\Routing\Controllers\HasMiddleware`, uniform across all 26 `API` controllers), extended with one or more `new Illuminate\Routing\Controllers\Middleware('abilities:<name>', only: [...])` entries scoped by controller method name — no route changes, no new middleware classes, and zero effect on session requests (`TransientToken::can()` is always `true`, so every `abilities:*` check passes trivially for the SPA).
+
+**The full per-controller mapping lives in `permissions.md` § "Full Ability Enforcement — Implementation Plan"** — that is the authoritative reference for exactly which ability gates which action.
+
+Summary of the mapping (see `permissions.md` for the full table):
+- Every `GET` action → requires `read`.
+- Every non-`GET` action → requires `write`.
+- Five config/credential controllers (`AiProviderConfigApiController`, `AiUserSettingsApiController`, `GoogleDriveConfigApiController`, `InvestmentProviderConfigApiController`, `UserApiController`) → every action, including `GET`, requires `settings` instead — they expose account configuration or third-party credentials, not financial data.
+- Two cross-controller "maintenance" routes (`maintenance.clear-currency-cache`, `maintenance.cleanup-ai-document-old-files`) → require `settings` as a per-route override, regardless of their home controller's default. `maintenance.recalculate-account-monthly-summaries` is deliberately *not* in this group — see `permissions.md`'s "Cross-controller maintenance route overrides" section for why (it's `write`, not `settings`).
+- `read` is unconditionally present on every issued token (`ApiTokenRequest::prepareForValidation()`), so single-ability gates are sufficient — a `write`- or `settings`-scoped token always also holds `read`.
+
+Now that this has landed, previously-issued tokens are immediately restricted to what was recorded on them at creation time — no re-issuance needed, since the `abilities` column was already being populated correctly before enforcement existed. This is the intended fix, but it is a real behavior change for any user whose token was unknowingly relying on broader access than they selected — see `variables.md` Pre-Go-Live Checklist for the rollout note. Coverage is pinned by `tests/Feature/API/ApiAbilityEnforcementTest.php` (one deny-without-ability + one allow-with-ability case per controller, data-provider-driven).
 
 ### Token Lifecycle
 
@@ -258,13 +267,13 @@ Because token creation lives behind the same session-authenticated Settings page
   - Revoking an already-expired/pruned token id (idempotent 404, not an error).
   - Losing recovery codes with 2FA still enabled and no valid device (documented as an accepted self-hosted-app limitation — see Risks).
 - Negative paths:
-  - Bearer-token request without a required ability, once Phase 2 enforcement lands on a given controller, gets 403 (Sanctum's `CheckAbilities` default behavior), not a silent pass-through.
-  - Session/SPA requests are unaffected by ability checks at every phase (`TransientToken` always passes `tokenCan()`).
+  - Bearer-token request without a required ability gets 403 (Sanctum's `CheckAbilities` default behavior), not a silent pass-through — enforced on every `API` controller per `permissions.md`'s mapping.
+  - Session/SPA requests are unaffected by ability checks anywhere (`TransientToken` always passes `tokenCan()`).
 
 ## Risks / Open Questions
 
 - **No account-recovery path if a user loses both their authenticator device and recovery codes.** For a self-hosted single-user app there is no support desk to fall back on. Options to resolve before shipping: an artisan command (`php artisan user:disable-2fa {email}`) as a documented break-glass procedure for the operator (whoever has server/DB access), rather than a UI-level bypass. This needs an explicit decision before implementation.
-- **Phased ability enforcement (Part A)** means MVP-issued tokens are effectively full-access until the follow-up lands. This is disclosed to the user in the token-creation UI copy, but is a real interim gap worth confirming is acceptable.
+- **Full ability enforcement (Part A) has shipped** — every `API` controller now enforces `read`/`write`/`settings` per `permissions.md`'s mapping, pinned by `tests/Feature/API/ApiAbilityEnforcementTest.php`. Rolling this out narrows the effective reach of any token issued before the rollout to exactly what its `abilities` column already says — see `variables.md` Pre-Go-Live Checklist for the associated release note.
 - **Email notification on token creation / 2FA disable** was scoped out of MVP (see "Events / Notifications") — worth revisiting once the base flow ships, since it's a common signal for catching account compromise early.
 - **2FA package final choice** is not locked — must be re-validated against maintenance/compatibility at implementation start, per standing project convention.
 - **`YAFFA_REQUIRE_2FA_FOR_API_TOKENS`** is proposed but not decided as a default-on/default-off/exists-at-all question — currently designed as opt-in, off by default.
@@ -279,3 +288,5 @@ Because token creation lives behind the same session-authenticated Settings page
 - Given a user has confirmed 2FA, when they submit correct credentials, then they are redirected to the 2FA challenge and are not granted a session until a correct TOTP or recovery code is submitted.
 - Given a user submits 6 incorrect 2FA codes within a minute, when they submit a 7th, then the attempt is throttled regardless of correctness.
 - Given the API rate limiter change, when a single authenticated user exceeds 120 requests/minute, then subsequent requests are throttled without affecting other users on the same instance.
+- Given a bearer token that was not granted a given ability, when it calls an endpoint requiring that ability, then the request is rejected with 403 — for every one of the ~24 `API` controllers listed in `permissions.md`, not only `ApiTokenApiController`/`TwoFactorApiController`. **Met** — pinned by `tests/Feature/API/ApiAbilityEnforcementTest.php`.
+- Given a session (SPA) request, when it calls any `/api/v1/*` endpoint, then ability checks never deny it — `TransientToken::can()` always returns `true`, so this criterion is met and must not regress as the enforcement mapping evolves.

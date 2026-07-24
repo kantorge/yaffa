@@ -13,6 +13,13 @@ class TwoFactorDisableTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['yaffa.sandbox_mode' => false]);
+    }
+
     private function enableTwoFactorFor(User $user): void
     {
         $user->createTwoFactorAuth();

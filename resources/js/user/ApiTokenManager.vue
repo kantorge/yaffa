@@ -177,55 +177,30 @@
 
               <div class="mb-3">
                 <label class="form-label">{{ __('Access') }}</label>
-                <div class="btn-group w-100 mb-2" role="group">
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    :class="{ active: preset === 'read' }"
-                    @click="applyPreset('read')"
-                  >
-                    {{ __('Read-only') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    :class="{ active: preset === 'full' }"
-                    @click="applyPreset('full')"
-                  >
-                    {{ __('Full access') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    :class="{ active: preset === 'advanced' }"
-                    @click="preset = 'advanced'"
-                  >
-                    {{ __('Advanced') }}
-                  </button>
+                <div class="form-text mb-2">
+                  {{ __('Every token can always read your data.') }}
                 </div>
-
-                <div v-if="preset === 'advanced'" class="row g-2 border rounded p-2">
-                  <div
-                    v-for="ability in abilityOptions"
-                    :key="ability.value"
-                    class="col-6"
-                  >
-                    <div class="form-check">
-                      <input
-                        :id="`ability-${ability.value}`"
-                        v-model="form.abilities"
-                        class="form-check-input"
-                        type="checkbox"
-                        :value="ability.value"
-                      />
-                      <label
-                        class="form-check-label"
-                        :for="`ability-${ability.value}`"
-                      >
-                        {{ ability.label }}
-                      </label>
-                    </div>
-                  </div>
+                <div class="form-check">
+                  <input
+                    id="apiTokenAbilityWrite"
+                    v-model="form.write"
+                    class="form-check-input"
+                    type="checkbox"
+                  />
+                  <label class="form-check-label" for="apiTokenAbilityWrite">
+                    {{ __('Allow write access') }}
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    id="apiTokenAbilitySettings"
+                    v-model="form.settings"
+                    class="form-check-input"
+                    type="checkbox"
+                  />
+                  <label class="form-check-label" for="apiTokenAbilitySettings">
+                    {{ __('Allow account & security settings changes') }}
+                  </label>
                 </div>
                 <div v-if="errors.abilities" class="text-danger small mt-1">
                   {{ errors.abilities[0] }}
@@ -298,24 +273,6 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import Swal from 'sweetalert2';
 
-  const ABILITY_OPTIONS = [
-    { value: 'accounts:read', label: __('Accounts: read') },
-    { value: 'accounts:write', label: __('Accounts: write') },
-    { value: 'transactions:read', label: __('Transactions: read') },
-    { value: 'transactions:write', label: __('Transactions: write') },
-    { value: 'investments:read', label: __('Investments: read') },
-    { value: 'investments:write', label: __('Investments: write') },
-    { value: 'categories:read', label: __('Categories: read') },
-    { value: 'categories:write', label: __('Categories: write') },
-    { value: 'payees:read', label: __('Payees: read') },
-    { value: 'payees:write', label: __('Payees: write') },
-    { value: 'tags:read', label: __('Tags: read') },
-    { value: 'tags:write', label: __('Tags: write') },
-    { value: 'reports:read', label: __('Reports: read') },
-    { value: 'imports:write', label: __('Imports: write') },
-    { value: 'settings:write', label: __('Settings: write') },
-  ];
-
   export default {
     name: 'ApiTokenManager',
     data: () => ({
@@ -323,15 +280,14 @@
       loading: false,
       loadError: false,
       revokingId: null,
-      abilityOptions: ABILITY_OPTIONS,
-      preset: 'read',
       creating: false,
       createdToken: null,
       acknowledged: false,
       createModal: null,
       form: {
         name: '',
-        abilities: [],
+        write: false,
+        settings: false,
         expires_at: '',
       },
       errors: {},
@@ -352,8 +308,6 @@
           this.createModal = new window.coreui.Modal(el);
         }
       });
-
-      this.applyPreset('read');
     },
     methods: {
       async loadTokens() {
@@ -376,29 +330,15 @@
       formatDate(value) {
         return value ? new Date(value).toLocaleString() : __('Never');
       },
-      applyPreset(preset) {
-        this.preset = preset;
-
-        if (preset === 'read') {
-          this.form.abilities = this.abilityOptions
-            .filter((ability) => ability.value.endsWith(':read'))
-            .map((ability) => ability.value);
-        } else if (preset === 'full') {
-          this.form.abilities = this.abilityOptions.map(
-            (ability) => ability.value,
-          );
-        }
-      },
       openCreateModal() {
         this.resetForm();
-        this.applyPreset('read');
 
         if (this.createModal) {
           this.createModal.show();
         }
       },
       resetForm() {
-        this.form = { name: '', abilities: [], expires_at: '' };
+        this.form = { name: '', write: false, settings: false, expires_at: '' };
         this.errors = {};
         this.createdToken = null;
         this.acknowledged = false;
@@ -412,12 +352,20 @@
         this.creating = true;
         this.errors = {};
 
+        const abilities = ['read'];
+        if (this.form.write) {
+          abilities.push('write');
+        }
+        if (this.form.settings) {
+          abilities.push('settings');
+        }
+
         try {
           const response = await axios.post(
             this.route('api.v1.users.me.tokens.store'),
             {
               name: this.form.name,
-              abilities: this.form.abilities,
+              abilities,
               expires_at: this.form.expires_at || null,
             },
           );

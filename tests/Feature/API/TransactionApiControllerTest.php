@@ -56,7 +56,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_get_transaction_details(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -89,7 +89,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_access_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -106,7 +106,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_reconcile_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -128,7 +128,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_unreconcile_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -152,7 +152,7 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(
             route('api.v1.transactions.update-standard', $transaction),
@@ -178,7 +178,7 @@ class TransactionApiControllerTest extends TestCase
             ->buy($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(
             route('api.v1.transactions.update-investment', $transaction),
@@ -203,7 +203,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_reconcile_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -225,7 +225,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_delete_own_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -251,7 +251,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_delete_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -275,7 +275,7 @@ class TransactionApiControllerTest extends TestCase
             ->create(['user_id' => $this->user->id]);
         $originalNextDate = $transaction->transactionSchedule->next_date;
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(route('api.v1.transactions.skip', $transaction));
 
@@ -289,7 +289,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_source_transaction_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $sourceTransaction = Transaction::factory()
@@ -592,7 +592,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_category_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $foreignCategory = Category::factory()->create([
@@ -646,7 +646,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_account_entity_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $foreignAccount = Account::factory()->withUser($otherUser)->create();
@@ -695,7 +695,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_investment_rejects_other_users_investment_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $currency = Currency::factory()->for($otherUser)->create();
@@ -743,7 +743,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_get_scheduled_items(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         // Create a scheduled transaction
         Transaction::factory()
@@ -769,7 +769,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_get_scheduled_items_returns_empty_when_category_required_but_not_provided(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?category_required=1');
 
@@ -779,7 +779,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_updates_category_learning(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -885,7 +885,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_resets_usage_when_category_changes(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -961,7 +961,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_respects_dont_learn_flag(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -1037,7 +1037,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_investment_finalization_does_not_require_items_array(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $currency = $this->user->currencies()->first() ?: Currency::factory()->for($this->user)->create();

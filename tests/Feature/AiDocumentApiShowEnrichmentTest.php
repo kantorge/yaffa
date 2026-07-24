@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentApiShowEnrichmentTest extends TestCase
 {
@@ -41,7 +42,10 @@ class AiDocumentApiShowEnrichmentTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson("/api/v1/documents/{$document->id}");
 
         $response->assertOk()

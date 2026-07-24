@@ -62,7 +62,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_base_currency_account_amounts_are_not_converted(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = $this->createAccount($this->baseCurrency);
 
@@ -91,7 +91,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_foreign_currency_account_amounts_are_converted_using_closest_rate(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $foreignCurrency = Currency::factory()
             ->for($this->user)
@@ -132,7 +132,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_foreign_currency_without_any_rate_falls_back_to_raw_amount(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $foreignCurrency = Currency::factory()
             ->for($this->user)
@@ -168,7 +168,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_foreign_currency_with_only_future_rate_uses_oldest_available_rate(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $foreignCurrency = Currency::factory()
             ->for($this->user)
@@ -208,7 +208,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_correct_rate_is_used_per_month(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $foreignCurrency = Currency::factory()
             ->for($this->user)
@@ -271,7 +271,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_running_total_accumulates_correctly(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = $this->createAccount($this->baseCurrency);
 
@@ -308,7 +308,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_forecast_data_excluded_by_default(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = $this->createAccount($this->baseCurrency);
 
@@ -344,7 +344,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_forecast_data_included_when_flag_is_set(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = $this->createAccount($this->baseCurrency);
 
@@ -380,7 +380,7 @@ class ReportApiCashflowTest extends TestCase
      */
     public function test_account_entity_filter_returns_only_that_accounts_data(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $accountA = $this->createAccount($this->baseCurrency);
         $accountB = $this->createAccount($this->baseCurrency);

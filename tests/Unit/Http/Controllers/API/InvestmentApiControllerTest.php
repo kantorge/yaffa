@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class InvestmentApiControllerTest extends TestCase
@@ -266,13 +267,15 @@ class InvestmentApiControllerTest extends TestCase
             ]);
 
         // User1 should only see their own investment
-        $response = $this->actingAs($user1)->getJson(self::BASE_API_ENDPOINT);
+        Sanctum::actingAs($user1, ['*']);
+        $response = $this->getJson(self::BASE_API_ENDPOINT);
         $response->assertStatus(Response::HTTP_OK);
         $this->assertEquals(1, count($response->json()));
         $response->assertJsonPath('0.user_id', $user1->id);
 
         // User2 should only see their own investment
-        $response = $this->actingAs($user2)->getJson(self::BASE_API_ENDPOINT);
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->getJson(self::BASE_API_ENDPOINT);
         $response->assertStatus(Response::HTTP_OK);
         $this->assertEquals(1, count($response->json()));
         $response->assertJsonPath('0.user_id', $user2->id);

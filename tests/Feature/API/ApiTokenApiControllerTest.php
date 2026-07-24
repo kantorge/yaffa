@@ -26,7 +26,7 @@ class ApiTokenApiControllerTest extends TestCase
 
         $response = $this->actingAs($user)->postJson(route('api.v1.users.me.tokens.store'), [
             'name' => 'My script',
-            'abilities' => ['accounts:read'],
+            'abilities' => ['read'],
         ]);
 
         $response->assertStatus(Response::HTTP_CREATED);
@@ -73,7 +73,7 @@ class ApiTokenApiControllerTest extends TestCase
 
         $response = $this->actingAs($user)->postJson(route('api.v1.users.me.tokens.store'), [
             'name' => 'My script',
-            'abilities' => ['accounts:read'],
+            'abilities' => ['read'],
             'expires_at' => Carbon::now()->subDay()->toDateTimeString(),
         ]);
 
@@ -88,7 +88,7 @@ class ApiTokenApiControllerTest extends TestCase
 
         $response = $this->actingAs($user)->postJson(route('api.v1.users.me.tokens.store'), [
             'name' => 'My script',
-            'abilities' => ['accounts:read'],
+            'abilities' => ['read'],
             'expires_at' => Carbon::now()->addDays($maxLifetimeDays + 1)->toDateTimeString(),
         ]);
 
@@ -99,7 +99,7 @@ class ApiTokenApiControllerTest extends TestCase
     public function test_can_revoke_own_token(): void
     {
         $user = User::factory()->create();
-        $newToken = $user->createToken('mine', ['accounts:read']);
+        $newToken = $user->createToken('mine', ['read']);
 
         $response = $this->actingAs($user)->deleteJson(route('api.v1.users.me.tokens.destroy', ['id' => $newToken->accessToken->id]));
 
@@ -111,7 +111,7 @@ class ApiTokenApiControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        $newToken = $otherUser->createToken('theirs', ['accounts:read']);
+        $newToken = $otherUser->createToken('theirs', ['read']);
 
         $response = $this->actingAs($user)->deleteJson(route('api.v1.users.me.tokens.destroy', ['id' => $newToken->accessToken->id]));
 
@@ -132,11 +132,11 @@ class ApiTokenApiControllerTest extends TestCase
     public function test_narrow_bearer_token_cannot_create_a_broader_token(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user, ['accounts:read']);
+        Sanctum::actingAs($user, ['read']);
 
         $response = $this->postJson(route('api.v1.users.me.tokens.store'), [
             'name' => 'Escalation attempt',
-            'abilities' => ['settings:write'],
+            'abilities' => ['settings'],
         ]);
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);

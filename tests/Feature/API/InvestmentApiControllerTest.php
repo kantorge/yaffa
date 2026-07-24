@@ -32,7 +32,7 @@ class InvestmentApiControllerTest extends TestCase
 
     public function test_can_delete_own_investment(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $investment = $this->createInvestmentForUser($this->user);
 
@@ -55,7 +55,7 @@ class InvestmentApiControllerTest extends TestCase
         $otherUser = User::factory()->create();
         $investment = $this->createInvestmentForUser($this->user);
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->deleteJson(route('api.v1.investments.destroy', $investment));
 
@@ -69,7 +69,7 @@ class InvestmentApiControllerTest extends TestCase
 
     public function test_can_update_provider_settings_for_web_scraping_investment(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $investment = $this->createInvestmentForUser($this->user);
         $investment->update([
@@ -101,7 +101,7 @@ class InvestmentApiControllerTest extends TestCase
 
     public function test_provider_settings_update_validates_selected_provider_schema(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $investment = $this->createInvestmentForUser($this->user);
         $investment->update([
@@ -123,7 +123,7 @@ class InvestmentApiControllerTest extends TestCase
 
     public function test_show_returns_provider_settings_payload(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $investment = $this->createInvestmentForUser($this->user);
         $investment->update([
@@ -145,7 +145,7 @@ class InvestmentApiControllerTest extends TestCase
 
     public function test_timeline_resolves_closed_and_open_holding_periods_with_prices(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $investment = $this->createInvestmentForUser($this->user);
         $account = AccountEntity::factory()

@@ -14,6 +14,7 @@ use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class ImportTransactionCreateFromDraftTest extends TestCase
 {
@@ -30,7 +31,10 @@ class ImportTransactionCreateFromDraftTest extends TestCase
         $draft = $this->parseCsvDraft($user, $account, $profile, 'Vendor');
         $payload = $this->buildFinalizePayload($draft, $category->id, $payee->id);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.transactions.store-standard'), $payload);
 
         $response->assertOk();
@@ -52,7 +56,10 @@ class ImportTransactionCreateFromDraftTest extends TestCase
         $updatePayload['action'] = 'edit';
         $updatePayload['comment'] = 'Updated after import';
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.transactions.update-standard', $transaction), $updatePayload)
             ->assertOk()
             ->assertJsonPath('transaction.comment', 'Updated after import');
@@ -74,7 +81,10 @@ MWarning-friendly import
 ^
 QIF;
 
-        $parseResponse = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $parseResponse = $this
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'qif',
                 'account_id' => $account->id,
@@ -91,7 +101,10 @@ QIF;
 
         $payload = $this->buildFinalizePayload($draft, $category->id, $payee->id);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.transactions.store-standard'), $payload)
             ->assertOk();
 
@@ -112,13 +125,19 @@ QIF;
         $invalidPayload = $payload;
         $invalidPayload['items'][0]['category_id'] = 999999;
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.transactions.store-standard'), $invalidPayload)
             ->assertUnprocessable();
 
         $this->assertDatabaseCount('transactions', 0);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.transactions.store-standard'), $payload)
             ->assertOk();
 
@@ -144,11 +163,17 @@ QIF;
         $draft = $this->parseCsvDraft($user, $account, $profile, 'AI Vendor');
         $payload = $this->buildFinalizePayload($draft, $category->id, $payee->id, $aiDocument->id);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.transactions.store-standard'), $payload)
             ->assertOk();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.transactions.store-standard'), $payload)
             ->assertUnprocessable();
 
@@ -216,7 +241,10 @@ QIF;
 2025.01.11.;-50,25;Elektronikus forint átutalás;Ref;{$payeeName};Memo
 CSV;
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.imports.parse'), [
                 'source_type' => 'csv',
                 'account_id' => $account->id,

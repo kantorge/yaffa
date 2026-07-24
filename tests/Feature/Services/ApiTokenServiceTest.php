@@ -30,7 +30,7 @@ class ApiTokenServiceTest extends TestCase
         $user = User::factory()->create();
         $service = new ApiTokenService();
 
-        $newToken = $service->create($user, 'Test token', ['accounts:read'], Carbon::now()->addDays(365));
+        $newToken = $service->create($user, 'Test token', ['read'], Carbon::now()->addDays(365));
 
         $this->assertTrue(
             $newToken->accessToken->expires_at->lessThanOrEqualTo(Carbon::now()->addDays(30)->addMinute())
@@ -44,7 +44,7 @@ class ApiTokenServiceTest extends TestCase
         $user = User::factory()->create();
         $service = new ApiTokenService();
 
-        $newToken = $service->create($user, 'Test token', ['accounts:read'], null);
+        $newToken = $service->create($user, 'Test token', ['read'], null);
 
         $this->assertTrue(
             $newToken->accessToken->expires_at->between(
@@ -59,8 +59,8 @@ class ApiTokenServiceTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $user->createToken('mine', ['accounts:read']);
-        $otherUser->createToken('theirs', ['accounts:read']);
+        $user->createToken('mine', ['read']);
+        $otherUser->createToken('theirs', ['read']);
 
         $service = new ApiTokenService();
 
@@ -73,7 +73,7 @@ class ApiTokenServiceTest extends TestCase
     public function test_revoke_deletes_token_owned_by_user(): void
     {
         $user = User::factory()->create();
-        $newToken = $user->createToken('mine', ['accounts:read']);
+        $newToken = $user->createToken('mine', ['read']);
 
         $service = new ApiTokenService();
 
@@ -85,7 +85,7 @@ class ApiTokenServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
-        $newToken = $otherUser->createToken('theirs', ['accounts:read']);
+        $newToken = $otherUser->createToken('theirs', ['read']);
 
         $service = new ApiTokenService();
 

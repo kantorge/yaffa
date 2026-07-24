@@ -6,6 +6,7 @@ use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class GoogleDriveConfigRequestTest extends TestCase
 {
@@ -27,7 +28,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_requires_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'folder_id' => 'test-folder-id',
             ]);
@@ -38,7 +41,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_requires_folder_id(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             ]);
@@ -49,7 +54,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_rejects_short_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => 'too short',
                 'folder_id' => 'test-folder-id',
@@ -61,7 +68,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_rejects_very_long_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => str_repeat('x', 5001),
                 'folder_id' => 'test-folder-id',
@@ -73,7 +82,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_rejects_invalid_json_format(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => '{"invalid": "json", missing bracket',
                 'folder_id' => 'test-folder-id',
@@ -87,7 +98,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         $invalidJson = '{"type":"service_account","project_id":"test"}'; // Missing most required keys
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => $invalidJson,
                 'folder_id' => 'test-folder-id',
@@ -101,7 +115,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"http://169.254.169.254/latest/meta-data/"}';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => $maliciousJson,
                 'folder_id' => 'test-folder-id',
@@ -115,7 +132,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"http://internal.attacker.example/oauth","token_uri":"https://oauth2.googleapis.com/token"}';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => $maliciousJson,
                 'folder_id' => 'test-folder-id',
@@ -127,7 +147,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_accepts_valid_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
@@ -140,7 +162,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'another-folder-id',
@@ -152,7 +177,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_accepts_post_import_actions_array(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
@@ -164,7 +191,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_accepts_enabled_boolean(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
@@ -183,7 +212,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'folder_id' => 'original-folder-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'enabled' => true,
             ]);
@@ -200,7 +232,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
         $originalJson = $config->service_account_json;
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
             ]);
@@ -216,7 +251,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
         $originalJson = $config->service_account_json;
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '',
@@ -233,7 +271,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
         $newJson = '{"type":"service_account","project_id":"new-project","private_key_id":"newkey","private_key":"-----BEGIN PRIVATE KEY-----\nnewtest\n-----END PRIVATE KEY-----","client_email":"new@new-project.iam.gserviceaccount.com","client_id":"987654321","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => $newJson,
@@ -249,7 +290,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '{"invalid": json}',
@@ -264,7 +308,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
         $originalJson = $config->service_account_json;
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
                 'service_account_json' => '__existing__',
@@ -283,7 +330,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'post_import_actions' => null,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
                 'post_import_actions' => ['delete'],
@@ -302,7 +352,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'enabled' => true,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
                 'enabled' => false,
@@ -318,7 +371,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_test_connection_requires_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'folder_id' => 'test-folder-id',
             ]);
@@ -329,7 +384,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_test_connection_requires_folder_id(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             ]);
@@ -342,7 +399,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => '__existing__',
                 'folder_id' => 'test-folder-id',
@@ -354,7 +414,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_test_connection_allows_new_service_account_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'test-folder-id',
@@ -366,7 +428,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_test_connection_rejects_invalid_json(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => 'not valid json',
                 'folder_id' => 'test-folder-id',
@@ -380,7 +444,10 @@ class GoogleDriveConfigRequestTest extends TestCase
     {
         $invalidJson = '{"type":"service_account","project_id":"test"}';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.test'), [
                 'service_account_json' => $invalidJson,
                 'folder_id' => 'test-folder-id',
@@ -399,7 +466,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'folder_id' => 'same-folder-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
                 'folder_id' => 'same-folder-id',
                 'post_import_actions' => ['move_to_processed'],
@@ -417,7 +487,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'folder_id' => 'import-folder-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
                 'folder_id' => 'import-folder-id',
                 'post_import_actions' => ['move_to_processed'],
@@ -434,7 +507,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'folder_id' => 'import-folder-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
                 'post_import_actions' => ['move_to_processed'],
                 'processed_folder_id' => 'import-folder-id',
@@ -451,7 +527,10 @@ class GoogleDriveConfigRequestTest extends TestCase
             'folder_id' => 'import-folder-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
                 'post_import_actions' => ['move_to_processed'],
                 'processed_folder_id' => null,
@@ -463,7 +542,9 @@ class GoogleDriveConfigRequestTest extends TestCase
 
     public function test_create_rejects_processed_folder_id_equal_to_folder_id(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.google-drive.config.store'), [
                 'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
                 'folder_id' => 'same-folder-id',

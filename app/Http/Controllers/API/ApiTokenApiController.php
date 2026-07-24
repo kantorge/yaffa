@@ -39,6 +39,12 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * List API tokens
+     *
+     * Lists the current user's personal access tokens, including their abilities,
+     * expiration, and last-used timestamp. Session requests only; see middleware().
+     */
     public function index(Request $request): JsonResponse
     {
         /** @var User $user */
@@ -58,6 +64,13 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         ]);
     }
 
+    /**
+     * Create an API token
+     *
+     * Creates a new personal access token for the current user. Requested abilities
+     * are filtered down to those the requesting session already holds, so a token can
+     * never grant itself broader access than its creator has.
+     */
     public function store(ApiTokenRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -90,6 +103,11 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         ], 201);
     }
 
+    /**
+     * Revoke an API token
+     *
+     * @throws ModelNotFoundException
+     */
     public function destroy(Request $request, int $id): JsonResponse
     {
         /** @var User $user */

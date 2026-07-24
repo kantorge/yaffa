@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
@@ -34,27 +35,30 @@ class InvestmentApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline',
+            ]),
+            new Middleware('abilities:write', only: [
+                'patchActive', 'updateProviderSettings', 'destroy',
+            ]),
         ];
     }
 
     /**
-     * Get a list of investments with optional filtering and sorting.
+     * List investments
+     *
+     * Returns the user's investments with optional filtering and sorting.
+     *
+     * Supported query parameters:
+     * - active: filter by active status (1 or 0)
+     * - query: search string to match against name, symbol, or ISIN (alias: q)
+     * - currency_id: filter by currency ID
+     * - limit: maximum number of results to return (default 10)
+     * - sort_by: field to sort by (name, symbol, isin, active, created_at), default is name
+     * - sort_order: asc or desc, default is asc
      */
     public function index(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/investments")
-         * @name("api.v1.investments.index")
-         * @middlewares("api", "auth:sanctum")
-         *
-         * Currently supported query parameters:
-         * - active: filter by active status (1 or 0)
-         * - query: search string to match against name, symbol, or ISIN (alias: q)
-         * - currency_id: filter by currency ID
-         * - limit: maximum number of results to return (default 10)
-         * - sort_by: field to sort by (name, symbol, isin, active, created_at), default is name
-         * - sort_order: asc or desc, default is asc
-         */
         // Whitelist of valid sortable columns
         $validSortColumns = ['name', 'symbol', 'isin', 'active', 'created_at'];
         $sortBy = $request->query('sort_by', 'name');
@@ -113,15 +117,12 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Read and return the details of a selected investment
+     * Get an investment
+     *
+     * @throws AuthorizationException
      */
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
-        /**
-         * @get("/api/v1/investments/{investment}")
-         * @name("api.v1.investments.show")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('view', $investment);
 
         $investment->load(['currency']);
@@ -130,15 +131,12 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get historical price points for an investment.
+     * Get investment price history
+     *
+     * @throws AuthorizationException
      */
     public function getPriceHistory(Investment $investment): JsonResponse
     {
-        /**
-         * @get("/api/v1/investments/{investment}/price-history")
-         * @name("api.v1.investments.price-history")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('view', $investment);
 
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
@@ -151,7 +149,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get complete investment display data (investment, transactions, quantities, prices).
+     * Get investment display data
+     *
      * Used by the investment detail page to update all visualizations after transaction changes.
      */
     public function getDisplayData(Investment $investment): JsonResponse
@@ -199,11 +198,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * @throws AuthorizationException
-     */
-    /**
-     * V1: PATCH /api/v1/investments/{investment}
-     * Accepts { active: true|false } in request body.
+     * Update investment active status
+     *
+     * Accepts { active: true|false } in the request body.
      *
      * @throws AuthorizationException
      */
@@ -219,6 +216,11 @@ class InvestmentApiController extends Controller implements HasMiddleware
         return response()->json($investment, Response::HTTP_OK);
     }
 
+    /**
+     * Update investment provider settings
+     *
+     * @throws AuthorizationException
+     */
     public function updateProviderSettings(
         UpdateInvestmentProviderSettingsRequest $request,
         Investment $investment
@@ -237,15 +239,13 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get all investments with timeline data
+     * List investments with timeline data
+     *
+     * Returns each investment's holding periods (quantity, start/end dates) along with
+     * the price as of the end of each period, built from the user's transaction schedule.
      */
     public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/investments/timeline")
-         * @name("api.v1.investments.timeline")
-         * @middlewares("api", "auth:sanctum")
-         */
         $investments = $request->user()
             ->investments()
             ->with([
@@ -334,15 +334,12 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified investment.
+     * Delete an investment
+     *
+     * @throws AuthorizationException
      */
     public function destroy(Investment $investment): JsonResponse
     {
-        /**
-         * @delete("/api/v1/investments/{investment}")
-         * @name("api.v1.investments.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
         Gate::authorize('delete', $investment);
 
         $result = $this->investmentService->delete($investment);

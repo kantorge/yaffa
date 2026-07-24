@@ -19,6 +19,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -38,18 +39,29 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'index', 'show', 'summary',
+            ]),
+            new Middleware('abilities:write', only: [
+                'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+            ]),
+            // Operator-level bulk maintenance action, not a per-record financial-data
+            // write, so it requires "settings" instead of "write".
+            new Middleware('abilities:settings', only: [
+                'cleanupOldFiles',
+            ]),
         ];
     }
 
     /**
+     * Upload a document for AI processing
+     *
+     * Accepts uploaded files and/or text input, creates an AI document, and queues it for background processing.
+     *
      * @throws AuthorizationException
      */
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/documents")
-         * @middleware("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('create', AiDocument::class);
 
         /** @var User $user */
@@ -90,7 +102,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * PATCH /api/v1/documents/{id} - Update document (custom prompt or status)
+     * Update a document
+     *
+     * Updates the custom prompt or status of an AI document.
      *
      * @throws AuthorizationException
      */
@@ -116,7 +130,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents/summary - Aggregate stats for non-finalized documents
+     * Get document processing summary
+     *
+     * Returns aggregate counts (ready for review, processing failed, oldest pending) for the
+     * user's non-finalized AI documents.
      */
     public function summary(Request $request): JsonResponse
     {
@@ -152,7 +169,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/maintenance/cleanup-ai-document-old-files - Queue cleanup of old AI document files
+     * Cleanup old AI document files
+     *
+     * Queues a background job that removes old AI document files for the authenticated user.
      */
     public function cleanupOldFiles(Request $request): JsonResponse
     {
@@ -166,7 +185,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents - List user's documents with filters
+     * List documents
+     *
+     * Returns the user's AI documents, with optional filters for date range, status, source
+     * type, and free-text search.
      */
     public function index(Request $request): JsonResponse
     {
@@ -230,7 +252,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents/{id} - Get document details
+     * Get a document
+     *
+     * Returns full details for a single AI document, including matched entities and related records.
      *
      * @throws AuthorizationException
      */
@@ -247,7 +271,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/documents/{id}/reprocess - Trigger document reprocessing
+     * Reprocess a document
+     *
+     * Resets a document to ready_for_processing and re-queues it for AI processing. Only
+     * allowed from a terminal or failed status.
      *
      * @throws AuthorizationException
      */
@@ -283,7 +310,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/v1/documents/{id} - Delete a document and its files
+     * Delete a document
+     *
+     * Deletes an AI document, its stored files, and any linked received mail.
      *
      * @throws AuthorizationException
      */
@@ -308,7 +337,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/documents/{id}/check-duplicates - Check for duplicate transactions
+     * Check a document for duplicate transactions
+     *
+     * Compares an AI-processed document's extracted transaction data against existing
+     * transactions to find likely duplicates.
      *
      * @throws AuthorizationException
      */
