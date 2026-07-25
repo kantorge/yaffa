@@ -124,12 +124,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('import.parse', [ImportPolicy::class, 'parse']);
 
-        Gate::define('viewApiDocs', function (?User $user) {
-            return match (config('yaffa.scramble_prod_auth', 'none')) {
-                'guest' => true,
-                'user' => $user !== null && $user->hasVerifiedEmail(),
-                default => false,
-            };
+        Gate::define('viewApiDocs', fn (?User $user) => match (config('yaffa.scramble_prod_auth', 'none')) {
+            'guest' => true,
+            'user' => $user !== null && $user->hasVerifiedEmail(),
+            default => false,
         });
     }
 }

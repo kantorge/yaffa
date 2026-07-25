@@ -8,6 +8,7 @@ use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
+use App\Models\Payee;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,6 +38,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'categories.index' => ['api.v1.categories.index', 'get', 'read', []],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
+            'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
             'investments.index' => ['api.v1.investments.index', 'get', 'read', []],
             'reports.cashflow' => ['api.v1.reports.cashflow', 'get', 'read', []],
@@ -150,6 +152,9 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.account-entities.destroy' => [
                 'accountEntity' => $this->createOwnedAccountEntity($user)->id,
             ],
+            'api.v1.payees.category-stats' => [
+                'accountEntity' => $this->createOwnedPayee($user)->id,
+            ],
             'api.v1.account-groups.destroy' => [
                 'accountGroup' => AccountGroup::factory()->for($user)->create()->id,
             ],
@@ -167,6 +172,17 @@ class ApiAbilityEnforcementTest extends TestCase
             ->for(Account::factory()->withUser($user), 'config')
             ->create([
                 'config_type' => 'account',
+                'active' => true,
+            ]);
+    }
+
+    private function createOwnedPayee(User $user): AccountEntity
+    {
+        return AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
                 'active' => true,
             ]);
     }

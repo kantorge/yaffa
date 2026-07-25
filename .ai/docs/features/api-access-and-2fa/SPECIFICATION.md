@@ -4,7 +4,7 @@
 
 Two related hardening initiatives, shipped together because the second reduces the blast radius of the first:
 
-1. **Personal Access Tokens** — let a user mint, scope, and revoke a Sanctum bearer token from their own Settings page, so they can call `/api/v1/*` from outside the browser (scripts, automations, a future mobile client) with the same per-user data isolation the SPA already gets. Today this is impossible: `laravel/sanctum` is installed and `App\Models\User` already uses `HasApiTokens`, but the `personal_access_tokens` migration was never published, and no code anywhere calls `createToken()`. The API only ever authenticates via the first-party session cookie (Sanctum's "stateful SPA" mode).
+1. **Personal Access Tokens** — let a user mint, scope, and revoke a Sanctum bearer token from their own Settings page, so they can call `/api/v1/*` from outside the browser (scripts, automations, a future mobile client) with the same per-user data isolation the SPA already gets. Today this is impossible: `laravel/sanctum` is installed and `App\Models\User` already uses `HasApiTokens`, and the `personal_access_tokens` table already exists (via the squashed schema dump), but no code anywhere calls `createToken()`. The API only ever authenticates via the first-party session cookie (Sanctum's "stateful SPA" mode). Implementation is wiring up token issuance (`createToken()`) against that existing table, not publishing a new migration.
 2. **Optional two-factor authentication (TOTP)** — a per-user opt-in second factor on top of the existing `laravel/ui` session login, using a dedicated 2FA package rather than migrating to Laravel Fortify. Because minting an API token is done from the same session-authenticated Settings page as everything else, enabling 2FA automatically raises the cost of "attacker gets the password, then mints themselves a durable API token."
 
 ## Why This Architecture
@@ -17,7 +17,7 @@ Two related hardening initiatives, shipped together because the second reduces t
 ## Goals / Non-Goals
 
 - Goals:
-  - Publish and run the missing Sanctum migration; make `createToken()` actually usable.
+  - Wire up token issuance against the existing `personal_access_tokens` table; make `createToken()` actually usable.
   - Let a user create, name, scope (abilities), optionally expire, list, and revoke their own personal access tokens via a Settings UI.
   - Add per-user (not just per-IP) API rate limiting, in all environments.
   - Prune expired tokens on a schedule.
@@ -97,10 +97,11 @@ Two related hardening initiatives, shipped together because the second reduces t
 
 - Entities:
   - `PersonalAccessToken` (Sanctum built-in, `personal_access_tokens` table) — `tokenable` (User), `name`, `abilities` (JSON), `expires_at`, `last_used_at`.
-  - `User` additions (from 2FA package): `two_factor_secret` (encrypted), `two_factor_recovery_codes` (encrypted JSON array of hashed codes), `two_factor_confirmed_at`.
+  - `TwoFactorAuthentication` (`laragear/two-factor` built-in, own `two_factor_authentications` table — not columns on `users`, see "Migrations" above) — `authenticatable` (User), `shared_secret` (encrypted), `enabled_at`, `recovery_codes` (encrypted JSON, hashed), `recovery_codes_generated_at`, plus TOTP config columns (`digits`, `seconds`, `window`, `algorithm`) and `safe_devices`.
 
 - Relationships:
   - `User hasMany PersonalAccessToken` via Sanctum's existing `morphMany` (`HasApiTokens::tokens()`), already present.
+  - `User` has one `TwoFactorAuthentication` via the package's `authenticatable` polymorphic relation (`TwoFactorAuthenticatable` trait on `User`), analogous to the Sanctum relation above.
 
 - Endpoints (method + path):
   - `GET /api/v1/users/me/tokens` — list current user's tokens (never includes plaintext).
@@ -215,9 +216,9 @@ Notes and edge cases:
 
 ### Package Decision
 
-Recommended: a dedicated, trait-based TOTP package designed to attach directly to any `Authenticatable` model without requiring Fortify (e.g. `laragear/two-factor`, which uses Fortify-compatible column names and ships recovery codes out of the box). Alternative considered: `pragmarx/google2fa` (+ manual controller wiring) — more manual glue code, but zero opinion on storage/columns if finer control is wanted later.
+Implemented: `laragear/two-factor` — a dedicated, trait-based TOTP package that attaches directly to `Authenticatable` (`User`) without requiring Fortify, storing its data in its own `two_factor_authentications` table (see "Migrations" above) rather than columns on `users`, and shipping recovery codes out of the box.
 
-Per this project's package-governance convention (established in `qif-csv-import/SPECIFICATION.md`): before implementation, confirm the chosen package is actively maintained, PHP 8.4-compatible, and has current releases; if not, fall back to the manual `pragmarx/google2fa` + custom controller approach rather than accepting an unmaintained dependency.
+Per this project's standing package-governance convention (established in `qif-csv-import/SPECIFICATION.md`), its maintenance status and PHP 8.4/Laravel 12 compatibility should be re-checked before each go-live — see `variables.md` Pre-Go-Live Checklist.
 
 ### Enrollment Flow
 
@@ -244,7 +245,7 @@ Per this project's package-governance convention (established in `qif-csv-import
 
 ### Rate Limiting
 
-`TwoFactorChallengeController`'s POST route gets `throttle:6,1` (same literal pattern already used for `email/verification-notification` in `routes/web.php`) — a 6-digit TOTP code is only 1,000,000 possibilities, so brute-force throttling is not optional.
+The shared `POST /login` route — which serves both the initial credential submission and the 2FA-code challenge step, since there is no separate challenge route/controller (see "Login Step-Up Flow" above) — gets `throttle:6,1` (same literal pattern already used for `email/verification-notification` in `routes/web.php`) — a 6-digit TOTP code is only 1,000,000 possibilities, so brute-force throttling is not optional.
 
 ### Interaction With API Tokens
 
@@ -281,7 +282,7 @@ Because token creation lives behind the same session-authenticated Settings page
 
 ## Acceptance Criteria
 
-- Given the Sanctum migration has been published and run, when a user calls `$user->createToken(...)` (directly or via the new endpoint), then a row is created in `personal_access_tokens` and a plaintext token is returned exactly once.
+- Given the existing `personal_access_tokens` table, when a user calls `$user->createToken(...)` (directly or via the new endpoint), then a row is created in `personal_access_tokens` and a plaintext token is returned exactly once.
 - Given a user is on `/user/settings`, when they open the API Tokens panel, then they can create a named, ability-scoped, optionally-expiring token, see it listed (without its plaintext value) afterward, and revoke it.
 - Given a revoked or expired token, when it is used to call any `/api/v1/*` endpoint, then the request is rejected as unauthenticated (401), consistent with the existing `auth:sanctum` exception handling in `bootstrap/app.php`.
 - Given a user has not enabled 2FA, when they log in, then the flow is unchanged from today (no new step).

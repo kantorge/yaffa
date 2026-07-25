@@ -37,7 +37,7 @@
 | **2FA re-confirm on an already-enabled account** | `flows.md` §3 step 4, `permissions.md` §Hardening | `POST /two-factor/confirm` on an already-confirmed account is rejected (422) without validating the submitted code or returning recovery codes | Security audit finding #1, fixed — `TwoFactorApiController.php` `confirm()` | integration | existing |
 | **2FA re-enroll on an already-enabled account** | `flows.md` §3 step 2, `permissions.md` §Hardening | `POST /two-factor/enroll` on an already-confirmed account is rejected (422) without touching the existing secret | Security audit finding #2, fixed — `TwoFactorApiController.php` `enroll()` | integration | existing |
 | Bearer token needs `settings` ability to reach 2FA mutating endpoints | `permissions.md` §Auth-Mode Matrix | A token without `settings` gets 403 on `enroll`/`confirm`/`disable`/`regenerate-recovery-codes`; a token with `settings` is allowed; `show` remains reachable without it | Security audit finding #3, fixed — `TwoFactorApiController::middleware()` | integration | existing |
-| Bearer token cannot use unscoped abilities on other `/api/v1/*` endpoints | `permissions.md` § Full Ability Enforcement — Implementation Plan | A token without a route's required ability is denied on all ~24 remaining controllers; a token with it is not blocked by the ability check | `ApiAbilityEnforcementTest.php` (86 cases: one deny + one allow per representative route) | integration | existing |
+| Bearer token cannot use unscoped abilities on other `/api/v1/*` endpoints | `permissions.md` § Full Ability Enforcement — Implementation Plan | A token without a route's required ability is denied on all ~24 remaining controllers; a token with it is not blocked by the ability check | `ApiAbilityEnforcementTest.php` (88 cases: one deny + one allow per representative route) | integration | existing |
 
 ## Existing coverage
 
@@ -46,7 +46,7 @@ The suite is genuinely solid for the paths it covers: both controllers' happy/de
 - `TwoFactorEnrollmentTest::test_confirm_on_already_enabled_account_is_rejected_without_leaking_recovery_codes`
 - `TwoFactorEnrollmentTest::test_enroll_on_already_enabled_account_is_rejected_without_wiping_existing_secret`
 - `TwoFactorApiControllerAccessTest` (6 cases: 4 deny-without-`settings`, 1 allow-with-`settings`, 1 `show` remains reachable without `settings`)
-- `ApiAbilityEnforcementTest` (data-provider-driven, 43 representative routes × 2 = 86 cases: one deny-without-ability, one allow-with-ability, per controller)
+- `ApiAbilityEnforcementTest` (data-provider-driven, 44 representative routes × 2 = 88 cases: one deny-without-ability, one allow-with-ability, per controller)
 
 All pass against the fixed code. This is above-average coverage for the paths it covers, and the feature is now complete: full ability enforcement across all ~24 remaining `API` controllers has shipped and is pinned by the tests above, in addition to each controller's pre-existing feature test file (re-run unmodified except where a test used `Sanctum::actingAs($user)` with no abilities as a generic "authenticate this user" helper — those calls were updated to pass `['*']` so they keep testing business logic rather than being incidentally blocked by the new ability gate; see `permissions.md`'s checklist for the affected files).
 
