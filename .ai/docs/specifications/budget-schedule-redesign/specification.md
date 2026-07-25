@@ -228,21 +228,57 @@ This redesign should follow the same, already-established pattern instead of inv
 
 This project uses real semver releases (tagged `vX.Y.Z`, changelog generated from conventional commits). This redesign is a **major/breaking** change — it drops a column, removes request/response fields other clients could depend on (`budget` on `Transaction`), and changes `budgetChart()`'s response shape — and ships as a single `4.0.0` release, following the same precedent already set by the YAFFA 2.x→3.x `transaction_type` migration (also an irreversible, single-release breaking change with its own `UPGRADE.md` section and pre-upgrade check command).
 
-**Ships early, in a current 3.x release, independent of everything else below:**
+Everything from Phase 3 onward lands in that one `4.0.0` release — the phases below are an **implementation order**, not a series of independent production rollouts. Each phase is scoped as a self-contained, separately reviewable unit (its own PR/commit) that leaves the codebase compiling and its own tests green without depending on any *later* phase's code — so an implementer (human or agent) can pick up one phase at a time in order. The ordering itself is deliberate, not arbitrary: it builds and proves the new system (Budget entity → calculation → UI) before touching or deleting any existing data (Phase 7), so a mistake is caught by tests on inert, additive code rather than discovered after `budget=true` rows have already been hard-deleted.
 
-1. The pre-migration check command (7.1) — so self-hosted operators can audit their data well ahead of the 4.0.0 upgrade, exactly as `app:upgrade:check-3x` shipped in the last 2.x release ahead of 3.0.0.
-2. FR-9's performance fix (the `scheduleInstances()` DTO rewrite and the investment-price batching) — it touches no schema and no API contract, so it isn't a breaking change and doesn't need to wait for 4.0.0. It ships first, on its own, and is verified (functionally equivalent output, plus the query-count regression tests) before any 4.0.0 work begins, since FR-8 builds its inflation logic directly on top of this simplified code — see FR-9.
+### Phase 1 — Pre-migration check command (ships in 3.x, independent)
 
-**Ships together in `4.0.0`, after FR-9 has landed:**
+**Scope:** FR 7.1 only — the read-only audit command (e.g. `app:check:budget-migration`) reporting the four risk cases (zero-item budget transactions, payee-attributed budgets, stray transfer/investment `budget=true` rows, currency mismatches).
+**Depends on:** nothing.
+**Ships to production now**, in a current 3.x release — exactly as `app:upgrade:check-3x` shipped ahead of the 2.x→3.x major, so self-hosted operators can audit their data with no time pressure ahead of the eventual 4.0.0 upgrade. No other phase depends on this one landing first, but it should still go out first since it has zero risk and immediate standalone value.
 
-3. Add the `budgets` migration, `Budget` model (including the automatic `active` flag), shared recurrence helper, inflation utility (FR-8, built on the FR-9-simplified `scheduleInstances()`/forecast code), currency accessor, policy, form request, service, and controllers.
-4. Extend the existing schedules report page and its `getScheduledItems()` endpoint to also list `Budget` rows (FR-6); replace `byScheduleType()` with the `isSchedule()` scope everywhere it's used, including `CalculateTransactionScheduleActiveFlags` (FR-1).
-5. Run the transforming migration (7.2) — converts remaining budget-only transactions to `Budget` rows, hard-deletes the originals. No data-level `down()` (7.3).
-6. Rewire `budgetChart()` (both halves of FR-2, plus the FR-7 breakdown) and `getAccountBalanceBudgetData()` (FR-3).
-7. Remove the `budget` flag from `Transaction`, `TransactionRequest`, `TransactionService`, and all consuming queries/listeners; remove the Budget checkbox from `TransactionFormStandard.vue`; remove the now-meaningless `budget` filter/column from the schedules report page (replaced by the row-type filter added in step 4).
-8. Drop the `budget` column via its own migration; make `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL` via its own migration (Data Model Changes).
-9. Update `.ai/docs` per Section 9, and add the new "Upgrade from YAFFA 3.x to 4.x" section to `UPGRADE.md` per 7.3 (breaking-changes summary, step-by-step guide referencing the 3.x pre-migration check command, mandatory backup step, explicit no-downgrade-path statement).
-10. Add/update tests; run the focused suite, then the full suite if requested.
+### Phase 2 — Forecast/schedule-instance performance fix (ships in 3.x, independent)
+
+**Scope:** FR-9 in full — the `Transaction::scheduleInstances()` DTO rewrite (stop calling `replicate()` per occurrence) and the `CalculateAccountMonthlySummary::getInvestmentValueForecastData()` investment-price batching.
+**Depends on:** nothing (it fixes an existing, already-shipped bug — see [forecast-performance.md](forecast-performance.md)).
+**Ships to production now**, in a current 3.x release — it changes no schema and no API contract, so it isn't a breaking change and doesn't need to wait for 4.0.0.
+**Gate before Phase 4:** the FR-9 regression tests (query-count assertions, not just wall-clock) must pass, and output must be verified unchanged for a fixed fixture dataset, before Phase 4 (inflation) starts building on top of this code — see FR-9's own note on why bolting inflation onto the unfixed implementation would compound the problem instead of fixing it.
+
+### Phase 3 — Budget entity backend: model, shared recurrence helper, CRUD API
+
+**Scope:** FR-4 (the `Budget` model itself, including the automatic `active` flag) and FR-5 (extract `RecurrenceRuleService` from `TransactionSchedule::getRecurrence()`/`isActive()`, then refactor `TransactionSchedule` to consume it — proving no regression before `Budget` reuses the same code).
+**Components:** `budgets` migration (new table only — no change to any existing table yet), `app/Models/Budget.php`, `app/Services/RecurrenceRuleService.php`, `app/Policies/BudgetPolicy.php`, `app/Http/Requests/BudgetRequest.php`, `app/Services/BudgetService.php`, `app/Http/Controllers/API/BudgetApiController.php`.
+**Depends on:** nothing outside this phase.
+**State at end of phase:** a `Budget` can be created/edited/deleted through the API, with a correct `currency()` and a correct, automatically-maintained `active` flag — fully covered by `tests/Feature/BudgetApiTest.php` and the `Budget::currency()`/`Budget::active` unit tests. Nothing in the rest of the app reads from `budgets` yet; this phase is purely additive and carries no user-visible change.
+
+### Phase 4 — Inflation utility
+
+**Scope:** FR-8 — `InflationCalculator` (or equivalent pure function) plus its wiring into `Transaction::scheduleInstances()` (testable immediately, since `TransactionSchedule.inflation` already exists) and `CalculateAccountMonthlySummary`'s forecast bucket. The `Budget`-row half of the wiring (the standalone-budget side of `budgetChart()`) has nothing to attach to yet and is completed in Phase 5.
+**Depends on:** Phase 2 (built on the simplified `scheduleInstances()`, not the `replicate()` version) and Phase 3 (the utility is shared with `Budget`, even though `Budget` isn't projected anywhere until Phase 5).
+**State at end of phase:** schedule instances (forecast bucket, and any existing consumer of `scheduleInstances()`) correctly compound at calendar-year boundaries; the December-15th-start-date unit test and multi-year/no-op cases pass. `Budget.inflation` exists on the model (Phase 3) but nothing projects it yet.
+
+### Phase 5 — Calculation rewire: `isSchedule()`, `budgetChart()`, account-balance budget bucket
+
+**Scope:** FR-1's `byScheduleType()` → `isSchedule()` replacement everywhere it's used (including `CalculateTransactionScheduleActiveFlags`, extended in this phase to also (re)compute `Budget.active`); FR-2 (`budgetChart()` sums schedule-flagged items **and** active `Budget` rows, applying FR-8's inflation to the `Budget` side for the first time, and exposes the FR-7 contributing-rows breakdown in its response); FR-3 (`getAccountBalanceBudgetData()` simplifies to read only active `Budget` rows, attributed per-account).
+**Depends on:** Phase 3 (`Budget` to read from) and Phase 4 (inflation utility to apply).
+**State at end of phase:** the budget-vs-actual chart and the account-balance forecast are now computed the new way — correct for schedule-flagged transactions and for any `Budget` rows created via Phase 3's API — but existing `budget=true` fake transactions are **not yet** reflected (the old `budget` column and its data still exist untouched; they're converted in Phase 7). This is expected and safe only because the whole phase sequence lands in one release — it is not a state that is ever deployed to production on its own.
+
+### Phase 6 — Frontend: merged Schedules & Budgets UI
+
+**Scope:** FR-6 in full. Rewrite `TransactionApiController::getScheduledItems()` to merge `Transaction` schedule rows with `Budget` rows into one response; extend `resources/views/reports/schedule.blade.php` + `resources/js/reports/schedules.js` into the merged listing (row-type filter, blanked-out inapplicable columns, "New Budget" action, row-level edit/delete for `Budget` rows); add the new Vue `Budget` create/edit form/modal; remove the Budget checkbox/section from `TransactionFormStandard.vue` (safe now — the `Budget` entity and its UI fully replace that use case, even though the *old* `budget=true` data isn't migrated until Phase 7); update `budgetchart.js`'s drill-down to consume `budgetChart()`'s new contributing-rows data (FR-7) instead of re-querying `getScheduledItems()?type=any`.
+**Depends on:** Phase 3 (Budget CRUD API to call) and Phase 5 (`getScheduledItems()`'s `type` semantics already narrowed to `schedule`/`none`, and `budgetChart()` already returning the breakdown this phase's UI displays).
+**State at end of phase:** a user can fully create, view, and manage standalone `Budget`s end-to-end, and see them reflected in both the schedules report and the budget-vs-actual chart. Existing `budget=true` fake transactions still exist in the database, invisible to all of this new UI (they were already invisible to the calculation layer as of Phase 5) until Phase 7 converts them.
+
+### Phase 7 — Data migration: transform, hard-delete, drop column, `NOT NULL`
+
+**Scope:** Section 7.2 (the transforming migration: one `Budget` row per distinct category on each remaining `schedule=false, budget=true` transaction, hard-deleting the originals — refuses to run unless Phase 1's check is clean); dropping the `budget` column; making `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`; removing every remaining `budget` reference app-wide (`TransactionRequest`'s `$isBasic` branch, `TransactionService`, `Account`/`Payee`/`AccountMonthlySummary`/`TransactionItemMergeService`/`ProcessTransactionUpdated`, `CategoryController`/`PayeeCategoryStatsService`); removing the now-fully-replaced `budget` filter/column artifacts if any remain.
+**Depends on:** Phase 1 (the check this migration is gated on) and Phases 3-6 (the new system must already be built, wired, and tested — this phase's only job is to retire the old one, not to introduce new behavior).
+**This is the only irreversible phase** (no data-level `down()`, 7.3) — it should be the last thing implemented and the last thing tested before release, precisely so every earlier phase has already been verified against a codebase where the old `budget` data and the new `Budget` system coexist.
+**State at end of phase:** the `budget` column, and every code path that ever read it, no longer exist. The application is fully on the new model.
+
+### Phase 8 — Documentation and release packaging
+
+**Scope:** Section 9 (`.ai/docs` split — `schedules.md` / `budget/budget.md`, cross-reference updates including the merged-UI note in `features/reports/budget-and-schedules.md`); the new "Upgrade from YAFFA 3.x to 4.x" `UPGRADE.md` section per 7.3 (breaking-changes summary, step-by-step guide referencing Phase 1's check command, mandatory backup step, explicit no-downgrade-path statement); final full test suite run (`vendor/bin/sail artisan test --compact`, `./vendor/bin/pint --dirty`, `./vendor/bin/phpstan analyse`) and the manual verification checklist (Section 10).
+**Depends on:** all prior phases being complete — this is the release-readiness gate, not new functional work.
 
 ## 13. Open Questions
 
