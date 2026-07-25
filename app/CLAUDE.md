@@ -23,6 +23,7 @@ Read `.ai/docs/assets/` for entity definitions before modifying models.
 - Always implement `down()` (reversible)
 - When modifying a column, re-declare **all** previously defined attributes — omitting any drops them
 - No destructive changes without explicit user confirmation
+- Explicit, justified exceptions to the above are acceptable when documented in the migration file itself and in `UPGRADE.md` — e.g. a data-transformation migration with no meaningful reverse (see the 2.x→3.x `transaction_type` migration, and the 3.x→4.x budget/schedule redesign, for precedent)
 
 ## Conventions
 

@@ -22,7 +22,7 @@ The rule going forward, matching the reasoning already used for transfer/investm
 - Investment transactions never contribute to category budgeting (no items — structural, unchanged); they still contribute to account-balance forecasting via `schedule`, unchanged.
 - A standalone `Budget` entity (category + target amount + its own period definition, no linked transaction) exists only for targets that aren't tied to any known transaction.
 
-This removes the `budget` column/flag/UI from `Transaction` entirely — no replacement flag, not even an opt-out — and introduces `Budget` only for the standalone case. Scenario planning (base + worst-case/best-case budget variants) is explicitly out of scope for this pass, but a real `Budget` entity is what makes it a clean future addition (e.g. a nullable `budget_scenario_id` later) rather than something bolted onto transaction flags.
+This removes the `budget` column/flag/UI from `Transaction` entirely — no replacement flag, not even an opt-out — and introduces `Budget` only for the standalone case. Scenario planning (base + worst-case/best-case budget variants) is explicitly out of scope for this pass; see [future-directions.md](future-directions.md) for the recommended overlay/delta architecture (a real `Budget` entity remains a useful building block for it, but not via a nullable `budget_scenario_id` column — that shape is explicitly superseded there).
 
 ## Account Scoping for Budgets
 
