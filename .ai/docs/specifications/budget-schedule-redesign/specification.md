@@ -134,7 +134,7 @@ Change `account_from_id` and `account_to_id` from nullable to `NOT NULL`. Today 
 - `app/Models/Investment.php`, `app/Http/Controllers/MainController.php`, `app/Services/InvestmentService.php`, `app/Console/Commands/RecordScheduledTransactions.php` — mechanically convert each `byScheduleType('none')`/`byScheduleType('schedule')` call site to the FR-1 replacement (`isSchedule()` or an inline `where('schedule', false)`); no behavior change, since none of these sites use a `budget`-dependent branch, but they break at runtime if left on the removed scope.
 - `app/Models/Account.php`, `app/Models/Payee.php`, `app/Models/AccountMonthlySummary.php`, `app/Services/TransactionItemMergeService.php`, `app/Listeners/ProcessTransactionUpdated.php` — drop the `->where('budget', ...)` / `!$transaction->budget` conditions accompanying `schedule` checks.
 - `app/Http/Controllers/CategoryController.php`, `app/Services/PayeeCategoryStatsService.php` — drop the `where('transactions.budget', ...)` branches.
-- A new pre-migration check command (e.g. `app:check:budget-migration`, see Section 7.1) — read-only audit, reports the four risk cases before the transforming migration is allowed to run. **Ships separately, in a current 3.x release**, ahead of everything else in this list (which lands together in 4.0.0) — see 7.1.
+- A new pre-migration check command (e.g. `app:check:budget-migration`, see Section 7.1) — read-only audit, reports the four risk cases before the transforming migration is allowed to run. **Ships separately, in a current 3.x release**, ahead of everything else in this list (which lands together in 4.0.0) — see 7.1. **Removed again in the same 4.0.0 release** (Phase 7) once its job is done — see 7.1's closing note.
 - Database migration files (see Section 7) for: creating `budgets`; the data transformation itself (7.2, no data-level `down()` — see 7.3); dropping the `budget` column (after 7.2 is verified); making `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL` (after 7.2 is verified — see Data Model Changes).
 - `UPGRADE.md` — new "Upgrade from YAFFA 3.x to 4.x" section per 7.3.
 
@@ -154,6 +154,8 @@ Given the actual current data model has never enforced several of this redesign'
 Implement this as a dedicated check (an Artisan command is appropriate here, since it's a read-only audit, not a mutation) that reports counts for each case above. **The transforming migration (7.2) must refuse to proceed if any of these are found**, per `app/CLAUDE.md`'s "no destructive changes without explicit user confirmation" — surfacing the problem is not optional, and silently dropping a user's data during a redesign migration is not acceptable.
 
 **This check command ships separately, in a current 3.x release, ahead of the breaking 4.0.0 release that contains the rest of this redesign** — mirroring the existing precedent in `UPGRADE.md` for the 2.x→3.x `transaction_type` migration, where `php artisan app:upgrade:check-3x` was released in the last 2.x version specifically so operators could self-audit before the major upgrade. This lets self-hosted operators run the check well ahead of time, on their current version, with no time pressure to fix flagged data before upgrading.
+
+**The command is removed again once 4.0.0 ships** (Phase 7, alongside the rest of the `budget` cleanup) — again mirroring `app:upgrade:check-3x`, which was likewise dropped from the codebase once YAFFA 3.x shipped and the 2.x data it audited could no longer exist. Once the transforming migration (7.2) has run, `schedule=false, budget=true` transactions are no longer a state the application can produce or contain, so the check has nothing left to check; keeping it around would be dead code auditing a condition that can never again occur.
 
 ### 7.2 The transforming migration
 
@@ -234,11 +236,14 @@ This project uses real semver releases (tagged `vX.Y.Z`, changelog generated fro
 
 Everything from Phase 3 onward lands in that one `4.0.0` release — the phases below are an **implementation order**, not a series of independent production rollouts. Each phase is scoped as a self-contained, separately reviewable unit (its own PR/commit) that leaves the codebase compiling and its own tests green without depending on any *later* phase's code — so an implementer (human or agent) can pick up one phase at a time in order. The ordering itself is deliberate, not arbitrary: it builds and proves the new system (Budget entity → calculation → UI) before touching or deleting any existing data (Phase 7), so a mistake is caught by tests on inert, additive code rather than discovered after `budget=true` rows have already been hard-deleted.
 
-### Phase 1 — Pre-migration check command (ships in 3.x, independent)
+### Phase 1 — Pre-migration check command (ships in 3.x, independent) — ✅ Completed
 
 **Scope:** FR 7.1 only — the read-only audit command (e.g. `app:check:budget-migration`) reporting the four risk cases (zero-item budget transactions, payee-attributed budgets, stray transfer/investment `budget=true` rows, currency mismatches).
+
+**Implemented in:** `app/Console/Commands/CheckBudgetMigration.php` (`app:check:budget-migration`), covered by `tests/Feature/Console/CheckBudgetMigrationCommandTest.php`.
 **Depends on:** nothing.
 **Ships to production now**, in a current 3.x release — exactly as `app:upgrade:check-3x` shipped ahead of the 2.x→3.x major, so self-hosted operators can audit their data with no time pressure ahead of the eventual 4.0.0 upgrade. No other phase depends on this one landing first, but it should still go out first since it has zero risk and immediate standalone value.
+**Lifecycle note:** this command is temporary scaffolding for the upgrade, not a permanent feature — it is removed again in Phase 7, once the transforming migration has run and the state it checks for can no longer exist (see 7.1's closing note).
 
 ### Phase 2 — Forecast/schedule-instance performance fix (ships in 3.x, independent)
 
@@ -274,7 +279,7 @@ Everything from Phase 3 onward lands in that one `4.0.0` release — the phases 
 
 ### Phase 7 — Data migration: transform, hard-delete, drop column, `NOT NULL`
 
-**Scope:** Section 7.2 (the transforming migration: one `Budget` row per distinct category on each remaining `schedule=false, budget=true` transaction, hard-deleting the originals — refuses to run unless Phase 1's check is clean); dropping the `budget` column; making `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`; removing every remaining `budget` reference app-wide (`TransactionRequest`'s `$isBasic` branch, `TransactionService`, `Account`/`Payee`/`AccountMonthlySummary`/`TransactionItemMergeService`/`ProcessTransactionUpdated`, `CategoryController`/`PayeeCategoryStatsService`); removing the now-fully-replaced `budget` filter/column artifacts if any remain.
+**Scope:** Section 7.2 (the transforming migration: one `Budget` row per distinct category on each remaining `schedule=false, budget=true` transaction, hard-deleting the originals — refuses to run unless Phase 1's check is clean); dropping the `budget` column; making `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`; removing every remaining `budget` reference app-wide (`TransactionRequest`'s `$isBasic` branch, `TransactionService`, `Account`/`Payee`/`AccountMonthlySummary`/`TransactionItemMergeService`/`ProcessTransactionUpdated`, `CategoryController`/`PayeeCategoryStatsService`); removing the now-fully-replaced `budget` filter/column artifacts if any remain; **removing Phase 1's pre-migration check command** (`app/Console/Commands/CheckBudgetMigration.php` and its test) now that the transforming migration has run and `schedule=false, budget=true` is no longer a reachable state for it to audit — mirroring how `app:upgrade:check-3x` was removed once YAFFA 3.x shipped (see 7.1).
 **Depends on:** Phase 1 (the check this migration is gated on) and Phases 3-6 (the new system must already be built, wired, and tested — this phase's only job is to retire the old one, not to introduce new behavior).
 **This is the only irreversible phase** (no data-level `down()`, 7.3) — it should be the last thing implemented and the last thing tested before release, precisely so every earlier phase has already been verified against a codebase where the old `budget` data and the new `Budget` system coexist.
 **State at end of phase:** the `budget` column, and every code path that ever read it, no longer exist. The application is fully on the new model.
