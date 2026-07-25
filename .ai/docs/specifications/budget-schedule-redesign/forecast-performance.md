@@ -61,7 +61,9 @@ Given ~100 active recurring definitions, the actual number of occurrences to com
 
 ## Relationship to the Existing Caching Architecture
 
-If on-demand computation becomes fast enough, the current `account_monthly_summaries` precomputed table is likely no longer necessary *for correctness*. There may still be a separate, much smaller case for a short-TTL cache (e.g. Redis, already used for queues) purely for perceived snappiness when multiple widgets on the same page request the same forecast within a short window — but that is a materially different, simpler thing than today's fragile, user-facing, manually-recalculated summary table, and shouldn't be assumed necessary until the underlying computation is actually fast.
+If on-demand computation becomes fast enough, the current `account_monthly_summaries` precomputed table might eventually no longer be necessary *for correctness*. There may still be a separate, much smaller case for a short-TTL cache (e.g. Redis, already used for queues) purely for perceived snappiness when multiple widgets on the same page request the same forecast within a short window — but that is a materially different, simpler thing than today's fragile, user-facing, manually-recalculated summary table, and shouldn't be assumed necessary until the underlying computation is actually fast.
+
+**This is speculative, not a plan.** The current redesign (specification.md, FR-9) only fixes the *forecast* calculation's performance; it does not remove, and is not a step toward removing, `account_monthly_summaries` — see specification.md's Non-Goals. Nothing here was profiled for the table's other job: caching *fact* data (the actual historical account balance and investment value, read by `AccountApiController::getAccountBalance` and `ReportApiController`'s cashflow queries). Whether that path could also be computed live, fast enough to retire the cache entirely, is unmeasured and is called out as a candidate for future investigation in [future-directions.md](future-directions.md).
 
 ## Relationship to Future Scenarios
 

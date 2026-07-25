@@ -92,6 +92,12 @@ All three reduce to one generic adjustment-rule shape: a target (nullable, for p
 
 Leaning toward the distinct "override" kind for UX clarity, but this is a detail, not a decision that needs to be made now.
 
+## Revisiting the `account_monthly_summaries` Cache
+
+Out of scope for the current redesign — noted here only so it isn't lost. [forecast-performance.md](forecast-performance.md) profiled and fixed (FR-9) only the *forecast* half of `CalculateAccountMonthlySummary`: `Transaction::scheduleInstances()`'s per-occurrence `replicate()` and the per-month `Investment::find()` N+1. It did not touch, and did not profile, the *fact* half — the precomputed historical account balance and investment value read by `AccountApiController::getAccountBalance()` and `ReportApiController`'s cashflow queries — nor the covering index (`database/migrations/2026_03_26_000001_add_performance_indexes.php`) those reads currently depend on for grouping/filtering across many accounts and months in one query.
+
+Whether that fact-data path could also be computed live, at request time, fast enough to retire `account_monthly_summaries` and its accompanying daily cron + event-driven invalidation wiring (`TransactionService`, `ProcessTransactionUpdated`, `InvestmentService`) is genuinely unknown — it was never benchmarked, on-demand or otherwise. If this is revisited later, it needs its own profiling pass in the same spirit as forecast-performance.md's: real query-count and wall-clock measurement of live fact computation, including the multi-account aggregate case, before concluding the cache can be safely dropped — not just intuition carried over from the forecast fix. Until that's done, `account_monthly_summaries` stays exactly as it is today, table and all.
+
 ## Immediate Action for the Current Spec
 
 Everything above is directional only. The one concrete, near-term action is specified as FR-8 in [specification.md](specification.md): implement the previously-unused `inflation` field's compounding calculation as a small, standalone, reusable utility, deliberately kept separate from the calendar-occurrence/recurrence-listing logic (FR-5) — so the same utility can be reused later for investment-return and currency-drift assumptions above, without rework.
