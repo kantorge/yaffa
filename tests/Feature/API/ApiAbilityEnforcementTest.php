@@ -113,7 +113,7 @@ class ApiAbilityEnforcementTest extends TestCase
         $user = User::factory()->create();
         $params = $this->resolveParams($routeName, $params, $user);
 
-        Sanctum::actingAs($user, ['*']);
+        Sanctum::actingAs($user, [$requiredAbility]);
 
         $response = $this->json($method, route($routeName, $params));
 

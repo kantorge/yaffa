@@ -58,7 +58,6 @@ One additional, distinct issue surfaced only by the full suite run: `tests/Unit/
 
 **`tests/Feature/API/ApiAbilityEnforcementTest.php`** (integration):
 
-```php
 See `tests/Feature/API/ApiAbilityEnforcementTest.php` for the actual implementation. It follows the shape above with three adjustments made during implementation:
 
 - Uses PHPUnit's `#[DataProvider('routeAbilityProvider')]` attribute, not the `@dataProvider` docblock — this project's PHPUnit version (12.x) no longer reads docblock metadata.

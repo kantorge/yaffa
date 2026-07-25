@@ -63,8 +63,12 @@ class TwoFactorEnrollmentTest extends TestCase
 
         $this->postJson(route('api.v1.users.me.two-factor.enroll'));
 
+        $currentCode = $user->fresh()->makeTwoFactorCode();
+        $wrongDigit = ((int) $currentCode[0] + 1) % 10;
+        $wrongCode = $wrongDigit . mb_substr($currentCode, 1);
+
         $response = $this->postJson(route('api.v1.users.me.two-factor.confirm'), [
-            'code' => '000000',
+            'code' => $wrongCode,
         ]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -91,8 +95,13 @@ class TwoFactorEnrollmentTest extends TestCase
         $this->enableTwoFactorFor($user);
         Sanctum::actingAs($user, ['*']);
 
+        // Deliberately the current, genuinely valid code: proves the already-enabled
+        // guard rejects the request before confirmTwoFactorAuth() is ever called, rather
+        // than merely rejecting an obviously-malformed one.
+        $currentCode = $user->fresh()->makeTwoFactorCode();
+
         $response = $this->postJson(route('api.v1.users.me.two-factor.confirm'), [
-            'code' => 'not-a-real-code',
+            'code' => $currentCode,
         ]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

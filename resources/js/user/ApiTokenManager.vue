@@ -343,6 +343,17 @@
         this.createdToken = null;
         this.acknowledged = false;
         this.creating = false;
+        this.setModalDismissible(true);
+      },
+      // While the plaintext token is revealed, the modal must not be dismissable via
+      // backdrop click or Escape - only the acknowledgement-gated buttons may close it,
+      // since the token can never be re-fetched after this.
+      setModalDismissible(dismissible) {
+        if (!this.createModal) {
+          return;
+        }
+        this.createModal._config.backdrop = dismissible ? true : 'static';
+        this.createModal._config.keyboard = dismissible;
       },
       async createToken() {
         if (this.creating) {
@@ -371,6 +382,7 @@
           );
 
           this.createdToken = response.data.token;
+          this.setModalDismissible(false);
           await this.loadTokens();
         } catch (error) {
           if (error.response?.status === 422) {

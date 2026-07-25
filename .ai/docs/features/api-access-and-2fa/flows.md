@@ -32,7 +32,7 @@ Only flows that touch permissions, data integrity, external side effects, or ope
 
 - **Actor:** authenticated, session-based, email-verified user; `SANDBOX_MODE` must be off.
 - **Precondition:** user does not already have confirmed 2FA.
-- **Success outcome:** `two_factor_confirmed_at` is set; recovery codes generated once and returned once.
+- **Success outcome:** enrollment (`POST .../enroll`) creates an unconfirmed secret and returns the QR/otpauth URI; a subsequent confirmation (`POST .../confirm`) with a valid code sets `two_factor_confirmed_at` and generates and returns recovery codes once.
 
 | Step | Boundary crossed | Authz check | Side effect |
 |---|---|---|---|
