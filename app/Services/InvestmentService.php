@@ -107,7 +107,7 @@ class InvestmentService
             );
 
         // Add all scheduled items to list of transactions
-        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
         $transactions = $transactions->concat($scheduleInstances);
 
         // Calculate historical and scheduled quantity changes for chart

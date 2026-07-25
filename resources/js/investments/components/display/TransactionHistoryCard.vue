@@ -332,23 +332,32 @@
                   `<button class="btn btn-xs btn-danger data-delete" data-id="${id}" type="button" title="${vm.__(
                     'Delete',
                   )}"><i class="fa fa-fw fa-trash"></i></button> `;
-              } else {
+              } else if (row.schedule_first_instance) {
                 // Scheduled transaction actions
                 // For scheduled instances, use originalId (parent transaction ID)
                 const id = row.originalId || row.id;
                 actions +=
                   `<a href="${vm.route('transaction.open', {
                     transaction: id,
-                    action: 'enter',
-                  })}" class="btn btn-xs btn-success" title="${vm.__(
-                    'Enter/Finalize',
-                  )}"><i class="fa fa-fw fa-calendar-check"></i></a> ` +
+                    action: 'edit',
+                    callback: 'back',
+                  })}" class="btn btn-xs btn-primary" title="${vm.__(
+                    'Edit',
+                  )}"><i class="fa fa-fw fa-edit"></i></a> ` +
                   `<a href="${vm.route('transaction.open', {
                     transaction: id,
                     action: 'replace',
+                    callback: 'back',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit schedule',
-                  )}"><i class="fa fa-fw fa-edit"></i></a> ` +
+                    'Edit and create new schedule',
+                  )}"><i class="fa fa-fw fa-calendar"></i></a> ` +
+                  `<a href="${vm.route('transaction.open', {
+                    transaction: id,
+                    action: 'enter',
+                    callback: 'back',
+                  })}" class="btn btn-xs btn-success" title="${vm.__(
+                    'Adjust and enter instance',
+                  )}"><i class="fa fa-fw fa-pencil"></i></a> ` +
                   `<button class="btn btn-xs btn-warning data-skip" data-id="${id}" type="button" title="${vm.__(
                     'Skip this instance',
                   )}"><i class="fa fa-fw fa-forward"></i></button> `;
