@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CalculateAccountMonthlySummaryTest extends TestCase
@@ -314,6 +315,108 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $this->assertEquals(-100, $recordsAfterPartial->get(1)->amount);
         $this->assertEquals(-100, $recordsAfterPartial->get(2)->amount);
         $this->assertEquals(-100, $recordsAfterPartial->get(3)->amount);
+
+        Carbon::resetMonthsOverflow();
+    }
+
+    /**
+     * Regression test for FR-9 (see .ai/docs/specifications/budget-schedule-redesign/forecast-performance.md):
+     * getInvestmentValueForecastData() must fetch each investment's price once per job run, in a
+     * fixed number of batched queries, rather than once per investment per forecast month.
+     */
+    public function test_investment_value_forecast_batches_price_lookups_regardless_of_horizon(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            // A 20 year horizon means ~240 forecast months - if the old per-month
+            // Investment::find()/getLatestPrice() N+1 ever came back, this would show up
+            // immediately as a query count that scales with the horizon length.
+            'end_date' => now()->addYears(20),
+        ]);
+
+        InvestmentGroup::factory()->for($user)->create();
+        $currency = Currency::factory()->for($user)->create();
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()
+                ->withUser($user)
+                ->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+        $investment = Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create(['currency_id' => $currency->id]);
+
+        /** @var Transaction $investmentTransaction */
+        $investmentTransaction = Transaction::factory()
+            ->for($user)
+            ->buy_schedule($user, [
+                'account_id' => $account->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 5,
+                'commission' => null,
+                'tax' => null,
+                'dividend' => null,
+            ])
+            ->create();
+
+        $investmentTransaction->transactionSchedule->update([
+            'start_date' => now()->startOfMonth(),
+            'next_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        // A stored price, so the batched "combined" price lookup has something to resolve for
+        // every forecast month (a schedule-only transaction is not itself a priced fact transaction).
+        \App\Models\InvestmentPrice::factory()->create([
+            'investment_id' => $investment->id,
+            'date' => now()->subDay(),
+            'price' => 10,
+        ]);
+
+        DB::enableQueryLog();
+
+        $job = new CalculateAccountMonthlySummary($user, 'investment_value-forecast', $account);
+        $job->handle($this->app->make(InvestmentService::class));
+
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $investmentTableQueries = array_filter(
+            $queries,
+            fn (array $q) => str_contains($q['query'], '`investments`')
+        );
+
+        $this->assertCount(
+            1,
+            $investmentTableQueries,
+            'Expected exactly one batched investments lookup query regardless of forecast horizon length.'
+        );
+
+        // The whole job (schedule loading, batched price/transaction lookups, the insert) stays a
+        // small, fixed number of queries - nowhere near the ~240 months in this horizon.
+        $this->assertLessThan(20, count($queries));
+
+        // The forecast values themselves must still be correct: 5 shares bought/month, at a
+        // fixed price of 10 (no InvestmentPrice/other transaction ever overrides it), cumulating
+        // month over month.
+        $summaryRecords = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'investment_value',
+            'data_type' => 'forecast',
+        ])->orderBy('date')->get();
+
+        $this->assertGreaterThan(50, $summaryRecords->count());
+        $summaryRecords->each(function ($summaryRecord, $index) {
+            $this->assertEqualsWithDelta(($index + 2) * 5 * 10, $summaryRecord->amount, 0.001);
+        });
 
         Carbon::resetMonthsOverflow();
     }

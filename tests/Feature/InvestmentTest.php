@@ -7,6 +7,7 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\ScheduleInstance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -422,11 +423,11 @@ class InvestmentTest extends TestCase
 
         $response->assertOk();
 
-        /** @var \Illuminate\Support\Collection<int, Transaction> $transactions */
+        /** @var \Illuminate\Support\Collection<int, Transaction|ScheduleInstance> $transactions */
         $transactions = $response->viewData('transactions');
 
         $scheduledInstances = $transactions
-            ->filter(fn (Transaction $transaction): bool => $transaction->schedule)
+            ->filter(fn (Transaction|ScheduleInstance $transaction): bool => $transaction->schedule)
             ->values();
 
         $scheduledDates = $scheduledInstances

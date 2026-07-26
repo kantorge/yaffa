@@ -12,6 +12,7 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
+use App\Support\ScheduleInstance;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -100,7 +101,10 @@ class InvestmentService
         $transactions = $investment->transactionsBasic()->get();
         $scheduledTransactions = $investment->transactionsScheduled()
             ->get()
-            ->load(['transactionSchedule'])
+            // scheduleInstances() reuses whichever relations are already loaded on the source
+            // transaction (see App\Support\ScheduleInstance) instead of lazy-loading per virtual
+            // occurrence, so 'config' must be eager-loaded here up front.
+            ->load(['config', 'transactionSchedule'])
             ->filter(
                 fn ($transaction): bool => $transaction instanceof Transaction
                     && ($transaction->transactionSchedule?->active) === true
@@ -115,7 +119,7 @@ class InvestmentService
         $runningSchedule = 0;
         $quantities = $transactions
             ->sortBy('date')
-            ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
+            ->map(function (Transaction|ScheduleInstance $transaction) use (&$runningTotal, &$runningSchedule) {
                 // Quantity operator can be 1, -1 or null.
                 // It's the expected behavior to set the quantity to 0 if the operator is null.
                 $transactionConfig = $transaction->config;
