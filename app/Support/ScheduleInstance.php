@@ -66,7 +66,7 @@ final class ScheduleInstance implements Arrayable, JsonSerializable
 
     public function __isset(string $name): bool
     {
-        return array_key_exists($name, $this->relations) || array_key_exists($name, $this->attributes);
+        return isset($this->relations[$name]) || isset($this->attributes[$name]);
     }
 
     public function toArray(): array

@@ -420,4 +420,94 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         Carbon::resetMonthsOverflow();
     }
+
+    /**
+     * Regression test for FR-9: the batched price lookup must still honor "latest price on or
+     * before this month's cutoff date" semantics per forecast month, so a price recorded
+     * mid-month is picked up starting with the forecast month it falls in and carries forward
+     * into every later month, not just the month it happened to land in.
+     */
+    public function test_investment_value_forecast_reflects_a_mid_month_price_update_in_following_months(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        InvestmentGroup::factory()->for($user)->create();
+        $currency = Currency::factory()->for($user)->create();
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()
+                ->withUser($user)
+                ->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+        $investment = Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create(['currency_id' => $currency->id]);
+
+        /** @var Transaction $investmentTransaction */
+        $investmentTransaction = Transaction::factory()
+            ->for($user)
+            ->buy_schedule($user, [
+                'account_id' => $account->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 5,
+                'commission' => null,
+                'tax' => null,
+                'dividend' => null,
+            ])
+            ->create();
+
+        $investmentTransaction->transactionSchedule->update([
+            'start_date' => now()->startOfMonth(),
+            'next_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        // Baseline price, well before the forecast horizon.
+        \App\Models\InvestmentPrice::factory()->create([
+            'investment_id' => $investment->id,
+            'date' => now()->subMonths(2),
+            'price' => 10,
+        ]);
+
+        // A second price recorded mid-month, landing inside the second forecast month
+        // (forecast index 1 = now()->addMonths(2)).
+        \App\Models\InvestmentPrice::factory()->create([
+            'investment_id' => $investment->id,
+            'date' => now()->addMonths(2)->day(15),
+            'price' => 20,
+        ]);
+
+        $job = new CalculateAccountMonthlySummary($user, 'investment_value-forecast', $account);
+        $job->handle($this->app->make(InvestmentService::class));
+
+        $summaryRecords = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'investment_value',
+            'data_type' => 'forecast',
+        ])->orderBy('date')->get();
+
+        // Same quantity progression as the sibling test above: (index + 2) * 5 shares by
+        // forecast month `index`.
+        $quantityAt = fn (int $index) => ($index + 2) * 5;
+
+        // Index 0 (1 month out) is still before the mid-month price update: baseline price (10).
+        $this->assertEqualsWithDelta($quantityAt(0) * 10, $summaryRecords[0]->amount, 0.001);
+        // Index 1 (2 months out) is the month the update lands in: new price (20) applies already.
+        $this->assertEqualsWithDelta($quantityAt(1) * 20, $summaryRecords[1]->amount, 0.001);
+        // Index 2 (3 months out): the update carries forward, not just a one-month blip.
+        $this->assertEqualsWithDelta($quantityAt(2) * 20, $summaryRecords[2]->amount, 0.001);
+
+        Carbon::resetMonthsOverflow();
+    }
 }

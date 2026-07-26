@@ -70,7 +70,7 @@ class TransactionScheduleInstancesTest extends TestCase
         $this->assertGreaterThan(50, $instances->count());
 
         foreach ($instances->take(5) as $instance) {
-            $x = $instance->config->amount_from;
+            $this->assertSame(100.0, $instance->config->amount_from);
         }
         $queryCountAfterFew = count(DB::getQueryLog());
 
