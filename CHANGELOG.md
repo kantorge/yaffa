@@ -1,5 +1,36 @@
 # Changelog
 
+## [3.5.2](https://github.com/kantorge/yaffa/compare/v3.5.1...v3.5.2) (2026-07-26)
+
+
+### 🛠️ Chores
+
+* demo database backend support ([#506](https://github.com/kantorge/yaffa/issues/506)) ([7a61cb7](https://github.com/kantorge/yaffa/commit/7a61cb7520167ae99f001781bb6042fddce500a5))
+* **deps:** bump axios in the npm_and_yarn group across 1 directory ([#508](https://github.com/kantorge/yaffa/issues/508)) ([1b56b4d](https://github.com/kantorge/yaffa/commit/1b56b4dea8cfea762711941dbba44db9d1a84f10))
+* local development settings ([2989254](https://github.com/kantorge/yaffa/commit/2989254ab509a5b3d61393d7752254ebad93a65b))
+* local development settings ([6d5b96d](https://github.com/kantorge/yaffa/commit/6d5b96db633147613b8c427f4333434c11d9f5e9))
+* minor tweak to AI prompt ([34471b3](https://github.com/kantorge/yaffa/commit/34471b36bb6a189c785da4adbfa95d63e0bc1c20))
+* preparation for upcoming major version ([7803fb9](https://github.com/kantorge/yaffa/commit/7803fb92f687aa2db8e70d258bbd38f083ac7d5c))
+
+
+### 📚 Documentation
+
+* extensions and clarifications ([0be28bb](https://github.com/kantorge/yaffa/commit/0be28bb12ba0aea52410522f8ec4896ac6044aa9))
+* further clarifications for the budget specification ([69ecf00](https://github.com/kantorge/yaffa/commit/69ecf00ec3de1d41b4f326c74825ca913972bf7c))
+* initial plans ([5977fb3](https://github.com/kantorge/yaffa/commit/5977fb3c84d7f1ba0877074193604e6fadc22e3b))
+* plan development phases ([cc27585](https://github.com/kantorge/yaffa/commit/cc27585d61ec8e018e156815e00ae03e0a811327))
+
+
+### 🐛 Bug Fixes
+
+* investment schedule instances and forecast row actions ([6945047](https://github.com/kantorge/yaffa/commit/694504762754c95f49a9ef7fbcc4e651cd313e57))
+* package updates ([#511](https://github.com/kantorge/yaffa/issues/511)) ([1a976d7](https://github.com/kantorge/yaffa/commit/1a976d766aa58393f4376f064e7009b532d05f2d))
+
+
+### 🚀 Performance Improvements
+
+* optimizes monthly account balance forecasts ([#515](https://github.com/kantorge/yaffa/issues/515)) ([06eddce](https://github.com/kantorge/yaffa/commit/06eddce7b56a06a87c2c2a8763e0da9122301d3f))
+
 ## [3.5.1](https://github.com/kantorge/yaffa/compare/v3.5.0...v3.5.1) (2026-07-10)
 
 
