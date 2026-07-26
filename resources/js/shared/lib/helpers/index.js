@@ -44,6 +44,22 @@ export function escapeHtmlWithLineBreaks(value) {
 }
 
 /**
+ * Parse a fetch response as JSON and throw server-provided errors for non-2xx responses.
+ *
+ * @param {Response} response
+ * @returns {Promise<*>}
+ */
+export async function jsonFromResponse(response) {
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || response.statusText);
+    }
+
+    return data;
+}
+
+/**
  * Parse an ISO date-only string ("YYYY-MM-DD") as a local calendar date.
  *
  * new Date("YYYY-MM-DD") is specified to treat the string as UTC midnight,

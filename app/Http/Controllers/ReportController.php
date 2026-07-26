@@ -57,6 +57,16 @@ class ReportController extends Controller implements HasMiddleware
         return view('reports.budgetchart');
     }
 
+    public function advancedReconcile(Request $request): View
+    {
+        /**
+         * @get("/reports/advanced-reconcile")
+         * @name("reports.advanced-reconcile")
+         * @middlewares("web", "auth", "verified")
+         */
+        return view('reports.advanced-reconcile');
+    }
+
     /**
      * Display form for searching transactions.
      */

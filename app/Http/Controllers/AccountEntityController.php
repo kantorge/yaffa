@@ -12,6 +12,7 @@ use App\Models\FileImportProfile;
 use App\Models\Category;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\PayeePersistenceService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,6 +86,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             JavaScriptFacade::put([
                 'account' => $accountEntity,
                 'filters' => $filters,
+                'checkpointWindows' => $this->checkpointWindowsForAccount($accountEntity),
             ]);
 
             return view(
@@ -97,6 +99,37 @@ class AccountEntityController extends Controller implements HasMiddleware
 
         // Currently no function for Payees, redirect back
         return redirect()->back();
+    }
+
+    /**
+     * @return list<array{value: string, label: string, date_from: string, date_to: string}>
+     */
+    private function checkpointWindowsForAccount(AccountEntity $accountEntity): array
+    {
+        $checkpointDates = $accountEntity->balanceCheckpoints()
+            ->where('active', true)
+            ->orderBy('checkpoint_date')
+            ->pluck('checkpoint_date')
+            ->map(fn ($date): string => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->values();
+
+        return $checkpointDates
+            ->skip(1)
+            ->map(function (string $checkpointDate, int $index) use ($checkpointDates): array {
+                $dateFrom = Carbon::parse($checkpointDates->get($index - 1))
+                    ->addDay()
+                    ->toDateString();
+
+                return [
+                    'value' => 'checkpointWindow:' . $checkpointDate,
+                    'label' => $dateFrom . ' - ' . $checkpointDate,
+                    'date_from' => $dateFrom,
+                    'date_to' => $checkpointDate,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**

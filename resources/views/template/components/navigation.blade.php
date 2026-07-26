@@ -81,6 +81,11 @@
                 text="{{ __('Cash flow') }}"
             />
             <x-nav-link
+                href="{{ route('reports.advanced-reconcile') }}"
+                iconClasses="fa-solid fa-scale-balanced"
+                text="{{ __('Advanced reconcile') }}"
+            />
+            <x-nav-link
                 href="{{ route('reports.budgetchart') }}"
                 iconClasses="fa-solid fa-chart-line"
                 text="{{ __('Budget chart') }}"

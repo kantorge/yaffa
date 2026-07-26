@@ -136,6 +136,29 @@
     return `${y}-${m}-${day}`;
   }
 
+  function findPresetOption(groups, preset) {
+    if (!preset || preset === 'none') {
+      return null;
+    }
+
+    return (groups || [])
+      .flatMap((group) => group.options || [])
+      .find((option) => option.value === preset) || null;
+  }
+
+  function resolvePresetDates(preset, groups) {
+    const option = findPresetOption(groups, preset);
+    if (option?.date_from && option?.date_to) {
+      return {
+        start: parseDate(option.date_from),
+        end: parseDate(option.date_to),
+      };
+    }
+
+    const calculator = presetCalculators[preset];
+    return calculator ? calculator(new Date()) : null;
+  }
+
   export default {
     name: 'DateRangeFilterCard',
     components: { DatePicker },
@@ -188,9 +211,8 @@
       let dateTo = this.initialDateTo;
 
       if (!dateFrom && !dateTo && preset !== 'none') {
-        const calculator = presetCalculators[preset];
-        if (calculator) {
-          const dates = calculator(new Date());
+        const dates = resolvePresetDates(preset, this.presetGroups);
+        if (dates) {
           dateFrom = formatDate(dates.start);
           dateTo = formatDate(dates.end);
         }
@@ -269,9 +291,8 @@
     },
     methods: {
       onPresetChange() {
-        const calculator = presetCalculators[this.selectedPreset];
-        if (calculator) {
-          const dates = calculator(new Date());
+        const dates = resolvePresetDates(this.selectedPreset, this.presetGroups);
+        if (dates) {
           this.dateFrom = formatDate(dates.start);
           this.dateTo = formatDate(dates.end);
         } else {

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\AccountBalanceCheckpoint;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
@@ -130,6 +131,31 @@ class AccountTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('accounts.index');
+    }
+
+    public function test_account_details_exposes_checkpoint_windows_for_date_presets(): void
+    {
+        $account = $this->createAccountAndUser();
+
+        AccountBalanceCheckpoint::factory()
+            ->forAccount($account)
+            ->create(['checkpoint_date' => '2026-01-31', 'checkpoint_type' => 'cash']);
+        AccountBalanceCheckpoint::factory()
+            ->forAccount($account)
+            ->create(['checkpoint_date' => '2026-02-28', 'checkpoint_type' => 'cash']);
+        AccountBalanceCheckpoint::factory()
+            ->forAccount($account)
+            ->create(['checkpoint_date' => '2026-03-31', 'checkpoint_type' => 'total']);
+
+        $response = $this->actingAs($account->user)->get(route("{$this->base_route}.show", [
+            'account_entity' => $account,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('checkpointWindow:2026-02-28', false);
+        $response->assertSee('2026-02-01 - 2026-02-28', false);
+        $response->assertSee('checkpointWindow:2026-03-31', false);
+        $response->assertSee('2026-03-01 - 2026-03-31', false);
     }
 
     public function test_user_can_access_create_form(): void
