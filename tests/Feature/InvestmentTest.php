@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Support\ScheduleInstance;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -383,6 +386,58 @@ class InvestmentTest extends TestCase
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         $this->assertDestroyWithUser($user);
+    }
+
+    public function test_investment_show_derives_scheduled_instances_from_next_date(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => '2026-12-31',
+        ]);
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
+        /** @var Investment $investment */
+        $investment = Investment::factory()->for($user)->create([
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+
+        /** @var Transaction $scheduledTransaction */
+        $scheduledTransaction = Transaction::factory()
+            ->for($user)
+            ->buy_schedule($user, [
+                'investment_id' => $investment->id,
+            ])
+            ->create();
+
+        $scheduledTransaction->transactionSchedule()->update([
+            'start_date' => '2026-01-01',
+            'next_date' => '2026-03-01',
+            'end_date' => '2026-04-01',
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'count' => null,
+            'active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('investments.show', $investment));
+
+        $response->assertOk();
+
+        /** @var \Illuminate\Support\Collection<int, Transaction|ScheduleInstance> $transactions */
+        $transactions = $response->viewData('transactions');
+
+        $scheduledInstances = $transactions
+            ->filter(fn (Transaction|ScheduleInstance $transaction): bool => $transaction->schedule)
+            ->values();
+
+        $scheduledDates = $scheduledInstances
+            ->pluck('date')
+            ->map(fn (Carbon $date): string => $date->format('Y-m-d'))
+            ->all();
+
+        $this->assertSame(['2026-03-01', '2026-04-01'], $scheduledDates);
+        $this->assertTrue((bool) $scheduledInstances->first()?->schedule_first_instance);
+        $this->assertFalse((bool) $scheduledInstances->last()?->schedule_first_instance);
     }
 
     private function createPrerequisites(?User $user = null): array

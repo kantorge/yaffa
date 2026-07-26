@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Support\ScheduleInstance;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
@@ -350,7 +351,7 @@ class Transaction extends Model
      * @param Carbon|null $maxLookAhead The maximum look-ahead date for generating instances. Defaults to the user's end date.
      * @param int|null $virtualLimit The virtual limit for the number of instances to generate. Defaults to 500.
      *
-     * @return Collection A collection of scheduled transaction instances.
+     * @return Collection<int, ScheduleInstance> A collection of virtual (never-persisted) schedule instances.
      */
     public function scheduleInstances(
         ?Carbon $constraintStart = null,
@@ -401,18 +402,38 @@ class Transaction extends Model
 
         $constraint = new BetweenConstraint($constraintStart, $endDate, true);
 
+        // Every virtual occurrence shares the same attributes/relations as $this - only the
+        // date and "is this the first instance" flag differ per occurrence. Resolving the
+        // handful of cast/appended values once here, instead of via a full Eloquent::replicate()
+        // per occurrence, is what avoids the per-occurrence model-instantiation cost profiled
+        // in forecast-performance.md; a plain array copy per occurrence is essentially free.
+        $baseAttributes = $this->getAttributes();
+        unset(
+            $baseAttributes[$this->getKeyName()],
+            $baseAttributes[$this->getCreatedAtColumn()],
+            $baseAttributes[$this->getUpdatedAtColumn()],
+            $baseAttributes['config_id'],
+        );
+        $baseAttributes['transaction_type'] = $this->transaction_type;
+        $baseAttributes['reconciled'] = $this->reconciled;
+        $baseAttributes['schedule'] = $this->schedule;
+        $baseAttributes['budget'] = $this->budget;
+        $baseAttributes['cashflow_value'] = $this->cashflow_value;
+        $baseAttributes['transaction_currency'] = $this->transaction_currency;
+        $baseAttributes['originalId'] = $this->id;
+        $baseAttributes['transactionGroup'] = 'forecast';
+
+        $baseRelations = $this->relations;
+
         // Some features need to know which is the first instance
         $first = true;
 
         foreach ($transformer->transform($rule, $constraint) as $instance) {
-            $newTransaction = $this->replicate();
+            $attributes = $baseAttributes;
+            $attributes['date'] = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $attributes['schedule_first_instance'] = $first;
 
-            $newTransaction->originalId = $this->id;
-            $newTransaction->date = \Illuminate\Support\Carbon::instance($instance->getStart());
-            $newTransaction->transactionGroup = 'forecast';
-            $newTransaction->schedule_first_instance = $first;
-
-            $scheduleInstances->push($newTransaction);
+            $scheduleInstances->push(new ScheduleInstance($attributes, $baseRelations));
 
             $first = false;
         }

@@ -216,6 +216,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('investments.provider-settings.update');
     Route::get('/investments/{investment}/price-history', [InvestmentApiController::class, 'getPriceHistory'])
         ->name('investments.price-history');
+    Route::get('/investments/{investment}/display-data', [InvestmentApiController::class, 'getDisplayData'])
+        ->name('investments.display-data');
     Route::delete('/investments/{investment}', [InvestmentApiController::class, 'destroy'])
         ->name('investments.destroy');
 

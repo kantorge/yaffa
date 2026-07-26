@@ -56,8 +56,7 @@
         "nikaia/translation-sheet": "dev-feature/config_empty_behavior",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^12.5.22",
-        "roquie/laravel-dusk-select2": "dev-custom_package",
-        "spatie/db-dumper": "^4.0"
+        "roquie/laravel-dusk-select2": "dev-custom_package"
     },
     "config": {
         "discard-changes": true,

@@ -13,6 +13,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Services\InvestmentService;
+use App\Support\ScheduleInstance;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Batchable;
@@ -331,7 +332,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
             // Split the transactions into from and to transactions
             [$transactionsFrom, $transactionsTo] = ($scheduledStandardTransactionInstances[$month] ?? collect())->partition(
-                fn (Transaction $transaction) =>
+                fn (ScheduleInstance $transaction) =>
                     $transaction->config instanceof TransactionDetailStandard
                     && $transaction->config->account_from_id === $this->accountEntity->id
             );
@@ -467,16 +468,28 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         // We need to forecast until the user's end date
         $lastForecastDate = $this->user->end_date;
 
-        $period = $firstForecastDate->startOfMonth()->monthsUntil($lastForecastDate);
+        $months = collect($firstForecastDate->startOfMonth()->monthsUntil($lastForecastDate))
+            ->map(fn ($month) => Carbon::instance($month)->endOfMonth());
+
+        // Batch-fetch every investment price this run could need, once, up front, instead of
+        // one Investment::find() + price lookup per investment per forecast month (FR-9) - this
+        // was the dominant cost in a 16-19s job per forecast-performance.md's profiling.
+        $investmentIds = $allTransactionsInstances->pluck('config.investment_id')->filter()->unique()->values();
+        $investments = Investment::whereIn('id', $investmentIds)->get();
+
+        $priceRequests = new Collection();
+        foreach ($months as $carbonEndOfMonth) {
+            foreach ($investments as $investment) {
+                $priceRequests->push(['investment' => $investment, 'date' => $carbonEndOfMonth]);
+            }
+        }
+        $priceMap = $this->investmentService->getLatestPricesBatch($priceRequests);
 
         $results = new Collection();
         $currentTransactionCount = 0;
         $quantities = collect();
 
-        foreach ($period as $month) {
-            // Create a Carbon instance of the month
-            $carbonEndOfMonth = Carbon::instance($month)->endOfMonth();
-
+        foreach ($months as $carbonEndOfMonth) {
             // This loop reproduces the functionality of the calculateInvestmentValueFact method,
             // and that of the getAssociatedInvestmentsAndQuantity method in the Account model,
             // using the already loaded transactions.
@@ -498,10 +511,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 );
             }
 
-            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth) {
-                // Get the latest known price up to this date
-                $investment = Investment::find($investmentId);
-                $latestPrice = $this->investmentService->getLatestPrice($investment, 'combined', $carbonEndOfMonth);
+            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth, $priceMap) {
+                // Get the latest known price up to this date, from the pre-fetched map
+                $latestPrice = $priceMap[$this->investmentService->priceBatchKey((int) $investmentId, $carbonEndOfMonth)] ?? null;
 
                 return $quantity * $latestPrice;
             })
@@ -510,7 +522,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Here we intentionally store zero values, as it's valid to have a zero value for a month
             // and we don't want to get stuck with a previous non-zero value
             $results->push([
-                'date' => $month->startOfMonth(),
+                'date' => $carbonEndOfMonth->clone()->startOfMonth(),
                 'user_id' => $this->accountEntity->user_id,
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'investment_value',

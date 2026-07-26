@@ -147,6 +147,54 @@ class InvestmentApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Get complete investment display data (investment, transactions, quantities, prices).
+     * Used by the investment detail page to update all visualizations after transaction changes.
+     */
+    public function getDisplayData(Investment $investment): JsonResponse
+    {
+        /**
+         * @get("/api/v1/investments/{investment}/display-data")
+         * @name("api.v1.investments.display-data")
+         * @middlewares("api", "auth:sanctum")
+         */
+        Gate::authorize('view', $investment);
+
+        // Load investment with related data
+        $investment->load(['investmentGroup', 'currency']);
+
+        // Enrich investment with calculated quantity history
+        $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
+
+        // Get all prices
+        $prices = InvestmentPrice::where('investment_id', $investment->id)
+            ->orderBy('date')
+            ->get();
+
+        // Get basic (non-scheduled) transactions
+        $transactions = $investment->transactionsBasic()
+            ->with(['config'])
+            ->get();
+
+        // Get scheduled transactions and generate instances
+        $scheduledTransactions = $investment->transactionsScheduled()
+            ->with(['config', 'transactionSchedule'])
+            ->get()
+            ->filter(fn ($transaction): bool => $transaction instanceof \App\Models\Transaction
+                && ($transaction->transactionSchedule?->active) === true);
+
+        // Add all scheduled instances to list of transactions
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
+        $transactions = $transactions->concat($scheduleInstances);
+
+        return response()->json([
+            'investment' => $this->serializeInvestment($investment),
+            'transactions' => $transactions,
+            'quantities' => $investment->quantities,
+            'prices' => $prices,
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * @throws AuthorizationException
      */
     /**
