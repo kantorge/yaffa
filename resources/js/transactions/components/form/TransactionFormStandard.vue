@@ -1455,9 +1455,12 @@
           return;
         }
         const date = parseIsoDate(newDate);
-        this.form.original_schedule_config.end_date = new Date(
-          date.getTime() - 24 * 60 * 60 * 1000,
-        );
+        if (!date) {
+          return;
+        }
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() - 1);
+        this.form.original_schedule_config.end_date = endDate;
       },
       __,
 

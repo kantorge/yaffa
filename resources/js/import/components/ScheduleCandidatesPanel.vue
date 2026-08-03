@@ -92,7 +92,7 @@
 <script>
   import axios from 'axios';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
-  import { processTransaction } from '@/shared/lib/helpers';
+  import { processTransaction, toIsoDateString } from '@/shared/lib/helpers';
 
   export default {
     name: 'ScheduleCandidatesPanel',
@@ -197,6 +197,9 @@
           transaction.budget = false;
           transaction.date =
             transaction.transaction_schedule?.next_date ?? transaction.date;
+          transaction.year_month = transaction.date
+            ? toIsoDateString(transaction.date).slice(0, 7)
+            : null;
 
           window.dispatchEvent(
             new CustomEvent('initiateEnterInstance', {
