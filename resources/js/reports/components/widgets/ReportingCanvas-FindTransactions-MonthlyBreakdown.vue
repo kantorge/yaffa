@@ -327,6 +327,18 @@
         type: Boolean,
         default: false,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
     data() {
       return {
@@ -372,7 +384,11 @@
           return this.cachedCategoryData;
         }
 
-        return aggregateTransactionsByCategory(this.transactions);
+        return aggregateTransactionsByCategory(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
       },
 
       /**
@@ -466,6 +482,11 @@
             this.saveBreakdownCache();
           });
         }
+      },
+      // A cached breakdown was computed with whatever scope was active at the time;
+      // toggling the switch must bypass it and recompute from the raw transactions.
+      matchingItemsOnly() {
+        this.cachedCategoryData = null;
       },
     },
 

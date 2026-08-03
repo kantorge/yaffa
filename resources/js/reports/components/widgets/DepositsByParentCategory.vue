@@ -12,6 +12,7 @@
   import { toFormattedCurrency } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
   import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import { itemMatchesActiveFilters } from '../find-transactions/helpers';
 
   am4core.useTheme(am4themes_animated);
 
@@ -31,6 +32,18 @@
         type: Boolean,
         required: true,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
     data() {
       return {
@@ -46,6 +59,9 @@
         },
         immediate: true,
         deep: true,
+      },
+      matchingItemsOnly() {
+        this.updateChartData(this.transactions);
       },
     },
     methods: {
@@ -89,6 +105,15 @@
           filteredTransactions
             // Flatten the transaction items to a single array
             .flatMap((transaction) => transaction.transaction_items)
+            // Optionally narrow down to items matching the active category/tag filters
+            .filter(
+              (item) =>
+                !this.matchingItemsOnly ||
+                itemMatchesActiveFilters(item, {
+                  categoryIds: this.categoryIds,
+                  tagIds: this.tagIds,
+                }),
+            )
             /**
              * Process each transaction item and group them by parent category,
              * where the parent category is determined based on the selectedParentId.

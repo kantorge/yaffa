@@ -49,7 +49,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
          *
          * Currently supported query parameters:
          * - active: filter by active status (1 or 0)
-         * - query: search string to match against name, symbol, or ISIN
+         * - query: search string to match against name, symbol, or ISIN (alias: q)
          * - currency_id: filter by currency ID
          * - limit: maximum number of results to return (default 10)
          * - sort_by: field to sort by (name, symbol, isin, active, created_at), default is name
@@ -70,6 +70,10 @@ class InvestmentApiController extends Controller implements HasMiddleware
             $sortOrder = 'asc';
         }
 
+        // 'q' is accepted as an alias for 'query', matching the search parameter used
+        // by the other list endpoints (categories, payees, accounts, tags)
+        $searchTerm = $request->query('query') ?: $request->query('q');
+
         $investments = $request->user()
             ->investments()
             ->when(
@@ -78,21 +82,21 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 $query->where('active', $request->query('active'))
             )
             ->when(
-                $request->query('query'),
+                $searchTerm,
                 fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
-                $query->where(function ($q) use ($request) {
+                $query->where(function ($q) use ($searchTerm) {
                     $q->whereRaw(
                         'LOWER(name) LIKE ?',
-                        ['%' . Str::lower($request->query('query')) . '%']
+                        ['%' . Str::lower($searchTerm) . '%']
                     )
                         ->orWhereRaw(
                             'LOWER(symbol) LIKE ?',
-                            ['%' . Str::lower($request->query('query')) . '%']
+                            ['%' . Str::lower($searchTerm) . '%']
                         )
                         ->orWhereRaw(
                             'LOWER(isin) LIKE ?',
-                            ['%' . Str::lower($request->query('query')) . '%']
+                            ['%' . Str::lower($searchTerm) . '%']
                         );
                 })
             )
