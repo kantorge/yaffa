@@ -499,6 +499,7 @@
     todayInUTC,
     toIsoDateString,
     initializeBootstrapTooltips,
+    parseIsoDate,
   } from '@/shared/lib/helpers';
   import {
     __,
@@ -662,10 +663,7 @@
       },
 
       datePickerInitialPage() {
-        let date = this.form.date || new Date();
-        if (typeof date === 'string') {
-          date = new Date(date);
-        }
+        const date = parseIsoDate(this.form.date) || new Date();
         return {
           year: date.getFullYear(),
           month: date.getMonth(),
@@ -937,17 +935,6 @@
         });
       },
 
-      copyDateObject(date) {
-        if (date instanceof Date) {
-          return date;
-        }
-        if (date) {
-          return new Date(date);
-        }
-
-        return null;
-      },
-
       initializeTransaction() {
         if (this.transaction && Object.keys(this.transaction).length > 0) {
           // Populate form data with already known values
@@ -955,7 +942,7 @@
           this.form.transaction_type = this.transaction.transaction_type;
 
           // Populate date from source transaction, and ensure that it's a Date object
-          this.form.date = this.copyDateObject(this.transaction.date);
+          this.form.date = parseIsoDate(this.transaction.date);
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
@@ -982,15 +969,15 @@
             this.form.schedule_config.interval =
               this.transaction.transaction_schedule.interval;
 
-            this.form.schedule_config.start_date = this.copyDateObject(
+            this.form.schedule_config.start_date = parseIsoDate(
               this.transaction.transaction_schedule.start_date,
             );
-            this.form.schedule_config.next_date = this.copyDateObject(
+            this.form.schedule_config.next_date = parseIsoDate(
               this.transaction.transaction_schedule.next_date,
             );
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
-            this.form.schedule_config.end_date = this.copyDateObject(
+            this.form.schedule_config.end_date = parseIsoDate(
               this.transaction.transaction_schedule.end_date,
             );
 
@@ -1009,7 +996,7 @@
               this.form.schedule_config.interval;
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
-            this.form.original_schedule_config.start_date = this.copyDateObject(
+            this.form.original_schedule_config.start_date = parseIsoDate(
               this.form.schedule_config.start_date,
             );
             this.form.original_schedule_config.automatic_recording =
