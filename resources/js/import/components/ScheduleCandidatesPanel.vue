@@ -92,6 +92,7 @@
 <script>
   import axios from 'axios';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import { processTransaction, toIsoDateString } from '@/shared/lib/helpers';
 
   export default {
     name: 'ScheduleCandidatesPanel',
@@ -189,31 +190,16 @@
           const response = await axios.get(
             `/api/v1/transactions/${transactionId}`,
           );
-          const transaction = response.data.transaction;
-          if (transaction?.date) transaction.date = new Date(transaction.date);
-          if (transaction?.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-              transaction.transaction_schedule.start_date = new Date(
-                transaction.transaction_schedule.start_date,
-              );
-            }
-            if (transaction.transaction_schedule.end_date) {
-              transaction.transaction_schedule.end_date = new Date(
-                transaction.transaction_schedule.end_date,
-              );
-            }
-            if (transaction.transaction_schedule.next_date) {
-              transaction.transaction_schedule.next_date = new Date(
-                transaction.transaction_schedule.next_date,
-              );
-            }
-          }
+          const transaction = processTransaction(response.data.transaction);
 
           // Enter this instance as a regular transaction dated at the schedule's next occurrence.
           transaction.schedule = false;
           transaction.budget = false;
           transaction.date =
             transaction.transaction_schedule?.next_date ?? transaction.date;
+          transaction.year_month = transaction.date
+            ? toIsoDateString(transaction.date).slice(0, 7)
+            : null;
 
           window.dispatchEvent(
             new CustomEvent('initiateEnterInstance', {
