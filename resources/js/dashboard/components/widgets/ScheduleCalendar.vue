@@ -77,6 +77,8 @@
         maxDate: null,
         activePopover: null,
         activePopoverTrigger: null,
+        popoverHideTimer: null,
+        popoverHideDelayMs: 1500,
         skipInstanceBusy: false,
         visiblePage: null,
       };
@@ -278,7 +280,23 @@
       </div>
     `;
       },
+      clearPopoverHideTimer() {
+        if (!this.popoverHideTimer) {
+          return;
+        }
+
+        clearTimeout(this.popoverHideTimer);
+        this.popoverHideTimer = null;
+      },
+      schedulePopoverHide() {
+        this.clearPopoverHideTimer();
+        this.popoverHideTimer = setTimeout(() => {
+          this.hideActivePopover();
+        }, this.popoverHideDelayMs);
+      },
       hideActivePopover() {
+        this.clearPopoverHideTimer();
+
         if (!this.activePopover) {
           return;
         }
@@ -286,6 +304,10 @@
         const tip = this.getPopoverTipElement();
         if (tip) {
           tip.removeEventListener('click', this.onPopoverActionClick);
+          tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
+          tip.removeEventListener('mouseleave', this.schedulePopoverHide);
+          tip.removeEventListener('focusin', this.clearPopoverHideTimer);
+          tip.removeEventListener('focusout', this.schedulePopoverHide);
         }
 
         this.activePopover.hide();
@@ -308,6 +330,8 @@
 
         const shouldRecreatePopover =
           !this.activePopover || this.activePopoverTrigger !== triggerElement;
+
+        this.clearPopoverHideTimer();
 
         if (shouldRecreatePopover) {
           this.disposeActivePopover();
@@ -344,6 +368,10 @@
         const tip = this.getPopoverTipElement();
         if (tip) {
           tip.addEventListener('click', this.onPopoverActionClick);
+          tip.addEventListener('mouseenter', this.clearPopoverHideTimer);
+          tip.addEventListener('mouseleave', this.schedulePopoverHide);
+          tip.addEventListener('focusin', this.clearPopoverHideTimer);
+          tip.addEventListener('focusout', this.schedulePopoverHide);
         }
       },
       getPopoverTipElement() {
@@ -385,6 +413,21 @@
 
           event.preventDefault();
           this.showPopover(info.el, transaction);
+        });
+
+        // Hover/focus opens the popover immediately, like the rest of the
+        // app's tooltips - eventClick above covers touch/mouse-click too.
+        info.el.addEventListener('mouseenter', () => {
+          this.showPopover(info.el, transaction);
+        });
+        info.el.addEventListener('mouseleave', () => {
+          this.schedulePopoverHide();
+        });
+        info.el.addEventListener('focus', () => {
+          this.showPopover(info.el, transaction);
+        });
+        info.el.addEventListener('blur', () => {
+          this.schedulePopoverHide();
         });
       },
       async skipInstance(transactionId, buttonElement = null) {

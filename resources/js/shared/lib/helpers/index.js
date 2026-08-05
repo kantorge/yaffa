@@ -222,30 +222,30 @@ export const ordinalLabels = {
     '-1': __('Last'),
 };
 
-export const weekdayLabels = {
-    SU: __('Sunday'),
-    MO: __('Monday'),
-    TU: __('Tuesday'),
-    WE: __('Wednesday'),
-    TH: __('Thursday'),
-    FR: __('Friday'),
-    SA: __('Saturday'),
-};
+// Weekday/month names are derived from Intl rather than translated in lang/*.json: they are a
+// fixed, unambiguous set, and the browser's locale data already knows them. Intl returns the
+// grammatically-correct lowercase form for some locales (e.g. French, Hungarian, Polish), so the
+// first letter is capitalized to read correctly as a standalone label (e.g. dropdown option).
+function capitalize(value) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
-export const monthLabels = {
-    1: __('January'),
-    2: __('February'),
-    3: __('March'),
-    4: __('April'),
-    5: __('May'),
-    6: __('June'),
-    7: __('July'),
-    8: __('August'),
-    9: __('September'),
-    10: __('October'),
-    11: __('November'),
-    12: __('December'),
-};
+const locale = window.YAFFA?.userSettings?.locale || window.YAFFA?.locale;
+
+export const weekdayLabels = Object.fromEntries(
+    ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
+        // 2024-01-07 is a Sunday, so index 0..6 walks Sunday through Saturday.
+        const date = new Date(2024, 0, 7 + index);
+        return [code, capitalize(new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date))];
+    })
+);
+
+export const monthLabels = Object.fromEntries(
+    Array.from({ length: 12 }, (_, index) => {
+        const date = new Date(2024, index, 1);
+        return [index + 1, capitalize(new Intl.DateTimeFormat(locale, { month: 'long' }).format(date))];
+    })
+);
 
 export const ordinalOptions = Object.entries(ordinalLabels).map(([value, label]) => ({ value, label }));
 export const weekdayOptions = Object.entries(weekdayLabels).map(([value, label]) => ({ value, label }));
