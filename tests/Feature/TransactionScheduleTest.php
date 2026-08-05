@@ -135,6 +135,8 @@ class TransactionScheduleTest extends TestCase
      * schedule attributes - mirrors the fixture used by
      * test_a_transaction_schedule_has_the_active_flag_correctly_set, factored out so
      * catchUpToDate() tests (which must persist via save()) can reuse it.
+     *
+     * @param  array{start_date: Carbon, next_date: Carbon, end_date: Carbon|null, frequency: string, interval: int, count: int|null, by_day?: string|null}  $scheduleAttributes
      */
     private function createScheduledTransaction(array $scheduleAttributes): Transaction
     {

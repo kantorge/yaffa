@@ -81,6 +81,12 @@ class AiDocumentsIndexTest extends DuskTestCase
         });
     }
 
+    /**
+     * Status is pinned to 'ready_for_review' on both documents below because
+     * that's the table's default status filter (see AiDocumentManager.vue's
+     * initialStatus) - the factory's random status would otherwise make either
+     * document invisible regardless of date.
+     */
     public function test_ai_documents_date_filter_updates_table(): void
     {
         $user = User::factory()->create([
@@ -91,9 +97,6 @@ class AiDocumentsIndexTest extends DuskTestCase
 
         $today = now();
 
-        // Status is pinned to the table's default status filter ('ready_for_review',
-        // see AiDocumentManager.vue's initialStatus) - the factory's random status
-        // would otherwise make either document invisible regardless of date.
         $inRangeDocument = AiDocument::factory()->for($user)->create([
             'status' => 'ready_for_review',
             'created_at' => $today,

@@ -1499,6 +1499,7 @@
     "Skip to nearest future occurrence": "Passer à la prochaine occurrence future",
     "Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.": "Au lieu de la prochaine date, fait également avancer le calendrier au-delà de toute autre occurrence encore due, afin que sa prochaine occurrence soit aujourd'hui ou plus tard.",
     "May close this schedule if no occurrences remain.": "Peut clôturer ce calendrier s'il ne reste plus d'occurrence.",
+    "Unable to catch up the schedule to the current date.": "Impossible de mettre à jour le calendrier jusqu'à la date actuelle.",
     "Day-of-week recurrence requires a monthly or yearly frequency.": "La récurrence par jour de la semaine nécessite une fréquence mensuelle ou annuelle.",
     "Month only applies to yearly day-of-week recurrence.": "Le mois s'applique uniquement à la récurrence annuelle par jour de la semaine.",
     "The :attribute must be a date the schedule actually recurs on.": "Le champ :attribute doit être une date à laquelle le calendrier se répète réellement.",

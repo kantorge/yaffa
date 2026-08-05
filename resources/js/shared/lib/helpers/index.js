@@ -256,10 +256,10 @@ export function processScheduledTransaction(transaction) {
         const schedule = transaction.transaction_schedule;
 
         transaction.transaction_schedule.rule = new RRule({
-            dtstart: schedule.start_date,
+            dtstart: toRRuleDate(schedule.start_date),
             freq: RRule[schedule.frequency],
             interval: schedule.interval,
-            until: schedule.end_date,
+            until: toRRuleDate(schedule.end_date),
             byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
             // Mirrors TransactionSchedule::buildRule() on the backend: by_month
             // only applies alongside a YEARLY by_day rule, otherwise it's ignored.

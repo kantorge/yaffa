@@ -1499,6 +1499,7 @@
     "Skip to nearest future occurrence": "Skip to nearest future occurrence",
     "Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.": "Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.",
     "May close this schedule if no occurrences remain.": "May close this schedule if no occurrences remain.",
+    "Unable to catch up the schedule to the current date.": "Unable to catch up the schedule to the current date.",
     "Day-of-week recurrence requires a monthly or yearly frequency.": "Day-of-week recurrence requires a monthly or yearly frequency.",
     "Month only applies to yearly day-of-week recurrence.": "Month only applies to yearly day-of-week recurrence.",
     "The :attribute must be a date the schedule actually recurs on.": "The :attribute must be a date the schedule actually recurs on.",

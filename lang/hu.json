@@ -1499,6 +1499,7 @@
     "Skip to nearest future occurrence": "Ugrás a legközelebbi jövőbeli előfordulásra",
     "Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.": "A következő dátum helyett az ütemezést az összes még esedékes előforduláson túl is előreviszi, így a következő előfordulása ma vagy később lesz.",
     "May close this schedule if no occurrences remain.": "Lezárhatja ezt az ütemezést, ha nem marad több előfordulás.",
+    "Unable to catch up the schedule to the current date.": "Nem sikerült az ütemezést a mai napig frissíteni.",
     "Day-of-week recurrence requires a monthly or yearly frequency.": "A hét napja szerinti ismétlődéshez havi vagy éves gyakoriság szükséges.",
     "Month only applies to yearly day-of-week recurrence.": "A hónap csak az éves, hét napja szerinti ismétlődésre vonatkozik.",
     "The :attribute must be a date the schedule actually recurs on.": "A(z) :attribute mezőnek olyan dátumnak kell lennie, amelyen az ütemezés ténylegesen ismétlődik.",

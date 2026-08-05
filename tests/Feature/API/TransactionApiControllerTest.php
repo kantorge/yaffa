@@ -329,6 +329,8 @@ class TransactionApiControllerTest extends TestCase
     /**
      * Create a fresh account/payee/category setup owned by $this->user, wrapped in
      * the AccountEntity rows the API expects for account_from_id/account_to_id.
+     *
+     * @return array{account_entity_id: int, payee_entity_id: int, category_id: int}
      */
     private function createStandardEntities(): array
     {

@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Log;
 use Exception;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
+use RuntimeException;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -464,12 +465,16 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
 
         $this->mergeService->mergeIfEnabled($transaction);
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -517,10 +522,14 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -795,7 +804,9 @@ class TransactionApiController extends Controller implements HasMiddleware
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
             if ($validated['catch_up_schedule'] ?? false) {
-                $sourceTransaction->transactionSchedule->catchUpToDate();
+                if (!$sourceTransaction->transactionSchedule->catchUpToDate()) {
+                    throw new RuntimeException(__('Unable to catch up the schedule to the current date.'));
+                }
             } else {
                 $sourceTransaction->transactionSchedule->skipNextInstance();
             }
