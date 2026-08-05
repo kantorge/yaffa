@@ -2,7 +2,6 @@ import { COLOR_MODE_EVENT } from './amchartsColorTheme';
 
 /**
  * Adds a reactive `isDarkMode` boolean that tracks CoreUI's color mode.
- * Use it to pass `:is-dark="isDarkMode"` to v-calendar components.
  */
 export const colorModeMixin = {
     data() {

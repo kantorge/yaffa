@@ -160,4 +160,25 @@ abstract class DuskTestCase extends BaseTestCase
     {
         $this->assertSame([], $this->getSelect2Values($browser, $selectSelector));
     }
+
+    /**
+     * Setting a native <input type="date"> via ->type() sends keys to the browser's
+     * segmented date widget, which is unreliable across locales and can produce
+     * garbled values (e.g. typed digits landing in the wrong segment). Setting the
+     * value directly and dispatching an 'input' event - which is what Vue's v-model
+     * listens for on this input type - is the reliable equivalent.
+     *
+     * @param Browser $browser
+     * @param string $selector
+     * @param string $value Date string in 'Y-m-d' format
+     */
+    protected function setDateInput(Browser $browser, string $selector, string $value): void
+    {
+        $browser->script(
+            'const el = document.querySelector(' . json_encode($selector) . ');'
+            . 'el.value = ' . json_encode($value) . ';'
+            . "el.dispatchEvent(new Event('input', { bubbles: true }));"
+            . "el.dispatchEvent(new Event('change', { bubbles: true }));"
+        );
+    }
 }

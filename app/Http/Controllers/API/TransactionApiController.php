@@ -791,7 +791,11 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
-            $sourceTransaction->transactionSchedule->skipNextInstance();
+            if ($validated['catch_up_schedule'] ?? false) {
+                $sourceTransaction->transactionSchedule->catchUpToDate();
+            } else {
+                $sourceTransaction->transactionSchedule->skipNextInstance();
+            }
 
             // This also triggers a TransactionUpdated event for the source transaction
             event(new TransactionUpdated($sourceTransaction, [

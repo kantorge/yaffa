@@ -503,10 +503,13 @@ class AccountShowTest extends DuskTestCase
                     'account_entity' => $account->id,
                 ])
                 ->waitFor('#historyTable')
-                ->waitFor('#accountDateUpdate')
-                // Select a date range that includes the transaction
-                ->type('#accountDate_from', $date->copy()->subDays(1)->format('Y-m-d'))
-                ->type('#accountDate_to', $date->copy()->addDays(1)->format('Y-m-d'))
+                ->waitFor('#accountDateUpdate');
+
+            // Select a date range that includes the transaction
+            $this->setDateInput($browser, '#accountDate_from', $date->copy()->subDays(1)->format('Y-m-d'));
+            $this->setDateInput($browser, '#accountDate_to', $date->copy()->addDays(1)->format('Y-m-d'));
+
+            $browser
                 // Click the Update button to trigger table reload
                 ->click('#accountDateUpdate')
                 // Wait for table to reload with the transaction

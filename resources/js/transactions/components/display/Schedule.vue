@@ -23,6 +23,13 @@
               {{ schedule.interval }}
             </dd>
 
+            <dt class="col-6 mb-2" v-if="patternDescription">
+              {{ __('Pattern') }}
+            </dt>
+            <dd class="col-6 mb-2" v-if="patternDescription">
+              {{ patternDescription }}
+            </dd>
+
             <dt class="col-6 mb-2">
               {{ __('Count') }}
             </dt>
@@ -122,6 +129,8 @@
    * @property {Date} schedule.end_date
    * @property {Number} schedule.inflation
    * @property {Boolean} schedule.automatic_recording
+   * @property {String|null} schedule.by_day RFC5545 ordinal weekday token, e.g. "1WE", "-1FR"
+   * @property {Number|null} schedule.by_month 1-12, pins a YEARLY by_day rule to a month
    * @property {Object} window.YAFFA
    */
   export default {
@@ -139,7 +148,66 @@
     },
 
     data() {
-      return {};
+      return {
+        // Mirrors the option labels used by the schedule edit form
+        // (TransactionSchedule.vue) so the same by_day/by_month values read
+        // the same way here.
+        ordinalLabels: {
+          1: __('First'),
+          2: __('Second'),
+          3: __('Third'),
+          4: __('Fourth'),
+          '-1': __('Last'),
+        },
+        weekdayLabels: {
+          SU: __('Sunday'),
+          MO: __('Monday'),
+          TU: __('Tuesday'),
+          WE: __('Wednesday'),
+          TH: __('Thursday'),
+          FR: __('Friday'),
+          SA: __('Saturday'),
+        },
+        monthLabels: {
+          1: __('January'),
+          2: __('February'),
+          3: __('March'),
+          4: __('April'),
+          5: __('May'),
+          6: __('June'),
+          7: __('July'),
+          8: __('August'),
+          9: __('September'),
+          10: __('October'),
+          11: __('November'),
+          12: __('December'),
+        },
+      };
+    },
+
+    computed: {
+      // e.g. "First Wednesday" or, for a yearly rule pinned to a month,
+      // "Last Friday of November". Null when the schedule uses the default
+      // day-of-month pattern (by_day empty), so the row can be hidden.
+      patternDescription() {
+        if (!this.schedule.by_day) {
+          return null;
+        }
+
+        const ordinal = this.schedule.by_day.slice(0, -2);
+        const weekday = this.schedule.by_day.slice(-2);
+
+        const ordinalLabel = this.ordinalLabels[ordinal] ?? ordinal;
+        const weekdayLabel = this.weekdayLabels[weekday] ?? weekday;
+
+        let description = `${ordinalLabel} ${weekdayLabel}`;
+
+        if (this.schedule.by_month && this.monthLabels[this.schedule.by_month]) {
+          description += ` ${__('of')} ${this.monthLabels[this.schedule.by_month]}`;
+        }
+
+        return description;
+      },
     },
 
     methods: {

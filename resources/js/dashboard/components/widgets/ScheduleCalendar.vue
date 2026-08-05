@@ -18,47 +18,38 @@
       <p v-if="busy" aria-hidden="true" class="placeholder-glow">
         <span class="placeholder col-12"></span>
       </p>
-      <Calendar
-        ref="calendar"
-        class="custom-calendar"
-        :masks="masks"
-        :attributes="transactions"
-        :first-day-of-week="2"
-        :min-date="minDate"
-        :max-date="maxDate"
-        :is-dark="isDarkMode"
-        disable-page-swipe
-        expanded
-        trim-weeks
-        :locale="language"
-        @transition-start="onCalendarTransitionStart"
-        @update:pages="handlePagesUpdate"
-      >
-        <template #day-content="{ day, attributes }">
-          <div>
-            <span class="day-label text-sm">{{ day.day }}</span>
-            <div class="vc-day-custom-content">
-              <button
-                v-for="item in attributes"
-                :key="item.key"
-                type="button"
-                class="btn btn-link p-0 schedule-calendar-trigger"
-                @mouseenter="onTransactionTriggerEnter($event, item.customData)"
-                @mouseleave="onTransactionTriggerLeave"
-                @click="onTransactionTriggerClick($event, item.customData)"
-                @keydown="onTransactionTriggerKeydown($event, item.customData)"
-                @touchstart="
-                  onTransactionTriggerTouchstart($event, item.customData)
-                "
-                @focus="onTransactionTriggerEnter($event, item.customData)"
-                @blur="onTransactionTriggerLeave"
-              >
-                <i :class="getTransactionIconClasses(item.customData)"></i>
-              </button>
-            </div>
-          </div>
+      <FullCalendar ref="calendar" class="custom-calendar" :options="calendarOptions">
+        <template #eventContent="arg">
+          <button
+            type="button"
+            class="btn btn-link p-0 schedule-calendar-trigger"
+            @mouseenter="
+              onTransactionTriggerEnter($event, arg.event.extendedProps.transaction)
+            "
+            @mouseleave="onTransactionTriggerLeave"
+            @click="
+              onTransactionTriggerClick($event, arg.event.extendedProps.transaction)
+            "
+            @keydown="
+              onTransactionTriggerKeydown($event, arg.event.extendedProps.transaction)
+            "
+            @touchstart="
+              onTransactionTriggerTouchstart(
+                $event,
+                arg.event.extendedProps.transaction,
+              )
+            "
+            @focus="
+              onTransactionTriggerEnter($event, arg.event.extendedProps.transaction)
+            "
+            @blur="onTransactionTriggerLeave"
+          >
+            <i
+              :class="getTransactionIconClasses(arg.event.extendedProps.transaction)"
+            ></i>
+          </button>
         </template>
-      </Calendar>
+      </FullCalendar>
     </div>
   </div>
 </template>
@@ -72,14 +63,17 @@
   } from '@/shared/lib/helpers';
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
-  import { Calendar } from 'v-calendar';
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
+  import FullCalendar from '@fullcalendar/vue3';
+  import dayGridPlugin from '@fullcalendar/daygrid';
+  import frLocale from '@fullcalendar/core/locales/fr';
+  import huLocale from '@fullcalendar/core/locales/hu';
+  import plLocale from '@fullcalendar/core/locales/pl';
+
+  const calendarLocales = [frLocale, huLocale, plLocale];
 
   export default {
-    mixins: [colorModeMixin],
-
     components: {
-      Calendar,
+      FullCalendar,
     },
 
     props: {
@@ -97,9 +91,6 @@
       return {
         busy: false,
         transactions: [],
-        masks: {
-          weekdays: 'WWW',
-        },
         minDate: null,
         maxDate: null,
         activePopover: null,
@@ -110,6 +101,62 @@
         visiblePage: null,
         preventGhostClickUntil: 0,
       };
+    },
+
+    computed: {
+      // One FullCalendar "event" per matching transaction; FullCalendar
+      // groups these by day itself, so no manual per-day aggregation is
+      // needed the way the old day-content slot required.
+      calendarEvents() {
+        return this.transactions.map((item) => ({
+          id: String(item.key),
+          start: item.dates,
+          allDay: true,
+          extendedProps: {
+            transaction: item.customData,
+          },
+        }));
+      },
+
+      // FullCalendar's validRange.end is exclusive, while maxDate (see
+      // updateCalendarRange) is the last calendar day of the target month -
+      // push the boundary one day later so that day stays reachable.
+      validRange() {
+        if (!this.minDate || !this.maxDate) {
+          return undefined;
+        }
+
+        return {
+          start: this.minDate,
+          end: new Date(
+            this.maxDate.getFullYear(),
+            this.maxDate.getMonth(),
+            this.maxDate.getDate() + 1,
+          ),
+        };
+      },
+
+      calendarOptions() {
+        return {
+          plugins: [dayGridPlugin],
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev',
+            center: 'title',
+            right: 'next',
+          },
+          firstDay: 1,
+          height: 'auto',
+          fixedWeekCount: false,
+          dayMaxEvents: false,
+          dayHeaderFormat: { weekday: 'short' },
+          locale: this.language,
+          locales: calendarLocales,
+          events: this.calendarEvents,
+          validRange: this.validRange,
+          datesSet: this.onDatesSet,
+        };
+      },
     },
 
     created() {
@@ -493,34 +540,39 @@
           this.enterInstance(transactionId);
         }
       },
-      handlePagesUpdate(pages) {
-        if (!Array.isArray(pages) || pages.length === 0) {
-          return;
-        }
+      // Fires on initial render and whenever the visible range changes
+      // (navigation, or a reactive option update such as a new validRange) -
+      // covers both the old @transition-start (popover cleanup) and
+      // @update:pages (visible-page tracking) handlers.
+      onDatesSet(dateInfo) {
+        this.disposeActivePopover();
 
-        const firstPage = pages[0];
-        if (!firstPage?.month || !firstPage?.year) {
+        const anchor = dateInfo?.view?.currentStart;
+        if (!anchor) {
           return;
         }
 
         this.visiblePage = {
-          month: firstPage.month,
-          year: firstPage.year,
+          month: anchor.getMonth() + 1,
+          year: anchor.getFullYear(),
         };
       },
       async restoreVisiblePage() {
-        if (!this.visiblePage || !this.$refs.calendar?.move) {
+        if (!this.visiblePage) {
           return;
         }
 
         await this.$nextTick();
 
+        const api = this.$refs.calendar?.getApi?.();
+        if (!api) {
+          return;
+        }
+
         try {
-          await this.$refs.calendar.move(this.visiblePage, {
-            force: true,
-            position: 1,
-            transition: 'none',
-          });
+          api.gotoDate(
+            new Date(this.visiblePage.year, this.visiblePage.month - 1, 1),
+          );
         } catch (_error) {
           // Ignore failed page restoration when the requested page is no longer valid.
         }
@@ -594,9 +646,6 @@
       handleTransactionCreated() {
         this.loadTransactions();
       },
-      onCalendarTransitionStart() {
-        this.disposeActivePopover();
-      },
       __,
       toFormattedCurrency,
       hide() {
@@ -608,47 +657,118 @@
 </script>
 
 <style>
-  .custom-calendar.vc-container {
-    border-radius: 0;
+  .custom-calendar.fc {
     max-width: 100%;
   }
 
-  .custom-calendar .vc-header {
+  .custom-calendar .fc-toolbar {
     margin-bottom: 10px;
   }
 
-  .custom-calendar .vc-weeks {
-    padding: 0;
+  .custom-calendar .fc-toolbar-title {
+    font-size: 1.1rem;
   }
 
-  .custom-calendar .vc-weekday {
+  /* Reskin FullCalendar's default blue prev/next buttons to match the
+     app's neutral Bootstrap outline buttons, via its own CSS custom
+     properties rather than fighting .fc-button specificity. */
+  .custom-calendar {
+    --fc-button-bg-color: transparent;
+    --fc-button-border-color: var(--cui-border-color, #b8c2cc);
+    --fc-button-text-color: var(--cui-body-color, #212529);
+    --fc-button-hover-bg-color: var(--cui-tertiary-bg, #f8fafc);
+    --fc-button-hover-border-color: var(--cui-border-color, #b8c2cc);
+    --fc-button-active-bg-color: var(--cui-secondary-bg, #eaeaea);
+    --fc-button-active-border-color: var(--cui-border-color, #b8c2cc);
+  }
+
+  /* Disabled prev/next (at the edge of validRange) reads as plainly
+     inactive - no border/box, faint icon - instead of just a slightly
+     lighter copy of the enabled button. */
+  .custom-calendar .fc-button:disabled {
+    opacity: 0.3;
+    background-color: transparent;
+    border-color: transparent;
+    cursor: default;
+  }
+
+  /* Day numbers render as <a> tags with no click handler attached - style
+     them as plain text instead of the app's default link color/underline. */
+  .custom-calendar .fc-daygrid-day-number {
+    color: inherit;
+    text-decoration: none;
+    cursor: default;
+  }
+
+  .custom-calendar .fc-col-header-cell {
     background-color: #f8fafc;
-    border-bottom: 1px solid #eaeaea;
     border-top: 1px solid #eaeaea;
-    padding: 5px 0;
+    border-bottom: 1px solid #eaeaea;
   }
 
-  [data-coreui-theme="dark"] .custom-calendar .vc-weekday {
+  /* Also an <a> with no click handler attached - same treatment as
+     fc-daygrid-day-number below. */
+  .custom-calendar .fc-col-header-cell-cushion {
+    display: block;
+    padding: 5px 0;
+    color: inherit;
+    text-decoration: none;
+    cursor: default;
+  }
+
+  [data-coreui-theme="dark"] .custom-calendar .fc-col-header-cell {
     background-color: var(--cui-secondary-bg);
     border-color: var(--cui-border-color);
   }
 
-  .custom-calendar .vc-day {
-    border: 1px solid #b8c2cc;
-    padding: 0 5px 3px 5px;
-    text-align: left;
-    height: 65px;
-    min-width: 45px;
-    background-color: white;
+  .custom-calendar .fc-daygrid-day {
+    border-color: #b8c2cc;
   }
 
-  [data-coreui-theme="dark"] .custom-calendar .vc-day {
-    background-color: var(--cui-body-bg);
+  [data-coreui-theme="dark"] .custom-calendar .fc-daygrid-day {
     border-color: var(--cui-border-color);
   }
 
-  .custom-calendar .vc-day-custom-content {
+  .custom-calendar .fc-daygrid-day-frame {
+    min-height: 65px;
+    padding: 0 5px 3px 5px;
+    background-color: white;
+  }
+
+  [data-coreui-theme="dark"] .custom-calendar .fc-daygrid-day-frame {
+    background-color: var(--cui-body-bg);
+  }
+
+  /* Lay the day's transaction icons out in a row, like the old
+     v-calendar day-content slot, instead of FullCalendar's default of
+     one event per row. */
+  .custom-calendar .fc-daygrid-day-events {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     line-height: normal;
+    min-height: 0;
+    margin: 0;
+  }
+
+  .custom-calendar .fc-daygrid-event-harness {
+    width: auto;
+    margin: 0;
+  }
+
+  /* FullCalendar wraps each event in its own <a> (href-less, so it has no
+     default action) with our button nested inside - invalid HTML nesting
+     that can make hit-testing ambiguous. Make the wrapper click-through so
+     pointer/WebDriver clicks always resolve to the actual button. */
+  .custom-calendar .fc-daygrid-event-harness .fc-event {
+    background: none;
+    border: none;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .custom-calendar .fc-daygrid-event-harness .fc-event .schedule-calendar-trigger {
+    pointer-events: auto;
   }
 
   .schedule-calendar-trigger {

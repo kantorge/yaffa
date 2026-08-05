@@ -113,38 +113,62 @@
                   </label>
                 </div>
                 <div
-                  class="col-8 col-sm-4 col-md-8 col-lg-4 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
-                  :class="{ 'has-error': form.errors.has('date') }"
+                  :class="[
+                    action === 'enter'
+                      ? 'col-8 col-sm-2 col-md-4 col-lg-2'
+                      : 'col-8 col-sm-4 col-md-8 col-lg-4',
+                    'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
+                    { 'has-error': form.errors.has('date') },
+                  ]"
                 >
                   <label class="form-label" for="investment-date">
                     {{ __('Date') }}
                   </label>
-                  <DatePicker
-                    :columns="2"
-                    :initial-page="datePickerInitialPage"
-                    :is-dark="isDarkMode"
-                    :masks="{
-                      L: 'YYYY-MM-DD',
-                      modelValue: 'YYYY-MM-DD',
-                    }"
-                    mode="date"
-                    :popover="{
-                      visibility: 'click',
-                      showDelay: 0,
-                      hideDelay: 0,
-                    }"
-                    v-model.string="form.date"
-                  >
-                    <template #default="{ inputValue, inputEvents }">
-                      <input
-                        class="form-control"
-                        :disabled="form.schedule"
-                        id="investment-date"
-                        :value="inputValue"
-                        v-on="inputEvents"
-                      />
-                    </template>
-                  </DatePicker>
+                  <input
+                    type="date"
+                    class="form-control"
+                    :disabled="form.schedule"
+                    id="investment-date"
+                    v-model="dateInput"
+                  />
+                </div>
+                <div
+                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
+                  v-if="action === 'enter'"
+                >
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      dusk="checkbox-investment-catch-up-schedule"
+                      id="checkbox-investment-catch-up-schedule"
+                      type="checkbox"
+                      value="1"
+                      v-model="form.catch_up_schedule"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="checkbox-investment-catch-up-schedule"
+                    >
+                      {{ __('Skip to nearest future occurrence') }}
+                      <i
+                        class="fa fa-info-circle text-primary"
+                        :title="
+                          __(
+                            'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
+                          )
+                        "
+                      ></i>
+                      <i
+                        class="fa fa-triangle-exclamation text-warning ms-1"
+                        :title="
+                          __(
+                            'May close this schedule if no occurrences remain.',
+                          )
+                        "
+                        v-if="catchUpMayCloseSchedule"
+                      ></i>
+                    </label>
+                  </div>
                 </div>
                 <div
                   class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
@@ -401,6 +425,7 @@
         :isBudget="false"
         :schedule="form.original_schedule_config"
         :form="form"
+        field-prefix="original_schedule_config"
       ></transaction-schedule>
 
       <div class="card mb-3">
@@ -484,13 +509,12 @@
 </template>
 
 <script>
+  import { RRule } from 'rrule';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import * as toastHelpers from '@/shared/lib/toast';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
-
-  import { DatePicker } from 'v-calendar';
 
   import TransactionSchedule from './TransactionSchedule.vue';
 
@@ -500,6 +524,8 @@
     toIsoDateString,
     initializeBootstrapTooltips,
     parseIsoDate,
+    byDayToRRuleWeekday,
+    toDateInputValue,
   } from '@/shared/lib/helpers';
   import {
     __,
@@ -508,15 +534,21 @@
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
+
+  // RRule reads a Date's UTC getters, not its local ones, so a local-midnight Date
+  // (e.g. from parseIsoDate) has to be re-expressed with matching UTC fields before
+  // use - otherwise occurrences can land a day off for anyone outside UTC, exactly
+  // the class of bug this schedule/date handling has already been fixed for elsewhere.
+  function toRRuleDate(date) {
+    return new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+    );
+  }
 
   export default {
-    mixins: [colorModeMixin],
-
     components: {
       TransactionSchedule,
       MathInput,
-      DatePicker,
       Button,
       AlertErrors,
     },
@@ -565,6 +597,7 @@
         schedule: false,
         budget: false,
         reconciled: false,
+        catch_up_schedule: false,
         config: {
           account_id: null,
           investment_id: null,
@@ -662,12 +695,49 @@
         return this.callbackOptions.filter((option) => option.enabled);
       },
 
-      datePickerInitialPage() {
-        const date = parseIsoDate(this.form.date) || new Date();
-        return {
-          year: date.getFullYear(),
-          month: date.getMonth(),
-        };
+      // Native <input type="date"> needs a 'YYYY-MM-DD' string, while
+      // form.date may hold a Date object (see toRRuleDate above) - this
+      // bridges the two without changing the stored type.
+      dateInput: {
+        get() {
+          return toDateInputValue(this.form.date);
+        },
+        set(value) {
+          this.form.date = value || null;
+        },
+      },
+
+      // Predicts whether catching up to today would close this schedule, by checking
+      // whether the rule (anchored at start_date, same as the backend's
+      // TransactionSchedule::catchUpToDate()) has any occurrence left on or after
+      // today. next_date doesn't need to be considered separately: it's always one of
+      // the rule's own occurrences, so "no occurrence on/after today anywhere in the
+      // rule" and "no occurrence on/after today reachable from next_date" agree.
+      catchUpMayCloseSchedule() {
+        if (this.action !== 'enter') {
+          return false;
+        }
+
+        const schedule = this.form.schedule_config;
+        if (!schedule?.frequency || !schedule?.start_date) {
+          return false;
+        }
+
+        try {
+          const rule = new RRule({
+            freq: RRule[schedule.frequency],
+            interval: schedule.interval || 1,
+            dtstart: toRRuleDate(schedule.start_date),
+            until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
+            count: schedule.count || null,
+            byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
+            bymonth: schedule.by_month || null,
+          });
+
+          return rule.after(toRRuleDate(new Date()), true) === null;
+        } catch {
+          return false;
+        }
       },
 
       // Do we allow the user to edit the base settings?
@@ -968,6 +1038,10 @@
               this.transaction.transaction_schedule.count;
             this.form.schedule_config.interval =
               this.transaction.transaction_schedule.interval;
+            this.form.schedule_config.by_day =
+              this.transaction.transaction_schedule.by_day;
+            this.form.schedule_config.by_month =
+              this.transaction.transaction_schedule.by_month;
 
             this.form.schedule_config.start_date = parseIsoDate(
               this.transaction.transaction_schedule.start_date,
@@ -994,6 +1068,10 @@
               this.form.schedule_config.count;
             this.form.original_schedule_config.interval =
               this.form.schedule_config.interval;
+            this.form.original_schedule_config.by_day =
+              this.form.schedule_config.by_day;
+            this.form.original_schedule_config.by_month =
+              this.form.schedule_config.by_month;
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
             this.form.original_schedule_config.start_date = parseIsoDate(
@@ -1011,6 +1089,15 @@
             // If this is a schedule, then set the new next date to today
             if (this.form.schedule) {
               this.form.schedule_config.next_date = todayInUTC();
+            }
+
+            // The end date carried over from the original schedule may now be
+            // in the past relative to the new start date - the new schedule
+            // can't already be over before its first occurrence, so clear it.
+            const newEndDate = this.form.schedule_config.end_date;
+            const newStartDate = this.form.schedule_config.start_date;
+            if (newEndDate && newEndDate < newStartDate) {
+              this.form.schedule_config.end_date = null;
             }
 
             // Set original schedule end date to today - 1 day

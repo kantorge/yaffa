@@ -101,10 +101,11 @@ class AiDocumentsIndexTest extends DuskTestCase
                 ->waitFor('#ai-document-table')
                 ->waitFor('#aiDocumentDate_from');
 
-            // Set a date range - dates are automatically updated as user types
+            // Set a date range - dates are automatically updated as the inputs change
+            $this->setDateInput($browser, '#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'));
+            $this->setDateInput($browser, '#aiDocumentDate_to', $today->format('Y-m-d'));
+
             $browser
-                ->type('#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'))
-                ->type('#aiDocumentDate_to', $today->format('Y-m-d'))
                 ->pause(1000)
                 // Verify the dates are set in the input fields
                 ->assertValue('#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'))

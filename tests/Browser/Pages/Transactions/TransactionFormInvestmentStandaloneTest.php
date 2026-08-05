@@ -470,16 +470,16 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
 
             // Fill form with standard data
-            $this->fillStandardBuyForm($browser)
-                // Click the date field to open the date picker
-                ->click('#investment-date')
-                // Wait for the date picker to open
-                ->waitFor('.vc-pane-container', 10)
-                // Click the first day of the previous month, which is in the first column
-                // (This is to avoid clicking the current day on the 1st of the month, which would remove the date)
-                ->click('.vc-pane-container .vc-pane.column-1 .vc-day.in-month')
-                // Wait for the date picker to close
-                ->waitUntilMissing('.vc-pane-container', 10)
+            $this->fillStandardBuyForm($browser);
+
+            // Set the date to the first day of the previous month
+            $this->setDateInput(
+                $browser,
+                '#investment-date',
+                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d')
+            );
+
+            $browser
                 // Select callback to show the transaction
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
                 // Submit form

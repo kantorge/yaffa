@@ -77,6 +77,18 @@ export function toIsoDateString(date) {
     return `${y}-${m}-${d}`;
 }
 
+// Normalizes a Date object, an ISO 'YYYY-MM-DD' string, a full ISO datetime
+// string (e.g. a Carbon 'datetime'-cast attribute like "2026-06-26T00:00:00.000000Z"),
+// or a null/undefined value into the plain 'YYYY-MM-DD' string native
+// `<input type="date">` elements require for their value/v-model binding -
+// anything else silently renders blank per the HTML date-input spec.
+export function toDateInputValue(value) {
+    if (!value) return '';
+    if (value instanceof Date) return toIsoDateString(value);
+    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : '';
+}
+
 // Function to create a new date in UTC
 export function todayInUTC() {
     let date = new Date();
@@ -143,13 +155,31 @@ export function processTransaction(transaction) {
 
 import { RRule } from 'rrule';
 
+/**
+ * Converts a stored RFC5545 ordinal BYDAY token (e.g. "1WE", "-1FR") into
+ * the rrule.js Weekday instance used for RRule's byweekday option.
+ *
+ * @param {string} token
+ * @returns {object}
+ */
+export function byDayToRRuleWeekday(token) {
+    const weekdayCode = token.slice(-2);
+    const ordinal = parseInt(token.slice(0, -2), 10);
+
+    return RRule[weekdayCode].nth(ordinal);
+}
+
 export function processScheduledTransaction(transaction) {
     if (transaction.transaction_schedule) {
+        const schedule = transaction.transaction_schedule;
+
         transaction.transaction_schedule.rule = new RRule({
-            dtstart: transaction.transaction_schedule.start_date,
-            freq: RRule[transaction.transaction_schedule.frequency],
-            interval: transaction.transaction_schedule.interval,
-            until: transaction.transaction_schedule.end_date,
+            dtstart: schedule.start_date,
+            freq: RRule[schedule.frequency],
+            interval: schedule.interval,
+            until: schedule.end_date,
+            byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
+            bymonth: schedule.by_month || null,
         });
     }
 
