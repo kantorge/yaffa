@@ -18,36 +18,17 @@
       <p v-if="busy" aria-hidden="true" class="placeholder-glow">
         <span class="placeholder col-12"></span>
       </p>
-      <FullCalendar ref="calendar" class="custom-calendar" :options="calendarOptions">
+      <p v-else-if="loadError" class="text-danger mb-0">
+        {{ __('widget.scheduleCalendar.loadError') }}
+      </p>
+      <p v-else-if="transactions.length === 0" class="text-muted mb-0">
+        {{ __('No data available') }}
+      </p>
+      <FullCalendar v-else ref="calendar" class="custom-calendar" :options="calendarOptions">
         <template #eventContent="arg">
-          <button
-            type="button"
-            class="btn btn-link p-0 schedule-calendar-trigger"
-            @mouseenter="
-              onTransactionTriggerEnter($event, arg.event.extendedProps.transaction)
-            "
-            @mouseleave="onTransactionTriggerLeave"
-            @click="
-              onTransactionTriggerClick($event, arg.event.extendedProps.transaction)
-            "
-            @keydown="
-              onTransactionTriggerKeydown($event, arg.event.extendedProps.transaction)
-            "
-            @touchstart="
-              onTransactionTriggerTouchstart(
-                $event,
-                arg.event.extendedProps.transaction,
-              )
-            "
-            @focus="
-              onTransactionTriggerEnter($event, arg.event.extendedProps.transaction)
-            "
-            @blur="onTransactionTriggerLeave"
-          >
-            <i
-              :class="getTransactionIconClasses(arg.event.extendedProps.transaction)"
-            ></i>
-          </button>
+          <i
+            :class="getTransactionIconClasses(arg.event.extendedProps.transaction)"
+          ></i>
         </template>
       </FullCalendar>
     </div>
@@ -90,16 +71,14 @@
     data() {
       return {
         busy: false,
+        loadError: false,
         transactions: [],
         minDate: null,
         maxDate: null,
         activePopover: null,
         activePopoverTrigger: null,
-        popoverHideTimer: null,
-        popoverHideDelayMs: 1500,
         skipInstanceBusy: false,
         visiblePage: null,
-        preventGhostClickUntil: 0,
       };
     },
 
@@ -155,6 +134,8 @@
           events: this.calendarEvents,
           validRange: this.validRange,
           datesSet: this.onDatesSet,
+          eventClick: this.onEventClick,
+          eventDidMount: this.onEventDidMount,
         };
       },
     },
@@ -297,23 +278,7 @@
       </div>
     `;
       },
-      clearPopoverHideTimer() {
-        if (!this.popoverHideTimer) {
-          return;
-        }
-
-        clearTimeout(this.popoverHideTimer);
-        this.popoverHideTimer = null;
-      },
-      schedulePopoverHide() {
-        this.clearPopoverHideTimer();
-        this.popoverHideTimer = setTimeout(() => {
-          this.hideActivePopover();
-        }, this.popoverHideDelayMs);
-      },
       hideActivePopover() {
-        this.clearPopoverHideTimer();
-
         if (!this.activePopover) {
           return;
         }
@@ -321,10 +286,6 @@
         const tip = this.getPopoverTipElement();
         if (tip) {
           tip.removeEventListener('click', this.onPopoverActionClick);
-          tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
-          tip.removeEventListener('mouseleave', this.schedulePopoverHide);
-          tip.removeEventListener('focusin', this.clearPopoverHideTimer);
-          tip.removeEventListener('focusout', this.schedulePopoverHide);
         }
 
         this.activePopover.hide();
@@ -340,16 +301,13 @@
         this.activePopover = null;
         this.activePopoverTrigger = null;
       },
-      showPopover(event, transaction) {
-        if (!event.currentTarget || !transaction) {
+      showPopover(triggerElement, transaction) {
+        if (!triggerElement || !transaction) {
           return;
         }
 
-        const triggerElement = event.currentTarget;
         const shouldRecreatePopover =
           !this.activePopover || this.activePopoverTrigger !== triggerElement;
-
-        this.clearPopoverHideTimer();
 
         if (shouldRecreatePopover) {
           this.disposeActivePopover();
@@ -386,10 +344,6 @@
         const tip = this.getPopoverTipElement();
         if (tip) {
           tip.addEventListener('click', this.onPopoverActionClick);
-          tip.addEventListener('mouseenter', this.clearPopoverHideTimer);
-          tip.addEventListener('mouseleave', this.schedulePopoverHide);
-          tip.addEventListener('focusin', this.clearPopoverHideTimer);
-          tip.addEventListener('focusout', this.schedulePopoverHide);
         }
       },
       getPopoverTipElement() {
@@ -403,38 +357,35 @@
 
         return this.activePopover.tip || null;
       },
-      onTransactionTriggerEnter(event, transaction) {
-        this.showPopover(event, transaction);
+      // FullCalendar's own click handling for the event wrapper - the
+      // eventContent slot renders a plain, non-interactive icon (see template)
+      // so there's no nested interactive element inside FullCalendar's own
+      // <a> wrapper.
+      onEventClick(clickInfo) {
+        this.showPopover(
+          clickInfo.el,
+          clickInfo.event.extendedProps.transaction,
+        );
       },
-      onTransactionTriggerLeave() {
-        this.schedulePopoverHide();
-      },
-      onTransactionTriggerClick(event, transaction) {
-        if (Date.now() < this.preventGhostClickUntil) {
-          event.preventDefault();
+      // Gives the FullCalendar-rendered event wrapper a single accessible
+      // label and keyboard operability, since FullCalendar itself doesn't
+      // add either by default.
+      onEventDidMount(info) {
+        const transaction = info.event.extendedProps.transaction;
+        if (!transaction) {
           return;
         }
 
-        this.onTransactionTriggerEnter(event, transaction);
-      },
-      onTransactionTriggerKeydown(event, transaction) {
-        if (event.key !== 'Enter' && event.key !== ' ') {
-          return;
-        }
+        info.el.setAttribute('aria-label', this.getTransactionLabel(transaction));
+        info.el.setAttribute('tabindex', '0');
+        info.el.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+          }
 
-        event.preventDefault();
-        this.onTransactionTriggerEnter(event, transaction);
-      },
-      preventGhostClick(event) {
-        this.preventGhostClickUntil = Date.now() + 700;
-
-        if (event.cancelable) {
           event.preventDefault();
-        }
-      },
-      onTransactionTriggerTouchstart(event, transaction) {
-        this.onTransactionTriggerEnter(event, transaction);
-        this.preventGhostClick(event);
+          this.showPopover(info.el, transaction);
+        });
       },
       async skipInstance(transactionId, buttonElement = null) {
         if (this.skipInstanceBusy) {
@@ -616,6 +567,7 @@
       },
       async loadTransactions() {
         this.busy = true;
+        this.loadError = false;
         this.disposeActivePopover();
 
         try {
@@ -639,6 +591,13 @@
 
           this.updateCalendarRange();
           await this.restoreVisiblePage();
+        } catch (error) {
+          this.loadError = true;
+          toastHelpers.showErrorToast(
+            error?.response?.data?.message ||
+              error?.message ||
+              this.__('widget.scheduleCalendar.loadError'),
+          );
         } finally {
           this.busy = false;
         }
@@ -757,26 +716,18 @@
   }
 
   /* FullCalendar wraps each event in its own <a> (href-less, so it has no
-     default action) with our button nested inside - invalid HTML nesting
-     that can make hit-testing ambiguous. Make the wrapper click-through so
-     pointer/WebDriver clicks always resolve to the actual button. */
+     default browser action); it - not a nested control - is the single
+     interactive/focusable element, activated via eventClick/keydown. */
   .custom-calendar .fc-daygrid-event-harness .fc-event {
     background: none;
     border: none;
     padding: 0;
-    pointer-events: none;
-  }
-
-  .custom-calendar .fc-daygrid-event-harness .fc-event .schedule-calendar-trigger {
-    pointer-events: auto;
-  }
-
-  .schedule-calendar-trigger {
     margin: 0 1px;
     text-decoration: none;
+    cursor: pointer;
   }
 
-  .schedule-calendar-trigger:focus {
+  .custom-calendar .fc-daygrid-event-harness .fc-event:focus {
     outline: 2px solid var(--cui-primary);
     outline-offset: 2px;
     box-shadow: none;

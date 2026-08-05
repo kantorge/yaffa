@@ -95,6 +95,43 @@ export function todayInUTC() {
     return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
 }
 
+// RRule reads a Date's UTC getters, not its local ones, so a local-midnight
+// Date (e.g. from parseIsoDate) has to be re-expressed with matching UTC
+// fields before use - otherwise occurrences can land a day off for anyone
+// outside UTC. Accepts either a Date or a 'YYYY-MM-DD' string.
+export function toRRuleDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
+    }
+
+    const parts = String(value).split('-').map(Number);
+    if (parts.length !== 3) {
+        return null;
+    }
+
+    const [year, month, day] = parts;
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+// Reverses toRRuleDate(): converts an rrule.js occurrence (UTC-anchored
+// Date) back into the schedule's stored 'YYYY-MM-DD' string using UTC
+// getters - using local getters here would reintroduce the exact
+// off-by-one-day class of bug toRRuleDate exists to avoid.
+export function fromRRuleDate(date) {
+    if (!date) {
+        return null;
+    }
+
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 /**
  * Function to preprocess transaction data returned from the API.
  *
@@ -169,6 +206,51 @@ export function byDayToRRuleWeekday(token) {
     return RRule[weekdayCode].nth(ordinal);
 }
 
+// Imported from the leaf translate module (not the '@/shared/lib/i18n' barrel)
+// to avoid a circular import: that barrel re-exports format.js, which itself
+// imports parseIsoDate from this file.
+import { __ } from '@/shared/lib/i18n/translate';
+
+// Ordinal/weekday/month labels for a schedule's by_day/by_month RFC5545
+// fields, shared by the schedule edit form (TransactionSchedule.vue) and its
+// read-only display (Schedule.vue) so both read the same values the same way.
+export const ordinalLabels = {
+    1: __('First'),
+    2: __('Second'),
+    3: __('Third'),
+    4: __('Fourth'),
+    '-1': __('Last'),
+};
+
+export const weekdayLabels = {
+    SU: __('Sunday'),
+    MO: __('Monday'),
+    TU: __('Tuesday'),
+    WE: __('Wednesday'),
+    TH: __('Thursday'),
+    FR: __('Friday'),
+    SA: __('Saturday'),
+};
+
+export const monthLabels = {
+    1: __('January'),
+    2: __('February'),
+    3: __('March'),
+    4: __('April'),
+    5: __('May'),
+    6: __('June'),
+    7: __('July'),
+    8: __('August'),
+    9: __('September'),
+    10: __('October'),
+    11: __('November'),
+    12: __('December'),
+};
+
+export const ordinalOptions = Object.entries(ordinalLabels).map(([value, label]) => ({ value, label }));
+export const weekdayOptions = Object.entries(weekdayLabels).map(([value, label]) => ({ value, label }));
+export const monthOptions = Object.entries(monthLabels).map(([value, label]) => ({ value: Number(value), label }));
+
 export function processScheduledTransaction(transaction) {
     if (transaction.transaction_schedule) {
         const schedule = transaction.transaction_schedule;
@@ -179,7 +261,12 @@ export function processScheduledTransaction(transaction) {
             interval: schedule.interval,
             until: schedule.end_date,
             byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
-            bymonth: schedule.by_month || null,
+            // Mirrors TransactionSchedule::buildRule() on the backend: by_month
+            // only applies alongside a YEARLY by_day rule, otherwise it's ignored.
+            bymonth:
+                schedule.by_day && schedule.frequency === 'YEARLY'
+                    ? schedule.by_month || null
+                    : null,
         });
     }
 

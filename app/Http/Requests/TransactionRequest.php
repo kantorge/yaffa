@@ -85,6 +85,10 @@ class TransactionRequest extends FormRequest
             // 'nullable' is present, so the "required" direction needs an implicit
             // rule (Rule::requiredIf isn't skipped) rather than a closure fail().
             Rule::requiredIf(fn () => $this->input($frequencyField) === 'YEARLY' && (bool) $this->input($byDayField)),
+            // Reject the inverse too: TransactionSchedule::buildRule() only applies
+            // by_month when by_day is also set, so a YEARLY schedule without a
+            // by_day would silently ignore by_month rather than use it.
+            Rule::prohibitedIf(fn () => $this->input($frequencyField) === 'YEARLY' && !$this->input($byDayField)),
             function ($attribute, $value, $fail) use ($frequencyField) {
                 if ($value && $this->input($frequencyField) !== 'YEARLY') {
                     $fail(__('Month only applies to yearly day-of-week recurrence.'));

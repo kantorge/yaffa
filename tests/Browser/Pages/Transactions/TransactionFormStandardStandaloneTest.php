@@ -738,6 +738,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $this->setDateInput($browser, '#schedule_start_current', now()->format('Y-m-d'));
 
             $browser
+                // Confirm the Vue-side schedule state actually picked up the input
+                // before submitting, not just that the DOM input has the value
+                ->assertInputValue('#schedule_start_current', now()->format('Y-m-d'))
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
@@ -749,6 +752,13 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
+
+            // Confirm the schedule was actually persisted with the date set via
+            // setDateInput above, not left at whatever the form initialized with
+            $this->assertEquals(
+                now()->format('Y-m-d'),
+                $transaction->transactionSchedule->start_date->format('Y-m-d')
+            );
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(

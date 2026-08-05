@@ -241,6 +241,20 @@ class TransactionSchedule extends Model
     }
 
     /**
+     * The ArrayTransformer used to expand this schedule's rule into concrete
+     * occurrences, configured identically wherever it's needed.
+     */
+    private function makeArrayTransformer(): ArrayTransformer
+    {
+        $transformer = new ArrayTransformer();
+        $transformerConfig = new ArrayTransformerConfig();
+        $transformerConfig->enableLastDayOfMonthFix();
+        $transformer->setConfig($transformerConfig);
+
+        return $transformer;
+    }
+
+    /**
      * Build the recurrence rule for the transaction schedule.
      *
      * @throws InvalidWeekday
@@ -250,11 +264,7 @@ class TransactionSchedule extends Model
     private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
     {
         $rule = $this->buildRule();
-
-        $transformer = new ArrayTransformer();
-        $transformerConfig = new ArrayTransformerConfig();
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformer->setConfig($transformerConfig);
+        $transformer = $this->makeArrayTransformer();
 
         $constraint = ($afterDate ? new AfterConstraint(new DateTime($afterDate->toDateString()), false) : null);
 
@@ -279,11 +289,7 @@ class TransactionSchedule extends Model
     public function occursOn(Carbon $date): bool
     {
         $rule = $this->buildRule();
-
-        $transformer = new ArrayTransformer();
-        $transformerConfig = new ArrayTransformerConfig();
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformer->setConfig($transformerConfig);
+        $transformer = $this->makeArrayTransformer();
 
         $day = new DateTime($date->toDateString());
         $constraint = new BetweenConstraint($day, $day, true);

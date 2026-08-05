@@ -152,6 +152,8 @@
                       {{ __('Skip to nearest future occurrence') }}
                       <i
                         class="fa fa-info-circle text-primary"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
                         :title="
                           __(
                             'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
@@ -160,6 +162,8 @@
                       ></i>
                       <i
                         class="fa fa-triangle-exclamation text-warning ms-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
                         :title="
                           __(
                             'May close this schedule if no occurrences remain.',
@@ -526,6 +530,7 @@
     parseIsoDate,
     byDayToRRuleWeekday,
     toDateInputValue,
+    toRRuleDate,
   } from '@/shared/lib/helpers';
   import {
     __,
@@ -534,16 +539,6 @@
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
-
-  // RRule reads a Date's UTC getters, not its local ones, so a local-midnight Date
-  // (e.g. from parseIsoDate) has to be re-expressed with matching UTC fields before
-  // use - otherwise occurrences can land a day off for anyone outside UTC, exactly
-  // the class of bug this schedule/date handling has already been fixed for elsewhere.
-  function toRRuleDate(date) {
-    return new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-    );
-  }
 
   export default {
     components: {
@@ -723,11 +718,16 @@
           return false;
         }
 
+        const start = toRRuleDate(schedule.start_date);
+        if (!start) {
+          return false;
+        }
+
         try {
           const rule = new RRule({
             freq: RRule[schedule.frequency],
             interval: schedule.interval || 1,
-            dtstart: toRRuleDate(schedule.start_date),
+            dtstart: start,
             until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
             count: schedule.count || null,
             byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
@@ -1094,9 +1094,16 @@
             // The end date carried over from the original schedule may now be
             // in the past relative to the new start date - the new schedule
             // can't already be over before its first occurrence, so clear it.
-            const newEndDate = this.form.schedule_config.end_date;
-            const newStartDate = this.form.schedule_config.start_date;
-            if (newEndDate && newEndDate < newStartDate) {
+            // Compared as calendar-date strings (not raw timestamps), since
+            // todayInUTC() and parseIsoDate() don't share the same
+            // time-of-day representation in every timezone.
+            const newEndDateValue = toDateInputValue(
+              this.form.schedule_config.end_date,
+            );
+            const newStartDateValue = toDateInputValue(
+              this.form.schedule_config.start_date,
+            );
+            if (newEndDateValue && newEndDateValue < newStartDateValue) {
               this.form.schedule_config.end_date = null;
             }
 
@@ -1230,7 +1237,10 @@
           return;
         }
 
-        let date = new Date(newDate);
+        const date = parseIsoDate(newDate);
+        if (!date) {
+          return;
+        }
         date.setDate(date.getDate() - 1);
         this.form.original_schedule_config.end_date = toIsoDateString(date);
       },
@@ -1332,6 +1342,13 @@
       // On change of new schedule start date, adjust original schedule end date to previous day
       'form.schedule_config.start_date': function (newDate) {
         this.syncScheduleStartDate(newDate);
+      },
+
+      // The catch-up warning icon is only rendered when this is true (v-if), so a
+      // newly-mounted icon needs its own tooltip initialization - the one in
+      // mounted() only covers icons already in the DOM at that point.
+      catchUpMayCloseSchedule() {
+        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
       },
 
       // Check for existing price when date changes

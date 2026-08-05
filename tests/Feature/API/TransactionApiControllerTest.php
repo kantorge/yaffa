@@ -296,22 +296,7 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal_schedule($otherUser)
             ->create(['user_id' => $otherUser->id]);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
-        $category = Category::factory()->for($this->user)->create(['active' => true]);
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $entities = $this->createStandardEntities();
 
         $response = $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'enter',
@@ -323,15 +308,15 @@ class TransactionApiControllerTest extends TestCase
             'schedule' => false,
             'budget' => false,
             'config' => [
-                'account_from_id' => $accountEntity->id,
-                'account_to_id' => $payeeEntity->id,
+                'account_from_id' => $entities['account_entity_id'],
+                'account_to_id' => $entities['payee_entity_id'],
                 'amount_from' => 10,
                 'amount_to' => 10,
             ],
             'items' => [
                 [
                     'amount' => 10,
-                    'category_id' => $category->id,
+                    'category_id' => $entities['category_id'],
                     'tags' => [],
                 ],
             ],
@@ -342,10 +327,10 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
-     * Build a standard "enter" payload for $sourceTransaction, with fresh account/payee/category
-     * entities owned by $this->user, merging any $overrides on top.
+     * Create a fresh account/payee/category setup owned by $this->user, wrapped in
+     * the AccountEntity rows the API expects for account_from_id/account_to_id.
      */
-    private function buildEnterStandardPayload(Transaction $sourceTransaction, array $overrides = []): array
+    private function createStandardEntities(): array
     {
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -364,6 +349,21 @@ class TransactionApiControllerTest extends TestCase
             'active' => true,
         ]);
 
+        return [
+            'account_entity_id' => $accountEntity->id,
+            'payee_entity_id' => $payeeEntity->id,
+            'category_id' => $category->id,
+        ];
+    }
+
+    /**
+     * Build a standard "enter" payload for $sourceTransaction, with fresh account/payee/category
+     * entities owned by $this->user, merging any $overrides on top.
+     */
+    private function buildEnterStandardPayload(Transaction $sourceTransaction, array $overrides = []): array
+    {
+        $entities = $this->createStandardEntities();
+
         return array_merge([
             'action' => 'enter',
             'id' => $sourceTransaction->id,
@@ -374,15 +374,15 @@ class TransactionApiControllerTest extends TestCase
             'schedule' => false,
             'budget' => false,
             'config' => [
-                'account_from_id' => $accountEntity->id,
-                'account_to_id' => $payeeEntity->id,
+                'account_from_id' => $entities['account_entity_id'],
+                'account_to_id' => $entities['payee_entity_id'],
                 'amount_from' => 10,
                 'amount_to' => 10,
             ],
             'items' => [
                 [
                     'amount' => 10,
-                    'category_id' => $category->id,
+                    'category_id' => $entities['category_id'],
                     'tags' => [],
                 ],
             ],
@@ -1101,22 +1101,7 @@ class TransactionApiControllerTest extends TestCase
      */
     private function buildCreateScheduledStandardPayload(array $overrides = []): array
     {
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
-        $category = Category::factory()->for($this->user)->create(['active' => true]);
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $entities = $this->createStandardEntities();
 
         return array_merge([
             'action' => 'create',
@@ -1126,15 +1111,15 @@ class TransactionApiControllerTest extends TestCase
             'schedule' => true,
             'budget' => false,
             'config' => [
-                'account_from_id' => $accountEntity->id,
-                'account_to_id' => $payeeEntity->id,
+                'account_from_id' => $entities['account_entity_id'],
+                'account_to_id' => $entities['payee_entity_id'],
                 'amount_from' => 10,
                 'amount_to' => 10,
             ],
             'items' => [
                 [
                     'amount' => 10,
-                    'category_id' => $category->id,
+                    'category_id' => $entities['category_id'],
                     'tags' => [],
                 ],
             ],
@@ -1181,6 +1166,27 @@ class TransactionApiControllerTest extends TestCase
                     'frequency' => 'YEARLY',
                     'interval' => 1,
                     'by_day' => '-1FR',
+                ],
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['schedule_config.by_month']);
+    }
+
+    public function test_store_standard_schedule_rejects_yearly_by_month_without_by_day(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildCreateScheduledStandardPayload([
+                'schedule_config' => [
+                    'start_date' => now()->format('Y-m-d'),
+                    'next_date' => now()->format('Y-m-d'),
+                    'frequency' => 'YEARLY',
+                    'interval' => 1,
+                    'by_month' => 11,
                 ],
             ])
         );
@@ -1404,6 +1410,10 @@ class TransactionApiControllerTest extends TestCase
             'interval' => 1,
             'by_day' => null,
             'by_month' => null,
+            // Deterministic date that is not the last Friday of November under
+            // any year, so it can't survive as a valid occurrence of the new
+            // YEARLY/-1FR/November rule below.
+            'next_date' => '2024-01-15',
         ]);
 
         $response = $this->postJson(
@@ -1421,11 +1431,16 @@ class TransactionApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
+        // The old next_date is not an occurrence of the new rule, and
+        // original_schedule_config omitted next_date entirely, so it must be
+        // cleared rather than persisted verbatim - see
+        // TransactionApiController::handleSourceTransactionUpdates().
         $this->assertDatabaseHas('transaction_schedules', [
             'id' => $sourceTransaction->transactionSchedule->id,
             'frequency' => 'YEARLY',
             'by_day' => '-1FR',
             'by_month' => 11,
+            'next_date' => null,
         ]);
     }
 

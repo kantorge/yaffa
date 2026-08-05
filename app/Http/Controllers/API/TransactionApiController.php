@@ -32,6 +32,9 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidWeekday;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -818,6 +821,24 @@ class TransactionApiController extends Controller implements HasMiddleware
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
             $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+
+            // next_date isn't necessarily present in original_schedule_config (the
+            // "close out the old schedule" flow always omits/nulls it), so a stale
+            // value from before this pattern change can survive the fill() above.
+            // Since next_date is trusted verbatim wherever a transaction is recorded
+            // (see TransactionSchedule::occursOn()), clear it here if it no longer
+            // matches the (possibly just-changed) recurrence rule.
+            $nextDate = $sourceTransaction->transactionSchedule->next_date;
+            if ($nextDate) {
+                try {
+                    if (!$sourceTransaction->transactionSchedule->occursOn($nextDate)) {
+                        $sourceTransaction->transactionSchedule->next_date = null;
+                    }
+                } catch (InvalidArgument|InvalidWeekday|Exception) {
+                    $sourceTransaction->transactionSchedule->next_date = null;
+                }
+            }
+
             $sourceTransaction->push();
 
             // This also triggers a TransactionUpdated event for the source transaction

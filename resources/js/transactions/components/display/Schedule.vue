@@ -118,6 +118,11 @@
 
 <script>
   import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import {
+    ordinalLabels,
+    weekdayLabels,
+    monthLabels,
+  } from '@/shared/lib/helpers';
 
   /**
    * @property {Object} schedule
@@ -149,39 +154,11 @@
 
     data() {
       return {
-        // Mirrors the option labels used by the schedule edit form
-        // (TransactionSchedule.vue) so the same by_day/by_month values read
-        // the same way here.
-        ordinalLabels: {
-          1: __('First'),
-          2: __('Second'),
-          3: __('Third'),
-          4: __('Fourth'),
-          '-1': __('Last'),
-        },
-        weekdayLabels: {
-          SU: __('Sunday'),
-          MO: __('Monday'),
-          TU: __('Tuesday'),
-          WE: __('Wednesday'),
-          TH: __('Thursday'),
-          FR: __('Friday'),
-          SA: __('Saturday'),
-        },
-        monthLabels: {
-          1: __('January'),
-          2: __('February'),
-          3: __('March'),
-          4: __('April'),
-          5: __('May'),
-          6: __('June'),
-          7: __('July'),
-          8: __('August'),
-          9: __('September'),
-          10: __('October'),
-          11: __('November'),
-          12: __('December'),
-        },
+        // Shared with the schedule edit form (TransactionSchedule.vue) so the
+        // same by_day/by_month values read the same way here.
+        ordinalLabels,
+        weekdayLabels,
+        monthLabels,
       };
     },
 
@@ -200,13 +177,18 @@
         const ordinalLabel = this.ordinalLabels[ordinal] ?? ordinal;
         const weekdayLabel = this.weekdayLabels[weekday] ?? weekday;
 
-        let description = `${ordinalLabel} ${weekdayLabel}`;
-
         if (this.schedule.by_month && this.monthLabels[this.schedule.by_month]) {
-          description += ` ${__('of')} ${this.monthLabels[this.schedule.by_month]}`;
+          return __(':ordinal :weekday of :month', {
+            ordinal: ordinalLabel,
+            weekday: weekdayLabel,
+            month: this.monthLabels[this.schedule.by_month],
+          });
         }
 
-        return description;
+        return __(':ordinal :weekday', {
+          ordinal: ordinalLabel,
+          weekday: weekdayLabel,
+        });
       },
     },
 

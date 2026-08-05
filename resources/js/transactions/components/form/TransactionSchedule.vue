@@ -29,8 +29,7 @@
               <input
                 type="number"
                 :disabled="!allowCustomizationData"
-                class="form-control"
-                style="width: 4.5rem"
+                class="form-control schedule-interval-input"
                 :id="'schedule_interval_' + this.$.vnode.key"
                 v-model="intervalInput"
                 min="1"
@@ -100,8 +99,7 @@
               </div>
               <template v-if="patternMode === 'weekday' && showPatternPicker">
                 <select
-                  class="form-select"
-                  style="width: 7rem"
+                  class="form-select schedule-ordinal-select"
                   dusk="select-schedule-by-day-ordinal"
                   :id="'schedule_by_day_ordinal_' + this.$.vnode.key"
                   v-model="byDayOrdinal"
@@ -116,8 +114,7 @@
                   </option>
                 </select>
                 <select
-                  class="form-select"
-                  style="width: 8.5rem"
+                  class="form-select schedule-weekday-select"
                   dusk="select-schedule-by-day-weekday"
                   :id="'schedule_by_day_weekday_' + this.$.vnode.key"
                   v-model="byDayWeekday"
@@ -134,8 +131,7 @@
                 <template v-if="showMonthPicker">
                   <span class="text-muted">{{ __('of') }}</span>
                   <select
-                    class="form-select"
-                    style="width: 8.5rem"
+                    class="form-select schedule-month-select"
                     dusk="select-schedule-by-month"
                     :id="'schedule_by_month_' + this.$.vnode.key"
                     v-model.number="schedule.by_month"
@@ -240,7 +236,7 @@
               of truth, this is a UI aid only.
             -->
             <div :class="{ 'has-error': hasError('count') }">
-              <label :for="'schedule_count' + this.$.vnode.key" class="form-label">
+              <label :for="'schedule_count_' + this.$.vnode.key" class="form-label">
                 {{ __('Count') }}
               </label>
               <input
@@ -344,44 +340,15 @@
 <script>
   import { RRule } from 'rrule';
   import { __ } from '@/shared/lib/i18n';
-  import { byDayToRRuleWeekday, toDateInputValue } from '@/shared/lib/helpers';
-
-  // RRule reads a Date's UTC getters, not its local ones (see the identical
-  // comment in TransactionFormStandard.vue). schedule.* date fields here may be
-  // a local-midnight Date object or a 'YYYY-MM-DD' string (see startDateParts
-  // above) - both are normalized to a UTC-midnight Date for RRule.
-  function toRRuleDate(value) {
-    if (!value) {
-      return null;
-    }
-
-    if (value instanceof Date) {
-      return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
-    }
-
-    const parts = String(value).split('-').map(Number);
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const [year, month, day] = parts;
-    return new Date(Date.UTC(year, month - 1, day));
-  }
-
-  // Reverses toRRuleDate(): converts an rrule.js occurrence (UTC-anchored
-  // Date) back into the schedule's stored 'YYYY-MM-DD' string using UTC
-  // getters - using local getters here would reintroduce the exact
-  // off-by-one-day class of bug toRRuleDate exists to avoid.
-  function fromRRuleDate(date) {
-    if (!date) {
-      return null;
-    }
-
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
+  import {
+    byDayToRRuleWeekday,
+    toDateInputValue,
+    toRRuleDate,
+    fromRRuleDate,
+    ordinalOptions,
+    weekdayOptions,
+    monthOptions,
+  } from '@/shared/lib/helpers';
 
   export default {
     props: {
@@ -416,38 +383,9 @@
 
       data.allowCustomizationData = this.allowCustomization;
 
-      data.ordinalOptions = [
-        { value: '1', label: __('First') },
-        { value: '2', label: __('Second') },
-        { value: '3', label: __('Third') },
-        { value: '4', label: __('Fourth') },
-        { value: '-1', label: __('Last') },
-      ];
-
-      data.weekdayOptions = [
-        { value: 'SU', label: __('Sunday') },
-        { value: 'MO', label: __('Monday') },
-        { value: 'TU', label: __('Tuesday') },
-        { value: 'WE', label: __('Wednesday') },
-        { value: 'TH', label: __('Thursday') },
-        { value: 'FR', label: __('Friday') },
-        { value: 'SA', label: __('Saturday') },
-      ];
-
-      data.monthOptions = [
-        { value: 1, label: __('January') },
-        { value: 2, label: __('February') },
-        { value: 3, label: __('March') },
-        { value: 4, label: __('April') },
-        { value: 5, label: __('May') },
-        { value: 6, label: __('June') },
-        { value: 7, label: __('July') },
-        { value: 8, label: __('August') },
-        { value: 9, label: __('September') },
-        { value: 10, label: __('October') },
-        { value: 11, label: __('November') },
-        { value: 12, label: __('December') },
-      ];
+      data.ordinalOptions = ordinalOptions;
+      data.weekdayOptions = weekdayOptions;
+      data.monthOptions = monthOptions;
 
       return data;
     },
@@ -766,5 +704,18 @@
      field wrapped onto its own row. */
   .field-grid-2col {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .schedule-interval-input {
+    width: 4.5rem;
+  }
+
+  .schedule-ordinal-select {
+    width: 7rem;
+  }
+
+  .schedule-weekday-select,
+  .schedule-month-select {
+    width: 8.5rem;
   }
 </style>
