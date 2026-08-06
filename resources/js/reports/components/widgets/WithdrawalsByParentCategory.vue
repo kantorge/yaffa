@@ -63,6 +63,12 @@
       matchingItemsOnly() {
         this.updateChartData(this.transactions);
       },
+      categoryIds() {
+        this.updateChartData(this.transactions);
+      },
+      tagIds() {
+        this.updateChartData(this.transactions);
+      },
     },
     methods: {
       /**

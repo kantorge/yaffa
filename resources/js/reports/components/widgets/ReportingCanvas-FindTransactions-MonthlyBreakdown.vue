@@ -512,8 +512,10 @@
 
       saveBreakdownCache() {
         try {
-          // Don't overwrite cache on drill-down pages
-          if (this.isDrillDown) return;
+          // Don't overwrite cache on drill-down pages, or with a narrowed
+          // aggregate that a differently-scoped load couldn't detect as stale
+          // (the cache key doesn't encode matchingItemsOnly).
+          if (this.isDrillDown || this.matchingItemsOnly) return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};

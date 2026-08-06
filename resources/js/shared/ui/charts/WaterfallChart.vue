@@ -1,5 +1,5 @@
 <template>
-  <div id="waterfallChart" ref="chartdiv"></div>
+  <div class="waterfall-chart" ref="chartdiv"></div>
 </template>
 
 <script>
@@ -66,14 +66,19 @@
       };
       document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
-    updated() {
-      if (!this.chart) {
-        return;
-      }
+    watch: {
+      chartData() {
+        if (!this.chart) {
+          return;
+        }
 
-      this.chart.data = this.chartData;
-      this.chart.validateData();
-      this.toggleNoDataMessage();
+        this.chart.data = this.chartData;
+        this.chart.validateData();
+        this.toggleNoDataMessage();
+      },
+      noDataMessage() {
+        this.toggleNoDataMessage();
+      },
     },
     beforeUnmount() {
       document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
@@ -206,7 +211,7 @@
 </script>
 
 <style scoped>
-  #waterfallChart {
+  .waterfall-chart {
     width: 100%;
     height: 350px;
   }

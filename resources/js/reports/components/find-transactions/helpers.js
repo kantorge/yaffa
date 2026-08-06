@@ -500,11 +500,9 @@ export function aggregateTransactionsForWaterfall(
     } else if (transaction.config_type === 'investment') {
       if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type)) return;
 
-      const isIncome = transaction.transaction_type === 'dividend'
-        || transaction.transaction_type === 'interest_yield';
-      const label = translateFn(isIncome ? 'Investment income' : 'Investment payment');
       const rate = transaction.currencyRateToBase ?? 1;
       const amount = Number(transaction.cashflow_value || 0) * rate;
+      const label = translateFn(amount < 0 ? 'Investment payment' : 'Investment income');
 
       dataByCategory[label] =
         (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
