@@ -1,0 +1,72 @@
+# Precision Improvements — Background
+
+This document records the rationale behind [specification.md](specification.md): the current state of money/quantity handling in YAFFA, why it matters, what was considered and rejected, and what is deliberately out of scope. The specification is the sole source of truth for implementation details (functional requirements, data model, components, testing, rollout) — this document does not restate them.
+
+## Why this exists
+
+YAFFA's own domain documentation (`.ai/docs/product-context.md:56`, under "Non-Goals / Explicit Limitations") already names this gap verbatim: *"Precision handling for monetary values is currently limited (planned improvement)."* This is not a hypothetical concern raised for the first time here — the codebase already contains two independent, shipped workarounds for float-precision drift, found by grepping for exactly the kind of epsilon/rounding logic that only exists because something upstream is already wrong:
+
+- **Backend**: `app/Services/TransactionItemMergeService.php:11` — `private const AMOUNT_COMPARISON_EPSILON = 0.0001;`, used at line 98 (`if (abs($originalTotal - $newTotal) > self::AMOUNT_COMPARISON_EPSILON)`) to tolerate float drift when verifying that merged transaction-item amounts still sum to the original total.
+- **Frontend**: `resources/js/reports/components/find-transactions/helpers.js:46-55` — a `round2()` helper, explicitly commented as an "IEEE 754 floating-point precision" correction (`Math.round((num + Number.EPSILON) * 100) / 100`), called five times inside `processCategoryGroup()` to clean up totals/averages before they're rendered in the Monthly Breakdown report.
+
+Both are symptoms of the same root cause: money and quantity values cross from exact decimal storage into IEEE-754 double-precision float arithmetic, accumulate drift, and get patched with tolerance/rounding at the point where the drift becomes visible, rather than never introduced in the first place.
+
+## Current State
+
+### Backend (Laravel/MySQL)
+
+- **The schema is decimal-native, but scale is inconsistent for conceptually-identical values.** Every monetary/quantity column is MySQL `DECIMAL` — never float or integer-cents — but `investment_prices.price` is `decimal(20,10)` while `transaction_details_investment.price` is `decimal(10,4)` for the same investment. Confirmed as the current, definitive column state: `database/migrations/2026_01_31_000002_add_unsigned_to_decimal_columns.php` (lines 15-20 and the signed-fallback branch at 77-82) defines both columns as they exist today, and no migration after that date touches either column. The same migration also fixes `transaction_details_investment.quantity` at `decimal(14,4)`, `commission`/`tax` at `decimal(14,4)`, and `dividend` at `decimal(12,4)`.
+- **The ORM boundary throws precision away.** Every money/quantity attribute across 8 models is cast `'float'`, confirmed exactly as follows:
+  - `app/Models/Account.php:89` — `'opening_balance' => 'float'`
+  - `app/Models/Transaction.php:140` — `'cashflow_value' => 'float'`
+  - `app/Models/TransactionItem.php:71` — `'amount' => 'float'`
+  - `app/Models/TransactionDetailStandard.php:72-73` — `'amount_from' => 'float'`, `'amount_to' => 'float'`
+  - `app/Models/TransactionDetailInvestment.php:80-84` — `'price'`, `'quantity'`, `'commission'`, `'tax'`, `'dividend'` all `'float'`
+  - `app/Models/InvestmentPrice.php:58` — `'price' => 'float'`
+  - `app/Models/CurrencyRate.php:58` — `'rate' => 'float'`
+  - `app/Models/AccountMonthlySummary.php:64` — `'amount' => 'float'`
+
+  A `DECIMAL(20,10)` value becomes an IEEE-754 double the instant a model is hydrated, regardless of how carefully the database stored it.
+- **All arithmetic is raw float math, with no rounding-mode control.** Confirmed representative sites: `TransactionService::getInvestmentConfigCashFlow()` (`amountMultiplier() * $config->price * $config->quantity + $config->dividend - $config->tax - $config->commission`, plain float operators); `AccountMonthlySummary::calculateAccountBalanceFact()` (sums three query-builder `->sum(...)` float results, `return $valueInvestment + $valueTo - $valueFrom;`); `CalculateAccountMonthlySummary` (`$transactions->sum('cashflow_value')` and similar); `InvestmentService.php:130-135` (`$quantity = ... * (float) ($transactionConfig->quantity ?? 0); $runningTotal += $quantity;`); and cross-currency conversion in `app/Http/Traits/CurrencyTrait.php` (`$value * $rate`, no rounding-mode control, including `(float)`-casting a DB `AVG(rate)` at line 57).
+- **No decimal-math library exists anywhere.** No `brick/math`, `brick/money`, `moneyphp/money`, or explicit `bcmath`/`gmp` call anywhere in `composer.json` or `app/` (confirmed by grep — zero matches for `bcadd|bcsub|bcmul|bcdiv|gmp_`). `bcmath` itself is nonetheless **already available**: `vendor/laravel/sail/runtimes/8.4/Dockerfile:46` compiles `php8.4-bcmath` into the local dev image, so it can be used today with no new Composer dependency.
+- **Denormalized caches compound the risk.** `transactions.cashflow_value` is computed by `TransactionService::getTransactionCashFlow()` and written at create/update time (`app/Listeners/ProcessTransactionCreated.php:23`, `ProcessTransactionUpdated.php:38`). `account_monthly_summaries.amount` is materialized by `CalculateAccountMonthlySummary`, rebuilt daily via `routes/console.php:36` (`Schedule::command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00')`) and incrementally via `TransactionService::recalculateMonthlySummaries()`. Both are the primary read source for cashflow/budget/investment reports, so float error baked in at write time propagates through every downstream read rather than being recomputed fresh each time.
+- **API responses largely bypass a Resource layer.** `app/Http/Resources/` contains almost no Resource classes covering Transaction/Account/Investment money fields — these endpoints mostly return Eloquent models directly, serialized via their `$casts`. This matters for the wire-format discussion below: there is no broad Resource-class rewrite required to change how money serializes to JSON, only the cast itself.
+
+### Frontend (Vue 3 + JS)
+
+- **No money/decimal library is used today.** `decimal.js` is not a direct dependency (absent from `package.json`'s `dependencies` block) — it resolves only transitively through `mathjs` (`package-lock.json:3786`, nested under `mathjs`'s own `node_modules`). `mathjs` itself is direct (`package.json:51`, `"mathjs": "^15.2.0"`) and is imported in exactly one place: `resources/js/shared/ui/form/MathInput.vue:11` (`import { evaluate } from 'mathjs'`).
+- **`MathInput.vue` is the highest-risk single point in the frontend.** It is the app's universal amount-entry component. `evaluate(input)` (line 40) runs in plain-float mode and its result is emitted as-is via `update:modelValue` (line 56) — **no rounding or clamping of any kind**; on a parse error it falls back to the previous value plus a toast, but a successful parse is never checked against the field's expected precision. Confirmed usage sites (by import, not by guess): `TransactionFormStandard.vue` (2 uses — amount fields), `TransactionSchedule.vue` (2 uses), `TransactionItem.vue` (1 use — item amount), `TransactionFormInvestment.vue` (5 uses — quantity, price, commission, tax, dividend). This matches the fields named in the original assessment.
+- **Arithmetic is scattered across several components, with one workaround already in place.**
+  - `TransactionItemContainer.vue:404-436` — a manual `toFixed(4)` + remainder-reconciliation pattern (`roundAmount(amount) { return Number(Number(amount).toFixed(4)); }`), used specifically inside the "Apply standard transaction items" auto-suggest allocation feature (proportionally distributing a total across previously-used categories). This is narrower than "general manual item splitting" — worth being precise about, since a future implementer should not assume this workaround already covers hand-entered splits.
+  - `TransactionFormStandard.vue:802-827` — `allocatedAmount`/`remainingAmountToPayeeDefault`/`remainingAmountNotAllocated` computed properties do plain float subtraction with no rounding; line 869's `exchangeRate` computed uses `.toFixed(4)` for display only.
+  - `TransactionFormInvestment.vue:639-647` — `total` computed: `quantity*price + dividend - (commission+tax)*amount_multiplier`, plain floats, no rounding.
+  - `ResultsCard.vue:290-329` — investment ROI: `result = selling+dividend+value-buying-commission-taxes`; `roiString`/`aroiString` apply `.toFixed(2)` for display only, not for the underlying calculation.
+  - `resources/js/reports/components/widgets/MonthlyTimeline.vue:175-188` — `transaction.cashflow_value * transaction.currencyRateToBase`, summed into `cashFlow: month.deposits + month.withdrawals`, with no rounding helper applied anywhere in the chain.
+  - `resources/js/shared/lib/datatable/index.js` — does no arithmetic of its own; it only formats already-computed amounts via `toFormattedCurrency` (delegating to `format.js`).
+- **Formatting is already well-centralized — a clean seam, not a problem area.** `resources/js/shared/lib/i18n/format.js` wraps `Intl.NumberFormat`/`toLocaleString` and is re-exported through the barrel `resources/js/shared/lib/i18n/index.js:3` (`export * from './format'`); it's imported via `@/shared/lib/i18n` in 30+ files across forms, reports, dashboard widgets, and `shared/lib/datatable/index.js`. Nothing about this task needs to touch that seam beyond what FR-6 in the specification adds.
+- **Currency-specific precision metadata exists but is display-only.** `Currency.generic_decimal_precision`/`detailed_decimal_precision` (`app/Models/Currency.php:30-31,70-71,84-85`, both `integer`-cast; migration `database/migrations/2026_04_14_000001_add_decimal_precision_to_currencies_table.php`) are consumed **only** in `format.js:34-40` to set `Intl.NumberFormat`'s `minimumFractionDigits`/`maximumFractionDigits`. No grep hit anywhere shows these fields being used to round or clamp a value before it is submitted to the backend — they inform how a number is displayed, never what value is actually sent. This is a real, closeable gap (see specification FR-6).
+
+## Framing the Benefit: Real vs. Perceived
+
+- **Real, already-proven risk**: cumulative drift in repeated split/allocate/sum operations (transaction-item allocation, monthly summary recomputation, report aggregation). This is evidenced by the two existing workarounds, not speculative. A structural fix removes an entire bug class instead of patching symptoms with epsilon comparisons and post-hoc rounding scattered ad hoc across the codebase.
+- **Real but modest risk**: cross-currency conversion rounding — currently uncontrolled (`amount * rate`, no rounding mode), which matters for consistency but is not correctness-critical given YAFFA's reports already disclaim "not intended as exact accounting precision."
+- **Perceived, not real: performance.** Arbitrary-precision arithmetic (`BigDecimal`, `decimal.js`) is measurably slower per operation than native float math. For a personal-finance app's transaction volume — not high-frequency trading — this cost is very likely negligible in absolute terms, but it is a real, small regression, not a performance win. **The entire benefit case rests on correctness and maintainability, not speed**, and the specification's rollout plan should never be justified or re-litigated on a performance basis it does not claim.
+- **Explicitly out of scope for any money library**: FX rate staleness/interpretability (YAFFA deliberately does not reconcile a transfer's implied rate against the `CurrencyRate` table — a product decision, not a math bug) and investment cost-basis/realized-gain calculation (does not exist yet in the codebase, so there is nothing to harden).
+
+## Options Considered
+
+### Backend: `brick/math`/`brick/money` vs. `moneyphp/money`
+
+`moneyphp/money` is built around integer minor units (cents) — a natural fit for currencies with a fixed 2-decimal precision, but awkward for the columns in this schema that need 4-10 decimal places (investment prices, quantities, exchange rates) that aren't "money" in the strict 2-decimal-currency sense at all. `brick/math`'s `BigDecimal` sits directly on top of arbitrary-scale `DECIMAL` columns with no representation change, and `brick/money` (built on `brick/math`) can be layered on top specifically for the columns that are actual currency amounts. Likely split, to be finalized when Phase 1/2 are scheduled: `brick/money` for transaction amounts and balances, `brick/math` `BigDecimal` directly for quantities/prices/rates.
+
+### Frontend: `decimal.js` vs. `currency.js`
+
+`decimal.js` is already resolvable through the existing `mathjs` dependency tree (no new package weight, only a `package.json` declaration change) and handles arbitrary decimal places, which the investment price/quantity fields need. `currency.js` offers convenient split/allocation utilities but assumes 2-decimal cents throughout, which doesn't fit those same fields. `decimal.js` is the better fit for the same reason `brick/math` is on the backend: this schema is decimal-scale-native, not cents-native.
+
+Chart libraries (amCharts) should keep consuming plain `Number` — convert `Decimal → Number` only at the point of feeding the chart, since sub-cent precision is irrelevant for visualization and forcing `Decimal` through amCharts would add cost for no benefit.
+
+### Wire format
+
+Once the backend stores/computes money as `BigDecimal`, it must serialize as a decimal string, not a JSON number, or precision is lost again the instant the frontend does `JSON.parse`. This makes backend and frontend precision work a **coupled change**, not two independent efforts — the frontend's response-parsing layer must change in the same phase that the backend starts emitting decimal strings.
+
+This is more contained than it first appears: since `app/Http/Resources/` contains almost no Resource classes for the affected models (verified by grep — these endpoints return Eloquent models directly), a custom Eloquent cast implementing Laravel's `SerializesCastableAttributes` interface (alongside `CastsAttributes`) controls JSON serialization directly at the cast level. There is no broad Resource-layer rewrite required across "2+ API controllers," as an earlier draft of this assessment assumed — the cast is the single control point for both the in-PHP value and its JSON shape.
