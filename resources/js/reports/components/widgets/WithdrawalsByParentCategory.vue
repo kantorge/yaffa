@@ -12,6 +12,7 @@
   import { toFormattedCurrency } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
   import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import { itemMatchesActiveFilters } from '../find-transactions/helpers';
 
   am4core.useTheme(am4themes_animated);
 
@@ -31,6 +32,18 @@
         type: Boolean,
         required: true,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
     data() {
       return {
@@ -46,6 +59,15 @@
         },
         immediate: true,
         deep: true,
+      },
+      matchingItemsOnly() {
+        this.updateChartData(this.transactions);
+      },
+      categoryIds() {
+        this.updateChartData(this.transactions);
+      },
+      tagIds() {
+        this.updateChartData(this.transactions);
       },
     },
     methods: {
@@ -66,20 +88,7 @@
 
         if (!filteredTransactions.length) {
           this.filteredTransactions = [];
-          // Add one dummy data point to the chart to display a message when there are no transactions
-          this.chartData = [
-            {
-              amount: 1,
-              id: 0,
-              parent_id: 0,
-              parent_name: 'No data',
-              name: 'No data',
-              selected: false,
-              disabled: true,
-              color: am4core.color('#dadada'),
-              tooltip: 'No data',
-            },
-          ];
+          this.chartData = this.getNoDataPoint();
         } else {
           // Process the actual transactions
           this.filteredTransactions = filteredTransactions;
@@ -89,6 +98,15 @@
           filteredTransactions
             // Flatten the transaction items to a single array
             .flatMap((transaction) => transaction.transaction_items)
+            // Optionally narrow down to items matching the active category/tag filters
+            .filter(
+              (item) =>
+                !this.matchingItemsOnly ||
+                itemMatchesActiveFilters(item, {
+                  categoryIds: this.categoryIds,
+                  tagIds: this.tagIds,
+                }),
+            )
             /**
              * Process each transaction item and group them by parent category,
              * where the parent category is determined based on the selectedParentId.
@@ -154,23 +172,44 @@
 
               categorySummary[categoryIndex].amount += item.amount_in_base;
             });
-          // Sort the categories array by the true parent category name
-          categorySummary.sort((a, b) =>
-            a.parent_name.localeCompare(b.parent_name),
-          );
+          if (!categorySummary.length) {
+            // All items were excluded by the active category/tag filters
+            this.chartData = this.getNoDataPoint();
+          } else {
+            // Sort the categories array by the true parent category name
+            categorySummary.sort((a, b) =>
+              a.parent_name.localeCompare(b.parent_name),
+            );
 
-          // Transform parentCategories to an array of objects by converting amounts to formatted currency
-          this.chartData = categorySummary.map((category) => {
-            return {
-              ...category,
-              tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency)}`,
-            };
-          });
+            // Transform parentCategories to an array of objects by converting amounts to formatted currency
+            this.chartData = categorySummary.map((category) => {
+              return {
+                ...category,
+                tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency)}`,
+              };
+            });
+          }
         }
 
         if (this.chart) {
           this.chart.data = this.chartData;
         }
+      },
+      // Dummy data point used to display a "no data" message on the pie chart
+      getNoDataPoint() {
+        return [
+          {
+            amount: 1,
+            id: 0,
+            parent_id: 0,
+            parent_name: 'No data',
+            name: 'No data',
+            selected: false,
+            disabled: true,
+            color: am4core.color('#dadada'),
+            tooltip: 'No data',
+          },
+        ];
       },
       getDistinctParentIds() {
         return this.filteredTransactions

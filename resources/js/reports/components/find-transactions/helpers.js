@@ -8,6 +8,8 @@
  * @param {Array} filters.categories
  * @param {Array} filters.payees
  * @param {Array} filters.tags
+ * @param {Array} filters.types
+ * @param {Array} filters.investments
  * @returns {string} JSON-serialized key
  */
 export function buildFilterCacheKey(filters) {
@@ -18,6 +20,8 @@ export function buildFilterCacheKey(filters) {
     categories: (filters.categories || []).slice().sort(),
     payees: (filters.payees || []).slice().sort(),
     tags: (filters.tags || []).slice().sort(),
+    types: (filters.types || []).slice().sort(),
+    investments: (filters.investments || []).slice().sort(),
     locale: filters.locale || (window.YAFFA && window.YAFFA.userSettings.locale) || null,
   });
 }
@@ -39,6 +43,8 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
     categories: urlParams.getAll('categories[]'),
     payees: urlParams.getAll('payees[]'),
     tags: urlParams.getAll('tags[]'),
+    types: urlParams.getAll('types[]'),
+    investments: urlParams.getAll('investments[]'),
     locale: (window.YAFFA && window.YAFFA.userSettings.locale) || null,
   });
 }
@@ -76,6 +82,43 @@ export function getTransactionTypeFlags(transaction) {
 }
 
 /**
+ * Determine whether a transaction item matches the currently active item-level filters
+ * (category and/or tag). An item counts as matching if it satisfies ANY of the active
+ * filters. This is a pragmatic approximation rather than a precise re-derivation of the
+ * backend's transaction-level query: when category AND tag filters are both active, the
+ * backend can match a transaction via two different items (one per filter), so a strict
+ * "matches both" check per item would incorrectly exclude items that legitimately
+ * contributed to the match.
+ *
+ * When neither filter is active, every item matches (nothing to narrow).
+ *
+ * @param {Object} item - Transaction item with `category` (and `category.parent`) and `tags`
+ * @param {Object} [filters]
+ * @param {string[]} [filters.categoryIds] - Selected category ids (parent selections
+ *   also match their children, mirroring the backend's category expansion)
+ * @param {string[]} [filters.tagIds] - Selected tag ids
+ * @returns {boolean}
+ */
+export function itemMatchesActiveFilters(item, { categoryIds = [], tagIds = [] } = {}) {
+  if (categoryIds.length === 0 && tagIds.length === 0) {
+    return true;
+  }
+
+  const matchesCategory =
+    categoryIds.length > 0 &&
+    !!item.category &&
+    (categoryIds.includes(String(item.category.id)) ||
+      (item.category.parent &&
+        categoryIds.includes(String(item.category.parent.id))));
+
+  const matchesTag =
+    tagIds.length > 0 &&
+    (item.tags || []).some((tag) => tag && tagIds.includes(String(tag.id)));
+
+  return Boolean(matchesCategory || matchesTag);
+}
+
+/**
  * Aggregate transactions into a category data map.
  * Groups transactions by full category name, separates deposits/withdrawals,
  * and calculates monthly values per category.
@@ -84,9 +127,15 @@ export function getTransactionTypeFlags(transaction) {
  * Requires transactions to have parsed Date objects in transaction.date, which is generally expected
  *
  * @param {Array} transactions - Array of transaction objects
+ * @param {Object} [options]
+ * @param {boolean} [options.matchingItemsOnly] - When true, only items matching the
+ *   active category/tag filters are counted (see itemMatchesActiveFilters)
+ * @param {string[]} [options.categoryIds] - Currently selected category ids
+ * @param {string[]} [options.tagIds] - Currently selected tag ids
  * @returns {Object<string, {values: Object, depositValues: Object, withdrawalValues: Object, categoryIds: Set, depositTotal: number, withdrawalTotal: number, rawName: string, parentName: string, parentId: number}>}
  */
-export function aggregateTransactionsByCategory(transactions) {
+export function aggregateTransactionsByCategory(transactions, options = {}) {
+  const { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = options;
   const data = {};
 
   transactions.forEach((transaction) => {
@@ -108,6 +157,13 @@ export function aggregateTransactionsByCategory(transactions) {
     transaction.transaction_items.forEach((item) => {
       // Theoretically, all transaction items should have a category due to database constraints, but we add a safety check here just in case of data issues
       if (!item.category) {
+        return;
+      }
+
+      if (
+        matchingItemsOnly &&
+        !itemMatchesActiveFilters(item, { categoryIds, tagIds })
+      ) {
         return;
       }
 
@@ -382,4 +438,79 @@ export function calculateMonthlyTotalsByType(categoryData, months, isIncome) {
   });
 
   return totals;
+}
+
+/**
+ * Transaction types eligible for the investment income/payment waterfall bucket.
+ * Mirrors TransactionType::investmentTypesWithAmountValues() on the backend: only
+ * these investment types carry a well-defined cashflow amount.
+ */
+const INVESTMENT_CASHFLOW_TYPES = ['dividend', 'interest_yield'];
+
+/**
+ * Aggregate transactions into waterfall-ready {category, value} rows, mirroring the
+ * grouping used by the dashboard's category waterfall widget: standard transactions
+ * (excluding transfers) are grouped by their top-level category (the parent's name,
+ * or the category's own name when it has no parent), and eligible investment
+ * transactions are grouped into a single income/payment bucket.
+ *
+ * Requires transaction_items to carry `amount_in_base` and, for investment
+ * transactions, `cashflow_value` + `currencyRateToBase` on the transaction itself
+ * (both already provided by the /api/v1/transactions response).
+ *
+ * @param {Array} transactions - Processed transaction objects (see processTransaction)
+ * @param {Function} [translateFn] - i18n function for the investment bucket labels
+ * @param {Object} [options]
+ * @param {boolean} [options.matchingItemsOnly] - When true, only items matching the
+ *   active category/tag filters are counted (see itemMatchesActiveFilters)
+ * @param {string[]} [options.categoryIds] - Currently selected category ids
+ * @param {string[]} [options.tagIds] - Currently selected tag ids
+ * @returns {Array<{category: string, value: number}>}
+ */
+export function aggregateTransactionsForWaterfall(
+  transactions,
+  translateFn = (s) => s,
+  options = {},
+) {
+  const { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = options;
+  const dataByCategory = {};
+
+  transactions.forEach((transaction) => {
+    if (transaction.config_type === 'standard') {
+      if (transaction.transaction_type === 'transfer') return;
+
+      (transaction.transaction_items || []).forEach((item) => {
+        if (!item.category) return;
+
+        if (
+          matchingItemsOnly &&
+          !itemMatchesActiveFilters(item, { categoryIds, tagIds })
+        ) {
+          return;
+        }
+
+        const topCategory = item.category.parent || item.category;
+        const label = topCategory.name;
+        const amount = Number(item.amount_in_base || 0);
+        const signed = transaction.transaction_type === 'withdrawal' ? -amount : amount;
+
+        dataByCategory[label] =
+          (dataByCategory[label] || 0) + (isFinite(signed) ? signed : 0);
+      });
+    } else if (transaction.config_type === 'investment') {
+      if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type)) return;
+
+      const rate = transaction.currencyRateToBase ?? 1;
+      const amount = Number(transaction.cashflow_value || 0) * rate;
+      const label = translateFn(amount < 0 ? 'Investment payment' : 'Investment income');
+
+      dataByCategory[label] =
+        (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
+    }
+  });
+
+  return Object.entries(dataByCategory).map(([category, value]) => ({
+    category,
+    value,
+  }));
 }

@@ -241,6 +241,8 @@ class TransactionApiController extends Controller implements HasMiddleware
             'categories',
             'payees',
             'tags',
+            'types',
+            'investments',
         ])) {
             return response()->json(
                 [
@@ -255,6 +257,10 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
+
+        // Get list of requested categories
+        // This also ensures that child categories are loaded for all parents
+        $categories = $this->categoryService->getChildCategories($request);
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
@@ -282,11 +288,11 @@ class TransactionApiController extends Controller implements HasMiddleware
                         ->orWhereIn('account_to_id', $request->validated('payees'));
                 });
             })
-            ->when($request->has('categories') && $request->validated('categories'), function ($query) use ($request) {
-                $query->whereIn('id', function ($query) use ($request) {
+            ->when($request->has('categories') && $request->validated('categories'), function ($query) use ($categories) {
+                $query->whereIn('id', function ($query) use ($categories) {
                     $query->select('transaction_id')
                         ->from('transaction_items')
-                        ->whereIn('category_id', $request->validated('categories'));
+                        ->whereIn('category_id', $categories->pluck('id'));
                 });
             })
             ->when($request->has('tags') && $request->validated('tags'), function ($query) use ($request) {
@@ -299,11 +305,18 @@ class TransactionApiController extends Controller implements HasMiddleware
                                 ->whereIn('tag_id', $request->validated('tags'));
                         });
                 });
+            })
+            ->when($request->has('types') && $request->validated('types'), function ($query) use ($request) {
+                $query->whereIn('transaction_type', $request->validated('types'));
+            })
+            // Investments are an investment-only concept: a standard transaction can never match one
+            ->when($request->has('investments') && $request->validated('investments'), function ($query) {
+                $query->whereRaw('1 = 0');
             });
 
         // Get investment transactions matching any provided criteria
         // This part of the query is run only if relevant search criteria is provided, and no other search criteria is provided
-        if ($request->hasAny(['date_from', 'date_to','accounts'])
+        if ($request->hasAny(['date_from', 'date_to', 'accounts', 'types', 'investments'])
             && !($request->hasAny(['categories', 'payees', 'tags']))) {
             $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
@@ -319,6 +332,16 @@ class TransactionApiController extends Controller implements HasMiddleware
                         $query->select('id')
                             ->from('transaction_details_investment')
                             ->whereIn('account_id', $request->validated('accounts'));
+                    });
+                })
+                ->when($request->has('types') && $request->validated('types'), function ($query) use ($request) {
+                    $query->whereIn('transaction_type', $request->validated('types'));
+                })
+                ->when($request->has('investments') && $request->validated('investments'), function ($query) use ($request) {
+                    $query->whereIn('config_id', function ($query) use ($request) {
+                        $query->select('id')
+                            ->from('transaction_details_investment')
+                            ->whereIn('investment_id', $request->validated('investments'));
                     });
                 });
         } else {

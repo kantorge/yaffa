@@ -276,6 +276,12 @@ class ReportApiController extends Controller implements HasMiddleware
         // Final result placeholder
         $dataByCategory = [];
         $currenciesWithMissingRates = [];
+        // Top-level category id backing each standard bucket, keyed by bucket label (null for investment buckets)
+        $categoryIdByBucket = [];
+        // Transaction type values that contributed to each bucket, keyed by bucket label
+        $transactionTypesByBucket = [];
+        $standardBucketTypes = [TransactionTypeEnum::WITHDRAWAL->value, TransactionTypeEnum::DEPOSIT->value];
+        $investmentBucketTypes = TransactionTypeEnum::investmentTypesWithAmountValues();
 
         if ($transactionType === 'all' || $transactionType === 'standard') {
             // Get all standard transactions with related categories
@@ -296,16 +302,17 @@ class ReportApiController extends Controller implements HasMiddleware
                 })
                 ->get();
 
-            $standardTransactions->each(function ($item) use (&$dataByCategory, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
+            $standardTransactions->each(function ($item) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, $standardBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
                 // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
-                $category = $item->category->parent
-                    ? $item->category->parent->name
-                    : $item->category->name;
+                $topCategory = $item->category->parent ?: $item->category;
+                $category = $topCategory->name;
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
                     $dataByCategory[$category] = 0;
+                    $categoryIdByBucket[$category] = $topCategory->id;
+                    $transactionTypesByBucket[$category] = $standardBucketTypes;
                 }
 
                 // Get the currency (from the transaction's cached value) and determine currency rate
@@ -342,7 +349,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->whereBetween('date', [$rangeStart, $rangeEnd])
                 ->get();
 
-            $investmentTransactions->each(function ($transaction) use (&$dataByCategory, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
+            $investmentTransactions->each(function ($transaction) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, $investmentBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
                 $category = ($transaction->transaction_type->amountMultiplier() === 1
                     ? __('Investment income')
@@ -351,6 +358,8 @@ class ReportApiController extends Controller implements HasMiddleware
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
                     $dataByCategory[$category] = 0;
+                    $categoryIdByBucket[$category] = null;
+                    $transactionTypesByBucket[$category] = $investmentBucketTypes;
                 }
 
                 // Get the currency (from the cached column) and determine currency rate
@@ -371,9 +380,14 @@ class ReportApiController extends Controller implements HasMiddleware
 
         $result = [];
         foreach ($dataByCategory as $category => $value) {
+            // The find-transactions endpoint already expands a top-level category into
+            // itself plus its children (see CategoryService::getChildCategories()), so
+            // only the top-level category id needs to be passed through here.
             $result[] = [
                 'category' => $category,
                 'value' => $value,
+                'category_id' => $categoryIdByBucket[$category],
+                'transaction_types' => $transactionTypesByBucket[$category],
             ];
         }
 
