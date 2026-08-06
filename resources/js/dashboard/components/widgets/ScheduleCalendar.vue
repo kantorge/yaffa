@@ -481,7 +481,6 @@
         const draft = {
           ...transaction,
           schedule: false,
-          budget: false,
           date: parseIsoDate(transaction.transaction_schedule?.next_date),
         };
 

@@ -124,7 +124,6 @@ class PayeeCategoryStatsServiceTest extends TestCase
             'transaction_type' => $transactionType->value,
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'comment' => null,
             'config_type' => 'standard',
             'config_id' => $detail->id,

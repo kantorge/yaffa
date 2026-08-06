@@ -218,7 +218,6 @@ class TransactionRequest extends FormRequest
             ],
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
-            'budget' => 'boolean',
             'catch_up_schedule' => 'boolean',
             'config_type' => 'required|in:standard,investment',
 
@@ -232,15 +231,12 @@ class TransactionRequest extends FormRequest
             ],
         ];
 
-        // Basic transaction has no schedule at all, or has only schedule enabled
-        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
-
         // Set date and schedule related rules
-        if ($this->get('schedule') || $this->get('budget')) {
+        if ($this->get('schedule')) {
             $rules = array_merge($rules, [
                 'reconciled' => [
                     'boolean',
-                    new IsFalsy(), // Scheduled or budgeted items cannot be reconciled
+                    new IsFalsy(), // Scheduled items cannot be reconciled
                 ],
 
                 'schedule_config.start_date' => [
@@ -341,15 +337,14 @@ class TransactionRequest extends FormRequest
             ]);
 
             // Adjust detail related rules, based on transaction type
-            // Accounts are only needed for basic setup (not budget only)
             if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedAccountRule,
                     ],
                     'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedPayeeRule,
                     ],
                     'config.amount_from' => [
@@ -376,11 +371,11 @@ class TransactionRequest extends FormRequest
             } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedPayeeRule,
                     ],
                     'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedAccountRule,
                     ],
                     'config.amount_from' => [
@@ -531,7 +526,6 @@ class TransactionRequest extends FormRequest
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
             'schedule' => $this->schedule ?? 0,
-            'budget' => $this->budget ?? 0,
             'catch_up_schedule' => $this->catch_up_schedule ?? 0,
         ]);
     }

@@ -67,7 +67,6 @@ class ReportApiWaterfallTest extends TestCase
         Transaction::factory()
             ->for($this->user)
             ->create([
-                'budget' => false,
                 'schedule' => false,
                 'date' => '2025-01-10',
                 'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,

@@ -61,7 +61,7 @@ const deleteButtonConditions = [
         property: 'transactions_count_with_schedule',
         value: 0,
         negate: false,
-        errorMessage: __('It is used in scheduled or budget transactions.'),
+        errorMessage: __('It is used in scheduled transactions.'),
     },
     {
         property: 'children_count',

@@ -57,7 +57,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -72,9 +71,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Buy');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
@@ -92,7 +91,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 
@@ -122,7 +121,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -137,9 +135,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Sell');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
@@ -157,7 +155,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 
@@ -189,7 +187,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -204,9 +201,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Dividend');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
@@ -224,7 +221,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 

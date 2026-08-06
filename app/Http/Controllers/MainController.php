@@ -60,7 +60,7 @@ class MainController extends Controller implements HasMiddleware
         $standardTransactions = Transaction::where(function ($query) {
             $query->where('schedule', 1)
                 ->orWhere(function ($query) {
-                    $query->byScheduleType('none');
+                    $query->where('schedule', false);
                 });
         })
             ->where('user_id', $user->id)
@@ -84,7 +84,7 @@ class MainController extends Controller implements HasMiddleware
         $investmentTransactions = Transaction::where(function ($query) {
             $query->where('schedule', 1)
                 ->orWhere(function ($query) {
-                    $query->byScheduleType('none');
+                    $query->where('schedule', false);
                 });
         })
             ->where('user_id', $user->id)

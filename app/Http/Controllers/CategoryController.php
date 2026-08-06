@@ -49,28 +49,22 @@ class CategoryController extends Controller implements HasMiddleware
             ->withCount([
                 'transaction as transactions_count_regular' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                        ->where('transactions.schedule', false);
                 },
                 'transaction as transactions_count_with_schedule' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where(function (Builder $query): void {
-                            $query->where('transactions.schedule', true)
-                                ->orWhere('transactions.budget', true);
-                        });
+                        ->where('transactions.schedule', true);
                 },
             ])
             ->withCount('children')
             ->withMin([
                 'transaction as transactions_min_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withMax([
                 'transaction as transactions_max_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withCount('payeesNotPreferring')

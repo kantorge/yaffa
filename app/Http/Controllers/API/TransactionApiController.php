@@ -19,6 +19,7 @@ use App\Http\Requests\API\FindTransactionsRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
+use App\Models\Budget;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -118,7 +119,9 @@ class TransactionApiController extends Controller implements HasMiddleware
      */
     public function getScheduledItems(Request $request): JsonResponse
     {
-        $type = $request->query('type', 'any');
+        // Only 'schedule' and 'none' remain meaningful now that the budget flag is gone (FR-1);
+        // anything else (including the old 'any') is treated as 'none'.
+        $type = $request->query('type', 'none');
 
         // Return empty response if categories are required, but not set or empty
         if ($request->has('category_required')
@@ -146,7 +149,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             'transactionItems.tags',
         ])
             ->where('user_id', $request->user()->id)
-            ->byScheduleType($type)
+            ->where('schedule', $type === 'schedule')
             ->byType('standard')
             // Optionally add account filter
             ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
@@ -205,7 +208,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'transactionSchedule',
             ])
                 ->where('user_id', $request->user()->id)
-                ->byScheduleType($type)
+                ->where('schedule', $type === 'schedule')
                 ->byType('investment')
                 // Optionally add account filter
                 ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
@@ -221,9 +224,49 @@ class TransactionApiController extends Controller implements HasMiddleware
                 ->get();
         }
 
+        // FR-6: the merged schedules-report listing opts in explicitly via includeBudgets=1 - no
+        // other caller (dashboard ScheduleCalendar, account show) requests it, so their type=schedule
+        // fetches never see a Budget row, which they aren't shaped to handle (no transaction_schedule).
+        $budgetRows = new Collection();
+
+        if ($request->boolean('includeBudgets')) {
+            $budgetRows = Budget::with('category')
+                ->where('user_id', $request->user()->id)
+                ->where('active', true)
+                ->when($accountSelection === 'selected', fn ($query) => $query->where('account_id', $accountEntity))
+                ->when($accountSelection === 'none', fn ($query) => $query->whereNull('account_id'))
+                ->when($categories->count() > 0, fn ($query) => $query->whereIn('category_id', $categories->pluck('id')))
+                ->get()
+                ->map(fn (Budget $budget) => [
+                    'id' => $budget->id,
+                    'row_type' => 'budget',
+                    'transaction_type' => $budget->transaction_type->value,
+                    'amount' => $budget->amount,
+                    'comment' => $budget->comment,
+                    'category_id' => $budget->category_id,
+                    // Shaped like Transaction::categories (built from transaction_items) so the
+                    // shared category column renderer works unchanged for a Budget row too.
+                    'categories' => [$budget->category],
+                    'account_id' => $budget->account_id,
+                    'transaction_currency' => $budget->currency(),
+                    // Synthetic, schedule-shaped period definition - a Budget has no next_date/
+                    // automatic_recording (FR-4), which render blank via the same convention an
+                    // empty category cell already uses (FR-6).
+                    'transaction_schedule' => [
+                        'start_date' => optional($budget->start_date)->toDateString(),
+                        'end_date' => optional($budget->end_date)->toDateString(),
+                        'next_date' => null,
+                        'frequency' => $budget->frequency,
+                        'interval' => $budget->interval,
+                        'count' => $budget->count,
+                        'active' => $budget->active,
+                    ],
+                ]);
+        }
+
         return response()->json(
             [
-                'transactions' => $standardTransactions->concat($investmentTransactions),
+                'transactions' => $standardTransactions->concat($investmentTransactions)->concat($budgetRows),
             ],
             Response::HTTP_OK
         );
@@ -268,7 +311,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->byType('standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
                 $query->where('date', '>=', $request->validated('date_from'));
@@ -323,7 +366,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         if ($request->hasAny(['date_from', 'date_to', 'accounts', 'types', 'investments'])
             && !($request->hasAny(['categories', 'payees', 'tags']))) {
             $investmentQuery = Transaction::where('user_id', $user->id)
-                ->byScheduleType('none')
+                ->where('schedule', false)
                 ->byType('investment')
                 ->when($request->has('date_from'), function ($query) use ($request) {
                     $query->where('date', '>=', $request->validated('date_from'));
@@ -350,7 +393,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 });
         } else {
             $investmentQuery = Transaction::where('user_id', $user->id)  // User ID is used for security reasons
-                ->byScheduleType('none')->byType('investment') // Pretend that we are searching for investment transactions
+                ->where('schedule', false)->byType('investment') // Pretend that we are searching for investment transactions
                 ->whereRaw('1 = 0'); // Make sure that the query returns no results
         }
 
@@ -506,7 +549,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             $transaction->push();
 
-            if ($transaction->schedule || $transaction->budget) {
+            if ($transaction->schedule) {
                 $transactionSchedule = new TransactionSchedule(['transaction_id' => $transaction->id]);
                 $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
@@ -619,8 +662,8 @@ class TransactionApiController extends Controller implements HasMiddleware
             $attributeChanges['config'][$key] = $transaction->config->getOriginal($key);
         }
 
-        if ($transaction->schedule || $transaction->budget) {
-            // At this point, the schedule or budget flag cannot be changed,
+        if ($transaction->schedule) {
+            // At this point, the schedule flag cannot be changed,
             // so we can safely assume that the schedule exists
             $transaction->transactionSchedule->fill($validated['schedule_config']);
 
@@ -698,7 +741,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         }
 
         if ($transaction->schedule) {
-            // At this point, the schedule or budget flag cannot be changed,
+            // At this point, the schedule flag cannot be changed,
             // so we can safely assume that the schedule exists
             $transaction->transactionSchedule->fill($validated['schedule_config']);
 

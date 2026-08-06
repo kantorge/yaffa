@@ -15,7 +15,7 @@ class TransactionItemMergeService
      * Merge transaction items for a given transaction if the user's
      * auto_merge_standard_transaction_items setting is enabled.
      *
-     * Only processes standard transactions that are not schedules or budgets.
+     * Only processes standard transactions that are not schedules.
      */
     public function mergeIfEnabled(Transaction $transaction): void
     {
@@ -160,7 +160,6 @@ class TransactionItemMergeService
     private function isMergeCandidate(Transaction $transaction): bool
     {
         return $transaction->isStandard()
-            && ! $transaction->schedule
-            && ! $transaction->budget;
+            && ! $transaction->schedule;
     }
 }

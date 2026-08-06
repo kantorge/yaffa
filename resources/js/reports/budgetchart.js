@@ -8,8 +8,6 @@ import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 import 'datatables.net-bs5';
 
 // Generic helpers
-import * as dataTableHelpers from '@/shared/lib/datatable'
-import * as helpers from '@/shared/lib/helpers';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import { initializeSelect2 } from '@/shared/lib/select2';
@@ -78,6 +76,32 @@ const computeMovingAverage = (baseData, interval) => {
         return currentItem;
     })
 };
+
+// FR-7: flatten the per-period budgetBreakdown arrays budgetChart() returns into one row per
+// distinct contributing Budget row (a recurring budget appears in every period it lands in;
+// the drill-down cares about "which budgets contribute," not "how many times"). When the same
+// budget's amount differs across periods (FR-8 inflation), the most recent period's amount wins.
+function buildBudgetBreakdownRows(rawData) {
+    const byBudgetId = new Map();
+
+    rawData.forEach(function (periodEntry) {
+        (periodEntry.budgetBreakdown || []).forEach(function (row) {
+            const existing = byBudgetId.get(row.budget_id);
+
+            if (!existing || periodEntry.date > existing.periodDate) {
+                byBudgetId.set(row.budget_id, {
+                    budget_id: row.budget_id,
+                    category_name: row.category_name,
+                    account_name: row.account_name,
+                    amount: row.amount,
+                    periodDate: periodEntry.date,
+                });
+            }
+        });
+    });
+
+    return Array.from(byBudgetId.values());
+}
 
 const elementRefreshButton = document.getElementById('reload');
 
@@ -207,6 +231,10 @@ let reloadData = function () {
             // Update the chart
             updateChart(rawData);
 
+            // FR-7: the drill-down table is driven directly by budgetChart()'s own
+            // contributing-rows data (budgetBreakdown) - no separate request.
+            window.table.clear().rows.add(buildBudgetBreakdownRows(rawData)).draw();
+
             if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
                 const currencyList = data.warnings.currenciesWithoutRates
                     .map(c => `${c.name} (${c.iso_code})`)
@@ -221,12 +249,6 @@ let reloadData = function () {
         .always(function () {
             elementRefreshButton.disabled = false;
         });
-
-    // We need to reload the table content, too
-    window.table.ajax.reload(function () {
-        // (Re-)initialize tooltips in table, once data is reloaded
-        helpers.initializeBootstrapTooltips();
-    });
 }
 
 function updateChart(rawData) {
@@ -393,91 +415,47 @@ document.querySelectorAll('input[name="chart_time_interval"]').forEach(function 
     });
 });
 
-// Initially we need to prevent dataTables from calling AJAX, as JStree will not be initialized
-let initialTableLoad = true;
 const tableSelector = '#table';
 
+// FR-7: a read-only breakdown of the standalone Budget rows contributing to the chart -
+// populated directly from budgetChart()'s own response (see buildBudgetBreakdownRows() /
+// reloadData()) rather than a separate request. A Budget row has no schedule to enter/skip and
+// no transaction to edit/clone, so unlike the old table this one carries no row actions.
 window.table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
-    ajax: {
-        url: window.route('api.v1.transactions.scheduled-items', {type: 'any'}),
-        type: 'GET',
-        dataSrc: function (data) {
-            if (!data.transactions) {
-                return [];
-            }
-            return data.transactions
-                .map(helpers.processTransaction)
-                .map(helpers.processScheduledTransaction);
-        },
-        data: function () {
-            // As the first load, we are intentionally not loading any data. It will be loaded once the tree is ready.
-            if (initialTableLoad) {
-                initialTableLoad = false;
-                return {
-                    categories: [],
-                    category_required: 1,
-                };
-            }
-
-            return Object.assign({}, {
-                categories: ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked') : []),
-                category_required: 1,
-                accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
-                accountEntity: $(accountSelector).val(),
-            });
-        },
-    },
+    data: [],
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.userSettings.locale),
         {
-            data: "transaction_schedule.rule",
-            title: __("Schedule"),
-            render: function (data) {
-                // Return human readable format
-                // TODO: translate the RRule string
-                return data.toText();
-            }
+            data: 'category_name',
+            title: __('Category'),
         },
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.next_date", __("Next date"), window.YAFFA.userSettings.locale),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        dataTableHelpers.transactionColumnDefinition.type(true),
-        dataTableHelpers.transactionColumnDefinition.payee,
-        dataTableHelpers.transactionColumnDefinition.category,
-        dataTableHelpers.transactionColumnDefinition.amount,
-        dataTableHelpers.transactionColumnDefinition.extra,
         {
-            data: 'id',
-            title: __("Actions"),
-            render: function (data, _type, row) {
-                return dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
-                    dataTableHelpers.dataTablesActionButton(data, 'delete') +
-                    (row.schedule
-                        ? '<a href="' + window.route('transaction.open', {
-                            transaction: data,
-                            action: 'enter'
-                        }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                        '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
-                        : '');
+            data: 'account_name',
+            title: __('Account'),
+            render: function (data) {
+                return data || __('No account');
             },
-            className: "dt-nowrap",
-            orderable: false,
-            searchable: false,
-        }
+        },
+        {
+            data: 'amount',
+            title: __('Amount'),
+            className: 'dt-nowrap',
+            type: 'num',
+            render: function (data, type) {
+                if (type === 'display') {
+                    return Number(data).toLocaleString(window.YAFFA.userSettings.locale, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    });
+                }
+
+                return data;
+            },
+        },
     ],
     createdRow: function (row, data) {
-        if (!data.transaction_schedule.next_date) {
-            return;
-        }
-
-        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
-            $(row).addClass('danger');
-        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
-            $(row).addClass('warning');
+        if (!data.account_name) {
+            $('td', row).eq(1).addClass('text-muted text-italic');
         }
     },
     order: [
@@ -490,9 +468,6 @@ window.table = $(tableSelector).DataTable({
     processing: true,
     paging: false,
 });
-
-dataTableHelpers.initializeSkipInstanceButton(tableSelector);
-dataTableHelpers.initializeAjaxDeleteButton(tableSelector);
 
 // Initialize an object which checks if preset filters are populated.
 // This is used to trigger initial chart and table content.

@@ -7,11 +7,14 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
+use App\Models\Budget;
 use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use App\Services\BudgetService;
+use App\Services\InflationCalculator;
 use App\Services\InvestmentService;
 use App\Support\ScheduleInstance;
 use Brick\Math\BigDecimal;
@@ -41,6 +44,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     private ?Carbon $dateFrom;
     private ?Carbon $dateTo;
     private InvestmentService $investmentService;
+    private BudgetService $budgetService;
 
     public int $timeout = 240;
 
@@ -65,9 +69,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(InvestmentService $investmentService): void
+    public function handle(InvestmentService $investmentService, BudgetService $budgetService): void
     {
         $this->investmentService = $investmentService;
+        $this->budgetService = $budgetService;
 
         switch ($this->task) {
             case 'account_balance-fact':
@@ -264,7 +269,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionSchedule',
         ])
             ->byType('standard')
-            ->byScheduleType('schedule')
+            ->isSchedule()
             ->whereHas(
                 'transactionSchedule',
                 fn ($query) => $query->where('active', true)
@@ -284,7 +289,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionSchedule',
         ])
             ->byType('investment')
-            ->byScheduleType('schedule')
+            ->isSchedule()
             ->whereHas(
                 'transactionSchedule',
                 fn ($query) => $query->where('active', true)
@@ -339,9 +344,25 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                     && $transaction->config->account_from_id === $this->accountEntity->id
             );
 
-            $amountFrom = $this->sumMoney($transactionsFrom, fn ($transaction) => $transaction->config?->amount_from);
-            $amountTo = $this->sumMoney($transactionsTo, fn ($transaction) => $transaction->config?->amount_to);
-            $amountInvestment = $this->sumMoney($investmentTransactions, fn ($transaction) => $transaction->cashflow_value);
+            // FR-8: each instance carries its own inflation-compounded multiplier (computed once,
+            // in Transaction::scheduleInstances(), from the schedule's own inflation rate).
+            // Summed exactly via sumBigDecimal (not sumMoney): multiplying a Money's BigDecimal
+            // amount by the multiplier here already drops the Money wrapper down to BigDecimal.
+            $amountFrom = $this->sumBigDecimal(
+                $transactionsFrom,
+                fn (ScheduleInstance $transaction) => $transaction->config?->amount_from
+                    ?->getAmount()->multipliedBy($transaction->inflationMultiplier)
+            );
+            $amountTo = $this->sumBigDecimal(
+                $transactionsTo,
+                fn (ScheduleInstance $transaction) => $transaction->config?->amount_to
+                    ?->getAmount()->multipliedBy($transaction->inflationMultiplier)
+            );
+            $amountInvestment = $this->sumBigDecimal(
+                $investmentTransactions,
+                fn (ScheduleInstance $transaction) => $transaction->cashflow_value
+                    ?->getAmount()->multipliedBy($transaction->inflationMultiplier)
+            );
 
             $amount = $amountInvestment->plus($amountTo)->minus($amountFrom);
 
@@ -492,7 +513,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionSchedule',
         ])
             ->byType('investment')
-            ->byScheduleType('schedule')
+            ->isSchedule()
             ->whereHas(
                 'transactionSchedule',
                 fn ($query) => $query->where('active', true)
@@ -512,7 +533,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionSchedule',
         ])
             ->byType('investment')
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->whereHasMorph(
                 'config',
                 TransactionDetailInvestment::class,
@@ -629,85 +650,66 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * all instances are calculated, and then the sum of the cashflow_value is calculated for each month,
      * starting from the current month.
      */
+    /**
+     * Get the monthly summary data for the budget of the account (accountEntity) provided at
+     * class level, or the account-agnostic bucket if none is provided (FR-3).
+     *
+     * Reads only active, standalone Budget rows attributed to this exact bucket (a row's own
+     * account_id must match $this->accountEntity, or be null when no account is provided) -
+     * mirroring how getAccountBalanceForecastData() filters on transactionSchedule.active.
+     */
     private function getAccountBalanceBudgetData(): Collection
     {
-        // Get all budget only transactions for this account, or for the user
-        $budgetTransactions = Transaction::with([
-            'config',
-            'transactionSchedule',
-        ])
-            ->where('user_id', $this->user->id)
-            ->byType('standard')
-            // Budgets with schedules are handled by the schedule forecast
-            ->byScheduleType('budget_only')
-            // The schedule must be still active
-            ->whereHas(
-                'transactionSchedule',
-                fn ($query) => $query->where('active', true)
-            )
-            ->where(
-                fn ($query) => $query
-                    ->when(
-                        $this->accountEntity,
-                        fn ($query) => $query->whereHasMorph(
-                            'config',
-                            TransactionDetailStandard::class,
-                            fn ($query) => $query
-                                ->where('account_from_id', $this->accountEntity->id)
-                                ->orWhere('account_to_id', $this->accountEntity->id)
-                        ),
-                        // If no account is specified, then we take the transactions of the user without an account
-                        // This needs to be checked separately to withdrawal and deposit transactions,
-                        // as the proper acocunt needs to be null.
-                        // (Not expected, but the payee can be set as the other account.)
-                        fn ($query) => $query->where(
-                            // Withdrawals without an account_from_id
-                            fn ($query) => $query
-                                ->where('transaction_type', 'withdrawal')
-                                ->whereHasMorph(
-                                    'config',
-                                    TransactionDetailStandard::class,
-                                    fn ($query) => $query
-                                        ->whereNull('account_from_id')
-                                )
-                        )
-                            // Deposits without an account_to_id
-                            ->orWhere(
-                                fn ($query) => $query
-                                    ->where('transaction_type', 'deposit')
-                                    ->orWhereHasMorph(
-                                        'config',
-                                        TransactionDetailStandard::class,
-                                        fn ($query) => $query
-                                            ->whereNull('account_to_id')
-                                    )
-                            )
-                    )
+        $budgets = Budget::where('user_id', $this->user->id)
+            ->where('active', true)
+            ->when(
+                $this->accountEntity,
+                fn ($query) => $query->where('account_id', $this->accountEntity->id),
+                fn ($query) => $query->whereNull('account_id')
             )
             ->get();
 
-        // If no budget transactions are found, we can return an empty collection
-        if ($budgetTransactions->isEmpty()) {
+        // If no budgets are found, we can return an empty collection
+        if ($budgets->isEmpty()) {
             return new Collection();
         }
 
-        // Get all instances, added to a new transactions collection, only from the current month
-        $budgetTransactionInstances = $this->getScheduleInstances(
-            $budgetTransactions,
-            'custom',
-            Carbon::now()->startOfMonth()
-        );
+        $inflationCalculator = new InflationCalculator();
+        // BudgetService/RecurrenceRuleService type-hint Illuminate\Support\Carbon (not this
+        // file's Carbon\Carbon import) - Carbon::now() here would be the wrong, incompatible type.
+        $horizonStart = \Illuminate\Support\Carbon::now()->startOfMonth();
+        $horizonEnd = $this->user->end_date;
 
-        // Convert the transaction dates to 'Y-m-01' format and group by the formatted date
-        $budgetTransactionInstances = $budgetTransactionInstances
-            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m-01'));
+        // Sum every budget's inflation-adjusted, signed (withdrawal/deposit) contribution per
+        // month, so multiple budgets landing in the same month/category are combined rather than
+        // overwriting each other.
+        $amountsByMonth = [];
+
+        foreach ($budgets as $budget) {
+            $occurrences = $this->budgetService->projectOccurrences($budget, $horizonStart, $horizonEnd);
+
+            foreach ($occurrences as $occurrenceDate) {
+                $month = $occurrenceDate->format('Y-m-01');
+                // Same "apply to a unit multiplier" pattern as Transaction::scheduleInstances()'s
+                // inflationMultiplier, so the exact BigDecimal amount below is only ever multiplied
+                // (never added to/subtracted from a float).
+                $multiplier = $inflationCalculator->applyAnnualRate(
+                    1.0,
+                    $budget->inflation,
+                    $budget->start_date,
+                    $occurrenceDate,
+                );
+                $amount = $budget->amount->getAmount()
+                    ->multipliedBy($multiplier)
+                    ->multipliedBy($budget->transaction_type->amountMultiplier());
+
+                $amountsByMonth[$month] = ($amountsByMonth[$month] ?? BigDecimal::zero())->plus($amount);
+            }
+        }
 
         $results = new Collection();
 
-        // Loop through the grouped transactions
-        foreach ($budgetTransactionInstances as $month => $transactions) {
-            $amount = $this->sumMoney($transactions, fn ($transaction) => $transaction->cashflow_value);
-
+        foreach ($amountsByMonth as $month => $amount) {
             // Don't store zero values
             if ($amount->isZero()) {
                 continue;

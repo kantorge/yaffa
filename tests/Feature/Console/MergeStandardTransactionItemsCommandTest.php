@@ -36,7 +36,7 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
     {
         $transaction = Transaction::factory()
             ->withdrawal($user)
-            ->create(['user_id' => $user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $user->id, 'schedule' => false]);
 
         $transaction->transactionItems()->delete();
         $transaction->transactionItems()->createMany([
@@ -77,7 +77,7 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
 
         $otherTransaction = Transaction::factory()
             ->withdrawal($otherUser)
-            ->create(['user_id' => $otherUser->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $otherUser->id, 'schedule' => false]);
         $otherTransaction->transactionItems()->delete();
         $otherTransaction->transactionItems()->createMany([
             ['category_id' => $otherCategory->id, 'amount' => 10.00, 'comment' => null],
@@ -92,19 +92,15 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
     }
 
     /**
-     * The command skips schedule and budget transactions.
+     * The command skips schedule transactions.
      */
-    public function test_skips_schedule_and_budget_transactions(): void
+    public function test_skips_schedule_transactions(): void
     {
         Bus::fake();
 
         Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => true, 'budget' => false]);
-
-        Transaction::factory()
-            ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => false, 'budget' => true]);
+            ->create(['user_id' => $this->user->id, 'schedule' => true]);
 
         $this->artisan('app:transactions:merge-standard-items', ['userId' => $this->user->id])
             ->assertSuccessful();
@@ -125,7 +121,7 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
         // Transaction with only a single item — nothing to merge.
         $singleItem = Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $this->user->id, 'schedule' => false]);
         $singleItem->transactionItems()->delete();
         $singleItem->transactionItems()->create([
             'category_id' => $this->category->id,
@@ -136,7 +132,7 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
         // Transaction with two items in different categories — no mergeable group.
         $differentCategories = Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $this->user->id, 'schedule' => false]);
         $differentCategories->transactionItems()->delete();
         $differentCategories->transactionItems()->createMany([
             ['category_id' => $this->category->id, 'amount' => 10.00, 'comment' => null],
@@ -146,7 +142,7 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
         // Transaction with two same-category items but both have a comment — not mergeable.
         $withComments = Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $this->user->id, 'schedule' => false]);
         $withComments->transactionItems()->delete();
         $withComments->transactionItems()->createMany([
             ['category_id' => $this->category->id, 'amount' => 10.00, 'comment' => 'note a'],

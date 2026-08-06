@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
+use App\Models\Budget;
 use App\Models\Category;
 use App\Models\CategoryLearning;
 use App\Models\Currency;
@@ -72,7 +73,6 @@ class TransactionApiControllerTest extends TestCase
                 'transaction_type',
                 'config_type',
                 'schedule',
-                'budget',
                 'reconciled',
             ],
         ]);
@@ -398,7 +398,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $entities['account_entity_id'],
                 'account_to_id' => $entities['payee_entity_id'],
@@ -648,7 +647,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
@@ -697,7 +695,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $foreignAccountEntity->id,
                 'account_to_id' => $ownPayeeEntity->id,
@@ -747,7 +744,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_id' => $accountEntity->id,
                 'investment_id' => $foreignInvestment->id,
@@ -1199,6 +1195,71 @@ class TransactionApiControllerTest extends TestCase
         $response->assertJson([]);
     }
 
+    /**
+     * FR-6 coverage: getScheduledItems() merges active standalone Budget rows into the same
+     * response, but only when explicitly requested via includeBudgets=1.
+     */
+    public function test_scheduled_items_include_active_budgets_only_when_requested(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $category = Category::factory()->for($this->user)->create();
+
+        Budget::factory()->create([
+            'user_id' => $this->user->id,
+            'category_id' => $category->id,
+            'account_id' => null,
+            'transaction_type' => 'withdrawal',
+            'amount' => 150,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->subDay(),
+            'end_date' => null,
+            'count' => null,
+        ]);
+
+        // Without includeBudgets, the response is unaffected (unchanged contract).
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertCount(0, $response->json('transactions'));
+
+        // With includeBudgets, the active Budget row is merged in, row_type-tagged.
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule&includeBudgets=1');
+        $response->assertStatus(Response::HTTP_OK);
+
+        $transactions = $response->json('transactions');
+        $this->assertCount(1, $transactions);
+        $this->assertSame('budget', $transactions[0]['row_type']);
+        $this->assertSame('withdrawal', $transactions[0]['transaction_type']);
+        $this->assertEqualsWithDelta(150.0, $transactions[0]['amount'], 0.001);
+        $this->assertNull($transactions[0]['transaction_schedule']['next_date']);
+    }
+
+    public function test_scheduled_items_exclude_inactive_budgets(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $category = Category::factory()->for($this->user)->create();
+
+        Budget::factory()->create([
+            'user_id' => $this->user->id,
+            'category_id' => $category->id,
+            'account_id' => null,
+            'transaction_type' => 'withdrawal',
+            'amount' => 150,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->subYears(2),
+            'end_date' => now()->subYear(),
+            'count' => null,
+        ]);
+
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule&includeBudgets=1');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertCount(0, $response->json('transactions'));
+    }
+
     public function test_store_standard_finalization_updates_category_learning(): void
     {
         Sanctum::actingAs($this->user, ['*']);
@@ -1261,7 +1322,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
@@ -1349,7 +1409,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
@@ -1426,7 +1485,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
@@ -1489,7 +1547,6 @@ class TransactionApiControllerTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_id' => $accountEntity->id,
                 'investment_id' => $investment->id,
@@ -1881,7 +1938,6 @@ class TransactionApiControllerTest extends TestCase
             'comment' => $transaction->comment,
             'reconciled' => $transaction->reconciled,
             'schedule' => $transaction->schedule,
-            'budget' => $transaction->budget,
             'config' => [
                 'account_from_id' => $transaction->config->account_from_id,
                 'account_to_id' => $transaction->config->account_to_id,
@@ -1909,7 +1965,6 @@ class TransactionApiControllerTest extends TestCase
             'comment' => $transaction->comment,
             'reconciled' => $transaction->reconciled,
             'schedule' => $transaction->schedule,
-            'budget' => $transaction->budget,
             'config' => [
                 'account_id' => $transaction->config->account_id,
                 'investment_id' => $transaction->config->investment_id,

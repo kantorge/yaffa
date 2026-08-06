@@ -299,7 +299,6 @@ class TransactionServiceTest extends TestCase
         // Assert the new transaction has correct properties
         $this->assertEquals($originalNextDate?->format('Y-m-d'), $newTransaction->date?->format('Y-m-d'));
         $this->assertFalse($newTransaction->schedule);
-        $this->assertFalse($newTransaction->budget);
         $this->assertEquals($scheduledTransaction->user_id, $newTransaction->user_id);
     }
 
@@ -315,7 +314,6 @@ class TransactionServiceTest extends TestCase
             ->create([
                 'user_id' => $this->user->id,
                 'schedule' => false,
-                'budget' => false,
             ]);
 
         $this->service->recalculateMonthlySummaries($transaction);
@@ -323,7 +321,6 @@ class TransactionServiceTest extends TestCase
         // For simple transactions, the job is dispatched synchronously
         // We can't easily test dispatch_sync, but we can verify the transaction is loaded correctly
         $this->assertFalse($transaction->schedule);
-        $this->assertFalse($transaction->budget);
     }
 
     /**
@@ -338,7 +335,6 @@ class TransactionServiceTest extends TestCase
             ->create([
                 'user_id' => $this->user->id,
                 'schedule' => true,
-                'budget' => false,
             ]);
 
         $this->service->recalculateMonthlySummaries($transaction);

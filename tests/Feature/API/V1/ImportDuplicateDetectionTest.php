@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\FileImportProfile;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -94,7 +95,7 @@ CSV;
 
         $payee = AccountEntity::factory()
             ->for($user)
-            ->for(\App\Models\Payee::factory()->withUser($user), 'config')
+            ->for(Payee::factory()->withUser($user), 'config')
             ->create([
                 'config_type' => 'payee',
                 'active' => true,
@@ -162,6 +163,14 @@ QIF;
         return $record;
     }
 
+    private function createPayeeEntity(User $user): AccountEntity
+    {
+        return AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+    }
+
     private function createStandardTransaction(
         User $user,
         int $accountFromId,
@@ -171,7 +180,7 @@ QIF;
     ): Transaction {
         $detail = TransactionDetailStandard::query()->create([
             'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId,
+            'account_to_id' => $accountToId ?? $this->createPayeeEntity($user)->id,
             'amount_from' => $amount,
             'amount_to' => $amount,
         ]);
@@ -182,7 +191,6 @@ QIF;
             'transaction_type' => TransactionType::WITHDRAWAL->value,
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'comment' => null,
             'config_type' => 'standard',
             'config_id' => $detail->id,

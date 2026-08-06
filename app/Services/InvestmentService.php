@@ -338,7 +338,7 @@ class InvestmentService
         return Transaction::with([
             'config',
         ])
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],
@@ -456,7 +456,7 @@ class InvestmentService
             ->groupBy('investment_id');
 
         $pricedTransactionsByInvestment = Transaction::with('config')
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Services\InflationCalculator;
 use App\Support\ScheduleInstance;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
@@ -35,7 +36,6 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property TransactionTypeEnum $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
- * @property bool $budget
  * @property string|null $comment
  * @property string|null $config_type
  * @property int|null $config_id
@@ -46,13 +46,12 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @method static Builder|Transaction byScheduleType($type)
+ * @method static Builder|Transaction isSchedule()
  * @method static Builder|Transaction byType($type)
  * @method static TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
  * @method static Builder|Transaction newQuery()
  * @method static Builder|Transaction query()
- * @method static Builder|Transaction whereBudget($value)
  * @method static Builder|Transaction whereComment($value)
  * @method static Builder|Transaction whereConfigId($value)
  * @method static Builder|Transaction whereConfigType($value)
@@ -108,7 +107,6 @@ class Transaction extends Model
         'transaction_type',
         'reconciled',
         'schedule',
-        'budget',
         'comment',
         'config_type',
         'config_id',
@@ -140,7 +138,6 @@ class Transaction extends Model
             'transaction_type' => TransactionTypeEnum::class,
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
-            'budget' => 'boolean',
             'cashflow_value' => MoneyCast::class . ':4,resolveCashflowCurrency',
         ];
     }
@@ -216,24 +213,14 @@ class Transaction extends Model
     }
 
     /**
-     * Create a dynamic scope to filter transactions by schedule and/or budget flag
+     * Scope to filter transactions that are real schedules (schedule = true).
+     * The schedule = false case is expressed inline (where('schedule', false)) at the few call
+     * sites that need it, rather than kept as a named scope.
      */
     #[Scope]
-    protected function byScheduleType(Builder $query, string $type): Builder
+    protected function isSchedule(Builder $query): Builder
     {
-        return match ($type) {
-            'schedule' => $query->where('schedule', true),
-            'schedule_only' => $query->where('schedule', true)->where('budget', false),
-            'budget' => $query->where('budget', true),
-            'budget_only' => $query->where('budget', true)->where('schedule', false),
-            'both' => $query->where('schedule', true)->where('budget', true),
-            'any' => $query->where(function (Builder $query): void {
-                $query->where('schedule', true)
-                    ->orWhere('budget', true);
-            }),
-            'none' => $query->where('schedule', false)->where('budget', false),
-            default => $query,
-        };
+        return $query->where('schedule', true);
     }
 
     /**
@@ -252,7 +239,7 @@ class Transaction extends Model
     /**
      * Scope to filter transactions that are eligible for item merging.
      *
-     * A transaction qualifies when it is a standard non-schedule, non-budget
+     * A transaction qualifies when it is a standard non-schedule
      * transaction AND has at least two transaction items that share the same
      * category_id and have an empty (null or blank) comment — i.e. there is
      * actual merge work to be done.
@@ -263,7 +250,6 @@ class Transaction extends Model
         return $query
             ->where('config_type', 'standard')
             ->where('schedule', false)
-            ->where('budget', false)
             ->whereExists(function ($subquery): void {
                 $subquery->selectRaw('1')
                     ->from('transaction_items')
@@ -435,7 +421,6 @@ class Transaction extends Model
         $baseAttributes['transaction_type'] = $this->transaction_type;
         $baseAttributes['reconciled'] = $this->reconciled;
         $baseAttributes['schedule'] = $this->schedule;
-        $baseAttributes['budget'] = $this->budget;
         $baseAttributes['cashflow_value'] = $this->cashflow_value;
         $baseAttributes['transaction_currency'] = $this->transaction_currency;
         $baseAttributes['originalId'] = $this->id;
@@ -446,10 +431,23 @@ class Transaction extends Model
         // Some features need to know which is the first instance
         $first = true;
 
+        $inflationCalculator = new InflationCalculator();
+        $scheduleStartDate = new \Illuminate\Support\Carbon($this->transactionSchedule->start_date);
+        $inflationRate = $this->transactionSchedule->inflation;
+
         foreach ($transformer->transform($rule, $constraint) as $instance) {
             $attributes = $baseAttributes;
-            $attributes['date'] = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $instanceDate = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $attributes['date'] = $instanceDate;
             $attributes['schedule_first_instance'] = $first;
+            // FR-8: which periods exist is decided above (FR-5's occurrence rule); this only
+            // decides the multiplier a consumer should apply to this occurrence's amount(s).
+            $attributes['inflationMultiplier'] = $inflationCalculator->applyAnnualRate(
+                1.0,
+                $inflationRate,
+                $scheduleStartDate,
+                $instanceDate,
+            );
 
             $scheduleInstances->push(new ScheduleInstance($attributes, $baseRelations));
 

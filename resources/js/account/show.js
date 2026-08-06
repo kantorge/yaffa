@@ -489,7 +489,6 @@ $('#create-standard-transaction-button').on('click', function () {
     const transaction = {
         transaction_type: 'withdrawal',
         schedule: false,
-        budget: false,
         date: new Date(),
         config: {
             account_from_id: account.id,
@@ -518,7 +517,6 @@ $('#create-investment-transaction-button').on('click', function () {
     const transaction = {
         transaction_type: 'buy',
         schedule: false,
-        budget: false,
         date: new Date(),
         config: {
             account_id: account.id,
@@ -543,9 +541,8 @@ $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', fun
     const draft = dtSchedule.row($(this).parentsUntil('tr')).data();
     const transaction = {...draft};
 
-    // Remove schedule and budget data
+    // Remove schedule data
     transaction.schedule = false;
-    transaction.budget = false;
 
     // Adjust the date to the next scheduled date
     transaction.date = transaction.transaction_schedule.next_date;

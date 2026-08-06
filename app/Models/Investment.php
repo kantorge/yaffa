@@ -154,7 +154,7 @@ class Investment extends Model
             'id',
             'id',
         )
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->where(
                 'config_type',
                 'investment'
@@ -171,7 +171,7 @@ class Investment extends Model
             'id',
             'id',
         )
-            ->byScheduleType('schedule')
+            ->isSchedule()
             ->where(
                 'config_type',
                 'investment'

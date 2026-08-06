@@ -24,7 +24,15 @@ class TransactionTest extends TestCase
         $this->user = User::factory()->create();
     }
 
-    public function test_by_schedule_type_scope_filters_transactions_for_each_supported_mode(): void
+    /**
+     * FR-1: byScheduleType() is removed entirely in favor of a single isSchedule() scope
+     * (where('schedule', true)); the schedule=false case is expressed as a plain inline
+     * where('schedule', false) at call sites that need it. Neither depends on (or is affected
+     * by) the removed transactions.budget column any more, unlike the old
+     * 'budget'/'budget_only'/'both'/'any' branches this replaces - standalone budgets are now a
+     * separate `Budget` entity entirely, not a Transaction variant.
+     */
+    public function test_is_schedule_scope_filters_transactions_with_schedule_true(): void
     {
         $transactions = $this->createTransactionsForScheduleTypeScope();
         $otherUser = User::factory()->create();
@@ -33,94 +41,29 @@ class TransactionTest extends TestCase
             ->deposit($otherUser)
             ->create([
                 'user_id' => $otherUser->id,
-                'schedule' => false,
-                'budget' => true,
+                'schedule' => true,
             ]);
-
-        $this->assertSame(
-            [$transactions['schedule_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('schedule')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
 
         $this->assertSame(
             [$transactions['schedule_only']->id],
             Transaction::query()
                 ->where('user_id', $this->user->id)
-                ->byScheduleType('schedule_only')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['budget_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('budget')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['budget_only']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('budget_only')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('both')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['schedule_only']->id, $transactions['budget_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('any')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['regular']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('none')
+                ->isSchedule()
                 ->orderBy('id')
                 ->pluck('id')
                 ->all()
         );
     }
 
-    public function test_by_schedule_type_scope_returns_unfiltered_query_for_unknown_type(): void
+    public function test_inline_schedule_false_where_clause_filters_transactions_with_schedule_false(): void
     {
         $transactions = $this->createTransactionsForScheduleTypeScope();
 
         $this->assertSame(
-            collect($transactions)
-                ->pluck('id')
-                ->sort()
-                ->values()
-                ->all(),
+            [$transactions['regular']->id],
             Transaction::query()
                 ->where('user_id', $this->user->id)
-                ->byScheduleType('unexpected-filter')
+                ->where('schedule', false)
                 ->orderBy('id')
                 ->pluck('id')
                 ->all()
@@ -135,28 +78,12 @@ class TransactionTest extends TestCase
                 ->create([
                     'user_id' => $this->user->id,
                     'schedule' => false,
-                    'budget' => false,
                 ]),
             'schedule_only' => Transaction::factory()
                 ->deposit($this->user)
                 ->create([
                     'user_id' => $this->user->id,
                     'schedule' => true,
-                    'budget' => false,
-                ]),
-            'budget_only' => Transaction::factory()
-                ->deposit($this->user)
-                ->create([
-                    'user_id' => $this->user->id,
-                    'schedule' => false,
-                    'budget' => true,
-                ]),
-            'both' => Transaction::factory()
-                ->deposit($this->user)
-                ->create([
-                    'user_id' => $this->user->id,
-                    'schedule' => true,
-                    'budget' => true,
                 ]),
         ];
     }

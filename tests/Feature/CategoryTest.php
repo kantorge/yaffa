@@ -73,22 +73,14 @@ class CategoryTest extends TestCase
         $earliestRegularTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2024-01-10',
             'schedule' => false,
-            'budget' => false,
         ]);
         $latestRegularTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2024-03-15',
             'schedule' => false,
-            'budget' => false,
         ]);
         $scheduledTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2023-01-01',
             'schedule' => true,
-            'budget' => false,
-        ]);
-        $budgetTransaction = Transaction::factory()->deposit($user)->create([
-            'date' => '2025-01-01',
-            'schedule' => false,
-            'budget' => true,
         ]);
 
         foreach (
@@ -96,7 +88,6 @@ class CategoryTest extends TestCase
                 $earliestRegularTransaction,
                 $latestRegularTransaction,
                 $scheduledTransaction,
-                $budgetTransaction,
             ] as $transaction
         ) {
             $transaction->transactionItems()->firstOrFail()->update([
@@ -108,33 +99,27 @@ class CategoryTest extends TestCase
             ->withCount([
                 'transaction as transactions_count_regular' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                        ->where('transactions.schedule', false);
                 },
                 'transaction as transactions_count_with_schedule' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where(function (Builder $query): void {
-                            $query->where('transactions.schedule', true)
-                                ->orWhere('transactions.budget', true);
-                        });
+                        ->where('transactions.schedule', true);
                 },
             ])
             ->withMin([
                 'transaction as transactions_min_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withMax([
                 'transaction as transactions_max_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->findOrFail($category->id);
 
         $this->assertSame(2, $categoryWithDates->transactions_count_regular);
-        $this->assertSame(2, $categoryWithDates->transactions_count_with_schedule);
+        $this->assertSame(1, $categoryWithDates->transactions_count_with_schedule);
         $this->assertSame('2024-01-10', Carbon::parse($categoryWithDates->transactions_min_date)->toDateString());
         $this->assertSame('2024-03-15', Carbon::parse($categoryWithDates->transactions_max_date)->toDateString());
     }

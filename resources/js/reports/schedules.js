@@ -8,21 +8,121 @@ import * as dataTableHelpers from '@/shared/lib/datatable';
 import * as helpers from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
+import BudgetForm from '@/reports/components/BudgetForm.vue';
+import { createApp } from 'vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 let ajaxIsBusy = true;
 
 const tableSelector = '#table';
+
+// A Budget row and a Transaction schedule row are separate database tables with their own
+// auto-increment ids, so `id` alone cannot identify a row in this merged listing - row_type must
+// always be checked alongside it.
+function findRowByIdentity(id, rowType) {
+    return $(tableSelector).dataTable().api().row(function (_idx, data) {
+        const dataRowType = data.row_type === 'budget' ? 'budget' : 'schedule';
+
+        return data.id === id && dataRowType === rowType;
+    });
+}
+
+// A Budget row is already shaped close to a Transaction row by the backend (FR-6): a synthetic
+// transaction_schedule (no next_date/automatic_recording), and categories/comment matching the
+// shape processTransaction() would otherwise build from transaction_items. It deliberately does
+// NOT go through processTransaction() itself, since that function unconditionally overwrites
+// row.categories from row.transaction_items, which a Budget row doesn't have.
+function normalizeBudgetRow(row) {
+    if (row.transaction_schedule) {
+        if (row.transaction_schedule.start_date) {
+            row.transaction_schedule.start_date = helpers.parseIsoDate(row.transaction_schedule.start_date);
+        }
+        if (row.transaction_schedule.end_date) {
+            row.transaction_schedule.end_date = helpers.parseIsoDate(row.transaction_schedule.end_date);
+        }
+    }
+
+    return helpers.processScheduledTransaction(row);
+}
+
+function normalizeRow(row) {
+    if (row.row_type === 'budget') {
+        return normalizeBudgetRow(row);
+    }
+
+    return helpers.processScheduledTransaction(helpers.processTransaction(row));
+}
+
+// Payee/amount rendering for a Budget row: a Budget has no config relation (no account_from/to,
+// no amount_to), so it can't go through the shared transactionColumnDefinition renderers as-is.
+function budgetAwarePayee(data, type, row) {
+    if (row.row_type === 'budget') {
+        return '';
+    }
+
+    return dataTableHelpers.transactionColumnDefinition.payee.render(data, type, row);
+}
+
+function budgetAwareAmount(data, type, row) {
+    if (row.row_type === 'budget') {
+        if (type !== 'display') {
+            return row.amount;
+        }
+
+        const prefix = row.transaction_type === 'withdrawal' ? '- ' : '+ ';
+
+        return prefix + dataTableHelpers.toFormattedCurrency(
+            type,
+            row.amount,
+            window.YAFFA.userSettings.locale,
+            row.transaction_currency
+        );
+    }
+
+    return dataTableHelpers.transactionColumnDefinition.amount.render(data, type, row);
+}
+
+// The Vue app (onboarding widget + Budget create/edit modals) must mount BEFORE DataTables
+// initializes #table below. Vue's in-DOM template compilation replaces the DOM nodes under its
+// mount point on mount; mounting after DataTables had already initialized the table left
+// DataTables holding references to now-detached nodes, so the table never rendered fetched rows
+// (a real bug caught via a Dusk smoke test - see ScheduleBudgetMergedPageTest).
+const vueApp = createApp({
+    components: {
+        OnboardingCard,
+        BudgetForm,
+    },
+    methods: {
+        showNewBudgetModal() {
+            this.$refs.budgetFormNew.show();
+        },
+        showEditBudgetModal(budgetId) {
+            this.$refs.budgetFormEdit.show(budgetId);
+        },
+        onBudgetSaved() {
+            toastHelpers.showSuccessToast(__('Budget saved'));
+            table.ajax.reload(null, false);
+        },
+    },
+});
+installRouteGlobal(vueApp);
+const app = vueApp.mount('#schedulesPageApp');
+
+// Listener for the new budget button
+$('#button-new-budget').on('click', function () {
+    app.showNewBudgetModal();
+});
+
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/v1/transactions/scheduled-items?type=any',
+        url: '/api/v1/transactions/scheduled-items?type=schedule&includeBudgets=1',
         type: 'GET',
         dataSrc: function(data) {
             ajaxIsBusy = false;
 
-            return data.transactions
-                .map(helpers.processTransaction)
-                .map(helpers.processScheduledTransaction);
+            return data.transactions.map(normalizeRow);
         },
         deferRender: true
     },
@@ -40,17 +140,30 @@ let table = $(tableSelector).DataTable({
         },
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
+        {
+            data: 'row_type',
+            title: __('Budget'),
+            render: function (data, type) {
+                return dataTableHelpers.booleanToTableIcon(data === 'budget', type);
+            },
+            className: 'text-center',
+        },
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
         dataTableHelpers.transactionColumnDefinition.type(true),
-        dataTableHelpers.transactionColumnDefinition.payee,
+        {
+            ...dataTableHelpers.transactionColumnDefinition.payee,
+            render: budgetAwarePayee,
+        },
         dataTableHelpers.transactionColumnDefinition.category,
-        dataTableHelpers.transactionColumnDefinition.amount,
+        {
+            ...dataTableHelpers.transactionColumnDefinition.amount,
+            render: budgetAwareAmount,
+        },
         dataTableHelpers.transactionColumnDefinition.extra,
     ],
     createdRow: function (row, data) {
         $(row).attr('data-id', data.id);
+        $(row).attr('data-row-type', data.row_type === 'budget' ? 'budget' : 'schedule');
 
         // TODO: unify with similar tables, e.g. account/show
 
@@ -63,8 +176,8 @@ let table = $(tableSelector).DataTable({
         }
 
         // Mute category cell with 'not set' value
-        if (data.config_type === 'standard' && data.categories.length === 0) {
-            $('td', row).eq(8).addClass('text-muted text-italic');
+        if (data.row_type !== 'budget' && data.config_type === 'standard' && data.categories.length === 0) {
+            $('td', row).eq(7).addClass('text-muted text-italic');
         }
     },
     drawCallback: function () {
@@ -113,7 +226,7 @@ table.contextualActions({
                 })
             },
             isHidden: function (row) {
-                return !row.schedule || !row.transaction_schedule.active;
+                return row.row_type === 'budget' || !row.schedule || !row.transaction_schedule.active;
             }
         },
         {
@@ -134,9 +247,7 @@ table.contextualActions({
                 window.axios.patch(window.route('api.v1.transactions.skip', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
-                        let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
-                            return data.id === id;
-                        });
+                        let row = findRowByIdentity(id, 'schedule');
 
                         // Process the transaction similarly to the DataTables initialization
                         let transaction = helpers.processTransaction(response.data.transaction);
@@ -163,11 +274,23 @@ table.contextualActions({
                     });
             },
             isHidden: function (row) {
-                return !row.schedule || !row.transaction_schedule.active;
+                return row.row_type === 'budget' || !row.schedule || !row.transaction_schedule.active;
             }
         },
         {
             type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('Edit budget'),
+            iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-success fw-bold'],
+            action: function (row) {
+                app.showEditBudgetModal(row[0].id);
+            },
+            isHidden: function (row) {
+                return row.row_type !== 'budget';
+            }
         },
         {
             type: 'option',
@@ -179,6 +302,9 @@ table.contextualActions({
                     action: 'edit',
                     callback: 'back'
                 })
+            },
+            isHidden: function (row) {
+                return row.row_type === 'budget';
             }
         },
         {
@@ -190,6 +316,9 @@ table.contextualActions({
                     transaction: row[0].id,
                     action: 'clone'
                 })
+            },
+            isHidden: function (row) {
+                return row.row_type === 'budget';
             }
         },
         {
@@ -201,6 +330,9 @@ table.contextualActions({
                     transaction: row[0].id,
                     action: 'replace'
                 })
+            },
+            isHidden: function (row) {
+                return row.row_type === 'budget';
             }
         },
         {
@@ -216,6 +348,7 @@ table.contextualActions({
             },
             action: function (row) {
                 const id = row[0].id;
+                const rowType = row[0].row_type === 'budget' ? 'budget' : 'schedule';
                 ajaxIsBusy = true;
 
                 // Get confirmation from the user using SweetAlert
@@ -237,30 +370,30 @@ table.contextualActions({
                         return;
                     }
 
-                    // Emit a custom event to global scope to indicate that a transaction is being deleted
+                    // Emit a custom event to global scope to indicate that an item is being deleted
                     toastHelpers.showLoaderToast(
-                        __('Deleting transaction #:transactionId', {transactionId: id}),
+                        __('Deleting #:id', {id: id}),
                         `toast-transaction-${id}`
                     );
 
-                    window.axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+                    const deleteUrl = rowType === 'budget'
+                        ? window.route('api.v1.budgets.destroy', {budget: id})
+                        : window.route('api.v1.transactions.destroy', {transaction: id});
+
+                    window.axios.delete(deleteUrl)
                         .then(function () {
                             // Find and remove original row in schedule table
-                            let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
-                                return data.id === id;
-                            });
-
-                            row.remove().draw();
+                            findRowByIdentity(id, rowType).remove().draw();
 
                             // Emit a custom event to global scope about the result
                             toastHelpers.showSuccessToast(
-                                __('Transaction deleted (#:transactionId)', {transactionId: id})
+                                __('Deleted (#:id)', {id: id})
                             );
                         })
                         .catch(function (error) {
                             // Emit a custom event to global scope about the result
                             toastHelpers.showErrorToast(
-                                __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error})
+                                __('Error deleting (#:id): :error', {id: id, error: error})
                             );
                         })
                         .finally(function () {
@@ -276,10 +409,9 @@ table.contextualActions({
 });
 
 // Listeners for button filters
-dataTableHelpers.initializeFilterToggle(table, 3, 'table_filter_schedule');
-dataTableHelpers.initializeFilterToggle(table, 4, 'table_filter_budget');
-dataTableHelpers.initializeFilterToggle(table, 5, 'table_filter_active');
-dataTableHelpers.initializeFilterToggle(table, 6, 'table_filter_transaction_type');
+dataTableHelpers.initializeFilterToggle(table, 3, 'table_filter_budget');
+dataTableHelpers.initializeFilterToggle(table, 4, 'table_filter_active');
+dataTableHelpers.initializeFilterToggle(table, 5, 'table_filter_transaction_type');
 
 // Set the active toggle to active by default
 document.getElementById('table_filter_active_yes').click();
@@ -304,12 +436,3 @@ window.onboardingTourSteps = [
         }
     }
 ];
-
-// Initialize the onboarding widget
-import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
-import { createApp } from 'vue';
-import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
-const app = createApp({});
-installRouteGlobal(app);
-app.component('onboarding-card', OnboardingCard);
-app.mount('#onboarding-card');

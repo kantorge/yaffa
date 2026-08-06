@@ -371,8 +371,9 @@
       },
       // Which key under form.errors this instance's fields live at. Needed
       // because this same component is reused for the "replace" action's
-      // original-schedule panel, bound to form.original_schedule_config -
-      // without this, that panel could never show its own validation errors.
+      // original-schedule panel (bound to form.original_schedule_config), and
+      // for BudgetForm (whose BudgetRequest validates the same fields as flat
+      // top-level keys, so it passes an empty prefix).
       fieldPrefix: {
         type: String,
         default: 'schedule_config',
@@ -651,7 +652,9 @@
     methods: {
       __,
       hasError(field) {
-        return this.form.errors.has(`${this.fieldPrefix}.${field}`);
+        const key = this.fieldPrefix ? `${this.fieldPrefix}.${field}` : field;
+
+        return this.form.errors.has(key);
       },
       clearDate(field) {
         this.schedule[field] = null;

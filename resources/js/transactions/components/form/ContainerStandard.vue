@@ -33,7 +33,6 @@
           transaction_type: 'withdrawal',
           date: new Date(),
           schedule: false,
-          budget: false,
           reconciled: false,
           comment: null,
           config: {
@@ -88,11 +87,6 @@
 
         if (urlParams.get('schedule')) {
           data.transactionData.schedule = !!urlParams.get('schedule');
-          data.transactionData.date = undefined;
-        }
-
-        if (urlParams.get('budget')) {
-          data.transactionData.budget = !!urlParams.get('budget');
           data.transactionData.date = undefined;
         }
 

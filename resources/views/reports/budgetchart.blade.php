@@ -100,7 +100,7 @@
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-title">
-                    {{ __('Scheduled and budgeted transactions for selected categories') }}
+                    {{ __('Standalone budgets contributing to the selected categories') }}
                 </div>
             </div>
             <div class="card-body">
@@ -109,8 +109,5 @@
         </div>
     </div>
 </div>
-
-@include('template.components.model-delete-form')
-@include('template.components.transaction-skip-form')
 
 @stop

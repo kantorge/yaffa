@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\RecurrenceRuleService;
 use Database\Factories\TransactionScheduleFactory;
-use DateTime;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,11 +12,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
-use Recurr\RecurrenceCollection;
-use Recurr\Rule;
-use Recurr\Transformer\ArrayTransformer;
-use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\BetweenConstraint;
 use Exception;
 
 /**
@@ -123,7 +118,16 @@ class TransactionSchedule extends Model
             return null;
         }
 
-        $recurrence = $this->getRecurrence($this->next_date);
+        $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
+            $this->start_date,
+            $this->frequency,
+            $this->interval,
+            $this->end_date,
+            $this->count,
+            $this->by_day,
+            $this->by_month,
+            $this->next_date,
+        );
 
         if ($recurrence->count() === 0) {
             return null;
@@ -152,17 +156,6 @@ class TransactionSchedule extends Model
      * not a realistic business limit.
      */
     private const int MAX_CATCH_UP_ITERATIONS = 10000;
-
-    /**
-     * Recurr's default virtualLimit (732) caps how many candidate occurrences
-     * are scanned from start_date before giving up - for a DAILY schedule that's
-     * only ~2 years. Past that, getNextInstance()/isActive()/occursOn() silently
-     * return "no occurrence found" even when one clearly exists further out.
-     * Raised generously (covers ~270 years of DAILY occurrences) since this is
-     * still a single bounded scan, not a loop - protects against a genuinely
-     * malformed/infinite rule without breaking realistic long-lived schedules.
-     */
-    private const int RECURRENCE_VIRTUAL_LIMIT = 100000;
 
     /**
      * Advance next_date repeatedly - reusing the same mechanism as skipNextInstance()
@@ -197,7 +190,7 @@ class TransactionSchedule extends Model
      *
      * The transaction schedule is active, if it has a next date defined. This is the case for not finished schedules.
      * Otherwise we need to process the rule and check if any of the occurrences are in the future.
-     * This is the case for budgets or ended schedules.
+     * This is the case for ended schedules.
      */
     public function isActive(): bool
     {
@@ -206,114 +199,22 @@ class TransactionSchedule extends Model
         }
 
         try {
-            $recurrence = $this->getRecurrence(Carbon::now());
+            $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
+                $this->start_date,
+                $this->frequency,
+                $this->interval,
+                $this->end_date,
+                $this->count,
+                $this->by_day,
+                $this->by_month,
+                Carbon::now(),
+            );
         } catch (InvalidArgument|InvalidWeekday|Exception) {
             // TODO: somehow the user should be notified about this error
             return false;
         }
 
         return $recurrence->count() > 0;
-    }
-
-    /**
-     * Build the Recurr rule from this schedule's attributes, without any constraint applied.
-     *
-     * @throws InvalidWeekday
-     * @throws InvalidArgument
-     */
-    private function buildRule(): Rule
-    {
-        $rule = (new Rule())
-            ->setStartDate(new DateTime($this->start_date->toDateString()))
-            ->setFreq($this->frequency);
-
-        if ($this->end_date) {
-            $rule->setUntil(new DateTime($this->end_date->toDateString()));
-        }
-
-        if ($this->count) {
-            $rule->setCount($this->count);
-        }
-
-        if ($this->interval) {
-            $rule->setInterval($this->interval);
-        }
-
-        if ($this->by_day) {
-            $rule->setByDay([$this->by_day]);
-
-            if ($this->frequency === 'YEARLY' && $this->by_month) {
-                $rule->setByMonth([$this->by_month]);
-            }
-        }
-
-        return $rule;
-    }
-
-    /**
-     * The ArrayTransformer used to expand this schedule's rule into concrete
-     * occurrences, configured identically wherever it's needed.
-     */
-    private function makeArrayTransformer(): ArrayTransformer
-    {
-        $transformer = new ArrayTransformer();
-        $transformerConfig = new ArrayTransformerConfig();
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformerConfig->setVirtualLimit(self::RECURRENCE_VIRTUAL_LIMIT);
-        $transformer->setConfig($transformerConfig);
-
-        return $transformer;
-    }
-
-    /**
-     * Build the recurrence rule for the transaction schedule.
-     *
-     * Recurr's AfterConstraint never stops the transformer early (it always scans all the
-     * way to virtualLimit, regardless of how soon a match is found) - with
-     * RECURRENCE_VIRTUAL_LIMIT raised to 100000 to fix the correctness bug above, that made
-     * every single call here take seconds, not just catchUpToDate()'s loop. BetweenConstraint
-     * *does* stop early once it passes its upper bound, so bounding the query to a window
-     * that's comfortably wider than one recurrence period keeps the scan cheap while still
-     * finding occurrences arbitrarily far past start_date.
-     *
-     * @throws InvalidWeekday
-     * @throws InvalidArgument
-     * @throws Exception
-     */
-    private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
-    {
-        $rule = $this->buildRule();
-        $transformer = $this->makeArrayTransformer();
-
-        if ($afterDate === null) {
-            return $transformer->transform($rule);
-        }
-
-        $after = new DateTime($afterDate->toDateString());
-        $before = new DateTime($afterDate->copy()->addDays($this->recurrenceLookaheadDays())->toDateString());
-        $constraint = new BetweenConstraint($after, $before, false);
-
-        return $transformer->transform($rule, $constraint, false);
-    }
-
-    /**
-     * A rule's ByDay/interval semantics guarantee at least one occurrence per period (e.g.
-     * "1st Wednesday of every month" occurs exactly once per month), so a window of 2 periods
-     * from the query date is a generous, safely-overestimating bound to search within -
-     * using calendar-day approximations for month/year lengths since exact unit arithmetic
-     * isn't needed for a safety margin.
-     */
-    private function recurrenceLookaheadDays(): int
-    {
-        $periodDays = match ($this->frequency) {
-            'DAILY' => 1,
-            'WEEKLY' => 7,
-            'MONTHLY' => 31,
-            'YEARLY' => 366,
-            default => 366,
-        };
-
-        return $periodDays * max($this->interval ?? 1, 1) * 2;
     }
 
     /**
@@ -333,12 +234,15 @@ class TransactionSchedule extends Model
      */
     public function occursOn(Carbon $date): bool
     {
-        $rule = $this->buildRule();
-        $transformer = $this->makeArrayTransformer();
-
-        $day = new DateTime($date->toDateString());
-        $constraint = new BetweenConstraint($day, $day, true);
-
-        return $transformer->transform($rule, $constraint)->count() > 0;
+        return (new RecurrenceRuleService())->occursOn(
+            $this->start_date,
+            $this->frequency,
+            $this->interval,
+            $this->end_date,
+            $this->count,
+            $this->by_day,
+            $this->by_month,
+            $date,
+        );
     }
 }

@@ -7,11 +7,14 @@ use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Services\BudgetService;
 use App\Services\CategoryService;
+use App\Services\InflationCalculator;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -27,11 +30,12 @@ class ReportApiController extends Controller implements HasMiddleware
     use ScheduleTrait;
 
     private CategoryService $categoryService;
+    private BudgetService $budgetService;
 
-    public function __construct()
+    public function __construct(BudgetService $budgetService)
     {
-
         $this->categoryService = new CategoryService();
+        $this->budgetService = $budgetService;
     }
 
     public static function middleware(): array
@@ -76,7 +80,6 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
                     $query->whereUserId($request->user()->id)
                         ->where('schedule', false)
-                        ->where('budget', false)
                         ->where('config_type', 'standard')
                         ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                             'config',
@@ -139,8 +142,9 @@ class ReportApiController extends Controller implements HasMiddleware
             }
         }
 
-        // Get all budget transactions with related categories
-        $budgetTransactions = Transaction::with([
+        // FR-2 #1: schedule-flagged standard transactions' items for the requested categories
+        // (transfers are already structurally excluded, since they never have items).
+        $scheduleTransactions = Transaction::with([
             'transactionItems',
             'transactionSchedule',
         ])
@@ -149,7 +153,7 @@ class ReportApiController extends Controller implements HasMiddleware
             })
             ->where('user_id', $request->user()->id)
             ->byType('standard')
-            ->byScheduleType('budget')
+            ->isSchedule()
             ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                 'config',
                 TransactionDetailStandard::class,
@@ -181,9 +185,9 @@ class ReportApiController extends Controller implements HasMiddleware
             ->get();
 
         // Unify currencies and calculate amounts only for given categories. Summed exactly
-        // (BigDecimal) rather than Collection::sum()'s native float +=, since a budget
-        // transaction can have multiple items.
-        $budgetTransactions->transform(function ($transaction) use ($categories) {
+        // (BigDecimal) rather than Collection::sum()'s native float +=, since a transaction can
+        // have multiple items.
+        $scheduleTransactions->transform(function ($transaction) use ($categories) {
             $transaction->sum = $transaction->transactionItems
                 ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
                 ->reduce(fn (BigDecimal $carry, $item) => $carry->plus($item->amount->getAmount()), BigDecimal::zero());
@@ -192,15 +196,18 @@ class ReportApiController extends Controller implements HasMiddleware
         });
 
         // Get all instances by month
-        $budgetInstances = $this->getScheduleInstances(
-            $budgetTransactions,
+        $scheduleInstances = $this->getScheduleInstances(
+            $scheduleTransactions,
             'start',
             null,
             $request->user()->end_date
         );
 
         $budgetCompact = [];
-        $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency) {
+        // FR-7: which Budget rows contributed to each period's total, for the drill-down.
+        $budgetBreakdown = [];
+
+        $scheduleInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency) {
             $period = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
@@ -211,10 +218,70 @@ class ReportApiController extends Controller implements HasMiddleware
                 $budgetCompact[$period][$currency_id] = BigDecimal::zero();
             }
 
+            // FR-8: apply this occurrence's own inflation-compounded multiplier.
             $budgetCompact[$period][$currency_id] = $budgetCompact[$period][$currency_id]->plus(
-                $transaction->sum->multipliedBy($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
+                $transaction->sum
+                    ->multipliedBy($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
+                    ->multipliedBy($transaction->inflationMultiplier)
             );
         });
+
+        // FR-2 #2: all active standalone Budget rows for the requested categories, regardless of
+        // account_id - an account-scoped row and an account-agnostic row for the same category
+        // are both included, by design (see background.md "Account Scoping for Budgets").
+        $budgets = Budget::with(['category', 'account'])
+            ->where('user_id', $request->user()->id)
+            ->where('active', true)
+            ->whereIn('category_id', $categories->pluck('id'))
+            ->get();
+
+        $inflationCalculator = new InflationCalculator();
+
+        foreach ($budgets as $budget) {
+            $occurrences = $this->budgetService->projectOccurrences(
+                $budget,
+                $budget->start_date,
+                $request->user()->end_date
+            );
+
+            $budgetCurrency = $budget->currency();
+            $currency_id = $budgetCurrency !== null ? $budgetCurrency->id : $baseCurrency->id;
+
+            foreach ($occurrences as $occurrenceDate) {
+                $period = $occurrenceDate->format('Y-m-01');
+
+                // Same "apply to a unit multiplier" pattern as Transaction::scheduleInstances()'s
+                // inflationMultiplier, so $budget->amount's exact BigDecimal is only ever
+                // multiplied (never added to/subtracted from a float).
+                $multiplier = $inflationCalculator->applyAnnualRate(
+                    1.0,
+                    $budget->inflation,
+                    $budget->start_date,
+                    $occurrenceDate,
+                );
+                $amount = $budget->amount->getAmount()
+                    ->multipliedBy($multiplier)
+                    ->multipliedBy($budget->transaction_type->amountMultiplier());
+
+                if (
+                    !array_key_exists($period, $budgetCompact)
+                    || !array_key_exists($currency_id, $budgetCompact[$period])
+                ) {
+                    $budgetCompact[$period][$currency_id] = BigDecimal::zero();
+                }
+                $budgetCompact[$period][$currency_id] = $budgetCompact[$period][$currency_id]->plus($amount);
+
+                $budgetBreakdown[$period][] = [
+                    'budget_id' => $budget->id,
+                    'category_id' => $budget->category_id,
+                    'category_name' => $budget->category->name,
+                    'account_id' => $budget->account_id,
+                    'account_name' => $budget->account?->name,
+                    'amount' => $amount->toFloat(),
+                    'currency_id' => $currency_id,
+                ];
+            }
+        }
 
         foreach ($budgetCompact as $period => $periodData) {
             $carbonPeriod = Carbon::parse($period);
@@ -247,6 +314,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 'period' => new Carbon($key),
                 'actual' => $value['actual']?->toFloat(),
                 'budget' => $value['budget']->toFloat(),
+                'budgetBreakdown' => $budgetBreakdown[$key] ?? [],
             ];
         }
 
@@ -306,7 +374,6 @@ class ReportApiController extends Controller implements HasMiddleware
                     $query->where('user_id', $request->user()->id)
                         ->whereBetween('date', [$rangeStart, $rangeEnd])
                         ->where('schedule', false)
-                        ->where('budget', false)
                         ->where('config_type', 'standard')
                         ->where('transaction_type', '!=', TransactionTypeEnum::TRANSFER);
                 })

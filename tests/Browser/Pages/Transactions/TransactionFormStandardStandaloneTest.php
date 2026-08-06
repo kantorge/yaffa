@@ -329,33 +329,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_automatic_recording_is_enabled_only_for_scheduled_transactions(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user);
-            $browser
-                // Open vanilla form (withdrawal, no preselected account)
-                ->visitRoute('transaction.create', ['type' => 'standard'])
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-
-                // The schedule card should not be visible
-                ->assertMissing('@card-transaction-schedule')
-                // Select budget checkbox
-                ->click('@checkbox-transaction-budget')
-                // The schedule card should be visible, but the automatic recording checkbox should not be visible
-                ->assertVisible('@card-transaction-schedule')
-                ->assertMissing('@checkbox-schedule-automatic-recording')
-                // Select schedule checkbox
-                ->click('@checkbox-transaction-schedule')
-                // The automatic recording checkbox should be visible
-                ->assertVisible('@checkbox-schedule-automatic-recording')
-                // Unselect the budget checkbox
-                ->click('@checkbox-transaction-budget')
-                // The automatic recording checkbox should still be visible
-                ->assertVisible('@checkbox-schedule-automatic-recording');
-        });
-    }
-
     public function test_user_can_submit_transaction_form_with_schedule(): void
     {
         $this->markTestIncomplete('This test has not been implemented yet.');
@@ -708,76 +681,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertInputValue('#transaction_amount_to', '20')
                 // The exchange rate should also be visible
                 ->waitForTextIn('@label-transaction-exchange-rate', '2.0000', 10);
-        });
-    }
-
-    public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                // Open vanilla form (withdrawal, no preselected account)
-                ->visitRoute('transaction.create', ['type' => 'standard'])
-                // Wait for the form to load
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-
-                // Validate that the account is empty, by checking if the select2 has no options
-                ->assertPresent('#account_from')
-                ->assertMissing('#account_from > option')
-                // Validate that the payee is empty, by checking if the select2 has no options
-                ->assertPresent('#account_to')
-                ->assertMissing('#account_to > option')
-                // Add amount
-                ->type('#transaction_amount_from', '100')
-                // Select budget checkbox
-                ->click('@checkbox-transaction-budget')
-
-                // Wait for the schedule card to be visible
-                ->waitFor('@card-transaction-schedule');
-
-            // Set the schedule start date to today
-            $today = now()->format('Y-m-d');
-            $this->setDateInput($browser, '#schedule_start_current', $today);
-
-            $browser
-                // Confirm the Vue-side schedule state actually picked up the input
-                // before submitting, not just that the DOM input has the value
-                ->assertInputValue('#schedule_start_current', $today)
-                // Scroll to the bottom of the page to make the save button visible, including the callback buttons
-                ->scrollIntoView('#transactionFormStandard-Save')
-                // Select the "show transaction" callback
-                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
-                    $buttonBar->click('button[value="show"]');
-                }, 10)
-                // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
-
-            // Get the latest transaction from the database
-            $transaction = Transaction::orderByDesc('id')->first();
-
-            // Confirm the schedule was actually persisted with the date set via
-            // setDateInput above, not left at whatever the form initialized with
-            $this->assertEquals(
-                $today,
-                $transaction->transactionSchedule->start_date->format('Y-m-d')
-            );
-
-            // Check that the view is the transaction show
-            $browser->assertRouteIs(
-                'transaction.open',
-                [
-                    'action' => 'show',
-                    'transaction' => $transaction->id,
-                ]
-            );
-
-            // Wait for the show transaction page to load
-            $browser->waitFor('#transactionShowStandard')
-                // Assert that the transaction is a budget
-                ->assertPresent('@label-budget > i.fa-check')
-                // Assert that the account is 'Not set'
-                ->assertSeeIn('@label-account-from-name', 'Not set')
-                // Assert that the payee is 'Not set'
-                ->assertSeeIn('@label-account-to-name', 'Not set');
         });
     }
 

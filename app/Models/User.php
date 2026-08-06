@@ -268,6 +268,14 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
     }
 
     /**
+     * @return HasMany<Budget, $this>
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    /**
      * @return HasMany<InvestmentProviderConfig, $this>
      */
     public function investmentProviderConfigs(): HasMany
