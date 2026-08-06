@@ -288,10 +288,22 @@ class TransactionRequest extends FormRequest
             ];
         }
 
-        // Dividend OR Interest yield
-        if ($transactionTypeEnum === TransactionTypeEnum::DIVIDEND || $transactionTypeEnum === TransactionTypeEnum::INTEREST_YIELD) {
+        // Dividend, interest yield, or purchased interest
+        if (in_array($transactionTypeEnum, [TransactionTypeEnum::DIVIDEND, TransactionTypeEnum::INTEREST_YIELD, TransactionTypeEnum::PURCHASED_INTEREST], true)) {
             return [
                 'config.dividend' => 'required|numeric|gt:0',
+            ];
+        }
+
+        if ($transactionTypeEnum === TransactionTypeEnum::PRODUCT_FEE) {
+            return [
+                'config.commission' => 'required|numeric|gt:0',
+            ];
+        }
+
+        if ($transactionTypeEnum === TransactionTypeEnum::TAX_RELIEF) {
+            return [
+                'config.tax' => 'required|numeric|gt:0',
             ];
         }
 

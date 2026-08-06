@@ -368,28 +368,19 @@ export const transactionColumnDefinition = {
                     );
                 }
                 if (typeConfig.category === 'investment') {
-                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
+                    const amount =
+                        (row.config.quantity ?? 0) * (row.config.price ?? 0) * (typeConfig.amount_multiplier ?? 0)
+                        + (row.config.dividend ?? 0) * (typeConfig.dividend_multiplier ?? 1)
+                        + (row.config.commission ?? 0) * (typeConfig.commission_multiplier ?? -1)
+                        + (row.config.tax ?? 0) * (typeConfig.tax_multiplier ?? -1);
 
-                    if (typeConfig.amount_multiplier === -1) {
-                        prefix = '- ';
-                        amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + toFormattedCurrency(
-                            type,
-                            amount,
-                            window.YAFFA.userSettings.locale,
-                            row.transaction_currency
-                        );
-                    }
-                    if (typeConfig.amount_multiplier === 1) {
-                        prefix = '+ ';
-                        amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + toFormattedCurrency(
-                            type,
-                            amount,
-                            window.YAFFA.userSettings.locale,
-                            row.transaction_currency
-                        );
-                    }
+                    prefix = amount < 0 ? '- ' : '+ ';
+                    return prefix + toFormattedCurrency(
+                        type,
+                        Math.abs(amount),
+                        window.YAFFA.userSettings.locale,
+                        row.transaction_currency
+                    );
                 }
             }
 

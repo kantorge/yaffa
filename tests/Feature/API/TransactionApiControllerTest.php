@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\API;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Account;
@@ -485,6 +486,46 @@ class TransactionApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['config.investment_id']);
+    }
+
+    public function test_can_store_special_investment_transaction_types(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $account = Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]);
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+        $investment = Investment::factory()->for($this->user)->create(['currency_id' => $currency->id]);
+
+        $cases = [
+            TransactionTypeEnum::PURCHASED_INTEREST->value => [['dividend' => 100], -100],
+            TransactionTypeEnum::PRODUCT_FEE->value => [['commission' => 25], -25],
+            TransactionTypeEnum::TAX_RELIEF->value => [['tax' => 30], 30],
+        ];
+
+        foreach ($cases as $transactionType => [$typeSpecificConfig, $expectedCashFlow]) {
+            $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+                'action' => 'create',
+                'transaction_type' => $transactionType,
+                'config_type' => 'investment',
+                'date' => now()->format('Y-m-d'),
+                'reconciled' => false,
+                'schedule' => false,
+                'budget' => false,
+                'config' => array_merge([
+                    'account_id' => $accountEntity->id,
+                    'investment_id' => $investment->id,
+                ], $typeSpecificConfig),
+            ]);
+
+            $response->assertOk();
+            $this->assertEquals($expectedCashFlow, $response->json('transaction.cashflow_value'));
+        }
     }
 
     /**
