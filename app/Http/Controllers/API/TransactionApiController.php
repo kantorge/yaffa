@@ -32,6 +32,10 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidWeekday;
+use RuntimeException;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -461,12 +465,16 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
 
         $this->mergeService->mergeIfEnabled($transaction);
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -514,10 +522,14 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -791,7 +803,13 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
-            $sourceTransaction->transactionSchedule->skipNextInstance();
+            if ($validated['catch_up_schedule'] ?? false) {
+                if (!$sourceTransaction->transactionSchedule->catchUpToDate()) {
+                    throw new RuntimeException(__('Unable to catch up the schedule to the current date.'));
+                }
+            } else {
+                $sourceTransaction->transactionSchedule->skipNextInstance();
+            }
 
             // This also triggers a TransactionUpdated event for the source transaction
             event(new TransactionUpdated($sourceTransaction, [
@@ -814,6 +832,24 @@ class TransactionApiController extends Controller implements HasMiddleware
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
             $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+
+            // next_date isn't necessarily present in original_schedule_config (the
+            // "close out the old schedule" flow always omits/nulls it), so a stale
+            // value from before this pattern change can survive the fill() above.
+            // Since next_date is trusted verbatim wherever a transaction is recorded
+            // (see TransactionSchedule::occursOn()), clear it here if it no longer
+            // matches the (possibly just-changed) recurrence rule.
+            $nextDate = $sourceTransaction->transactionSchedule->next_date;
+            if ($nextDate) {
+                try {
+                    if (!$sourceTransaction->transactionSchedule->occursOn($nextDate)) {
+                        $sourceTransaction->transactionSchedule->next_date = null;
+                    }
+                } catch (InvalidArgument|InvalidWeekday|Exception) {
+                    $sourceTransaction->transactionSchedule->next_date = null;
+                }
+            }
+
             $sourceTransaction->push();
 
             // This also triggers a TransactionUpdated event for the source transaction

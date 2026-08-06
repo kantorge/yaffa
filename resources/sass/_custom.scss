@@ -106,6 +106,17 @@ table.dataTable tr.table-warning {
     --cui-table-border-color: rgba(255, 255, 255, 0.15);
 }
 
+// Native <input type="date"> renders its calendar popup and spinner icon using the
+// OS/browser color scheme, which YAFFA's manual dark-mode toggle doesn't drive on its
+// own — force it to follow the app's own theme attribute instead.
+[data-coreui-theme="dark"] input[type="date"] {
+    color-scheme: dark;
+}
+
+[data-coreui-theme="light"] input[type="date"] {
+    color-scheme: light;
+}
+
 // DataTables detects dark mode via [data-bs-theme="dark"], not CoreUI's [data-coreui-theme="dark"].
 // This means --dt-row-stripe stays at its default "0, 0, 0" (black) in dark mode — a black
 // overlay on a dark background is invisible. Fix: set white rgb values and override the

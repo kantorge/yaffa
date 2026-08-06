@@ -81,6 +81,12 @@ class AiDocumentsIndexTest extends DuskTestCase
         });
     }
 
+    /**
+     * Status is pinned to 'ready_for_review' on both documents below because
+     * that's the table's default status filter (see AiDocumentManager.vue's
+     * initialStatus) - the factory's random status would otherwise make either
+     * document invisible regardless of date.
+     */
     public function test_ai_documents_date_filter_updates_table(): void
     {
         $user = User::factory()->create([
@@ -91,25 +97,45 @@ class AiDocumentsIndexTest extends DuskTestCase
 
         $today = now();
 
-        AiDocument::factory()->for($user)->create([
+        $inRangeDocument = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
             'created_at' => $today,
         ]);
 
-        $this->browse(function (Browser $browser) use ($user, $today) {
+        // Received well outside the date range set below, so filtering it out
+        // proves the table actually reacts to the date range, not just the inputs.
+        $outOfRangeDocument = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'created_at' => $today->copy()->subDays(10),
+        ]);
+
+        $this->browse(function (Browser $browser) use ($user, $today, $inRangeDocument, $outOfRangeDocument) {
             $browser->loginAs($user);
             $browser->visitRoute('ai-documents.index')
                 ->waitFor('#ai-document-table')
-                ->waitFor('#aiDocumentDate_from');
+                ->waitFor('#aiDocumentDate_from')
+                // Both documents are present before any filter is applied
+                ->waitFor($this->getAiDocumentRowSelector($inRangeDocument))
+                ->waitFor($this->getAiDocumentRowSelector($outOfRangeDocument));
 
-            // Set a date range - dates are automatically updated as user types
+            // Set a date range - dates are automatically updated as the inputs change
+            $this->setDateInput($browser, '#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'));
+            $this->setDateInput($browser, '#aiDocumentDate_to', $today->format('Y-m-d'));
+
             $browser
-                ->type('#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'))
-                ->type('#aiDocumentDate_to', $today->format('Y-m-d'))
                 ->pause(1000)
                 // Verify the dates are set in the input fields
                 ->assertValue('#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'))
-                ->assertValue('#aiDocumentDate_to', $today->format('Y-m-d'));
+                ->assertValue('#aiDocumentDate_to', $today->format('Y-m-d'))
+                // Only the in-range document remains in the filtered table
+                ->assertVisible($this->getAiDocumentRowSelector($inRangeDocument))
+                ->assertMissing($this->getAiDocumentRowSelector($outOfRangeDocument));
         });
+    }
+
+    private function getAiDocumentRowSelector(AiDocument $document): string
+    {
+        return '#ai-document-table a[href="' . route('ai-documents.show', $document) . '"]';
     }
 
     public function test_ai_documents_preset_dropdown_populated_correctly(): void

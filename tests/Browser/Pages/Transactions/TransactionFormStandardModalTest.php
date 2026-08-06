@@ -150,8 +150,11 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 ->assertNotChecked('#checkbox-standard-transaction-reconciled')
 
                 // Test the date field with prefixed ID
-                ->assertPresent('#standard-date')
-                ->type('#standard-date', '2025-01-15')
+                ->assertPresent('#standard-date');
+
+            $this->setDateInput($browser, '#standard-date', '2025-01-15');
+
+            $browser
                 ->assertInputValue('#standard-date', '2025-01-15')
 
                 // Test the comment field with prefixed ID

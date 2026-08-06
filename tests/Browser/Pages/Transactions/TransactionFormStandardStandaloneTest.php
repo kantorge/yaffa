@@ -732,13 +732,15 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('@checkbox-transaction-budget')
 
                 // Wait for the schedule card to be visible
-                ->waitFor('@card-transaction-schedule')
-                // Select start date by clicking the input, which opens up the date picker
-                ->click('#schedule_start_current')
-                // Wait for the date picker to open
-                ->waitFor('.vc-pane-container', 10)
-                // Click the current date which is highlighted
-                ->click('.vc-pane-container .vc-day.is-today')
+                ->waitFor('@card-transaction-schedule');
+
+            // Set the schedule start date to today
+            $this->setDateInput($browser, '#schedule_start_current', now()->format('Y-m-d'));
+
+            $browser
+                // Confirm the Vue-side schedule state actually picked up the input
+                // before submitting, not just that the DOM input has the value
+                ->assertInputValue('#schedule_start_current', now()->format('Y-m-d'))
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
@@ -750,6 +752,13 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
+
+            // Confirm the schedule was actually persisted with the date set via
+            // setDateInput above, not left at whatever the form initialized with
+            $this->assertEquals(
+                now()->format('Y-m-d'),
+                $transaction->transactionSchedule->start_date->format('Y-m-d')
+            );
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(
@@ -776,16 +785,16 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
 
-            $this->fillStandardWithdrawalForm($browser)
-                // Click the date input to open the date picker
-                ->click('#standard-date')
-                // Wait for the calendar to be visible
-                ->waitFor('.vc-pane-container', 10)
-                // Click the first day of the previous month, which is in the first column
-                // (This is to avoid clicking the current day on the 1st of the month, which would remove the date)
-                ->click('.vc-pane-container .vc-pane.column-1 .vc-day.in-month')
-                // Wait for the date picker to close
-                ->waitUntilMissing('.vc-pane-container', 10)
+            $this->fillStandardWithdrawalForm($browser);
+
+            // Set the date to the first day of the previous month
+            $this->setDateInput(
+                $browser,
+                '#standard-date',
+                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d')
+            );
+
+            $browser
                 // Select callback to show transaction
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
                 // Submit form

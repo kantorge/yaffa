@@ -79,8 +79,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->assertNotChecked('#checkbox-investment-transaction-reconciled')
 
                 // Test the date field with prefixed ID
-                ->assertPresent('#investment-date')
-                ->type('#investment-date', '2025-01-15')
+                ->assertPresent('#investment-date');
+
+            $this->setDateInput($browser, '#investment-date', '2025-01-15');
+
+            $browser
                 ->assertInputValue('#investment-date', '2025-01-15')
 
                 // Test the comment field with prefixed ID
