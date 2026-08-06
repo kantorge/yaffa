@@ -48,6 +48,45 @@ class TransactionScheduleTest extends TestCase
         $this->assertTrue($schedule->isActive());
     }
 
+    public function testIsActiveReturnsTrueForOldDailyScheduleBeyondRecurrVirtualLimit(): void
+    {
+        // start_date is ~3 years back, so the gap to today exceeds Recurr's default
+        // virtualLimit of 732 daily occurrences - regression test for that ceiling.
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'next_date' => null,
+            'start_date' => Carbon::now()->subYears(3),
+            'end_date' => null,
+            'frequency' => 'DAILY',
+            'count' => null,
+            'interval' => 1,
+        ]);
+
+        $this->assertTrue($schedule->isActive());
+    }
+
+    public function testGetNextInstanceComputesDailyOccurrenceForOldScheduleBeyondRecurrVirtualLimit(): void
+    {
+        // next_date is several months in the past, and start_date ~3 years back, so the
+        // gap from start_date to today exceeds Recurr's default virtualLimit of 732.
+        $schedule = TransactionSchedule::factory()->make([
+            'start_date' => Carbon::now()->subYears(3),
+            'next_date' => Carbon::now()->subMonths(6),
+            'end_date' => null,
+            'frequency' => 'DAILY',
+            'interval' => 1,
+            'count' => null,
+        ]);
+
+        $next = $schedule->getNextInstance();
+
+        $this->assertNotNull($next);
+        $this->assertSame(
+            Carbon::now()->subMonths(6)->addDay()->format('Y-m-d'),
+            $next->format('Y-m-d')
+        );
+    }
+
     public function testOccursOnReturnsFalseWhenDateDoesNotMatchOrdinalWeekdayRule(): void
     {
         // 2026-01-01 is a Thursday, not the first Wednesday of January 2026.

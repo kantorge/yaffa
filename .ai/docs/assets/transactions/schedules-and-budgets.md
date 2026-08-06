@@ -167,6 +167,7 @@ A planned transaction may include the following schedule properties:
   - monthly
   - yearly
 - interval
+- day-of-week pattern (`by_day`), for ordinal-weekday recurrence such as "first Wednesday of every month" or, combined with month (`by_month`), "last Friday of November every year" — only meaningful for monthly/yearly frequencies
 - automatic recording for true schedules
 - inflation for budget-oriented planning
 
@@ -174,6 +175,12 @@ Important interpretation rules:
 
 - if next date is empty, the schedule is effectively considered finished
 - end date and count are alternative ways of defining when recurrence stops
+- next date must actually be a real occurrence of the configured recurrence rule (validated server-side); it is trusted verbatim when a scheduled instance is recorded
+- when replacing a schedule with a new recurrence pattern, a next date that no longer matches the new rule is cleared rather than carried over
+
+## Catching Up a Missed Schedule
+
+If a schedule's next date has fallen behind (e.g. the app was unused for a while), the user can choose to catch it up to the current date instead of only skipping a single missed occurrence. This advances `next_date` occurrence-by-occurrence until it is on or after today, capped at a defensive iteration limit to guard against a pathological rule looping excessively within one request.
 
 ## Core Logic / Rules
 

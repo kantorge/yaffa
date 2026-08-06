@@ -251,6 +251,29 @@ export const ordinalOptions = Object.entries(ordinalLabels).map(([value, label])
 export const weekdayOptions = Object.entries(weekdayLabels).map(([value, label]) => ({ value, label }));
 export const monthOptions = Object.entries(monthLabels).map(([value, label]) => ({ value: Number(value), label }));
 
+// schedule.start_date may be either a Date object (set via parseIsoDate/todayInUTC
+// elsewhere) or a 'YYYY-MM-DD' string (written back by a date input's computed
+// setter). Date objects here are always local-midnight, so local getters are
+// safe; strings are parsed directly to sidestep new Date(string) being
+// UTC-interpreted. Shared by TransactionSchedule.vue and its read-only display
+// Schedule.vue so both derive the day-of-month pattern the same way.
+export function scheduleStartDateParts(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return { day: value.getDate(), month: value.getMonth() + 1 };
+    }
+
+    const parts = String(value).split('-');
+    if (parts.length !== 3) {
+        return null;
+    }
+
+    return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
+}
+
 export function processScheduledTransaction(transaction) {
     if (transaction.transaction_schedule) {
         const schedule = transaction.transaction_schedule;

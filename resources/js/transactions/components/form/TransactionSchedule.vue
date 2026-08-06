@@ -348,6 +348,7 @@
     ordinalOptions,
     weekdayOptions,
     monthOptions,
+    scheduleStartDateParts,
   } from '@/shared/lib/helpers';
 
   export default {
@@ -418,28 +419,8 @@
           : __('On a specific weekday (e.g. the first Monday)');
       },
 
-      // schedule.start_date may be either a Date object (set via parseIsoDate/
-      // todayInUTC elsewhere in the form) or a 'YYYY-MM-DD' string (written back
-      // by this component's own startDateInput computed setter).
-      // Date objects here are always local-midnight (matching the rest of the
-      // form's date handling), so local getters are safe; strings are parsed
-      // directly to sidestep new Date(string) being UTC-interpreted.
       startDateParts() {
-        const value = this.schedule.start_date;
-        if (!value) {
-          return null;
-        }
-
-        if (value instanceof Date) {
-          return { day: value.getDate(), month: value.getMonth() + 1 };
-        }
-
-        const parts = String(value).split('-');
-        if (parts.length !== 3) {
-          return null;
-        }
-
-        return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
+        return scheduleStartDateParts(this.schedule.start_date);
       },
 
       startDateDayOfMonth() {

@@ -16,7 +16,6 @@ use Recurr\RecurrenceCollection;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\AfterConstraint;
 use Recurr\Transformer\Constraint\BetweenConstraint;
 use Exception;
 
@@ -155,6 +154,17 @@ class TransactionSchedule extends Model
     private const int MAX_CATCH_UP_ITERATIONS = 10000;
 
     /**
+     * Recurr's default virtualLimit (732) caps how many candidate occurrences
+     * are scanned from start_date before giving up - for a DAILY schedule that's
+     * only ~2 years. Past that, getNextInstance()/isActive()/occursOn() silently
+     * return "no occurrence found" even when one clearly exists further out.
+     * Raised generously (covers ~270 years of DAILY occurrences) since this is
+     * still a single bounded scan, not a loop - protects against a genuinely
+     * malformed/infinite rule without breaking realistic long-lived schedules.
+     */
+    private const int RECURRENCE_VIRTUAL_LIMIT = 100000;
+
+    /**
      * Advance next_date repeatedly - reusing the same mechanism as skipNextInstance()
      * ($this->next_date = $this->getNextInstance()) - until it is either null (schedule
      * exhausted) or on/after $date (defaults to today). Persists with a single save() at
@@ -249,6 +259,7 @@ class TransactionSchedule extends Model
         $transformer = new ArrayTransformer();
         $transformerConfig = new ArrayTransformerConfig();
         $transformerConfig->enableLastDayOfMonthFix();
+        $transformerConfig->setVirtualLimit(self::RECURRENCE_VIRTUAL_LIMIT);
         $transformer->setConfig($transformerConfig);
 
         return $transformer;
@@ -256,6 +267,14 @@ class TransactionSchedule extends Model
 
     /**
      * Build the recurrence rule for the transaction schedule.
+     *
+     * Recurr's AfterConstraint never stops the transformer early (it always scans all the
+     * way to virtualLimit, regardless of how soon a match is found) - with
+     * RECURRENCE_VIRTUAL_LIMIT raised to 100000 to fix the correctness bug above, that made
+     * every single call here take seconds, not just catchUpToDate()'s loop. BetweenConstraint
+     * *does* stop early once it passes its upper bound, so bounding the query to a window
+     * that's comfortably wider than one recurrence period keeps the scan cheap while still
+     * finding occurrences arbitrarily far past start_date.
      *
      * @throws InvalidWeekday
      * @throws InvalidArgument
@@ -266,9 +285,35 @@ class TransactionSchedule extends Model
         $rule = $this->buildRule();
         $transformer = $this->makeArrayTransformer();
 
-        $constraint = ($afterDate ? new AfterConstraint(new DateTime($afterDate->toDateString()), false) : null);
+        if ($afterDate === null) {
+            return $transformer->transform($rule);
+        }
 
-        return $transformer->transform($rule, $constraint);
+        $after = new DateTime($afterDate->toDateString());
+        $before = new DateTime($afterDate->copy()->addDays($this->recurrenceLookaheadDays())->toDateString());
+        $constraint = new BetweenConstraint($after, $before, false);
+
+        return $transformer->transform($rule, $constraint, false);
+    }
+
+    /**
+     * A rule's ByDay/interval semantics guarantee at least one occurrence per period (e.g.
+     * "1st Wednesday of every month" occurs exactly once per month), so a window of 2 periods
+     * from the query date is a generous, safely-overestimating bound to search within -
+     * using calendar-day approximations for month/year lengths since exact unit arithmetic
+     * isn't needed for a safety margin.
+     */
+    private function recurrenceLookaheadDays(): int
+    {
+        $periodDays = match ($this->frequency) {
+            'DAILY' => 1,
+            'WEEKLY' => 7,
+            'MONTHLY' => 31,
+            'YEARLY' => 366,
+            default => 366,
+        };
+
+        return $periodDays * max($this->interval ?? 1, 1) * 2;
     }
 
     /**

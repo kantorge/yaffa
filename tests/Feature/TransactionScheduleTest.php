@@ -60,6 +60,23 @@ class TransactionScheduleTest extends TestCase
         $this->assertTrue($transaction->transactionSchedule->next_date->gte(Carbon::today()));
     }
 
+    public function testCatchUpToDateAdvancesOldDailyScheduleBeyondRecurrVirtualLimit(): void
+    {
+        // start_date is ~3 years back, so the gap to today exceeds Recurr's default
+        // virtualLimit of 732 daily occurrences - regression test for that ceiling.
+        $transaction = $this->createScheduledTransaction([
+            'start_date' => Carbon::now()->subYears(3),
+            'next_date' => Carbon::now()->subYears(3),
+            'end_date' => null,
+            'frequency' => 'DAILY',
+            'interval' => 1,
+            'count' => null,
+        ]);
+
+        $this->assertTrue($transaction->transactionSchedule->catchUpToDate());
+        $this->assertTrue($transaction->transactionSchedule->next_date->gte(Carbon::today()));
+    }
+
     public function testCatchUpToDateLeavesNextDateNullWhenScheduleExhaustedBeforeTarget(): void
     {
         $transaction = $this->createScheduledTransaction([

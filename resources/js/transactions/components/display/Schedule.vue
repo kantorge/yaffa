@@ -6,109 +6,99 @@
       </div>
     </div>
     <div class="card-body">
-      <div class="row mb-0">
-        <div class="col-12 col-md-6">
-          <dl class="row mb-0">
-            <dt class="col-6 mb-2">
-              {{ __('Frequency') }}
-            </dt>
-            <dd class="col-6 mb-2">
-              {{ schedule.frequency }}
-            </dd>
-
-            <dt class="col-6 mb-2">
-              {{ __('Interval') }}
-            </dt>
-            <dd class="col-6 mb-2">
-              {{ schedule.interval }}
-            </dd>
-
-            <dt class="col-6 mb-2" v-if="patternDescription">
-              {{ __('Pattern') }}
-            </dt>
-            <dd class="col-6 mb-2" v-if="patternDescription">
-              {{ patternDescription }}
-            </dd>
-
-            <dt class="col-6 mb-2">
-              {{ __('Count') }}
-            </dt>
-            <dd class="col-6 mb-2">
-              <span
-                v-if="
-                  typeof schedule.count !== 'undefined' &&
-                  schedule.count !== null
-                "
-              >
-                {{ schedule.count }}
-              </span>
-              <span v-else class="text-muted text-italic">{{
-                __('Not set')
-              }}</span>
-            </dd>
-
-            <dt class="col-6 mb-2" v-if="isBudget">
-              {{ __('Budget inflation') }}
-            </dt>
-            <dd class="col-6 mb-2" v-if="isBudget">
-              <span
-                v-if="
-                  typeof schedule.inflation !== 'undefined' &&
-                  schedule.inflation !== null
-                "
-              >
-                {{ schedule.inflation }}%
-              </span>
-              <span v-else class="text-muted text-italic">{{
-                __('Not set')
-              }}</span>
-            </dd>
+      <div class="schedule-groups">
+        <div class="p-3 rounded border">
+          <h6 class="text-muted text-uppercase small mb-2">{{ __('Pattern') }}</h6>
+          <dl class="field-grid mb-0">
+            <div>
+              <dt class="mb-1">{{ __('Repeats every') }}</dt>
+              <dd class="mb-0">{{ schedule.interval }} {{ frequencyLabel }}</dd>
+            </div>
+            <div v-if="showPattern">
+              <dt class="mb-1">{{ __('Pattern') }}</dt>
+              <dd class="mb-0">{{ patternDescription }}</dd>
+            </div>
           </dl>
         </div>
-        <div class="col-12 col-md-6">
-          <dl class="row mb-0">
-            <dt class="col-6 mb-2">
-              {{ __('Start date') }}
-            </dt>
-            <dd class="col-6 mb-2">
-              {{ formattedDate(schedule.start_date) }}
-            </dd>
 
-            <dt class="col-6 mb-2" v-if="isSchedule">
-              {{ __('Next date') }}
-            </dt>
-            <dd class="col-6 mb-2" v-if="isSchedule">
-              <span v-if="schedule.next_date">{{
-                formattedDate(schedule.next_date)
-              }}</span>
-              <span v-else class="text-muted text-italic">{{
-                __('Not set')
-              }}</span>
-            </dd>
+        <div class="p-3 rounded border">
+          <h6 class="text-muted text-uppercase small mb-2">{{ __('Range') }}</h6>
+          <dl class="field-grid field-grid-2col mb-0">
+            <div>
+              <dt class="mb-1">{{ __('Start date') }}</dt>
+              <dd class="mb-0">{{ formattedDate(schedule.start_date) }}</dd>
+            </div>
+            <div v-if="isSchedule">
+              <dt class="mb-1">{{ __('Next date') }}</dt>
+              <dd class="mb-0">
+                <span v-if="schedule.next_date">{{
+                  formattedDate(schedule.next_date)
+                }}</span>
+                <span v-else class="text-muted text-italic">{{
+                  __('Not set')
+                }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="mb-1">{{ __('Count') }}</dt>
+              <dd class="mb-0">
+                <span
+                  v-if="
+                    typeof schedule.count !== 'undefined' &&
+                    schedule.count !== null
+                  "
+                >
+                  {{ schedule.count }}
+                </span>
+                <span v-else class="text-muted text-italic">{{
+                  __('Not set')
+                }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="mb-1">{{ __('End date') }}</dt>
+              <dd class="mb-0">
+                <span v-if="schedule.end_date">{{
+                  formattedDate(schedule.end_date)
+                }}</span>
+                <span v-else class="text-muted text-italic">{{
+                  __('Not set')
+                }}</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
 
-            <dt class="col-6 mb-2" v-if="isSchedule">
-              {{ __('Automatic recording') }}
-            </dt>
-            <dd class="col-6 mb-2" v-if="isSchedule">
-              <span v-if="schedule.automatic_recording">
-                <i class="fa fa-check text-success" :title="__('Yes')"></i>
-              </span>
-              <span v-else
-                ><i class="fa fa-ban text-danger" :title="__('No')"></i
-              ></span>
-            </dd>
-
-            <dt class="col-6 mb-2">
-              {{ __('End date') }}
-            </dt>
-            <dd class="col-6 mb-2">
-              <span v-if="schedule.end_date">{{
-                formattedDate(schedule.end_date)
-              }}</span>
-              <span v-else class="text-muted text-italic">{{
-                __('Not set')
-              }}</span>
-            </dd>
+        <div class="p-3 rounded border" v-if="isSchedule || isBudget">
+          <h6 class="text-muted text-uppercase small mb-2">{{ __('Behavior') }}</h6>
+          <dl class="field-grid mb-0">
+            <div v-if="isSchedule">
+              <dt class="mb-1">{{ __('Automatic recording') }}</dt>
+              <dd class="mb-0">
+                <span v-if="schedule.automatic_recording">
+                  <i class="fa fa-check text-success" :title="__('Yes')"></i>
+                </span>
+                <span v-else
+                  ><i class="fa fa-ban text-danger" :title="__('No')"></i
+                ></span>
+              </dd>
+            </div>
+            <div v-if="isBudget">
+              <dt class="mb-1">{{ __('Budget inflation') }}</dt>
+              <dd class="mb-0">
+                <span
+                  v-if="
+                    typeof schedule.inflation !== 'undefined' &&
+                    schedule.inflation !== null
+                  "
+                >
+                  {{ schedule.inflation }}%
+                </span>
+                <span v-else class="text-muted text-italic">{{
+                  __('Not set')
+                }}</span>
+              </dd>
+            </div>
           </dl>
         </div>
       </div>
@@ -122,7 +112,17 @@
     ordinalLabels,
     weekdayLabels,
     monthLabels,
+    scheduleStartDateParts,
   } from '@/shared/lib/helpers';
+
+  // Unit nouns for the "Repeats every :interval :unit" line, matching the
+  // options in the schedule edit form's frequency select (TransactionSchedule.vue).
+  const frequencyLabels = {
+    DAILY: __('schedule.daily'),
+    WEEKLY: __('schedule.weekly'),
+    MONTHLY: __('schedule.monthly'),
+    YEARLY: __('schedule.yearly'),
+  };
 
   /**
    * @property {Object} schedule
@@ -163,12 +163,27 @@
     },
 
     computed: {
+      frequencyLabel() {
+        return frequencyLabels[this.schedule.frequency] ?? this.schedule.frequency;
+      },
+
+      // The pattern row only means anything for MONTHLY/YEARLY (by_day can
+      // only be set for those), matching the form's showPatternPicker.
+      showPattern() {
+        return ['MONTHLY', 'YEARLY'].includes(this.schedule.frequency);
+      },
+
       // e.g. "First Wednesday" or, for a yearly rule pinned to a month,
-      // "Last Friday of November". Null when the schedule uses the default
-      // day-of-month pattern (by_day empty), so the row can be hidden.
+      // "Last Friday of November". Falls back to the default day-of-month
+      // description (matching the form's dayOfMonthPatternLabel) when the
+      // schedule doesn't use an ordinal-weekday rule (by_day empty).
       patternDescription() {
         if (!this.schedule.by_day) {
-          return null;
+          const day = scheduleStartDateParts(this.schedule.start_date)?.day;
+
+          return day
+            ? __('On day :day of the month', { day })
+            : __('On the same day each month');
         }
 
         const ordinal = this.schedule.by_day.slice(0, -2);
@@ -204,3 +219,25 @@
     },
   };
 </script>
+
+<style scoped>
+  .schedule-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+
+  /* Range's four fields (start/next/count/end) always read as a 2x2 block,
+     rather than auto-fit letting a third column squeeze in and leave one
+     field wrapped onto its own row. Matches TransactionSchedule.vue. */
+  .field-grid-2col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+</style>
