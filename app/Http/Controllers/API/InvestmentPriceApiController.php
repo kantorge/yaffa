@@ -13,6 +13,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
 class InvestmentPriceApiController extends Controller implements HasMiddleware
@@ -27,11 +28,19 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'index', 'checkPrice',
+            ]),
+            new Middleware('abilities:write', only: [
+                'store', 'update', 'destroy', 'retrieveMissingPrices',
+            ]),
         ];
     }
 
     /**
-     * Get investment prices, optionally filtered by date range.
+     * List investment prices
+     *
+     * Returns investment prices for the given investment, optionally filtered by date range.
      *
      * @throws AuthorizationException
      */
@@ -61,7 +70,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Store a new investment price.
+     * Add an investment price
+     *
+     * Creates a new price entry for the investment and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -84,7 +95,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing investment price.
+     * Update an investment price
+     *
+     * Updates the price entry and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -106,7 +119,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Delete an investment price.
+     * Delete an investment price
+     *
+     * Deletes the price entry and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -126,7 +141,10 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Retrieve missing investment prices from the provider.
+     * Retrieve missing investment prices
+     *
+     * Downloads investment prices from the configured provider, starting from the latest
+     * known price date (or 30 days ago if none exist), and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -150,7 +168,10 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Check if a price exists for a specific date and investment.
+     * Check if a price exists
+     *
+     * Checks whether a price exists for the investment on a specific date, and returns
+     * its value if found.
      *
      * @throws AuthorizationException
      */

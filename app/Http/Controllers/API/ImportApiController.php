@@ -13,6 +13,7 @@ use App\Services\Import\QifParserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,9 +33,19 @@ class ImportApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:write', only: [
+                'parse',
+            ]),
         ];
     }
 
+    /**
+     * Parse an import file
+     *
+     * Parses an uploaded QIF or CSV file into draft transactions, enriching
+     * them with payee matches, duplicate/schedule candidates, and related AI
+     * documents.
+     */
     public function parse(ImportParseRequest $request): JsonResponse
     {
         /** @var AccountEntity $accountEntity */

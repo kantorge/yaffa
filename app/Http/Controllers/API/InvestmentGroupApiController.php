@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\InvestmentGroup;
@@ -26,19 +27,19 @@ class InvestmentGroupApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:write', only: [
+                'destroy',
+            ]),
         ];
     }
 
     /**
+     * Delete an investment group
+     *
      * @throws AuthorizationException
      */
     public function destroy(InvestmentGroup $investmentGroup): JsonResponse
     {
-        /**
-         * @delete("/api/v1/investment-groups/{investmentGroup}")
-         * @name("api.v1.investment-groups.destroy")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('delete', $investmentGroup);
         $result = $this->investmentGroupService->delete($investmentGroup);
 

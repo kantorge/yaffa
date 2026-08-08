@@ -15,6 +15,8 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Laragear\TwoFactor\Contracts\TwoFactorAuthenticatable;
+use Laragear\TwoFactor\TwoFactorAuthentication;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\ModelFlags\Models\Concerns\HasFlags;
@@ -99,13 +101,14 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder<static>|User whereAccountDetailsDateRange($value)
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements MustVerifyEmail, Onboardable
+class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoFactorAuthenticatable
 {
     use GetsOnboarded;
     use HasApiTokens;
     use HasFactory;
     use HasFlags;
     use Notifiable;
+    use TwoFactorAuthentication;
 
     /**
      * The attributes that are mass assignable.

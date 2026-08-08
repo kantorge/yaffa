@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
 use DB;
+use Laravel\Sanctum\Sanctum;
 
 class AiProviderConfigApiControllerTest extends TestCase
 {
@@ -70,7 +71,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->otherUser->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.ai.config.show'));
 
         $response->assertStatus(404);
@@ -80,7 +84,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->otherUser->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
                 'model' => 'gemini-2.5-flash',
@@ -94,7 +101,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->otherUser->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->deleteJson(route('api.v1.ai.config.destroy', ['aiProviderConfig' => $config->id]));
 
         // Should not find the resource since it's not the user's
@@ -105,7 +115,9 @@ class AiProviderConfigApiControllerTest extends TestCase
 
     public function test_show_returns_404_when_no_config(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->getJson(route('api.v1.ai.config.show'));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -116,7 +128,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.ai.config.show'));
 
         $response->assertStatus(Response::HTTP_OK);
@@ -134,7 +149,9 @@ class AiProviderConfigApiControllerTest extends TestCase
 
     public function test_store_creates_new_config(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -164,7 +181,9 @@ class AiProviderConfigApiControllerTest extends TestCase
         AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
         // Try to create second config
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'gemini',
                 'model' => 'gemini-2.5-flash',
@@ -180,7 +199,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $plainKey = 'sk-test-1234567890abcdefghij';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -222,7 +244,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'user_id' => $this->user->id,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
                 'model' => 'gemini-2.5-flash',
@@ -249,7 +274,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'vision_enabled' => false,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -273,7 +301,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'api_key' => $originalKey,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
@@ -293,7 +324,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'api_key' => $originalKey,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
@@ -314,7 +348,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'api_key' => $originalKey,
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
@@ -332,7 +369,10 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
         $newKey = 'sk-new-key-1234567890abcdefghij';
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -349,7 +389,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
@@ -365,7 +408,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->deleteJson(route('api.v1.ai.config.destroy', ['aiProviderConfig' => $config->id]));
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
@@ -377,7 +423,10 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->deleteJson(route('api.v1.ai.config.destroy', ['aiProviderConfig' => $config->id]));
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
@@ -388,7 +437,9 @@ class AiProviderConfigApiControllerTest extends TestCase
 
     public function test_test_fails_with_invalid_api_key(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -401,7 +452,9 @@ class AiProviderConfigApiControllerTest extends TestCase
 
     public function test_test_fails_with_existing_placeholder_and_no_config(): void
     {
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
@@ -427,7 +480,10 @@ class AiProviderConfigApiControllerTest extends TestCase
             'api_key' => 'sk-invalid-but-existing-key',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
+        Sanctum::actingAs($this->user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',

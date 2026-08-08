@@ -10,6 +10,7 @@ use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class ImportAuthorizationTest extends TestCase
 {
@@ -29,7 +30,10 @@ class ImportAuthorizationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $storeResponse = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $storeResponse = $this
             ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'My Import Profile',
                 'delimiter' => ',',
@@ -48,14 +52,20 @@ class ImportAuthorizationTest extends TestCase
 
         $profileId = $storeResponse->json('data.id');
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.imports.file-profiles.update', $profileId), [
                 'name' => 'Updated Import Profile',
             ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Import Profile');
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profileId))
             ->assertNoContent();
     }
@@ -69,7 +79,10 @@ class ImportAuthorizationTest extends TestCase
             'type' => 'user',
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'name' => 'Should fail',
             ])
@@ -81,7 +94,10 @@ class ImportAuthorizationTest extends TestCase
         $user = User::factory()->create();
         $profile = $this->createSystemProfile();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))
             ->assertForbidden();
     }
@@ -147,7 +163,10 @@ class ImportAuthorizationTest extends TestCase
         $otherAccount->preferred_file_import_profile_id = $profile->id;
         $otherAccount->save();
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.imports.file-profiles.index'));
 
         $response->assertOk();
@@ -175,7 +194,10 @@ class ImportAuthorizationTest extends TestCase
         $account->preferred_file_import_profile_id = $profile->id;
         $account->save();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->deleteJson(route('api.v1.imports.file-profiles.destroy', $profile))
             ->assertUnprocessable();
 
@@ -186,7 +208,10 @@ class ImportAuthorizationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'Bad Options Profile',
                 'options_json' => [
@@ -201,7 +226,10 @@ class ImportAuthorizationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'Good Options Profile',
                 'options_json' => [
@@ -224,7 +252,10 @@ class ImportAuthorizationTest extends TestCase
             'type' => 'user',
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'options_json' => [
                     'bogus_key' => 'not allowed',
@@ -238,7 +269,10 @@ class ImportAuthorizationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.store'), [
                 'name' => 'Custom QIF Profile',
                 'file_type' => 'qif',
@@ -264,7 +298,10 @@ class ImportAuthorizationTest extends TestCase
             'type' => 'user',
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'options_json' => [
                     'field_map' => ['unknown_field' => 'M'],
@@ -283,7 +320,10 @@ class ImportAuthorizationTest extends TestCase
             'type' => 'user',
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->patchJson(route('api.v1.imports.file-profiles.update', $profile), [
                 'options_json' => [
                     'amount_sign' => 'sideways',

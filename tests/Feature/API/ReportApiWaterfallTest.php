@@ -47,7 +47,7 @@ class ReportApiWaterfallTest extends TestCase
 
     public function test_waterfall_reports_missing_foreign_currency_rates_in_warnings_payload(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $foreignCurrency = Currency::factory()
             ->for($this->user)

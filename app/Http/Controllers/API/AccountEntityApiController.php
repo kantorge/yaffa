@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
@@ -21,12 +22,14 @@ class AccountEntityApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:write', only: [
+                'patchActive', 'destroy', 'recalculateAccountMonthlySummaries',
+            ]),
         ];
     }
 
     /**
-     * V1: PATCH /api/v1/account-entities/{accountEntity}
-     * Accepts { active: true|false } in request body.
+     * Update account entity active status
      *
      * @throws AuthorizationException
      */
@@ -43,7 +46,10 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Recalculate monthly summaries for all accounts of the current user.
+     * Recalculate account monthly summaries
+     *
+     * Queues a background job to recalculate the cached monthly summaries for all
+     * accounts belonging to the current user.
      */
     public function recalculateAccountMonthlySummaries(Request $request): JsonResponse
     {
@@ -57,17 +63,12 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified account entity.
+     * Delete an account entity
      *
      * @throws AuthorizationException
      */
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @delete("/api/v1/account-entities/{accountEntity}")
-         * @name("api.v1.account-entities.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
         Gate::authorize('forceDelete', $accountEntity);
 
         try {

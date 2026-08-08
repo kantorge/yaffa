@@ -12,6 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Prism\Prism\Facades\Prism;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,20 +25,21 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            // Holds third-party AI provider API keys, so every action - including reads -
+            // requires "settings", not just "read".
+            new Middleware('abilities:settings', only: [
+                'show', 'store', 'update', 'destroy', 'test',
+            ]),
         ];
     }
 
     /**
-     * Get the current AI provider configuration for the authenticated user.
+     * Get the AI provider configuration
+     *
+     * Returns the authenticated user's AI provider configuration.
      */
     public function show(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/ai/config")
-         * @name("api.v1.ai.config.show")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // For MVP, we assume one config per user
         // Later, this needs to be converted to a normal show method with config ID and proper ownership checks
 
@@ -65,15 +67,15 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Create an AI provider configuration
+     *
+     * Creates the authenticated user's AI provider configuration. Only one configuration is
+     * supported per user.
+     *
      * @throws AuthorizationException
      */
     public function store(AiProviderConfigRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/ai/config")
-         * @name("api.v1.ai.config.store")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('create', AiProviderConfig::class);
 
         /** @var User $user */
@@ -105,16 +107,14 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Update the AI provider configuration
+     *
+     * Updates the provider, model, vision setting, and optionally the API key.
+     *
      * @throws AuthorizationException
      */
     public function update(AiProviderConfigRequest $request, AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        /**
-         * @patch("/api/v1/ai/config/{config}")
-         * @name("api.v1.ai.config.update")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         Gate::authorize('update', $aiProviderConfig);
 
         $validated = $request->validated();
@@ -143,15 +143,12 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Delete the AI provider configuration
+     *
      * @throws AuthorizationException
      */
     public function destroy(AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        /**
-         * @delete("/api/v1/ai/config/{config}")
-         * @name("api.v1.ai.config.destroy")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('delete', $aiProviderConfig);
 
         $aiProviderConfig->delete();
@@ -160,16 +157,12 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Test connectivity to the configured AI provider.
+     * Test the AI provider connection
+     *
+     * Sends a test prompt to the configured (or given) AI provider to verify connectivity.
      */
     public function test(AiProviderConfigRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/ai/config/test")
-         * @name("api.v1.ai.config.test")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // Basic validation is already done by AiProviderConfigRequest
         $validated = $request->validated();
 

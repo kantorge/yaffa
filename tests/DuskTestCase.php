@@ -6,6 +6,7 @@ use AleBatistella\DuskApiConf\Traits\UsesDuskApiConfig;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Tests\Browser\DuskMacros;
@@ -42,6 +43,26 @@ abstract class DuskTestCase extends BaseTestCase
         $this->browse(function ($browser) {
             $browser->resize(1920, 1080);
         });
+    }
+
+    /**
+     * alebatistella/duskapiconf persists setConfig()/getConfig() overrides to a temp file
+     * (storage/app/duskapiconf_tmp.txt by default) that its service provider re-applies to
+     * config() on every non-production boot - not just during Dusk runs, but for any artisan
+     * command afterward - until the file is removed. The package only removes it via an
+     * explicit resetConfig() call, so a test that calls setConfig() and then fails/times out
+     * before its own cleanup lines run leaves the override stuck indefinitely, silently
+     * corrupting config for the whole dev environment (e.g. yaffa.sandbox_mode stuck `true`).
+     * Deleting the file unconditionally here - rather than relying on each test's own
+     * try/finally discipline - guarantees it never survives a test, since tearDown() still
+     * runs after an assertion failure or exception.
+     */
+    protected function tearDown(): void
+    {
+        Storage::disk(config('duskapiconf.storage.disk', 'local'))
+            ->delete(config('duskapiconf.storage.file', 'duskapiconf_tmp.txt'));
+
+        parent::tearDown();
     }
 
     /**

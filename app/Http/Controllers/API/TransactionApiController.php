@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\TransactionType;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
@@ -54,12 +55,21 @@ class TransactionApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'getItem', 'getScheduledItems', 'findTransactions',
+            ]),
+            new Middleware('abilities:write', only: [
+                'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
+                'updateInvestment', 'skipScheduleInstance', 'destroy',
+            ]),
         ];
     }
 
     /**
-     * V1: PATCH /api/v1/transactions/{transaction}/reconciliation
-     * Accepts { reconciled: true|false } in request body.
+     * Reconcile a transaction
+     *
+     * Accepts { reconciled: true|false } in the request body to mark the
+     * transaction as reconciled or unreconciled.
      *
      * @throws AuthorizationException
      */
@@ -80,16 +90,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * V1: GET /api/v1/transactions/scheduled-items?type=...
+     * Get a transaction
      */
-
     public function getItem(Transaction $transaction): JsonResponse
     {
-        /**
-         * @get("/api/v1/transactions/{transaction}")
-         * @name("api.v1.transactions.show")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('view', $transaction);
 
         $transaction->loadDetails();
@@ -103,16 +107,14 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get scheduled transactions filtered by schedule type and optional criteria.
+     * List scheduled transactions
+     *
+     * Returns scheduled transactions filtered by schedule type and optional
+     * criteria such as account selection and categories.
      */
     public function getScheduledItems(Request $request): JsonResponse
     {
         $type = $request->query('type', 'any');
-
-        /**
-         * @get("/api/v1/transactions/scheduled-items?type=...")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
 
         // Return empty response if categories are required, but not set or empty
         if ($request->has('category_required')
@@ -224,15 +226,13 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Search transactions by date range and related entities.
+     * Search transactions
+     *
+     * Searches transactions by date range and related entities such as
+     * accounts, categories, payees, and tags.
      */
     public function findTransactions(FindTransactionsRequest $request): JsonResponse
     {
-        /**
-         * @get("/api/transactions")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // A request without any search criteria will return an empty response to avoid loading all transactions
         if (!$request->hasAny([
             'date_from',
@@ -445,15 +445,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Create a standard transaction.
+     * Create a standard transaction
      */
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/transactions/standard")
-         * @name("api.v1.transactions.store-standard")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
@@ -514,15 +509,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Create an investment transaction.
+     * Create an investment transaction
      */
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/transactions/investment")
-         * @name("api.v1.transactions.store-investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
@@ -569,15 +559,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing standard transaction.
+     * Update a standard transaction
      */
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/standard/{transaction}")
-         * @name("api.v1.transactions.update-standard")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $transaction);
 
         $validated = $request->validated();
@@ -658,15 +643,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing investment transaction.
+     * Update an investment transaction
      */
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/investment/{transaction}")
-         * @name("api.v1.transactions.update-investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $transaction);
 
         $validated = $request->validated();
@@ -757,15 +737,12 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Skip the next scheduled occurrence of a transaction.
+     * Skip a scheduled transaction
+     *
+     * Skips the next scheduled occurrence of a recurring transaction.
      */
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/{transaction}/skip")
-         * @name("api.v1.transactions.skip")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $transaction);
 
         $transaction->loadDetails();
@@ -780,16 +757,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a transaction
      */
     public function destroy(Transaction $transaction): JsonResponse
     {
-        /**
-         * @delete("/api/v1/transactions/{transaction}")
-         * @name("api.v1.transactions.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-
         // Authorize the deletion of the transaction for the owner
         Gate::authorize('delete', $transaction);
 

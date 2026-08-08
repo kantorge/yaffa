@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
@@ -17,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountApiController extends Controller implements HasMiddleware
@@ -29,19 +29,23 @@ class AccountApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
+            ]),
+            new Middleware('abilities:write', only: [
+                'recalculateMonthlySummary',
+            ]),
         ];
     }
 
     /**
-     * Get a list of accounts with optional search and filters.
+     * List accounts
+     *
+     * Returns accounts matching an optional search term, transaction-type/direction filter,
+     * and currency filter. Falls back to the user's active accounts when no filters match.
      */
     public function getList(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts")
-         * @name("api.v1.accounts.index")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $parameters = [
             'user' => $request->user(),
             'query' => $request->query('q'),
@@ -167,15 +171,10 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get a list of accounts for investment transactions.
+     * List accounts for investment transactions
      */
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/investment")
-         * @name("api.v1.accounts.investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $user = $request->user();
 
         if ($request->query('q')) {
@@ -243,16 +242,12 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the account entity for the given id.
+     * Get an account
      *
      * @throws AuthorizationException
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/{accountEntity}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('view', $accountEntity);
 
         $accountEntity->load(['config', 'config.currency']);
@@ -265,20 +260,15 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the current balance of a selected account or all accounts
+     * Get account balance
      *
+     * Returns the current balance of a selected account, or all accounts when none is given.
      * The balance is calculated using AccountMonthlySummary, which is regularly updated.
      *
      * @throws AuthorizationException
      */
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/balance/{accountEntity?}")
-         * @get("/api/v1/accounts/balance")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         $user = $request->user();
 
         // Validate the account entity and the user
@@ -432,16 +422,14 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Trigger the related job to update the monthly summary for the given account entity.
+     * Recalculate an account's monthly summary
+     *
+     * Triggers the background job that updates the monthly summary for the given account entity.
      *
      * @throws AuthorizationException
      */
     public function recalculateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @post("/api/v1/accounts/{accountEntity}/monthly-summary")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $accountEntity);
 
         // Check if the account entity is an account
