@@ -16,7 +16,7 @@ See [background.md](background.md) for the current-state analysis, the real-vs-p
 
 ## 3. Non-Goals
 
-- A full backend/frontend BigDecimal migration delivered as one change. Phases 1-4 are scoped and sequenced but not committed to a single release; each is written at roadmap detail, not full implementation detail, because each introduces a new dependency that requires explicit user approval before work starts (`brick/math`/`brick/money` in Phase 1, promoting `decimal.js` to a direct npm dependency in Phase 0/3) — this document flags where approval is needed but cannot grant it.
+- A full backend/frontend BigDecimal migration delivered as one change. Phases 1-4 are scoped and sequenced but not committed to a single release. **All named dependencies are approved** (`brick/math`/`brick/money` for Phases 1-2; `decimal.js`'s promotion to a direct npm dependency for Phase 0/FR-3 and Phase 3/FR-6) — every phase may proceed in order.
 - FX rate staleness/reconciliation between a transfer's implied rate and the `CurrencyRate` table — an existing, deliberate product decision, not a precision bug (see background.md).
 - Investment cost-basis/realized-gain calculation — does not exist in the codebase yet, so there is nothing here to harden.
 - Any change to `resources/js/shared/lib/i18n/format.js`'s display formatting — it is already correctly centralized and reused; this work changes what value is computed and stored, not how a correct value is displayed.
@@ -28,21 +28,36 @@ See [background.md](background.md) for the current-state analysis, the real-vs-p
 
 Replace the float-tolerance guard in `app/Services/TransactionItemMergeService.php:11,98` (`AMOUNT_COMPARISON_EPSILON = 0.0001`, `abs($originalTotal - $newTotal) > self::AMOUNT_COMPARISON_EPSILON`) with an exact comparison using PHP's `bcmath` extension (`bccomp($originalTotal, $newTotal, $scale)` at a fixed scale matching `transaction_items.amount`'s column precision). `ext-bcmath` is already compiled into the local dev image (`vendor/laravel/sail/runtimes/8.4/Dockerfile:46`), so this requires no `composer require` and no dependency-approval gate. The two summed values being compared should be built from the raw string amounts (as read from the `DECIMAL` column) rather than from the float-cast model attribute, since casting to float before comparing would reintroduce the exact drift this FR removes.
 
+**New runtime requirement to declare and document.** `ext-bcmath` isn't in YAFFA's currently-published required-extensions list ([yaffa.cc/documentation/getting-started/installation/technology/](https://yaffa.cc/documentation/getting-started/installation/technology/) lists 13 extensions — Ctype, cURL, DOM, Fileinfo, Filter, Hash, Mbstring, OpenSSL, PCRE, PDO, Session, Tokenizer, XML — `bcmath` is not among them). It's present in the Sail dev image but that's not guaranteed on a self-hosted deployment running its own PHP stack. Two actions, both in scope for this FR:
+
+1. Add `"ext-bcmath": "*"` to `composer.json`'s `require` block, so `composer install` fails fast with a clear message on a host missing it, instead of a runtime fatal error the first time this service runs.
+2. Flag the gap to whoever maintains the yaffa.cc documentation site (not part of this repo — no local mirror of that requirements list was found in `README.md`, `UPGRADE.md`, or a dedicated `INSTALL.md`) so "BCMath PHP Extension" gets added to the published required-extensions list.
+
 ### FR-2: Align `investment_prices.price` / `transaction_details_investment.price` scale — Phase 0
 
 Add a migration that changes `transaction_details_investment.price` from `decimal(10,4)` to `decimal(20,10)`, matching `investment_prices.price`'s existing scale, so the same logical value (an investment's price at a point in time) is stored at the same precision regardless of which table it appears in. Implement a reversible `down()` per `.ai/agents/laravel-backend.agent.md`'s migration rules ("migrations must be reversible," "no destructive changes without confirmation" — widening a decimal column's scale is non-destructive and safe to reverse). No application code depends on the current narrower scale in a way that would break from widening it; confirm this by grepping for `transaction_details_investment.*price` usage before writing the migration.
 
-### FR-3: Replace `round2()` with `decimal.js` — Phase 0, requires dependency-promotion approval
+Align the FormRequest validating this field with its sibling: `app/Http/Requests/TransactionRequest.php:393`'s `getInvestmentAmountRules()` currently validates the BUY/SELL `config.price` field as bare `'required|numeric|gt:0'`, with no upper-bound/scale check at all, unlike `app/Http/Requests/InvestmentPriceRequest.php:23-29` (which validates `investment_prices.price` and already carries an explicit `min:0.0000000001|max:9999999999.9999999999` pair with a `// Fit in signed DECIMAL(20,10) range` comment). Add the identical bound and comment to `TransactionRequest.php`'s `config.price` rule, now that both columns share the same scale — this doesn't fix a break (the looser rule was never wrong), it closes a validation-consistency gap between two request classes validating the same logical value.
 
-Replace `round2()` in `resources/js/reports/components/find-transactions/helpers.js:46-55` with a `decimal.js`-based rounding call at its five call sites inside `processCategoryGroup()` (lines 200-216). This requires promoting `decimal.js` from a transitive dependency (currently resolved only via `mathjs`) to a direct entry in `package.json`. **No new package is downloaded** — the same version already exists in `package-lock.json` — but adding a direct dependency declaration is still a dependency change and must be explicitly approved before implementation begins, per this repo's "do not add dependencies without user approval" rule.
+### FR-3: Replace `round2()` with `decimal.js` — Phase 0, dependency-promotion approved
 
-### FR-4: `MoneyCast`/`DecimalCast` and first two field groups — Phase 1, requires new-dependency approval (`brick/math`, `brick/money`)
+Replace `round2()` in `resources/js/reports/components/find-transactions/helpers.js:46-55` with a `decimal.js`-based rounding call at its five call sites inside `processCategoryGroup()` (lines 200-216). Promote `decimal.js` from a transitive dependency (currently resolved only via `mathjs`) to a direct entry in `package.json` — **approved**. No new package is downloaded; the same version already exists in `package-lock.json`, only the direct declaration is new.
 
-Introduce `brick/math` and `brick/money` via Composer (explicit approval required before this phase starts). Add a custom Eloquent cast (e.g. `app/Casts/MoneyCast.php`) implementing both `Illuminate\Contracts\Database\Eloquent\CastsAttributes` (so PHP code receives a `Brick\Math\BigDecimal`/`Brick\Money\Money` instance instead of a float) and `Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes` (so `toArray()`/`toJson()` emit a decimal string, not a JSON number — see background.md's "Wire format" section for why this is sufficient without a Resource-layer rewrite). Apply it first to `transaction_items.amount` and `transaction_details_standard.amount_from`/`amount_to` — the split/allocation-prone fields where Phase 0 already proved real drift exists.
+### FR-4: `MoneyCast`/`DecimalCast` and first two field groups — Phase 1, dependencies approved (`brick/math`, `brick/money`)
 
-### FR-5: Extend the cast to investment and currency fields — Phase 2
+Introduce `brick/math` and `brick/money` via Composer — **approved**. Add a custom Eloquent cast (e.g. `app/Casts/MoneyCast.php`) implementing both `Illuminate\Contracts\Database\Eloquent\CastsAttributes` (so PHP code receives a `Brick\Math\BigDecimal`/`Brick\Money\Money` instance instead of a float) and `Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes` (so `toArray()`/`toJson()` emit a decimal string, not a JSON number — see background.md's "Wire format" section for why this is sufficient without a Resource-layer rewrite). Apply it first to `transaction_items.amount` and `transaction_details_standard.amount_from`/`amount_to` — the split/allocation-prone fields where Phase 0 already proved real drift exists.
 
-Extend `MoneyCast`/`DecimalCast` to `transaction_details_investment.price/quantity/commission/tax/dividend`, `investment_prices.price`, and `CurrencyRate.rate`. Define an explicit rounding mode (e.g. `RoundingMode::HALF_UP`, matching typical financial convention) for the currency-conversion arithmetic in `app/Http/Traits/CurrencyTrait.php`, which today performs `$value * $rate` with no rounding-mode control at all.
+**Dependency footprint.** Neither library hard-requires a new PHP extension: `brick/math`'s `composer.json` requires only `php: ^8.2` and ships a pure-PHP fallback calculator, auto-upgrading to a faster `BcMathCalculator` now that FR-1 already requires `ext-bcmath` — a free synergy, not an extra ask. `brick/money` additionally pulls in `psr/simple-cache` (a small new indirect Composer package, not an extension) and requires `brick/math`. `Money::formatTo()` (locale-aware formatting) depends on `ext-intl` at call time, but **this cast must never call it** — YAFFA's display formatting is already fully centralized in `resources/js/shared/lib/i18n/format.js` on the frontend (background.md), so backend `Money` usage stays scoped to arithmetic and `SerializesCastableAttributes`-driven serialization only. This avoids introducing an undocumented `ext-intl` runtime dependency for no functional gain.
+
+### FR-5: Extend the cast to investment and currency fields — Phase 2, dependencies approved
+
+Extend `MoneyCast` to `transaction_details_investment.price/commission/tax/dividend` and `investment_prices.price` — all genuine currency amounts. `transaction_details_investment.quantity` (a share count) and `CurrencyRate.rate` (a currency-to-currency ratio) are not themselves currency amounts, so both use `DecimalCast`/`brick/math`'s `BigDecimal` directly rather than `Money`.
+
+Use `RoundingMode::HALF_UP` for the currency-conversion arithmetic — **decided**. This only affects derived, display-oriented base-currency conversions (`amount_to_base`/`amount_from_base`/`amount_in_base`, never the stored source-of-truth transaction amount), so the two candidate modes can only ever diverge by one unit at the smallest configured decimal place, on values landing exactly on a tie — imperceptible at YAFFA's per-transaction scale, and neither mode is more "correct" given the product's standing disclaimer that reports aren't "exact accounting precision." `HALF_UP` is chosen because it matches how everyday calculators and non-accounting software round, which is what a personal-finance app's users expect; `HALF_EVEN` (banker's rounding) exists to cancel statistical bias across millions of roundings in ledger-scale accounting systems, which doesn't apply here.
+
+Correct the arithmetic's location while implementing this: the actual multiplication happens in `app/Http/Controllers/API/TransactionApiController.php:424,427,433` (`$transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;` and the equivalent `amount_from_base`/`item->amount_in_base` lines), not in `app/Http/Traits/CurrencyTrait.php` — that trait only resolves the applicable rate (`getLatestRateFromMap()`); it never applies it. `brick/money`'s `Money::convertedTo($currency, $exchangeRate, RoundingMode::HALF_UP)` is a direct fit for these three call sites, replacing plain `*` with an explicit, currency-aware, rounded conversion.
+
+A second concrete illustrative site: `app/Services/TransactionService.php`'s `getInvestmentConfigCashFlow()` (`~lines 144-167`) computes `$transaction->transaction_type->amountMultiplier() * $config->price * $config->quantity + $config->dividend - $config->tax - $config->commission` in raw floats — once `price`/`dividend`/`tax`/`commission` are `Money` and `quantity` is `BigDecimal`, this becomes `$price->multipliedBy($quantity)->plus($dividend)->minus($tax)->minus($commission)`, gaining an automatic currency-mismatch guard (an accidental cross-currency mix throws instead of silently producing a wrong total) alongside exact arithmetic. Its result still feeds `cashflow_value`, which itself is not migrated until Phase 4 (FR-7) — this FR fixes the inputs, FR-7 fixes where they're written to.
 
 ### FR-6: Frontend decimal adoption — Phase 3, builds on FR-3's direct `decimal.js` dependency
 
@@ -51,6 +66,8 @@ Clamp `MathInput.vue`'s emitted value (`resources/js/shared/ui/form/MathInput.vu
 ### FR-7: Migrate materialized caches onto the new arithmetic path — Phase 4
 
 Move `transactions.cashflow_value`'s write path (`TransactionService::getTransactionCashFlow()`, called from `app/Listeners/ProcessTransactionCreated.php:23` and `ProcessTransactionUpdated.php:38`) and `account_monthly_summaries.amount`'s write path (`CalculateAccountMonthlySummary` job, `TransactionService::recalculateMonthlySummaries()`) onto the cast/decimal-library arithmetic established in Phases 1-2, so drift cannot re-enter through these denormalized, cron- and event-rebuilt caches after everything upstream has been fixed.
+
+Concrete illustrative site: `app/Models/AccountMonthlySummary.php`'s `calculateAccountBalanceFact()` (lines 82-132) sums three independently-computed float components — `return $valueInvestment + $valueTo - $valueFrom;` (line 132) — into the balance written for every account, every month, on the daily 05:00 cron (`routes/console.php:36`). This is exactly the repeated-summation drift pattern `AMOUNT_COMPARISON_EPSILON` was invented to tolerate (FR-1), just one layer further downstream; converting these three values to `Money` before summing removes the same bug class at the point where it currently compounds the most.
 
 ## 5. Data Model Changes
 
@@ -62,17 +79,23 @@ Move `transactions.cashflow_value`'s write path (`TransactionService::getTransac
 **Phase 0 (this document's implementation-ready scope):**
 
 - `app/Services/TransactionItemMergeService.php` — replace the epsilon comparison with `bccomp()` (FR-1).
+- `composer.json` — add `"ext-bcmath": "*"` to `require` (FR-1).
 - New migration for `transaction_details_investment.price` (FR-2).
+- `app/Http/Requests/TransactionRequest.php` — add the `min`/`max` DECIMAL(20,10)-range bound to `getInvestmentAmountRules()`'s `config.price` rule, matching `InvestmentPriceRequest.php` (FR-2).
 - `tests/Unit/Services/TransactionItemMergeServiceTest.php` (or equivalent existing test file) — add/update coverage for the exact-comparison change.
 
-**Phase 1+ (roadmap detail — each gated on the dependency approval named in its FR):**
+**Phase 1-2 (dependencies approved — `brick/math`, `brick/money`):**
 
-- `composer.json` — add `brick/math`, `brick/money` (FR-4, needs approval).
-- `app/Casts/MoneyCast.php` (new) — `CastsAttributes` + `SerializesCastableAttributes` (FR-4).
+- `composer.json` — add `brick/math`, `brick/money` (FR-4; pulls in `psr/simple-cache` transitively — no extension, no action needed).
+- `app/Casts/MoneyCast.php` (new) — `CastsAttributes` + `SerializesCastableAttributes`; must never call `Money::formatTo()` (FR-4 — keeps `ext-intl` out of the runtime requirement list).
 - `app/Models/TransactionItem.php` (`amount`), `app/Models/TransactionDetailStandard.php` (`amount_from`, `amount_to`) — first casts to convert (FR-4).
-- `app/Models/TransactionDetailInvestment.php` (`price`, `quantity`, `commission`, `tax`, `dividend`), `app/Models/InvestmentPrice.php` (`price`), `app/Models/CurrencyRate.php` (`rate`) — second wave of casts (FR-5).
-- `app/Http/Traits/CurrencyTrait.php` — explicit rounding mode for conversion arithmetic (FR-5).
-- `app/Services/TransactionService.php`, `app/Jobs/CalculateAccountMonthlySummary.php` — migrate `cashflow_value`/`account_monthly_summaries` write paths (FR-7).
+- `app/Models/TransactionDetailInvestment.php` (`price`, `commission`, `tax`, `dividend`), `app/Models/InvestmentPrice.php` (`price`) — `Money`-cast second wave; `app/Models/TransactionDetailInvestment.php` (`quantity`) and `app/Models/CurrencyRate.php` (`rate`) — `BigDecimal`-cast, not `Money`, since neither is itself a currency amount (FR-5).
+- `app/Http/Controllers/API/TransactionApiController.php:424,427,433` — replace `amount * currencyRateToBase` with `Money::convertedTo()` and an explicit rounding mode (FR-5).
+- `app/Services/TransactionService.php` (`getInvestmentConfigCashFlow()`) — convert to `Money`/`BigDecimal` arithmetic, feeding Phase 4's `cashflow_value` migration (FR-5, consumed by FR-7).
+
+**Phase 4 (roadmap detail, depends on Phase 1-2's casts landing first):**
+
+- `app/Services/TransactionService.php`, `app/Jobs/CalculateAccountMonthlySummary.php`, `app/Models/AccountMonthlySummary.php` (`calculateAccountBalanceFact()`) — migrate `cashflow_value`/`account_monthly_summaries` write paths (FR-7).
 - Remaining models still on a blanket `'float'` cast for a money/quantity field (`app/Models/Account.php` — `opening_balance`; `app/Models/Transaction.php` — `cashflow_value`; `app/Models/AccountMonthlySummary.php` — `amount`) convert alongside FR-7, since they're part of the same cache-rebuild path.
 
 ## 7. Frontend Components to Update
@@ -80,9 +103,9 @@ Move `transactions.cashflow_value`'s write path (`TransactionService::getTransac
 **Phase 0:**
 
 - `resources/js/reports/components/find-transactions/helpers.js` — replace `round2()` with `decimal.js` rounding (FR-3).
-- `package.json` — promote `decimal.js` to a direct dependency (FR-3, needs approval).
+- `package.json` — promote `decimal.js` to a direct dependency (FR-3, approved).
 
-**Phase 3 (roadmap detail, gated on FR-3's approval already having landed):**
+**Phase 3 (dependency approved — `decimal.js`):**
 
 - `resources/js/shared/ui/form/MathInput.vue` — clamp emitted value to field precision (FR-6).
 - `resources/js/transactions/components/TransactionItemContainer.vue` — replace `toFixed(4)`/remainder workaround with `decimal.js` (FR-6).
@@ -99,11 +122,15 @@ Per `.ai/agents/testing.agent.md`:
 - Unit test for the `bccomp()`-based comparison in `TransactionItemMergeService`: confirm it rejects a genuinely unequal merge (correctness preserved from the old epsilon check) and confirm it does not itself introduce a false positive/negative at the boundary the old `0.0001` tolerance used to paper over.
 - Feature test covering the transaction-item split/merge flow end-to-end, asserting no regression in the existing merge behavior.
 - Test for the new migration: confirm `transaction_details_investment.price` accepts a value with 10 decimal places without truncation after the scale change.
+- Test for `TransactionRequest`'s updated `config.price` rule: confirm a value within the new `DECIMAL(20,10)` range passes and a value exceeding `9999999999.9999999999` fails validation, mirroring the existing `InvestmentPriceRequest` coverage.
 
-### Backend Tests (Phase 1+, roadmap detail)
+### Backend Tests (Phase 1-2, approved)
 
-- Unit tests for `MoneyCast`/`DecimalCast`: round-trip correctness (DB string → `BigDecimal` → JSON decimal string), and that `toArray()`/`toJson()` emit a string, not a float.
+- Unit tests for `MoneyCast`/`DecimalCast`: round-trip correctness (DB string → `BigDecimal`/`Money` → JSON decimal string), and that `toArray()`/`toJson()` emit a string, not a float.
+- Unit test confirming `Money`'s currency-mismatch guard: an operation mixing two different currencies (e.g. a corrupted-data scenario) throws rather than silently producing a wrong total.
+- Unit test for the `TransactionApiController` conversion rewrite: `Money::convertedTo()` with `RoundingMode::HALF_UP` matches the previous `amount * rate` result for a representative set of rates, plus an explicit tie-breaking case (a conversion landing exactly on a half-unit at the smallest configured decimal place) confirming it rounds away from zero.
 - Feature tests asserting API responses for affected endpoints serialize the converted fields as JSON strings post-migration (a deliberate breaking change to the wire format — must be visible in test assertions, not just implied).
+- Static/manual check: confirm no call site invokes `Money::formatTo()` (would introduce an undocumented `ext-intl` runtime dependency — FR-4).
 
 ### Manual Verification (Phase 0)
 
@@ -114,40 +141,41 @@ Per `.ai/agents/testing.agent.md`:
 
 1. `TransactionItemMergeService` no longer contains a float-epsilon tolerance; the comparison is exact at the target scale, using `bcmath` (no new Composer dependency).
 2. `investment_prices.price` and `transaction_details_investment.price` share the same decimal scale (`decimal(20,10)`), verified by a passing migration test.
-3. `round2()` is removed from `find-transactions/helpers.js` and replaced by `decimal.js`-based rounding — only after `decimal.js`'s promotion to a direct dependency has been explicitly approved.
+3. `round2()` is removed from `find-transactions/helpers.js` and replaced by `decimal.js`-based rounding.
 4. `vendor/bin/sail artisan test --compact` (scoped to `TransactionItemMergeService` and the new migration test), `./vendor/bin/pint --dirty`, and `npx eslint resources/js --ext .js,.vue` (scoped to the changed file) all pass.
-5. No Phase 1-4 work begins without the dependency approval its FR names (`brick/math`/`brick/money` for FR-4/FR-5; `decimal.js` as a direct dependency for FR-3/FR-6) having been explicitly granted first.
+5. `brick/math`/`brick/money` (FR-4/FR-5) and `decimal.js` as a direct dependency (FR-3/FR-6) are all approved — no phase in this document is blocked on a dependency decision.
+6. `composer.json` declares `"ext-bcmath": "*"`, and no code path calls `Money::formatTo()` — the runtime extension footprint stays limited to `bcmath` (documented per FR-1) with no undocumented `ext-intl` dependency introduced.
 
 ## 10. Rollout Plan
 
-This is an **implementation order**, not a set of independently-approved production commitments beyond Phase 0. Phase 0 is written at full implementation detail and is ready to build now, with no dependency-approval blocker. Phases 1-4 are written at roadmap detail (FRs and components named, not line-by-line) because each is gated on a dependency decision this document flags but cannot grant.
+This is an **implementation order**. All four phases are unblocked on dependencies — `decimal.js` (FR-3/FR-6) and `brick/math`/`brick/money` (FR-4/FR-5) are all approved — so the ordering below reflects build sequencing (what depends on what compiling/passing tests first), not approval gates.
 
 ### Phase 0 — Fix the two proven bugs, zero new dependencies except one direct-dependency promotion
 
 **Scope:** FR-1, FR-2, FR-3.
 **Depends on:** nothing.
-**Dependency approval needed:** promoting `decimal.js` from transitive to direct in `package.json` (FR-3 only — FR-1/FR-2 need no approval, since `bcmath` is already available).
+**Dependencies:** `decimal.js` promoted from transitive to direct in `package.json` (FR-3) — approved; FR-1/FR-2 need none, since `bcmath` is already available.
 **State at end of phase:** the two already-shipped workarounds are gone, replaced by exact arithmetic; the investment price scale mismatch is fixed. Nothing else in the app changes behavior.
 
 ### Phase 1 — Backend core: `MoneyCast`, first two field groups
 
 **Scope:** FR-4.
 **Depends on:** Phase 0 (proves the cast approach is worth investing in, on the same fields already known to be risky).
-**Dependency approval needed:** `brick/math`, `brick/money` via Composer.
+**Dependency approval:** granted — `brick/math`, `brick/money` approved via Composer (`ext-bcmath` already required by Phase 0; no `ext-intl` dependency, per FR-4's `formatTo()` constraint).
 **State at end of phase:** `transaction_items.amount` and `transaction_details_standard.amount_from`/`amount_to` are backed by exact decimal arithmetic in PHP and serialize as decimal strings over the API. No other model has changed.
 
 ### Phase 2 — Investment and currency fields
 
 **Scope:** FR-5.
 **Depends on:** Phase 1 (reuses `MoneyCast`).
-**Dependency approval needed:** none beyond Phase 1's (same library, more fields).
-**State at end of phase:** investment price/quantity/commission/tax/dividend and currency-rate fields are exact; currency conversion has an explicit, documented rounding mode.
+**Dependency approval:** none beyond Phase 1's (same, already-approved libraries, more fields and call sites — `TransactionApiController`'s conversion arithmetic, `TransactionService::getInvestmentConfigCashFlow()`).
+**State at end of phase:** investment price/quantity/commission/tax/dividend fields and `CurrencyRate.rate` are exact; currency conversion in `TransactionApiController` has an explicit, documented rounding mode via `Money::convertedTo()`.
 
 ### Phase 3 — Frontend adoption
 
 **Scope:** FR-6.
-**Depends on:** Phase 0 (direct `decimal.js` dependency already present) and Phase 1 (decimal-string API responses to parse).
-**Dependency approval needed:** none beyond Phase 0's (same library, more call sites).
+**Depends on:** Phase 0 (direct `decimal.js` dependency present) and Phase 1 (decimal-string API responses to parse).
+**Dependencies:** same as Phase 0's FR-3 — `decimal.js` as a direct dependency — approved.
 **State at end of phase:** `MathInput.vue` clamps to field precision; the allocation/remainder call sites and API-response parsing use `decimal.js` instead of raw floats.
 
 ### Phase 4 — Materialized caches
