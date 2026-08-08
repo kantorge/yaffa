@@ -698,3 +698,52 @@ export function investmentGroupTree(selector, data, changeHandler) {
         .on('select_node.jstree', changeHandler)
         .on('deselect_node.jstree', changeHandler);
 }
+
+/**
+ * Initialize a jsTree plugin for categories: hierarchical (parent/child) and
+ * checkbox-selectable, fetched from the categories API. A simpler sibling of the bespoke
+ * category tree on the budget chart page (resources/js/reports/budgetchart.js) - that one also
+ * drives server-side aggregation (selected IDs as query params, per-node default_aggregation
+ * metadata, URL-param preset restoration), which this plain DataTables-filter use case doesn't
+ * need, so it isn't reused here beyond the same jstree init shape.
+ *
+ * @param {string} selector
+ * @param {function} changeHandler
+ *
+ * @returns {void}
+ */
+export function categoryTree(selector, changeHandler) {
+    $(selector)
+        .jstree({
+            core: {
+                data: function (_obj, callback) {
+                    fetch('/api/v1/categories?withInactive=1&q=*')
+                        .then(response => response.json())
+                        .then(data => {
+                            const categories = data.map(function (category) {
+                                return {
+                                    id: category.id,
+                                    parent: category.parent_id || '#',
+                                    text: category.active
+                                        ? category.name
+                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>',
+                                    icon: (!category.parent_id
+                                        ? 'fa fa-folder text-info'
+                                        : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
+                                };
+                            });
+                            callback.call(this, categories);
+                        });
+                },
+                themes: {
+                    dots: false
+                }
+            },
+            plugins: ['checkbox'],
+            checkbox: {
+                keep_selected_style: false
+            },
+        })
+        .on('select_node.jstree', changeHandler)
+        .on('deselect_node.jstree', changeHandler);
+}

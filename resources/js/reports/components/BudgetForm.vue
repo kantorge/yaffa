@@ -107,15 +107,18 @@
                 {{ __('Amount') }}
               </label>
               <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="amountInputId"
-                  type="number"
-                  step="any"
-                  min="0"
-                  v-model="form.amount"
-                  :class="{ 'has-error': form.errors.has('amount') }"
-                />
+                <div class="input-group">
+                  <input
+                    class="form-control"
+                    :id="amountInputId"
+                    type="number"
+                    step="any"
+                    min="0"
+                    v-model="form.amount"
+                    :class="{ 'has-error': form.errors.has('amount') }"
+                  />
+                  <span class="input-group-text">{{ currencyCode }}</span>
+                </div>
               </div>
             </div>
 
@@ -136,10 +139,11 @@
 
             <transaction-schedule
               :isSchedule="false"
+              :isBudget="true"
               :schedule="form"
               :form="form"
-              errorKeyPrefix=""
-              :title="__('Period')"
+              fieldPrefix=""
+              bare
               key="budget-period"
             ></transaction-schedule>
           </div>
@@ -208,6 +212,8 @@
           comment: null,
           frequency: 'MONTHLY',
           interval: 1,
+          by_day: null,
+          by_month: null,
           start_date: null,
           end_date: null,
           count: null,
@@ -216,12 +222,18 @@
         budgetId: null,
         categorySelect: null,
         accountSelect: null,
+        // The selected account's own currency (iso_code), or null for an account-agnostic
+        // budget, which is always priced in the base currency (FR-4).
+        accountCurrencyCode: null,
       };
     },
 
     computed: {
       formInstanceId() {
         return this.instanceId || this.id;
+      },
+      currencyCode() {
+        return this.accountCurrencyCode || window.YAFFA.userSettings.baseCurrency?.iso_code;
       },
       categorySelectId() {
         return `${this.formInstanceId}-category_id`;
@@ -361,6 +373,28 @@
               selectedValue === null || selectedValue === ''
                 ? null
                 : Number(selectedValue);
+
+            this.updateAccountCurrency(this.form.account_id);
+          });
+      },
+
+      // Reflects the selected account's own currency in the amount field's suffix (FR-4: a
+      // budget's currency is never stored, always derived from its account, or the base
+      // currency when account-agnostic) - fetched on demand rather than carried on the
+      // lightweight select2 search results, which don't include the account's currency.
+      updateAccountCurrency(accountId) {
+        if (!accountId) {
+          this.accountCurrencyCode = null;
+          return;
+        }
+
+        fetch(route('api.v1.accounts.show', { accountEntity: accountId }))
+          .then((response) => (response.ok ? response.json() : null))
+          .then((data) => {
+            this.accountCurrencyCode = data?.config?.currency?.iso_code ?? null;
+          })
+          .catch(() => {
+            this.accountCurrencyCode = null;
           });
       },
 
@@ -391,6 +425,8 @@
             this.form.comment = data.comment;
             this.form.frequency = data.frequency;
             this.form.interval = data.interval;
+            this.form.by_day = data.by_day;
+            this.form.by_month = data.by_month;
             this.form.start_date = data.start_date;
             this.form.end_date = data.end_date;
             this.form.count = data.count;
@@ -405,6 +441,8 @@
             if (data.account) {
               this.setSelectValue(this.accountSelect, data.account, 'name');
             }
+
+            this.accountCurrencyCode = data.account?.config?.currency?.iso_code ?? null;
           })
           .catch((error) => {
             console.error('Error loading budget:', error);
@@ -425,6 +463,7 @@
         this.form.end_date = null;
         this.form.count = null;
         this.form.inflation = null;
+        this.accountCurrencyCode = null;
 
         if (this.categorySelect) {
           this.categorySelect.empty().val(null).trigger('change');

@@ -19,8 +19,8 @@ use Tests\TestCase;
 
 /**
  * Integration coverage for the budget/schedule redesign's transforming + schema migrations
- * (2026_07_26_000002_transform_budget_transactions_to_budgets.php and
- * 2026_07_26_000003_drop_budget_column_and_enforce_account_not_null.php), specification.md
+ * (2026_08_05_000002_transform_budget_transactions_to_budgets.php and
+ * 2026_08_05_000003_drop_budget_column_and_enforce_account_not_null.php), specification.md
  * Section 7.1/7.2/10.
  *
  * Each test rolls the schema back to just before those two migrations (restoring the `budget`

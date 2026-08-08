@@ -277,12 +277,15 @@ class AccountApiController extends Controller implements HasMiddleware
         }
 
         // Before proceeding with any calculation, check if any batch jobs are running for this user for fact data
+        // Batches older than 1 hour are treated as orphaned/stuck rather than genuinely in progress,
+        // since the underlying jobs normally complete within seconds.
         $batchJobsCount = DB::table('job_batches')
             ->whereIn('name', [
                 'CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id,
                 'CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id,
             ])
             ->where('finished_at', null)
+            ->where('created_at', '>', now()->subHour()->getTimestamp())
             ->count();
 
         if ($batchJobsCount > 0) {

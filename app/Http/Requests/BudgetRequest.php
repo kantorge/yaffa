@@ -3,10 +3,13 @@
 namespace App\Http\Requests;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Http\Traits\ValidatesRecurrenceRule;
 use Illuminate\Validation\Rule;
 
 class BudgetRequest extends FormRequest
 {
+    use ValidatesRecurrenceRule;
+
     public function attributes(): array
     {
         return [
@@ -18,6 +21,8 @@ class BudgetRequest extends FormRequest
             'end_date' => __('schedule end date'),
             'frequency' => __('schedule frequency'),
             'interval' => __('schedule interval'),
+            'by_day' => __('schedule day of week'),
+            'by_month' => __('schedule month'),
             'count' => __('schedule count'),
             'inflation' => __('schedule inflation'),
         ];
@@ -65,6 +70,8 @@ class BudgetRequest extends FormRequest
                 Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
             ],
             'interval' => 'nullable|integer|gte:1',
+            'by_day' => $this->byDayRule('frequency'),
+            'by_month' => $this->byMonthRule('frequency', 'by_day'),
             'count' => [
                 'nullable',
                 'integer',

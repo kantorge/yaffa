@@ -60,6 +60,12 @@
             <div class="card-header d-flex justify-content-between">
                 <div class="text-start">
                     <button name="reload" type="button" id="reload" class="btn btn-primary">{{ __('Load data') }}</button>
+                    <i
+                        class="fa fa-warning text-warning ms-2 d-none"
+                        id="stale-data-warning"
+                        data-bs-toggle="tooltip"
+                        title="{{ __('Filters have changed since the data was last loaded - reload to see the current selection.') }}"
+                    ></i>
                 </div>
                 <div class="text-end">
                     <div
@@ -108,6 +114,15 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="budgetChartFormApp">
+    <budget-form
+        ref="budgetFormEdit"
+        action="edit"
+        id="editBudgetModal"
+        @budget-saved="onBudgetSaved"
+    ></budget-form>
 </div>
 
 @stop

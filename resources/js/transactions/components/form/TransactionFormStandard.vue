@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col btn-group mb-3 mb-xl-0">
+                <div class="col-9 btn-group mb-3 mb-xl-0">
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
@@ -74,7 +74,7 @@
                   </button>
                 </div>
                 <div
-                  class="col d-flex justify-content-between gap-2 mb-0"
+                  class="col-3 d-flex justify-content-between gap-2 mb-0"
                   v-if="!simplified"
                 >
                   <input

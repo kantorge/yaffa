@@ -86,6 +86,12 @@ const deleteButtonConditions = [
         value: 0,
         negate: false,
         errorMessage: __('It is used as not preferred category by some payees.'),
+    },
+    {
+        property: 'budgets_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used by one or more budgets.'),
     }
 ];
 
@@ -139,6 +145,18 @@ window.table = $(dataTableSelector).DataTable({
             type: 'num',
         },
         {
+            // Display count of associated budgets (active or inactive)
+            data: "budgets_count",
+            title: __("Budgets"),
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data > 0 ? data : __('None'));
+                }
+                return data;
+            },
+            type: 'num',
+        },
+        {
             // Display first transaction date
             data: "transactions_min_date",
             title: __("First transaction"),
@@ -184,11 +202,14 @@ window.table = $(dataTableSelector).DataTable({
         if (data.transactions_count_regular === 0) {
             $('td:eq(3)', row).addClass("text-muted text-italic");
         }
-        if (!data.transactions_min_date) {
+        if (data.budgets_count === 0) {
             $('td:eq(4)', row).addClass("text-muted text-italic");
         }
-        if (!data.transactions_max_date) {
+        if (!data.transactions_min_date) {
             $('td:eq(5)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_max_date) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
         }
     },
     order: [

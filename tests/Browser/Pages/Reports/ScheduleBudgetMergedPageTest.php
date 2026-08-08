@@ -69,9 +69,10 @@ class ScheduleBudgetMergedPageTest extends DuskTestCase
                 ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"][data-row-type="schedule"]', 10)
                 ->waitFor('#table tbody tr[data-id="' . $budget->id . '"][data-row-type="budget"]', 10)
                 ->screenshot('schedule-budget-merged-listing')
-                // The old per-row "Schedule" boolean filter/column is gone; only "Budget" remains.
+                // The old per-row "Schedule" boolean filter/column is gone; the row-type
+                // (Schedule/Budget) filter replaces the old plain "Budget" boolean filter.
                 ->assertMissing('[dusk="button-group-table-filter-schedule"]')
-                ->assertPresent('[dusk="button-group-table-filter-budget"]')
+                ->assertPresent('[dusk="button-group-table-filter-row-type"]')
                 ->assertPresent('#button-new-budget')
                 ->click('#button-new-budget')
                 ->waitFor('#newBudgetModal.show', 10)

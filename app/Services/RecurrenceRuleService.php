@@ -124,6 +124,13 @@ class RecurrenceRuleService
     /**
      * Determine whether a recurrence rule yields at least one occurrence on or after the given date.
      * Returns false (rather than throwing) if the rule itself is invalid.
+     *
+     * Bounded like getOccurrencesAfter() rather than routed through getRecurrence()'s unbounded
+     * AfterConstraint - the same "scans all the way to virtualLimit regardless of how soon a
+     * match is found" cost applies here, and this is called synchronously on every Budget
+     * create/update (Budget::booted()), so it must stay cheap. The search window's upper bound
+     * is anchored to the later of $onOrAfterDate/$startDate so a rule that hasn't started yet
+     * (a future-dated budget) still has its first candidate occurrence land inside the window.
      */
     public function hasOccurrenceOnOrAfter(
         Carbon $startDate,
@@ -136,17 +143,17 @@ class RecurrenceRuleService
         Carbon $onOrAfterDate,
     ): bool {
         try {
-            $recurrence = $this->getRecurrence(
-                $startDate,
-                $frequency,
-                $interval,
-                $endDate,
-                $count,
-                $byDay,
-                $byMonth,
-                $onOrAfterDate,
-                afterDateInclusive: true,
+            $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+            $transformer = $this->makeArrayTransformer();
+
+            $after = new DateTime($onOrAfterDate->toDateString());
+            $windowStart = $startDate->greaterThan($onOrAfterDate) ? $startDate : $onOrAfterDate;
+            $before = new DateTime(
+                $windowStart->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
             );
+            $constraint = new BetweenConstraint($after, $before, true);
+
+            $recurrence = $transformer->transform($rule, $constraint, false);
         } catch (InvalidArgument|InvalidWeekday|Exception) {
             return false;
         }
@@ -208,6 +215,40 @@ class RecurrenceRuleService
             $afterDate->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
         );
         $constraint = new BetweenConstraint($after, $before, false);
+
+        return $transformer->transform($rule, $constraint, false);
+    }
+
+    /**
+     * Build the occurrence collection for a recurrence rule, bounded to a closed [$from, $to]
+     * window (both ends inclusive). Unlike getRecurrence()'s unbounded AfterConstraint, a
+     * BetweenConstraint genuinely stops the transformer once it passes $to instead of scanning to
+     * virtualLimit - the right choice for a caller (BudgetService::projectOccurrences()) that
+     * already has its own upper bound rather than needing "all future occurrences".
+     *
+     * @throws InvalidWeekday
+     * @throws InvalidArgument
+     * @throws Exception
+     */
+    public function getRecurrenceBetween(
+        Carbon $startDate,
+        string $frequency,
+        int $interval,
+        ?Carbon $endDate,
+        ?int $count,
+        ?string $byDay,
+        ?int $byMonth,
+        Carbon $from,
+        Carbon $to,
+    ): RecurrenceCollection {
+        $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+        $transformer = $this->makeArrayTransformer();
+
+        $constraint = new BetweenConstraint(
+            new DateTime($from->toDateString()),
+            new DateTime($to->toDateString()),
+            true
+        );
 
         return $transformer->transform($rule, $constraint, false);
     }

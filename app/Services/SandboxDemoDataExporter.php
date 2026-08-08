@@ -28,6 +28,7 @@ class SandboxDemoDataExporter
         'currencies',
         'transactions',
         'transaction_items',
+        'budgets',
         'categories',
         'flags',
         'transaction_schedules',

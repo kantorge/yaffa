@@ -62,6 +62,8 @@ class RecurrenceRuleServiceTest extends TestCase
             1,
             null,
             null,
+            null,
+            null,
             Carbon::now(),
         ));
     }
@@ -76,6 +78,8 @@ class RecurrenceRuleServiceTest extends TestCase
             1,
             Carbon::now()->subDay(),
             null,
+            null,
+            null,
             Carbon::now(),
         ));
     }
@@ -88,6 +92,8 @@ class RecurrenceRuleServiceTest extends TestCase
             Carbon::now()->subDays(10),
             'INVALID_FREQUENCY',
             1,
+            null,
+            null,
             null,
             null,
             Carbon::now(),
@@ -106,6 +112,8 @@ class RecurrenceRuleServiceTest extends TestCase
             1,
             null,
             1,
+            null,
+            null,
             Carbon::now(),
         ));
     }
@@ -119,6 +127,8 @@ class RecurrenceRuleServiceTest extends TestCase
             'DAILY',
             1,
             Carbon::parse('2024-01-05'),
+            null,
+            null,
             null,
             Carbon::parse('2024-01-01'),
         );
@@ -137,11 +147,62 @@ class RecurrenceRuleServiceTest extends TestCase
             1,
             Carbon::parse('2024-01-05'),
             null,
+            null,
+            null,
             Carbon::parse('2024-01-01'),
             afterDateInclusive: true,
         );
 
         // 01-01 through 01-05, inclusive.
         $this->assertSame(5, $recurrence->count());
+    }
+
+    public function test_get_occurrences_after_respects_by_day_and_by_month(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        // "Last Friday of November, yearly" - starting from a non-matching start_date. The
+        // lookahead window is 2 yearly periods wide, so both the 2024 and 2025 occurrences
+        // fall inside it; only the nearest one matters here.
+        $recurrence = $service->getOccurrencesAfter(
+            Carbon::parse('2024-01-01'),
+            'YEARLY',
+            1,
+            null,
+            null,
+            '-1FR',
+            11,
+            Carbon::parse('2024-01-01'),
+        );
+
+        $this->assertGreaterThanOrEqual(1, $recurrence->count());
+        $this->assertSame('2024-11-29', $recurrence[0]->getStart()->format('Y-m-d'));
+    }
+
+    public function test_occurs_on_matches_a_by_day_pattern(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertTrue($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            'YEARLY',
+            1,
+            null,
+            null,
+            '-1FR',
+            11,
+            Carbon::parse('2024-11-29'),
+        ));
+
+        $this->assertFalse($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            'YEARLY',
+            1,
+            null,
+            null,
+            '-1FR',
+            11,
+            Carbon::parse('2024-11-28'),
+        ));
     }
 }

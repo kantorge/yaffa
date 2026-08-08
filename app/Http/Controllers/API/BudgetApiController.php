@@ -59,6 +59,8 @@ class BudgetApiController extends Controller implements HasMiddleware
          */
         Gate::authorize('view', $budget);
 
+        $budget->load(['category', 'account.config.currency']);
+
         return response()->json($budget, Response::HTTP_OK);
     }
 

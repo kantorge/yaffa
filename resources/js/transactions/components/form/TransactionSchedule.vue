@@ -1,10 +1,10 @@
 <template>
   <div
-    class="card mb-3"
+    :class="bare ? null : 'card mb-3'"
     dusk="card-transaction-schedule"
     :id="'transaction_schedule_' + this.$.vnode.key"
   >
-    <div class="card-header d-flex justify-content-between">
+    <div class="card-header d-flex justify-content-between" v-if="!bare">
       <div class="card-title">
         {{ title }}
       </div>
@@ -17,7 +17,7 @@
         </div>
       </div>
     </div>
-    <div class="card-body">
+    <div :class="bare ? null : 'card-body'">
       <div class="schedule-groups">
         <div class="p-3 rounded border">
           <h6 class="text-muted text-uppercase small mb-2">{{ __('Pattern') }}</h6>
@@ -360,6 +360,12 @@
       title: {
         type: String,
         default: __('Schedule'),
+      },
+      // Skips the outer card chrome (header/card-body wrapper) - for callers that already
+      // provide their own container, e.g. BudgetForm.vue's modal body.
+      bare: {
+        type: Boolean,
+        default: false,
       },
       withCheckbox: {
         type: Boolean,

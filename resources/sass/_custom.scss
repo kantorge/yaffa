@@ -18,6 +18,14 @@ td.dt-nowrap {
     cursor: pointer;
 }
 
+// jstree's default theme sets .jstree-anchor to white-space: nowrap, so a long category name
+// (e.g. a deeply nested subcategory) overflows the sidebar card to the right instead of wrapping.
+#categoryTree .jstree-anchor {
+    white-space: normal;
+    height: auto;
+    min-height: 24px;
+}
+
 // Hide the DataTables search box
 .no-datatable-search .dt-search {
     display: none;
@@ -495,7 +503,10 @@ button[type="submit"] .spinner-border {
     transform: translateY(var(--left-control-panel-toggle-resting-offset, 10px));
     opacity: var(--left-control-panel-toggle-resting-opacity, 0.35);
     transition: transform 0.18s ease, opacity 0.18s ease;
-    z-index: 1;
+    /* Above .left-control-panel-toggle-card (z-index: 2): at its resting position this handle
+       overlaps the card's top edge by design (a peeking tab), so it must win pointer events
+       there - a lower z-index left clicks in that overlap silently swallowed by the card. */
+    z-index: 3;
 }
 
 .left-control-panel-toggle-handle:hover,

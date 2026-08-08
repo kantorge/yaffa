@@ -144,45 +144,38 @@ class ReportApiController extends Controller implements HasMiddleware
 
         // FR-2 #1: schedule-flagged standard transactions' items for the requested categories
         // (transfers are already structurally excluded, since they never have items).
-        $scheduleTransactions = Transaction::with([
-            'transactionItems',
-            'transactionSchedule',
-        ])
-            ->whereHas('transactionItems', function ($query) use ($categories) {
-                $query->whereIn('category_id', $categories->pluck('id'));
-            })
-            ->where('user_id', $request->user()->id)
-            ->byType('standard')
-            ->isSchedule()
-            ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
-                'config',
-                TransactionDetailStandard::class,
-                fn ($query) => $query->where('account_from_id', $accountEntity)
-                    ->orWhere('account_to_id', $accountEntity)
-            ))
-            ->when($accountSelection === 'none', function ($query) {
-                return $query->where(function ($query) {
-                    // Withdrawal with empty account_from_id
-                    return $query->where(function ($query) {
-                        $query->where('transaction_type', TransactionTypeEnum::WITHDRAWAL)
-                            ->whereHasMorph(
-                                'config',
-                                TransactionDetailStandard::class,
-                                fn ($query) => $query->whereNull('account_from_id')
-                            );
-                    })
-                        // Or deposit with empty account_to_id
-                        ->orWhere(function ($query) {
-                            $query->where('transaction_type', TransactionTypeEnum::DEPOSIT)
-                                ->whereHasMorph(
-                                    'config',
-                                    TransactionDetailStandard::class,
-                                    fn ($query) => $query->whereNull('account_to_id')
-                                );
-                        });
-                });
-            })
-            ->get();
+        //
+        // 'none' scope has no schedule-transaction equivalent post-redesign: account_from_id/
+        // account_to_id are NOT NULL on transaction_details_standard now (Phase 7), so a real
+        // schedule transaction can never be account-agnostic - that case is now represented only
+        // by an account-agnostic standalone Budget row (account_id = null, handled below). An
+        // empty collection here mirrors how $standardTransactions already short-circuits for
+        // 'none' above, instead of running a whereNull query against a column that can never be
+        // null (which previously silently always matched zero rows).
+        if ($accountSelection === 'none') {
+            // Same Eloquent collection type Transaction::...->get() below returns, so downstream
+            // ->transform() isn't left inferring the item type from a mismatched empty base
+            // Illuminate\Support\Collection.
+            $scheduleTransactions = new \Illuminate\Database\Eloquent\Collection();
+        } else {
+            $scheduleTransactions = Transaction::with([
+                'transactionItems',
+                'transactionSchedule',
+            ])
+                ->whereHas('transactionItems', function ($query) use ($categories) {
+                    $query->whereIn('category_id', $categories->pluck('id'));
+                })
+                ->where('user_id', $request->user()->id)
+                ->byType('standard')
+                ->isSchedule()
+                ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->whereHasMorph(
+                    'config',
+                    TransactionDetailStandard::class,
+                    fn ($query) => $query->where('account_from_id', $accountEntity)
+                        ->orWhere('account_to_id', $accountEntity)
+                ))
+                ->get();
+        }
 
         // Unify currencies and calculate amounts only for given categories. Summed exactly
         // (BigDecimal) rather than Collection::sum()'s native float +=, since a transaction can
@@ -525,9 +518,12 @@ class ReportApiController extends Controller implements HasMiddleware
         $user = $request->user();
 
         // Before proceeding with any calculation, check if any batch jobs are running for this user
+        // Batches older than 1 hour are treated as orphaned/stuck rather than genuinely in progress,
+        // since the underlying jobs normally complete within seconds.
         $batchJobsCount = DB::table('job_batches')
             ->where('name', 'like', 'CalculateAccountMonthlySummariesJob-%-' . $user->id)
             ->where('finished_at', null)
+            ->where('created_at', '>', now()->subHour()->getTimestamp())
             ->count();
 
         if ($batchJobsCount > 0) {

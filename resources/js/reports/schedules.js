@@ -54,14 +54,46 @@ function normalizeRow(row) {
     return helpers.processScheduledTransaction(helpers.processTransaction(row));
 }
 
-// Payee/amount rendering for a Budget row: a Budget has no config relation (no account_from/to,
-// no amount_to), so it can't go through the shared transactionColumnDefinition renderers as-is.
+// Payee/next date/amount rendering for a Budget row: a Budget has no config relation (no
+// account_from/to, no amount_to) and no next_date (Non-Goals - no "enter/skip instance"
+// workflow for a Budget), so these columns can't go through the shared
+// transactionColumnDefinition renderers as-is. Both cells show plain 'N/A' text (muted/italic
+// via createdRow below), matching the existing convention for an empty category cell.
 function budgetAwarePayee(data, type, row) {
     if (row.row_type === 'budget') {
-        return '';
+        return __('N/A');
     }
 
     return dataTableHelpers.transactionColumnDefinition.payee.render(data, type, row);
+}
+
+const nextDateColumnDefinition = dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
+    'transaction_schedule.next_date',
+    __('Next date'),
+    window.YAFFA.userSettings.locale
+);
+
+function budgetAwareNextDate(data, type, row) {
+    if (row.row_type === 'budget' && type === 'display') {
+        return __('N/A');
+    }
+
+    return nextDateColumnDefinition.render(data, type, row);
+}
+
+// The row-type column replaces the old plain-boolean 'Budget' filter/column: it now shows which
+// kind of row this is (a real Transaction schedule vs. a standalone Budget target), since 'Budget'
+// as a yes/no property on a schedule row no longer exists post-redesign (FR-6).
+function rowTypeIcon(data, type) {
+    const isBudget = data === 'budget';
+
+    if (type === 'filter' || type === 'sort' || type === 'type') {
+        return isBudget ? __('Budget') : __('Schedule');
+    }
+
+    return isBudget
+        ? '<i class="fa fa-piggy-bank text-primary" title="' + __('Budget') + '"></i>'
+        : '<i class="fa fa-repeat text-primary" title="' + __('Schedule') + '"></i>';
 }
 
 function budgetAwareAmount(data, type, row) {
@@ -114,11 +146,23 @@ $('#button-new-budget').on('click', function () {
     app.showNewBudgetModal();
 });
 
+const categoryTreeSelector = '#categoryTree';
+
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
         url: '/api/v1/transactions/scheduled-items?type=schedule&includeBudgets=1',
         type: 'GET',
+        // getScheduledItems() already filters both schedule transactions and Budget rows by
+        // category (including child-category expansion) - no client-side filtering needed.
+        data: function (d) {
+            // .jstree(true) fetches an existing instance without creating one - the table's own
+            // first ajax call fires synchronously during DataTable() construction, before the
+            // category tree below has initialized, and a bare .jstree() call in that window
+            // would auto-create an empty, unconfigured instance on #categoryTree instead.
+            const treeInstance = $(categoryTreeSelector).jstree(true);
+            d.categories = treeInstance ? treeInstance.get_checked() : [];
+        },
         dataSrc: function(data) {
             ajaxIsBusy = false;
 
@@ -139,17 +183,21 @@ let table = $(tableSelector).DataTable({
             }
         },
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.userSettings.locale),
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
+        {
+            ...nextDateColumnDefinition,
+            render: budgetAwareNextDate,
+        },
         {
             data: 'row_type',
-            title: __('Budget'),
-            render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data === 'budget', type);
-            },
+            title: __('Type'),
+            render: rowTypeIcon,
             className: 'text-center',
         },
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        dataTableHelpers.transactionColumnDefinition.type(true),
+        {
+            ...dataTableHelpers.transactionColumnDefinition.type(true),
+            title: __('Transaction type'),
+        },
         {
             ...dataTableHelpers.transactionColumnDefinition.payee,
             render: budgetAwarePayee,
@@ -178,6 +226,12 @@ let table = $(tableSelector).DataTable({
         // Mute category cell with 'not set' value
         if (data.row_type !== 'budget' && data.config_type === 'standard' && data.categories.length === 0) {
             $('td', row).eq(7).addClass('text-muted text-italic');
+        }
+
+        // Mute the 'N/A' next date/payee cells on a Budget row - neither column applies to it.
+        if (data.row_type === 'budget') {
+            $('td', row).eq(2).addClass('text-muted text-italic');
+            $('td', row).eq(6).addClass('text-muted text-italic');
         }
     },
     drawCallback: function () {
@@ -284,7 +338,7 @@ table.contextualActions({
             type: 'option',
             title: __('Edit budget'),
             iconClass: 'fa fa-edit',
-            contextMenuClasses: ['text-success fw-bold'],
+            contextMenuClasses: ['text-primary'],
             action: function (row) {
                 app.showEditBudgetModal(row[0].id);
             },
@@ -296,6 +350,7 @@ table.contextualActions({
             type: 'option',
             title: __('Edit transaction'),
             iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
             action: function (row) {
                 window.location.href = route('transaction.open', {
                     transaction: row[0].id,
@@ -408,8 +463,21 @@ table.contextualActions({
     ]
 });
 
+// Category filter tree
+dataTableHelpers.categoryTree(categoryTreeSelector, function () {
+    table.ajax.reload(null, false);
+});
+
+document.getElementById('category-tree-all').addEventListener('click', function () {
+    $(categoryTreeSelector).jstree('check_all');
+});
+
+document.getElementById('category-tree-clear').addEventListener('click', function () {
+    $(categoryTreeSelector).jstree('uncheck_all');
+});
+
 // Listeners for button filters
-dataTableHelpers.initializeFilterToggle(table, 3, 'table_filter_budget');
+dataTableHelpers.initializeFilterToggle(table, 3, 'table_filter_row_type');
 dataTableHelpers.initializeFilterToggle(table, 4, 'table_filter_active');
 dataTableHelpers.initializeFilterToggle(table, 5, 'table_filter_transaction_type');
 
@@ -422,6 +490,27 @@ dataTableHelpers.initializeStandardExternalSearch(table);
 // Define the steps for the onboarding widget
 window.onboardingTourSteps = [
     {
+        element: '#cardActions',
+        popover: {
+            title: __('Schedules and budgets'),
+            description: __(
+                'This page lists both scheduled transactions (a recurring withdrawal, deposit, ' +
+                'transfer or investment transaction) and standalone budgets (a spending or income ' +
+                'target for a category with no linked transaction). Use these actions to create ' +
+                'either one.',
+            ),
+        }
+    },
+    {
+        element: '#filter-row-type',
+        popover: {
+            title: __('Filter by type'),
+            description: __(
+                'Switch this to show only scheduled transactions, only budgets, or both.',
+            ),
+        }
+    },
+    {
         element: '#cardFilters',
         popover: {
             title: __('Apply filters'),
@@ -432,7 +521,10 @@ window.onboardingTourSteps = [
         element: tableSelector,
         popover: {
             title: __('Actions'),
-            description: __('Right click on a transaction to open a context menu with actions.'),
+            description: __(
+                'Right click on a row to open a context menu with actions. The available ' +
+                'actions depend on whether the row is a scheduled transaction or a budget.',
+            ),
         }
     }
 ];

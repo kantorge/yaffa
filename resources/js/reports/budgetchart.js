@@ -11,8 +11,13 @@ import 'datatables.net-bs5';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import { initializeSelect2 } from '@/shared/lib/select2';
+import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+import Swal from 'sweetalert2';
+import { createApp } from 'vue';
+import BudgetForm from '@/reports/components/BudgetForm.vue';
+import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 // Category tree
 import 'jstree';
@@ -184,19 +189,42 @@ if (btnZoomIn) {
 
 let rawData = [];
 
+// Warns the user when the currently displayed chart no longer reflects the active filters
+// (category/account/account-scope changed after the last successful load, without reloading).
+const staleDataWarning = document.getElementById('stale-data-warning');
+initializeBootstrapTooltips();
+function markDataStale() {
+    if (rawData.length > 0) {
+        staleDataWarning.classList.remove('d-none');
+    }
+}
+function markDataFresh() {
+    staleDataWarning.classList.add('d-none');
+}
+
 let reloadData = function () {
     elementRefreshButton.disabled = true;
     const selectedCategories = ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked', true) : []);
 
     $.ajax({
         url: window.route('api.v1.reports.budget-chart'),
+        timeout: 30000,
         data: {
             categories: selectedCategories.map(category => category.id),
             accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
             accountEntity: $(accountSelector).val(),
         }
     })
+        .fail(function (jqXHR, textStatus) {
+            const message = textStatus === 'timeout'
+                ? __('Loading the budget chart timed out. Please try again with fewer categories, or try again later.')
+                : __('Failed to load the budget chart: :error', { error: jqXHR.statusText || textStatus });
+
+            toastHelpers.showErrorToast(message);
+        })
         .done(function (data) {
+            markDataFresh();
+
             const chartData = Array.isArray(data) ? data : (data.chartData || []);
 
             // Convert date strings to Date objects
@@ -417,10 +445,64 @@ document.querySelectorAll('input[name="chart_time_interval"]').forEach(function 
 
 const tableSelector = '#table';
 
-// FR-7: a read-only breakdown of the standalone Budget rows contributing to the chart -
-// populated directly from budgetChart()'s own response (see buildBudgetBreakdownRows() /
-// reloadData()) rather than a separate request. A Budget row has no schedule to enter/skip and
-// no transaction to edit/clone, so unlike the old table this one carries no row actions.
+// Vue app hosting just the Budget edit modal (reused from the schedules report page) - a
+// separate DOM subtree from #table, so unlike schedules.js there's no ordering constraint
+// against DataTables.init().
+const budgetFormApp = createApp({
+    components: {
+        BudgetForm,
+    },
+    methods: {
+        showEditBudgetModal(budgetId) {
+            this.$refs.budgetFormEdit.show(budgetId);
+        },
+        onBudgetSaved() {
+            toastHelpers.showSuccessToast(__('Budget saved'));
+            // A Budget's own amount/period/account feeds directly into the chart's aggregate
+            // totals, so only a full reload (not a local row patch) keeps both the chart and
+            // this breakdown table correct.
+            reloadData();
+        },
+    },
+});
+installRouteGlobal(budgetFormApp);
+const budgetForm = budgetFormApp.mount('#budgetChartFormApp');
+
+function deleteBudget(budgetId) {
+    Swal.fire({
+        animation: false,
+        text: __('Are you sure to want to delete this item?'),
+        icon: 'warning',
+        showCancelButton: true,
+        cancelButtonText: __('Cancel'),
+        confirmButtonText: __('Delete'),
+        buttonsStyling: false,
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+        },
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        window.axios.delete(window.route('api.v1.budgets.destroy', { budget: budgetId }))
+            .then(function () {
+                toastHelpers.showSuccessToast(__('Deleted (#:id)', { id: budgetId }));
+                reloadData();
+            })
+            .catch(function (error) {
+                toastHelpers.showErrorToast(
+                    __('Error deleting (#:id): :error', { id: budgetId, error: error })
+                );
+            });
+    });
+}
+
+// FR-7: a breakdown of the standalone Budget rows contributing to the chart - populated
+// directly from budgetChart()'s own response (see buildBudgetBreakdownRows() / reloadData())
+// rather than a separate request. Only edit/delete are offered (via BudgetApiController
+// routes) - a Budget row has no schedule to enter/skip and no linked transaction to clone/replace.
 window.table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: [],
@@ -452,6 +534,22 @@ window.table = $(tableSelector).DataTable({
                 return data;
             },
         },
+        {
+            data: 'budget_id',
+            title: __('Actions'),
+            orderable: false,
+            className: 'text-center dt-nowrap',
+            render: function (budgetId) {
+                return `
+                    <button class="btn btn-xs btn-primary" data-edit-budget="${budgetId}" type="button" title="${__('Edit')}">
+                        <i class="fa fa-fw fa-edit"></i>
+                    </button>
+                    <button class="btn btn-xs btn-danger" data-delete-budget="${budgetId}" type="button" title="${__('Delete')}">
+                        <i class="fa fa-fw fa-trash"></i>
+                    </button>
+                `;
+            },
+        },
     ],
     createdRow: function (row, data) {
         if (!data.account_name) {
@@ -467,6 +565,14 @@ window.table = $(tableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
+});
+
+$(tableSelector).on('click', '[data-edit-budget]', function () {
+    budgetForm.showEditBudgetModal(Number(this.dataset.editBudget));
+});
+
+$(tableSelector).on('click', '[data-delete-budget]', function () {
+    deleteBudget(Number(this.dataset.deleteBudget));
 });
 
 // Initialize an object which checks if preset filters are populated.
@@ -500,6 +606,10 @@ if (typeof presetAccount !== 'undefined') {
 
 // Update URL params based on JS Tree selection
 let rebuildUrl = function () {
+    // Any filter change (category, account, or the two callers below) invalidates the
+    // currently displayed chart until the user reloads.
+    markDataStale();
+
     let url = new URL(window.location.origin + window.location.pathname);
 
     // Accounts
@@ -656,6 +766,8 @@ document.getElementById('clear').addEventListener('click', function() {
 
 // Account type switch
 $('input[name=table_filter_account_scope]').on("change", function() {
+    markDataStale();
+
     // Only selected items are needed, so we need to enable the account selector
     $(accountSelector).prop('disabled', this.value !== 'selected');
 

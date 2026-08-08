@@ -25,6 +25,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $comment
  * @property string $frequency
  * @property int $interval
+ * @property string|null $by_day
+ * @property int|null $by_month
  * @property Carbon $start_date
  * @property Carbon|null $end_date
  * @property int|null $count
@@ -74,6 +76,8 @@ class Budget extends Model
         'comment',
         'frequency',
         'interval',
+        'by_day',
+        'by_month',
         'start_date',
         'end_date',
         'count',
@@ -89,6 +93,7 @@ class Budget extends Model
             'end_date' => 'date',
             'count' => 'integer',
             'interval' => 'integer',
+            'by_month' => 'integer',
             'inflation' => 'float',
             'active' => 'boolean',
         ];
@@ -151,6 +156,8 @@ class Budget extends Model
             $this->interval ?? 1,
             $this->end_date,
             $this->count,
+            $this->by_day,
+            $this->by_month,
             Carbon::now(),
         );
     }

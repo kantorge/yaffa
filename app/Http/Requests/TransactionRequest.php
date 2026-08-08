@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Http\Traits\ValidatesRecurrenceRule;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
@@ -17,6 +18,8 @@ use Recurr\Exception\InvalidWeekday;
 
 class TransactionRequest extends FormRequest
 {
+    use ValidatesRecurrenceRule;
+
     public function attributes(): array
     {
         return [
@@ -51,52 +54,6 @@ class TransactionRequest extends FormRequest
             'original_schedule_config.by_day' => __('original schedule day of week'),
             'original_schedule_config.by_month' => __('original schedule month'),
             'original_schedule_config.inflation' => __('original schedule inflation'),
-        ];
-    }
-
-    /**
-     * Ordinal-weekday BYDAY rule (e.g. "1WE", "-1FR"), only meaningful for
-     * MONTHLY/YEARLY frequencies.
-     */
-    private function byDayRule(string $frequencyField): array
-    {
-        return [
-            'nullable',
-            'string',
-            'regex:/^(-?[1-4])(MO|TU|WE|TH|FR|SA|SU)$/',
-            function ($attribute, $value, $fail) use ($frequencyField) {
-                if ($value && !in_array($this->input($frequencyField), ['MONTHLY', 'YEARLY'], true)) {
-                    $fail(__('Day-of-week recurrence requires a monthly or yearly frequency.'));
-                }
-            },
-        ];
-    }
-
-    /**
-     * Month (1-12) pinning a YEARLY ordinal-weekday rule to a specific month,
-     * e.g. "last Friday of November". Required whenever a YEARLY by_day is
-     * set, since recurr resolves an unscoped YEARLY BYDAY across the whole
-     * year rather than per month.
-     */
-    private function byMonthRule(string $frequencyField, string $byDayField): array
-    {
-        return [
-            'nullable',
-            'integer',
-            'between:1,12',
-            // A plain closure is skipped by the validator when the field is null and
-            // 'nullable' is present, so the "required" direction needs an implicit
-            // rule (Rule::requiredIf isn't skipped) rather than a closure fail().
-            Rule::requiredIf(fn () => $this->input($frequencyField) === 'YEARLY' && (bool) $this->input($byDayField)),
-            // Reject the inverse too: TransactionSchedule::buildRule() only applies
-            // by_month when by_day is also set, so a YEARLY schedule without a
-            // by_day would silently ignore by_month rather than use it.
-            Rule::prohibitedIf(fn () => $this->input($frequencyField) === 'YEARLY' && !$this->input($byDayField)),
-            function ($attribute, $value, $fail) use ($frequencyField) {
-                if ($value && $this->input($frequencyField) !== 'YEARLY') {
-                    $fail(__('Month only applies to yearly day-of-week recurrence.'));
-                }
-            },
         ];
     }
 

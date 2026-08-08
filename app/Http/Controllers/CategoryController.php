@@ -70,6 +70,7 @@ class CategoryController extends Controller implements HasMiddleware
             ->withCount('payeesNotPreferring')
             ->withCount('payeesPreferring')
             ->withCount('payeesDefaulting')
+            ->withCount('budgets')
             ->get();
 
         // Pass data for DataTables

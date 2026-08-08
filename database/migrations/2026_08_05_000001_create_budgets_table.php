@@ -24,6 +24,8 @@ return new class () extends Migration {
             $table->string('comment')->nullable();
             $table->string('frequency');
             $table->integer('interval')->default(1);
+            $table->string('by_day', 4)->nullable();
+            $table->unsignedTinyInteger('by_month')->nullable();
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->integer('count')->nullable();

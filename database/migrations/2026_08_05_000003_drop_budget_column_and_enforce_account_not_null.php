@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Schema-only tail end of the budget/schedule redesign (specification.md Section 7.2/7.3, FR-1).
- * Must run after 2026_07_26_000002 (the transforming migration), which guarantees no
+ * Must run after 2026_08_05_000002 (the transforming migration), which guarantees no
  * schedule=false, budget=true transactions remain and that every standard transaction has real
  * accounts on both sides. Both changes here are reversible on their own — only the data
  * transformation in 000002 is not.
@@ -18,7 +18,7 @@ return new class () extends Migration {
         // Guard checked first, before any DDL: MySQL DDL statements auto-commit and cannot be
         // rolled back, so if this check were interspersed with (or after) the schema changes
         // below, a failed guard would still leave a partially-applied, corrupted migration behind.
-        // Guaranteed null-free by 2026_07_26_000002 (which converts or requires real accounts on
+        // Guaranteed null-free by 2026_08_05_000002 (which converts or requires real accounts on
         // every remaining standard transaction). Fails loudly, per app/CLAUDE.md's migration
         // rules, if that invariant somehow doesn't hold rather than silently truncating data.
         $remainingNulls = DB::table('transaction_details_standard')
@@ -32,7 +32,7 @@ return new class () extends Migration {
             throw new RuntimeException(
                 "{$remainingNulls} transaction_details_standard row(s) still have a null "
                 . 'account_from_id/account_to_id. This should be impossible once '
-                . '2026_07_26_000002_transform_budget_transactions_to_budgets has run successfully; '
+                . '2026_08_05_000002_transform_budget_transactions_to_budgets has run successfully; '
                 . 'investigate before re-running this migration.'
             );
         }
