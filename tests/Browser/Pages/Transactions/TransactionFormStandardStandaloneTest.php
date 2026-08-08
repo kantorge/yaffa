@@ -50,9 +50,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Wait for the form to load
             ->waitFor(self::MAIN_FORM_SELECTOR)
             // Select account from, random from dropdown
-            ->select2('#account_from', null, 10)
+            ->select2('#account_from', null, 20)
             // Select payeee, random from dropdown
-            ->select2('#account_to', null, 10)
+            ->select2('#account_to', null, 20)
             // Add amount
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
