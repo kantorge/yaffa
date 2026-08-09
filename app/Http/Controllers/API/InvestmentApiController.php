@@ -36,7 +36,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
             'auth:sanctum',
             'verified',
             new Middleware('abilities:read', only: [
-                'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline',
+                'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
             ]),
             new Middleware('abilities:write', only: [
                 'patchActive', 'updateProviderSettings', 'destroy',

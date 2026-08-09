@@ -97,7 +97,7 @@ Two related hardening initiatives, shipped together because the second reduces t
 
 - Entities:
   - `PersonalAccessToken` (Sanctum built-in, `personal_access_tokens` table) — `tokenable` (User), `name`, `abilities` (JSON), `expires_at`, `last_used_at`.
-  - `TwoFactorAuthentication` (`laragear/two-factor` built-in, own `two_factor_authentications` table — not columns on `users`, see "Migrations" above) — `authenticatable` (User), `shared_secret` (encrypted), `enabled_at`, `recovery_codes` (encrypted JSON, hashed), `recovery_codes_generated_at`, plus TOTP config columns (`digits`, `seconds`, `window`, `algorithm`) and `safe_devices`.
+  - `TwoFactorAuthentication` (`laragear/two-factor` built-in, own `two_factor_authentications` table — not columns on `users`, see "Migrations" above) — `authenticatable` (User), `shared_secret` (encrypted), `enabled_at`, `recovery_codes` (encrypted collection, reversible via `APP_KEY` — not hashed), `recovery_codes_generated_at`, plus TOTP config columns (`digits`, `seconds`, `window`, `algorithm`) and `safe_devices`.
 
 - Relationships:
   - `User hasMany PersonalAccessToken` via Sanctum's existing `morphMany` (`HasApiTokens::tokens()`), already present.
@@ -240,7 +240,7 @@ Per this project's standing package-governance convention (established in `qif-c
 ### Recovery Codes
 
 - Generated once at confirmation, and again on demand via "regenerate" (invalidates all previous codes).
-- Stored hashed (not reversibly encrypted) — same reasoning as password storage; a code is single-use and consumed (removed from the stored set) on successful use.
+- Stored via `laragear/two-factor`'s `encrypted:collection` cast (reversible with `APP_KEY`, not one-way hashed — the package matches submitted codes by plaintext comparison, which requires them to be recoverable); a code is single-use and consumed (marked used, not removed) on successful use.
 - Challenge screen offers "use a recovery code instead" as a secondary option to the TOTP input.
 
 ### Rate Limiting

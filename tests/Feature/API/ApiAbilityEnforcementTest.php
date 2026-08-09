@@ -41,6 +41,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
             'investments.index' => ['api.v1.investments.index', 'get', 'read', []],
+            'investments.display-data' => ['api.v1.investments.display-data', 'get', 'read', ['investment' => 1]],
             'reports.cashflow' => ['api.v1.reports.cashflow', 'get', 'read', []],
             'imports.file-profiles.index' => ['api.v1.imports.file-profiles.index', 'get', 'read', []],
             'documents.index' => ['api.v1.documents.index', 'get', 'read', []],
@@ -141,6 +142,9 @@ class ApiAbilityEnforcementTest extends TestCase
                 'to' => Currency::factory()->for($user)->create(['name' => 'Euro', 'iso_code' => 'EUR'])->id,
             ],
             'api.v1.investment-prices.index' => [
+                'investment' => $this->createOwnedInvestment($user)->id,
+            ],
+            'api.v1.investments.display-data' => [
                 'investment' => $this->createOwnedInvestment($user)->id,
             ],
             'api.v1.tags.patch-active' => [

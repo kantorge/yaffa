@@ -124,6 +124,44 @@ class TwoFactorLoginChallengeTest extends TestCase
         $response->assertRedirect('/');
     }
 
+    /**
+     * A distributed attacker rotates source IPs specifically to dodge an IP-keyed throttle -
+     * the shared `throttle:6,1` route limiter would reset for each new IP, giving effectively
+     * unlimited 6-digit TOTP guesses against one account. The per-account throttleKey() (no
+     * IP component, for the 2FA-code step only) must still lock the account out regardless of
+     * which IP each guess comes from.
+     */
+    public function test_repeated_wrong_codes_are_throttled_per_account_even_across_different_ips(): void
+    {
+        $user = User::factory()->create(['password' => Hash::make('correct-password')]);
+        $this->enableTwoFactorFor($user);
+
+        $firstResponse = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'correct-password',
+        ]);
+        $this->forwardSessionCookie($firstResponse);
+
+        // ThrottlesLogins' default maxAttempts() is 5 - the 6th submission should be
+        // locked out before the code is even checked, even though every request below
+        // (including this one) comes from a distinct IP that has made only 1 request.
+        for ($i = 1; $i <= 5; $i++) {
+            $response = $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$i}"])
+                ->post('/login', ['2fa_code' => '000000']);
+            $response->assertViewIs('auth.two-factor-challenge');
+        }
+
+        // Even a CORRECT code is rejected once locked out - the account throttle check runs
+        // before the code is checked at all, from yet another IP that has made only 1 request.
+        $code = $user->fresh()->makeTwoFactorCode();
+        $lockedOutResponse = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99'])
+            ->post('/login', ['2fa_code' => $code]);
+
+        $this->assertGuest();
+        $lockedOutResponse->assertRedirect();
+        $lockedOutResponse->assertSessionHasErrors('2fa_code');
+    }
+
     public function test_challenge_accepts_a_recovery_code_and_consumes_it(): void
     {
         $user = User::factory()->create(['password' => Hash::make('correct-password')]);
