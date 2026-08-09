@@ -473,11 +473,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser);
 
             // Set the date to the first day of the previous month
-            $this->setDateInput(
-                $browser,
-                '#investment-date',
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d')
-            );
+            $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
+            $this->setDateInput($browser, '#investment-date', $previousMonthStart);
 
             $browser
                 // Select callback to show the transaction
@@ -490,7 +487,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
+                $previousMonthStart,
                 $transaction->date->format('Y-m-d')
             );
         });

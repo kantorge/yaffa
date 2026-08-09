@@ -735,12 +735,13 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitFor('@card-transaction-schedule');
 
             // Set the schedule start date to today
-            $this->setDateInput($browser, '#schedule_start_current', now()->format('Y-m-d'));
+            $today = now()->format('Y-m-d');
+            $this->setDateInput($browser, '#schedule_start_current', $today);
 
             $browser
                 // Confirm the Vue-side schedule state actually picked up the input
                 // before submitting, not just that the DOM input has the value
-                ->assertInputValue('#schedule_start_current', now()->format('Y-m-d'))
+                ->assertInputValue('#schedule_start_current', $today)
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
@@ -756,7 +757,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Confirm the schedule was actually persisted with the date set via
             // setDateInput above, not left at whatever the form initialized with
             $this->assertEquals(
-                now()->format('Y-m-d'),
+                $today,
                 $transaction->transactionSchedule->start_date->format('Y-m-d')
             );
 
@@ -788,11 +789,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $this->fillStandardWithdrawalForm($browser);
 
             // Set the date to the first day of the previous month
-            $this->setDateInput(
-                $browser,
-                '#standard-date',
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d')
-            );
+            $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
+            $this->setDateInput($browser, '#standard-date', $previousMonthStart);
 
             $browser
                 // Select callback to show transaction
@@ -805,7 +803,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
+                $previousMonthStart,
                 $transaction->date->format('Y-m-d')
             );
         });

@@ -178,7 +178,7 @@ Remove the unused `'api' => ['driver' => 'token', 'provider' => 'users', 'hash' 
 
 ### API Documentation
 
-Publish `config/scramble.php` (currently absent, using package defaults) and declare a Sanctum bearer-token security scheme so the auto-generated OpenAPI docs (dedoc/scramble) accurately describe how to call the API with a personal access token — this is the reference material a user creating an automation against their own instance would actually read.
+`config/scramble.php` is published, with `security_strategy` set to `MiddlewareAuthSecurityStrategy::class` (default options: matches `auth`/`auth:*` middleware, documents it as HTTP bearer auth) so the auto-generated OpenAPI docs (dedoc/scramble) accurately describe how to call the API with a personal access token — this is the reference material a user creating an automation against their own instance would actually read. The rest of the file (`api_path`, `api_domain`, `title`) stays at package defaults; see "Production Docs Access Control" below for the one behavior layered on top via the `middleware` array's `RestrictedDocsAccess` entry.
 
 ### Production Docs Access Control (`SCRAMBLE_PROD_AUTH`)
 

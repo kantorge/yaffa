@@ -40,6 +40,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
+            'tags.show' => ['api.v1.tags.show', 'get', 'read', ['tag' => 1]],
             'investments.index' => ['api.v1.investments.index', 'get', 'read', []],
             'investments.display-data' => ['api.v1.investments.display-data', 'get', 'read', ['investment' => 1]],
             'reports.cashflow' => ['api.v1.reports.cashflow', 'get', 'read', []],
@@ -147,7 +148,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.investments.display-data' => [
                 'investment' => $this->createOwnedInvestment($user)->id,
             ],
-            'api.v1.tags.patch-active' => [
+            'api.v1.tags.show', 'api.v1.tags.patch-active' => [
                 'tag' => Tag::factory()->for($user)->create()->id,
             ],
             'api.v1.investments.destroy' => [

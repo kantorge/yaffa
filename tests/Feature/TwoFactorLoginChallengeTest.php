@@ -12,6 +12,14 @@ class TwoFactorLoginChallengeTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Neither a 6-digit numeric string (TOTP format) nor an uppercase alphanumeric string
+     * (recovery-code format) - structurally cannot hash_equals() a real TOTP code or match a
+     * real recovery code, unlike a numeric placeholder such as '000000' which has a
+     * (vanishingly small but nonzero) chance of coinciding with the actual rotating code.
+     */
+    private const string INVALID_CODE = 'invalid-code';
+
     private function enableTwoFactorFor(User $user): void
     {
         $user->createTwoFactorAuth();
@@ -89,7 +97,7 @@ class TwoFactorLoginChallengeTest extends TestCase
         $this->forwardSessionCookie($firstResponse);
 
         $response = $this->post('/login', [
-            '2fa_code' => '000000',
+            '2fa_code' => self::INVALID_CODE,
         ]);
 
         $this->assertGuest();
@@ -147,7 +155,7 @@ class TwoFactorLoginChallengeTest extends TestCase
         // (including this one) comes from a distinct IP that has made only 1 request.
         for ($i = 1; $i <= 5; $i++) {
             $response = $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$i}"])
-                ->post('/login', ['2fa_code' => '000000']);
+                ->post('/login', ['2fa_code' => self::INVALID_CODE]);
             $response->assertViewIs('auth.two-factor-challenge');
         }
 

@@ -75,8 +75,12 @@ class InvestmentApiController extends Controller implements HasMiddleware
         }
 
         // 'q' is accepted as an alias for 'query', matching the search parameter used
-        // by the other list endpoints (categories, payees, accounts, tags)
-        $searchTerm = $request->query('query') ?: $request->query('q');
+        // by the other list endpoints (categories, payees, accounts, tags). Checked with
+        // is_string() rather than ?: so that a literal "0" isn't treated as absent, and an
+        // array value (e.g. ?query[]=x) can't reach Str::lower() below.
+        $queryParam = $request->query('query');
+        $searchTerm = is_string($queryParam) && $queryParam !== '' ? $queryParam : $request->query('q');
+        $searchTerm = is_string($searchTerm) ? $searchTerm : null;
 
         $investments = $request->user()
             ->investments()

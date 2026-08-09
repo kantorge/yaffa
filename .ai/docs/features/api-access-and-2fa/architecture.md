@@ -49,7 +49,7 @@ Both surfaces are new sections on the existing Settings page (Vue islands), plus
 
 - [SPECIFICATION.md](SPECIFICATION.md) — original design-time spec (source of intent; code is source of truth where they diverge, see below).
 - [flows.md](flows.md) — step-by-step token-creation, 2FA-enrollment, and login-challenge flows with per-step authz checks.
-- [permissions.md](permissions.md) — ability matrix, current enforcement state, and the required "Full Ability Enforcement — Implementation Plan" for the ~24 controllers still unenforced.
+- [permissions.md](permissions.md) — ability matrix, the shipped per-controller `abilities:*` mapping ("Full Ability Enforcement — Implementation Plan", status: done), and its test coverage (`tests/Feature/API/ApiAbilityEnforcementTest.php`).
 - [variables.md](variables.md) — new env vars / config introduced by this feature.
 
 No `emails.md` — this feature does not send email (the spec's optional "notify on token creation / 2FA disable" was explicitly scoped out of MVP; see SPECIFICATION.md "Events / Notifications"). No `cron.md`-specific file — the one new scheduled job (`sanctum:prune-expired`, daily) is folded into the existing project-wide scheduler inventory, not a new subsystem. No `seo.md` (no public/indexable routes added). No `automation.md` (no embedded agents/LLM/webhook automation in this feature).

@@ -1104,6 +1104,7 @@ class TransactionApiControllerTest extends TestCase
     private function buildCreateScheduledStandardPayload(array $overrides = []): array
     {
         $entities = $this->createStandardEntities();
+        $today = now()->format('Y-m-d');
 
         return array_merge([
             'action' => 'create',
@@ -1126,8 +1127,8 @@ class TransactionApiControllerTest extends TestCase
                 ],
             ],
             'schedule_config' => [
-                'start_date' => now()->format('Y-m-d'),
-                'next_date' => now()->format('Y-m-d'),
+                'start_date' => $today,
+                'next_date' => $today,
                 'frequency' => 'MONTHLY',
                 'interval' => 1,
             ],
