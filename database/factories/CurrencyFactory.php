@@ -42,12 +42,14 @@ class CurrencyFactory extends Factory
     public function configure(): static
     {
         return $this->afterMaking(function (Currency $currency) {
-            if (!$currency->user_id) {
+            $ownerId = $currency->user_id ?: auth()->id();
+
+            if (!$ownerId) {
                 return;
             }
 
             $existing = Currency::query()
-                ->where('user_id', $currency->user_id)
+                ->where('user_id', $ownerId)
                 ->get(['name', 'iso_code']);
 
             $usedNames = $existing->pluck('name');

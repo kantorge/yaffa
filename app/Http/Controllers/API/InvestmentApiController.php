@@ -90,7 +90,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 $query->where('active', $request->query('active'))
             )
             ->when(
-                $searchTerm,
+                $searchTerm !== null,
                 fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
                 $query->where(function ($q) use ($searchTerm) {
