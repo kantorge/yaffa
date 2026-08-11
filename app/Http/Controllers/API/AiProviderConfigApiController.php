@@ -93,7 +93,6 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         // Create new config
         $config = AiProviderConfig::create([
-            'user_id' => $user->id,
             'provider' => $request->input('provider'),
             'model' => $request->input('model'),
             'api_key' => $request->input('api_key'),

@@ -126,7 +126,6 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
 
         if (! $existing) {
             $config = InvestmentProviderConfig::create([
-                'user_id' => $request->user()->id,
                 'provider_key' => $providerKey,
                 ...$attributes,
             ]);

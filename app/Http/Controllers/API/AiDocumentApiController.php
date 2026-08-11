@@ -73,7 +73,6 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
         // Create the document
         $document = AiDocument::create([
-            'user_id' => $user->id,
             'status' => 'ready_for_processing',
             'source_type' => 'manual_upload',
             'custom_prompt' => $request->input('custom_prompt'),

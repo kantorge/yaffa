@@ -285,8 +285,6 @@ class ReportApiController extends Controller implements HasMiddleware
                 'category.parent',
                 'transaction',
                 'transaction.currency',
-                'transaction.config.accountFrom.config',
-                'transaction.config.accountTo.config',
             ])
                 ->whereHas('transaction', function ($query) use ($request, $rangeStart, $rangeEnd) {
                     $query->where('user_id', $request->user()->id)

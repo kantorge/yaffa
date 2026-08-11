@@ -108,7 +108,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         // Create new config
         $config = GoogleDriveConfig::create([
-            'user_id' => $user->id,
             'service_account_email' => $serviceAccountEmail,
             'service_account_json' => $request->input('service_account_json'),
             'folder_id' => $request->input('folder_id'),
