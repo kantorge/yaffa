@@ -4,6 +4,9 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 
+// DataTables
+import 'datatables.net-bs5';
+
 // Generic helpers
 import * as dataTableHelpers from '@/shared/lib/datatable'
 import * as helpers from '@/shared/lib/helpers';
@@ -16,9 +19,6 @@ import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amcha
 // Category tree
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
-
-// DataTables
-import 'datatables.net-bs5';
 
 // Select2 for account selection
 initializeSelect2(window.YAFFA.userSettings.language);

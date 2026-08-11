@@ -4,6 +4,15 @@ import * as toastHelpers from '@/shared/lib/toast';
 
 const route = window.route;
 
+// DataTables defaults to a blocking window.alert() on ajax/other errors (errMode: 'alert'),
+// which freezes the whole page behind a native dialog on a transient network hiccup.
+// Route errors through a dismissible toast instead.
+if ($.fn.dataTable) {
+    $.fn.dataTable.ext.errMode = function (settings, techNote, message) {
+        toastHelpers.showErrorToast(message);
+    };
+}
+
 export function dataTablesActionButton(id, action) {
     const functions = {
         delete: function () {
