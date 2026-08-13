@@ -191,22 +191,36 @@ class TransactionController extends Controller implements HasMiddleware
             $transaction->setRelation('config', new TransactionDetailInvestment($transactionData['config']));
         } else {
             $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
+            // Inverse relation, so TransactionDetailStandard::resolveStandardCurrency()'s
+            // fallback (when neither account side resolves) can reach the owning
+            // transaction's currency instead of lazily querying for a non-existent row.
+            $transaction->config->setRelation('transaction', $transaction);
 
-            $transaction->setRelation(
-                'transactionItems',
-                $this->buildDraftTransactionItems($transactionData, $request->user()->id)
-            );
+            $draftTransactionItems = $this->buildDraftTransactionItems($transactionData, $request->user()->id);
 
-            // Try to add relation for account and payee, if they exist
+            // These items are manually attached rather than eager-loaded, so chaperone()
+            // never fires - set the inverse relation by hand so TransactionItem::amount
+            // (MoneyCast) can resolve its currency via the parent transaction instead of
+            // issuing a lazy lookup for a transaction_id that doesn't exist yet (draft/unsaved).
+            $draftTransactionItems->each(fn (TransactionItem $item) => $item->setRelation('transaction', $transaction));
+
+            $transaction->setRelation('transactionItems', $draftTransactionItems);
+
+            // Try to add relation for account and payee, if they exist.
+            // Use the real (camelCase) relation names, matching TransactionDetailStandard::
+            // accountFrom()/accountTo() - not just so Eloquent's snake-casing still produces
+            // the same "account_from"/"account_to" JSON keys, but so relationLoaded() sees
+            // these as already resolved. Otherwise resolveAmountFromCurrency() (MoneyCast)
+            // would lazy-load them again with no user scope at all, undoing this scoping.
             if (($transactionData['config']['account_from_id'] ?? null) !== null) {
                 $transaction->config->setRelation(
-                    'account_from',
+                    'accountFrom',
                     AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_from_id'])
                 );
             }
             if (($transactionData['config']['account_to_id'] ?? null) !== null) {
                 $transaction->config->setRelation(
-                    'account_to',
+                    'accountTo',
                     AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_to_id'])
                 );
             }

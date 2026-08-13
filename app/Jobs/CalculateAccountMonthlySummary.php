@@ -14,8 +14,10 @@ use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Services\InvestmentService;
 use App\Support\ScheduleInstance;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Closure;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -214,7 +216,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             );
 
             // Don't store zero values
-            if ($amount === 0 || $amount === 0.0) {
+            if ($amount->isZero()) {
                 continue;
             }
 
@@ -225,7 +227,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'account_balance',
                 'data_type' => 'fact',
-                'amount' => $amount,
+                'amount' => (string) $amount,
             ]);
         }
 
@@ -246,8 +248,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'transaction_type' => 'account_balance',
                 'data_type' => 'fact',
                 'amount' => $this->accountEntity->config instanceof Account
-                    ? $this->accountEntity->config->opening_balance
-                    : 0,
+                    ? (string) $this->accountEntity->config->opening_balance->getAmount()
+                    : '0',
             ]);
         }
 
@@ -337,14 +339,14 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                     && $transaction->config->account_from_id === $this->accountEntity->id
             );
 
-            $amountFrom = $transactionsFrom->sum('config.amount_from');
-            $amountTo = $transactionsTo->sum('config.amount_to');
-            $amountInvestment = $investmentTransactions->sum('cashflow_value');
+            $amountFrom = $this->sumMoney($transactionsFrom, fn ($transaction) => $transaction->config->amount_from);
+            $amountTo = $this->sumMoney($transactionsTo, fn ($transaction) => $transaction->config->amount_to);
+            $amountInvestment = $this->sumMoney($investmentTransactions, fn ($transaction) => $transaction->cashflow_value);
 
-            $amount = $amountInvestment + $amountTo - $amountFrom;
+            $amount = $amountInvestment->plus($amountTo)->minus($amountFrom);
 
             // Don't store zero values
-            if ($amount === 0 || $amount === 0.0) {
+            if ($amount->isZero()) {
                 continue;
             }
 
@@ -354,10 +356,59 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'account_balance',
                 'data_type' => 'forecast',
-                'amount' => $amount,
+                'amount' => (string) $amount,
             ]);
         }
         return $results;
+    }
+
+    /**
+     * Sum a Money-cast attribute across a collection exactly (BigDecimal), instead of via
+     * Collection::sum() (which does native `+=` and can't handle Money objects at all, let
+     * alone exactly). A null value (e.g. an optional Money field) contributes nothing, same
+     * as Collection::sum()'s treatment of null.
+     *
+     * @param  iterable<int, mixed>  $items
+     */
+    private function sumMoney(iterable $items, Closure $extractor): BigDecimal
+    {
+        $sum = BigDecimal::zero();
+
+        foreach ($items as $item) {
+            $money = $extractor($item);
+
+            if ($money === null) {
+                continue;
+            }
+
+            $sum = $sum->plus($money->getAmount());
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Sum a BigDecimal-returning extractor across a collection exactly, skipping null
+     * results (e.g. no price found for an investment/date pair) - the non-Money sibling of
+     * sumMoney(), for values (quantities, quantity*price products) that never wrap a Money.
+     *
+     * @param  iterable<int|string, mixed>  $items
+     */
+    private function sumBigDecimal(iterable $items, Closure $extractor): BigDecimal
+    {
+        $sum = BigDecimal::zero();
+
+        foreach ($items as $key => $item) {
+            $value = $extractor($item, $key);
+
+            if ($value === null) {
+                continue;
+            }
+
+            $sum = $sum->plus($value);
+        }
+
+        return $sum;
     }
 
     /**
@@ -400,7 +451,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'investment_value',
                 'data_type' => 'fact',
-                'amount' => $amount,
+                'amount' => (string) $amount,
             ]);
         }
 
@@ -475,7 +526,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         // one Investment::find() + price lookup per investment per forecast month (FR-9) - this
         // was the dominant cost in a 16-19s job per forecast-performance.md's profiling.
         $investmentIds = $allTransactionsInstances->pluck('config.investment_id')->filter()->unique()->values();
-        $investments = Investment::whereIn('id', $investmentIds)->get();
+        // Eager-load currency so InvestmentPrice/TransactionDetailInvestment's price-currency
+        // resolution (MoneyCast) can reuse these already-loaded Investment instances below,
+        // instead of lazy-loading investment.currency per price/transaction row.
+        $investments = Investment::whereIn('id', $investmentIds)->with('currency')->get();
 
         $priceRequests = new Collection();
         foreach ($months as $carbonEndOfMonth) {
@@ -483,7 +537,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 $priceRequests->push(['investment' => $investment, 'date' => $carbonEndOfMonth]);
             }
         }
-        $priceMap = $this->investmentService->getLatestPricesBatch($priceRequests);
+        // Exact BigDecimal map (not the float-collapsing getLatestPricesBatch()) - this feeds
+        // an accumulation below, not a display, so precision must survive past this lookup.
+        $priceMap = $this->investmentService->getLatestPricesBatchExact($priceRequests);
 
         $results = new Collection();
         $currentTransactionCount = 0;
@@ -502,22 +558,31 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 // Then, we need to group the transactions by investment_id of the config
                 $groupedTransactions = $transactions->groupBy('config.investment_id');
 
-                // For all groups, let's calculate the cummulated quantity up to the end of the month
+                // For all groups, let's calculate the cummulated quantity up to the end of the month.
+                // $transaction->config->quantity is already a BigDecimal (DecimalCast) - no
+                // need to unwrap it, since this feeds an accumulation, not a display.
                 $quantities = $groupedTransactions->map(
-                    fn ($group) => $group->sum(
-                        fn ($transaction) => $transaction->config->quantity *
-                            $transaction->transaction_type->quantityMultiplier()
+                    fn ($group) => $this->sumBigDecimal(
+                        $group,
+                        fn ($transaction) => $transaction->config->quantity
+                            ->multipliedBy($transaction->transaction_type->quantityMultiplier())
                     )
                 );
             }
 
-            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth, $priceMap) {
-                // Get the latest known price up to this date, from the pre-fetched map
-                $latestPrice = $priceMap[$this->investmentService->priceBatchKey((int) $investmentId, $carbonEndOfMonth)] ?? null;
+            $amount = $this->sumBigDecimal(
+                $quantities,
+                function (BigDecimal $quantity, $investmentId) use ($carbonEndOfMonth, $priceMap) {
+                    // Get the latest known price up to this date, from the pre-fetched map
+                    $latestPrice = $priceMap[$this->investmentService->priceBatchKey((int) $investmentId, $carbonEndOfMonth)] ?? null;
 
-                return $quantity * $latestPrice;
-            })
-                ->sum();
+                    if ($latestPrice === null) {
+                        return null;
+                    }
+
+                    return $quantity->multipliedBy($latestPrice);
+                }
+            );
 
             // Here we intentionally store zero values, as it's valid to have a zero value for a month
             // and we don't want to get stuck with a previous non-zero value
@@ -527,7 +592,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'investment_value',
                 'data_type' => 'forecast',
-                'amount' => $amount,
+                'amount' => (string) $amount,
             ]);
 
             // Store the number of currently processed transactions
@@ -622,10 +687,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
         // Loop through the grouped transactions
         foreach ($budgetTransactionInstances as $month => $transactions) {
-            $amount = $transactions->sum('cashflow_value');
+            $amount = $this->sumMoney($transactions, fn ($transaction) => $transaction->cashflow_value);
 
             // Don't store zero values
-            if ($amount === 0 || $amount === 0.0) {
+            if ($amount->isZero()) {
                 continue;
             }
 
@@ -635,7 +700,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'account_entity_id' => $this->accountEntity?->id,
                 'transaction_type' => 'account_balance',
                 'data_type' => 'budget',
-                'amount' => $amount,
+                'amount' => (string) $amount,
             ]);
         }
 

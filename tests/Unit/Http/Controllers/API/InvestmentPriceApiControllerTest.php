@@ -197,7 +197,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED);
         $response->assertJsonPath('price.date', '2024-01-15');
-        $response->assertJsonPath('price.price', 150.50);
+        $response->assertJsonPath('price.price', '150.5000000000');
         $response->assertJsonPath('price.investment_id', $investment->id);
         $response->assertJsonStructure([
             'price' => [
@@ -279,7 +279,7 @@ class InvestmentPriceApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('price.date', '2024-01-02');
-        $response->assertJsonPath('price.price', 200.75);
+        $response->assertJsonPath('price.price', '200.7500000000');
         $response->assertJsonPath('message', __('Investment price updated'));
 
         // Verify in database
@@ -354,7 +354,7 @@ class InvestmentPriceApiControllerTest extends TestCase
         );
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonPath('exists', true);
-        $response->assertJsonPath('price', 123.45);
+        $response->assertJsonPath('price', '123.4500000000');
     }
 
     public function test_check_price_returns_false_when_price_does_not_exist(): void

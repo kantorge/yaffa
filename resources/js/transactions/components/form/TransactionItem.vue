@@ -132,6 +132,7 @@
           <MathInput
             class="form-control transaction_item_amount"
             v-model="amountData"
+            :precision="precision"
           ></MathInput>
 
           <button
@@ -219,6 +220,10 @@
       tags: Array,
       remainingAmount: Number,
       payee: [Number, String],
+      precision: {
+        type: Number,
+        default: null,
+      },
       match_type: {
         type: String,
         default: null,

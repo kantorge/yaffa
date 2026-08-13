@@ -15,12 +15,32 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AccountMonthlySummaryTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * calculateAccountBalanceFact() and calculateInvestmentValueFact() both return
+     * BigDecimal (FR-7); compare the exact value rather than relying on PHP's loose float
+     * equality.
+     *
+     * Builds the expected string via BigDecimal rather than number_format(): at
+     * calculateInvestmentValueFact()'s scale of 14 (quantity's scale 4 + price's scale 10,
+     * added by BigDecimal multiplication), number_format() itself round-trips through a
+     * double and can render an exact value like 50 as "50.00000000000001" - reintroducing
+     * the float-precision bug class this whole assertion exists to catch.
+     */
+    private function assertBalanceFactEquals(float $expected, BigDecimal $actual): void
+    {
+        $this->assertSame(
+            (string) BigDecimal::of((string) $expected)->toScale($actual->getScale()),
+            (string) $actual
+        );
+    }
 
     private function createBasicAssetsAndReturnUser(): User
     {
@@ -115,10 +135,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result
-        $this->assertEquals(
-            -10,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(-10, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create the second transaction: deposit to account 1
         Transaction::factory()
@@ -139,10 +156,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result
-        $this->assertEquals(
-            10,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(10, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create the third transaction: transfer from account 1 to account 2
         Transaction::factory()
@@ -163,10 +177,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result
-        $this->assertEquals(
-            -20,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(-20, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create the fourth transaction: transfer from account 2 to account 1
         Transaction::factory()
@@ -187,10 +198,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result
-        $this->assertEquals(
-            20,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(20, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create the fifth transaction: buy investment
         Transaction::factory()
@@ -215,10 +223,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result -> investment transaction CF is -70
-        $this->assertEquals(
-            -50,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(-50, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create an irrelevant transaction
         Transaction::factory()
@@ -239,10 +244,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result - should be the same as before
-        $this->assertEquals(
-            -50,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(-50, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
 
         // Create a transaction with a different date
         $dateNextMonth = now()->addMonthNoOverflow();
@@ -264,10 +266,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result - should be the same as before
-        $this->assertEquals(
-            -50,
-            AccountMonthlySummary::calculateAccountBalanceFact($account1, $date)
-        );
+        $this->assertBalanceFactEquals(-50, AccountMonthlySummary::calculateAccountBalanceFact($account1, $date));
     }
 
     public function test_investment_value_is_calculated_correctly(): void
@@ -301,7 +300,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result: investment value is 50
-        $this->assertEquals(
+        $this->assertBalanceFactEquals(
             50,
             AccountMonthlySummary::calculateInvestmentValueFact($account, $date)
         );
@@ -327,7 +326,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result: investment value is +100, total of 150
-        $this->assertEquals(
+        $this->assertBalanceFactEquals(
             150,
             AccountMonthlySummary::calculateInvestmentValueFact($account, $date)
         );
@@ -353,7 +352,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result: investment value is -20, total of 130
-        $this->assertEquals(
+        $this->assertBalanceFactEquals(
             130,
             AccountMonthlySummary::calculateInvestmentValueFact($account, $date)
         );
@@ -380,7 +379,7 @@ class AccountMonthlySummaryTest extends TestCase
             ->save();
 
         // Check the partial result: investment value is -20, total remains 130
-        $this->assertEquals(
+        $this->assertBalanceFactEquals(
             130,
             AccountMonthlySummary::calculateInvestmentValueFact($account, $date)
         );

@@ -6,6 +6,7 @@ use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\TransactionService;
+use Brick\Money\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -23,6 +24,19 @@ class TransactionServiceTest extends TestCase
 
         $this->service = new TransactionService();
         $this->user = User::factory()->create();
+    }
+
+    /**
+     * getTransactionCashFlow() now returns Money (FR-7); compare its exact amount
+     * rather than relying on PHP's loose float equality.
+     */
+    private function assertCashFlowEquals(float $expected, ?Money $actual): void
+    {
+        $this->assertNotNull($actual);
+        $this->assertSame(
+            number_format($expected, $actual->getAmount()->getScale(), '.', ''),
+            (string) $actual->getAmount()
+        );
     }
 
     /**
@@ -147,8 +161,7 @@ class TransactionServiceTest extends TestCase
 
         $cashFlow = $this->service->getTransactionCashFlow($transaction);
 
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(-100, $cashFlow);
+        $this->assertCashFlowEquals(-100, $cashFlow);
     }
 
     /**
@@ -168,8 +181,7 @@ class TransactionServiceTest extends TestCase
 
         $cashFlow = $this->service->getTransactionCashFlow($transaction);
 
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(100, $cashFlow);
+        $this->assertCashFlowEquals(100, $cashFlow);
     }
 
     /**
@@ -205,8 +217,7 @@ class TransactionServiceTest extends TestCase
 
         // Buy: -(price * quantity + commission + tax)
         // -1 * (10 * 5) + 0 - 1 - 2 = -53
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(-53, $cashFlow);
+        $this->assertCashFlowEquals(-53, $cashFlow);
     }
 
     /**
@@ -227,8 +238,7 @@ class TransactionServiceTest extends TestCase
 
         // Sell: +(price * quantity - commission - tax)
         // 1 * (10 * 5) + 0 - 1 - 2 = 47
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(47, $cashFlow);
+        $this->assertCashFlowEquals(47, $cashFlow);
     }
 
     /**
@@ -248,8 +258,7 @@ class TransactionServiceTest extends TestCase
 
         // Dividend: 0 * (price * quantity) + dividend - commission - tax
         // 0 + 100 - 10 - 2 = 88
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(88, $cashFlow);
+        $this->assertCashFlowEquals(88, $cashFlow);
     }
 
     /**

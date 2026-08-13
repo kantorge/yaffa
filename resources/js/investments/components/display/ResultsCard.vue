@@ -114,6 +114,7 @@
 </template>
 
 <script>
+  import Decimal from 'decimal.js';
   import { toFormattedCurrency, __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
@@ -254,39 +255,49 @@
           return d >= this.internalDateFrom && d <= this.internalDateTo;
         });
       },
+      // Uses exact decimal arithmetic throughout: config.price/quantity/dividend/
+      // commission/tax arrive from the API as decimal strings (MoneyCast/DecimalCast),
+      // which native `+` would silently string-concatenate instead of add.
       summary() {
         const filtered = this.filteredTransactions;
-        const getSum = (arr, fn) => arr.reduce((sum, trx) => sum + fn(trx), 0);
+        const getSum = (arr, fn) =>
+          arr.reduce(
+            (sum, trx) => sum.plus(new Decimal(fn(trx) || 0)),
+            new Decimal(0),
+          );
         const getQty = (arr, type) =>
           getSum(
             arr.filter((trx) => trx.transaction_type === type),
-            (trx) => trx.config.quantity || 0,
+            (trx) => trx.config.quantity,
           );
         const getVal = (arr, type) =>
           getSum(
             arr.filter((trx) => trx.transaction_type === type),
-            (trx) => (trx.config.price || 0) * (trx.config.quantity || 0),
+            (trx) =>
+              new Decimal(trx.config.price || 0).times(
+                trx.config.quantity || 0,
+              ),
           );
-        const getField = (arr, field) =>
-          getSum(arr, (trx) => trx.config[field] || 0);
+        const getField = (arr, field) => getSum(arr, (trx) => trx.config[field]);
         const getQtyMult = (arr) =>
           getSum(
             arr,
             (trx) =>
-              (getTransactionTypeConfig(trx.transaction_type).quantity_multiplier || 0) *
-              (trx.config.quantity || 0),
+              new Decimal(
+                getTransactionTypeConfig(trx.transaction_type).quantity_multiplier || 0,
+              ).times(trx.config.quantity || 0),
           );
-        let lastPrice = 1;
+        let lastPrice = new Decimal(1);
         if (this.prices.length > 0) {
-          lastPrice = this.prices[this.prices.length - 1].price;
+          lastPrice = new Decimal(this.prices[this.prices.length - 1].price || 0);
         } else {
           const priceTrx = filtered
             .filter((trx) => !isNaN(trx.price))
             .sort((a, b) => new Date(b.date) - new Date(a.date));
-          if (priceTrx.length > 0) lastPrice = priceTrx[0].price;
+          if (priceTrx.length > 0) lastPrice = new Decimal(priceTrx[0].price || 0);
         }
         const quantity = getQtyMult(filtered);
-        const value = quantity * lastPrice;
+        const value = quantity.times(lastPrice);
         const buying = getVal(filtered, 'buy');
         const selling = getVal(filtered, 'sell');
         const added = getQty(filtered, 'add_shares');
@@ -294,19 +305,24 @@
         const dividend = getField(filtered, 'dividend');
         const commission = getField(filtered, 'commission');
         const taxes = getField(filtered, 'tax');
-        const result = selling + dividend + value - buying - commission - taxes;
+        const result = selling
+          .plus(dividend)
+          .plus(value)
+          .minus(buying)
+          .minus(commission)
+          .minus(taxes);
 
         return {
-          Buying: buying,
-          Selling: selling,
-          Added: added,
-          Removed: removed,
-          Dividend: dividend,
-          Commission: commission,
-          Taxes: taxes,
-          Quantity: quantity,
-          Value: value,
-          Result: result,
+          Buying: buying.toNumber(),
+          Selling: selling.toNumber(),
+          Added: added.toNumber(),
+          Removed: removed.toNumber(),
+          Dividend: dividend.toNumber(),
+          Commission: commission.toNumber(),
+          Taxes: taxes.toNumber(),
+          Quantity: quantity.toNumber(),
+          Value: value.toNumber(),
+          Result: result.toNumber(),
         };
       },
       roi() {

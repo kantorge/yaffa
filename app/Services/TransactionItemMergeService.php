@@ -8,7 +8,8 @@ use RuntimeException;
 
 class TransactionItemMergeService
 {
-    private const AMOUNT_COMPARISON_EPSILON = 0.0001;
+    /** Matches transaction_items.amount's DECIMAL(12,4) scale. */
+    private const AMOUNT_SCALE = 4;
 
     /**
      * Merge transaction items for a given transaction if the user's
@@ -86,19 +87,21 @@ class TransactionItemMergeService
             return 0;
         }
 
-        // Validate amount preservation before making any changes
-        $originalTotal = $items->sum('amount');
+        // Validate amount preservation before making any changes, using exact decimal
+        // arithmetic on the raw DECIMAL strings (not the float-cast attribute) to avoid
+        // reintroducing float drift into the very comparison meant to detect it.
+        $originalTotal = $this->sumRawAmounts($items);
 
-        $newTotal = 0.0;
+        $newTotal = '0';
         foreach ($groups as $groupItems) {
-            $newTotal += array_sum(array_map(fn ($i) => (float) $i->amount, $groupItems));
+            $newTotal = bcadd($newTotal, $this->sumRawAmounts(collect($groupItems)), self::AMOUNT_SCALE);
         }
-        $newTotal += $nonMergeable->sum('amount');
+        $newTotal = bcadd($newTotal, $this->sumRawAmounts($nonMergeable), self::AMOUNT_SCALE);
 
-        if (abs($originalTotal - $newTotal) > self::AMOUNT_COMPARISON_EPSILON) {
+        if (bccomp($originalTotal, $newTotal, self::AMOUNT_SCALE) !== 0) {
             throw new RuntimeException(
                 sprintf(
-                    'Transaction item merge aborted: amount mismatch for transaction %d (original %.4f vs new %.4f).',
+                    'Transaction item merge aborted: amount mismatch for transaction %d (original %s vs new %s).',
                     $transaction->id,
                     $originalTotal,
                     $newTotal,
@@ -115,13 +118,10 @@ class TransactionItemMergeService
                     continue;
                 }
 
-                $totalAmount = array_sum(
-                    array_map(fn ($i) => (float) $i->amount, $groupItems)
-                );
-
-                // Keep the first item and update its amount
+                // Keep the first item and update its amount, reusing the same exact
+                // bcmath sum already used to validate amount preservation above.
                 $keepItem = $groupItems[0];
-                $keepItem->amount = $totalAmount;
+                $keepItem->amount = $this->sumRawAmounts(collect($groupItems));
                 $keepItem->save();
 
                 // Delete the rest (detach tags first to avoid FK violations)
@@ -134,6 +134,20 @@ class TransactionItemMergeService
         });
 
         return $removedCount;
+    }
+
+    /**
+     * Sum a collection of transaction items' raw (pre-float-cast) DECIMAL amounts
+     * using bcmath, so the result is exact rather than IEEE-754-approximate.
+     */
+    private function sumRawAmounts(iterable $items): string
+    {
+        $sum = '0';
+        foreach ($items as $item) {
+            $sum = bcadd($sum, (string) $item->getRawOriginal('amount'), self::AMOUNT_SCALE);
+        }
+
+        return $sum;
     }
 
     /**

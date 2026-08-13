@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f914b10990d07a3655815190601dcb83",
+    "content-hash": "35db5dec15fab7396a27c6faedbcb63d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -331,6 +331,63 @@
                 }
             ],
             "time": "2026-02-10T14:33:43+00:00"
+        },
+        {
+            "name": "brick/money",
+            "version": "0.11.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/brick/money.git",
+                "reference": "57fb799337d9c532da7f7c7def52b926bfcf0917"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/brick/money/zipball/57fb799337d9c532da7f7c7def52b926bfcf0917",
+                "reference": "57fb799337d9c532da7f7c7def52b926bfcf0917",
+                "shasum": ""
+            },
+            "require": {
+                "brick/math": "~0.14.4",
+                "php": "^8.2",
+                "symfony/deprecation-contracts": "^2.2|^3.0"
+            },
+            "require-dev": {
+                "brick/varexporter": "0.7.0",
+                "ext-dom": "*",
+                "ext-pdo": "*",
+                "phpunit/phpunit": "^11.0",
+                "vimeo/psalm": "6.14.3"
+            },
+            "suggest": {
+                "ext-intl": "Required to format Money objects"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Brick\\Money\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Money and currency library",
+            "keywords": [
+                "brick",
+                "currency",
+                "money"
+            ],
+            "support": {
+                "issues": "https://github.com/brick/money/issues",
+                "source": "https://github.com/brick/money/tree/0.11.2"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/BenMorel",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-03-02T20:25:37+00:00"
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -13854,7 +13911,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.4"
+        "php": "^8.4",
+        "ext-bcmath": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"

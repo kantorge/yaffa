@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\DecimalCast;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ModelOwnedByUserTrait;
@@ -154,7 +155,7 @@ class Currency extends Model
             ->latest('date')
             ->first();
 
-        return $rate instanceof CurrencyRate ? $rate->rate : null;
+        return $rate instanceof CurrencyRate ? DecimalCast::toFloat($rate->rate) : null;
     }
 
     /**

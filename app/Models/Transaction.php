@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Support\ScheduleInstance;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
@@ -62,9 +65,10 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
  * @property int|null $ai_document_id
- * @property float|null $cashflow_value
+ * @property-read Money|null $cashflow_value
+ * @property-write Money|string|int|float|null $cashflow_value
  * @property float|null $currencyRateToBase
- * @property float|null $sum
+ * @property BigDecimal|null $sum
  * @property int|null $originalId
  * @property string|null $transactionGroup
  * @property int|null $transactionOperator
@@ -137,8 +141,18 @@ class Transaction extends Model
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
-            'cashflow_value' => 'float',
+            'cashflow_value' => MoneyCast::class . ':4,resolveCashflowCurrency',
         ];
+    }
+
+    /**
+     * cashflow_value is always denominated in the transaction's own currency
+     * (transaction_currency's fallback-to-base-currency logic already handles the
+     * common case where currency_id hasn't been resolved yet).
+     */
+    public function resolveCashflowCurrency(): Currency
+    {
+        return $this->transaction_currency;
     }
 
     public function config(): MorphTo
@@ -153,7 +167,11 @@ class Transaction extends Model
 
     public function transactionItems(): HasMany
     {
-        return $this->hasMany(TransactionItem::class);
+        // chaperone() sets each loaded item's "transaction" inverse relation to this same
+        // parent instance, so TransactionItem::resolveAmountCurrency() (MoneyCast) never
+        // needs a fresh lazy lookup - notably including after the parent has been deleted
+        // but is still being serialized in-memory (e.g. TransactionApiController::destroy()).
+        return $this->hasMany(TransactionItem::class)->chaperone();
     }
 
     public function transactionSchedule(): HasOne

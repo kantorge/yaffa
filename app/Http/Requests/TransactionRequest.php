@@ -390,7 +390,13 @@ class TransactionRequest extends FormRequest
         // Buy OR Sell
         if ($transactionTypeEnum === TransactionTypeEnum::BUY || $transactionTypeEnum === TransactionTypeEnum::SELL) {
             return [
-                'config.price' => 'required|numeric|gt:0',
+                'config.price' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    // Fit in signed DECIMAL(20,10) range
+                    'max:9999999999.9999999999',
+                ],
                 'config.quantity' => 'required|numeric|gt:0',
             ];
         }

@@ -15,7 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
-class ReportApiWaterfallTest extends TestCase
+class ReportApiBudgetChartTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -47,54 +47,13 @@ class ReportApiWaterfallTest extends TestCase
             ->create();
     }
 
-    public function test_waterfall_reports_missing_foreign_currency_rates_in_warnings_payload(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $foreignCurrency = Currency::factory()
-            ->for($this->user)
-            ->fromIsoCodes(['EUR'])
-            ->create(['base' => null]);
-
-        $foreignAccount = $this->createAccount($foreignCurrency);
-
-        $transactionConfig = TransactionDetailStandard::factory()
-            ->withdrawal($this->user)
-            ->create([
-                'account_from_id' => $foreignAccount->id,
-            ]);
-
-        Transaction::factory()
-            ->for($this->user)
-            ->create([
-                'budget' => false,
-                'schedule' => false,
-                'date' => '2025-01-10',
-                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
-                'config_type' => 'standard',
-                'config_id' => $transactionConfig->id,
-            ]);
-
-        $response = $this->getJson(route('api.v1.reports.waterfall', [
-            'transactionType' => 'standard',
-            'dataType' => 'result',
-            'year' => 2025,
-            'month' => 1,
-        ]));
-
-        $response->assertOk();
-        $response->assertJsonPath('result', 'success');
-        $response->assertJsonPath('warnings.currenciesWithoutRates.0.iso_code', 'EUR');
-        $response->assertJsonPath('warnings.currenciesWithoutRates.0.name', $foreignCurrency->name);
-    }
-
     /**
-     * Regression test for the precision-improvements FR-7 follow-up: the category bucket
-     * used to accumulate item amounts via a plain float `+=`, the same repeated-summation
-     * drift pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate elsewhere. 0.10 and
-     * 0.20 are a classic IEEE 754 case (0.10 + 0.20 !== 0.30 in native float arithmetic).
+     * Regression test for the precision-improvements follow-up: the 'actual' bucket used to
+     * accumulate item amounts via a plain float `+=`, the same repeated-summation drift
+     * pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate elsewhere. 0.10 and 0.20
+     * are a classic IEEE 754 case (0.10 + 0.20 !== 0.30 in native float arithmetic).
      */
-    public function test_waterfall_standard_category_sums_transaction_item_amounts_exactly(): void
+    public function test_budget_chart_actual_sums_transaction_item_amounts_exactly(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -124,19 +83,20 @@ class ReportApiWaterfallTest extends TestCase
         TransactionItem::factory()->for($transaction)->create(['category_id' => $category->id, 'amount' => 0.10]);
         TransactionItem::factory()->for($transaction)->create(['category_id' => $category->id, 'amount' => 0.20]);
 
-        $response = $this->getJson(route('api.v1.reports.waterfall', [
-            'transactionType' => 'standard',
-            'dataType' => 'result',
-            'year' => 2025,
-            'month' => 1,
+        $response = $this->getJson(route('api.v1.reports.budget-chart', [
+            'categories' => [$category->id],
+            'accountSelection' => 'selected',
+            'accountEntity' => $account->id,
         ]));
 
         $response->assertOk();
 
-        $bucket = collect($response->json('chartData'))->firstWhere('category_id', $category->id);
-
-        $this->assertNotNull($bucket);
+        $chartData = $response->json('chartData');
+        $this->assertCount(1, $chartData);
         // Withdrawal => negative sign; must be exactly -0.30, not a float-drift artifact.
-        $this->assertSame(-0.30, $bucket['value']);
+        $this->assertSame(-0.30, $chartData[0]['actual']);
+        // PHP's json_encode() renders a zero float as "0", which json_decode() reads back
+        // as int 0, not float 0.0 - this is a JSON round-trip artifact, not a precision bug.
+        $this->assertEquals(0, $chartData[0]['budget']);
     }
 }

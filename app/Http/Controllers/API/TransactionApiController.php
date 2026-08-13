@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType;
+use App\Models\Currency;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
@@ -420,17 +424,25 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             // Extend the optional amount_to and amount_from fields in the config
             if ($transaction->config instanceof TransactionDetailStandard) {
-                if ($transaction->config->amount_to) {
-                    $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
+                if (! $transaction->config->amount_to->isZero()) {
+                    $transaction->config->amount_to_base = $this->convertToBase(
+                        $transaction->config->amount_to,
+                        $baseCurrency,
+                        $transaction->currencyRateToBase
+                    );
                 }
-                if ($transaction->config->amount_from) {
-                    $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+                if (! $transaction->config->amount_from->isZero()) {
+                    $transaction->config->amount_from_base = $this->convertToBase(
+                        $transaction->config->amount_from,
+                        $baseCurrency,
+                        $transaction->currencyRateToBase
+                    );
                 }
             }
 
             // Extend the amount field in the items
-            $transaction->transactionItems->map(function ($item) use ($transaction) {
-                $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
+            $transaction->transactionItems->map(function ($item) use ($transaction, $baseCurrency) {
+                $item->amount_in_base = $this->convertToBase($item->amount, $baseCurrency, $transaction->currencyRateToBase);
             });
 
             return $transaction;
@@ -442,6 +454,20 @@ class TransactionApiController extends Controller implements HasMiddleware
             ],
             Response::HTTP_OK
         );
+    }
+
+    /**
+     * Convert a Money amount into the user's base currency at the given rate, returning
+     * a decimal string (matching the wire format of the cast-backed money fields this
+     * value sits alongside in the response). Reuses the source amount's own scale for the
+     * converted value, since no persisted column governs this transient, derived field.
+     */
+    private function convertToBase(Money $amount, Currency $baseCurrency, float $rate): string
+    {
+        $scale = $amount->getAmount()->getScale();
+        $targetCurrency = MoneyCast::currencyFor($baseCurrency, $scale);
+
+        return (string) $amount->convertedTo($targetCurrency, (string) $rate, roundingMode: RoundingMode::HalfUp)->getAmount();
     }
 
     /**

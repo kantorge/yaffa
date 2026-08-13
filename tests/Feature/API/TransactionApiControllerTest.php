@@ -84,6 +84,30 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
+     * Money-cast fields (config.amount_from/amount_to, transaction_items[].amount) must
+     * serialize as decimal strings, not JSON numbers - a deliberate breaking change to the
+     * wire format (FR-4/FR-5), so a full-precision decimal round-trips through the API
+     * without ever passing through a lossy JSON number.
+     */
+    public function test_transaction_money_fields_serialize_as_decimal_strings(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $transaction = Transaction::factory()
+            ->withdrawal($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->getJson(route('api.v1.transactions.show', $transaction));
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $payload = $response->json('transaction');
+        $this->assertIsString($payload['config']['amount_from']);
+        $this->assertIsString($payload['config']['amount_to']);
+        $this->assertIsString($payload['transaction_items'][0]['amount']);
+    }
+
+    /**
      * Test that user cannot access other user's transaction via API
      */
     public function test_cannot_access_other_users_transaction(): void
@@ -736,6 +760,91 @@ class TransactionApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['config.investment_id']);
+    }
+
+    /**
+     * config.price accepts a value within the DECIMAL(20,10) range shared with
+     * investment_prices.price, mirroring InvestmentPriceRequest's rule.
+     */
+    public function test_store_investment_accepts_price_within_decimal_20_10_range(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                // 10 decimal places: exceeds the old DECIMAL(10,4) column's precision but
+                // fits comfortably within the widened DECIMAL(20,10) range and rule.
+                'price' => '1234.5678901234',
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    /**
+     * config.price rejects a value exceeding DECIMAL(20,10)'s max, mirroring
+     * InvestmentPriceRequest's rule.
+     */
+    public function test_store_investment_rejects_price_exceeding_decimal_20_10_range(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10000000000,
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.price']);
     }
 
     /**

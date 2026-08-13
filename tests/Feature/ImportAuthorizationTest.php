@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Casts\MoneyCast;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
@@ -123,7 +124,7 @@ class ImportAuthorizationTest extends TestCase
             'name' => $accountEntity->name,
             'active' => 1,
             'config' => [
-                'opening_balance' => $accountEntity->config->opening_balance,
+                'opening_balance' => MoneyCast::toFloat($accountEntity->config->opening_balance),
                 'account_group_id' => $accountEntity->config->account_group_id,
                 'currency_id' => $accountEntity->config->currency_id,
             ],

@@ -280,6 +280,7 @@
                         id="transaction_price"
                         v-model="form.config.price"
                         :disabled="!transactionTypeSettings.price"
+                        :precision="pricePrecision"
                         @input="onPriceChange"
                       ></MathInput>
                       <span
@@ -346,6 +347,7 @@
                         id="transaction_dividend"
                         v-model="form.config.dividend"
                         :disabled="!transactionTypeSettings.dividend"
+                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -365,6 +367,7 @@
                         class="form-control"
                         id="transaction_commission"
                         v-model="form.config.commission"
+                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -382,6 +385,7 @@
                         class="form-control"
                         id="transaction_tax"
                         v-model="form.config.tax"
+                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -514,6 +518,7 @@
 
 <script>
   import { RRule } from 'rrule';
+  import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -535,6 +540,7 @@
   import {
     __,
     getCurrencySymbol,
+    getDecimalPrecision,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
@@ -664,14 +670,34 @@
     },
 
     computed: {
+      // Uses exact decimal arithmetic: config.price/commission/tax/dividend arrive
+      // from the API as decimal strings (MoneyCast), which native `+` would silently
+      // string-concatenate instead of add.
       total() {
-        return (
-          (this.form.config.quantity || 0) * (this.form.config.price || 0) +
-          (this.form.config.dividend || 0) -
-          ((this.form.config.commission || 0) + (this.form.config.tax || 0)) *
-            // Taxes and commissions are added to the value when the transaction is a buy
-            this.transactionTypeSettings.amount_multiplier
-        );
+        const quantity = new Decimal(this.form.config.quantity || 0);
+        const price = new Decimal(this.form.config.price || 0);
+        const dividend = new Decimal(this.form.config.dividend || 0);
+        const commission = new Decimal(this.form.config.commission || 0);
+        const tax = new Decimal(this.form.config.tax || 0);
+
+        return quantity
+          .times(price)
+          .plus(dividend)
+          .minus(
+            commission
+              .plus(tax)
+              // Taxes and commissions are added to the value when the transaction is a buy
+              .times(this.transactionTypeSettings.amount_multiplier || 0),
+          )
+          .toNumber();
+      },
+
+      pricePrecision() {
+        return getDecimalPrecision(this.currency, 'detailed');
+      },
+
+      moneyPrecision() {
+        return getDecimalPrecision(this.currency, 'generic');
       },
 
       transactionTypeSettings() {
@@ -1286,7 +1312,9 @@
           );
 
           if (response.data.exists) {
-            this.existingPriceForDate = response.data.price;
+            // The API emits price as a decimal string (MoneyCast); toFormattedCurrency()
+            // (used to display it below) requires a plain Number to format correctly.
+            this.existingPriceForDate = Number(response.data.price);
             this.storePriceEnabled = false;
           } else {
             this.existingPriceForDate = null;

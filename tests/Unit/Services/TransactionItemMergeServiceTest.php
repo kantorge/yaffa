@@ -7,7 +7,9 @@ use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\TransactionItemMergeService;
+use Brick\Money\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class TransactionItemMergeServiceTest extends TestCase
@@ -68,7 +70,7 @@ class TransactionItemMergeServiceTest extends TestCase
         $transaction->refresh()->load('transactionItems');
         $this->assertEquals(2, $removed);
         $this->assertCount(1, $transaction->transactionItems);
-        $this->assertEquals(35.00, $transaction->transactionItems->first()->amount);
+        $this->assertMoneyEquals(35.00, $transaction->transactionItems->first()->amount);
     }
 
     /**
@@ -101,7 +103,7 @@ class TransactionItemMergeServiceTest extends TestCase
         $transaction->refresh()->load(['transactionItems', 'transactionItems.tags']);
         $this->assertEquals(1, $removed);
         $this->assertCount(1, $transaction->transactionItems);
-        $this->assertEquals(40.00, $transaction->transactionItems->first()->amount);
+        $this->assertMoneyEquals(40.00, $transaction->transactionItems->first()->amount);
     }
 
     /**
@@ -221,7 +223,7 @@ class TransactionItemMergeServiceTest extends TestCase
 
         $transaction->refresh()->load('transactionItems');
         $this->assertCount(1, $transaction->transactionItems);
-        $this->assertEquals(30.00, $transaction->transactionItems->first()->amount);
+        $this->assertMoneyEquals(30.00, $transaction->transactionItems->first()->amount);
     }
 
     /**
@@ -271,6 +273,70 @@ class TransactionItemMergeServiceTest extends TestCase
         $this->assertCount(2, $transaction->transactionItems);
 
         $mergedItem = $transaction->transactionItems->firstWhere('category_id', $category1->id);
-        $this->assertEquals(15.00, $mergedItem->amount);
+        $this->assertMoneyEquals(15.00, $mergedItem->amount);
+    }
+
+    /**
+     * The bccomp-based sum is exact for values that are notorious for IEEE-754 float
+     * drift (0.1 + 0.2 !== 0.3 in binary float), unlike the old epsilon-tolerant check.
+     */
+    public function test_raw_amount_sum_is_exact_for_float_prone_values(): void
+    {
+        $transaction = $this->createStandardTransaction();
+        $transaction->transactionItems()->delete();
+
+        $category = $this->createCategory();
+        $transaction->transactionItems()->createMany([
+            ['category_id' => $category->id, 'amount' => 0.10, 'comment' => null],
+            ['category_id' => $category->id, 'amount' => 0.20, 'comment' => null],
+        ]);
+        $transaction->refresh()->load('transactionItems');
+
+        $sum = $this->sumRawAmounts($transaction->transactionItems);
+
+        $this->assertSame('0.3000', $sum);
+        $this->assertSame(0, bccomp($sum, '0.3', 4));
+    }
+
+    /**
+     * The bccomp-based comparison correctly rejects a genuine amount mismatch,
+     * preserving the safety guarantee the old epsilon check provided.
+     */
+    public function test_raw_amount_sum_detects_a_genuine_mismatch(): void
+    {
+        $transaction = $this->createStandardTransaction();
+        $transaction->transactionItems()->delete();
+
+        $category = $this->createCategory();
+        $transaction->transactionItems()->createMany([
+            ['category_id' => $category->id, 'amount' => 10.00, 'comment' => null],
+            ['category_id' => $category->id, 'amount' => 20.00, 'comment' => null],
+        ]);
+        $transaction->refresh()->load('transactionItems');
+
+        $fullSum = $this->sumRawAmounts($transaction->transactionItems);
+        $partialSum = $this->sumRawAmounts($transaction->transactionItems->take(1));
+
+        $this->assertNotSame(0, bccomp($fullSum, $partialSum, 4));
+    }
+
+    /**
+     * transaction_items.amount is now a Money instance (MoneyCast); compare its exact
+     * decimal amount rather than relying on PHP's loose float equality.
+     */
+    private function assertMoneyEquals(float $expected, Money $actual): void
+    {
+        $this->assertSame(number_format($expected, 4, '.', ''), (string) $actual->getAmount());
+    }
+
+    /**
+     * Invoke the service's private raw-amount summation helper via reflection.
+     */
+    private function sumRawAmounts(iterable $items): string
+    {
+        $method = new ReflectionMethod(TransactionItemMergeService::class, 'sumRawAmounts');
+        $method->setAccessible(true);
+
+        return $method->invoke($this->service, $items);
     }
 }

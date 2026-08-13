@@ -9,6 +9,8 @@ use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money;
 
 class TransactionService
 {
@@ -105,9 +107,11 @@ class TransactionService
     }
 
     /**
-     * Get the monetary value associated with the cash flow of the transaction
+     * Get the monetary value associated with the cash flow of the transaction, computed
+     * exactly end-to-end (Money) all the way through to Transaction::cashflow_value's
+     * write path - see FR-7.
      */
-    public function getTransactionCashFlow(Transaction $transaction): ?float
+    public function getTransactionCashFlow(Transaction $transaction): ?Money
     {
         if ($transaction->isStandard()) {
             return $this->getStandardConfigCashFlow($transaction);
@@ -118,7 +122,7 @@ class TransactionService
         return null;
     }
 
-    private function getStandardConfigCashFlow(Transaction $transaction): ?float
+    private function getStandardConfigCashFlow(Transaction $transaction): ?Money
     {
         $transaction->loadMissing([
             'config',
@@ -135,13 +139,13 @@ class TransactionService
             return $config->amount_from;
         }
         if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
-            return $config->amount_from * -1;
+            return $config->amount_from->negated();
         }
 
         return null;
     }
 
-    private function getInvestmentConfigCashFlow(Transaction $transaction): ?float
+    private function getInvestmentConfigCashFlow(Transaction $transaction): ?Money
     {
         $transaction->loadMissing([
             'config',
@@ -154,16 +158,39 @@ class TransactionService
             return null;
         }
 
-        if ($transaction->transaction_type->amountMultiplier() !== null) {
-            return $transaction->transaction_type->amountMultiplier()
-                * $config->price
-                * $config->quantity
-                + $config->dividend
-                - $config->tax
-                - $config->commission;
+        $multiplier = $transaction->transaction_type->amountMultiplier();
+
+        if ($multiplier === null) {
+            return null;
         }
 
-        return null;
+        // Build the cash flow from whichever terms are present, exactly (Money/BigDecimal),
+        // treating a missing (nullable) field as no contribution - same as the previous
+        // float expression, where a null operand was implicitly treated as 0.
+        $terms = [];
+
+        if ($config->price !== null && $config->quantity !== null) {
+            $terms[] = $config->price->multipliedBy($config->quantity, RoundingMode::HalfUp)->multipliedBy($multiplier);
+        }
+        if ($config->dividend !== null) {
+            $terms[] = $config->dividend;
+        }
+        if ($config->tax !== null) {
+            $terms[] = $config->tax->negated();
+        }
+        if ($config->commission !== null) {
+            $terms[] = $config->commission->negated();
+        }
+
+        if ($terms === []) {
+            return null;
+        }
+
+        return array_reduce(
+            array_slice($terms, 1),
+            fn (Money $carry, Money $term) => $carry->plus($term),
+            $terms[0]
+        );
     }
 
     /**

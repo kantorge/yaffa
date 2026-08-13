@@ -1,3 +1,5 @@
+import Decimal from 'decimal.js';
+
 /**
  * Build a cache key string from a filter object.
  *
@@ -50,14 +52,14 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
 }
 
 /**
- * Round a number to 2 decimal places with EPSILON correction
- * for IEEE 754 floating-point precision errors.
+ * Round a number to 2 decimal places using exact decimal arithmetic (decimal.js),
+ * avoiding IEEE 754 floating-point precision errors.
  *
  * @param {number} num
  * @returns {number} Rounded value
  */
 export function round2(num) {
-  return Math.round((num + Number.EPSILON) * 100) / 100;
+  return new Decimal(num).toDecimalPlaces(2).toNumber();
 }
 
 /**

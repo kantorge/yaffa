@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Casts\MoneyCast;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -259,7 +260,7 @@ class AccountTest extends TestCase
                     'active' => $account->active,
                     'config_type' => 'account',
                     'config' => [
-                        'opening_balance' => $account->config->opening_balance,
+                        'opening_balance' => MoneyCast::toFloat($account->config->opening_balance),
                         'account_group_id' => $account->config->account_group_id,
                         'currency_id' => $account->config->currency_id,
                     ],

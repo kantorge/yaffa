@@ -132,6 +132,17 @@ export function fromRRuleDate(date) {
     return `${year}-${month}-${day}`;
 }
 
+// Money/quantity model attributes are cast on the backend to Brick\Money/BigDecimal
+// (MoneyCast/DecimalCast) and serialize as decimal strings, not JSON numbers, so
+// precision survives JSON.parse. processTransaction() is the shared point every
+// transaction API response is funneled through before use, so it converts them
+// back to plain JS numbers here - otherwise native `+` on two such fields would
+// string-concatenate instead of add wherever a consumer doesn't defensively wrap
+// a read in Number() itself.
+function toNumberOrNull(value) {
+    return value === null || value === undefined ? value : Number(value);
+}
+
 /**
  * Function to preprocess transaction data returned from the API.
  *
@@ -144,6 +155,28 @@ export function processTransaction(transaction) {
     // Convert ISO date strings to local-timezone Date objects.
     if (transaction.date) {
         transaction.date = parseIsoDate(transaction.date);
+    }
+
+    transaction.cashflow_value = toNumberOrNull(transaction.cashflow_value);
+
+    if (transaction.transaction_items) {
+        transaction.transaction_items.forEach((item) => {
+            item.amount = toNumberOrNull(item.amount);
+            item.amount_in_base = toNumberOrNull(item.amount_in_base);
+        });
+    }
+
+    if (transaction.config) {
+        if (transaction.config_type === 'standard') {
+            transaction.config.amount_from = toNumberOrNull(transaction.config.amount_from);
+            transaction.config.amount_to = toNumberOrNull(transaction.config.amount_to);
+        } else if (transaction.config_type === 'investment') {
+            transaction.config.price = toNumberOrNull(transaction.config.price);
+            transaction.config.quantity = toNumberOrNull(transaction.config.quantity);
+            transaction.config.commission = toNumberOrNull(transaction.config.commission);
+            transaction.config.tax = toNumberOrNull(transaction.config.tax);
+            transaction.config.dividend = toNumberOrNull(transaction.config.dividend);
+        }
     }
 
     // toIsoDateString uses local date components, so year_month is always correct.

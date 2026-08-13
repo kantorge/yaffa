@@ -29,7 +29,7 @@ use JsonSerializable;
  * @property-read bool $schedule
  * @property-read bool $budget
  * @property-read bool $reconciled
- * @property-read float|null $cashflow_value
+ * @property-read \Brick\Money\Money|null $cashflow_value
  * @property-read int|null $currency_id
  * @property-read int $originalId
  * @property-read string $transactionGroup
