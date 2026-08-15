@@ -158,7 +158,9 @@
             {{ __('Range') }}
           </h6>
           <div class="field-grid field-grid-2col">
-            <div :class="{ 'has-error': hasError('start_date') }">
+            <div
+              :class="{ 'has-error': hasError('start_date') || tooManyPeriods }"
+            >
               <label
                 :for="'schedule_start_' + this.$.vnode.key"
                 class="form-label"
@@ -173,6 +175,14 @@
                 :disabled="!allowCustomizationData"
                 required
               />
+              <div class="form-text text-danger" v-if="tooManyPeriods">
+                {{
+                  __(
+                    'This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.',
+                    { count: estimatedPeriodCount },
+                  )
+                }}
+              </div>
             </div>
             <div
               :class="{
@@ -375,6 +385,10 @@
     monthOptions,
     scheduleStartDateParts,
   } from '@/shared/lib/helpers';
+
+  // Mirrors ValidatesRecurrenceRule::MAX_RECURRENCE_PERIODS on the backend - see that
+  // constant's doc comment for why 2000.
+  const MAX_RECURRENCE_PERIODS = 2000;
 
   export default {
     props: {
@@ -592,6 +606,47 @@
         } catch {
           return null;
         }
+      },
+
+      // Client-side mirror of RecurrenceRuleService::estimatePeriodsBetween() on the backend -
+      // the number of periods between start_date and today, at the configured
+      // frequency/interval, is what drives the cost of every later recurrence calculation.
+      // Uses fixed day-per-period averages rather than exact calendar-month/year arithmetic
+      // (unlike the backend's Carbon diffInMonths/diffInYears) since this is a UI aid only; the
+      // backend validation remains the actual source of truth, so a few periods of drift near
+      // the cap doesn't matter.
+      estimatedPeriodCount() {
+        if (!this.schedule.frequency || !this.schedule.start_date) {
+          return 0;
+        }
+
+        const start = toRRuleDate(this.schedule.start_date);
+        if (!start) {
+          return 0;
+        }
+
+        const diffDays = (new Date() - start) / (1000 * 60 * 60 * 24);
+        if (diffDays <= 0) {
+          return 0;
+        }
+
+        const periodDays = {
+          DAILY: 1,
+          WEEKLY: 7,
+          MONTHLY: 30,
+          YEARLY: 365,
+        }[this.schedule.frequency];
+        if (!periodDays) {
+          return 0;
+        }
+
+        const interval = this.schedule.interval || 1;
+
+        return Math.floor(diffDays / (periodDays * interval));
+      },
+
+      tooManyPeriods() {
+        return this.estimatedPeriodCount > MAX_RECURRENCE_PERIODS;
       },
 
       // Client-side mirror of TransactionSchedule::occursOn() on the backend:

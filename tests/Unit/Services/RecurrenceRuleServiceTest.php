@@ -205,4 +205,75 @@ class RecurrenceRuleServiceTest extends TestCase
             Carbon::parse('2024-11-28'),
         ));
     }
+
+    public function test_estimate_periods_between_returns_zero_when_reference_date_is_not_after_start(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertSame(0, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-06-01'),
+            'DAILY',
+            1,
+            Carbon::parse('2024-06-01'),
+        ));
+
+        $this->assertSame(0, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-06-01'),
+            'DAILY',
+            1,
+            Carbon::parse('2024-01-01'),
+        ));
+    }
+
+    public function test_estimate_periods_between_counts_daily_periods_respecting_interval(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertSame(10, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-01-01'),
+            'DAILY',
+            1,
+            Carbon::parse('2024-01-11'),
+        ));
+
+        $this->assertSame(5, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-01-01'),
+            'DAILY',
+            2,
+            Carbon::parse('2024-01-11'),
+        ));
+    }
+
+    public function test_estimate_periods_between_counts_monthly_and_yearly_periods(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertSame(6, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-01-01'),
+            'MONTHLY',
+            1,
+            Carbon::parse('2024-07-01'),
+        ));
+
+        $this->assertSame(3, $service->estimatePeriodsBetween(
+            Carbon::parse('2020-01-01'),
+            'YEARLY',
+            1,
+            Carbon::parse('2023-01-01'),
+        ));
+    }
+
+    public function test_estimate_periods_between_flags_a_pathological_ancient_daily_start_date(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $periods = $service->estimatePeriodsBetween(
+            Carbon::now()->subYears(1000),
+            'DAILY',
+            1,
+            Carbon::now(),
+        );
+
+        $this->assertGreaterThan(2000, $periods);
+    }
 }

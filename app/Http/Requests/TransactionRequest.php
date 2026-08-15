@@ -199,6 +199,7 @@ class TransactionRequest extends FormRequest
                 'schedule_config.start_date' => [
                     'required',
                     'date',
+                    $this->maxRecurrencePeriodsRule('schedule_config.frequency', 'schedule_config.interval'),
                 ],
                 'schedule_config.next_date' => [
                     'nullable',
@@ -242,7 +243,11 @@ class TransactionRequest extends FormRequest
         // Add optional rules for replacing a schedule
         if ($this->input('action') === 'replace') {
             $rules = array_merge($rules, [
-                'original_schedule_config.start_date' => 'required|date',
+                'original_schedule_config.start_date' => [
+                    'required',
+                    'date',
+                    $this->maxRecurrencePeriodsRule('original_schedule_config.frequency', 'original_schedule_config.interval'),
+                ],
                 'original_schedule_config.next_date' => [
                     'nullable',
                     'date',

@@ -31,6 +31,37 @@ class RecurrenceRuleService
      */
     private const int RECURRENCE_VIRTUAL_LIMIT = 100000;
 
+    /**
+     * Cheap analytic estimate of how many recurrence periods fall between $startDate and
+     * $referenceDate (typically "now") - the number of iterations the bounded scans above need
+     * to walk through to resolve an occurrence relative to today, without actually running the
+     * transformer. A by_day/by_month ordinal-weekday rule still yields ~1 occurrence per base
+     * period, so period count (not exact occurrence count) is intentionally used as the proxy.
+     * Returns 0 when $referenceDate is on or before $startDate (nothing to scan yet).
+     */
+    public function estimatePeriodsBetween(
+        Carbon $startDate,
+        string $frequency,
+        int $interval,
+        Carbon $referenceDate,
+    ): int {
+        if ($referenceDate->lessThanOrEqualTo($startDate)) {
+            return 0;
+        }
+
+        $interval = max($interval, 1);
+
+        $periods = match ($frequency) {
+            'DAILY' => $startDate->diffInDays($referenceDate) / $interval,
+            'WEEKLY' => $startDate->diffInDays($referenceDate) / (7 * $interval),
+            'MONTHLY' => $startDate->diffInMonths($referenceDate) / $interval,
+            'YEARLY' => $startDate->diffInYears($referenceDate) / $interval,
+            default => 0,
+        };
+
+        return (int) floor($periods);
+    }
+
     private function buildRule(
         Carbon $startDate,
         string $frequency,

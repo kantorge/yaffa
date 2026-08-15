@@ -277,7 +277,11 @@ class ReportApiController extends Controller implements HasMiddleware
                 $request->user()->end_date
             );
 
-            $budgetCurrency = $budget->currency();
+            // Account-scoped budgets resolve their own currency via the eager-loaded
+            // account.config.currency relation (no extra query); account-agnostic ones would
+            // otherwise re-lazy-load user->baseCurrency() per row, so reuse the value already
+            // computed once above instead.
+            $budgetCurrency = $budget->account_id ? $budget->currency() : $baseCurrency;
             $currency_id = $budgetCurrency !== null ? $budgetCurrency->id : $baseCurrency->id;
 
             foreach ($occurrences as $occurrenceDate) {

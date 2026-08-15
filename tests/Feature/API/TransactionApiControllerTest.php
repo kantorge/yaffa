@@ -1722,6 +1722,33 @@ class TransactionApiControllerTest extends TestCase
         $response->assertJsonValidationErrors(['schedule_config.by_month']);
     }
 
+    /**
+     * Regression guard for the DoS finding fixed in ValidatesRecurrenceRule::
+     * maxRecurrencePeriodsRule(): a DAILY schedule with a start_date far enough in the past spans
+     * thousands of periods, which made every later RecurrenceRuleService call on it measurably
+     * slow (reproduced at ~4s/call for a centuries-old start_date). 10 years of DAILY is ~3650
+     * periods, comfortably over the 2000-period cap.
+     */
+    public function test_store_standard_schedule_with_a_start_date_spanning_too_many_periods_is_rejected(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildCreateScheduledStandardPayload([
+                'schedule_config' => [
+                    'start_date' => now()->subYears(10)->format('Y-m-d'),
+                    'next_date' => now()->format('Y-m-d'),
+                    'frequency' => 'DAILY',
+                    'interval' => 1,
+                ],
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['schedule_config.start_date']);
+    }
+
     public function test_store_standard_schedule_accepts_valid_monthly_nth_weekday_rule(): void
     {
         Sanctum::actingAs($this->user, ['*']);
@@ -1916,6 +1943,33 @@ class TransactionApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJsonValidationErrors(['original_schedule_config.by_month']);
+    }
+
+    /**
+     * Same regression guard as test_store_standard_schedule_with_a_start_date_spanning_too_many_
+     * periods_is_rejected(), for the 'replace' action's original_schedule_config side.
+     */
+    public function test_replace_rejects_original_schedule_spanning_too_many_periods(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $sourceTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildReplaceStandardPayload($sourceTransaction, [
+                'original_schedule_config' => [
+                    'start_date' => now()->subYears(10)->format('Y-m-d'),
+                    'frequency' => 'DAILY',
+                    'interval' => 1,
+                ],
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['original_schedule_config.start_date']);
     }
 
     /**

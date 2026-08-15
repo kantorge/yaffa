@@ -2,6 +2,10 @@
 
 namespace App\Http\Traits;
 
+use App\Services\RecurrenceRuleService;
+use Closure;
+use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 /**
@@ -12,6 +16,59 @@ use Illuminate\Validation\Rule;
  */
 trait ValidatesRecurrenceRule
 {
+    /**
+     * A rule spanning more periods than this makes every RecurrenceRuleService call that
+     * resolves an occurrence relative to "today" (isActive(), getNextInstance(), catch-up)
+     * measurably slow - reproduced at ~4s/call for a DAILY rule with a centuries-old start_date.
+     * 2000 periods comfortably covers realistic long-lived rules (daily for ~5 years, weekly for
+     * ~38 years, monthly for 166 years, yearly effectively unlimited) while keeping every
+     * RecurrenceRuleService call in the tens-of-milliseconds range.
+     */
+    private const int MAX_RECURRENCE_PERIODS = 2000;
+
+    /**
+     * Rejects a start_date whose distance from today, at the given frequency/interval, would
+     * make every later RecurrenceRuleService call on this rule expensive - see
+     * MAX_RECURRENCE_PERIODS. Attached to start_date since that's the field whose value actually
+     * drives the cost; frequency/interval are read from sibling inputs the same way
+     * nextDateOccursOnRule() reads its siblings.
+     */
+    private function maxRecurrencePeriodsRule(string $frequencyField, string $intervalField): Closure
+    {
+        return function ($attribute, $value, $fail) use ($frequencyField, $intervalField) {
+            if (!$value) {
+                return;
+            }
+
+            $frequency = $this->input($frequencyField);
+            if (!$frequency) {
+                return;
+            }
+
+            try {
+                $startDate = Carbon::parse($value);
+            } catch (Exception) {
+                return; // Already caught by the 'date' rule.
+            }
+
+            $interval = (int) ($this->input($intervalField) ?: 1);
+
+            $periods = app(RecurrenceRuleService::class)->estimatePeriodsBetween(
+                $startDate,
+                $frequency,
+                $interval,
+                Carbon::now(),
+            );
+
+            if ($periods > self::MAX_RECURRENCE_PERIODS) {
+                $fail(__(
+                    'This recurrence pattern spans too many periods (:count) to process. Pick a more recent start date or a less frequent recurrence.',
+                    ['count' => $periods]
+                ));
+            }
+        };
+    }
+
     /**
      * Ordinal-weekday BYDAY rule (e.g. "1WE", "-1FR"), only meaningful for
      * MONTHLY/YEARLY frequencies.

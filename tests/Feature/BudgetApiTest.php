@@ -169,6 +169,32 @@ class BudgetApiTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    /**
+     * Regression guard for the DoS finding fixed in ValidatesRecurrenceRule::
+     * maxRecurrencePeriodsRule(): a DAILY budget with a start_date far enough in the past spans
+     * thousands of periods, which made every later RecurrenceRuleService call on it (isActive()
+     * on every create/update) measurably slow (reproduced at ~4s/call for a centuries-old
+     * start_date). 10 years of DAILY is ~3650 periods, comfortably over the 2000-period cap.
+     */
+    public function test_budget_start_date_spanning_too_many_periods_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'DAILY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subYears(10)->toDateString(),
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['start_date']);
+    }
+
     public function test_transaction_type_must_be_withdrawal_or_deposit(): void
     {
         $user = User::factory()->create();

@@ -57,6 +57,7 @@ class BudgetRequest extends FormRequest
             'start_date' => [
                 'required',
                 'date',
+                $this->maxRecurrencePeriodsRule('frequency', 'interval'),
             ],
             'end_date' => [
                 'nullable',
