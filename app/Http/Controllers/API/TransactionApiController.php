@@ -195,8 +195,10 @@ class TransactionApiController extends Controller implements HasMiddleware
             })
             ->get();
 
-        // Return empty collection if categories are required
-        if ($request->has('category_required')) {
+        // Return empty collection if categories are required, or a category filter is active -
+        // investment transactions structurally have no categorized items, so they can never match
+        // a category filter (mirrors the same exclusion in TransactionApiController::findTransactions()).
+        if ($request->has('category_required') || $categories->count() > 0) {
             $investmentTransactions = new Collection();
         } else {
             // Get all investment transactions

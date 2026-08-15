@@ -10,13 +10,15 @@ import 'datatables.net-bs5';
 // Generic helpers
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import * as dataTableHelpers from '@/shared/lib/datatable';
 import { initializeSelect2 } from '@/shared/lib/select2';
-import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+import { initializeBootstrapTooltips, scheduleCadenceText, getArrayParamFromUrl } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 import Swal from 'sweetalert2';
 import { createApp } from 'vue';
 import BudgetForm from '@/reports/components/BudgetForm.vue';
+import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 // Category tree
@@ -99,6 +101,8 @@ function buildBudgetBreakdownRows(rawData) {
                     category_name: row.category_name,
                     account_name: row.account_name,
                     amount: row.amount,
+                    currency: row.currency,
+                    cadence: scheduleCadenceText(row.transaction_schedule),
                     periodDate: periodEntry.date,
                 });
             }
@@ -108,9 +112,34 @@ function buildBudgetBreakdownRows(rawData) {
     return Array.from(byBudgetId.values());
 }
 
+// Same idea as buildBudgetBreakdownRows(), for the schedule-transaction side of the total
+// (ReportApiController::budgetChart()'s scheduleBreakdown).
+function buildScheduleBreakdownRows(rawData) {
+    const byTransactionId = new Map();
+
+    rawData.forEach(function (periodEntry) {
+        (periodEntry.scheduleBreakdown || []).forEach(function (row) {
+            const existing = byTransactionId.get(row.transaction_id);
+
+            if (!existing || periodEntry.date > existing.periodDate) {
+                byTransactionId.set(row.transaction_id, {
+                    transaction_id: row.transaction_id,
+                    category_names: (row.category_names || []).join(', '),
+                    amount: row.amount,
+                    currency: row.currency,
+                    cadence: scheduleCadenceText(row.transaction_schedule),
+                    periodDate: periodEntry.date,
+                });
+            }
+        });
+    });
+
+    return Array.from(byTransactionId.values());
+}
+
 const elementRefreshButton = document.getElementById('reload');
 
-let chart, dateAxis, seriesActual, seriesBudget, seriesMovingAverage, scrollbarX;
+let chart, dateAxis, seriesActual, seriesForecast, seriesBudget, seriesMovingAverage, scrollbarX;
 
 function initChart() {
     if (chart) chart.dispose();
@@ -138,33 +167,91 @@ function initChart() {
     }
     dateAxis.dateFormats.setKey("month", "yyyy MMM");
 
+    // Highlight the current month, mirroring the cash flow chart's own current-month marker.
+    dateAxis.events.on("datavalidated", function (ev) {
+        const axis = ev.target;
+        const now = new Date();
+
+        const range = axis.axisRanges.create();
+        range.date = new Date(now.getFullYear(), now.getMonth(), 1);
+        range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fillOpacity = 0.4;
+        range.grid.strokeOpacity = 0;
+    });
+
     // This is not used later, so it is not assigned to a variable
     chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Consistent color pairing across the 4 series: "Actual" (fact) and "Moving average" share
+    // one color family (blue); "Forecast" and "Budget" - both plan/projection series - share
+    // another (purple), so the chart reads as two pairs rather than four unrelated colors.
+    const colorActual = am4core.color("#2E86C1");
+    const colorMovingAverage = am4core.color("#1B4F72");
+    const colorForecastFill = am4core.color("#b39ddb");
+    const colorForecastStroke = am4core.color("#7e57c2");
 
     seriesActual = chart.series.push(new am4charts.ColumnSeries());
     seriesActual.dataFields.valueY = "actual";
     seriesActual.dataFields.dateX = "date";
     seriesActual.name = __("Actual");
     seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
+    seriesActual.stacked = true;
+    // Set on the series itself (not just columns.template) - the tooltip background derives its
+    // color from the series' own fill/stroke, not from the column template, so setting only the
+    // template leaves the tooltip on the theme's auto-assigned color instead of matching the bars.
+    seriesActual.fill = colorActual;
+    seriesActual.stroke = colorActual;
+    seriesActual.columns.template.fill = colorActual;
+    seriesActual.columns.template.stroke = colorActual;
+    seriesActual.tooltip.getFillFromObject = false;
+    seriesActual.tooltip.background.fill = colorActual;
+
+    // The forecasted value of active scheduled transactions - stacked on top of "Actual" so the
+    // two bars read as "so far + what's still expected this period." Lighter purple fill and a
+    // dashed border distinguish it as a plan/forecast rather than recorded fact.
+    seriesForecast = chart.series.push(new am4charts.ColumnSeries());
+    seriesForecast.dataFields.valueY = "forecast";
+    seriesForecast.dataFields.dateX = "date";
+    seriesForecast.name = __("Forecast");
+    seriesForecast.tooltipText = "[bold]" + __('Forecast') + ":[/] {valueY}";
+    seriesForecast.stacked = true;
+    seriesForecast.fill = colorForecastFill;
+    seriesForecast.stroke = colorForecastStroke;
+    seriesForecast.columns.template.fill = colorForecastFill;
+    seriesForecast.columns.template.stroke = colorForecastStroke;
+    seriesForecast.columns.template.strokeWidth = 1;
+    seriesForecast.columns.template.strokeDasharray = "3,3";
+    seriesForecast.tooltip.getFillFromObject = false;
+    seriesForecast.tooltip.background.fill = colorForecastStroke;
 
     seriesBudget = chart.series.push(new am4charts.LineSeries());
     seriesBudget.strokeWidth = 3;
     seriesBudget.strokeDasharray = "8,4";
+    seriesBudget.fill = colorForecastStroke;
+    seriesBudget.stroke = colorForecastStroke;
     seriesBudget.dataFields.valueY = "budget";
     seriesBudget.dataFields.dateX = "date";
     seriesBudget.name = __("Budget");
     seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
+    seriesBudget.tooltip.getFillFromObject = false;
+    seriesBudget.tooltip.background.fill = colorForecastStroke;
 
     seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
     seriesMovingAverage.strokeWidth = 3;
+    seriesMovingAverage.fill = colorMovingAverage;
+    seriesMovingAverage.stroke = colorMovingAverage;
     seriesMovingAverage.dataFields.valueY = "movingAverage";
     seriesMovingAverage.dataFields.dateX = "date";
     seriesMovingAverage.name = __("Moving average");
     seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
+    seriesMovingAverage.tooltip.getFillFromObject = false;
+    seriesMovingAverage.tooltip.background.fill = colorMovingAverage;
 
     scrollbarX = new am4charts.XYChartScrollbar();
     scrollbarX.series.push(seriesBudget);
     scrollbarX.series.push(seriesActual);
+    scrollbarX.series.push(seriesForecast);
     scrollbarX.series.push(seriesMovingAverage);
     chart.scrollbarX = scrollbarX;
 
@@ -259,9 +346,10 @@ let reloadData = function () {
             // Update the chart
             updateChart(rawData);
 
-            // FR-7: the drill-down table is driven directly by budgetChart()'s own
-            // contributing-rows data (budgetBreakdown) - no separate request.
+            // FR-7: the drill-down tables are driven directly by budgetChart()'s own
+            // contributing-rows data (budgetBreakdown/scheduleBreakdown) - no separate request.
             window.table.clear().rows.add(buildBudgetBreakdownRows(rawData)).draw();
+            window.scheduleTable.clear().rows.add(buildScheduleBreakdownRows(rawData)).draw();
 
             if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
                 const currencyList = data.warnings.currenciesWithoutRates
@@ -305,15 +393,18 @@ function updateChart(rawData) {
                     period: item.date.getFullYear() + ' Q' + (quarter + 1),
                     actual: item.actual,
                     budget: item.budget,
+                    forecast: item.forecast,
                 });
                 return acc;
             }
             if (!existingItem.actual) existingItem.actual = 0;
             if (!existingItem.budget) existingItem.budget = 0;
+            if (!existingItem.forecast) existingItem.forecast = 0;
 
             // At this point all months should be present, so we can safely sum the values
             existingItem.actual += item.actual;
             existingItem.budget += item.budget;
+            existingItem.forecast += item.forecast;
 
             return acc;
         }, []);
@@ -332,6 +423,7 @@ function updateChart(rawData) {
                     period: currentDate.getFullYear() + ' Q' + (Math.floor(currentDate.getMonth() / 3) + 1),
                     actual: 0,
                     budget: 0,
+                    forecast: 0,
                 });
             }
             currentDate.setMonth(currentDate.getMonth() + 3);
@@ -355,15 +447,18 @@ function updateChart(rawData) {
                     period: item.date.getFullYear().toString(),
                     actual: item.actual,
                     budget: item.budget,
+                    forecast: item.forecast,
                 });
                 return acc;
             }
             if (!existingItem.actual) existingItem.actual = 0;
             if (!existingItem.budget) existingItem.budget = 0;
+            if (!existingItem.forecast) existingItem.forecast = 0;
 
             // At this point all months should be present, so we can safely sum the values
             existingItem.actual += item.actual;
             existingItem.budget += item.budget;
+            existingItem.forecast += item.forecast;
 
             return acc;
         }, []);
@@ -381,6 +476,7 @@ function updateChart(rawData) {
                     period: currentDate.getFullYear().toString(),
                     actual: 0,
                     budget: 0,
+                    forecast: 0,
                 });
             }
             currentDate.setFullYear(currentDate.getFullYear() + 1);
@@ -409,6 +505,7 @@ function updateChart(rawData) {
                     period: currentDate.toISOString().slice(0, 7),
                     actual: 0,
                     budget: 0,
+                    forecast: 0,
                 });
             }
             currentDate.setMonth(currentDate.getMonth() + 1);
@@ -444,17 +541,28 @@ document.querySelectorAll('input[name="chart_time_interval"]').forEach(function 
 });
 
 const tableSelector = '#table';
+const scheduleTableSelector = '#scheduleTable';
 
-// Vue app hosting just the Budget edit modal (reused from the schedules report page) - a
-// separate DOM subtree from #table, so unlike schedules.js there's no ordering constraint
-// against DataTables.init().
+// Vue app hosting the Budget edit modal (reused from the schedules report page) and the
+// read-only budget quick-view modal - a separate DOM subtree from #table, so unlike
+// schedules.js there's no ordering constraint against DataTables.init().
 const budgetFormApp = createApp({
     components: {
         BudgetForm,
+        BudgetQuickView,
     },
     methods: {
         showEditBudgetModal(budgetId) {
             this.$refs.budgetFormEdit.show(budgetId);
+        },
+        showBudgetQuickView(budgetId) {
+            fetch(route('api.v1.budgets.show', { budget: budgetId }))
+                .then((response) => (response.ok ? response.json() : null))
+                .then((data) => {
+                    if (data) {
+                        this.$refs.budgetQuickView.show(data);
+                    }
+                });
         },
         onBudgetSaved() {
             toastHelpers.showSuccessToast(__('Budget saved'));
@@ -523,16 +631,22 @@ window.table = $(tableSelector).DataTable({
             title: __('Amount'),
             className: 'dt-nowrap',
             type: 'num',
-            render: function (data, type) {
+            render: function (data, type, row) {
                 if (type === 'display') {
-                    return Number(data).toLocaleString(window.YAFFA.userSettings.locale, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    });
+                    return dataTableHelpers.toFormattedCurrency(
+                        type,
+                        data,
+                        window.YAFFA.userSettings.locale,
+                        row.currency
+                    );
                 }
 
                 return data;
             },
+        },
+        {
+            data: 'cadence',
+            title: __('Cadence'),
         },
         {
             data: 'budget_id',
@@ -541,6 +655,9 @@ window.table = $(tableSelector).DataTable({
             className: 'text-center dt-nowrap',
             render: function (budgetId) {
                 return `
+                    <button class="btn btn-xs btn-success" data-view-budget="${budgetId}" type="button" title="${__('Quick view')}">
+                        <i class="fa fa-fw fa-eye"></i>
+                    </button>
                     <button class="btn btn-xs btn-primary" data-edit-budget="${budgetId}" type="button" title="${__('Edit')}">
                         <i class="fa fa-fw fa-edit"></i>
                     </button>
@@ -567,6 +684,10 @@ window.table = $(tableSelector).DataTable({
     paging: false,
 });
 
+$(tableSelector).on('click', '[data-view-budget]', function () {
+    budgetForm.showBudgetQuickView(Number(this.dataset.viewBudget));
+});
+
 $(tableSelector).on('click', '[data-edit-budget]', function () {
     budgetForm.showEditBudgetModal(Number(this.dataset.editBudget));
 });
@@ -574,6 +695,110 @@ $(tableSelector).on('click', '[data-edit-budget]', function () {
 $(tableSelector).on('click', '[data-delete-budget]', function () {
     deleteBudget(Number(this.dataset.deleteBudget));
 });
+
+function deleteScheduleTransaction(transactionId) {
+    Swal.fire({
+        animation: false,
+        text: __('Are you sure to want to delete this item?'),
+        icon: 'warning',
+        showCancelButton: true,
+        cancelButtonText: __('Cancel'),
+        confirmButtonText: __('Delete'),
+        buttonsStyling: false,
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+        },
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        window.axios.delete(window.route('api.v1.transactions.destroy', { transaction: transactionId }))
+            .then(function () {
+                toastHelpers.showSuccessToast(__('Deleted (#:id)', { id: transactionId }));
+                reloadData();
+            })
+            .catch(function (error) {
+                toastHelpers.showErrorToast(
+                    __('Error deleting (#:id): :error', { id: transactionId, error: error })
+                );
+            });
+    });
+}
+
+// Same idea as the budgets table above, for the schedule-transaction side of the total
+// (ReportApiController::budgetChart()'s scheduleBreakdown). A schedule row has a real linked
+// transaction, so it offers edit/replace/delete (mirroring the schedules report's context
+// menu) rather than the budgets table's view/edit/delete.
+window.scheduleTable = $(scheduleTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
+    data: [],
+    columns: [
+        {
+            data: 'category_names',
+            title: __('Categories'),
+        },
+        {
+            data: 'amount',
+            title: __('Amount'),
+            className: 'dt-nowrap',
+            type: 'num',
+            render: function (data, type, row) {
+                if (type === 'display') {
+                    return dataTableHelpers.toFormattedCurrency(
+                        type,
+                        data,
+                        window.YAFFA.userSettings.locale,
+                        row.currency
+                    );
+                }
+
+                return data;
+            },
+        },
+        {
+            data: 'cadence',
+            title: __('Cadence'),
+        },
+        {
+            data: 'transaction_id',
+            title: __('Actions'),
+            orderable: false,
+            className: 'text-center dt-nowrap',
+            render: function (transactionId) {
+                return `
+                    <a class="btn btn-xs btn-primary" href="${window.route('transaction.open', { transaction: transactionId, action: 'edit', callback: 'back' })}" title="${__('Edit transaction')}">
+                        <i class="fa fa-fw fa-edit"></i>
+                    </a>
+                    <a class="btn btn-xs btn-primary" href="${window.route('transaction.open', { transaction: transactionId, action: 'replace' })}" title="${__('Edit and create new schedule')}">
+                        <i class="fa fa-fw fa-calendar"></i>
+                    </a>
+                    <button class="btn btn-xs btn-danger" data-delete-transaction="${transactionId}" type="button" title="${__('Delete')}">
+                        <i class="fa fa-fw fa-trash"></i>
+                    </button>
+                `;
+            },
+        },
+    ],
+    order: [
+        [0, "asc"]
+    ],
+    deferRender: true,
+    scrollY: '400px',
+    scrollCollapse: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
+});
+
+$(scheduleTableSelector).on('click', '[data-delete-transaction]', function () {
+    deleteScheduleTransaction(Number(this.dataset.deleteTransaction));
+});
+
+// One search field drives both tables (matches the account list page's search pattern/behavior).
+dataTableHelpers.initializeStandardExternalSearch(window.table);
+dataTableHelpers.initializeStandardExternalSearch(window.scheduleTable);
 
 // Initialize an object which checks if preset filters are populated.
 // This is used to trigger initial chart and table content.
@@ -595,7 +820,7 @@ let presetFilters = {
 /** @var {URLSearchParams} searchParams URL search parameters */
 const searchParams = new URLSearchParams(window.location.search);
 /** @var {Array} presetCategories Array of initially selected category IDs */
-const presetCategories = searchParams.getAll('categories[]').map(category => parseInt(category));
+const presetCategories = getArrayParamFromUrl(searchParams, 'categories').map(category => parseInt(category));
 presetCategories.forEach(category => presetFilters.categories[category] = false);
 
 /** @var {number} presetAccount ID of initially selected account */
@@ -653,7 +878,6 @@ $(treeSelector)
                                 default_aggregation: category.default_aggregation,
                                 text: (category.active ? category.name : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>'),
                                 full_name: category.full_name,
-                                icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
                                 state: {
                                     selected: presetCategories.includes(category.id)
                                 }
@@ -663,7 +887,8 @@ $(treeSelector)
                     })
             },
             themes: {
-                dots: false
+                dots: false,
+                icons: false
             }
         },
         plugins: [

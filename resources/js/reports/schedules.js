@@ -463,10 +463,15 @@ table.contextualActions({
     ]
 });
 
-// Category filter tree
+// Category filter tree - a category id in the `categories[]` URL param (the same preset-filter
+// convention used by the budget chart report, see resources/js/reports/budgetchart.js) is
+// pre-checked on load, e.g. when arriving from a category's transaction/budget count link.
+const presetCategories = helpers.getArrayParamFromUrl(new URLSearchParams(window.location.search), 'categories')
+    .map(category => parseInt(category, 10));
+
 dataTableHelpers.categoryTree(categoryTreeSelector, function () {
     table.ajax.reload(null, false);
-});
+}, presetCategories, { syncUrl: true });
 
 document.getElementById('category-tree-all').addEventListener('click', function () {
     $(categoryTreeSelector).jstree('check_all');

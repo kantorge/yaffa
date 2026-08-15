@@ -13,6 +13,14 @@ import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 
+// Matches the categories[]=<id> preset-filter URL convention used by the budget chart and
+// schedules/budgets reports (see resources/js/reports/budgetchart.js).
+function categoryFilteredReportUrl(baseUrl, categoryId) {
+    const url = new URL(baseUrl);
+    url.searchParams.append('categories[]', categoryId);
+    return url.toString();
+}
+
 function recalculateChildrenCounts(categories) {
     const childrenCountByParentId = {};
 
@@ -133,26 +141,36 @@ window.table = $(dataTableSelector).DataTable({
             className: "text-center activeIcon",
         },
         {
-            // Display count of associated transactions
+            // Display count of associated transactions, linking to the find-transactions
+            // report filtered to this category
             data: "transactions_count_regular",
             title: __("Transactions"),
-            render: function(data, type) {
-                if (type === 'display') {
-                    return (data > 0 ? data : __('Never used'));
+            render: function(data, type, row) {
+                if (type !== 'display') {
+                    return data;
                 }
-                return data;
+                if (!(data > 0)) {
+                    return __('Never used');
+                }
+
+                return `<a href="${categoryFilteredReportUrl(route('reports.transactions'), row.id)}">${data}</a>`;
             },
             type: 'num',
         },
         {
-            // Display count of associated budgets (active or inactive)
+            // Display count of associated budgets (active or inactive), linking to the
+            // schedules and budgets report filtered to this category
             data: "budgets_count",
             title: __("Budgets"),
-            render: function(data, type) {
-                if (type === 'display') {
-                    return (data > 0 ? data : __('None'));
+            render: function(data, type, row) {
+                if (type !== 'display') {
+                    return data;
                 }
-                return data;
+                if (!(data > 0)) {
+                    return __('None');
+                }
+
+                return `<a href="${categoryFilteredReportUrl(route('report.schedules'), row.id)}">${data}</a>`;
             },
             type: 'num',
         },

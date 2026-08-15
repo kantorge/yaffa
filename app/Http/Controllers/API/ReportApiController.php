@@ -67,6 +67,8 @@ class ReportApiController extends Controller implements HasMiddleware
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
+        // Already keyed by id - see CurrencyTrait::getAllCurrencies().
+        $allCurrencies = $this->getAllCurrencies($request->user()->id);
 
         // Get all standard transactions with related categories
         if ($accountSelection === 'none') {
@@ -128,6 +130,7 @@ class ReportApiController extends Controller implements HasMiddleware
                     $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => BigDecimal::zero(),
+                        'forecast' => BigDecimal::zero(),
                     ];
                 }
 
@@ -142,8 +145,10 @@ class ReportApiController extends Controller implements HasMiddleware
             }
         }
 
-        // FR-2 #1: schedule-flagged standard transactions' items for the requested categories
-        // (transfers are already structurally excluded, since they never have items).
+        // Forecast series: the projected value of active scheduled standard transactions, kept
+        // separate from the 'budget' series (which is standalone Budget rows only - see below).
+        // Projected from each schedule's own next_date, not start_date, since occurrences before
+        // next_date have either already been recorded as real (actual) transactions or skipped.
         //
         // 'none' scope has no schedule-transaction equivalent post-redesign: account_from_id/
         // account_to_id are NOT NULL on transaction_details_standard now (Phase 7), so a real
@@ -159,7 +164,7 @@ class ReportApiController extends Controller implements HasMiddleware
             $scheduleTransactions = new \Illuminate\Database\Eloquent\Collection();
         } else {
             $scheduleTransactions = Transaction::with([
-                'transactionItems',
+                'transactionItems.category',
                 'transactionSchedule',
             ])
                 ->whereHas('transactionItems', function ($query) use ($categories) {
@@ -168,6 +173,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->where('user_id', $request->user()->id)
                 ->byType('standard')
                 ->isSchedule()
+                ->whereHas('transactionSchedule', fn ($query) => $query->where('active', true))
                 ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->whereHasMorph(
                     'config',
                     TransactionDetailStandard::class,
@@ -188,44 +194,78 @@ class ReportApiController extends Controller implements HasMiddleware
             return $transaction;
         });
 
-        // Get all instances by month
+        // Get all instances by month, from each schedule's next_date onward.
         $scheduleInstances = $this->getScheduleInstances(
             $scheduleTransactions,
-            'start',
+            'next',
             null,
             $request->user()->end_date
         );
 
+        $forecastCompact = [];
         $budgetCompact = [];
         // FR-7: which Budget rows contributed to each period's total, for the drill-down.
         $budgetBreakdown = [];
+        // Same idea as $budgetBreakdown, for the schedule-transaction (forecast) side.
+        $scheduleBreakdown = [];
 
-        $scheduleInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency) {
+        $scheduleInstances->each(function ($transaction) use (&$forecastCompact, &$scheduleBreakdown, $baseCurrency, $categories, $allCurrencies) {
             $period = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
             if (
-                !array_key_exists($period, $budgetCompact)
-                || !array_key_exists($currency_id, $budgetCompact[$period])
+                !array_key_exists($period, $forecastCompact)
+                || !array_key_exists($currency_id, $forecastCompact[$period])
             ) {
-                $budgetCompact[$period][$currency_id] = BigDecimal::zero();
+                $forecastCompact[$period][$currency_id] = BigDecimal::zero();
             }
 
             // FR-8: apply this occurrence's own inflation-compounded multiplier.
-            $budgetCompact[$period][$currency_id] = $budgetCompact[$period][$currency_id]->plus(
-                $transaction->sum
-                    ->multipliedBy($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
-                    ->multipliedBy($transaction->inflationMultiplier)
-            );
+            $amount = $transaction->sum
+                ->multipliedBy($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
+                ->multipliedBy($transaction->inflationMultiplier);
+
+            $forecastCompact[$period][$currency_id] = $forecastCompact[$period][$currency_id]->plus($amount);
+
+            $categoryNames = $transaction->transactionItems
+                ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
+                ->pluck('category.name')
+                ->unique()
+                ->values()
+                ->all();
+
+            $scheduleBreakdown[$period][] = [
+                'transaction_id' => $transaction->originalId,
+                'category_names' => $categoryNames,
+                'amount' => $amount->toFloat(),
+                'currency_id' => $currency_id,
+                'currency' => $allCurrencies->get($currency_id),
+                'transaction_schedule' => [
+                    'frequency' => $transaction->transactionSchedule->frequency,
+                    'interval' => $transaction->transactionSchedule->interval,
+                    'by_day' => $transaction->transactionSchedule->by_day,
+                    'by_month' => $transaction->transactionSchedule->by_month,
+                    'start_date' => $transaction->transactionSchedule->start_date,
+                    'end_date' => $transaction->transactionSchedule->end_date,
+                    'inflation' => $transaction->transactionSchedule->inflation,
+                ],
+            ];
         });
 
         // FR-2 #2: all active standalone Budget rows for the requested categories, regardless of
         // account_id - an account-scoped row and an account-agnostic row for the same category
-        // are both included, by design (see background.md "Account Scoping for Budgets").
-        $budgets = Budget::with(['category', 'account'])
+        // are both included, by design (see background.md "Account Scoping for Budgets") - unless
+        // the report's own account-scope filter narrows this down: 'selected' keeps only that
+        // account's own budgets, 'none' keeps only account-agnostic budgets (mirroring
+        // getScheduledItems()'s identical 'none' => whereNull('account_id') handling of Budget
+        // rows - a budget with no account is exactly what "none" means here, not "no budgets"),
+        // and 'any' (default) keeps the unfiltered FR-2 behaviour.
+        $budgets = Budget::with(['category', 'account.config.currency'])
             ->where('user_id', $request->user()->id)
             ->where('active', true)
             ->whereIn('category_id', $categories->pluck('id'))
+            ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->where('account_id', $accountEntity))
+            ->when($accountSelection === 'none', fn ($query) => $query->whereNull('account_id'))
             ->get();
 
         $inflationCalculator = new InflationCalculator();
@@ -272,6 +312,16 @@ class ReportApiController extends Controller implements HasMiddleware
                     'account_name' => $budget->account?->name,
                     'amount' => $amount->toFloat(),
                     'currency_id' => $currency_id,
+                    'currency' => $allCurrencies->get($currency_id),
+                    'transaction_schedule' => [
+                        'frequency' => $budget->frequency,
+                        'interval' => $budget->interval,
+                        'by_day' => $budget->by_day,
+                        'by_month' => $budget->by_month,
+                        'start_date' => $budget->start_date,
+                        'end_date' => $budget->end_date,
+                        'inflation' => $budget->inflation,
+                    ],
                 ];
             }
         }
@@ -283,6 +333,7 @@ class ReportApiController extends Controller implements HasMiddleware
                     $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => BigDecimal::zero(),
+                        'forecast' => BigDecimal::zero(),
                     ];
                 }
 
@@ -298,6 +349,27 @@ class ReportApiController extends Controller implements HasMiddleware
             }
         }
 
+        foreach ($forecastCompact as $period => $periodData) {
+            $carbonPeriod = Carbon::parse($period);
+            foreach ($periodData as $currency => $value) {
+                if (!array_key_exists($period, $dataByPeriod)) {
+                    $dataByPeriod[$period] = [
+                        'actual' => null,
+                        'budget' => BigDecimal::zero(),
+                        'forecast' => BigDecimal::zero(),
+                    ];
+                }
+
+                $rate = $this->getLatestRateFromMap($currency, $carbonPeriod, $allRatesMap, $baseCurrency->id);
+
+                if ($rate === null && $currency !== $baseCurrency->id) {
+                    $currenciesWithMissingRates[$currency] = true;
+                }
+
+                $dataByPeriod[$period]['forecast'] = $dataByPeriod[$period]['forecast']->plus($value->multipliedBy((string) ($rate ?? 1)));
+            }
+        }
+
         // Transform standard data into amCharts format. Collapse to float only here, at the
         // chart-response boundary: budgetchart.js does plain JS `+` on these values (amCharts
         // consumption), which requires real JSON numbers, not decimal strings.
@@ -307,7 +379,9 @@ class ReportApiController extends Controller implements HasMiddleware
                 'period' => new Carbon($key),
                 'actual' => $value['actual']?->toFloat(),
                 'budget' => $value['budget']->toFloat(),
+                'forecast' => $value['forecast']->toFloat(),
                 'budgetBreakdown' => $budgetBreakdown[$key] ?? [],
+                'scheduleBreakdown' => $scheduleBreakdown[$key] ?? [],
             ];
         }
 

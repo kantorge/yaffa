@@ -707,12 +707,35 @@ export function investmentGroupTree(selector, data, changeHandler) {
  * metadata, URL-param preset restoration), which this plain DataTables-filter use case doesn't
  * need, so it isn't reused here beyond the same jstree init shape.
  *
+ * No per-node icon is set (matches the icon-less investment group tree above) - a generic folder/
+ * checkmark icon on every node added no information beyond the node's own text/active styling.
+ *
  * @param {string} selector
  * @param {function} changeHandler
+ * @param {number[]} [presetSelectedIds]
+ * @param {Object} [options]
+ * @param {boolean} [options.syncUrl] When true, checking/unchecking a node rewrites the page URL's
+ *   `categories[]` query params to match the tree's current selection (pushState), the same
+ *   preset-filter convention budgetchart.js's own category tree already follows.
  *
  * @returns {void}
  */
-export function categoryTree(selector, changeHandler) {
+export function categoryTree(selector, changeHandler, presetSelectedIds = [], options = {}) {
+    const { syncUrl = false } = options;
+
+    function handleChange() {
+        if (syncUrl) {
+            const treeInstance = $(selector).jstree(true);
+            const checked = treeInstance ? treeInstance.get_checked() : [];
+            const url = new URL(window.location.href);
+            url.searchParams.delete('categories[]');
+            checked.forEach(id => url.searchParams.append('categories[]', id));
+            window.history.pushState('', '', url.toString());
+        }
+
+        changeHandler();
+    }
+
     $(selector)
         .jstree({
             core: {
@@ -727,16 +750,17 @@ export function categoryTree(selector, changeHandler) {
                                     text: category.active
                                         ? category.name
                                         : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>',
-                                    icon: (!category.parent_id
-                                        ? 'fa fa-folder text-info'
-                                        : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
+                                    state: {
+                                        selected: presetSelectedIds.includes(category.id)
+                                    },
                                 };
                             });
                             callback.call(this, categories);
                         });
                 },
                 themes: {
-                    dots: false
+                    dots: false,
+                    icons: false
                 }
             },
             plugins: ['checkbox'],
@@ -744,6 +768,11 @@ export function categoryTree(selector, changeHandler) {
                 keep_selected_style: false
             },
         })
-        .on('select_node.jstree', changeHandler)
-        .on('deselect_node.jstree', changeHandler);
+        .on('select_node.jstree', handleChange)
+        .on('deselect_node.jstree', handleChange)
+        .on('ready.jstree', function () {
+            if (presetSelectedIds.length > 0) {
+                handleChange();
+            }
+        });
 }

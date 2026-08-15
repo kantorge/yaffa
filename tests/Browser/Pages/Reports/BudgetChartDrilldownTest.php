@@ -4,6 +4,7 @@ namespace Tests\Browser\Pages\Reports;
 
 use App\Models\Budget;
 use App\Models\Category;
+use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -48,6 +49,23 @@ class BudgetChartDrilldownTest extends DuskTestCase
             'count' => null,
         ]);
 
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->withdrawal_schedule($this->user)
+            ->create();
+        $transaction->transactionItems()->delete();
+        $transaction->transactionItems()->create(['category_id' => $category->id, 'amount' => 111]);
+        $transaction->config()->update(['amount_from' => 111, 'amount_to' => 111]);
+        $transaction->transactionSchedule->update([
+            'start_date' => now()->subDay(),
+            'next_date' => now()->addWeek(),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.budgetchart')
@@ -62,10 +80,25 @@ class BudgetChartDrilldownTest extends DuskTestCase
                     fn () => $browser->script("return Array.isArray(window.chart?.data) && window.chart.data.length > 0;")[0] === true
                 )
                 ->waitFor('#table tbody tr', 10)
+                ->waitFor('#scheduleTable tbody tr', 10)
                 ->screenshot('budgetchart-drilldown')
                 ->assertSeeIn('#table', 'Drilldown Test Category')
                 ->assertSeeIn('#table', 'No account')
-                ->assertSeeIn('#table', '321.00');
+                // Currency-formatted (shared toFormattedCurrency helper), so the exact
+                // decimals/symbol depend on the seeded base currency's own precision settings -
+                // only the numeric value itself is asserted here.
+                ->assertSeeIn('#table', '321')
+                // Cadence column, rendered via rrule.js's toText() (FR-5).
+                ->assertSeeIn('#table', 'month')
+                ->assertSeeIn('#scheduleTable', 'Drilldown Test Category')
+                ->assertSeeIn('#scheduleTable', '111')
+                ->assertSeeIn('#scheduleTable', 'month')
+                ->click('#table [data-view-budget]')
+                ->waitFor('#modal-budget-quickview.show', 10)
+                ->screenshot('budgetchart-quickview')
+                ->assertSeeIn('#modal-budget-quickview', 'Drilldown Test Category')
+                ->assertSeeIn('#modal-budget-quickview', '321')
+                ->assertSeeIn('#modal-budget-quickview', 'every month');
         });
     }
 }

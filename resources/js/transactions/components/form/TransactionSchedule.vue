@@ -20,7 +20,9 @@
     <div :class="bare ? null : 'card-body'">
       <div class="schedule-groups">
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Pattern') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Pattern') }}
+          </h6>
           <div class="mb-3" :class="hasError('frequency') ? 'has-error' : ''">
             <label class="form-label d-block">
               {{ __('Repeats every') }}
@@ -152,10 +154,15 @@
         </div>
 
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Range') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Range') }}
+          </h6>
           <div class="field-grid field-grid-2col">
             <div :class="{ 'has-error': hasError('start_date') }">
-              <label :for="'schedule_start_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_start_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Start date') }}
               </label>
               <input
@@ -168,10 +175,15 @@
               />
             </div>
             <div
-              :class="{ 'has-error': hasError('next_date') || nextDateMismatch }"
+              :class="{
+                'has-error': hasError('next_date') || nextDateMismatch,
+              }"
               v-if="isSchedule"
             >
-              <label :for="'schedule_next_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_next_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Next date') }}
                 <span
                   class="fa"
@@ -236,7 +248,10 @@
               of truth, this is a UI aid only.
             -->
             <div :class="{ 'has-error': hasError('count') }">
-              <label :for="'schedule_count_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_count_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Count') }}
               </label>
               <input
@@ -245,13 +260,18 @@
                 :id="'schedule_count_' + this.$.vnode.key"
                 v-model="countInput"
                 :disabled="!allowCustomizationData"
-                :placeholder="schedule.end_date ? __('Cleared (end date set)') : ''"
+                :placeholder="
+                  schedule.end_date ? __('Cleared (end date set)') : ''
+                "
                 min="1"
                 step="1"
               />
             </div>
             <div :class="{ 'has-error': hasError('end_date') }">
-              <label :for="'schedule_end_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_end_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('End date') }}
                 <i
                   class="fa fa-info-circle text-primary"
@@ -282,9 +302,14 @@
         </div>
 
         <div class="p-3 rounded border" v-if="isSchedule || isBudget">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Behavior') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Behavior') }}
+          </h6>
           <div class="field-grid">
-            <div :class="{ 'has-error': hasError('automatic_recording') }" v-if="isSchedule">
+            <div
+              :class="{ 'has-error': hasError('automatic_recording') }"
+              v-if="isSchedule"
+            >
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -311,12 +336,15 @@
                 </label>
               </div>
             </div>
-            <div :class="{ 'has-error': hasError('inflation') }" v-if="isBudget">
+            <div
+              :class="{ 'has-error': hasError('inflation') }"
+              v-if="isBudget"
+            >
               <label
                 :for="'schedule_inflation_' + this.$.vnode.key"
                 class="form-label"
               >
-                {{ __('Budget inflation') }}
+                {{ __('Yearly inflation') }}
               </label>
               <div class="input-group">
                 <input
@@ -404,7 +432,9 @@
       },
 
       showMonthPicker() {
-        return this.schedule.frequency === 'YEARLY' && this.patternMode === 'weekday';
+        return (
+          this.schedule.frequency === 'YEARLY' && this.patternMode === 'weekday'
+        );
       },
 
       // Distinguishes the two patterns by what actually varies month to month:
@@ -553,9 +583,13 @@
             freq: RRule[this.schedule.frequency],
             interval: this.schedule.interval || 1,
             dtstart: start,
-            until: this.schedule.end_date ? toRRuleDate(this.schedule.end_date) : null,
+            until: this.schedule.end_date
+              ? toRRuleDate(this.schedule.end_date)
+              : null,
             count: this.schedule.count || null,
-            byweekday: this.schedule.by_day ? byDayToRRuleWeekday(this.schedule.by_day) : null,
+            byweekday: this.schedule.by_day
+              ? byDayToRRuleWeekday(this.schedule.by_day)
+              : null,
             bymonth: this.schedule.by_month || null,
           });
         } catch {
@@ -666,7 +700,8 @@
         this.schedule[field] = null;
       },
       stepNextDate(direction) {
-        const target = direction === 'back' ? this.previousOccurrence : this.nextOccurrence;
+        const target =
+          direction === 'back' ? this.previousOccurrence : this.nextOccurrence;
         if (target) {
           this.schedule.next_date = fromRRuleDate(target);
         }

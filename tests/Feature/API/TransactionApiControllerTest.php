@@ -1235,6 +1235,51 @@ class TransactionApiControllerTest extends TestCase
         $this->assertNull($transactions[0]['transaction_schedule']['next_date']);
     }
 
+    /**
+     * Investment transactions structurally have no categorized items, so they can never match a
+     * category filter - mirrors the exclusion already applied in findTransactions(). Without this,
+     * checking a category on the schedules/budgets report would still show every scheduled
+     * investment transaction regardless of category.
+     */
+    public function test_scheduled_items_exclude_investment_transactions_when_category_filter_is_active(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $category = Category::factory()->for($this->user)->create();
+
+        $standardTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+        $standardTransaction->transactionItems()->update(['category_id' => $category->id]);
+
+        InvestmentGroup::factory()->for($this->user)->create();
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(), 'config')
+            ->create();
+        $investment = Investment::factory()->for($this->user)->create();
+
+        Transaction::factory()
+            ->buy_schedule($this->user, [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        // Without a category filter, both the standard schedule and the investment schedule show up.
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertCount(2, $response->json('transactions'));
+
+        // With a category filter, the investment transaction (which can't have categories) drops
+        // out, while the matching standard transaction remains.
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . "?type=schedule&categories[]={$category->id}");
+        $response->assertStatus(Response::HTTP_OK);
+        $transactions = $response->json('transactions');
+        $this->assertCount(1, $transactions);
+        $this->assertSame($standardTransaction->id, $transactions[0]['id']);
+    }
+
     public function test_scheduled_items_exclude_inactive_budgets(): void
     {
         Sanctum::actingAs($this->user);

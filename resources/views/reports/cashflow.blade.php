@@ -37,14 +37,14 @@
                     {{ __('Show on same axis') }}
                     <div>
                         <input type="checkbox" class="btn-check" id="singleAxis" checked autocomplete="off">
-                        <label class="btn btn-sm btn-outline-primary" for="singleAxis" title="{{ __('Show on same axis') }}"><i class="fa fa-lock"></i></label>
+                        <label class="btn btn-sm btn-outline-secondary" for="singleAxis" title="{{ __('Show on same axis') }}"><i class="fa fa-lock"></i></label>
                     </div>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     {{ __('With forecast') }}
                     <div>
                         <input type="checkbox" class="btn-check" id="withForecast" {{ $withForecast ? 'checked' : '' }} autocomplete="off">
-                        <label class="btn btn-sm btn-outline-primary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-calendar"></i></label>
+                        <label class="btn btn-sm btn-outline-secondary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-calendar"></i></label>
                     </div>
                 </li>
             </ul>
@@ -53,20 +53,20 @@
 
     <div class="col-12 col-lg-9" id="cashflowMainContent">
         <div class="left-control-panel-toggle-shell mb-3">
-            <button
-                type="button"
-                id="toggleCashflowLeftControlPanelButton"
-                class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
-                title="{{ __('Collapse left control panel') }}"
-                aria-label="{{ __('Collapse left control panel') }}"
-                aria-expanded="true"
-                aria-controls="cashflowLeftControlPanel cashflowMainContent"
-            >
-                <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
-            </button>
             <div class="card left-control-panel-toggle-card">
-                <div class="card-header left-control-panel-toggle-header">
-                    <div class="card-title">
+                <div class="card-header d-flex align-items-center gap-2 left-control-panel-toggle-header">
+                    <button
+                        type="button"
+                        id="toggleCashflowLeftControlPanelButton"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="{{ __('Collapse left control panel') }}"
+                        aria-label="{{ __('Collapse left control panel') }}"
+                        aria-expanded="true"
+                        aria-controls="cashflowLeftControlPanel cashflowMainContent"
+                    >
+                        <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
+                    </button>
+                    <div class="card-title mb-0">
                         {{ __('Cash flow') }}
                     </div>
                 </div>
@@ -77,7 +77,15 @@
                     <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 <div class="card-body">
-                    <span class="placeholder-glow"><span id="placeholder" class="placeholder col-12 placeholder-lg"></span></span>
+                    <div id="placeholder" class="d-flex align-items-end gap-2 placeholder-glow" style="height:500px;">
+                        <span class="placeholder w-100 h-25"></span>
+                        <span class="placeholder w-100 h-50"></span>
+                        <span class="placeholder w-100 h-75"></span>
+                        <span class="placeholder w-100 h-100"></span>
+                        <span class="placeholder w-100 h-75"></span>
+                        <span class="placeholder w-100 h-50"></span>
+                        <span class="placeholder w-100 h-25"></span>
+                    </div>
                     <div id="chartdiv" class="hidden" style="width:100%; height:500px;"></div>
                 </div>
             </div>

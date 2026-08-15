@@ -54,6 +54,20 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="card-title">
+                            {{ __('Search') }}
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        @include('template.components.tablefilter-sidebar-search')
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-lg-9">
         <div class="card mb-3">
@@ -98,19 +112,26 @@
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-lg-12">
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-title">
-                    {{ __('Standalone budgets contributing to the selected categories') }}
+                    {{ __('Budgets using the selected categories') }}
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body no-datatable-search">
                 <table class="table table-bordered table-hover no-footer" id="table"></table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-title">
+                    {{ __('Scheduled transactions using the selected categories') }}
+                </div>
+            </div>
+            <div class="card-body no-datatable-search">
+                <table class="table table-bordered table-hover no-footer" id="scheduleTable"></table>
             </div>
         </div>
     </div>
@@ -123,6 +144,7 @@
         id="editBudgetModal"
         @budget-saved="onBudgetSaved"
     ></budget-form>
+    <budget-quick-view ref="budgetQuickView" @edit="showEditBudgetModal"></budget-quick-view>
 </div>
 
 @stop

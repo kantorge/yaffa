@@ -157,7 +157,7 @@
     "Budget": "Budżet",
     "Budget Chart": "Wykres budżetu",
     "Budget chart": "Wykres budżetu",
-    "Budget inflation": "Inflacja budżetu",
+    "Yearly inflation": "Inflacja roczne",
     "Budget is calculated using your base currency, unless you define an account with an other currency.": "Budżet jest obliczany przy użyciu Twojej waluty bazowej, chyba że zdefiniujesz konto w innej walucie.",
     "Buy": "Kup",
     "Buying cost": "Koszt zakupu",
@@ -1573,5 +1573,9 @@
     "You are in sandbox mode. You cannot enable two-factor authentication.": "Jesteś w trybie piaskownicy. Nie możesz włączyć uwierzytelniania dwuskładnikowego.",
     "You have not created any API tokens yet.": "Nie utworzono jeszcze żadnych tokenów API.",
     "Your account is protected with an authenticator app.": "Twoje konto jest chronione aplikacją uwierzytelniającą.",
-    "e.g. Budgeting script": "np. skrypt budżetowy"
+    "e.g. Budgeting script": "np. skrypt budżetowy",
+    "Forecast": "Prognoza",
+    "Inflation": "Inflacja",
+    "Planning": "Planowanie",
+    ":rate% per year": ":rate% rocznie"
 }
