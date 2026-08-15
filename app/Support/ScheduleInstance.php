@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use BackedEnum;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
@@ -29,7 +31,7 @@ use JsonSerializable;
  * @property-read bool $schedule
  * @property-read bool $budget
  * @property-read bool $reconciled
- * @property-read \Brick\Money\Money|null $cashflow_value
+ * @property-read Money|null $cashflow_value
  * @property-read int|null $currency_id
  * @property-read int $originalId
  * @property-read string $transactionGroup
@@ -82,6 +84,13 @@ final class ScheduleInstance implements Arrayable, JsonSerializable
                 $array[$key] = $value->value;
             } elseif ($value instanceof DateTimeInterface) {
                 $array[$key] = \Illuminate\Support\Carbon::instance($value)->toJSON();
+            } elseif ($value instanceof Money) {
+                // Matches MoneyCast::serialize() - a decimal string, not the
+                // {"amount":...,"currency":...} shape Money's own JsonSerializable emits.
+                $array[$key] = (string) $value->getAmount();
+            } elseif ($value instanceof BigDecimal) {
+                // Matches DecimalCast::serialize().
+                $array[$key] = (string) $value;
             } elseif ($value instanceof Arrayable) {
                 $array[$key] = $value->toArray();
             }

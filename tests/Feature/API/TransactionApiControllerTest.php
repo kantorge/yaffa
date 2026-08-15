@@ -848,6 +848,319 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
+     * config.quantity rejects a value exceeding transaction_details_investment.quantity's
+     * DECIMAL(14,4) range - the same sibling-field gap config.price's bound closed.
+     */
+    public function test_store_investment_rejects_quantity_exceeding_decimal_14_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 10000000000,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.quantity']);
+    }
+
+    /**
+     * config.commission rejects a value exceeding transaction_details_investment.commission's
+     * DECIMAL(14,4) range.
+     */
+    public function test_store_investment_rejects_commission_exceeding_decimal_14_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 1,
+                'commission' => 10000000000,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.commission']);
+    }
+
+    /**
+     * config.tax rejects a value exceeding transaction_details_investment.tax's
+     * DECIMAL(14,4) range.
+     */
+    public function test_store_investment_rejects_tax_exceeding_decimal_14_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 10000000000,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.tax']);
+    }
+
+    /**
+     * config.dividend rejects a value exceeding transaction_details_investment.dividend's
+     * DECIMAL(12,4) range.
+     */
+    public function test_store_investment_rejects_dividend_exceeding_decimal_12_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'dividend',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'dividend' => 100000000,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.dividend']);
+    }
+
+    /**
+     * config.amount_from/amount_to reject a value exceeding
+     * transaction_details_standard.amount_from/amount_to's DECIMAL(12,4) range.
+     */
+    public function test_store_standard_rejects_amount_exceeding_decimal_12_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $payee = Payee::factory()->withUser($this->user)->create();
+        $category = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+        $payeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $payee->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                'amount_from' => 100000000,
+                'amount_to' => 100000000,
+            ],
+            'items' => [
+                [
+                    'amount' => 10,
+                    'category_id' => $category->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.amount_from', 'config.amount_to']);
+    }
+
+    /**
+     * items.*.amount rejects a value exceeding transaction_items.amount's DECIMAL(12,4) range.
+     */
+    public function test_store_standard_rejects_item_amount_exceeding_decimal_12_4_range(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $payee = Payee::factory()->withUser($this->user)->create();
+        $category = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+        $payeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $payee->id,
+            'active' => true,
+        ]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                [
+                    'amount' => 100000000,
+                    'category_id' => $category->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['items.0.amount']);
+    }
+
+    /**
+     * Closes the TODO: an investment transaction's account and investment must share a
+     * currency, since commission/tax/dividend are cast to the account's currency (MoneyCast)
+     * while price is cast to the investment's - a mismatch would otherwise only surface as an
+     * uncaught MoneyMismatchException from the post-commit TransactionCreated listener.
+     */
+    public function test_store_investment_rejects_account_investment_currency_mismatch(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $investmentCurrency = Currency::factory()->for($this->user)->create();
+        $accountCurrency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $investmentCurrency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()
+            ->for($this->user)
+            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $accountCurrency->id]), 'config')
+            ->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.account_id']);
+    }
+
+    /**
      * Test getting scheduled items returns valid response
      */
     public function test_can_get_scheduled_items(): void

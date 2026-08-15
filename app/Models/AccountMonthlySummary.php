@@ -171,7 +171,15 @@ class AccountMonthlySummary extends Model
      * for a given account. Under the hood, we need to get the quantity up to this date, and the latest
      * known price up to this date.
      */
-    public static function calculateInvestmentValueFact(AccountEntity $accountEntity, Carbon $date): BigDecimal
+    /**
+     * @param  array<string, BigDecimal|null>|null  $priceMap  Optional pre-fetched batch of
+     *                                                          InvestmentService::getLatestPricesBatchExact() results, keyed by
+     *                                                          InvestmentService::priceBatchKey(). When provided, this skips the
+     *                                                          per-investment Investment::find()/getLatestPriceExact() N+1 that a
+     *                                                          caller resolving many months at once (e.g. CalculateAccountMonthlySummary)
+     *                                                          would otherwise pay once per investment per month.
+     */
+    public static function calculateInvestmentValueFact(AccountEntity $accountEntity, Carbon $date, ?array $priceMap = null): BigDecimal
     {
         // New variable cloned from the date as the end of the target month
         $endOfMonth = $date->clone()->endOfMonth();
@@ -197,8 +205,12 @@ class AccountMonthlySummary extends Model
                 continue;
             }
 
-            $investment = Investment::find($item->investment_id);
-            $price = $investmentService->getLatestPriceExact($investment, 'combined', $endOfMonth);
+            if ($priceMap !== null) {
+                $price = $priceMap[$investmentService->priceBatchKey((int) $item->investment_id, $endOfMonth)] ?? null;
+            } else {
+                $investment = Investment::find($item->investment_id);
+                $price = $investmentService->getLatestPriceExact($investment, 'combined', $endOfMonth);
+            }
 
             if ($price === null) {
                 continue;

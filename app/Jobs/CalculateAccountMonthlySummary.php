@@ -429,17 +429,34 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         $lastTransactionDate = Carbon::now()->endOfMonth();
 
         // Loop through all months between the first and last transaction, using the first day of the month
-        $period = $firstTransactionDate->startOfMonth()->monthsUntil($lastTransactionDate);
+        $months = collect($firstTransactionDate->startOfMonth()->monthsUntil($lastTransactionDate))
+            ->map(fn ($month) => Carbon::instance($month));
+
+        // Batch-fetch every investment price this run could need, once, up front - the same
+        // getLatestPricesBatchExact() precedent getInvestmentValueForecastData() already
+        // established - instead of one Investment::find() + price lookup per investment per month.
+        $investmentIds = TransactionDetailInvestment::query()
+            ->where('account_id', $this->accountEntity->id)
+            ->distinct()
+            ->pluck('investment_id');
+        $investments = Investment::whereIn('id', $investmentIds)->with('currency')->get();
+
+        $priceRequests = new Collection();
+        foreach ($months as $month) {
+            $endOfMonth = $month->clone()->endOfMonth();
+            foreach ($investments as $investment) {
+                $priceRequests->push(['investment' => $investment, 'date' => $endOfMonth]);
+            }
+        }
+        $priceMap = $this->investmentService->getLatestPricesBatchExact($priceRequests);
 
         $results = new Collection();
 
-        foreach ($period as $month) {
-            // Create a Carbon instance of the month
-            $carbonMonth = Carbon::instance($month);
-
+        foreach ($months as $carbonMonth) {
             $amount = AccountMonthlySummary::calculateInvestmentValueFact(
                 $this->accountEntity,
-                $carbonMonth
+                $carbonMonth,
+                $priceMap
             );
 
             // Here we intentionally store zero values, as it's valid to have a zero value for a month
