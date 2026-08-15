@@ -170,8 +170,7 @@ class AccountMonthlySummary extends Model
      * This is a helper function to calculate the value of investments owned at the end of a given month,
      * for a given account. Under the hood, we need to get the quantity up to this date, and the latest
      * known price up to this date.
-     */
-    /**
+     *
      * @param  array<string, BigDecimal|null>|null  $priceMap  Optional pre-fetched batch of
      *                                                          InvestmentService::getLatestPricesBatchExact() results, keyed by
      *                                                          InvestmentService::priceBatchKey(). When provided, this skips the

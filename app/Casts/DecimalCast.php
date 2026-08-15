@@ -33,8 +33,8 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
 
         $decimal = $value instanceof BigDecimal ? $value : BigDecimal::of((string) $value);
 
-        // HALF_UP here (rather than the stricter UNNECESSARY used on read) tolerates
-        // over-precise input until FR-6 adds real input clamping in the UI layer.
+        // HALF_UP tolerates over-precise input until FR-6 adds real input clamping in the
+        // UI layer; read (get()) never rounds, since a DB value is already at-scale.
         return [$key => (string) $decimal->toScale($this->scale, RoundingMode::HalfUp)];
     }
 
@@ -46,9 +46,9 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
     /**
      * Unwrap a BigDecimal back to a float, for consumers not yet migrated to exact arithmetic.
      *
-     * ponytail: logs every call, no dedup - fine for locating remaining Phase 4 call
-     * sites, but will be noisy on a hot loop (e.g. CalculateAccountMonthlySummary).
-     * Add per-caller dedup (or drop to Log::debug) if this gets noisy in practice.
+     * Logs every call, no dedup - fine for locating remaining Phase 4 call sites, but will
+     * be noisy on a hot loop (e.g. CalculateAccountMonthlySummary). Add per-caller dedup (or
+     * drop to Log::debug) if this gets noisy in practice.
      */
     public static function toFloat(?BigDecimal $value): ?float
     {
@@ -56,7 +56,7 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $caller = $trace[1] ?? [];
 
-            Log::warning('DecimalCast::toFloat() called by a not-yet-migrated consumer', [
+            Log::debug('DecimalCast::toFloat() called by a not-yet-migrated consumer', [
                 'caller' => isset($caller['class'])
                     ? $caller['class'] . ($caller['type'] ?? '::') . $caller['function']
                     : ($caller['function'] ?? 'unknown'),

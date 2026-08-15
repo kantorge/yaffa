@@ -133,6 +133,7 @@
                         class="form-select"
                         id="currency_id"
                         name="config[currency_id]"
+                        data-original-currency-id="{{ $account['config']['currency_id'] ?? '' }}"
                     >
                         @forelse($allCurrencies as $id => $name)
                             <option

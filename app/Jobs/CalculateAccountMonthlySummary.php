@@ -339,8 +339,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                     && $transaction->config->account_from_id === $this->accountEntity->id
             );
 
-            $amountFrom = $this->sumMoney($transactionsFrom, fn ($transaction) => $transaction->config->amount_from);
-            $amountTo = $this->sumMoney($transactionsTo, fn ($transaction) => $transaction->config->amount_to);
+            $amountFrom = $this->sumMoney($transactionsFrom, fn ($transaction) => $transaction->config?->amount_from);
+            $amountTo = $this->sumMoney($transactionsTo, fn ($transaction) => $transaction->config?->amount_to);
             $amountInvestment = $this->sumMoney($investmentTransactions, fn ($transaction) => $transaction->cashflow_value);
 
             $amount = $amountInvestment->plus($amountTo)->minus($amountFrom);
@@ -369,6 +369,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * as Collection::sum()'s treatment of null.
      *
      * @param  iterable<int, mixed>  $items
+     * @param  Closure(mixed): ?\Brick\Money\Money  $extractor
      */
     private function sumMoney(iterable $items, Closure $extractor): BigDecimal
     {
@@ -393,6 +394,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * sumMoney(), for values (quantities, quantity*price products) that never wrap a Money.
      *
      * @param  iterable<int|string, mixed>  $items
+     * @param  Closure(mixed, int|string): ?BigDecimal  $extractor
      */
     private function sumBigDecimal(iterable $items, Closure $extractor): BigDecimal
     {
@@ -581,8 +583,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 $quantities = $groupedTransactions->map(
                     fn ($group) => $this->sumBigDecimal(
                         $group,
-                        fn ($transaction) => $transaction->config->quantity
-                            ->multipliedBy($transaction->transaction_type->quantityMultiplier())
+                        fn ($transaction) => $transaction->config?->quantity
+                            ?->multipliedBy($transaction->transaction_type->quantityMultiplier())
                     )
                 );
             }

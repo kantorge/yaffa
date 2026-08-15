@@ -143,10 +143,15 @@ class InvestmentApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('view', $investment);
 
+        // investment_id must stay selected (and eager-loaded) so MoneyCast can resolve
+        // price's currency via investment.currency - hidden again below since it isn't
+        // part of this endpoint's response shape.
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
-            ->select(['id', 'date', 'price'])
+            ->select(['id', 'date', 'investment_id', 'price'])
+            ->with('investment.currency')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->makeHidden('investment_id');
 
         // Return data
         return response()->json($prices, Response::HTTP_OK);
@@ -174,6 +179,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
         // Get all prices
         $prices = InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->orderBy('date')
             ->get();
 

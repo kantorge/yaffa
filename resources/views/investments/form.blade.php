@@ -163,6 +163,7 @@
                         class="form-select"
                         id="currency_id"
                         name="currency_id"
+                        data-original-currency-id="{{ $investment['currency_id'] ?? '' }}"
                     >
                         @forelse($allCurrencies as $id => $name)
                             <option

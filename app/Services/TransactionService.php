@@ -11,6 +11,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Brick\Math\RoundingMode;
 use Brick\Money\Money;
+use Illuminate\Support\Facades\Log;
 
 class TransactionService
 {
@@ -184,6 +185,24 @@ class TransactionService
 
         if ($terms === []) {
             return null;
+        }
+
+        // Legacy data: an investment transaction whose account currency no longer matches
+        // its investment's currency (one of the two was changed after this transaction was
+        // recorded - TransactionRequest::accountInvestmentCurrencyMatchRule() blocks this
+        // for new transactions, but can't fix rows that already existed). Money::plus()
+        // would throw MoneyMismatchException combining them - treat this the same as
+        // "cannot compute" (same as a missing operand above) instead of letting the
+        // exception escape.
+        $firstCurrency = $terms[0]->getCurrency();
+        foreach ($terms as $term) {
+            if (! $term->getCurrency()->is($firstCurrency)) {
+                Log::warning('Investment transaction cash flow spans mismatched currencies (legacy data)', [
+                    'transaction_id' => $transaction->id,
+                ]);
+
+                return null;
+            }
         }
 
         return array_reduce(

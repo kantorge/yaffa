@@ -1,5 +1,8 @@
 import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate } from '@/shared/lib/i18n';
-import { getTransactionTypeConfig, parseIsoDate } from '@/shared/lib/helpers';
+import {
+  getTransactionTypeConfig,
+  processTransaction,
+} from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 
 const route = window.route;
@@ -543,23 +546,10 @@ export function initializeQuickViewButton(selector) {
         fetch('/api/v1/transactions/' + this.dataset.id)
             .then(response => response.json())
             .then(function (data) {
-                let transaction = data.transaction;
-
-                // Convert ISO date strings to local-timezone Date objects.
-                if (transaction.date) {
-                    transaction.date = parseIsoDate(transaction.date);
-                }
-                if (transaction.transaction_schedule) {
-                    if (transaction.transaction_schedule.start_date) {
-                        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
-                    }
-                    if (transaction.transaction_schedule.end_date) {
-                        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
-                    }
-                    if (transaction.transaction_schedule.next_date) {
-                        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
-                    }
-                }
+                // Normalizes dates and the decimal-string Money/BigDecimal fields (price,
+                // quantity, amount_from/to, etc.) back to plain JS values - same as every
+                // other consumer of a /api/v1/transactions/* response.
+                let transaction = processTransaction(data.transaction);
 
                 // Emit global event for modal to display
                 let event = new CustomEvent('showTransactionQuickViewModal', {

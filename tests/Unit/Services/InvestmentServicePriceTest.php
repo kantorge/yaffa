@@ -509,9 +509,17 @@ class InvestmentServicePriceTest extends TestCase
 
         $this->assertInstanceOf(BigDecimal::class, $exact);
         $this->assertSame($service->getLatestPrice($investment, 'combined'), $exact->toFloat());
-        $this->assertNull($service->getLatestPriceExact(
-            Investment::factory()->for($user)->withUser($user)->create()
-        ));
+    }
+
+    public function test_get_latest_price_exact_returns_null_when_no_price_exists(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $this->assertNull($service->getLatestPriceExact($investment));
     }
 
     public function test_get_latest_prices_batch_exact_matches_float_variant(): void
@@ -533,6 +541,8 @@ class InvestmentServicePriceTest extends TestCase
 
         $exactResults = $service->getLatestPricesBatchExact($requests);
         $floatResults = $service->getLatestPricesBatch($requests);
+
+        $this->assertCount(2, $floatResults);
 
         foreach ($floatResults as $key => $floatValue) {
             $this->assertInstanceOf(BigDecimal::class, $exactResults[$key]);

@@ -8,6 +8,7 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use InvalidArgumentException;
 
 class TransactionDetailInvestmentFactory extends Factory
 {
@@ -34,6 +35,22 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     private function withUser(User $user, array $configAttributes = []): array
     {
+        if (isset($configAttributes['investment_id'], $configAttributes['account_id'])) {
+            $investment = Investment::findOrFail($configAttributes['investment_id']);
+            $account = AccountEntity::with('config')->findOrFail($configAttributes['account_id']);
+
+            if ($account->config?->currency_id !== $investment->currency_id) {
+                throw new InvalidArgumentException(
+                    'TransactionDetailInvestmentFactory: the given account_id and investment_id use different currencies.'
+                );
+            }
+
+            return [
+                'account_id' => $account->id,
+                'investment_id' => $investment->id,
+            ];
+        }
+
         if (isset($configAttributes['investment_id'])) {
             return $this->withInvestment($user, Investment::findOrFail($configAttributes['investment_id']));
         }

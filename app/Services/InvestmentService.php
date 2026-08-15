@@ -318,6 +318,7 @@ class InvestmentService
     private function getLatestStoredPrice(Investment $investment, ?Carbon $onOrBefore = null): ?InvestmentPrice
     {
         return InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->when($onOrBefore, function ($query) use ($onOrBefore) {
                 $query->where('date', '<=', $onOrBefore);
             })

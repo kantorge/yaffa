@@ -7,6 +7,8 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\User;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -75,9 +77,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                + ($transaction->config->commission ?? 0) + ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                + $this->toFloatOrZero($transaction->config->commission) + $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "- " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -140,9 +142,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                - $this->toFloatOrZero($transaction->config->commission) - $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "+ " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -207,9 +209,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                - $this->toFloatOrZero($transaction->config->commission) - $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "+ " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -229,5 +231,19 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
     private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
     {
         return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');
+    }
+
+    /**
+     * quantity/price/commission/tax/dividend are now DecimalCast/MoneyCast attributes
+     * (BigDecimal/Money), not floats - unwrap to a float for the plain-JS arithmetic
+     * this test embeds into the browser script.
+     */
+    private function toFloatOrZero(BigDecimal|Money|null $value): float
+    {
+        return match (true) {
+            $value === null => 0.0,
+            $value instanceof Money => $value->getAmount()->toFloat(),
+            default => $value->toFloat(),
+        };
     }
 }

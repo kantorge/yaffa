@@ -51,10 +51,13 @@ trait CurrencyTrait
                 ->orderByDesc('month')
                 ->get();
 
-            // Pre-process the $rates collection into a map array
+            // Pre-process the $rates collection into a map array. Kept as the raw decimal
+            // string from the DB (not cast to float) so callers doing Money arithmetic with
+            // it don't inherit float rounding drift; MySQL's AVG(rate) already returns a
+            // DECIMAL string via PDO.
             $allRatesMap = [];
             foreach ($rates as $rate) {
-                $allRatesMap[$rate->from_id][$rate->month] = (float) $rate->rate;
+                $allRatesMap[$rate->from_id][$rate->month] = (string) $rate->rate;
             }
 
             return $allRatesMap;
@@ -159,9 +162,9 @@ trait CurrencyTrait
      * @param Carbon $date The date for which to get the latest rate.
      * @param array $allRatesMap A map of all rates, indexed by currency ID and date.
      * @param int $baseCurrencyId The ID of the base currency, for which we look the rate for.
-     * @return float|null The latest rate for the given currency, or null if not found.
+     * @return string|null The latest rate for the given currency, as a decimal string, or null if not found.
      */
-    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyId): ?float
+    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyId): ?string
     {
         // If the currency is the base currency or not present in the rates map, return null
         if (

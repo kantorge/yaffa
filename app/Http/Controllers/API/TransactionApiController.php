@@ -415,12 +415,15 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Loop through all transactions and add the currency rate to the base currency
         // Also, calculate the amount in the base currency for the transaction and all its items, if applicable
         $transactions->map(function ($transaction) use ($baseCurrency, $allRatesMap) {
-            $transaction->currencyRateToBase = $this->getLatestRateFromMap(
+            // Keep the exact decimal rate for Money arithmetic below; currencyRateToBase
+            // itself stays a plain numeric API field, as it always has been.
+            $exactRate = $this->getLatestRateFromMap(
                 $transaction->currency_id,
                 $transaction->date,
                 $allRatesMap,
                 $baseCurrency->id
-            ) ?? 1;
+            ) ?? '1';
+            $transaction->currencyRateToBase = (float) $exactRate;
 
             // Extend the optional amount_to and amount_from fields in the config
             if ($transaction->config instanceof TransactionDetailStandard) {
@@ -428,21 +431,21 @@ class TransactionApiController extends Controller implements HasMiddleware
                     $transaction->config->amount_to_base = $this->convertToBase(
                         $transaction->config->amount_to,
                         $baseCurrency,
-                        $transaction->currencyRateToBase
+                        $exactRate
                     );
                 }
                 if (! $transaction->config->amount_from->isZero()) {
                     $transaction->config->amount_from_base = $this->convertToBase(
                         $transaction->config->amount_from,
                         $baseCurrency,
-                        $transaction->currencyRateToBase
+                        $exactRate
                     );
                 }
             }
 
             // Extend the amount field in the items
-            $transaction->transactionItems->map(function ($item) use ($transaction, $baseCurrency) {
-                $item->amount_in_base = $this->convertToBase($item->amount, $baseCurrency, $transaction->currencyRateToBase);
+            $transaction->transactionItems->map(function ($item) use ($exactRate, $baseCurrency) {
+                $item->amount_in_base = $this->convertToBase($item->amount, $baseCurrency, $exactRate);
             });
 
             return $transaction;
@@ -462,12 +465,12 @@ class TransactionApiController extends Controller implements HasMiddleware
      * value sits alongside in the response). Reuses the source amount's own scale for the
      * converted value, since no persisted column governs this transient, derived field.
      */
-    private function convertToBase(Money $amount, Currency $baseCurrency, float $rate): string
+    private function convertToBase(Money $amount, Currency $baseCurrency, string $rate): string
     {
         $scale = $amount->getAmount()->getScale();
         $targetCurrency = MoneyCast::currencyFor($baseCurrency, $scale);
 
-        return (string) $amount->convertedTo($targetCurrency, (string) $rate, roundingMode: RoundingMode::HalfUp)->getAmount();
+        return (string) $amount->convertedTo($targetCurrency, $rate, roundingMode: RoundingMode::HalfUp)->getAmount();
     }
 
     /**

@@ -29,6 +29,7 @@
   import ShowStandard from './ShowStandard.vue';
   import ShowInvestment from './ShowInvestment.vue';
   import ActionButtonBar from './ActionButtonBar.vue';
+  import { processTransaction } from '@/shared/lib/helpers';
 
   export default {
     name: 'TransactionDisplayContainer',
@@ -39,8 +40,11 @@
     },
 
     data() {
+      // window.transaction is raw JSON (Laracasts\Utilities\JavaScript::put()) - its
+      // Money/BigDecimal fields are decimal strings, never normalized the way an axios
+      // response is. Route it through the same processTransaction() every other consumer uses.
       return {
-        transaction: Object.assign({}, window.transaction),
+        transaction: processTransaction(JSON.parse(JSON.stringify(window.transaction))),
       };
     },
 

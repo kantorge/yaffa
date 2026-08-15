@@ -33,12 +33,12 @@ class CalculateAccountMonthlySummaryTest extends TestCase
      * the equivalent note on AccountMonthlySummaryTest::assertBalanceFactEquals()) -
      * reintroducing the float-precision bug class this assertion exists to catch.
      */
-    private function assertSummaryAmountEquals(float $expected, Money $actual): void
+    private function assertSummaryAmountEquals(string|int $expected, Money $actual): void
     {
         $scale = $actual->getAmount()->getScale();
 
         $this->assertSame(
-            (string) BigDecimal::of((string) $expected)->toScale($scale),
+            (string) BigDecimal::of($expected)->toScale($scale),
             (string) $actual->getAmount()
         );
     }

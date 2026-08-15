@@ -11,9 +11,11 @@ YAFFA's own domain documentation (`.ai/docs/product-context.md:56`, under "Non-G
 
 Both are symptoms of the same root cause: money and quantity values cross from exact decimal storage into IEEE-754 double-precision float arithmetic, accumulate drift, and get patched with tolerance/rounding at the point where the drift becomes visible, rather than never introduced in the first place.
 
-## Current State
+## Pre-Migration Baseline
 
-### Backend (Laravel/MySQL)
+_The state described below is the baseline this work started from, not the current state of the codebase. It is preserved here as the rationale for [specification.md](specification.md)'s decisions. Several of the specific facts below (the schema, the model casts, the arithmetic, the available dependencies) have since changed as the specification's FRs shipped — see the specification's per-FR "✅ Completed" markers and `UPGRADE.md` for what is actually true today. Code is always the source of truth over this document._
+
+### Backend (Laravel/MySQL), as of the start of this work
 
 - **The schema is decimal-native, but scale is inconsistent for conceptually-identical values.** Every monetary/quantity column is MySQL `DECIMAL` — never float or integer-cents — but `investment_prices.price` is `decimal(20,10)` while `transaction_details_investment.price` is `decimal(10,4)` for the same investment. Confirmed as the current, definitive column state: `database/migrations/2026_01_31_000002_add_unsigned_to_decimal_columns.php` (lines 15-20 and the signed-fallback branch at 77-82) defines both columns as they exist today, and no migration after that date touches either column. The same migration also fixes `transaction_details_investment.quantity` at `decimal(14,4)`, `commission`/`tax` at `decimal(14,4)`, and `dividend` at `decimal(12,4)`.
 - **The ORM boundary throws precision away.** Every money/quantity attribute across 8 models is cast `'float'`, confirmed exactly as follows:

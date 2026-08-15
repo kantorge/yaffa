@@ -52,6 +52,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
         $dateTo = $request->query('date_to');
 
         $query = InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->orderBy('date');
 
         if ($dateFrom) {

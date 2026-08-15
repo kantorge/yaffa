@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -11,6 +10,7 @@ use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\User;
 use App\Services\TransactionService;
+use Brick\Money\Money;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionFactory extends Factory
@@ -46,7 +46,9 @@ class TransactionFactory extends Factory
                             ->raw()
                     );
 
-                $itemsTotal = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
+                $itemsTotal = $transaction->transactionItems->reduce(
+                    fn (?Money $carry, $item) => $carry === null ? $item->amount : $carry->plus($item->amount)
+                );
                 $transaction->config->update([
                     'amount_from' => $itemsTotal,
                     'amount_to' => $itemsTotal,
@@ -76,7 +78,9 @@ class TransactionFactory extends Factory
                             ->raw()
                     );
 
-                $itemsTotal = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
+                $itemsTotal = $transaction->transactionItems->reduce(
+                    fn (?Money $carry, $item) => $carry === null ? $item->amount : $carry->plus($item->amount)
+                );
                 $transaction->config->update([
                     'amount_from' => $itemsTotal,
                     'amount_to' => $itemsTotal,

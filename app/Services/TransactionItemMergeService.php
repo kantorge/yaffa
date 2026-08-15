@@ -92,9 +92,13 @@ class TransactionItemMergeService
         // reintroducing float drift into the very comparison meant to detect it.
         $originalTotal = $this->sumRawAmounts($items);
 
+        // Cache each group's sum here so the merge step below can reuse it instead of
+        // recomputing the same bcmath sum a second time.
+        $groupSums = [];
         $newTotal = '0';
-        foreach ($groups as $groupItems) {
-            $newTotal = bcadd($newTotal, $this->sumRawAmounts(collect($groupItems)), self::AMOUNT_SCALE);
+        foreach ($groups as $key => $groupItems) {
+            $groupSums[$key] = $this->sumRawAmounts(collect($groupItems));
+            $newTotal = bcadd($newTotal, $groupSums[$key], self::AMOUNT_SCALE);
         }
         $newTotal = bcadd($newTotal, $this->sumRawAmounts($nonMergeable), self::AMOUNT_SCALE);
 
@@ -112,8 +116,8 @@ class TransactionItemMergeService
         // Apply changes inside a DB transaction
         $removedCount = 0;
 
-        DB::transaction(function () use ($groups, &$removedCount): void {
-            foreach ($groups as $groupItems) {
+        DB::transaction(function () use ($groups, $groupSums, &$removedCount): void {
+            foreach ($groups as $key => $groupItems) {
                 if (count($groupItems) <= 1) {
                     continue;
                 }
@@ -121,7 +125,7 @@ class TransactionItemMergeService
                 // Keep the first item and update its amount, reusing the same exact
                 // bcmath sum already used to validate amount preservation above.
                 $keepItem = $groupItems[0];
-                $keepItem->amount = $this->sumRawAmounts(collect($groupItems));
+                $keepItem->amount = $groupSums[$key];
                 $keepItem->save();
 
                 // Delete the rest (detach tags first to avoid FK violations)
