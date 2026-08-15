@@ -25,6 +25,24 @@ Neither feature requires any action to upgrade, and neither is enabled by defaul
 - **Exception:** if you previously used `php artisan tinker` (or similar direct DB/console access) to manually call `$user->createToken(...)` — an unsupported, undocumented path that happened to work because the underlying Sanctum table already existed — that token now has its `abilities` enforced like any other. Revoke it and re-create it from `/user/settings` so its scope matches what you actually intend to grant.
 - New environment variables, both optional (see `.env.example` for defaults): `API_TOKEN_MAX_LIFETIME_DAYS` (maximum lifetime, in days, selectable when creating a token — default `365`) and `SCRAMBLE_PROD_AUTH` (controls who can view the auto-generated API docs at `/docs/api` outside the `local` environment — default `none`, i.e. hidden).
 
+### API Response Precision (Decimal String Wire Format)
+
+This release replaces float-based money/quantity arithmetic with exact decimal arithmetic (`brick/math`/`brick/money`) across transactions and investments, to eliminate float-precision drift in split/allocation totals, investment valuations, and monthly summary balances. As part of this, several `/api/v1/*` fields now serialize as **decimal strings instead of JSON numbers**:
+
+- `transaction_items[].amount`
+- `config.amount_from` / `config.amount_to`, and their computed `amount_from_base` / `amount_to_base` / `amount_in_base` counterparts (standard transactions)
+- `config.price` / `config.commission` / `config.tax` / `config.dividend` / `config.quantity` (investment transactions)
+- `investment_prices[].price`
+- `accounts[].opening_balance`
+- `currency_rates[].rate`
+
+**Action required if you have a custom API integration**: parse these fields as strings (e.g. into a decimal type) rather than assuming a JSON number. The bundled frontend already expects this format, so no action is needed there. Report endpoints (`/api/v1/reports/*`) are unaffected — they still return JSON numbers, since their aggregates are only converted to exact decimals internally and collapsed back to a float at the response boundary.
+
+Two more precision-related changes, transparent to a normal upgrade:
+
+- `transaction_details_investment.price` is widened from `DECIMAL(10,4)` to `DECIMAL(20,10)` by a new migration, matching `investment_prices.price`'s existing scale. This runs automatically with the rest of the migrations and is non-destructive.
+- `ext-bcmath` is now a required PHP extension (declared in `composer.json`). It's already present in the Sail dev image; if you run PHP outside Sail/Docker, confirm it's compiled in before upgrading (`php -m | grep bcmath`) — it wasn't previously listed among YAFFA's required extensions.
+
 ### Docker users switching from `mysql/mysql-server:8.0` to `mysql:8.0`
 
 If the updated `docker-compose.yml` changes the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, review the Docker notes in the 3.x upgrade section below before restarting the stack.
