@@ -143,5 +143,10 @@
     id="editBudgetModal"
     @budget-saved="onBudgetSaved"
 ></budget-form>
+
+<budget-quick-view
+    ref="budgetQuickView"
+    @edit="showEditBudgetModal"
+></budget-quick-view>
 </div>
 @stop

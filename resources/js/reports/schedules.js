@@ -10,6 +10,7 @@ import * as toastHelpers from '@/shared/lib/toast';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
 import BudgetForm from '@/reports/components/BudgetForm.vue';
+import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
 import { createApp } from 'vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
@@ -124,6 +125,7 @@ const vueApp = createApp({
     components: {
         OnboardingCard,
         BudgetForm,
+        BudgetQuickView,
     },
     methods: {
         showNewBudgetModal() {
@@ -131,6 +133,15 @@ const vueApp = createApp({
         },
         showEditBudgetModal(budgetId) {
             this.$refs.budgetFormEdit.show(budgetId);
+        },
+        showBudgetQuickView(budgetId) {
+            fetch(route('api.v1.budgets.show', { budget: budgetId }))
+                .then((response) => (response.ok ? response.json() : null))
+                .then((data) => {
+                    if (data) {
+                        this.$refs.budgetQuickView.show(data);
+                    }
+                });
         },
         onBudgetSaved() {
             toastHelpers.showSuccessToast(__('Budget saved'));
@@ -333,6 +344,24 @@ table.contextualActions({
         },
         {
             type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('View budget'),
+            iconClass: 'fa fa-eye',
+            contextMenuClasses: ['text-success'],
+            action: function (row) {
+                app.showBudgetQuickView(row[0].id);
+            },
+            isHidden: function (row) {
+                return row.row_type !== 'budget';
+            }
+        },
+        {
+            type: 'divider',
+            isHidden: function (row) {
+                return row.row_type !== 'budget';
+            }
         },
         {
             type: 'option',
