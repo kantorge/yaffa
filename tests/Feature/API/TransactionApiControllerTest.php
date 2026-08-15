@@ -56,7 +56,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_get_transaction_details(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -89,7 +89,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_access_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -106,7 +106,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_reconcile_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -128,7 +128,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_unreconcile_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -152,7 +152,7 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(
             route('api.v1.transactions.update-standard', $transaction),
@@ -178,7 +178,7 @@ class TransactionApiControllerTest extends TestCase
             ->buy($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(
             route('api.v1.transactions.update-investment', $transaction),
@@ -203,7 +203,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_reconcile_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -225,7 +225,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_delete_own_transaction(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -251,7 +251,7 @@ class TransactionApiControllerTest extends TestCase
     public function test_cannot_delete_other_users_transaction(): void
     {
         $otherUser = User::factory()->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -275,7 +275,7 @@ class TransactionApiControllerTest extends TestCase
             ->create(['user_id' => $this->user->id]);
         $originalNextDate = $transaction->transactionSchedule->next_date;
 
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $response = $this->patchJson(route('api.v1.transactions.skip', $transaction));
 
@@ -289,7 +289,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_source_transaction_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $sourceTransaction = Transaction::factory()
@@ -393,7 +393,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_enter_without_catch_up_skips_only_one_instance(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -428,7 +428,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_enter_with_catch_up_advances_to_today_or_later(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -461,7 +461,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_enter_with_catch_up_deactivates_exhausted_schedule(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -494,7 +494,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_enter_dispatches_transaction_updated_event_regardless_of_catch_up(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -530,7 +530,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_investment_enter_with_catch_up_advances_schedule(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         // Pre-create a matching account/investment/currency so buy_schedule()'s internal
         // TransactionDetailInvestmentFactory::withUser() finds them and reuses them at
@@ -592,7 +592,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_category_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $foreignCategory = Category::factory()->create([
@@ -646,7 +646,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_rejects_other_users_account_entity_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $foreignAccount = Account::factory()->withUser($otherUser)->create();
@@ -695,7 +695,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_investment_rejects_other_users_investment_id(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
         $currency = Currency::factory()->for($otherUser)->create();
@@ -743,7 +743,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_can_get_scheduled_items(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         // Create a scheduled transaction
         Transaction::factory()
@@ -769,7 +769,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_get_scheduled_items_returns_empty_when_category_required_but_not_provided(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?category_required=1');
 
@@ -779,7 +779,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_updates_category_learning(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -885,7 +885,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_resets_usage_when_category_changes(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -961,7 +961,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_finalization_respects_dont_learn_flag(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $payee = Payee::factory()->withUser($this->user)->create();
@@ -1037,7 +1037,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_investment_finalization_does_not_require_items_array(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = Account::factory()->withUser($this->user)->create();
         $currency = $this->user->currencies()->first() ?: Currency::factory()->for($this->user)->create();
@@ -1104,6 +1104,7 @@ class TransactionApiControllerTest extends TestCase
     private function buildCreateScheduledStandardPayload(array $overrides = []): array
     {
         $entities = $this->createStandardEntities();
+        $today = now()->format('Y-m-d');
 
         return array_merge([
             'action' => 'create',
@@ -1126,8 +1127,8 @@ class TransactionApiControllerTest extends TestCase
                 ],
             ],
             'schedule_config' => [
-                'start_date' => now()->format('Y-m-d'),
-                'next_date' => now()->format('Y-m-d'),
+                'start_date' => $today,
+                'next_date' => $today,
                 'frequency' => 'MONTHLY',
                 'interval' => 1,
             ],
@@ -1136,7 +1137,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_rejects_by_day_with_incompatible_frequency(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1157,7 +1158,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_rejects_yearly_by_day_without_by_month(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1178,7 +1179,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_rejects_yearly_by_month_without_by_day(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1199,7 +1200,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_accepts_valid_monthly_nth_weekday_rule(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1230,7 +1231,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_accepts_valid_yearly_weekday_and_month_rule(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1260,7 +1261,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_rejects_next_date_that_is_not_a_rule_occurrence(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         // 2026-01-01 is a Thursday, not the first Wednesday of January 2026 -
         // next_date must be a genuine occurrence of the configured rule, not
@@ -1284,7 +1285,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_accepts_next_date_that_is_a_rule_occurrence(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson(
             route('api.v1.transactions.store-standard'),
@@ -1304,7 +1305,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_store_standard_schedule_rejects_next_date_misaligned_with_plain_interval(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         // No by_day involved: the same next_date-must-be-a-real-occurrence check
         // applies to plain frequency/interval schedules, since next_date is
@@ -1347,7 +1348,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_replace_rejects_original_schedule_by_day_with_incompatible_frequency(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -1371,7 +1372,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_replace_rejects_yearly_original_schedule_missing_by_month(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)
@@ -1401,7 +1402,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_replace_rewrites_original_schedule_pattern(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $sourceTransaction = Transaction::factory()
             ->withdrawal_schedule($this->user)

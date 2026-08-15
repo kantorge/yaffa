@@ -32,7 +32,7 @@ class PayeeApiControllerTest extends TestCase
             'active' => true,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.payees.category-suggestions.accept', [
             'accountEntity' => $payeeEntity->id,

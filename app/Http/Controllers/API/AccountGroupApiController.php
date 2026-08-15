@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountGroup;
@@ -26,19 +27,19 @@ class AccountGroupApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:write', only: [
+                'destroy',
+            ]),
         ];
     }
 
     /**
+     * Delete an account group
+     *
      * @throws AuthorizationException
      */
     public function destroy(AccountGroup $accountGroup): JsonResponse
     {
-        /**
-         * @delete("/api/v1/account-groups/{accountGroup}")
-         * @name("api.v1.account-groups.destroy")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('delete', $accountGroup);
         $result = $this->accountGroupService->delete($accountGroup);
 

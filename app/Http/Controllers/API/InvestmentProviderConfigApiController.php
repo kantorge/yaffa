@@ -11,6 +11,7 @@ use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,6 +22,11 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         return [
             'auth:sanctum',
             'verified',
+            // Holds investment-price-provider API keys, so every action - including reads -
+            // requires "settings".
+            new Middleware('abilities:settings', only: [
+                'index', 'show', 'update', 'test', 'destroy',
+            ]),
         ];
     }
 
@@ -28,6 +34,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
     {
     }
 
+    /**
+     * List investment provider configs
+     */
     public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', InvestmentProviderConfig::class);
@@ -43,6 +52,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         );
     }
 
+    /**
+     * Get an investment provider config
+     */
     public function show(Request $request, string $providerKey): JsonResponse
     {
         if (! $this->providerRegistry->has($providerKey)) {
@@ -76,6 +88,13 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         );
     }
 
+    /**
+     * Save an investment provider config
+     *
+     * Creates the configuration for a provider if none exists yet, or updates
+     * it otherwise. Incoming credentials are merged with previously stored
+     * ones so omitted fields are not accidentally cleared.
+     */
     public function update(InvestmentProviderConfigRequest $request, string $providerKey): JsonResponse
     {
         $existing = $request->user()
@@ -107,7 +126,6 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
 
         if (! $existing) {
             $config = InvestmentProviderConfig::create([
-                'user_id' => $request->user()->id,
                 'provider_key' => $providerKey,
                 ...$attributes,
             ]);
@@ -126,6 +144,12 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         );
     }
 
+    /**
+     * Test an investment provider config
+     *
+     * Validates the effective credentials (stored plus any provided in the
+     * request) against the provider, optionally persisting them if valid.
+     */
     public function test(InvestmentProviderConfigRequest $request, string $providerKey): JsonResponse
     {
         if (! $this->providerRegistry->has($providerKey)) {
@@ -206,6 +230,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Delete an investment provider config
+     */
     public function destroy(Request $request, string $providerKey): JsonResponse
     {
         if (! $this->providerRegistry->has($providerKey)) {

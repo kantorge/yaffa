@@ -58,5 +58,9 @@
         "sweetalert2": "^11.22.4",
         "vform": "^2.1.2",
         "vue": "^3.5.20"
+    },
+    "allowScripts": {
+        "@parcel/watcher@2.5.6": true,
+        "core-js@3.49.0": true
     }
 }

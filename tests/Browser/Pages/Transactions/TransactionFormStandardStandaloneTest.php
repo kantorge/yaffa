@@ -50,9 +50,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Wait for the form to load
             ->waitFor(self::MAIN_FORM_SELECTOR)
             // Select account from, random from dropdown
-            ->select2('#account_from', null, 10)
+            ->select2('#account_from', null, 20)
             // Select payeee, random from dropdown
-            ->select2('#account_to', null, 10)
+            ->select2('#account_to', null, 20)
             // Add amount
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
@@ -229,7 +229,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -260,7 +260,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Set the first amount to the same amount as the transaction
                 ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -287,7 +287,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Validate that the amount to field is not visible
                 ->assertMissing('#transaction_amount_to')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -323,7 +323,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#transactionFormStandard')
                 ->waitForTextIn('@label-transaction-exchange-rate', '1.0000')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -368,7 +368,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="create"]')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 ->assertRouteIs('transaction.create', ['type' => 'standard']);
         });
     }
@@ -379,7 +379,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="clone"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -401,7 +401,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="show"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -423,7 +423,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="returnToPrimaryAccount"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -468,7 +468,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Submit form
                 ->click('button[value="returnToSecondaryAccount"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             $browser->assertRouteIs(
                 'account-entity.show',
@@ -483,7 +483,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="returnToDashboard"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 ->assertRouteIs('home');
         });
     }
@@ -495,7 +495,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->visitRoute('tags.index');
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="back"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15)
                 ->assertRouteIs('tags.index');
         });
     }
@@ -559,7 +559,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('button[value="show"]')
 
                 // Submit the form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -735,12 +735,13 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitFor('@card-transaction-schedule');
 
             // Set the schedule start date to today
-            $this->setDateInput($browser, '#schedule_start_current', now()->format('Y-m-d'));
+            $today = now()->format('Y-m-d');
+            $this->setDateInput($browser, '#schedule_start_current', $today);
 
             $browser
                 // Confirm the Vue-side schedule state actually picked up the input
                 // before submitting, not just that the DOM input has the value
-                ->assertInputValue('#schedule_start_current', now()->format('Y-m-d'))
+                ->assertInputValue('#schedule_start_current', $today)
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
@@ -748,7 +749,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                     $buttonBar->click('button[value="show"]');
                 }, 10)
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -756,7 +757,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Confirm the schedule was actually persisted with the date set via
             // setDateInput above, not left at whatever the form initialized with
             $this->assertEquals(
-                now()->format('Y-m-d'),
+                $today,
                 $transaction->transactionSchedule->start_date->format('Y-m-d')
             );
 
@@ -788,24 +789,21 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $this->fillStandardWithdrawalForm($browser);
 
             // Set the date to the first day of the previous month
-            $this->setDateInput(
-                $browser,
-                '#standard-date',
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d')
-            );
+            $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
+            $this->setDateInput($browser, '#standard-date', $previousMonthStart);
 
             $browser
                 // Select callback to show transaction
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
+                $previousMonthStart,
                 $transaction->date->format('Y-m-d')
             );
         });
@@ -917,7 +915,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Make sure that the schedule end date is empty, by clearing the input
                 ->clear('#schedule_end_current')
                 // The default settings are otherwise fine, so we can submit the form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 15);
 
             // Get the latest transaction from the database
             $newTransaction = Transaction::orderByDesc('id')->with('transactionSchedule')->first();

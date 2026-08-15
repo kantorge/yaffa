@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Enums\TransactionType as TransactionTypeEnum;
@@ -32,19 +33,24 @@ class PayeeApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
+            ]),
+            new Middleware('abilities:write', only: [
+                'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
+                'storePayee', 'updatePayee',
+            ]),
         ];
     }
 
     /**
-     * Get a list of payees with optional search and contextual filters.
+     * List payees
+     *
+     * Returns payees matching a search term, or ranked by usage for a given
+     * account and transaction type/direction when no search term is given.
      */
     public function getList(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/payees")
-         * @name("api.v1.payees.index")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         if ($request->query('q')) {
             $payees = $request->user()
                 ->payees()
@@ -121,15 +127,10 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the default category suggestion for payees.
+     * Get default payee category suggestion
      */
     public function getPayeeDefaultSuggestion(Request $request): Response
     {
-        /**
-         * @get("/api/v1/payees/category-suggestions/default")
-         * @name("api.v1.payees.category-suggestions.default")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $payeeSuggestion = $this->payeeCategoryStatsService->getDefaultSuggestion($request->user());
 
         if ($payeeSuggestion === null) {
@@ -140,15 +141,12 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Accept payee category suggestion
+     *
      * @throws AuthorizationException
      */
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
-        /**
-         * @post("/api/v1/payees/{accountEntity}/category-suggestions/accept/{category}")
-         * @name("api.v1.payees.category-suggestions.accept")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $accountEntity);
         Gate::authorize('view', $category);
 
@@ -164,15 +162,12 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Dismiss payee category suggestion
+     *
      * @throws AuthorizationException
      */
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
-        /**
-         * @post("/api/v1/payees/{accountEntity}/category-suggestions/dismiss")
-         * @name("api.v1.payees.category-suggestions.dismiss")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
@@ -187,15 +182,12 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Create a new payee.
+     * Create a payee
+     *
+     * @throws AuthorizationException
      */
     public function storePayee(AccountEntityRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/payees")
-         * @name("api.v1.payees.store")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('create', AccountEntity::class);
 
         $newPayee = $this->payeePersistenceService->store($request);
@@ -205,16 +197,13 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get existing payees that are similar to the given name.
-     * Optionally limit search to active or inactive payees.
+     * Find similar payees
+     *
+     * Returns existing payees ranked by name similarity to the given query.
+     * Optionally limit the search to active or inactive payees.
      */
     public function getSimilarPayees(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/payees/similar")
-         * @name("api.v1.payees.similar")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $query = Str::lower($request->query('query'));
         $withActive = $request->query('withActive');
 
@@ -248,14 +237,12 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the payee entity and main attributes for the given id
+     * Get a payee
+     *
+     * @throws AuthorizationException
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @get("/api/assets/payee/{accountEntity}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         Gate::authorize('view', $accountEntity);
 
         $accountEntity->load($this->payeeResponseRelations());
@@ -268,17 +255,12 @@ class PayeeApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing payee
+     * Update a payee
      *
      * @throws AuthorizationException
      */
     public function updatePayee(AccountEntityRequest $request, AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @patch('/api/v1/payees/{accountEntity}')
-         * @name('api.v1.payees.update')
-         * @middlewares('api', 'auth:sanctum', 'verified')
-         */
         Gate::authorize('update', $accountEntity);
 
         if (! $accountEntity->isPayee()) {

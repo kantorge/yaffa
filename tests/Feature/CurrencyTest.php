@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Currency;
 use App\Models\User;
+use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -166,5 +167,30 @@ class CurrencyTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
+    }
+
+    public function test_factory_deduplicates_for_authenticated_user_with_explicit_null_user_id(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $taken = CurrencyData::getCurrencies()[0];
+
+        Currency::factory()->for($user)->create([
+            'name' => $taken['name'],
+            'iso_code' => $taken['iso_code'],
+        ]);
+
+        // user_id is explicitly null, not omitted - the factory must still resolve
+        // the authenticated user as the owner for its collision check, since the
+        // model's creating hook will fill user_id from auth() on save anyway.
+        $currency = Currency::factory()->make([
+            'name' => $taken['name'],
+            'iso_code' => $taken['iso_code'],
+            'user_id' => null,
+        ]);
+
+        $this->assertNotSame($taken['iso_code'], $currency->iso_code);
     }
 }

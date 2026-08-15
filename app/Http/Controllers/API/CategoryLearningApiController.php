@@ -12,6 +12,8 @@ use App\Services\CategoryLearningManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +28,20 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'index', 'show',
+            ]),
+            new Middleware('abilities:write', only: [
+                'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
+            ]),
         ];
     }
 
+    /**
+     * List category learnings
+     *
+     * @throws AuthorizationException
+     */
     public function index(CategoryLearningRequest $request): JsonResponse
     {
         /** @var User $user */
@@ -41,6 +54,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return response()->json(CategoryLearningResource::collection($items)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Get a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function show(Request $request, CategoryLearning $categoryLearning): JsonResponse
     {
         /** @var User $user */
@@ -58,6 +76,14 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Create a category learning
+     *
+     * Creates a new learned payee-to-category mapping, or updates the existing one
+     * if a matching mapping already exists for the user.
+     *
+     * @throws AuthorizationException
+     */
     public function store(CategoryLearningRequest $request): JsonResponse
     {
         /** @var User $user */
@@ -73,6 +99,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Update a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function update(CategoryLearningRequest $request, CategoryLearning $categoryLearning): JsonResponse
     {
         Gate::authorize('update', $categoryLearning);
@@ -82,6 +113,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Deactivate a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function deactivate(CategoryLearning $categoryLearning): JsonResponse
     {
         Gate::authorize('update', $categoryLearning);
@@ -91,6 +127,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Activate a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function activate(CategoryLearning $categoryLearning): JsonResponse
     {
         Gate::authorize('update', $categoryLearning);
@@ -100,6 +141,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Delete a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function destroy(CategoryLearning $categoryLearning): JsonResponse
     {
         Gate::authorize('delete', $categoryLearning);
@@ -111,6 +157,13 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Merge two category learnings
+     *
+     * Merges the source learning into the target learning and removes the source.
+     *
+     * @throws AuthorizationException
+     */
     public function merge(CategoryLearningMergeRequest $request): JsonResponse
     {
         $validated = $request->validated();

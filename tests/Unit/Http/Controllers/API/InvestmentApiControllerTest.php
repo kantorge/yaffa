@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class InvestmentApiControllerTest extends TestCase
@@ -202,6 +203,43 @@ class InvestmentApiControllerTest extends TestCase
         $response->assertJsonPath('0.isin', 'US0378331005');
     }
 
+    public function test_investment_list_search_treats_zero_as_a_real_search_value(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createForUser($user, Currency::class);
+
+        Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create([
+                'active' => true,
+                'name' => 'Zero Symbol Investment',
+                'symbol' => '0',
+            ]);
+
+        Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create([
+                'active' => true,
+                'name' => 'Unrelated Investment',
+                'symbol' => 'MSFT',
+            ]);
+
+        // 'query' alias with a literal "0" must still filter, not be treated as absent
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?query=0');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertEquals(1, count($response->json()));
+        $response->assertJsonPath('0.symbol', '0');
+
+        // 'q' alias with a literal "0" must behave the same way
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?q=0');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertEquals(1, count($response->json()));
+        $response->assertJsonPath('0.symbol', '0');
+    }
+
     public function test_investment_list_filters_by_active_status(): void
     {
         /** @var User $user */
@@ -266,13 +304,15 @@ class InvestmentApiControllerTest extends TestCase
             ]);
 
         // User1 should only see their own investment
-        $response = $this->actingAs($user1)->getJson(self::BASE_API_ENDPOINT);
+        Sanctum::actingAs($user1, ['*']);
+        $response = $this->getJson(self::BASE_API_ENDPOINT);
         $response->assertStatus(Response::HTTP_OK);
         $this->assertEquals(1, count($response->json()));
         $response->assertJsonPath('0.user_id', $user1->id);
 
         // User2 should only see their own investment
-        $response = $this->actingAs($user2)->getJson(self::BASE_API_ENDPOINT);
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->getJson(self::BASE_API_ENDPOINT);
         $response->assertStatus(Response::HTTP_OK);
         $this->assertEquals(1, count($response->json()));
         $response->assertJsonPath('0.user_id', $user2->id);

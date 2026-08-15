@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
@@ -37,20 +38,19 @@ class ReportApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
+            ]),
         ];
     }
 
     /**
-     * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
+     * Get budget vs actual chart data
+     *
+     * Collects actual and budgeted cost for selected categories, and returns it aggregated by month.
      */
     public function budgetChart(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/reports/budget-chart")
-         * @name("api.v1.reports.budget-chart")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // Get list of requested categories
         // This also ensures that child categories are loaded for all parents
         $categories = $this->categoryService->getChildCategories($request);
@@ -251,7 +251,9 @@ class ReportApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Collect actual transactions for the given interval.
+     * Get category waterfall data
+     *
+     * Collects actual transactions for the given interval and groups them by category.
      *
      * @param string $dataType Planned feature for budget. Currently actual transactions are supported.
      */
@@ -262,12 +264,6 @@ class ReportApiController extends Controller implements HasMiddleware
         int $year,
         int|null $month = null
     ): JsonResponse {
-        /**
-         * @get("/api/v1/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}")
-         * @name("api.v1.reports.waterfall")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
@@ -289,8 +285,6 @@ class ReportApiController extends Controller implements HasMiddleware
                 'category.parent',
                 'transaction',
                 'transaction.currency',
-                'transaction.config.accountFrom.config',
-                'transaction.config.accountTo.config',
             ])
                 ->whereHas('transaction', function ($query) use ($request, $rangeStart, $rangeEnd) {
                     $query->where('user_id', $request->user()->id)
@@ -427,7 +421,9 @@ class ReportApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get monthly cashflow data with optional forecast values.
+     * Get monthly cashflow data
+     *
+     * Returns monthly cashflow data, with optional forecast values.
      */
     public function getCashflowData(Request $request): JsonResponse
     {

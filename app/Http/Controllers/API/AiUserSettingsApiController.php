@@ -10,6 +10,7 @@ use App\Services\AiUserSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -25,9 +26,20 @@ class AiUserSettingsApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            // Account-level AI preferences are configuration, not financial data, so both
+            // actions - including the read - require "settings".
+            new Middleware('abilities:settings', only: [
+                'show', 'update',
+            ]),
         ];
     }
 
+    /**
+     * Get AI settings
+     *
+     * Resolves the current user's effective AI settings, creating a default
+     * settings record for the user if one does not already exist.
+     */
     public function show(Request $request): JsonResponse
     {
         /** @var User $user */
@@ -42,6 +54,12 @@ class AiUserSettingsApiController extends Controller implements HasMiddleware
         return response()->json((new AiUserSettingsResource($resolved))->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Update AI settings
+     *
+     * Updates the current user's AI settings. This feature is not available
+     * in sandbox mode.
+     */
     public function update(AiUserSettingsRequest $request): JsonResponse
     {
         // This feature is not enabled in sandbox mode

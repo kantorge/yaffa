@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Resources\CategoryResource;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryRequest;
@@ -21,7 +22,6 @@ class CategoryApiController extends Controller implements HasMiddleware
 
     public function __construct()
     {
-
         $this->categoryService = new CategoryService();
     }
 
@@ -30,19 +30,23 @@ class CategoryApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'getList', 'getItem',
+            ]),
+            new Middleware('abilities:write', only: [
+                'store', 'patchActive', 'destroy',
+            ]),
         ];
     }
 
     /**
-     * Get a list of categories with optional search and usage-based ordering.
+     * List categories
+     *
+     * Returns categories matching an optional search term, ordered by name or,
+     * when no term is given, by usage against the user's transactions.
      */
     public function getList(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/categories")
-         * @name("api.v1.categories.index")
-         * @middlewares("api", "auth:sanctum")
-         */
         $user = $request->user();
 
         $query = $request->query('q');
@@ -131,15 +135,12 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get a category by ID.
+     * Get a category
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function getItem(Category $category): JsonResponse
     {
-        /**
-         * @get("/api/v1/categories/{category}")
-         * @name("api.v1.categories.show")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('view', $category);
 
         return response()
@@ -150,11 +151,9 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Store a newly created category in storage.
+     * Create a category
      *
-     * @post("/api/v1/categories")
-     * @name("api.v1.categories.store")
-     * @middlewares("api", "auth:sanctum")
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function store(CategoryRequest $request): JsonResponse
     {
@@ -166,8 +165,9 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * V1: PATCH /api/v1/categories/{category}
-     * Accepts { active: true|false } in request body.
+     * Update category active status
+     *
+     * Accepts { active: true|false } in the request body.
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
@@ -184,15 +184,12 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Delete a category.
+     * Delete a category
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function destroy(Category $category): JsonResponse
     {
-        /**
-         * @delete("/api/v1/categories/{category}")
-         * @name("api.v1.categories.destroy")
-         * @middlewares("api", "auth:sanctum")
-         */
         Gate::authorize('delete', $category);
         $result = $this->categoryService->delete($category);
 

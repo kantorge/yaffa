@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
@@ -20,11 +21,16 @@ class UserApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            // Account credentials/preferences, not financial data, so every action requires
+            // "settings" - most notably changePassword (account-takeover surface).
+            new Middleware('abilities:settings', only: [
+                'updateSettings', 'changePassword', 'getPreference', 'setPreference',
+            ]),
         ];
     }
 
     /**
-     * Update user profile settings.
+     * Update user profile settings
      */
     public function updateSettings(UserRequest $request): JsonResponse
     {
@@ -68,7 +74,7 @@ class UserApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Change the authenticated user's password.
+     * Change the authenticated user's password
      */
     public function changePassword(Request $request): JsonResponse
     {

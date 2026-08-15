@@ -12,6 +12,19 @@ Table of contents:
 
 Most 3.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
+### API Access Tokens & Two-Factor Authentication
+
+This release adds two new opt-in security features, both managed from `/user/settings`:
+
+- **Personal access tokens** — mint a scoped bearer token (`read`, `write`, and/or `settings`) for calling the `/api/v1/*` API outside the browser.
+- **Two-factor authentication (TOTP)** — an optional second factor on top of your normal login.
+
+Neither feature requires any action to upgrade, and neither is enabled by default. A few notes if you plan to use them:
+
+- **Token abilities are enforced from day one.** A token scoped to `read` only will get a `403` on any action outside that scope — this isn't a narrowing of previously working access, since no earlier YAFFA version had a supported way to create or use a personal access token in the first place.
+- **Exception:** if you previously used `php artisan tinker` (or similar direct DB/console access) to manually call `$user->createToken(...)` — an unsupported, undocumented path that happened to work because the underlying Sanctum table already existed — that token now has its `abilities` enforced like any other. Revoke it and re-create it from `/user/settings` so its scope matches what you actually intend to grant.
+- New environment variables, both optional (see `.env.example` for defaults): `API_TOKEN_MAX_LIFETIME_DAYS` (maximum lifetime, in days, selectable when creating a token — default `365`) and `SCRAMBLE_PROD_AUTH` (controls who can view the auto-generated API docs at `/docs/api` outside the `local` environment — default `none`, i.e. hidden).
+
 ### Docker users switching from `mysql/mysql-server:8.0` to `mysql:8.0`
 
 If the updated `docker-compose.yml` changes the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, review the Docker notes in the 3.x upgrade section below before restarting the stack.

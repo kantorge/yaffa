@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -22,11 +23,19 @@ class OnboardingApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'getOnboardingData',
+            ]),
+            new Middleware('abilities:write', only: [
+                'setDismissedFlag', 'setCompletedTourFlag',
+            ]),
         ];
     }
 
     /**
-     * Get onboarding state and steps for a given topic.
+     * Get onboarding data
+     *
+     * Returns onboarding state and steps for a given topic.
      */
     public function getOnboardingData(Request $request, string $topic): JsonResponse
     {
@@ -42,7 +51,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Mark the onboarding widget as dismissed for a given topic.
+     * Dismiss onboarding widget
+     *
+     * Marks the onboarding widget as dismissed for a given topic.
      */
     public function setDismissedFlag(Request $request, string $topic): Response
     {
@@ -54,7 +65,9 @@ class OnboardingApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Mark the guided tour as completed for a given topic.
+     * Complete onboarding tour
+     *
+     * Marks the guided tour as completed for a given topic.
      */
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {

@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -22,6 +23,12 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'available',
+            ]),
+            new Middleware('abilities:write', only: [
+                'testFetch',
+            ]),
         ];
     }
 
@@ -32,6 +39,12 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
     ) {
     }
 
+    /**
+     * List available investment price providers
+     *
+     * Returns the providers available to the current user, optionally including
+     * providers that are configured but currently unavailable.
+     */
     public function available(Request $request): JsonResponse
     {
         return response()->json(
@@ -43,6 +56,12 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
         );
     }
 
+    /**
+     * Test a price provider fetch
+     *
+     * Performs a trial price fetch for the given provider and symbol/settings without
+     * persisting anything, so the user can validate credentials and settings before saving.
+     */
     public function testFetch(TestInvestmentPriceProviderFetchRequest $request, string $providerKey): JsonResponse
     {
         if (! $this->providerRegistry->has($providerKey)) {
