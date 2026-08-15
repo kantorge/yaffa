@@ -91,7 +91,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_transaction_money_fields_serialize_as_decimal_strings(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
@@ -768,7 +768,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_store_investment_accepts_price_within_decimal_20_10_range(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $currency = Currency::factory()->for($this->user)->create();
         $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
@@ -811,7 +811,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_store_investment_rejects_price_exceeding_decimal_20_10_range(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $currency = Currency::factory()->for($this->user)->create();
         $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();

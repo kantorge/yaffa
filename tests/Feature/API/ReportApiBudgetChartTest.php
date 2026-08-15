@@ -55,7 +55,7 @@ class ReportApiBudgetChartTest extends TestCase
      */
     public function test_budget_chart_actual_sums_transaction_item_amounts_exactly(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $account = $this->createAccount($this->baseCurrency);
         $category = Category::factory()->for($this->user)->create();
