@@ -530,7 +530,6 @@ function updateChart(rawData) {
 }
 
 // Attach event listener to refresh button
-// TODO: if the account selection is enabled, but no account is selected, the button should be disabled
 elementRefreshButton.addEventListener('click', reloadData);
 
 // Attach event listener to time interval radio buttons to redraw the chart using the already loaded data
@@ -848,8 +847,11 @@ let rebuildUrl = function () {
     // Update the URL
     window.history.pushState('', '', url.toString());
 
-    // Finally, adjust reload button availability
-    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
+    // Finally, adjust reload button availability: at least one category must be checked, and
+    // if the account scope is restricted to a single account, one must be selected
+    const accountScopeRequiresSelection = $('input[name=table_filter_account_scope]:checked').val() === 'selected';
+    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0)
+        || (accountScopeRequiresSelection && !$(accountSelector).val());
 }
 
 // Initialize category tree view
@@ -999,8 +1001,9 @@ $('input[name=table_filter_account_scope]').on("change", function() {
     // If the account selector is disabled, we need to clear the account filter
     if (this.value !== 'selected') {
         $(accountSelector).val(null).trigger('change');
-        rebuildUrl();
     }
+
+    rebuildUrl();
 });
 
 // Set initial state of account selector
