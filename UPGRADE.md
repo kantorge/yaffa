@@ -4,9 +4,106 @@ This document describes the breaking changes of major versions, and also include
 
 Table of contents:
 
+- [Upgrade from YAFFA 3.x to 4.x](#upgrade-from-yaffa-3x-to-4x)
 - [Upgrade within YAFFA 3.x](#upgrade-within-yaffa-3x)
 - [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
+
+## Upgrade from YAFFA 3.x to 4.x
+
+This version removes the `budget` flag from `Transaction` and replaces it with a standalone `Budget` entity: a category-level spending/income target with no linked transaction. See [`.ai/docs/assets/budget/budget.md`](.ai/docs/assets/budget/budget.md) and [`.ai/docs/assets/transactions/schedules.md`](.ai/docs/assets/transactions/schedules.md) for the concept-level explanation.
+
+A scheduled standard withdrawal/deposit's categorized items now always count toward category budget comparison — this used to require a separate `budget` flag on the transaction, which no longer exists and has no replacement opt-in/opt-out.
+
+### Breaking Changes
+
+- **`transactions.budget` column removed.** There is no replacement flag. A scheduled standard withdrawal/deposit with categorized items counts toward budget comparison automatically; a standalone target with no linked transaction is now a `Budget` row instead.
+- **New standalone `Budget` entity and `budgets` table.** Existing transactions that were budget-only (`schedule = false, budget = true`, i.e. created via the old "Budget" checkbox with no schedule) are automatically converted to one `Budget` row per distinct category, then **hard-deleted** from `transactions` — this data migration has no downgrade path (see below).
+- **`transaction_details_standard.account_from_id`/`account_to_id` are now `NOT NULL`.** These were only nullable to support the old budget-only transaction case; that case no longer exists after the conversion above.
+- **API changes:**
+  - `GET /api/v1/transactions/scheduled-items` — the `type` query parameter no longer accepts `budget`, `budget_only`, `both`, or `any`; only `schedule` and `none` remain meaningful. A new `includeBudgets=1` parameter merges standalone `Budget` rows into the response (used by the Schedules & Budgets report only).
+  - `ReportApiController`'s budget-vs-actual chart endpoint response shape changed: each period entry now also includes a `budgetBreakdown` array listing the individual `Budget` rows (with `account_id`/`account_name`) that contributed to the total, and a `scheduleBreakdown` array for the schedule-derived side.
+  - New CRUD endpoints: `GET/POST /api/v1/budgets`, `GET/PATCH/DELETE /api/v1/budgets/{budget}`.
+- **UI change:** the "Budget" checkbox/section on the standard transaction form is removed. Standalone Budgets are created, edited, and deleted from the existing Schedules & Budgets report page (Reports → Schedules and Budgets) instead, alongside real schedules.
+- If you have any custom integrations or scripts against the endpoints above, update them before upgrading.
+
+### Step-by-step Guide
+
+#### 1. Upgrade to the latest YAFFA 3.x release
+
+Before installing YAFFA 4.x, first update to the latest available YAFFA 3.x release (3.5.2 or later). This ensures the pre-upgrade safety check command described below is available in your existing installation.
+
+#### 2. Run the pre-upgrade safety check command (optional but recommended)
+
+Run the following command on your current YAFFA 3.x release before installing YAFFA 4.x:
+
+```bash
+php artisan app:check:budget-migration
+```
+
+This command is read-only and reports any pre-existing data it cannot safely convert:
+
+- a budget-only transaction with zero transaction items
+- a budget-only transaction where the only non-null account side is actually a payee, not a real account
+- a transfer or investment transaction with a stray `budget = true` flag (should never happen, but was never enforced at the database level)
+- a budget-only transaction whose currency doesn't match its linked account's current currency
+
+The 4.x migration **refuses to run** while any of these are reported, to avoid silently dropping or misattributing data. If the command reports issues, resolve them (edit or delete the flagged transactions) and run it again until it succeeds.
+
+**Note:** this command is removed again once you're on 4.x — once the conversion has run, the state it checks for can no longer occur.
+
+#### 3. Backup your database
+
+Before running any migrations, create a complete backup of your database. There is no native downgrade path for the budget-to-`Budget` data conversion (see below), so a backup is your only way back to 3.x if something goes wrong.
+
+```bash
+# Example for MySQL/MariaDB
+mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
+```
+
+See the [2.x to 3.x guide](#upgrade-from-yaffa-2x-to-3x) above for Docker-volume backup examples if you're running the packaged Docker setup.
+
+#### 4. Install the new version and apply all changes
+
+No new required environment variables are introduced by this upgrade.
+
+##### Docker users
+
+```bash
+docker compose pull
+docker compose stop app scheduler
+docker compose up -d db
+docker compose up -d app scheduler
+```
+
+The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup.
+
+##### Source code users
+
+```bash
+git pull
+composer install
+php artisan migrate
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+npm install && npm run build
+```
+
+The migration step will:
+
+- Create the new `budgets` table.
+- Convert every remaining budget-only transaction into `Budget` row(s) (one per distinct category, summing amounts within a category), carrying over its account (only if the non-null side is a real account, not a payee), transaction type, and recurrence settings — then hard-delete the source transaction. This step refuses to proceed if step 2's check would report any issue, even if you skipped running it manually.
+- Drop the `transactions.budget` column.
+- Make `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`.
+
+**Note**: the data conversion is irreversible once the `budget` column is dropped. Ensure you have a backup (step 3) before proceeding.
+
+#### 5. Review your converted Budgets (recommended)
+
+After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
+
+## Upgrade within YAFFA 3.x
 
 ## Upgrade within YAFFA 3.x
 

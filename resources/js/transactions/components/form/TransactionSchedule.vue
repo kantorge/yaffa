@@ -336,10 +336,7 @@
                 </label>
               </div>
             </div>
-            <div
-              :class="{ 'has-error': hasError('inflation') }"
-              v-if="isBudget"
-            >
+            <div :class="{ 'has-error': hasError('inflation') }">
               <label
                 :for="'schedule_inflation_' + this.$.vnode.key"
                 class="form-label"

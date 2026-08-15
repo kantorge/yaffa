@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Schema-only tail end of the budget/schedule redesign (specification.md Section 7.2/7.3, FR-1).
  * Must run after 2026_08_05_000002 (the transforming migration), which guarantees no
  * schedule=false, budget=true transactions remain and that every standard transaction has real
  * accounts on both sides. Both changes here are reversible on their own — only the data

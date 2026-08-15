@@ -10,21 +10,19 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Migrations\Migration;
 
 /**
- * Converts every remaining schedule=false, budget=true "fake transaction" (the legacy way of
+ * Converts every schedule=false, budget=true "fake transaction" (the legacy way of
  * storing a standalone budget) into one standalone `Budget` row per distinct category among its
- * transaction items, then hard-deletes the source transaction. See specification.md Section 7.2.
+ * transaction items, then hard-deletes the source transaction.
  *
  * Also converts the narrow set of legacy schedule=true, budget=true rows with no real account on
  * either side (account_from_id and account_to_id both null) — these predate this redesign's
  * requirement that a schedule transaction always reference real accounts, could never have fired as
  * a real recorded transaction (no account to record against), and are functionally indistinguishable
- * from a schedule=false budget-only row. The spec's Section 7.2 text ("schedule=true transactions:
- * no data movement needed") assumes a schedule transaction always has real accounts, which this
- * narrow, additional case violates.
+ * from a schedule=false budget-only row.
  *
- * Refuses to run if any of the 4 risk cases from Section 7.1 are present (mirrored here from the
+ * Refuses to run if any of the risk cases are present (mirrored here from the
  * `app:check:budget-migration` command, which is removed in this same release once this migration
- * makes it dead code — see Section 7.1's rollout note), since none of them can be converted without
+ * makes it dead code), since none of them can be converted without
  * losing or misattributing data.
  */
 return new class () extends Migration {
@@ -47,7 +45,7 @@ return new class () extends Migration {
 
     public function down(): void
     {
-        // Reverting the data transformation is not supported — see specification.md Section 7.3.
+        // Reverting the data transformation is not supported
         // Reconstructing the original budget-only transactions from `Budget` rows would require
         // lineage back to a source transaction/category that this migration deliberately discards
         // by hard-deleting the source rows, and that stops being meaningful the moment a user edits
@@ -102,7 +100,7 @@ return new class () extends Migration {
                 $budget->save();
             });
 
-        // Hard delete, per Section 7.2: these rows represent nothing once `budget` is removed as a
+        // Hard delete: these rows represent nothing once `budget` is removed as a
         // concept. transaction_items and transaction_schedules cascade via FK; config does not
         // (polymorphic relation, no FK), so it must be deleted explicitly.
         $config->delete();

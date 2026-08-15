@@ -216,7 +216,7 @@ This distinction is important because YAFFA uses investment transactions to desc
 - Buy and sell require both price and quantity.
 - Add shares and remove shares require quantity but not a normal trade price.
 - Dividend and interest yield require a positive income amount.
-- Investment transactions support scheduling, but budgeting is not the primary mode exposed for them.
+- Investment transactions support scheduling, which contributes to account-balance/investment-value forecasting, but never to category budgeting — investment transactions have no category-based items, and the standalone [Budget](../budget/budget.md) entity is restricted to standard withdrawal/deposit directions.
 - Reconciled status is not compatible with scheduled investment entries.
 
 ## User Flow
