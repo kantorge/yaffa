@@ -51,9 +51,13 @@ class ApiAbilityEnforcementTest extends TestCase
             'investment-prices.index' => ['api.v1.investment-prices.index', 'get', 'read', ['investment' => 1]],
             'investment-price-providers.available' => ['api.v1.investment-price-providers.available', 'get', 'read', []],
             'onboarding.show' => ['api.v1.onboarding.show', 'get', 'read', ['topic' => 'dashboard']],
+            'budgets.index' => ['api.v1.budgets.index', 'get', 'read', []],
+            'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
+            'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
 
             // write
             'transactions.store-standard' => ['api.v1.transactions.store-standard', 'post', 'write', []],
+            'budgets.store' => ['api.v1.budgets.store', 'post', 'write', []],
             'categories.store' => ['api.v1.categories.store', 'post', 'write', []],
             'payees.store' => ['api.v1.payees.store', 'post', 'write', []],
             'tags.patch-active' => ['api.v1.tags.patch-active', 'patch', 'write', ['tag' => 1]],

@@ -1201,7 +1201,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_scheduled_items_include_active_budgets_only_when_requested(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $category = Category::factory()->for($this->user)->create();
 
@@ -1243,7 +1243,7 @@ class TransactionApiControllerTest extends TestCase
      */
     public function test_scheduled_items_exclude_investment_transactions_when_category_filter_is_active(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $category = Category::factory()->for($this->user)->create();
 
@@ -1282,7 +1282,7 @@ class TransactionApiControllerTest extends TestCase
 
     public function test_scheduled_items_exclude_inactive_budgets(): void
     {
-        Sanctum::actingAs($this->user);
+        Sanctum::actingAs($this->user, ['*']);
 
         $category = Category::factory()->for($this->user)->create();
 

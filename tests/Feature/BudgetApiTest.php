@@ -40,7 +40,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -69,7 +69,7 @@ class BudgetApiTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $accountEntity = $this->createOwnedAccount($user);
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -94,7 +94,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -113,7 +113,7 @@ class BudgetApiTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
         $otherCategory = Category::factory()->for($otherUser)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $otherCategory->id,
@@ -135,7 +135,7 @@ class BudgetApiTest extends TestCase
             ->for($user)
             ->for(Payee::factory()->withUser($user), 'config')
             ->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -154,7 +154,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -173,7 +173,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -191,7 +191,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
             'category_id' => $category->id,
@@ -209,7 +209,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         // A rule that has already run out of occurrences: the client-sent `active: true` must be ignored.
         $response = $this->postJson(route('api.v1.budgets.store'), [
@@ -235,7 +235,7 @@ class BudgetApiTest extends TestCase
             'user_id' => $user->id,
             'category_id' => $category->id,
         ]);
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $this->getJson(route('api.v1.budgets.show', ['budget' => $budget->id]))
             ->assertOk()
@@ -251,7 +251,7 @@ class BudgetApiTest extends TestCase
             'category_id' => $category->id,
             'amount' => 100,
         ]);
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->patchJson(route('api.v1.budgets.update', ['budget' => $budget->id]), [
             'category_id' => $category->id,
@@ -274,7 +274,7 @@ class BudgetApiTest extends TestCase
             'user_id' => $user->id,
             'category_id' => $category->id,
         ]);
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $this->deleteJson(route('api.v1.budgets.destroy', ['budget' => $budget->id]))->assertOk();
 
@@ -292,7 +292,7 @@ class BudgetApiTest extends TestCase
 
         $otherUser = User::factory()->create();
         $otherCategory = Category::factory()->for($otherUser)->create();
-        Sanctum::actingAs($otherUser);
+        Sanctum::actingAs($otherUser, ['*']);
 
         $this->getJson(route('api.v1.budgets.show', ['budget' => $budget->id]))
             ->assertStatus(Response::HTTP_FORBIDDEN);
@@ -320,7 +320,7 @@ class BudgetApiTest extends TestCase
         $otherCategory = Category::factory()->for($otherUser)->create();
         Budget::factory()->create(['user_id' => $otherUser->id, 'category_id' => $otherCategory->id]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.budgets.index'));
 

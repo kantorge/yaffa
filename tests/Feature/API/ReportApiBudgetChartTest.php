@@ -76,7 +76,7 @@ class ReportApiBudgetChartTest extends TestCase
             'inflation' => null,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.reports.budget-chart', [
             'categories' => [$tvCategory->id, $broadbandCategory->id],
@@ -146,7 +146,7 @@ class ReportApiBudgetChartTest extends TestCase
             'inflation' => null,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.reports.budget-chart', [
             'categories' => [$category->id],
@@ -215,7 +215,7 @@ class ReportApiBudgetChartTest extends TestCase
             'inflation' => null,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         // 'selected' + this account: only the account-scoped budget counts, not the agnostic one.
         $selectedResponse = $this->getJson(route('api.v1.reports.budget-chart', [
@@ -288,7 +288,7 @@ class ReportApiBudgetChartTest extends TestCase
             'inflation' => null,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.reports.budget-chart', [
             'categories' => [$category->id],
@@ -344,7 +344,7 @@ class ReportApiBudgetChartTest extends TestCase
             'inflation' => null,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.reports.budget-chart', [
             'categories' => [$category->id],

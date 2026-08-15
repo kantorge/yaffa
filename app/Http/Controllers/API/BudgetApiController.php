@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
 class BudgetApiController extends Controller implements HasMiddleware
@@ -24,6 +25,12 @@ class BudgetApiController extends Controller implements HasMiddleware
         return [
             'auth:sanctum',
             'verified',
+            new Middleware('abilities:read', only: [
+                'index', 'getItem',
+            ]),
+            new Middleware('abilities:write', only: [
+                'store', 'update', 'destroy',
+            ]),
         ];
     }
 
