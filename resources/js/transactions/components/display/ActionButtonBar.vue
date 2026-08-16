@@ -74,6 +74,7 @@
 
 <script>
   import { __ } from '@/shared/lib/i18n';
+  import { processTransaction } from '@/shared/lib/helpers';
 
   export default {
     name: 'ActionButtonBar',
@@ -126,8 +127,11 @@
         axios
           .patch(url)
           .then((response) => {
-            // Notify the parent component that the transaction has been updated
-            this.$emit('transactionUpdated', response.data.transaction);
+            // Notify the parent component that the transaction has been updated. Normalized
+            // here, at the single emit site, so every consumer (page container, quick-view
+            // modal, any future one) gets decimal-string wire-format fields already
+            // converted back to JS numbers.
+            this.$emit('transactionUpdated', processTransaction(response.data.transaction));
           })
           .catch((error) => {
             console.error(error);

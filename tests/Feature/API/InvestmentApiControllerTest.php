@@ -210,6 +210,51 @@ class InvestmentApiControllerTest extends TestCase
         $this->assertEquals(120.00, $openPeriod['last_price']);
     }
 
+    public function test_price_history_returns_prices_without_investment_relation(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-10', 'price' => '100.5000000000']);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-02-15', 'price' => '120.2500000000']);
+
+        $response = $this->getJson(route('api.v1.investments.price-history', $investment));
+
+        $response->assertOk();
+
+        $prices = $response->json();
+        $this->assertCount(2, $prices);
+        $this->assertSame('2024-01-10', $prices[0]['date']);
+        $this->assertSame('100.5000000000', $prices[0]['price']);
+        $this->assertSame('2024-02-15', $prices[1]['date']);
+        $this->assertSame('120.2500000000', $prices[1]['price']);
+
+        foreach ($prices as $price) {
+            $this->assertArrayNotHasKey('investment_id', $price);
+            $this->assertArrayNotHasKey('investment', $price);
+        }
+    }
+
+    public function test_display_data_returns_prices_without_investment_relation(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $investment = $this->createInvestmentForUser($this->user);
+        InvestmentPrice::factory()->for($investment)->create(['date' => '2024-01-10', 'price' => '100.5000000000']);
+
+        $response = $this->getJson(route('api.v1.investments.display-data', $investment));
+
+        $response->assertOk()
+            ->assertJsonPath('investment.id', $investment->id);
+
+        $prices = $response->json('prices');
+        $this->assertCount(1, $prices);
+        $this->assertSame('2024-01-10', $prices[0]['date']);
+        $this->assertSame('100.5000000000', $prices[0]['price']);
+        $this->assertArrayNotHasKey('investment_id', $prices[0]);
+        $this->assertArrayNotHasKey('investment', $prices[0]);
+    }
+
     private function createInvestmentForUser(User $user): Investment
     {
         $currency = $user->currencies()->first() ?? Currency::factory()->for($user)->create();

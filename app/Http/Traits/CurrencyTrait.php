@@ -11,7 +11,10 @@ trait CurrencyTrait
 {
     protected function getAllCurrencyRatesByMonthCacheKey(int $userId): string
     {
-        return "allCurrencyRatesByMonth_forUser_{$userId}";
+        // Suffix versions the cache shape - bump it whenever what's cached changes, so
+        // Cache::remember() can't return a stale entry built under the old shape (e.g. an
+        // entry with float rates cached before rates were kept as raw decimal strings).
+        return "allCurrencyRatesByMonth_forUser_{$userId}_v2";
     }
 
     protected function getCurrenciesCacheKey(int $userId): string
@@ -22,6 +25,10 @@ trait CurrencyTrait
     /**
      * Load an array for all currencies, with an average rate by month
      * As this data is not expected to change often, it is cached for a day
+     *
+     * @return array<int, array<string, string>> Map keyed by from_id then month. Rate
+     *     values are kept as the raw decimal string from the DB (not cast to float), so
+     *     callers doing Money arithmetic with them don't inherit float rounding drift.
      */
     public function allCurrencyRatesByMonth(): array
     {
@@ -51,10 +58,6 @@ trait CurrencyTrait
                 ->orderByDesc('month')
                 ->get();
 
-            // Pre-process the $rates collection into a map array. Kept as the raw decimal
-            // string from the DB (not cast to float) so callers doing Money arithmetic with
-            // it don't inherit float rounding drift; MySQL's AVG(rate) already returns a
-            // DECIMAL string via PDO.
             $allRatesMap = [];
             foreach ($rates as $rate) {
                 $allRatesMap[$rate->from_id][$rate->month] = (string) $rate->rate;

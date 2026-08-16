@@ -60,6 +60,7 @@
 
     methods: {
       transactionUpdated: function (transaction) {
+        // ActionButtonBar already runs the emitted transaction through processTransaction().
         this.transaction = Object.assign({}, transaction);
       },
     },

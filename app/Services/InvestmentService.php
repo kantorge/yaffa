@@ -543,6 +543,25 @@ class InvestmentService
     }
 
     /**
+     * Get price history for an investment, ordered by date. `investment_id` and the
+     * eager-loaded `investment` relation are hidden again before returning - both are only
+     * loaded so MoneyCast can resolve price's currency via investment.currency, and aren't
+     * part of this endpoint's response shape.
+     *
+     * @param  array<int, string>  $columns
+     * @return Collection<int, InvestmentPrice>
+     */
+    public function getPrices(Investment $investment, array $columns = ['*']): Collection
+    {
+        return InvestmentPrice::where('investment_id', $investment->id)
+            ->select($columns)
+            ->with('investment.currency')
+            ->orderBy('date')
+            ->get()
+            ->makeHidden(['investment_id', 'investment']);
+    }
+
+    /**
      * Save price without triggering observers
      * Private helper for fetchAndSavePrices
      *
