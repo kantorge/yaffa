@@ -48,9 +48,9 @@ class ImportTransactionCreateFromDraftTest extends TestCase
         $this->assertSame('withdrawal', $transaction->transaction_type->value);
         $this->assertSame($account->id, $transaction->config->account_from_id);
         $this->assertSame($payee->id, $transaction->config->account_to_id);
-        $this->assertSame(50.25, (float) $transaction->config->amount_from);
+        $this->assertSame(50.25, $transaction->config->amount_from->getAmount()->toFloat());
         $this->assertCount(1, $transaction->transactionItems);
-        $this->assertSame(50.25, (float) $transaction->transactionItems[0]->amount);
+        $this->assertSame(50.25, $transaction->transactionItems[0]->amount->getAmount()->toFloat());
 
         $updatePayload = $payload;
         $updatePayload['action'] = 'edit';

@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Casts\MoneyCast;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\Investment;
+use App\Models\InvestmentGroup;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -259,7 +263,7 @@ class AccountTest extends TestCase
                     'active' => $account->active,
                     'config_type' => 'account',
                     'config' => [
-                        'opening_balance' => $account->config->opening_balance,
+                        'opening_balance' => MoneyCast::toFloat($account->config->opening_balance),
                         'account_group_id' => $account->config->account_group_id,
                         'currency_id' => $account->config->currency_id,
                     ],
@@ -316,5 +320,78 @@ class AccountTest extends TestCase
         $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'account']);
 
         $this->assertDatabaseHas('accounts', $attributes['config']);
+    }
+
+    /**
+     * An investment transaction's commission/tax/dividend are cast to the account's currency
+     * (MoneyCast) - changing it after the account is already used in an investment transaction
+     * would silently mismatch every existing transaction's stored values against a currency
+     * they were never recorded in.
+     */
+    public function test_currency_cannot_be_changed_once_used_in_an_investment_transaction(): void
+    {
+        $account = $this->createAccountAndUser();
+        $user = $account->user;
+
+        $originalCurrency = $account->config->currency_id;
+        $otherCurrency = Currency::factory()->for($user)->create();
+
+        InvestmentGroup::factory()->for($user)->create();
+        $investment = Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create(['currency_id' => $originalCurrency]);
+
+        Transaction::factory()
+            ->for($user)
+            ->buy($user, [
+                'account_id' => $account->id,
+                'investment_id' => $investment->id,
+            ])
+            ->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    ['type' => 'account', 'account_entity' => $account->id]
+                ),
+                [
+                    'name' => $account->name,
+                    'active' => $account->active,
+                    'config_type' => 'account',
+                    'config' => [
+                        'opening_balance' => MoneyCast::toFloat($account->config->opening_balance),
+                        'account_group_id' => $account->config->account_group_id,
+                        'currency_id' => $otherCurrency->id,
+                    ],
+                ]
+            );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.currency_id']);
+
+        // Leaving the currency unchanged must still be allowed.
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    ['type' => 'account', 'account_entity' => $account->id]
+                ),
+                [
+                    'name' => $account->name,
+                    'active' => $account->active,
+                    'config_type' => 'account',
+                    'config' => [
+                        'opening_balance' => MoneyCast::toFloat($account->config->opening_balance),
+                        'account_group_id' => $account->config->account_group_id,
+                        'currency_id' => $originalCurrency,
+                    ],
+                ]
+            );
+
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'account']);
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\Investment;
+use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentProviderSettingsResolver;
+use Closure;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -66,6 +68,28 @@ class InvestmentRequest extends FormRequest
             'currency_id' => [
                 'required',
                 Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
+                // Price is cast to the investment's currency (MoneyCast) while
+                // commission/tax/dividend are cast to the account's - changing the
+                // investment's currency after it's been used would silently mismatch every
+                // existing transaction's stored price against a currency it was never
+                // recorded in.
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $investment = $this->route('investment');
+
+                    if (!$investment instanceof Investment) {
+                        return;
+                    }
+
+                    if ((int) $value === (int) $investment->currency_id) {
+                        return;
+                    }
+
+                    $used = TransactionDetailInvestment::where('investment_id', $investment->id)->exists();
+
+                    if ($used) {
+                        $fail(__('The currency cannot be changed because this investment is already used in a transaction.'));
+                    }
+                },
             ],
             'investment_price_provider' => [
                 'nullable',

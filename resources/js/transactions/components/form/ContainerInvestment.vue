@@ -13,6 +13,7 @@
 
 <script>
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
+  import { processTransaction } from '@/shared/lib/helpers';
   import TransactionFormInvestment from './TransactionFormInvestment.vue';
 
   export default {
@@ -60,10 +61,17 @@
     data() {
       const urlParams = new URLSearchParams(window.location.search);
 
+      // A server-loaded transaction (edit/clone/enter/replace/finalize) arrives as raw
+      // JSON from the Blade `:transaction="{{ $transaction }}"` prop - its Money/BigDecimal
+      // fields are decimal strings, never normalized by processTransaction() the way an
+      // axios response is. The `create` action's default prop above is already plain
+      // JS values, so it's left untouched.
       let data = {
         // Default callback is to create a new transaction
         callback: urlParams.get('callback') || 'create',
-        transactionData: Object.assign({}, this.transaction),
+        transactionData: this.transaction?.id
+          ? processTransaction(JSON.parse(JSON.stringify(this.transaction)))
+          : Object.assign({}, this.transaction),
       };
 
       // Check for various default values in URL for new transactions

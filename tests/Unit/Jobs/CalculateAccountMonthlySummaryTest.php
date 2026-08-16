@@ -13,6 +13,8 @@ use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\InvestmentService;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,25 @@ use Tests\TestCase;
 class CalculateAccountMonthlySummaryTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * AccountMonthlySummary::amount is now Money-cast (FR-7); compare its exact amount
+     * rather than relying on PHP's loose float equality.
+     *
+     * Builds the expected string via BigDecimal rather than number_format(): number_format()
+     * round-trips through a double and can misrender an exact value at higher scales (see
+     * the equivalent note on AccountMonthlySummaryTest::assertBalanceFactEquals()) -
+     * reintroducing the float-precision bug class this assertion exists to catch.
+     */
+    private function assertSummaryAmountEquals(string|int $expected, Money $actual): void
+    {
+        $scale = $actual->getAmount()->getScale();
+
+        $this->assertSame(
+            (string) BigDecimal::of($expected)->toScale($scale),
+            (string) $actual->getAmount()
+        );
+    }
 
     public function test_only_standard_transactions_account_balance_forecast(): void
     {
@@ -84,7 +105,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         // Loop through the summary records and check that the date and the amount is correct
         $summaryRecords->each(function ($summaryRecord, $index) {
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
-            $this->assertEquals($summaryRecord->amount, -100);
+            $this->assertSummaryAmountEquals(-100, $summaryRecord->amount);
         });
 
         // Now, let's update the transaction, recalculate the summary and check the results
@@ -112,7 +133,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         // Loop through the summary records and check that the date and the amount is correct
         $summaryRecords->each(function ($summaryRecord, $index) {
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
-            $this->assertEquals($summaryRecord->amount, -200);
+            $this->assertSummaryAmountEquals(-200, $summaryRecord->amount);
         });
 
         Carbon::resetMonthsOverflow();
@@ -217,7 +238,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         // Loop through the summary records and check that the date and the amount is correct
         $summaryRecords->each(function ($summaryRecord, $index) use ($expectedBalance) {
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
-            $this->assertEquals($summaryRecord->amount, $expectedBalance[$index]);
+            $this->assertSummaryAmountEquals($expectedBalance[$index], $summaryRecord->amount);
         });
 
         Carbon::resetMonthsOverflow();
@@ -284,10 +305,10 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Expect: opening balance record + one record per transaction month = 4 records total
         $this->assertCount(4, $recordsAfterFull);
-        $this->assertEquals(1000, $recordsAfterFull->first()->amount); // opening balance
-        $this->assertEquals(-100, $recordsAfterFull->get(1)->amount);
-        $this->assertEquals(-100, $recordsAfterFull->get(2)->amount);
-        $this->assertEquals(-100, $recordsAfterFull->get(3)->amount);
+        $this->assertSummaryAmountEquals(1000, $recordsAfterFull->first()->amount); // opening balance
+        $this->assertSummaryAmountEquals(-100, $recordsAfterFull->get(1)->amount);
+        $this->assertSummaryAmountEquals(-100, $recordsAfterFull->get(2)->amount);
+        $this->assertSummaryAmountEquals(-100, $recordsAfterFull->get(3)->amount);
 
         // --- Step 2: partial recalculation for just the earliest month ---
         $partialJob = new CalculateAccountMonthlySummary(
@@ -311,10 +332,10 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $this->assertCount(4, $recordsAfterPartial);
 
         // Values must match the baseline — no doubling
-        $this->assertEquals(1000, $recordsAfterPartial->first()->amount); // opening balance unchanged
-        $this->assertEquals(-100, $recordsAfterPartial->get(1)->amount);
-        $this->assertEquals(-100, $recordsAfterPartial->get(2)->amount);
-        $this->assertEquals(-100, $recordsAfterPartial->get(3)->amount);
+        $this->assertSummaryAmountEquals(1000, $recordsAfterPartial->first()->amount); // opening balance unchanged
+        $this->assertSummaryAmountEquals(-100, $recordsAfterPartial->get(1)->amount);
+        $this->assertSummaryAmountEquals(-100, $recordsAfterPartial->get(2)->amount);
+        $this->assertSummaryAmountEquals(-100, $recordsAfterPartial->get(3)->amount);
 
         Carbon::resetMonthsOverflow();
     }
@@ -415,7 +436,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         $this->assertGreaterThan(50, $summaryRecords->count());
         $summaryRecords->each(function ($summaryRecord, $index) {
-            $this->assertEqualsWithDelta(($index + 2) * 5 * 10, $summaryRecord->amount, 0.001);
+            $this->assertSummaryAmountEquals(($index + 2) * 5 * 10, $summaryRecord->amount);
         });
 
         Carbon::resetMonthsOverflow();
@@ -502,11 +523,11 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $quantityAt = fn (int $index) => ($index + 2) * 5;
 
         // Index 0 (1 month out) is still before the mid-month price update: baseline price (10).
-        $this->assertEqualsWithDelta($quantityAt(0) * 10, $summaryRecords[0]->amount, 0.001);
+        $this->assertSummaryAmountEquals($quantityAt(0) * 10, $summaryRecords[0]->amount);
         // Index 1 (2 months out) is the month the update lands in: new price (20) applies already.
-        $this->assertEqualsWithDelta($quantityAt(1) * 20, $summaryRecords[1]->amount, 0.001);
+        $this->assertSummaryAmountEquals($quantityAt(1) * 20, $summaryRecords[1]->amount);
         // Index 2 (3 months out): the update carries forward, not just a one-month blip.
-        $this->assertEqualsWithDelta($quantityAt(2) * 20, $summaryRecords[2]->amount, 0.001);
+        $this->assertSummaryAmountEquals($quantityAt(2) * 20, $summaryRecords[2]->amount);
 
         Carbon::resetMonthsOverflow();
     }

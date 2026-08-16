@@ -7,11 +7,17 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
+use App\Http\Traits\CurrencyTrait;
+use App\Services\InvestmentService;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Carbon\Carbon;
 use Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * @property int $id
@@ -20,7 +26,8 @@ use Illuminate\Support\Facades\DB;
  * @property int|null $account_entity_id
  * @property string $transaction_type
  * @property string $data_type
- * @property float $amount
+ * @property-read Money $amount
+ * @property-write Money|string|int|float $amount
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read AccountEntity|null $accountEntity
  * @property-read User $user
@@ -39,6 +46,8 @@ use Illuminate\Support\Facades\DB;
  */
 class AccountMonthlySummary extends Model
 {
+    use CurrencyTrait;
+
     // This model is not using the created_at column, only the updated_at column
     public const null CREATED_AT = null;
 
@@ -61,7 +70,7 @@ class AccountMonthlySummary extends Model
     {
         return [
             'date' => 'date',
-            'amount' => 'float',
+            'amount' => MoneyCast::class . ':4,resolveAmountCurrency',
         ];
     }
 
@@ -76,10 +85,31 @@ class AccountMonthlySummary extends Model
     }
 
     /**
+     * amount is always in the currency of the account, or the base currency for
+     * generic budgets (account_entity_id is nullable for those).
+     */
+    public function resolveAmountCurrency(): Currency
+    {
+        $config = $this->loadMissing('accountEntity.config')->accountEntity?->config;
+
+        if ($config instanceof Account) {
+            return $config->loadMissing('currency')->currency;
+        }
+
+        $currency = $this->getBaseCurrency($this->user_id);
+
+        if ($currency === null) {
+            throw new RuntimeException('Unable to resolve a currency for this account monthly summary: no account and no base currency available.');
+        }
+
+        return $currency;
+    }
+
+    /**
      * Helper function to recalculate the summary fact for a given month,
      * for standard transactions, for a specified account.
      */
-    public static function calculateAccountBalanceFact(AccountEntity $accountEntity, Carbon $month)
+    public static function calculateAccountBalanceFact(AccountEntity $accountEntity, Carbon $month): BigDecimal
     {
         // New variables cloned from the date as start and end of the month
         $startOfMonth = $month->clone()->startOfMonth();
@@ -129,15 +159,26 @@ class AccountMonthlySummary extends Model
             ->where('transaction_details_investment.account_id', $accountEntity->id)
             ->sum('cashflow_value');
 
-        return $valueInvestment + $valueTo - $valueFrom;
+        // The three raw SQL sums are already exact DECIMAL strings from PDO (never
+        // float-cast) - combine them via BigDecimal instead of native float arithmetic,
+        // the same repeated-summation drift pattern AMOUNT_COMPARISON_EPSILON was
+        // invented to tolerate (FR-1), one layer further downstream.
+        return BigDecimal::of($valueInvestment)->plus($valueTo)->minus($valueFrom);
     }
 
     /**
      * This is a helper function to calculate the value of investments owned at the end of a given month,
      * for a given account. Under the hood, we need to get the quantity up to this date, and the latest
      * known price up to this date.
+     *
+     * @param  array<string, BigDecimal|null>|null  $priceMap  Optional pre-fetched batch of
+     *                                                          InvestmentService::getLatestPricesBatchExact() results, keyed by
+     *                                                          InvestmentService::priceBatchKey(). When provided, this skips the
+     *                                                          per-investment Investment::find()/getLatestPriceExact() N+1 that a
+     *                                                          caller resolving many months at once (e.g. CalculateAccountMonthlySummary)
+     *                                                          would otherwise pay once per investment per month.
      */
-    public static function calculateInvestmentValueFact(AccountEntity $accountEntity, Carbon $date)
+    public static function calculateInvestmentValueFact(AccountEntity $accountEntity, Carbon $date, ?array $priceMap = null): BigDecimal
     {
         // New variable cloned from the date as the end of the target month
         $endOfMonth = $date->clone()->endOfMonth();
@@ -150,18 +191,33 @@ class AccountMonthlySummary extends Model
 
         // All associated investments should be in the same currency as the account, so no conversion is needed
         // Get the current value of all the investments
-        $investmentService = app(\App\Services\InvestmentService::class);
+        $investmentService = app(InvestmentService::class);
 
-        return $investments->sum(
-            function ($item) use ($endOfMonth, $investmentService) {
-                if ($item->quantity === 0 || $item->quantity === 0.0) {
-                    return 0;
-                }
+        $sum = BigDecimal::zero();
 
-                $investment = Investment::find($item->investment_id);
+        foreach ($investments as $item) {
+            // $item->quantity is a raw SUM() of a DECIMAL column via DB::table(), so it
+            // arrives as a numeric string, not a float - build the BigDecimal from it directly.
+            $quantity = BigDecimal::of($item->quantity);
 
-                return $item->quantity * $investmentService->getLatestPrice($investment, 'combined', $endOfMonth);
+            if ($quantity->isZero()) {
+                continue;
             }
-        );
+
+            if ($priceMap !== null) {
+                $price = $priceMap[$investmentService->priceBatchKey((int) $item->investment_id, $endOfMonth)] ?? null;
+            } else {
+                $investment = Investment::find($item->investment_id);
+                $price = $investmentService->getLatestPriceExact($investment, 'combined', $endOfMonth);
+            }
+
+            if ($price === null) {
+                continue;
+            }
+
+            $sum = $sum->plus($quantity->multipliedBy($price));
+        }
+
+        return $sum;
     }
 }

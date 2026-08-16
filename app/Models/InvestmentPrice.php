@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Observers\InvestmentPriceObserver;
+use Brick\Money\Money;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property \Illuminate\Support\Carbon $date
  * @property int $investment_id
- * @property float $price
+ * @property-read Money $price
+ * @property-write Money|string|int|float $price
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Investment $investment
@@ -55,12 +58,17 @@ class InvestmentPrice extends Model
     {
         return [
             'date' => 'datetime:Y-m-d',
-            'price' => 'float',
+            'price' => MoneyCast::class . ':10,resolveInvestmentCurrency',
         ];
     }
 
     public function investment(): BelongsTo
     {
         return $this->belongsTo(Investment::class);
+    }
+
+    public function resolveInvestmentCurrency(): Currency
+    {
+        return $this->loadMissing('investment.currency')->investment->currency;
     }
 }

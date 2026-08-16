@@ -1729,7 +1729,7 @@ INSERT INTO `transactions` (`id`,`ai_document_id`,`user_id`,`date`,`transaction_
 ('26995',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26120',NULL,'-15.0000'),
 ('26996',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26121',NULL,'-10.0000'),
 ('26997',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26122',NULL,'-500.0000'),
-('26999',NULL,'3',NULL,'withdrawal','0','0','1',NULL,'standard','26124',NULL,'-50.0000'),
+('26999',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26124',NULL,'-50.0000'),
 ('27000',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26125',NULL,'-100.0000'),
 ('27001',NULL,'1',NULL,'buy','0','1','0',NULL,'investment','30','1','-270.0000');
 

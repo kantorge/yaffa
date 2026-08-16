@@ -17,6 +17,7 @@ use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderRateLimitPolicyResolver;
 use App\Services\InvestmentService;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Bus\PendingBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -484,6 +485,69 @@ class InvestmentServicePriceTest extends TestCase
         $service = $this->createService($registry);
 
         $this->assertSame([], $service->getLatestPricesBatch(collect()));
+    }
+
+    /**
+     * getLatestPriceExact()/getLatestPricesBatchExact() (precision-improvements FR-7
+     * follow-up) must resolve the same value as their float-collapsing counterparts,
+     * just as a BigDecimal instead of a float.
+     */
+    public function test_get_latest_price_exact_matches_float_variant(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        InvestmentPrice::factory()->for($investment)->create([
+            'date' => '2024-01-15',
+            'price' => 150.25,
+        ]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $exact = $service->getLatestPriceExact($investment, 'combined');
+
+        $this->assertInstanceOf(BigDecimal::class, $exact);
+        $this->assertSame($service->getLatestPrice($investment, 'combined'), $exact->toFloat());
+    }
+
+    public function test_get_latest_price_exact_returns_null_when_no_price_exists(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $this->assertNull($service->getLatestPriceExact($investment));
+    }
+
+    public function test_get_latest_prices_batch_exact_matches_float_variant(): void
+    {
+        $user = User::factory()->create();
+        $investmentA = Investment::factory()->for($user)->withUser($user)->create();
+        $investmentB = Investment::factory()->for($user)->withUser($user)->create();
+
+        InvestmentPrice::factory()->for($investmentA)->create(['date' => '2024-01-16', 'price' => 151.00]);
+        InvestmentPrice::factory()->for($investmentB)->create(['date' => '2024-01-14', 'price' => 149.00]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $requests = collect([
+            ['investment' => $investmentA, 'date' => null],
+            ['investment' => $investmentB, 'date' => null],
+        ]);
+
+        $exactResults = $service->getLatestPricesBatchExact($requests);
+        $floatResults = $service->getLatestPricesBatch($requests);
+
+        $this->assertCount(2, $floatResults);
+
+        foreach ($floatResults as $key => $floatValue) {
+            $this->assertInstanceOf(BigDecimal::class, $exactResults[$key]);
+            $this->assertSame($floatValue, $exactResults[$key]->toFloat());
+        }
     }
 
     public function test_recalculate_related_accounts_dispatches_batch_jobs_for_each_account(): void

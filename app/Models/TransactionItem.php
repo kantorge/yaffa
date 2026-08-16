@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Bkwld\Cloner\Cloneable;
+use Brick\Money\Money;
 use Database\Factories\TransactionItemFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,8 +20,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id
  * @property int $transaction_id
  * @property int|null $category_id
- * @property float $amount
- * @property float|null $amount_in_base
+ * @property-read Money $amount
+ * @property-write Money|string|int|float $amount
+ * @property string|null $amount_in_base
  * @property string|null $comment
  * @property-read Category|null $category
  * @property-read Collection|Tag[] $tags
@@ -68,13 +71,22 @@ class TransactionItem extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'float',
+            'amount' => MoneyCast::class . ':4,resolveAmountCurrency',
         ];
     }
 
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
+    }
+
+    /**
+     * The currency an item's amount is denominated in is the parent transaction's
+     * currency (falling back to the user's base currency, same as Transaction::transaction_currency).
+     */
+    public function resolveAmountCurrency(): Currency
+    {
+        return $this->loadMissing('transaction')->transaction->transaction_currency;
     }
 
     public function category(): BelongsTo

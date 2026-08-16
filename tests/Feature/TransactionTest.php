@@ -558,6 +558,11 @@ class TransactionTest extends TestCase
 
     public function test_create_from_draft_does_not_leak_other_users_account_entity(): void
     {
+        // The draft preview must still render (falling back to the acting user's base
+        // currency) even when the referenced account can't be resolved - give the
+        // acting user a currency to fall back to, same as every other test's fixtures.
+        \App\Models\Currency::factory()->for($this->user)->create(['base' => true]);
+
         $otherUser = User::factory()->create();
         $otherAccount = AccountEntity::factory()
             ->for($otherUser)
@@ -588,7 +593,7 @@ class TransactionTest extends TestCase
 
         /** @var Transaction $transaction */
         $transaction = $response->viewData('transaction');
-        $this->assertNull($transaction->config->getRelation('account_from'));
+        $this->assertNull($transaction->config->getRelation('accountFrom'));
         $response->assertDontSee('Other User Secret Account');
     }
 }

@@ -52,6 +52,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
         $dateTo = $request->query('date_to');
 
         $query = InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->orderBy('date');
 
         if ($dateFrom) {
@@ -187,7 +188,11 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
 
         return response()->json([
             'exists' => $existingPrice !== null,
-            'price' => $existingPrice ? $existingPrice->price : null,
+            // Emitted as a decimal string, not the raw Money object, to match the
+            // wire format Eloquent's SerializesCastableAttributes gives this same
+            // field everywhere else (Money::jsonSerialize() would otherwise emit
+            // {"amount": ..., "currency": ...} instead).
+            'price' => $existingPrice?->price !== null ? (string) $existingPrice->price->getAmount() : null,
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use InvalidArgumentException;
 
 class TransactionDetailInvestmentFactory extends Factory
 {
@@ -22,10 +23,42 @@ class TransactionDetailInvestmentFactory extends Factory
     }
 
     /**
-     * Use the assets of a given user
+     * Use the assets of a given user.
+     *
+     * @param array $configAttributes Attributes the caller will ultimately override with
+     *   (e.g. a specific investment_id/account_id pinned by TransactionFactory::buy_schedule()).
+     *   When present, the other side is resolved to match its currency instead of being
+     *   picked independently at random - otherwise the two can end up in different
+     *   currencies and MoneyCast's currency-mismatch guard (price vs dividend/tax/commission)
+     *   throws, since nothing else in the app enforces this invariant yet (see
+     *   TransactionRequest's "TODO: validate currency of account and investment").
      */
-    private function withUser(User $user): array
+    private function withUser(User $user, array $configAttributes = []): array
     {
+        if (isset($configAttributes['investment_id'], $configAttributes['account_id'])) {
+            $investment = Investment::findOrFail($configAttributes['investment_id']);
+            $account = AccountEntity::with('config')->findOrFail($configAttributes['account_id']);
+
+            if ($account->config?->currency_id !== $investment->currency_id) {
+                throw new InvalidArgumentException(
+                    'TransactionDetailInvestmentFactory: the given account_id and investment_id use different currencies.'
+                );
+            }
+
+            return [
+                'account_id' => $account->id,
+                'investment_id' => $investment->id,
+            ];
+        }
+
+        if (isset($configAttributes['investment_id'])) {
+            return $this->withInvestment($user, Investment::findOrFail($configAttributes['investment_id']));
+        }
+
+        if (isset($configAttributes['account_id'])) {
+            return $this->withAccount($user, AccountEntity::findOrFail($configAttributes['account_id']));
+        }
+
         // At this point we'll assume, that both account and investment will be taken by random
         // As a future improvement, we could account for one or the other being set, and then to create the other with the same currency
 
@@ -66,12 +99,51 @@ class TransactionDetailInvestmentFactory extends Factory
     }
 
     /**
+     * Resolve an account for the given user that shares the investment's currency,
+     * reusing an existing one where possible instead of always creating a new one.
+     */
+    private function withInvestment(User $user, Investment $investment): array
+    {
+        $account = $user->accounts()
+            ->with('config')
+            ->get()
+            ->first(fn (AccountEntity $account) => $account->config?->currency_id === $investment->currency_id);
+
+        $account ??= AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(['currency_id' => $investment->currency_id]), 'config')
+            ->create();
+
+        return [
+            'account_id' => $account->id,
+            'investment_id' => $investment->id,
+        ];
+    }
+
+    /**
+     * Resolve an investment for the given user that shares the account's currency,
+     * reusing an existing one where possible instead of always creating a new one.
+     */
+    private function withAccount(User $user, AccountEntity $accountEntity): array
+    {
+        $currencyId = $accountEntity->config->currency_id;
+
+        $investment = $user->investments()->where('currency_id', $currencyId)->inRandomOrder()->first()
+            ?? Investment::factory()->for($user)->create(['currency_id' => $currencyId]);
+
+        return [
+            'account_id' => $accountEntity->id,
+            'investment_id' => $investment->id,
+        ];
+    }
+
+    /**
      * Transaction type is BUY
      *
      * @param User $user
      * @return Factory
      */
-    public function buy(User $user): Factory
+    public function buy(User $user, array $configAttributes = []): Factory
     {
         return $this->state(fn (array $attributes) => array_merge(
             [
@@ -81,7 +153,7 @@ class TransactionDetailInvestmentFactory extends Factory
                 'tax' => $this->faker->randomFloat(4, 0.0001, 100),
                 'dividend' => null,
             ],
-            $this->withUser($user)
+            $this->withUser($user, $configAttributes)
         ));
     }
 
@@ -91,7 +163,7 @@ class TransactionDetailInvestmentFactory extends Factory
      * @param User $user
      * @return Factory
      */
-    public function sell(User $user): Factory
+    public function sell(User $user, array $configAttributes = []): Factory
     {
         return $this->state(fn (array $attributes) => array_merge(
             [
@@ -101,7 +173,7 @@ class TransactionDetailInvestmentFactory extends Factory
                 'tax' => $this->faker->randomFloat(4, 0.0001, 100),
                 'dividend' => null,
             ],
-            $this->withUser($user)
+            $this->withUser($user, $configAttributes)
         ));
     }
 
@@ -111,7 +183,7 @@ class TransactionDetailInvestmentFactory extends Factory
      * @param User $user
      * @return Factory
      */
-    public function dividend(User $user): Factory
+    public function dividend(User $user, array $configAttributes = []): Factory
     {
         return $this->state(fn (array $attributes) => array_merge(
             [
@@ -121,7 +193,7 @@ class TransactionDetailInvestmentFactory extends Factory
                 'tax' => $this->faker->randomFloat(4, 0.0001, 100),
                 'dividend' => $this->faker->randomFloat(4, 0.0001, 100),
             ],
-            $this->withUser($user)
+            $this->withUser($user, $configAttributes)
         ));
     }
 }

@@ -85,6 +85,26 @@ export function toFormattedDate(input, locale, fallback, allowIsoParse = false, 
 }
 
 /**
+ * Resolve a currency's configured decimal precision (generic or detailed), the same
+ * fields toFormattedCurrency() uses for display, for callers that need the raw number
+ * (e.g. to clamp an input value) rather than a formatted string.
+ *
+ * @param {Object} currencySettings Object with generic_decimal_precision/detailed_decimal_precision.
+ * @param {'generic'|'detailed'} [precision='generic']
+ * @returns {number|null} The configured precision, or null if unset/unavailable.
+ */
+export function getDecimalPrecision(currencySettings, precision = 'generic') {
+    if (!currencySettings) {
+        return null;
+    }
+
+    const key = precision === 'detailed' ? 'detailed_decimal_precision' : 'generic_decimal_precision';
+    const value = currencySettings[key];
+
+    return value === null || value === undefined ? null : value;
+}
+
+/**
  * Gets the currency symbol for a given locale and ISO currency code.
  *
  * @param {string} locale - The locale string (e.g., 'en-US', 'de-DE')

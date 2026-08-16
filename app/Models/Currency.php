@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\DecimalCast;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ModelOwnedByUserTrait;
@@ -94,11 +95,11 @@ class Currency extends Model
     {
         // Invalidate cache when currency is created, updated, or deleted
         static::saved(function ($currency) {
-            Cache::forget("currencies_user_{$currency->user_id}");
+            Cache::forget($currency->getCurrenciesCacheKey($currency->user_id));
         });
 
         static::deleted(function ($currency) {
-            Cache::forget("currencies_user_{$currency->user_id}");
+            Cache::forget($currency->getCurrenciesCacheKey($currency->user_id));
         });
     }
 
@@ -154,7 +155,7 @@ class Currency extends Model
             ->latest('date')
             ->first();
 
-        return $rate instanceof CurrencyRate ? $rate->rate : null;
+        return $rate instanceof CurrencyRate ? DecimalCast::toFloat($rate->rate) : null;
     }
 
     /**
@@ -287,10 +288,10 @@ class Currency extends Model
             DB::commit();
 
             // Clear currency cache (bulk update doesn't trigger model events)
-            Cache::forget("currencies_user_{$this->user->id}");
+            Cache::forget($this->getCurrenciesCacheKey($this->user->id));
 
             // Clear currency rates cache
-            Cache::forget("allCurrencyRatesByMonth_forUser_{$this->user->id}");
+            Cache::forget($this->getAllCurrencyRatesByMonthCacheKey($this->user->id));
         } catch (Exception $e) {
             DB::rollback();
             return false;

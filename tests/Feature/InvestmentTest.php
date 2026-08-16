@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
+use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
@@ -438,6 +440,81 @@ class InvestmentTest extends TestCase
         $this->assertSame(['2026-03-01', '2026-04-01'], $scheduledDates);
         $this->assertTrue((bool) $scheduledInstances->first()?->schedule_first_instance);
         $this->assertFalse((bool) $scheduledInstances->last()?->schedule_first_instance);
+    }
+
+    /**
+     * An investment transaction's price is cast to the investment's currency (MoneyCast) -
+     * changing it after the investment is already used in a transaction would silently
+     * mismatch every existing transaction's stored price against a currency it was never
+     * recorded in.
+     */
+    public function test_currency_cannot_be_changed_once_used_in_a_transaction(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
+        $otherCurrency = Currency::factory()->for($user)->create();
+
+        /** @var Investment $investment */
+        $investment = Investment::factory()->for($user)->create([
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+
+        $accountEntity = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currency->id]), 'config')
+            ->create();
+
+        Transaction::factory()
+            ->for($user)
+            ->buy($user, [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+            ])
+            ->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    $investment->id
+                ),
+                [
+                    'name' => $investment->name,
+                    'active' => $investment->active,
+                    'symbol' => $investment->symbol,
+                    'investment_group_id' => $investment->investment_group_id,
+                    'currency_id' => $otherCurrency->id,
+                    'auto_update' => $investment->auto_update,
+                    'investment_price_provider' => $investment->investment_price_provider,
+                ]
+            );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['currency_id']);
+
+        // Leaving the currency unchanged must still be allowed.
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    $investment->id
+                ),
+                [
+                    'name' => $investment->name,
+                    'active' => $investment->active,
+                    'symbol' => $investment->symbol,
+                    'investment_group_id' => $investment->investment_group_id,
+                    'currency_id' => $investment->currency_id,
+                    'auto_update' => $investment->auto_update,
+                    'investment_price_provider' => $investment->investment_price_provider,
+                ]
+            );
+
+        $response->assertRedirectToRoute("{$this->base_route}.index");
     }
 
     private function createPrerequisites(?User $user = null): array

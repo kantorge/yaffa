@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Casts\MoneyCast;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -325,7 +326,7 @@ class ResetDemoDatabase extends Command
             return;
         }
 
-        $amount = (float) $transaction->transactionItems->sum('amount');
+        $amount = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
         if ($amount <= 0) {
             $this->warn('Skipping AI document duplicate scenario - transaction amount is not positive');
             return;

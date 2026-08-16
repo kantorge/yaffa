@@ -12,6 +12,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -87,26 +88,33 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->get();
         }
 
-        // Group standard transactions by selected period, and get all relevant details
+        // Group standard transactions by selected period, and get all relevant details.
+        // Accumulated exactly (BigDecimal) rather than via float +=, since this sums across
+        // every transaction in the period/currency - the same repeated-summation drift
+        // pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate (FR-1).
         $standardCompact = [];
         $standardTransactions->each(function ($item) use (&$standardCompact) {
             /** @var TransactionItem $item */
             $period = $item->transaction->date->format('Y-m-01');
             $currency_id = $item->transaction->currency_id;
-            $amount = $item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
-                ? -1 * $item->amount
-                : $item->amount;
+            $amount = $item->amount->getAmount()
+                ->multipliedBy($item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1);
 
             if (
                 !array_key_exists($period, $standardCompact)
                 || !array_key_exists($currency_id, $standardCompact[$period])
             ) {
-                $standardCompact[$period][$currency_id] = 0;
+                $standardCompact[$period][$currency_id] = BigDecimal::zero();
             }
-            $standardCompact[$period][$currency_id] += $amount;
+            $standardCompact[$period][$currency_id] = $standardCompact[$period][$currency_id]->plus($amount);
         });
 
-        // Summarize items, applying currency rate
+        // Summarize items, applying currency rate. $rate is already an inexact monthly
+        // average (AVG() over daily rates), so multiplying by it doesn't need to be exact -
+        // only the summation does.
+        // 'actual' starts as null (rather than BigDecimal::zero()) and stays that way for a
+        // period with no standard transactions at all - budgetchart.js relies on this
+        // null-vs-zero distinction to find the last period with real data.
         $dataByPeriod = [];
         $currenciesWithMissingRates = [];
 
@@ -116,7 +124,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 if (!array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
-                        'budget' => 0,
+                        'budget' => BigDecimal::zero(),
                     ];
                 }
 
@@ -126,7 +134,8 @@ class ReportApiController extends Controller implements HasMiddleware
                     $currenciesWithMissingRates[$currency] = true;
                 }
 
-                $dataByPeriod[$period]['actual'] += $value * ($rate ?? 1);
+                $dataByPeriod[$period]['actual'] = ($dataByPeriod[$period]['actual'] ?? BigDecimal::zero())
+                    ->plus($value->multipliedBy((string) ($rate ?? 1)));
             }
         }
 
@@ -171,11 +180,13 @@ class ReportApiController extends Controller implements HasMiddleware
             })
             ->get();
 
-        // Unify currencies and calculate amounts only for given categories
+        // Unify currencies and calculate amounts only for given categories. Summed exactly
+        // (BigDecimal) rather than Collection::sum()'s native float +=, since a budget
+        // transaction can have multiple items.
         $budgetTransactions->transform(function ($transaction) use ($categories) {
             $transaction->sum = $transaction->transactionItems
                 ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
-                ->sum('amount');
+                ->reduce(fn (BigDecimal $carry, $item) => $carry->plus($item->amount->getAmount()), BigDecimal::zero());
 
             return $transaction;
         });
@@ -197,11 +208,12 @@ class ReportApiController extends Controller implements HasMiddleware
                 !array_key_exists($period, $budgetCompact)
                 || !array_key_exists($currency_id, $budgetCompact[$period])
             ) {
-                $budgetCompact[$period][$currency_id] = 0;
+                $budgetCompact[$period][$currency_id] = BigDecimal::zero();
             }
 
-            $budgetCompact[$period][$currency_id] += $transaction->sum
-                * ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1);
+            $budgetCompact[$period][$currency_id] = $budgetCompact[$period][$currency_id]->plus(
+                $transaction->sum->multipliedBy($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
+            );
         });
 
         foreach ($budgetCompact as $period => $periodData) {
@@ -210,7 +222,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 if (!array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
-                        'budget' => 0,
+                        'budget' => BigDecimal::zero(),
                     ];
                 }
 
@@ -220,17 +232,21 @@ class ReportApiController extends Controller implements HasMiddleware
                     $currenciesWithMissingRates[$currency] = true;
                 }
 
-                $dataByPeriod[$period]['budget'] += $value * ($rate ?? 1);
+                // As above: $rate is an inexact AVG() over daily rates, so multiplying by it
+                // doesn't need to be exact - only the summation into 'budget' does.
+                $dataByPeriod[$period]['budget'] = $dataByPeriod[$period]['budget']->plus($value->multipliedBy((string) ($rate ?? 1)));
             }
         }
 
-        // Transform standard data into amCharts format
+        // Transform standard data into amCharts format. Collapse to float only here, at the
+        // chart-response boundary: budgetchart.js does plain JS `+` on these values (amCharts
+        // consumption), which requires real JSON numbers, not decimal strings.
         $result = [];
         foreach ($dataByPeriod as $key => $value) {
             $result[] = [
                 'period' => new Carbon($key),
-                'actual' => $value['actual'],
-                'budget' => $value['budget'],
+                'actual' => $value['actual']?->toFloat(),
+                'budget' => $value['budget']->toFloat(),
             ];
         }
 
@@ -304,7 +320,7 @@ class ReportApiController extends Controller implements HasMiddleware
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
-                    $dataByCategory[$category] = 0;
+                    $dataByCategory[$category] = BigDecimal::zero();
                     $categoryIdByBucket[$category] = $topCategory->id;
                     $transactionTypesByBucket[$category] = $standardBucketTypes;
                 }
@@ -323,12 +339,16 @@ class ReportApiController extends Controller implements HasMiddleware
                     $currenciesWithMissingRates[$currency_id] = true;
                 }
 
-                $dataByCategory[$category] +=
-                    ($item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
-                        ? -1
-                        : 1)
-                    * $item->amount
-                    * ($rate ?? 1);
+                // Accumulated exactly (BigDecimal) rather than via float +=, since this sums
+                // across every transaction in the category - the same repeated-summation
+                // drift pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate (FR-1).
+                // $rate is already an inexact monthly average (AVG() over daily rates), so
+                // multiplying by it doesn't need to be exact - only the summation does.
+                $dataByCategory[$category] = $dataByCategory[$category]->plus(
+                    $item->amount->getAmount()
+                        ->multipliedBy($item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1)
+                        ->multipliedBy((string) ($rate ?? 1))
+                );
             });
         }
 
@@ -351,7 +371,7 @@ class ReportApiController extends Controller implements HasMiddleware
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
-                    $dataByCategory[$category] = 0;
+                    $dataByCategory[$category] = BigDecimal::zero();
                     $categoryIdByBucket[$category] = null;
                     $transactionTypesByBucket[$category] = $investmentBucketTypes;
                 }
@@ -368,7 +388,11 @@ class ReportApiController extends Controller implements HasMiddleware
                     $currenciesWithMissingRates[$transaction->currency_id] = true;
                 }
 
-                $dataByCategory[$category] += ($transaction->cashflow_value ?? 0) * ($rate ?? 1);
+                // As above: $rate is an inexact AVG() over daily rates, so multiplying by it
+                // doesn't need to be exact - only the summation into $dataByCategory does.
+                $dataByCategory[$category] = $dataByCategory[$category]->plus(
+                    ($transaction->cashflow_value?->getAmount() ?? BigDecimal::zero())->multipliedBy((string) ($rate ?? 1))
+                );
             });
         }
 
@@ -377,9 +401,13 @@ class ReportApiController extends Controller implements HasMiddleware
             // The find-transactions endpoint already expands a top-level category into
             // itself plus its children (see CategoryService::getChildCategories()), so
             // only the top-level category id needs to be passed through here.
+            // Collapse to float only here, at the chart-response boundary: waterfall.js
+            // does plain JS `+` on this value (amCharts consumption), which requires a
+            // real JSON number, not a decimal string - the same chart-boundary rule Phase 3
+            // established for the frontend (Decimal -> Number only at the amCharts feed).
             $result[] = [
                 'category' => $category,
-                'value' => $value,
+                'value' => $value->toFloat(),
                 'category_id' => $categoryIdByBucket[$category],
                 'transaction_types' => $transactionTypesByBucket[$category],
             ];
@@ -502,7 +530,14 @@ class ReportApiController extends Controller implements HasMiddleware
         $debugRows = [];
         $compact = [];
         $monthlySummaries->each(function ($summary) use (&$compact, &$currenciesWithMissingRates, &$debugRows, $baseCurrency, $allRatesMap) {
-            // First of all, if the amount is 0, we can skip this summary
+            // First of all, if the amount is 0, we can skip this summary.
+            // Pre-existing latent bug, left as-is: $summary->amount is a numeric string (the
+            // raw SQL SUM() result via the query builder, never cast), so this === 0 never
+            // matches and the guard never fires. Harmless for the accumulated totals (a
+            // zero contributes nothing either way), but fixing the comparison would start
+            // skipping all-zero rows and could make an all-zero month disappear from
+            // chartData entirely instead of appearing as a zero-value point - a visible
+            // chart behavior change, not a precision fix, so it's out of scope here.
             if ($summary->amount === 0) {
                 return;
             }
@@ -513,9 +548,9 @@ class ReportApiController extends Controller implements HasMiddleware
             if (!array_key_exists($month, $compact)) {
                 $compact[$month] = [
                     'month' => $month,
-                    'account_balance' => 0,
-                    'account_balance_running_total' => 0,
-                    'investment_value' => 0,
+                    'account_balance' => BigDecimal::zero(),
+                    'account_balance_running_total' => BigDecimal::zero(),
+                    'investment_value' => BigDecimal::zero(),
                 ];
             }
 
@@ -562,10 +597,15 @@ class ReportApiController extends Controller implements HasMiddleware
             $effectiveRate = $isBaseCurrency ? 1.0 : $rate;
             $isSuspiciousRate = !$isBaseCurrency && $effectiveRate !== null && ($effectiveRate < 0.0001 || $effectiveRate > 10000);
 
-            $amount = $summary->amount * ($effectiveRate ?? 1);
+            // Accumulated exactly (BigDecimal) rather than via float +=, since this sums
+            // across every summary row for the month/type - the same repeated-summation
+            // drift pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate (FR-1).
+            // $effectiveRate is already an inexact monthly average, so multiplying by it
+            // doesn't need to be exact - only the summation does.
+            $amount = BigDecimal::of($summary->amount)->multipliedBy((string) ($effectiveRate ?? 1));
 
             // Based on the data_type and transaction_type, assign the amount to the correct field
-            $compact[$month][$summary->transaction_type] += $amount;
+            $compact[$month][$summary->transaction_type] = $compact[$month][$summary->transaction_type]->plus($amount);
 
             // Collect per-row debug data for browser console inspection
             $flags = array_values(array_filter([
@@ -582,7 +622,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 'exchange_rate' => $effectiveRate,
                 'rate_source_month' => $debugRateSourceMonth,
                 'is_base_currency' => $isBaseCurrency,
-                'converted_amount' => $amount,
+                'converted_amount' => $amount->toFloat(),
                 'flags' => $flags,
             ];
         });
@@ -590,10 +630,13 @@ class ReportApiController extends Controller implements HasMiddleware
         // Sort the compact array by month to help with the chart
         ksort($compact);
 
-        // Calculate the running total for each month, for the account balance fact
-        $runningTotal = 0;
+        // Calculate the running total for each month, for the account balance fact.
+        // Accumulated exactly (BigDecimal) - a running total across every month in the
+        // user's history is exactly the kind of long repeated-summation chain most prone to
+        // float drift.
+        $runningTotal = BigDecimal::zero();
         foreach ($compact as $month => $data) {
-            $runningTotal += $data['account_balance'];
+            $runningTotal = $runningTotal->plus($data['account_balance']);
             $compact[$month]['account_balance_running_total'] = $runningTotal;
         }
 
@@ -610,9 +653,22 @@ class ReportApiController extends Controller implements HasMiddleware
             unset($row);
         }
 
+        // Collapse to float only here, at the chart-response boundary: cashflow.js feeds
+        // these fields straight to amCharts as valueY series, which needs real JSON numbers,
+        // not decimal strings.
+        $chartData = array_map(
+            fn (array $row) => [
+                ...$row,
+                'account_balance' => $row['account_balance']->toFloat(),
+                'account_balance_running_total' => $row['account_balance_running_total']->toFloat(),
+                'investment_value' => $row['investment_value']->toFloat(),
+            ],
+            array_values($compact)
+        );
+
         return response()->json(
             [
-                'chartData' => array_values($compact),
+                'chartData' => $chartData,
                 'warnings' => [
                     'currenciesWithoutRates' => $missingRateCurrencies,
                 ],

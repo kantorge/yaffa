@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\Investment;
 use App\Models\TransactionSchedule;
 use App\Rules\IsFalsy;
 use Closure;
@@ -137,6 +140,37 @@ class TransactionRequest extends FormRequest
             } catch (InvalidArgument|InvalidWeekday|Exception) {
                 // A malformed rule (e.g. an invalid frequency/by_day combination) is
                 // already surfaced by the other rules on those fields - don't pile on.
+            }
+        };
+    }
+
+    /**
+     * An investment transaction's cash side (account) and priced side (investment) must
+     * share the same currency - commission/tax/dividend are cast to the account's currency
+     * (MoneyCast) while price is cast to the investment's currency (TransactionDetailInvestment
+     * resolveAccountCurrency()/resolveInvestmentCurrency()), and arithmetic combining the two
+     * throws Brick\Money\Exception\MoneyMismatchException on a mismatch. That guard is
+     * fail-closed but only fires once the transaction is already committed (from the
+     * post-commit TransactionCreated listener) - this rejects the mismatch up front instead.
+     */
+    private function accountInvestmentCurrencyMatchRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            $investmentId = $this->input('config.investment_id');
+
+            if (!$value || !$investmentId) {
+                return;
+            }
+
+            $account = AccountEntity::with('config')->find($value);
+            $investment = Investment::find($investmentId);
+
+            if (!$account?->config instanceof Account || !$investment) {
+                return;
+            }
+
+            if ($account->config->currency_id !== $investment->currency_id) {
+                $fail(__('The selected account and investment must use the same currency.'));
             }
         };
     }
@@ -289,6 +323,8 @@ class TransactionRequest extends FormRequest
                     'required',
                     'numeric',
                     'gt:0',
+                    // Fit in signed DECIMAL(12,4) range
+                    'max:99999999.9999',
                 ],
                 'items.*.category_id' => [
                     'required',
@@ -316,8 +352,21 @@ class TransactionRequest extends FormRequest
                         ($isBasic ? 'required' : 'nullable'),
                         $ownedPayeeRule,
                     ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+                    'config.amount_from' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
+                    'config.amount_to' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        'same:config.amount_from',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
 
                     // Technical field, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
@@ -334,8 +383,21 @@ class TransactionRequest extends FormRequest
                         ($isBasic ? 'required' : 'nullable'),
                         $ownedAccountRule,
                     ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+                    'config.amount_from' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
+                    'config.amount_to' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        'same:config.amount_from',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
 
                     // Technical fields, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
@@ -352,8 +414,20 @@ class TransactionRequest extends FormRequest
                         'required',
                         $ownedAccountRule,
                     ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0',
+                    'config.amount_from' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
+                    'config.amount_to' => [
+                        'required',
+                        'numeric',
+                        'gt:0',
+                        // Fit in signed DECIMAL(12,4) range
+                        'max:99999999.9999',
+                    ],
                 ]);
             }
         } elseif ($this->get('config_type') === 'investment') {
@@ -362,16 +436,27 @@ class TransactionRequest extends FormRequest
                 'config.account_id' => [
                     'required',
                     $ownedAccountRule,
+                    $this->accountInvestmentCurrencyMatchRule(),
                 ],
                 'config.investment_id' => [
                     'required',
                     $ownedInvestmentRule,
                 ],
-                'config.commission' => 'nullable|numeric|gte:0',
-                'config.tax' => 'nullable|numeric|gte:0',
+                'config.commission' => [
+                    'nullable',
+                    'numeric',
+                    'gte:0',
+                    // Fit in signed DECIMAL(14,4) range
+                    'max:9999999999.9999',
+                ],
+                'config.tax' => [
+                    'nullable',
+                    'numeric',
+                    'gte:0',
+                    // Fit in signed DECIMAL(14,4) range
+                    'max:9999999999.9999',
+                ],
             ]);
-
-            //TODO: validate currency of account and investment
 
             $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type));
         }
@@ -390,22 +475,46 @@ class TransactionRequest extends FormRequest
         // Buy OR Sell
         if ($transactionTypeEnum === TransactionTypeEnum::BUY || $transactionTypeEnum === TransactionTypeEnum::SELL) {
             return [
-                'config.price' => 'required|numeric|gt:0',
-                'config.quantity' => 'required|numeric|gt:0',
+                'config.price' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    // Fit in signed DECIMAL(20,10) range
+                    'max:9999999999.9999999999',
+                ],
+                'config.quantity' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    // Fit in signed DECIMAL(14,4) range
+                    'max:9999999999.9999',
+                ],
             ];
         }
 
         // Add shares OR Remove shares
         if ($transactionTypeEnum === TransactionTypeEnum::ADD_SHARES || $transactionTypeEnum === TransactionTypeEnum::REMOVE_SHARES) {
             return [
-                'config.quantity' => 'required|numeric|gt:0',
+                'config.quantity' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    // Fit in signed DECIMAL(14,4) range
+                    'max:9999999999.9999',
+                ],
             ];
         }
 
         // Dividend OR Interest yield
         if ($transactionTypeEnum === TransactionTypeEnum::DIVIDEND || $transactionTypeEnum === TransactionTypeEnum::INTEREST_YIELD) {
             return [
-                'config.dividend' => 'required|numeric|gt:0',
+                'config.dividend' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    // Fit in signed DECIMAL(12,4) range
+                    'max:99999999.9999',
+                ],
             ];
         }
 

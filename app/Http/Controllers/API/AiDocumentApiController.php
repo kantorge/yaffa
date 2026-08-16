@@ -379,7 +379,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
                 'id' => $duplicate['id'],
                 'similarity' => $duplicate['similarity'],
                 'date' => $transaction->date,
-                'amount' => $transaction->cashflow_value,
+                // Emitted as a decimal string (matching the wire format Eloquent's
+                // SerializesCastableAttributes gives this field elsewhere), since this is a
+                // raw array embedding the Money value directly, bypassing that control point.
+                'amount' => $transaction->cashflow_value !== null ? (string) $transaction->cashflow_value->getAmount() : null,
                 'type' => $transaction->config_type,
             ];
         }, $duplicates);

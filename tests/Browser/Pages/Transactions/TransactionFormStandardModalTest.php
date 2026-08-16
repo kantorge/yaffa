@@ -202,7 +202,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
             // Verify the transaction was saved in the database
             $transaction = \App\Models\Transaction::orderByDesc('id')->first();
             $this->assertNotNull($transaction);
-            $this->assertEquals(100, $transaction->config->amount_from);
+            $this->assertEquals(100, $transaction->config->amount_from->getAmount()->toFloat());
         });
     }
 }

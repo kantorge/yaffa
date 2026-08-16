@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
-use App\Models\InvestmentPrice;
 use App\Services\InvestmentProviderSettingsResolver;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
@@ -143,10 +142,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('view', $investment);
 
-        $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
-            ->select(['id', 'date', 'price'])
-            ->orderBy('date')
-            ->get();
+        $prices = $this->investmentService->getPrices($investment, ['id', 'date', 'investment_id', 'price']);
 
         // Return data
         return response()->json($prices, Response::HTTP_OK);
@@ -173,9 +169,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
 
         // Get all prices
-        $prices = InvestmentPrice::where('investment_id', $investment->id)
-            ->orderBy('date')
-            ->get();
+        $prices = $this->investmentService->getPrices($investment);
 
         // Get basic (non-scheduled) transactions
         $transactions = $investment->transactionsBasic()

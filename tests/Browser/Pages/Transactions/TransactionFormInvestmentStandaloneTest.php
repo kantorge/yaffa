@@ -645,15 +645,15 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             // Verify the transaction was saved in the database
             $transaction = Transaction::orderByDesc('id')->first();
             $this->assertNotNull($transaction);
-            $this->assertEquals(10, $transaction->config->quantity);
-            $this->assertEquals(35.75, $transaction->config->price);
+            $this->assertEquals(10, $transaction->config->quantity->toFloat());
+            $this->assertEquals(35.75, $transaction->config->price->getAmount()->toFloat());
 
             // Verify the investment price was saved in the database
             $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)
                 ->where('date', now()->format('Y-m-d'))
                 ->first();
             $this->assertNotNull($investmentPrice);
-            $this->assertEquals(35.75, $investmentPrice->price);
+            $this->assertEquals(35.75, $investmentPrice->price->getAmount()->toFloat());
         });
     }
 
@@ -694,8 +694,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             // Verify the transaction was saved
             $transaction = Transaction::orderByDesc('id')->first();
             $this->assertNotNull($transaction);
-            $this->assertEquals(5, $transaction->config->quantity);
-            $this->assertEquals(42.25, $transaction->config->price);
+            $this->assertEquals(5, $transaction->config->quantity->toFloat());
+            $this->assertEquals(42.25, $transaction->config->price->getAmount()->toFloat());
 
             // Verify the investment price was NOT saved in the database
             $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)

@@ -24,7 +24,10 @@ trait ModelOwnedByUserTrait
         }
 
         static::creating(function ($model) {
-            if (empty($model->user_id)) {
+            // Only default to the authenticated user - never override a user_id the
+            // caller already set explicitly (e.g. via a relation like $user->currencies()
+            // ->create(...), or a factory building data for a specific, non-acting user).
+            if ($model->user_id === null) {
                 $model->user_id = auth()->id();
             }
         });

@@ -15,6 +15,7 @@
 </template>
 
 <script>
+  import Decimal from 'decimal.js';
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
@@ -153,7 +154,7 @@
           /**
            * @var {Object} transaction
            * @property {Date} transaction.date
-           * @property {Number} transaction.cashflow_value
+           * @property {Number|String} transaction.cashflow_value
            * @property {Number} transaction.currencyRateToBase
            */
           filteredTransactions.forEach((transaction) => {
@@ -164,18 +165,23 @@
                 month: month,
                 // Truncate the date to the first day of the month
                 date: new Date(date.getFullYear(), date.getMonth(), 1),
-                deposits: 0,
-                withdrawals: 0,
-                cashFlow: 0,
+                // Kept as Decimal while accumulating (cashflow_value arrives from the
+                // API as a decimal string) and converted to Number only when handed
+                // to the chart below.
+                deposits: new Decimal(0),
+                withdrawals: new Decimal(0),
               };
             }
 
+            const monthlyValue = new Decimal(transaction.cashflow_value || 0).times(
+              transaction.currencyRateToBase || 0,
+            );
+
             if (transaction.transaction_type === 'deposit') {
-              months[month].deposits +=
-                transaction.cashflow_value * transaction.currencyRateToBase;
+              months[month].deposits = months[month].deposits.plus(monthlyValue);
             } else if (transaction.transaction_type === 'withdrawal') {
-              months[month].withdrawals +=
-                transaction.cashflow_value * transaction.currencyRateToBase;
+              months[month].withdrawals =
+                months[month].withdrawals.plus(monthlyValue);
             }
           });
 
@@ -183,9 +189,10 @@
             chartData.push({
               month: month.month,
               date: month.date,
-              deposits: month.deposits,
-              withdrawals: month.withdrawals,
-              cashFlow: month.deposits + month.withdrawals, // Deposits are positive, withdrawals are negative
+              deposits: month.deposits.toNumber(),
+              withdrawals: month.withdrawals.toNumber(),
+              // Deposits are positive, withdrawals are negative
+              cashFlow: month.deposits.plus(month.withdrawals).toNumber(),
             });
           });
 

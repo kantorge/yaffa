@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Casts\DecimalCast;
+use App\Casts\MoneyCast;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
@@ -120,12 +122,12 @@ class MainController extends Controller implements HasMiddleware
                         ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                     $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
-                    $transaction->amount_from = $transaction->config->amount_from;
-                    $transaction->amount_to = $transaction->config->amount_to;
+                    $transaction->amount_from = MoneyCast::toFloat($transaction->config->amount_from);
+                    $transaction->amount_to = MoneyCast::toFloat($transaction->config->amount_to);
                     $transaction->tags = $transaction->tags()->values();
                     $transaction->categories = $transaction->categories()->values();
                 } elseif ($transaction->isInvestment() && $transaction->config instanceof TransactionDetailInvestment) {
-                    $amount = $transaction->cashflow_value ?? 0;
+                    $amount = MoneyCast::toFloat($transaction->cashflow_value) ?? 0;
 
                     $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier();
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
@@ -134,8 +136,8 @@ class MainController extends Controller implements HasMiddleware
                     $transaction->amount_to = ($amount > 0 ? $amount : null);
                     $transaction->tags = [];
                     $transaction->categories = [];
-                    $transaction->quantity = $transaction->config->quantity;
-                    $transaction->price = $transaction->config->price;
+                    $transaction->quantity = DecimalCast::toFloat($transaction->config->quantity);
+                    $transaction->price = MoneyCast::toFloat($transaction->config->price);
                     $transaction->setRelation('currency', $accountConfig->currency);
                 }
 
