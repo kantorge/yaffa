@@ -576,10 +576,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Select the payee from the list
                 ->click('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"] a')
 
-                // There is a 1 second delay between clicking the payee and the modal closing
-                ->pause(1000)
-
-                // Verify that the modal is closed
+                // There is a delay between clicking the payee and the modal closing - wait it out
                 ->waitUntilMissing('#newPayeeModal.show', 10)
 
                 // Verify that the payee is added to the transaction
@@ -809,7 +806,12 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->scrollIntoView('@action-after-save-desktop-button-group')
                 // Ensure the button is visible and clickable
                 ->waitFor('@action-after-save-desktop-button-group button[value="show"]')
-                // Pause to ensure any animations are complete
+                // TODO: replace with a real wait condition. This waits out the native smooth-scroll
+                // triggered by scrollIntoView() above; the project's test-env CSS reset
+                // (`* { transition: none; animation: none; }` in master.blade.php) does not cover
+                // `scroll-behavior: smooth`, and there is no reliable DOM-observable signal for
+                // "scroll animation finished" to poll on with waitUsing() without querying element
+                // position directly through a raw selector (fragile with @dusk-prefixed selectors).
                 ->pause(1000)
                 // Select the "show transaction" callback
                 ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {

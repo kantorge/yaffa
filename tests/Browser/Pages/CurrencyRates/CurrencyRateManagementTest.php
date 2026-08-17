@@ -218,11 +218,14 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
                 // Select date range preset
-                ->select('#dateRangeFilterPresets', 'thisMonth')
-                // Wait for filter to apply - this is done locally, so a short pause is sufficient
-                ->pause(2000)
-                // Verify table shows filtered results
-                ->assertPresent('#ratesTable');
+                ->select('#dateRangeFilterPresets', 'thisMonth');
+
+            // Wait for the table to react to the filter: the fixture rates are all dated
+            // February 2024, so filtering to "this month" leaves none of them visible.
+            $browser->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#ratesTable') === 0);
+
+            // Verify table shows filtered results
+            $browser->assertPresent('#ratesTable');
         });
     }
 

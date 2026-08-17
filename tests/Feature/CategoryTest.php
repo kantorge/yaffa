@@ -9,10 +9,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class CategoryTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -21,37 +23,6 @@ class CategoryTest extends TestCase
 
         $this->setBaseRoute('categories');
         $this->setBaseModel(Category::class);
-    }
-
-    public function test_guest_cannot_access_resource(): void
-    {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Category $category */
-        $category = Category::factory()->for($user)->create();
-
-        $this->get(route("{$this->base_route}.edit", $category))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $category))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirectToRoute('login');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        $user = User::factory()->create();
-        $category = Category::factory()->for($user)->create();
-
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_user_can_view_list_of_categories(): void

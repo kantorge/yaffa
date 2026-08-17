@@ -308,7 +308,18 @@ class RecurrenceRuleService
         ?int $byMonth,
         Carbon $date,
     ): bool {
-        $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+        // Bound the rule's own UNTIL to $date (unless the caller's $endDate is earlier)
+        // rather than relying solely on the BetweenConstraint below to short-circuit:
+        // Recurr doesn't reliably stop early for a YEARLY+BYMONTH+ordinal-BYDAY rule (e.g.
+        // "-1FR" of November) with no UNTIL/COUNT - measured ~33s at RECURRENCE_VIRTUAL_LIMIT
+        // because it keeps generating candidates past $date until the limit is hit, even
+        // though BetweenConstraint::stopsTransformer() should have ended it on the very next
+        // candidate. Capping UNTIL makes the rule itself stop generating right after $date,
+        // independent of that stopsTransformer quirk, while still resolving correctly for
+        // dates arbitrarily far from $startDate.
+        $searchEndDate = $endDate && $endDate->lessThan($date) ? $endDate : $date;
+
+        $rule = $this->buildRule($startDate, $frequency, $interval, $searchEndDate, $count, $byDay, $byMonth);
         $transformer = $this->makeArrayTransformer();
 
         $day = new DateTime($date->toDateString());

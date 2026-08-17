@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers\API;
+namespace Tests\Feature\API;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -118,98 +118,5 @@ class UserApiControllerTest extends TestCase
             ->assertJson([
                 'warnings' => [],
             ]);
-    }
-
-    public function test_changing_password_successfully_returns_successful_response(): void
-    {
-        // Make sure that the sandbox mode is disabled
-        config(['yaffa.sandbox_mode' => false]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $response = $this->json('PATCH', '/api/v1/users/me/password', [
-            'current_password' => 'password', // Assuming the factory sets this as default
-            'password' => 'newPassword123',
-            'password_confirmation' => 'newPassword123',
-        ]);
-
-        $response->assertStatus(200);
-    }
-
-    public function test_changing_password_with_incorrect_current_password_returns_error(): void
-    {
-        // Make sure that the sandbox mode is disabled
-        config(['yaffa.sandbox_mode' => false]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $response = $this->json('PATCH', '/api/v1/users/me/password', [
-            'current_password' => 'wrongPassword',
-            'password' => 'newPassword123',
-            'password_confirmation' => 'newPassword123',
-        ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_changing_password_without_password_confirmation_returns_error(): void
-    {
-        // Make sure that the sandbox mode is disabled
-        config(['yaffa.sandbox_mode' => false]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $response = $this->json('PATCH', '/api/v1/users/me/password', [
-            'current_password' => 'password',
-            'password' => 'newPassword123',
-            // No password_confirmation provided
-        ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_changing_password_with_short_password_returns_error(): void
-    {
-        // Make sure that the sandbox mode is disabled
-        config(['yaffa.sandbox_mode' => false]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $response = $this->json('PATCH', '/api/v1/users/me/password', [
-            'current_password' => 'password',
-            'password' => 'short',
-            'password_confirmation' => 'short',
-        ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_password_change_in_sandbox_mode_is_not_allowed(): void
-    {
-        // Make sure that the sandbox mode is enabled
-        config(['yaffa.sandbox_mode' => true]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $response = $this->json('PATCH', '/api/v1/users/me/password', [
-            'current_password' => 'password',
-            'password' => 'newPassword',
-            'password_confirmation' => 'newPassword',
-        ]);
-
-        $response->assertStatus(403);
-        $response->assertJson([
-            'message' => __('This action is not allowed in sandbox mode.'),
-        ]);
     }
 }

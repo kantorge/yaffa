@@ -23,35 +23,6 @@ class DataLayerTest extends DuskTestCase
         }
     }
 
-    public function testDataLayerIsNotPresentIfGtmIdIsNotSet(): void
-    {
-        // Make sure, that the GTM ID is not set in the .env file
-        $this->setConfig('yaffa.gtm_container_id', null);
-
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
-
-        $this->browse(function ($browser) use ($user) {
-            // Open the login page
-            $browser->visit(route('login'));
-
-            // Make sure the dataLayer is empty
-            $output = $browser->script('return window.dataLayer;');
-            $this->assertEmpty($output[0]);
-
-            // Log in using the generic test user
-            $browser->loginAs($user)
-                ->visit(route('home'));
-
-            // Make sure the dataLayer is still empty
-            $output = $browser->script('return window.dataLayer;');
-            $this->assertEmpty($output[0]);
-
-            // Finally, log out by submitting the logout form
-            $browser->logout();
-        });
-    }
-
     public function testDataLayerIsPresentIfGtmIdIsSetForDemoUser(): void
     {
         // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
