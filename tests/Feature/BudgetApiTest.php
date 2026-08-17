@@ -40,6 +40,8 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
+        // amount (MoneyCast) resolves currency via the user's base currency when account-agnostic.
+        Currency::factory()->for($user)->create(['base' => true]);
         Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
@@ -100,6 +102,29 @@ class BudgetApiTest extends TestCase
             'category_id' => $category->id,
             'transaction_type' => 'withdrawal',
             'amount' => 0,
+            'frequency' => 'MONTHLY',
+            'start_date' => Carbon::now()->toDateString(),
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['amount']);
+    }
+
+    /**
+     * amount rejects a value exceeding budgets.amount's DECIMAL(12,4) range - same bound
+     * TransactionRequest already enforces for the equivalent transaction_items.amount /
+     * transaction_details_standard.amount_from/amount_to fields.
+     */
+    public function test_amount_exceeding_decimal_12_4_range_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100000000,
             'frequency' => 'MONTHLY',
             'start_date' => Carbon::now()->toDateString(),
         ]);
@@ -217,6 +242,8 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
+        // amount (MoneyCast) resolves currency via the user's base currency when account-agnostic.
+        Currency::factory()->for($user)->create(['base' => true]);
         Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [
@@ -235,6 +262,8 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
+        // amount (MoneyCast) resolves currency via the user's base currency when account-agnostic.
+        Currency::factory()->for($user)->create(['base' => true]);
         Sanctum::actingAs($user, ['*']);
 
         // A rule that has already run out of occurrences: the client-sent `active: true` must be ignored.
@@ -288,7 +317,7 @@ class BudgetApiTest extends TestCase
             'start_date' => $budget->start_date->toDateString(),
         ]);
 
-        $response->assertOk()->assertJsonPath('amount', 200);
+        $response->assertOk()->assertJsonPath('amount', '200.0000');
         $this->assertDatabaseHas('budgets', ['id' => $budget->id, 'amount' => 200]);
     }
 

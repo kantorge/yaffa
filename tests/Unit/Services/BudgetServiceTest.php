@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Budget;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\User;
 use App\Services\BudgetService;
 use App\Services\RecurrenceRuleService;
@@ -24,6 +25,8 @@ class BudgetServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
+        // amount (MoneyCast) resolves currency via the user's base currency (no account_id here).
+        Currency::factory()->for($user)->create(['base' => true]);
 
         $budget = $this->service()->store($user, [
             'category_id' => $category->id,
@@ -51,7 +54,7 @@ class BudgetServiceTest extends TestCase
 
         $updated = $this->service()->update($budget, ['amount' => 300]);
 
-        $this->assertSame(300.0, $updated->amount);
+        $this->assertSame(300.0, $updated->amount->getAmount()->toFloat());
         $this->assertDatabaseHas('budgets', ['id' => $budget->id, 'amount' => 300]);
     }
 

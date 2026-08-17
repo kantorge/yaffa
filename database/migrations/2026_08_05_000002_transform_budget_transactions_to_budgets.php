@@ -5,6 +5,7 @@ use App\Models\AccountEntity;
 use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
+use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Migrations\Migration;
@@ -86,7 +87,12 @@ return new class () extends Migration {
                     'category_id' => $categoryId,
                     'account_id' => $accountId,
                     'transaction_type' => $transaction->transaction_type,
-                    'amount' => $items->sum('amount'),
+                    // Summed exactly (BigDecimal), not Collection::sum('amount') - amount is
+                    // Money-cast (MoneyCast), which native `+=` can't handle at all.
+                    'amount' => $items->reduce(
+                        fn (BigDecimal $carry, $item) => $carry->plus($item->amount->getAmount()),
+                        BigDecimal::zero()
+                    ),
                     'frequency' => $schedule->frequency,
                     'interval' => $schedule->interval,
                     'start_date' => $schedule->start_date,

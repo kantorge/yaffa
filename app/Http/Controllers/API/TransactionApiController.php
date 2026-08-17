@@ -250,7 +250,9 @@ class TransactionApiController extends Controller implements HasMiddleware
                     'id' => $budget->id,
                     'row_type' => 'budget',
                     'transaction_type' => $budget->transaction_type->value,
-                    'amount' => $budget->amount,
+                    // Manually-built array, not a model's own toArray()/toJson() - stringify to
+                    // match MoneyCast::serialize()'s decimal-string wire format explicitly.
+                    'amount' => (string) $budget->amount->getAmount(),
                     'comment' => $budget->comment,
                     'category_id' => $budget->category_id,
                     // Shaped like Transaction::categories (built from transaction_items) so the

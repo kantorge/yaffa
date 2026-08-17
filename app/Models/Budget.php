@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Services\RecurrenceRuleService;
+use Brick\Money\Money;
 use Database\Factories\BudgetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
@@ -21,7 +23,8 @@ use Illuminate\Support\Carbon;
  * @property int $category_id
  * @property int|null $account_id
  * @property TransactionTypeEnum $transaction_type
- * @property float $amount
+ * @property-read Money $amount
+ * @property-write Money|string|int|float $amount
  * @property string|null $comment
  * @property string $frequency
  * @property int $interval
@@ -88,7 +91,7 @@ class Budget extends Model
     {
         return [
             'transaction_type' => TransactionTypeEnum::class,
-            'amount' => 'float',
+            'amount' => MoneyCast::class . ':4,currency',
             'start_date' => 'date',
             'end_date' => 'date',
             'count' => 'integer',

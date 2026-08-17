@@ -48,7 +48,13 @@ class BudgetRequest extends FormRequest
                 'required',
                 Rule::in([TransactionTypeEnum::WITHDRAWAL->value, TransactionTypeEnum::DEPOSIT->value]),
             ],
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => [
+                'required',
+                'numeric',
+                'gt:0',
+                // Fit in unsigned DECIMAL(12,4) range
+                'max:99999999.9999',
+            ],
             'comment' => [
                 'nullable',
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,

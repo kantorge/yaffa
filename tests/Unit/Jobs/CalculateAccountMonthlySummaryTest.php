@@ -596,7 +596,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $this->assertGreaterThan(0, $summaryRecords->count());
         $summaryRecords->each(function ($summaryRecord) use ($scheduleStart) {
             $expectedMultiplier = $summaryRecord->date->year > $scheduleStart->year ? 1.1 : 1.0;
-            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $summaryRecord->amount, 0.001);
+            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $summaryRecord->amount->getAmount()->toFloat(), 0.001);
         });
 
         Carbon::resetMonthsOverflow();
@@ -680,7 +680,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         $this->assertGreaterThan(0, $accountRecords->count());
         $accountRecords->each(function ($record) {
-            $this->assertEqualsWithDelta(-200.0, $record->amount, 0.001);
+            $this->assertEqualsWithDelta(-200.0, $record->amount->getAmount()->toFloat(), 0.001);
         });
 
         // Run the account-agnostic bucket (no account provided): only the $400 deposit budget.
@@ -695,7 +695,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         $this->assertGreaterThan(0, $agnosticRecords->count());
         $agnosticRecords->each(function ($record) {
-            $this->assertEqualsWithDelta(400.0, $record->amount, 0.001);
+            $this->assertEqualsWithDelta(400.0, $record->amount->getAmount()->toFloat(), 0.001);
         });
 
         Carbon::resetMonthsOverflow();
@@ -750,7 +750,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $this->assertGreaterThan(0, $records->count());
         $records->each(function ($record) use ($budgetStart) {
             $expectedMultiplier = $record->date->year > $budgetStart->year ? 1.1 : 1.0;
-            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $record->amount, 0.001);
+            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $record->amount->getAmount()->toFloat(), 0.001);
         });
 
         Carbon::resetMonthsOverflow();

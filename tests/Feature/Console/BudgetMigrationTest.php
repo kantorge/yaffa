@@ -12,6 +12,7 @@ use App\Models\TransactionSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\PendingCommand;
 use RuntimeException;
@@ -43,7 +44,19 @@ class BudgetMigrationTest extends TestCase
     {
         parent::setUp();
 
-        Artisan::call('migrate:rollback', ['--step' => 2]);
+        // Roll back every migration after 2026_08_05_000001_create_budgets_table (the transform
+        // + drop-column pair this test exercises), not a hardcoded --step=2 - a later release/v4
+        // migration (e.g. 2026_08_08_..._price_scale) sorting after that pair would otherwise
+        // make rollback target the wrong two migrations and silently skip the transform
+        // migration's guard entirely. This exact class of breakage already happened once before
+        // during an earlier rebase (see project memory / architecture.md) when the budget
+        // migrations' own dates were bumped past a colliding one; computing the count instead of
+        // hardcoding it makes this robust against it recurring a third time.
+        $migrationsToRollBack = DB::table('migrations')
+            ->where('migration', '>', '2026_08_05_000001_create_budgets_table')
+            ->count();
+
+        Artisan::call('migrate:rollback', ['--step' => $migrationsToRollBack]);
 
         $this->user = User::factory()->create();
 
@@ -204,7 +217,7 @@ class BudgetMigrationTest extends TestCase
         $this->assertSame($category->id, $budget->category_id);
         $this->assertSame($accountId, $budget->account_id);
         $this->assertSame('withdrawal', $budget->transaction_type->value);
-        $this->assertEqualsWithDelta(42.50, $budget->amount, 0.0001);
+        $this->assertEqualsWithDelta(42.50, $budget->amount->getAmount()->toFloat(), 0.0001);
         $this->assertSame('MONTHLY', $budget->frequency);
         $this->assertSame(2, $budget->interval);
         $this->assertSame('2025-01-15', $budget->start_date->toDateString());
@@ -234,8 +247,8 @@ class BudgetMigrationTest extends TestCase
 
         $budgetA = Budget::where('category_id', $categoryA->id)->sole();
         $budgetB = Budget::where('category_id', $categoryB->id)->sole();
-        $this->assertEqualsWithDelta(25.00, $budgetA->amount, 0.0001);
-        $this->assertEqualsWithDelta(20.00, $budgetB->amount, 0.0001);
+        $this->assertEqualsWithDelta(25.00, $budgetA->amount->getAmount()->toFloat(), 0.0001);
+        $this->assertEqualsWithDelta(20.00, $budgetB->amount->getAmount()->toFloat(), 0.0001);
     }
 
     public function test_leaves_account_id_null_when_account_side_is_unset(): void

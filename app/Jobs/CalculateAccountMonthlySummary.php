@@ -346,8 +346,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
             // FR-8: each instance carries its own inflation-compounded multiplier (computed once,
             // in Transaction::scheduleInstances(), from the schedule's own inflation rate).
-            // Summed exactly via sumBigDecimal (not sumMoney): multiplying a Money's BigDecimal
-            // amount by the multiplier here already drops the Money wrapper down to BigDecimal.
+            // Summed exactly via sumBigDecimal: multiplying a Money's BigDecimal amount by the
+            // multiplier here already drops the Money wrapper down to a plain BigDecimal.
             $amountFrom = $this->sumBigDecimal(
                 $transactionsFrom,
                 fn (ScheduleInstance $transaction) => $transaction->config?->amount_from
@@ -384,35 +384,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     }
 
     /**
-     * Sum a Money-cast attribute across a collection exactly (BigDecimal), instead of via
-     * Collection::sum() (which does native `+=` and can't handle Money objects at all, let
-     * alone exactly). A null value (e.g. an optional Money field) contributes nothing, same
-     * as Collection::sum()'s treatment of null.
-     *
-     * @param  iterable<int, mixed>  $items
-     * @param  Closure(mixed): ?\Brick\Money\Money  $extractor
-     */
-    private function sumMoney(iterable $items, Closure $extractor): BigDecimal
-    {
-        $sum = BigDecimal::zero();
-
-        foreach ($items as $item) {
-            $money = $extractor($item);
-
-            if ($money === null) {
-                continue;
-            }
-
-            $sum = $sum->plus($money->getAmount());
-        }
-
-        return $sum;
-    }
-
-    /**
      * Sum a BigDecimal-returning extractor across a collection exactly, skipping null
-     * results (e.g. no price found for an investment/date pair) - the non-Money sibling of
-     * sumMoney(), for values (quantities, quantity*price products) that never wrap a Money.
+     * results (e.g. no price found for an investment/date pair), instead of via
+     * Collection::sum() (which does native `+=` and can't handle Money/BigDecimal values at
+     * all, let alone exactly).
      *
      * @param  iterable<int|string, mixed>  $items
      * @param  Closure(mixed, int|string): ?BigDecimal  $extractor
