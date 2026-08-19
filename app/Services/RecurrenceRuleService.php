@@ -62,7 +62,15 @@ class RecurrenceRuleService
         return (int) floor($periods);
     }
 
-    private function buildRule(
+    /**
+     * The one place a Recurr\Rule gets constructed from a frequency/interval/start_date/
+     * end_date/count/by_day/by_month tuple - public so a caller that needs the raw Rule itself
+     * (e.g. Transaction::scheduleInstances(), which runs its own ArrayTransformer/constraint
+     * with a caller-supplied virtualLimit rather than one of this service's own occurrence
+     * methods) still goes through this instead of hand-building one and silently dropping
+     * by_day/by_month, per this service's own class-level contract.
+     */
+    public function buildRule(
         Carbon $startDate,
         string $frequency,
         int $interval,

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\InflationCalculator;
+use App\Services\RecurrenceRuleService;
 use App\Support\ScheduleInstance;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
@@ -22,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\BetweenConstraint;
@@ -373,22 +373,19 @@ class Transaction extends Model
         }
         $constraintStart->startOfDay();
 
-        $rule = new Rule();
-        $rule->setStartDate(new Carbon($this->transactionSchedule->start_date));
-
-        if ($this->transactionSchedule->end_date) {
-            $rule->setUntil(new Carbon($this->transactionSchedule->end_date));
-        }
-
-        $rule->setFreq($this->transactionSchedule->frequency);
-
-        if ($this->transactionSchedule->count) {
-            $rule->setCount($this->transactionSchedule->count);
-        }
-
-        if ($this->transactionSchedule->interval) {
-            $rule->setInterval($this->transactionSchedule->interval);
-        }
+        // Routed through RecurrenceRuleService::buildRule() (not a hand-built Recurr\Rule) so
+        // by_day/by_month ordinal-weekday patterns (e.g. "first Wednesday of every month") are
+        // honored here the same as every other recurrence call site - see that method's docblock
+        // and architecture.md's former "Known Risks" entry for this method.
+        $rule = (new RecurrenceRuleService())->buildRule(
+            $this->transactionSchedule->start_date,
+            $this->transactionSchedule->frequency,
+            $this->transactionSchedule->interval,
+            $this->transactionSchedule->end_date,
+            $this->transactionSchedule->count,
+            $this->transactionSchedule->by_day,
+            $this->transactionSchedule->by_month,
+        );
 
         $transformer = new ArrayTransformer();
 

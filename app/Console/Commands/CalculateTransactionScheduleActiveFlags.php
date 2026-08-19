@@ -29,17 +29,15 @@ class CalculateTransactionScheduleActiveFlags extends Command
      */
     public function handle(): void
     {
-        // Get all transactions which are real schedules
-        $transactions = Transaction::with('transactionSchedule')
+        Transaction::with('transactionSchedule')
             ->isSchedule()
-            ->get();
-
-        $transactions->each(function ($transaction) {
-            CalculateTransactionScheduleActiveFlag::dispatch($transaction);
-        });
+            ->lazy()
+            ->each(function ($transaction) {
+                CalculateTransactionScheduleActiveFlag::dispatch($transaction);
+            });
 
         // Standalone budgets have their own active flag, computed the same way (FR-4).
-        Budget::all()->each(function (Budget $budget) {
+        Budget::lazy()->each(function (Budget $budget) {
             CalculateBudgetActiveFlag::dispatch($budget);
         });
     }
