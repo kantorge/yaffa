@@ -227,13 +227,19 @@ class GoogleDriveConfigRequestTest extends TestCase
         $this->assertEquals('original-folder-id', $config->folder_id);
     }
 
+    /**
+     * This and the following two tests (empty/replaced service_account_json) assert only that
+     * the request passes validation (200) for each shape update accepts. The resulting
+     * persisted value for each case is asserted with DB checks in GoogleDriveConfigApiControllerTest
+     * (test_update_preserves_service_account_json_when_not_provided,
+     * test_update_preserves_service_account_json_when_empty,
+     * test_update_changes_service_account_json_when_provided) - not repeated here.
+     */
     public function test_update_allows_missing_service_account_json(): void
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalJson = $config->service_account_json;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
@@ -241,18 +247,13 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertEquals($originalJson, $config->service_account_json);
     }
 
     public function test_update_allows_empty_service_account_json(): void
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalJson = $config->service_account_json;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
@@ -261,9 +262,6 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertEquals($originalJson, $config->service_account_json);
     }
 
     public function test_update_allows_new_service_account_json(): void
@@ -273,7 +271,6 @@ class GoogleDriveConfigRequestTest extends TestCase
 
         Sanctum::actingAs($this->user, ['*']);
 
-
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => 'new-folder-id',
@@ -281,9 +278,6 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertEquals($newJson, $config->service_account_json);
     }
 
     public function test_update_rejects_invalid_service_account_json(): void
@@ -303,13 +297,15 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['service_account_json']);
     }
 
+    /**
+     * Persisted-value assertion for the __existing__ placeholder lives in
+     * GoogleDriveConfigApiControllerTest::test_update_preserves_service_account_json_with_existing_placeholder.
+     */
     public function test_update_allows_existing_placeholder(): void
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalJson = $config->service_account_json;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
@@ -318,11 +314,12 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertEquals($originalJson, $config->service_account_json);
     }
 
+    /**
+     * Persisted-value assertion lives in
+     * GoogleDriveConfigApiControllerTest::test_update_changes_post_import_actions.
+     */
     public function test_update_allows_changing_post_import_actions(): void
     {
         $config = GoogleDriveConfig::factory()->create([
@@ -332,7 +329,6 @@ class GoogleDriveConfigRequestTest extends TestCase
 
         Sanctum::actingAs($this->user, ['*']);
 
-
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
@@ -340,11 +336,12 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertEquals(['delete'], $config->post_import_actions);
     }
 
+    /**
+     * Persisted-value assertion lives in
+     * GoogleDriveConfigApiControllerTest::test_update_changes_enabled_status.
+     */
     public function test_update_allows_changing_enabled(): void
     {
         $config = GoogleDriveConfig::factory()->create([
@@ -354,7 +351,6 @@ class GoogleDriveConfigRequestTest extends TestCase
 
         Sanctum::actingAs($this->user, ['*']);
 
-
         $response = $this
             ->patchJson(route('api.v1.google-drive.config.update', $config), [
                 'folder_id' => $config->folder_id,
@@ -362,9 +358,6 @@ class GoogleDriveConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        $config->refresh();
-        $this->assertFalse($config->enabled);
     }
 
     // ===== TEST CONNECTION (POST /api/v1/google-drive/config/test) =====

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers\API;
+namespace Tests\Feature\API;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
@@ -12,6 +12,7 @@ use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Artisan;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AccountApiControllerTest extends TestCase
@@ -54,8 +55,10 @@ class AccountApiControllerTest extends TestCase
                 'name' => self::BASE_ACCOUNT_NAME
             ]);
 
+        Sanctum::actingAs($user, ['*']);
+
         // Query string is applied
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -73,20 +76,18 @@ class AccountApiControllerTest extends TestCase
                 'name' => self::BASE_ACCOUNT_NAME . " - inactive",
             ]);
 
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
 
         // Inactive items can be requested
-        $response = $this->actingAs($user)
-            ->getJson('/api/v1/accounts?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->getJson('/api/v1/accounts?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
 
         // Currency can be specified
-        $response = $this->actingAs($user)
-            ->getJson('/api/v1/accounts?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->getJson('/api/v1/accounts?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -103,17 +104,17 @@ class AccountApiControllerTest extends TestCase
                 ]);
         }
 
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone');
+        $response = $this->getJson('/api/v1/accounts?q=clone');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(10);
 
         // Custom limit is applied for number of results
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=15');
+        $response = $this->getJson('/api/v1/accounts?q=clone&limit=15');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(15);
 
         // All items can be requested to be returned
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?q=clone&limit=0');
+        $response = $this->getJson('/api/v1/accounts?q=clone&limit=0');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(20);
     }
@@ -124,11 +125,13 @@ class AccountApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=invalid_type');
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->getJson('/api/v1/accounts?transaction_type=invalid_type');
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
 
-        $response = $this->actingAs($user)->getJson('/api/v1/accounts?transaction_type=withdrawal');
+        $response = $this->getJson('/api/v1/accounts?transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
     }
 
@@ -149,8 +152,9 @@ class AccountApiControllerTest extends TestCase
                 'accountEntityId' => $accountEntity->id,
             ]);
 
-        $response = $this->actingAs($user)
-            ->postJson('/api/v1/accounts/' . $accountEntity->id . '/monthly-summary');
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson('/api/v1/accounts/' . $accountEntity->id . '/monthly-summary');
 
         $response->assertStatus(Response::HTTP_ACCEPTED);
         $response->assertJsonPath('message', __('The monthly summary for this account is being updated.'));
@@ -169,8 +173,9 @@ class AccountApiControllerTest extends TestCase
 
         Artisan::shouldReceive('call')->never();
 
-        $response = $this->actingAs($user)
-            ->postJson('/api/v1/accounts/' . $payeeEntity->id . '/monthly-summary');
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson('/api/v1/accounts/' . $payeeEntity->id . '/monthly-summary');
 
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
         $response->assertJsonPath('message', __('This account entity is not an account.'));

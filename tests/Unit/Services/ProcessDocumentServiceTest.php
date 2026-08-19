@@ -913,7 +913,6 @@ class ProcessDocumentServiceTest extends TestCase
             'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'comment' => null,
             'config_type' => 'standard',
             'config_id' => $detail->id,

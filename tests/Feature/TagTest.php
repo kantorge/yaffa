@@ -2,15 +2,26 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
+use App\Models\Category;
+use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\Tag;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\User;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
+use Tests\Feature\Concerns\AuthorizesResourceCrudForUnverifiedUsers;
 use Tests\TestCase;
 
 class TagTest extends TestCase
 {
+    use AuthorizesResourceCrud;
+    use AuthorizesResourceCrudForUnverifiedUsers;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -19,54 +30,6 @@ class TagTest extends TestCase
 
         $this->setBaseRoute('tags');
         $this->setBaseModel(Tag::class);
-    }
-
-    public function test_guest_cannot_access_resource(): void
-    {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-
-        $user = User::factory()->create();
-        $tag = $this->createForUser($user, $this->base_model);
-
-        $this->get(route("{$this->base_route}.edit", $tag))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $tag))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $tag))->assertRedirectToRoute('login');
-    }
-
-    public function test_unverified_user_cannot_access_resource(): void
-    {
-        /** @var Authenticatable $user_unverified */
-        $user_unverified = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirectToRoute('verification.notice');
-
-
-        $user = User::factory()->create();
-        $tag = $this->createForUser($user, $this->base_model);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $tag))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $tag))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $tag))->assertRedirectToRoute('verification.notice');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        $user1 = User::factory()->create();
-        $tag = $this->createForUser($user1, $this->base_model);
-
-        /** @var Authenticatable $user2 */
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $tag))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $tag))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $tag))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_user_can_view_list_of_tags(): void
@@ -170,5 +133,73 @@ class TagTest extends TestCase
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
+    }
+
+    public function test_it_deletes_a_tag_even_if_it_is_used_in_a_transaction(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $categoryParent = Category::factory()
+            ->for($user)
+            ->create();
+        $categoryChild = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => $categoryParent->id,
+            ]);
+
+        // Create a transaction for this category, which also needs other models:
+        // account group, currency, account, payee
+        AccountGroup::factory()
+            ->for($user)
+            ->create();
+
+        Currency::factory()
+            ->for($user)
+            ->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        // Create a standard transaction with specific data
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create();
+
+        /** @var TransactionItem $transactionItem */
+        $transactionItem = TransactionItem::factory()->create([
+            'transaction_id' => $transaction->id,
+            'category_id' => $categoryChild->id,
+        ]);
+
+        // Create the tag to be tested
+        $tag = Tag::factory()
+            ->for($user)
+            ->create();
+
+        // Attach the tag to the transaction item
+        $transactionItem->tags()->attach($tag->id);
+
+        // Delete the tag, even though it is attached to a transaction item
+        $response = $this->actingAs($user)
+            ->delete(route("{$this->base_route}.destroy", ['tag' => $tag->id]));
+
+        $response->assertStatus(Response::HTTP_FOUND);
+
+        // Check that the tag was deleted, and the pivot row cascaded with it
+        $this->assertNull($tag->fresh());
+        $this->assertDatabaseMissing('transaction_items_tags', [
+            'tag_id' => $tag->id,
+        ]);
     }
 }

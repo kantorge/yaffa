@@ -7,7 +7,6 @@ use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -17,7 +16,21 @@ const TABLE_SELECTOR = '#table';
 #[Group('extended')]
 class AccountListTest extends DuskTestCase
 {
-    use DatabaseMigrations;
+    protected static bool $migrationRun = false;
+
+    /**
+     * Migrate only once for this file - this test only needs factory-created
+     * users/accounts, not the seeded demo data, so db:seed is skipped.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!static::$migrationRun) {
+            $this->artisan('migrate:fresh');
+            static::$migrationRun = true;
+        }
+    }
 
     public function test_user_can_load_the_account_list_and_use_filters(): void
     {

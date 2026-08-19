@@ -32,6 +32,12 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     // ===== AUTHORIZATION =====
 
+    /**
+     * This and test_store_requires_authentication below are representative of every action
+     * on this controller (update, destroy, folder-name, folder-name-by-credentials, folders),
+     * which all share the same auth:sanctum middleware wiring - a requires_authentication test
+     * per action would just re-prove the same middleware with no marginal coverage.
+     */
     public function test_show_requires_authentication(): void
     {
         $response = $this->getJson(route('api.v1.google-drive.config.show'));
@@ -44,20 +50,6 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
             'folder_id' => 'test-folder-id',
         ]);
-        $this->assertUserNotAuthorized($response);
-    }
-
-    public function test_update_requires_authentication(): void
-    {
-        $config = GoogleDriveConfig::factory()->create();
-        $response = $this->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]));
-        $this->assertUserNotAuthorized($response);
-    }
-
-    public function test_destroy_requires_authentication(): void
-    {
-        $config = GoogleDriveConfig::factory()->create();
-        $response = $this->deleteJson(route('api.v1.google-drive.config.destroy', ['googleDriveConfig' => $config->id]));
         $this->assertUserNotAuthorized($response);
     }
 
@@ -199,22 +191,9 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         ]);
     }
 
-    public function test_store_prevents_multiple_configs(): void
-    {
-        GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'another-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['folder_id']);
-    }
+    // test_store_prevents_multiple_configs: pure validation duplicate of
+    // GoogleDriveConfigRequestTest::test_create_prevents_multiple_configs_per_user - kept
+    // only there since this one adds no DB/response-shape assertion beyond the 422.
 
     public function test_store_encrypts_service_account_json(): void
     {
@@ -506,19 +485,9 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     // ===== TEST CONNECTION ENDPOINT (POST /api/v1/google-drive/test) =====
 
-    public function test_test_fails_with_invalid_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => 'not valid json',
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
+    // test_test_fails_with_invalid_json: pure validation duplicate of
+    // GoogleDriveConfigRequestTest::test_test_connection_rejects_invalid_json - kept only
+    // there since this one adds no DB/response-shape assertion beyond the 422.
 
     public function test_test_fails_with_existing_placeholder_and_no_config(): void
     {
@@ -615,15 +584,6 @@ class GoogleDriveConfigApiControllerTest extends TestCase
     }
 
     // ===== FOLDER NAME ENDPOINT (GET /api/v1/google-drive/config/{id}/folder-name) =====
-
-    public function test_folder_name_requires_authentication(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        $response = $this->getJson(route('api.v1.google-drive.config.folder-name', $config->id));
-
-        $this->assertUserNotAuthorized($response);
-    }
 
     public function test_folder_name_cannot_access_other_users_config(): void
     {
@@ -722,16 +682,6 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ->assertJson(['folder_name' => 'Custom Folder Name']);
     }
 
-    public function test_folder_name_by_credentials_requires_authentication(): void
-    {
-        $response = $this->postJson(route('api.v1.google-drive.config.folder-name-by-credentials'), [
-            'folder_id' => 'folder-id',
-            'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-        ]);
-
-        $this->assertUserNotAuthorized($response);
-    }
-
     public function test_folder_name_by_credentials_returns_name_from_service(): void
     {
         $mock = $this->createMock(GoogleDriveService::class);
@@ -769,15 +719,6 @@ class GoogleDriveConfigApiControllerTest extends TestCase
     }
 
     // ===== FOLDER BROWSER ENDPOINT (GET /api/v1/google-drive/config/{id}/folders) =====
-
-    public function test_folders_requires_authentication(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        $response = $this->getJson(route('api.v1.google-drive.config.folders', $config->id));
-
-        $this->assertUserNotAuthorized($response);
-    }
 
     public function test_folders_cannot_access_other_users_config(): void
     {

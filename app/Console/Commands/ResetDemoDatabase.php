@@ -64,7 +64,6 @@ class ResetDemoDatabase extends Command
         Artisan::call('migrate:fresh', ['--force' => true]);
 
         // Create the demo user without using factory, which is not autoloaded in production
-        // The generated user ID is expected to be 1
         $this->info('Creating demo user...');
         $demoUser = User::create([
             'id' => 1,
@@ -73,6 +72,8 @@ class ResetDemoDatabase extends Command
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
+            'start_date' => Carbon::now()->subYears(1)->startOfYear(),
+            'end_date' => Carbon::now()->addYears(30)->endOfYear(),
             'auto_merge_standard_transaction_items' => true,
         ]);
         $demoUser->markEmailAsVerified();

@@ -53,16 +53,26 @@ class AiProviderConfigApiControllerTest extends TestCase
 
     public function test_update_requires_authentication(): void
     {
-        $config = AiProviderConfig::factory()->create();
-        $response = $this->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]));
+        $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->patchJson(
+            route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]),
+            [
+                'provider' => 'gemini',
+                'model' => 'gemini-2.5-flash',
+            ]
+        );
         // Unauthenticated requests return 403 when authorization check fails
         $this->assertUserNotAuthorized($response);
     }
 
     public function test_destroy_requires_authentication(): void
     {
-        $config = AiProviderConfig::factory()->create();
-        $response = $this->deleteJson(route('api.v1.ai.config.destroy', ['aiProviderConfig' => $config->id]));
+        $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->deleteJson(
+            route('api.v1.ai.config.destroy', ['aiProviderConfig' => $config->id])
+        );
         // Unauthenticated requests return 403 when authorization check fails
         $this->assertUserNotAuthorized($response);
     }
@@ -175,25 +185,9 @@ class AiProviderConfigApiControllerTest extends TestCase
         ]);
     }
 
-    public function test_store_prevents_multiple_configs(): void
-    {
-        // Create initial config
-        AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
-
-        // Try to create second config
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.ai.config.store'), [
-                'provider' => 'gemini',
-                'model' => 'gemini-2.5-flash',
-                'api_key' => 'test-key-1234567890abcdefghij',
-            ]);
-
-        // Should get validation error
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        $response->assertJsonValidationErrors(['provider']);
-    }
+    // test_store_prevents_multiple_configs: pure validation duplicate of
+    // AiProviderConfigRequestTest::test_create_prevents_multiple_configs_per_user - kept
+    // only there since this one adds no DB/response-shape assertion beyond the 422.
 
     public function test_store_encrypts_api_key(): void
     {

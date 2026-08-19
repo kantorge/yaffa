@@ -1,23 +1,36 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers\API;
+namespace Tests\Feature\API;
 
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class InvestmentGroupApiControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->user = User::factory()->create();
+    }
+
     public function test_destroysInvestmentGroupSuccessfully(): void
     {
-        $user = User::factory()->create();
-        $investmentGroup = InvestmentGroup::factory()->for($user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
 
-        $response = $this->actingAs($user)
-            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_OK);
         $this->assertDatabaseMissing('investment_groups', ['id' => $investmentGroup->id]);
@@ -25,11 +38,11 @@ class InvestmentGroupApiControllerTest extends TestCase
 
     public function test_doesNotDestroyInvestmentGroupWithoutAuthorization(): void
     {
-        $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->create();
 
-        $response = $this->actingAs($user)
-            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
         $this->assertDatabaseHas('investment_groups', ['id' => $investmentGroup->id]);
@@ -37,13 +50,13 @@ class InvestmentGroupApiControllerTest extends TestCase
 
     public function test_doesNotDestroyInvestmentGroupInUse(): void
     {
-        $user = User::factory()->create();
-        $investmentGroup = InvestmentGroup::factory()->for($user)->create();
-        Currency::factory()->for($user)->create();
-        Investment::factory()->for($user)->for($investmentGroup)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        Currency::factory()->for($this->user)->create();
+        Investment::factory()->for($this->user)->for($investmentGroup)->create();
 
-        $response = $this->actingAs($user)
-            ->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->deleteJson(route('api.v1.investment-groups.destroy', $investmentGroup));
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $response->assertJson(['error' => __('Investment group is in use, cannot be deleted')]);

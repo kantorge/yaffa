@@ -223,13 +223,19 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['model']);
     }
 
+    /**
+     * This and the following similarly-named tests (empty/new/existing-placeholder api_key)
+     * assert only that the request passes validation (200) for each api_key shape update
+     * accepts. The resulting persisted value for each case is asserted with DB checks in
+     * AiProviderConfigApiControllerTest (test_update_preserves_api_key_when_not_provided,
+     * test_update_preserves_api_key_when_empty, test_update_changes_api_key_when_provided,
+     * test_update_preserves_api_key_with_existing_placeholder) - not repeated here.
+     */
     public function test_update_allows_missing_api_key(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalKey = $config->api_key;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', $config), [
@@ -238,19 +244,13 @@ class AiProviderConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        // Verify key was not changed
-        $config->refresh();
-        $this->assertEquals($originalKey, $config->api_key);
     }
 
     public function test_update_allows_empty_api_key(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalKey = $config->api_key;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', $config), [
@@ -260,32 +260,22 @@ class AiProviderConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        // Verify key was not changed
-        $config->refresh();
-        $this->assertEquals($originalKey, $config->api_key);
     }
 
     public function test_update_allows_new_api_key(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
-        $newKey = 'sk-new-key-1234567890abcdefghij';
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
                 'model' => 'gpt-4o',
-                'api_key' => $newKey,
+                'api_key' => 'sk-new-key-1234567890abcdefghij',
             ]);
 
         $response->assertStatus(200);
-
-        // Verify key was changed
-        $config->refresh();
-        $this->assertEquals($newKey, $config->api_key);
     }
 
     public function test_update_rejects_short_api_key(): void
@@ -309,10 +299,8 @@ class AiProviderConfigRequestTest extends TestCase
     public function test_update_allows_existing_placeholder(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
-        $originalKey = $config->api_key;
 
         Sanctum::actingAs($this->user, ['*']);
-
 
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', $config), [
@@ -322,10 +310,6 @@ class AiProviderConfigRequestTest extends TestCase
             ]);
 
         $response->assertStatus(200);
-
-        // Verify key was not changed
-        $config->refresh();
-        $this->assertEquals($originalKey, $config->api_key);
     }
 
     public function test_update_rejects_invalid_vision_enabled(): void
