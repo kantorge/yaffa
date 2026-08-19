@@ -126,7 +126,6 @@ class AccountMonthlySummary extends Model
             ->where('config_type', 'standard')
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
-            ->where('budget', 0)
             ->where('transaction_details_standard.account_from_id', $accountEntity->id)
             ->sum('transaction_details_standard.amount_from');
 
@@ -140,7 +139,6 @@ class AccountMonthlySummary extends Model
             ->where('config_type', 'standard')
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
-            ->where('budget', 0)
             ->where('transaction_details_standard.account_to_id', $accountEntity->id)
             ->sum('transaction_details_standard.amount_to');
 
@@ -155,7 +153,6 @@ class AccountMonthlySummary extends Model
             ->where('config_type', 'investment')
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
-            ->where('budget', 0)
             ->where('transaction_details_investment.account_id', $accountEntity->id)
             ->sum('cashflow_value');
 

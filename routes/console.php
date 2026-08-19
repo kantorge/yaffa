@@ -51,7 +51,9 @@ if (config('yaffa.runs_scheduler')) {
     Schedule::command(ProcessAiDocuments::class)->everyMinute();
 
     // Batch job cleanup
-    Schedule::command('queue:prune-batches')->daily();
+    // Unfinished batches never get a finished_at, so the default retention (finished batches
+    // only) never touches orphaned/stuck ones - prune those explicitly after 1 hour too.
+    Schedule::command('queue:prune-batches', ['--unfinished' => 1])->daily();
 
     // Prune expired personal access tokens
     Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();

@@ -35,7 +35,7 @@ class RecordScheduledTransactions extends Command
          * - automatic recording is enabled
          */
 
-        Transaction::byScheduleType('schedule')
+        Transaction::isSchedule()
             ->whereHas('transactionSchedule', function ($query) {
                 $query->where('next_date', '<=', Carbon::today()->toDateString())
                     ->where('automatic_recording', true);

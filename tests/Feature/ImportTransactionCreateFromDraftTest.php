@@ -271,7 +271,6 @@ CSV;
             'comment' => $draft['memo'] ?? null,
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'config' => [
                 'account_from_id' => data_get($draft, 'config.account_from_id'),
                 'account_to_id' => $payeeId,

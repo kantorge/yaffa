@@ -6,12 +6,15 @@ use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
+use App\Models\Budget;
+use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\BudgetService;
 use App\Services\InvestmentService;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
@@ -88,7 +91,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle($this->app->make(InvestmentService::class));
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([
@@ -116,7 +119,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle($this->app->make(InvestmentService::class));
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([
@@ -218,7 +221,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle($this->app->make(InvestmentService::class));
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([
@@ -287,14 +290,13 @@ class CalculateAccountMonthlySummaryTest extends TestCase
                     'date' => $month,
                     'transaction_type' => \App\Enums\TransactionType::WITHDRAWAL->value,
                     'schedule' => false,
-                    'budget' => false,
                 ])
                 ->save();
         }
 
         // --- Step 1: full recalculation to establish baseline ---
         $fullJob = new CalculateAccountMonthlySummary($user, 'account_balance-fact', $account);
-        $fullJob->handle($this->app->make(InvestmentService::class));
+        $fullJob->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         $recordsAfterFull = AccountMonthlySummary::where([
             'user_id' => $user->id,
@@ -318,7 +320,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             $monthMinus2->clone()->startOfMonth(),
             $monthMinus2->clone()->endOfMonth()
         );
-        $partialJob->handle($this->app->make(InvestmentService::class));
+        $partialJob->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         $recordsAfterPartial = AccountMonthlySummary::where([
             'user_id' => $user->id,
@@ -404,7 +406,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         DB::enableQueryLog();
 
         $job = new CalculateAccountMonthlySummary($user, 'investment_value-forecast', $account);
-        $job->handle($this->app->make(InvestmentService::class));
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
@@ -509,7 +511,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         ]);
 
         $job = new CalculateAccountMonthlySummary($user, 'investment_value-forecast', $account);
-        $job->handle($this->app->make(InvestmentService::class));
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
 
         $summaryRecords = AccountMonthlySummary::where([
             'user_id' => $user->id,
@@ -528,6 +530,228 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $this->assertSummaryAmountEquals($quantityAt(1) * 20, $summaryRecords[1]->amount);
         // Index 2 (3 months out): the update carries forward, not just a one-month blip.
         $this->assertSummaryAmountEquals($quantityAt(2) * 20, $summaryRecords[2]->amount);
+
+        Carbon::resetMonthsOverflow();
+    }
+
+    /**
+     * FR-8 wiring coverage: the account-balance forecast bucket must apply each schedule's
+     * inflation-compounded multiplier (computed in Transaction::scheduleInstances()) to the
+     * amounts it sums, stepping up at the calendar-year boundary rather than never at all.
+     */
+    public function test_account_balance_forecast_compounds_at_the_next_calendar_year_boundary(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addMonths(14)->endOfMonth(),
+        ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        $scheduleStart = now()->startOfMonth()->subMonths(2);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->config()->update([
+            'amount_from' => 100,
+            'amount_to' => 100,
+        ]);
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $scheduleStart,
+            'next_date' => $scheduleStart,
+            'end_date' => now()->addMonths(11)->endOfMonth(),
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'inflation' => 10.0,
+        ]);
+
+        $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
+
+        $summaryRecords = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'forecast',
+        ])->orderBy('date')->get();
+
+        // The 14-month window always crosses exactly one January 1st, so every record's year is
+        // either the schedule's start year (no compounding yet) or exactly one year later
+        // (compounded once).
+        $this->assertGreaterThan(0, $summaryRecords->count());
+        $summaryRecords->each(function ($summaryRecord) use ($scheduleStart) {
+            $expectedMultiplier = $summaryRecord->date->year > $scheduleStart->year ? 1.1 : 1.0;
+            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $summaryRecord->amount->getAmount()->toFloat(), 0.001);
+        });
+
+        Carbon::resetMonthsOverflow();
+    }
+
+    /**
+     * FR-3 coverage: the account-balance budget bucket (task 'account_balance-budget') now reads
+     * only from active, standalone Budget rows, attributed per Budget.account_id - an
+     * account-scoped row feeds only that account's own bucket, an account-agnostic row feeds
+     * only the null-account bucket, and an inactive Budget contributes to neither.
+     */
+    public function test_account_balance_budget_reads_from_active_standalone_budgets_attributed_per_account(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addMonths(3)->endOfMonth(),
+        ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        $category = Category::factory()->for($user)->create();
+
+        Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'account_id' => $account->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 200,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'inflation' => null,
+        ]);
+
+        Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'account_id' => null,
+            'transaction_type' => 'deposit',
+            'amount' => 400,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'inflation' => null,
+        ]);
+
+        // Inactive (already exhausted): must contribute to neither bucket.
+        Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'account_id' => $account->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 999,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->subYears(2),
+            'end_date' => now()->subYear(),
+            'count' => null,
+            'inflation' => null,
+        ]);
+
+        // Run for the specific account: only its own $200 withdrawal budget should count.
+        $accountJob = new CalculateAccountMonthlySummary($user, 'account_balance-budget', $account);
+        $accountJob->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
+
+        $accountRecords = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'budget',
+        ])->orderBy('date')->get();
+
+        $this->assertGreaterThan(0, $accountRecords->count());
+        $accountRecords->each(function ($record) {
+            $this->assertEqualsWithDelta(-200.0, $record->amount->getAmount()->toFloat(), 0.001);
+        });
+
+        // Run the account-agnostic bucket (no account provided): only the $400 deposit budget.
+        $agnosticJob = new CalculateAccountMonthlySummary($user, 'account_balance-budget');
+        $agnosticJob->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
+
+        $agnosticRecords = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'budget',
+        ])->whereNull('account_entity_id')->orderBy('date')->get();
+
+        $this->assertGreaterThan(0, $agnosticRecords->count());
+        $agnosticRecords->each(function ($record) {
+            $this->assertEqualsWithDelta(400.0, $record->amount->getAmount()->toFloat(), 0.001);
+        });
+
+        Carbon::resetMonthsOverflow();
+    }
+
+    /**
+     * FR-8 coverage: the budget bucket compounds each Budget row's own inflation rate at the
+     * calendar-year boundary, same as the forecast bucket.
+     */
+    public function test_account_balance_budget_compounds_at_the_next_calendar_year_boundary(): void
+    {
+        Carbon::useMonthsOverflow(false);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addMonths(14)->endOfMonth(),
+        ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        $category = Category::factory()->for($user)->create();
+
+        $budgetStart = now()->startOfMonth();
+
+        Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'account_id' => $account->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => $budgetStart,
+            'end_date' => now()->addMonths(13)->endOfMonth(),
+            'count' => null,
+            'inflation' => 10.0,
+        ]);
+
+        $job = new CalculateAccountMonthlySummary($user, 'account_balance-budget', $account);
+        $job->handle($this->app->make(InvestmentService::class), $this->app->make(BudgetService::class));
+
+        $records = AccountMonthlySummary::where([
+            'user_id' => $user->id,
+            'account_entity_id' => $account->id,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'budget',
+        ])->orderBy('date')->get();
+
+        $this->assertGreaterThan(0, $records->count());
+        $records->each(function ($record) use ($budgetStart) {
+            $expectedMultiplier = $record->date->year > $budgetStart->year ? 1.1 : 1.0;
+            $this->assertEqualsWithDelta(-100 * $expectedMultiplier, $record->amount->getAmount()->toFloat(), 0.001);
+        });
 
         Carbon::resetMonthsOverflow();
     }

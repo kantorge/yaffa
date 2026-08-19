@@ -5,6 +5,7 @@ namespace Tests\Feature\API;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
+use App\Models\Budget;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
@@ -51,9 +52,16 @@ class ApiAbilityEnforcementTest extends TestCase
             'investment-prices.index' => ['api.v1.investment-prices.index', 'get', 'read', ['investment' => 1]],
             'investment-price-providers.available' => ['api.v1.investment-price-providers.available', 'get', 'read', []],
             'onboarding.show' => ['api.v1.onboarding.show', 'get', 'read', ['topic' => 'dashboard']],
+            'budgets.index' => ['api.v1.budgets.index', 'get', 'read', []],
+            'budgets.show' => ['api.v1.budgets.show', 'get', 'read', ['budget' => 1]],
+            'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
+            'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
 
             // write
             'transactions.store-standard' => ['api.v1.transactions.store-standard', 'post', 'write', []],
+            'budgets.store' => ['api.v1.budgets.store', 'post', 'write', []],
+            'budgets.update' => ['api.v1.budgets.update', 'patch', 'write', ['budget' => 1]],
+            'budgets.destroy' => ['api.v1.budgets.destroy', 'delete', 'write', ['budget' => 1]],
             'categories.store' => ['api.v1.categories.store', 'post', 'write', []],
             'payees.store' => ['api.v1.payees.store', 'post', 'write', []],
             'tags.patch-active' => ['api.v1.tags.patch-active', 'patch', 'write', ['tag' => 1]],
@@ -165,6 +173,9 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.investment-groups.destroy' => [
                 'investmentGroup' => InvestmentGroup::factory()->for($user)->create()->id,
+            ],
+            'api.v1.budgets.show', 'api.v1.budgets.update', 'api.v1.budgets.destroy' => [
+                'budget' => Budget::factory()->create(['user_id' => $user->id])->id,
             ],
             default => $params,
         };

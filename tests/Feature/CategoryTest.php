@@ -9,10 +9,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class CategoryTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -21,37 +23,6 @@ class CategoryTest extends TestCase
 
         $this->setBaseRoute('categories');
         $this->setBaseModel(Category::class);
-    }
-
-    public function test_guest_cannot_access_resource(): void
-    {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Category $category */
-        $category = Category::factory()->for($user)->create();
-
-        $this->get(route("{$this->base_route}.edit", $category))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $category))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirectToRoute('login');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        $user = User::factory()->create();
-        $category = Category::factory()->for($user)->create();
-
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $category->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_user_can_view_list_of_categories(): void
@@ -73,22 +44,14 @@ class CategoryTest extends TestCase
         $earliestRegularTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2024-01-10',
             'schedule' => false,
-            'budget' => false,
         ]);
         $latestRegularTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2024-03-15',
             'schedule' => false,
-            'budget' => false,
         ]);
         $scheduledTransaction = Transaction::factory()->deposit($user)->create([
             'date' => '2023-01-01',
             'schedule' => true,
-            'budget' => false,
-        ]);
-        $budgetTransaction = Transaction::factory()->deposit($user)->create([
-            'date' => '2025-01-01',
-            'schedule' => false,
-            'budget' => true,
         ]);
 
         foreach (
@@ -96,7 +59,6 @@ class CategoryTest extends TestCase
                 $earliestRegularTransaction,
                 $latestRegularTransaction,
                 $scheduledTransaction,
-                $budgetTransaction,
             ] as $transaction
         ) {
             $transaction->transactionItems()->firstOrFail()->update([
@@ -108,33 +70,27 @@ class CategoryTest extends TestCase
             ->withCount([
                 'transaction as transactions_count_regular' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                        ->where('transactions.schedule', false);
                 },
                 'transaction as transactions_count_with_schedule' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where(function (Builder $query): void {
-                            $query->where('transactions.schedule', true)
-                                ->orWhere('transactions.budget', true);
-                        });
+                        ->where('transactions.schedule', true);
                 },
             ])
             ->withMin([
                 'transaction as transactions_min_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withMax([
                 'transaction as transactions_max_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->findOrFail($category->id);
 
         $this->assertSame(2, $categoryWithDates->transactions_count_regular);
-        $this->assertSame(2, $categoryWithDates->transactions_count_with_schedule);
+        $this->assertSame(1, $categoryWithDates->transactions_count_with_schedule);
         $this->assertSame('2024-01-10', Carbon::parse($categoryWithDates->transactions_min_date)->toDateString());
         $this->assertSame('2024-03-15', Carbon::parse($categoryWithDates->transactions_max_date)->toDateString());
     }

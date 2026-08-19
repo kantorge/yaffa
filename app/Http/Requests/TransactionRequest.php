@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Http\Traits\ValidatesRecurrenceRule;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
@@ -17,6 +18,8 @@ use Recurr\Exception\InvalidWeekday;
 
 class TransactionRequest extends FormRequest
 {
+    use ValidatesRecurrenceRule;
+
     public function attributes(): array
     {
         return [
@@ -51,52 +54,6 @@ class TransactionRequest extends FormRequest
             'original_schedule_config.by_day' => __('original schedule day of week'),
             'original_schedule_config.by_month' => __('original schedule month'),
             'original_schedule_config.inflation' => __('original schedule inflation'),
-        ];
-    }
-
-    /**
-     * Ordinal-weekday BYDAY rule (e.g. "1WE", "-1FR"), only meaningful for
-     * MONTHLY/YEARLY frequencies.
-     */
-    private function byDayRule(string $frequencyField): array
-    {
-        return [
-            'nullable',
-            'string',
-            'regex:/^(-?[1-4])(MO|TU|WE|TH|FR|SA|SU)$/',
-            function ($attribute, $value, $fail) use ($frequencyField) {
-                if ($value && !in_array($this->input($frequencyField), ['MONTHLY', 'YEARLY'], true)) {
-                    $fail(__('Day-of-week recurrence requires a monthly or yearly frequency.'));
-                }
-            },
-        ];
-    }
-
-    /**
-     * Month (1-12) pinning a YEARLY ordinal-weekday rule to a specific month,
-     * e.g. "last Friday of November". Required whenever a YEARLY by_day is
-     * set, since recurr resolves an unscoped YEARLY BYDAY across the whole
-     * year rather than per month.
-     */
-    private function byMonthRule(string $frequencyField, string $byDayField): array
-    {
-        return [
-            'nullable',
-            'integer',
-            'between:1,12',
-            // A plain closure is skipped by the validator when the field is null and
-            // 'nullable' is present, so the "required" direction needs an implicit
-            // rule (Rule::requiredIf isn't skipped) rather than a closure fail().
-            Rule::requiredIf(fn () => $this->input($frequencyField) === 'YEARLY' && (bool) $this->input($byDayField)),
-            // Reject the inverse too: TransactionSchedule::buildRule() only applies
-            // by_month when by_day is also set, so a YEARLY schedule without a
-            // by_day would silently ignore by_month rather than use it.
-            Rule::prohibitedIf(fn () => $this->input($frequencyField) === 'YEARLY' && !$this->input($byDayField)),
-            function ($attribute, $value, $fail) use ($frequencyField) {
-                if ($value && $this->input($frequencyField) !== 'YEARLY') {
-                    $fail(__('Month only applies to yearly day-of-week recurrence.'));
-                }
-            },
         ];
     }
 
@@ -218,7 +175,6 @@ class TransactionRequest extends FormRequest
             ],
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
-            'budget' => 'boolean',
             'catch_up_schedule' => 'boolean',
             'config_type' => 'required|in:standard,investment',
 
@@ -232,20 +188,18 @@ class TransactionRequest extends FormRequest
             ],
         ];
 
-        // Basic transaction has no schedule at all, or has only schedule enabled
-        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
-
         // Set date and schedule related rules
-        if ($this->get('schedule') || $this->get('budget')) {
+        if ($this->get('schedule')) {
             $rules = array_merge($rules, [
                 'reconciled' => [
                     'boolean',
-                    new IsFalsy(), // Scheduled or budgeted items cannot be reconciled
+                    new IsFalsy(), // Scheduled items cannot be reconciled
                 ],
 
                 'schedule_config.start_date' => [
                     'required',
                     'date',
+                    $this->maxRecurrencePeriodsRule('schedule_config.frequency', 'schedule_config.interval'),
                 ],
                 'schedule_config.next_date' => [
                     'nullable',
@@ -289,7 +243,11 @@ class TransactionRequest extends FormRequest
         // Add optional rules for replacing a schedule
         if ($this->input('action') === 'replace') {
             $rules = array_merge($rules, [
-                'original_schedule_config.start_date' => 'required|date',
+                'original_schedule_config.start_date' => [
+                    'required',
+                    'date',
+                    $this->maxRecurrencePeriodsRule('original_schedule_config.frequency', 'original_schedule_config.interval'),
+                ],
                 'original_schedule_config.next_date' => [
                     'nullable',
                     'date',
@@ -341,15 +299,14 @@ class TransactionRequest extends FormRequest
             ]);
 
             // Adjust detail related rules, based on transaction type
-            // Accounts are only needed for basic setup (not budget only)
             if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedAccountRule,
                     ],
                     'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedPayeeRule,
                     ],
                     'config.amount_from' => [
@@ -376,11 +333,11 @@ class TransactionRequest extends FormRequest
             } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedPayeeRule,
                     ],
                     'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
+                        'required',
                         $ownedAccountRule,
                     ],
                     'config.amount_from' => [
@@ -531,7 +488,6 @@ class TransactionRequest extends FormRequest
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
             'schedule' => $this->schedule ?? 0,
-            'budget' => $this->budget ?? 0,
             'catch_up_schedule' => $this->catch_up_schedule ?? 0,
         ]);
     }

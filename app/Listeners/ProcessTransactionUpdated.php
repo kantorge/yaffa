@@ -130,10 +130,10 @@ class ProcessTransactionUpdated
             }
         }
 
-        // If the date changed for a non-scheduled, non-budget transaction, the old month must also be
+        // If the date changed for a non-scheduled transaction, the old month must also be
         // recalculated for accounts that stayed the same — removing the transaction's stale contribution.
         // (Accounts that were replaced are already fully recalculated by the Artisan calls above.)
-        if (! $transaction->schedule && ! $transaction->budget
+        if (! $transaction->schedule
             && isset($changedAttributes['transaction']['date'])) {
             $oldDate = Carbon::parse($changedAttributes['transaction']['date']);
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\ApiTokenApiController;
+use App\Http\Controllers\API\BudgetApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
@@ -174,6 +175,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // AccountGroup endpoints
     Route::delete('/account-groups/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
         ->name('account-groups.destroy');
+
+    // Budget endpoints
+    Route::get('/budgets', [BudgetApiController::class, 'index'])
+        ->name('budgets.index');
+    Route::post('/budgets', [BudgetApiController::class, 'store'])
+        ->name('budgets.store');
+    Route::get('/budgets/{budget}', [BudgetApiController::class, 'getItem'])
+        ->name('budgets.show');
+    Route::patch('/budgets/{budget}', [BudgetApiController::class, 'update'])
+        ->name('budgets.update');
+    Route::delete('/budgets/{budget}', [BudgetApiController::class, 'destroy'])
+        ->name('budgets.destroy');
 
     // Category endpoints
     Route::get('/categories', [CategoryApiController::class, 'getList'])

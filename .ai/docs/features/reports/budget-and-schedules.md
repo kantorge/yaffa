@@ -6,7 +6,7 @@ Scheduled and Budgeted Items List
 
 ## Feature Summary
 
-This report is a simpler, maintenance-oriented side of financial planning in YAFFA. It gives users a structured list of recurring and budgeted transactions so they can review what is active, what is coming next, and which planned items need correction.
+This report is a simpler, maintenance-oriented side of financial planning in YAFFA. It gives users a single, merged list of recurring scheduled transactions and standalone [Budget](../../assets/budget/budget.md) rows so they can review what is active, what is coming next, and which planned items need correction. There is no separate Budget page — this report is the only place standalone Budgets are created, edited, and deleted.
 
 Unlike the more analytical category-based review pages, this screen is primarily operational. It helps users keep their recurring setup healthy so later budget comparisons and forecasting-style reports remain trustworthy.
 
@@ -21,18 +21,18 @@ Unlike the more analytical category-based review pages, this screen is primarily
 ## User Problem
 
 - Recurring plans become hard to manage when they are spread across many transactions.
-- Users need to see which scheduled items are active, overdue, upcoming, or budget-related.
+- Users need to see which scheduled items and standalone Budgets are active, overdue, or upcoming, in one place.
 - Users need fast access to corrective actions without hunting through the whole transaction history.
-- Users need one place to verify that the future-facing setup behind forecasts is still realistic.
+- Users need one place to verify that the future-facing setup behind forecasts and budget comparisons is still realistic.
 
 ## User Value / Benefit
 
 ### Functional Benefits
 
-- Lists scheduled and budgeted transactions in one review-focused place.
+- Lists scheduled transactions and standalone Budgets in one review-focused place, merged into a single table.
 - Highlights items whose next occurrence is overdue or imminent.
-- Lets users filter by schedule status, budget flag, active state, transaction type, and free-text search.
-- Provides direct actions to edit, clone, replace, delete, enter, or skip scheduled instances.
+- Lets users filter by row type (Schedule/Budget), active state, transaction type, and free-text search.
+- Provides direct actions to edit, clone, replace, delete, enter, or skip scheduled instances, and to edit or delete Budget rows.
 
 ### Conceptual Benefits
 
@@ -60,16 +60,17 @@ It is especially useful when the user wants to:
 
 ## Technical Description
 
-- The page is table-driven and loads scheduled items from the existing transaction API.
-- Each row represents a recurring or budgeted transaction and exposes status information such as schedule rule, start date, next date, active flag, and type.
-- Human-readable schedule text helps users understand the recurrence pattern without reading the raw rule.
-- Contextual actions reuse the application's standard transaction workflows rather than inventing report-specific editing logic.
+- The page is table-driven and merges two row sources behind one listing: `Transaction` rows with an active schedule, and standalone `Budget` rows.
+- Each row exposes status information such as schedule/period rule, start date, next date (Budget rows have none), active flag, and type.
+- Columns that don't apply to a Budget row — payee, next date, the enter/skip-instance actions — render blank/muted for that row rather than being conditionally hidden, the same convention already used elsewhere in the table for an empty category cell.
+- Human-readable schedule text helps users understand the recurrence pattern without reading the raw rule, for both schedule and Budget rows.
+- Contextual actions branch by row type: a schedule row keeps its existing edit/clone/replace/enter/skip/delete workflow; a Budget row offers edit/delete only, through the dedicated Budget API.
 
 ## Inputs
 
 - Existing scheduled transactions
-- Existing budgeted transactions
-- Schedule, budget, active, and transaction-type filters
+- Existing standalone Budget rows
+- Row-type (Schedule/Budget), active, and transaction-type filters
 - External search text
 
 ## Outputs
@@ -82,31 +83,32 @@ It is especially useful when the user wants to:
 
 - The screen focuses on items with scheduling or budget relevance rather than the full transaction history.
 - Overdue next dates are visually emphasized, and near-term next dates are also highlighted.
-- Some actions, such as entering or skipping an instance, only make sense when a schedule is active.
-- Edit, clone, replace, and delete actions are launched from this report but handled by the existing transaction flows.
-- The quality of forecasting and category-based budget review depends heavily on this underlying schedule and budget maintenance being kept accurate.
+- Some actions, such as entering or skipping an instance, only make sense for a schedule row and are active only when the schedule is active; a Budget row never has them.
+- Schedule row actions (edit, clone, replace, enter, skip, delete) are launched from this report but handled by the existing transaction flows; Budget row actions (edit, delete) go through the dedicated Budget API.
+- The quality of forecasting and category-based budget review depends heavily on this underlying schedule and Budget maintenance being kept accurate.
 
 ## User Flow
 
 1. User opens the Schedules and Budgets report.
-2. User filters the list to the relevant subset of recurring items.
-3. YAFFA displays schedule details, next dates, and status indicators.
-4. User identifies outdated, overdue, or incorrect recurring entries.
-5. User performs maintenance actions such as edit, skip, or replace.
+2. User filters the list to the relevant subset — by row type (Schedule/Budget), active state, or transaction type.
+3. YAFFA displays schedule/Budget details, next dates (Budget rows blank), and status indicators.
+4. User identifies outdated, overdue, or incorrect recurring entries, or creates a new standalone Budget via the "New Budget" action.
+5. User performs maintenance actions such as edit, skip, replace (schedule rows), or edit/delete (Budget rows).
 
 ## Edge Cases / Constraints
 
 - Human-readable schedule text exists, but translation and wording may not yet be fully polished.
 - The usefulness of the list depends on recurring items being modeled consistently.
+- A Budget row and a Transaction row are separate underlying records that can share the same numeric id — row lookups in the table must be row-type-aware, not id-only.
 - This page is intentionally simpler than the category-based budget history review and should not be treated as the main analytical budgeting feature.
 
 ## Dependencies
 
 - Models:
-  Scheduled and budgeted transactions together with their schedule-related data
+  `Transaction` (scheduled rows) and `Budget` (standalone rows), merged into one listing
 
 - Services and helpers:
-  Shared transaction formatting helpers, table-filter helpers, contextual action helpers, and onboarding support
+  `BudgetApiController`/`BudgetService` for Budget CRUD, shared transaction formatting helpers, table-filter helpers, contextual action helpers, and onboarding support
 
 - Frontend components:
   Data table, filter sidebar, external search, and onboarding card
@@ -127,4 +129,4 @@ High
 
 ## Assumptions
 
-- YAFFA continues to model budgets through recurring transaction infrastructure rather than through a fully separate budgeting subsystem.
+- A standalone Budget is a first-class entity with its own table, separate from `Transaction` — see [Budget](../../assets/budget/budget.md) — but is deliberately surfaced in the same maintenance list as schedules rather than a dedicated page, since both are forward-looking planning inputs a user maintains together.

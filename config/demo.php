@@ -24,6 +24,7 @@ return [
     'seed_date_shift_columns' => [
         'transactions' => ['columns' => ['date'], 'scope' => ['user_id' => 1]],
         'transaction_schedules' => ['columns' => ['start_date', 'next_date', 'end_date'], 'scope' => null],
+        'budgets' => ['columns' => ['start_date', 'end_date'], 'scope' => ['user_id' => 1]],
     ],
 
     // Tables where reset-database's own post-load steps (not the demo.sql load itself) create
