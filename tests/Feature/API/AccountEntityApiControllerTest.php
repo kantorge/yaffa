@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers\API;
+namespace Tests\Feature\API;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Artisan;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AccountEntityApiControllerTest extends TestCase
@@ -42,7 +43,7 @@ class AccountEntityApiControllerTest extends TestCase
                 'active' => false,
             ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
             'accountEntity' => $accountEntity->id,
         ]), [
@@ -98,7 +99,7 @@ class AccountEntityApiControllerTest extends TestCase
         /** @var User $user2 */
         $user2 = User::factory()->create();
 
-        $this->actingAs($user2);
+        Sanctum::actingAs($user2, ['*']);
         $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
             'accountEntity' => $accountEntity->id,
         ]), [
@@ -135,8 +136,8 @@ class AccountEntityApiControllerTest extends TestCase
             ->for(Account::factory()->withUser($otherUser), 'config')
             ->create(['config_type' => 'account']);
 
-        $response = $this->actingAs($user)
-            ->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
 
         $response->assertOk()
             ->assertJsonPath('message', __('maintenance.accountMonthlySummaries.queued'));
@@ -164,8 +165,8 @@ class AccountEntityApiControllerTest extends TestCase
 
         $payee->load('config');
 
-        $response = $this->actingAs($user)
-            ->deleteJson(route("api.v1.account-entities.destroy", $payee));
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $payee));
 
         // Response should be 200 OK
         $response->assertStatus(Response::HTTP_OK);
@@ -196,8 +197,8 @@ class AccountEntityApiControllerTest extends TestCase
 
         $account->load('config');
 
-        $response = $this->actingAs($user)
-            ->deleteJson(route("api.v1.account-entities.destroy", $account));
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $account));
 
         // Response should be 200 OK
         $response->assertStatus(Response::HTTP_OK);
@@ -253,9 +254,10 @@ class AccountEntityApiControllerTest extends TestCase
             ->withdrawal($user)
             ->create();
 
+        Sanctum::actingAs($user, ['*']);
+
         // Try to delete the payee
-        $response = $this->actingAs($user)
-            ->deleteJson(route("api.v1.account-entities.destroy", $payee));
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $payee));
 
         // Response should be 422 Unprocessable Entity
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -269,8 +271,7 @@ class AccountEntityApiControllerTest extends TestCase
         $this->assertDatabaseHas($payee->getTable(), $payee->attributesToArray());
 
         // Try to delete the account
-        $response = $this->actingAs($user)
-            ->deleteJson(route("api.v1.account-entities.destroy", $account));
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $account));
 
         // Response should be 422 Unprocessable Entity
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

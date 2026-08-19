@@ -7,10 +7,12 @@ use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class CurrencyTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -19,35 +21,6 @@ class CurrencyTest extends TestCase
 
         $this->setBaseRoute('currencies');
         $this->setBaseModel(Currency::class);
-    }
-
-    public function test_guest_cannot_access_resource(): void
-    {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Currency $currency */
-        $currency = Currency::factory()->for($user)->create();
-
-        $this->get(route("{$this->base_route}.edit", $currency))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $currency))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $currency))->assertRedirectToRoute('login');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        /** @var User $user1 */
-        $user1 = User::factory()->create();
-        $currency = $this->createForUser($user1, $this->base_model);
-
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_user_can_view_list_of_currencies(): void

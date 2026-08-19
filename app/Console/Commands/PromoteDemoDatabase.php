@@ -13,7 +13,8 @@ class PromoteDemoDatabase extends Command
      * @var string
      */
     protected $signature = 'app:sandbox:promote-database
-        {--force : Skip the confirmation prompt}';
+        {--force : Skip the confirmation prompt}
+        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
 
     /**
      * The console command description.
@@ -28,7 +29,7 @@ class PromoteDemoDatabase extends Command
     public function handle(SandboxDemoDataExporter $exporter): int
     {
         // This command cannot be run if sandbox mode is not enabled
-        if (! config('yaffa.sandbox_mode')) {
+        if (! config('yaffa.sandbox_mode') && ! $this->option('force-sandbox')) {
             $this->error('This command can only be run in sandbox mode.');
             return Command::FAILURE;
         }

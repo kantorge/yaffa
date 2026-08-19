@@ -13,10 +13,12 @@ use App\Support\ScheduleInstance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class InvestmentTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -27,40 +29,11 @@ class InvestmentTest extends TestCase
         $this->setBaseModel(Investment::class);
     }
 
-    public function test_guest_cannot_access_resource(): void
+    protected function createResourceForAuthTest(User $user): Investment
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
         $this->createPrerequisites($user);
-        /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $investment->id))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $investment->id))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $investment->id))->assertRedirectToRoute('login');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createPrerequisites($user);
-        /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
-
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+        return Investment::factory()->for($user)->create();
     }
 
     public function test_user_can_view_list_of_investments(): void

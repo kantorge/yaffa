@@ -8,10 +8,14 @@ use App\Models\InvestmentGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
+use Tests\Feature\Concerns\AuthorizesResourceCrudForUnverifiedUsers;
 use Tests\TestCase;
 
 class InvestmentGroupTest extends TestCase
 {
+    use AuthorizesResourceCrud;
+    use AuthorizesResourceCrudForUnverifiedUsers;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -20,53 +24,6 @@ class InvestmentGroupTest extends TestCase
 
         $this->setBaseRoute('investment-groups');
         $this->setBaseModel(InvestmentGroup::class);
-    }
-
-    public function test_guest_cannot_access_resource(): void
-    {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-
-        $user = User::factory()->create();
-        $investmentGroup = $this->createForUser($user, $this->base_model);
-
-        $this->get(route("{$this->base_route}.edit", $investmentGroup))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $investmentGroup))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertRedirectToRoute('login');
-    }
-
-    public function test_unverified_user_cannot_access_resource(): void
-    {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
-        $user_unverified = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirectToRoute('verification.notice');
-
-
-        $user = User::factory()->create();
-        $investmentGroup = $this->createForUser($user, $this->base_model);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $investmentGroup))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $investmentGroup))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertRedirectToRoute('verification.notice');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        $user1 = User::factory()->create();
-        $investmentGroup = $this->createForUser($user1, $this->base_model);
-
-        $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     public function test_user_can_view_list_of_investment_groups(): void

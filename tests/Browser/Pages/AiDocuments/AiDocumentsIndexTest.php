@@ -123,13 +123,13 @@ class AiDocumentsIndexTest extends DuskTestCase
             $this->setDateInput($browser, '#aiDocumentDate_to', $today->format('Y-m-d'));
 
             $browser
-                ->pause(1000)
                 // Verify the dates are set in the input fields
                 ->assertValue('#aiDocumentDate_from', $today->copy()->subDays(1)->format('Y-m-d'))
                 ->assertValue('#aiDocumentDate_to', $today->format('Y-m-d'))
+                // Wait for the table to react to the date range and filter out the out-of-range document
+                ->waitUntilMissing($this->getAiDocumentRowSelector($outOfRangeDocument), 10)
                 // Only the in-range document remains in the filtered table
-                ->assertVisible($this->getAiDocumentRowSelector($inRangeDocument))
-                ->assertMissing($this->getAiDocumentRowSelector($outOfRangeDocument));
+                ->assertVisible($this->getAiDocumentRowSelector($inRangeDocument));
         });
     }
 

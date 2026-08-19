@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers\API;
+namespace Tests\Feature\API;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
@@ -13,6 +13,7 @@ use App\Models\TransactionItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class CategoryApiControllerTest extends TestCase
@@ -39,7 +40,7 @@ class CategoryApiControllerTest extends TestCase
             'default_aggregation' => 'year',
         ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->getJson(route('api.v1.categories.index', [
             'withInactive' => 1,
             'q' => '*',
@@ -71,7 +72,7 @@ class CategoryApiControllerTest extends TestCase
             'active' => false,
         ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->getJson(route('api.v1.categories.index', [
             'q' => '*',
         ]));
@@ -96,7 +97,7 @@ class CategoryApiControllerTest extends TestCase
             'active' => true,
         ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->getJson(route('api.v1.categories.index', [
             'q' => 'Gro',
             'withInactive' => 1,
@@ -121,7 +122,7 @@ class CategoryApiControllerTest extends TestCase
                 'active' => false,
             ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
         ]), [
@@ -172,7 +173,7 @@ class CategoryApiControllerTest extends TestCase
         $this->assertFalse($category->fresh()->active);
 
         // Try to update the category as the different user
-        $this->actingAs($user2);
+        Sanctum::actingAs($user2, ['*']);
         $response = $this->patchJson(route('api.v1.categories.patch-active', [
             'category' => $category->id,
         ]), [
@@ -195,7 +196,7 @@ class CategoryApiControllerTest extends TestCase
             ->for($user)
             ->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
@@ -229,7 +230,7 @@ class CategoryApiControllerTest extends TestCase
                 'parent_id' => $category->id,
             ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $category->id,
         ]));
@@ -249,7 +250,7 @@ class CategoryApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
@@ -277,7 +278,7 @@ class CategoryApiControllerTest extends TestCase
             ->for($user)
             ->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
@@ -303,7 +304,7 @@ class CategoryApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         // Missing name
         $response = $this->postJson(route('api.v1.categories.store'), [
@@ -323,7 +324,7 @@ class CategoryApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Test Category',
             'active' => true,
@@ -343,7 +344,7 @@ class CategoryApiControllerTest extends TestCase
             ->for($user)
             ->create(['name' => 'Existing Category']);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Existing Category',
             'active' => true,
@@ -366,7 +367,7 @@ class CategoryApiControllerTest extends TestCase
             ->for($user1)
             ->create();
 
-        $this->actingAs($user2);
+        Sanctum::actingAs($user2, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Child Category',
             'active' => true,
@@ -390,7 +391,7 @@ class CategoryApiControllerTest extends TestCase
             ->for($user1)
             ->create(['name' => 'Groceries']);
 
-        $this->actingAs($user2);
+        Sanctum::actingAs($user2, ['*']);
         $response = $this->postJson(route('api.v1.categories.store'), [
             'name' => 'Groceries',
             'active' => true,
@@ -450,7 +451,7 @@ class CategoryApiControllerTest extends TestCase
             'category_id' => $categoryChild->id,
         ]);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
         $response = $this->delete(route('api.v1.categories.destroy', [
             'category' => $categoryChild->id,
         ]));
