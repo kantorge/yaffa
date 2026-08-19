@@ -3,6 +3,7 @@
 namespace Tests\Feature\Concerns;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 
 /**
@@ -35,7 +36,7 @@ trait AuthorizesResourceCrud
      * resolves it via its route key), which covers every resource with a single implicit
      * {resource} route parameter.
      */
-    protected function resourceAuthMemberRouteParams($resource)
+    protected function resourceAuthMemberRouteParams(mixed $resource): mixed
     {
         return $resource;
     }
@@ -51,7 +52,7 @@ trait AuthorizesResourceCrud
     /**
      * Create the resource instance owned by the given user, used for the edit/update/destroy checks.
      */
-    protected function createResourceForAuthTest(User $user)
+    protected function createResourceForAuthTest(User $user): Model
     {
         return $this->createForUser($user, $this->base_model);
     }

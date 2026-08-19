@@ -227,13 +227,14 @@ class GoogleDriveConfigRequestTest extends TestCase
         $this->assertEquals('original-folder-id', $config->folder_id);
     }
 
-    // These three tests assert only that the request passes validation (200) for each
-    // service_account_json shape update accepts: missing, empty, and replaced. The resulting
-    // persisted value for each case is asserted with DB checks in
-    // GoogleDriveConfigApiControllerTest (test_update_preserves_service_account_json_when_not_provided,
-    // test_update_preserves_service_account_json_when_empty,
-    // test_update_changes_service_account_json_when_provided) - not repeated here.
-
+    /**
+     * This and the following two tests (empty/replaced service_account_json) assert only that
+     * the request passes validation (200) for each shape update accepts. The resulting
+     * persisted value for each case is asserted with DB checks in GoogleDriveConfigApiControllerTest
+     * (test_update_preserves_service_account_json_when_not_provided,
+     * test_update_preserves_service_account_json_when_empty,
+     * test_update_changes_service_account_json_when_provided) - not repeated here.
+     */
     public function test_update_allows_missing_service_account_json(): void
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
@@ -296,8 +297,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['service_account_json']);
     }
 
-    // Persisted-value assertion for the __existing__ placeholder lives in
-    // GoogleDriveConfigApiControllerTest::test_update_preserves_service_account_json_with_existing_placeholder.
+    /**
+     * Persisted-value assertion for the __existing__ placeholder lives in
+     * GoogleDriveConfigApiControllerTest::test_update_preserves_service_account_json_with_existing_placeholder.
+     */
     public function test_update_allows_existing_placeholder(): void
     {
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
@@ -313,6 +316,10 @@ class GoogleDriveConfigRequestTest extends TestCase
         $response->assertStatus(200);
     }
 
+    /**
+     * Persisted-value assertion lives in
+     * GoogleDriveConfigApiControllerTest::test_update_changes_post_import_actions.
+     */
     public function test_update_allows_changing_post_import_actions(): void
     {
         $config = GoogleDriveConfig::factory()->create([
@@ -328,11 +335,13 @@ class GoogleDriveConfigRequestTest extends TestCase
                 'post_import_actions' => ['delete'],
             ]);
 
-        // Persisted-value assertion lives in
-        // GoogleDriveConfigApiControllerTest::test_update_changes_post_import_actions.
         $response->assertStatus(200);
     }
 
+    /**
+     * Persisted-value assertion lives in
+     * GoogleDriveConfigApiControllerTest::test_update_changes_enabled_status.
+     */
     public function test_update_allows_changing_enabled(): void
     {
         $config = GoogleDriveConfig::factory()->create([
@@ -348,8 +357,6 @@ class GoogleDriveConfigRequestTest extends TestCase
                 'enabled' => false,
             ]);
 
-        // Persisted-value assertion lives in
-        // GoogleDriveConfigApiControllerTest::test_update_changes_enabled_status.
         $response->assertStatus(200);
     }
 

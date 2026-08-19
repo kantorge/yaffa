@@ -32,6 +32,12 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     // ===== AUTHORIZATION =====
 
+    /**
+     * This and test_store_requires_authentication below are representative of every action
+     * on this controller (update, destroy, folder-name, folder-name-by-credentials, folders),
+     * which all share the same auth:sanctum middleware wiring - a requires_authentication test
+     * per action would just re-prove the same middleware with no marginal coverage.
+     */
     public function test_show_requires_authentication(): void
     {
         $response = $this->getJson(route('api.v1.google-drive.config.show'));
@@ -46,15 +52,6 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         ]);
         $this->assertUserNotAuthorized($response);
     }
-
-    // Note: show/store above and every other action on this controller (update, destroy,
-    // folder-name, folder-name-by-credentials, folders) share the same auth:sanctum
-    // middleware wiring. One representative test per HTTP verb shape (GET/POST above) is
-    // enough to prove the gate is applied - a requires_authentication test per action just
-    // re-proves the same middleware with no marginal coverage (dropped
-    // test_update_requires_authentication, test_destroy_requires_authentication,
-    // test_folder_name_requires_authentication, test_folder_name_by_credentials_requires_authentication,
-    // test_folders_requires_authentication).
 
     public function test_show_cannot_view_other_users_config(): void
     {

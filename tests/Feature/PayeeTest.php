@@ -29,7 +29,7 @@ class PayeeTest extends TestCase
         return ['type' => 'payee'];
     }
 
-    protected function resourceAuthMemberRouteParams($resource): array
+    protected function resourceAuthMemberRouteParams(mixed $resource): array
     {
         return ['account_entity' => $resource->id];
     }

@@ -223,13 +223,14 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['model']);
     }
 
-    // These four tests assert only that the request passes validation (200) for each api_key
-    // shape update accepts: missing, empty, replaced, and the __existing__ placeholder. The
-    // resulting persisted value for each case is asserted with DB checks in
-    // AiProviderConfigApiControllerTest (test_update_preserves_api_key_when_not_provided,
-    // test_update_preserves_api_key_when_empty, test_update_changes_api_key_when_provided,
-    // test_update_preserves_api_key_with_existing_placeholder) - not repeated here.
-
+    /**
+     * This and the following similarly-named tests (empty/new/existing-placeholder api_key)
+     * assert only that the request passes validation (200) for each api_key shape update
+     * accepts. The resulting persisted value for each case is asserted with DB checks in
+     * AiProviderConfigApiControllerTest (test_update_preserves_api_key_when_not_provided,
+     * test_update_preserves_api_key_when_empty, test_update_changes_api_key_when_provided,
+     * test_update_preserves_api_key_with_existing_placeholder) - not repeated here.
+     */
     public function test_update_allows_missing_api_key(): void
     {
         $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);

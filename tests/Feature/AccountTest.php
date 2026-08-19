@@ -26,6 +26,11 @@ class AccountTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
+        return $this->createAccountForUser($user);
+    }
+
+    private function createAccountForUser(User $user): AccountEntity
+    {
         /** @var AccountEntity $account */
         $account = AccountEntity::factory()
             ->for($user)
@@ -51,7 +56,7 @@ class AccountTest extends TestCase
         return ['type' => 'account'];
     }
 
-    protected function resourceAuthMemberRouteParams($resource): array
+    protected function resourceAuthMemberRouteParams(mixed $resource): array
     {
         return ['type' => 'account', 'account_entity' => $resource->id];
     }
@@ -64,7 +69,7 @@ class AccountTest extends TestCase
 
     protected function createResourceForAuthTest(User $user): AccountEntity
     {
-        return $this->createAccountAndUser();
+        return $this->createAccountForUser($user);
     }
 
     public function test_user_cannot_create_new_account_without_an_account_group(): void

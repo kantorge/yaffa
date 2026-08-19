@@ -313,14 +313,15 @@ class InvestmentPriceApiV1Test extends TestCase
         $this->assertDatabaseMissing('investment_prices', ['id' => $price->id]);
     }
 
-    public function test_v1_check_price_validates_date_format(): void
+    public function test_v1_check_price_requires_a_date(): void
     {
-        // Missing date parameter
         $response = $this->actingAs($this->user)
             ->getJson(route('api.v1.investment-prices.check', ['investment' => $this->investment->id]));
         $response->assertUnprocessable()->assertJsonValidationErrors(['date']);
+    }
 
-        // Invalid date formats
+    public function test_v1_check_price_rejects_invalid_date_formats(): void
+    {
         foreach (['01/15/2024', '2024-13-01', 'not-a-date'] as $invalidDate) {
             $response = $this->actingAs($this->user)->getJson(
                 route('api.v1.investment-prices.check', ['investment' => $this->investment->id, 'date' => $invalidDate])

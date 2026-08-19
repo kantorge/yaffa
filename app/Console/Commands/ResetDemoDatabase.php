@@ -64,7 +64,6 @@ class ResetDemoDatabase extends Command
         Artisan::call('migrate:fresh', ['--force' => true]);
 
         // Create the demo user without using factory, which is not autoloaded in production
-        // The generated user ID is expected to be 1, and it should not conflict as we just reset the database and there are no other users yet.
         $this->info('Creating demo user...');
         $demoUser = User::create([
             'id' => 1,

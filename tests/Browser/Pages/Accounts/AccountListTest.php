@@ -18,12 +18,14 @@ class AccountListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
+    /**
+     * Migrate only once for this file - this test only needs factory-created
+     * users/accounts, not the seeded demo data, so db:seed is skipped.
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Migrate only once for this file - this test only needs factory-created
-        // users/accounts, not the seeded demo data, so db:seed is skipped.
         if (!static::$migrationRun) {
             $this->artisan('migrate:fresh');
             static::$migrationRun = true;

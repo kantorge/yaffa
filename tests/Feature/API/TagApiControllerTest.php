@@ -37,9 +37,8 @@ class TagApiControllerTest extends TestCase
         $this->assertTrue($tag->fresh()->active);
     }
 
-    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_tag(): void
+    public function test_it_does_not_update_a_tag_for_an_unauthenticated_user(): void
     {
-        // Create a user and a category
         /** @var User $user */
         $user = User::factory()->create();
 
@@ -50,11 +49,6 @@ class TagApiControllerTest extends TestCase
                 'active' => false,
             ]);
 
-        // Create a different user
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-
-        // Try to update the category as an unauthenticated user
         $response = $this->patchJson(
             route('api.v1.tags.patch-active', [
                 'tag' => $tag->id,
@@ -74,8 +68,23 @@ class TagApiControllerTest extends TestCase
         );
 
         $this->assertFalse($tag->fresh()->active);
+    }
 
-        // Try to update the category as the different user
+    public function test_it_throws_an_authorization_exception_if_user_is_not_the_owner_of_a_tag(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Tag $tag */
+        $tag = Tag::factory()
+            ->for($user)
+            ->create([
+                'active' => false,
+            ]);
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
         $this->actingAs($user2);
         $response = $this->patchJson(route('api.v1.tags.patch-active', [
             'tag' => $tag->id,

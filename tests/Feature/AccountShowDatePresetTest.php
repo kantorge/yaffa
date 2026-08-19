@@ -33,6 +33,9 @@ class AccountShowDatePresetTest extends TestCase
             ->create();
     }
 
+    /**
+     * @return array{date_from?: string, date_to?: string, date_preset?: string}
+     */
     private function resolvedFilters(TestResponse $response): array
     {
         preg_match('/window\.filters\s*=\s*(\{.*?\});/', $response->getContent(), $matches);
