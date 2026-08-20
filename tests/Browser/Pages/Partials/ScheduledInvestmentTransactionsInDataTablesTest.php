@@ -57,7 +57,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -122,7 +121,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -189,7 +187,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);

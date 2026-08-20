@@ -15,7 +15,7 @@ const tableSelector = '#table';
 let table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/v1/transactions/scheduled-items?type=any',
+        url: '/api/v1/transactions/scheduled-items?type=schedule&includeBudgets=1',
         type: 'GET',
         dataSrc: function(data) {
             ajaxIsBusy = false;
@@ -41,7 +41,14 @@ let table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
-        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
+        {
+            data: null,
+            title: __('Budget'),
+            render: function (data, type, row) {
+                return dataTableHelpers.booleanToTableIcon(row.row_type === 'budget', type);
+            },
+            className: 'text-center',
+        },
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
         dataTableHelpers.transactionColumnDefinition.type(true),
         dataTableHelpers.transactionColumnDefinition.payee,
