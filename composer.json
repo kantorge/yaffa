@@ -43,6 +43,7 @@
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {
+        "albertoarena/laravel-truss": "^1.9",
         "alebatistella/duskapiconf": "^1.2",
         "barryvdh/laravel-ide-helper": "^3.6",
         "deployer/deployer": "^7.5",

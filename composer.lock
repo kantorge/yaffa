@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d3aaa3a48f54c7519d62fc3449c3b5e5",
+    "content-hash": "b907644b7213ad8b561e67aae41fc875",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -10201,6 +10201,87 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "albertoarena/laravel-truss",
+            "version": "v1.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/albertoarena/laravel-truss.git",
+                "reference": "032594113e078a27c1d0c2e8161f2a837ddd190a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/albertoarena/laravel-truss/zipball/032594113e078a27c1d0c2e8161f2a837ddd190a",
+                "reference": "032594113e078a27c1d0c2e8161f2a837ddd190a",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^12.0 || ^13.0",
+                "illuminate/support": "^12.0 || ^13.0",
+                "php": "^8.3",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "laravel/mcp": "^0.9",
+                "laravel/pint": "^1.18",
+                "orchestra/testbench": "^10.0 || ^11.0",
+                "pestphp/pest": "^3.5"
+            },
+            "suggest": {
+                "laravel/mcp": "Enables the optional read-only, structure-only Truss MCP server (Truss as AI context). Opt in with `composer require laravel/mcp`. Needs Laravel >= 12.41.1 or 13."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AlbertoArena\\Truss\\TrussServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AlbertoArena\\Truss\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alberto Arena",
+                    "email": "arena.alberto@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A live database structure viewer for Laravel. Renders your schema (never data) as a scrollable, zoomable ER diagram.",
+            "homepage": "https://trussphp.com",
+            "keywords": [
+                "DBML",
+                "data-dictionary",
+                "database",
+                "database-diagram",
+                "er-diagram",
+                "erd",
+                "introspection",
+                "laravel",
+                "mermaid",
+                "migrations",
+                "schema"
+            ],
+            "support": {
+                "docs": "https://trussphp.com",
+                "issues": "https://github.com/albertoarena/laravel-truss/issues",
+                "source": "https://github.com/albertoarena/laravel-truss"
+            },
+            "funding": [
+                {
+                    "url": "https://ko-fi.com/albertoarena",
+                    "type": "ko-fi"
+                }
+            ],
+            "time": "2026-08-18T07:04:06+00:00"
+        },
         {
             "name": "alebatistella/duskapiconf",
             "version": "v1.2.5",
