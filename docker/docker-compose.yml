@@ -25,7 +25,7 @@ services:
 
   # This is the main Yaffa app container
   app:
-    image: kantorge/yaffa:latest
+    image: ${YAFFA_IMAGE:-kantorge/yaffa:latest}
     container_name: yaffa_app
     ports:
       # Default: expose Yaffa directly on host port 80.
@@ -63,7 +63,7 @@ services:
 
   # This container runs the Laravel scheduler to handle scheduled tasks
   scheduler:
-    image: kantorge/yaffa:latest
+    image: ${YAFFA_IMAGE:-kantorge/yaffa:latest}
     container_name: yaffa_scheduler
     env_file:
       - .env
