@@ -179,6 +179,37 @@ CREATE TABLE `ai_user_settings` (
   CONSTRAINT `ai_user_settings_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `budgets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `budgets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `category_id` bigint unsigned NOT NULL,
+  `account_id` bigint unsigned DEFAULT NULL,
+  `transaction_type` enum('withdrawal','deposit') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(12,4) unsigned NOT NULL,
+  `comment` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `frequency` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `interval` int NOT NULL DEFAULT '1',
+  `by_day` varchar(4) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `by_month` tinyint unsigned DEFAULT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `count` int DEFAULT NULL,
+  `inflation` double DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `budgets_user_id_foreign` (`user_id`),
+  KEY `budgets_category_id_foreign` (`category_id`),
+  KEY `budgets_account_id_foreign` (`account_id`),
+  CONSTRAINT `budgets_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `account_entities` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `budgets_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `budgets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `categories`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -606,8 +637,8 @@ DROP TABLE IF EXISTS `transaction_details_standard`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `transaction_details_standard` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `account_from_id` bigint unsigned DEFAULT NULL,
-  `account_to_id` bigint unsigned DEFAULT NULL,
+  `account_from_id` bigint unsigned NOT NULL,
+  `account_to_id` bigint unsigned NOT NULL,
   `amount_from` decimal(12,4) unsigned NOT NULL,
   `amount_to` decimal(12,4) unsigned NOT NULL,
   PRIMARY KEY (`id`),
@@ -684,7 +715,6 @@ CREATE TABLE `transactions` (
   `transaction_type` enum('withdrawal','deposit','transfer','buy','sell','add_shares','remove_shares','dividend','interest_yield') COLLATE utf8mb4_unicode_ci NOT NULL,
   `reconciled` tinyint(1) NOT NULL DEFAULT '0',
   `schedule` tinyint(1) NOT NULL DEFAULT '0',
-  `budget` tinyint(1) NOT NULL DEFAULT '0',
   `comment` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `config_type` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `config_id` bigint unsigned NOT NULL,
@@ -696,7 +726,7 @@ CREATE TABLE `transactions` (
   KEY `transactions_config_type_config_id_index` (`config_type`,`config_id`),
   KEY `transactions_currency_id_foreign` (`currency_id`),
   KEY `transactions_ai_document_id_foreign` (`ai_document_id`),
-  KEY `transactions_user_type_flags_date_index` (`user_id`,`config_type`,`schedule`,`budget`,`date`),
+  KEY `transactions_user_type_flags_date_index` (`user_id`,`config_type`,`schedule`,`date`),
   CONSTRAINT `transactions_ai_document_id_foreign` FOREIGN KEY (`ai_document_id`) REFERENCES `ai_documents` (`id`) ON DELETE CASCADE,
   CONSTRAINT `transactions_currency_id_foreign` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`) ON DELETE SET NULL,
   CONSTRAINT `transactions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -826,7 +856,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (69,'2026_05_25_000
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (70,'2026_07_07_000001_drop_redundant_config_id_config_type_index_from_transactions_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (71,'2026_07_23_000001_create_two_factor_authentications_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (72,'2026_08_04_000001_add_by_day_to_transaction_schedules_table',2);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (73,'2026_08_08_000001_widen_transaction_details_investment_price_scale',3);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (77,'2026_08_20_000001_add_pk_and_unique_key_to_account_entity_category_preference_table',4);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (78,'2026_08_20_000002_add_unique_key_to_transaction_items_tags_table',4);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (79,'2026_08_20_000003_drop_redundant_fk_indexes_subsumed_by_composite_indexes',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (73,'2026_08_05_000001_create_budgets_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (74,'2026_08_05_000002_transform_budget_transactions_to_budgets',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (75,'2026_08_05_000003_drop_budget_column_and_enforce_account_not_null',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (76,'2026_08_08_000001_widen_transaction_details_investment_price_scale',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (77,'2026_08_20_000001_add_pk_and_unique_key_to_account_entity_category_preference_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (78,'2026_08_20_000002_add_unique_key_to_transaction_items_tags_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (79,'2026_08_20_000003_drop_redundant_fk_indexes_subsumed_by_composite_indexes',2);
