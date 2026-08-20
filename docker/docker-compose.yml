@@ -61,7 +61,6 @@ services:
   scheduler:
     image: kantorge/yaffa:latest
     container_name: yaffa_scheduler
-    entrypoint: ['/usr/bin/supervisord', '-c', '/etc/supervisord.conf']
     env_file:
       - .env
     environment:

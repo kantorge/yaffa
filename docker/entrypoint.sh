@@ -11,17 +11,45 @@ if [ -n "$DB_HOST" ]; then
   done
 fi
 
-# Run various Laravel maintenance scripts
-php artisan down || true
-php artisan migrate --force
-php artisan app:import:sync-system-profiles --no-interaction
-php artisan optimize:clear
-php artisan optimize
-php artisan up
+# Auto-generate APP_KEY on first boot if it wasn't supplied via the environment.
+# The key is persisted in the storage volume (shared with the scheduler container)
+# so restarts and container recreation keep using the same key instead of
+# invalidating existing sessions / encrypted data.
+if [ -z "$APP_KEY" ]; then
+  APP_KEY_FILE="/var/www/html/storage/app/.app_key"
+  if [ -f "$APP_KEY_FILE" ]; then
+    APP_KEY=$(cat "$APP_KEY_FILE")
+  else
+    echo "No APP_KEY set, generating one..."
+    APP_KEY=$(php artisan key:generate --show --no-interaction)
+    mkdir -p "$(dirname "$APP_KEY_FILE")"
+    echo -n "$APP_KEY" > "$APP_KEY_FILE"
+  fi
+  export APP_KEY
+fi
+
+# Only the main app container runs migrations/optimization; the scheduler
+# container (RUNS_SCHEDULER=TRUE) waits for it via depends_on: service_healthy,
+# so by the time it starts the schema is already up to date.
+if [ "$RUNS_SCHEDULER" != "TRUE" ]; then
+  # migrate --force is safe to run on every boot: Laravel tracks applied
+  # migrations and skips them, so this is a no-op after the first run.
+  php artisan down || true
+  php artisan migrate --force
+  php artisan app:import:sync-system-profiles --no-interaction
+  php artisan optimize:clear
+  php artisan optimize
+  php artisan up
+fi
 
 echo "Adjusting storage permissions..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-echo "Startup complete. Launching Apache..."
-exec apache2-foreground
+if [ "$RUNS_SCHEDULER" = "TRUE" ]; then
+  echo "Startup complete. Launching scheduler/queue supervisor..."
+  exec /usr/bin/supervisord -c /etc/supervisord.conf
+else
+  echo "Startup complete. Launching Apache..."
+  exec apache2-foreground
+fi
