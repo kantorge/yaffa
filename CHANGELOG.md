@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.6.0](https://github.com/kantorge/yaffa/compare/v3.5.2...v3.6.0) (2026-08-20)
+
+
+### 🛠️ Chores
+
+* composer update ([3599e75](https://github.com/kantorge/yaffa/commit/3599e75370794db7feee343e7b5ea0d70471c8fb))
+* **deps:** bump the npm_and_yarn group across 1 directory with 2 updates ([#521](https://github.com/kantorge/yaffa/issues/521)) ([49ba55c](https://github.com/kantorge/yaffa/commit/49ba55c65006de8df20860e5e97f6286952208da))
+
+
+### ✨ Features
+
+* add new AI models and providers ([71ad418](https://github.com/kantorge/yaffa/commit/71ad4187617416ac81aa9ef1e9d6ae8363dbf2a8))
+
+
+### 🐛 Bug Fixes
+
+* npm vulnerabilities ([a99866a](https://github.com/kantorge/yaffa/commit/a99866a09cb68a8e33f75c405c9e8f4c503fa0c1))
+* remove unsupported menu toggler ([2dcee81](https://github.com/kantorge/yaffa/commit/2dcee8166a99bcc885a6078481e8b8e3bb2194d3))
+* standardizes frontend date handling ([#517](https://github.com/kantorge/yaffa/issues/517)) ([e8f4066](https://github.com/kantorge/yaffa/commit/e8f4066d396c07e8237671ff359e84cb44748c8c))
+* widen pre-migration budget check to match transforming migration ([#532](https://github.com/kantorge/yaffa/issues/532)) ([72901cd](https://github.com/kantorge/yaffa/commit/72901cdc3816ca27eac4c234f3e5aff9933a7be0))
+
 ## [3.5.2](https://github.com/kantorge/yaffa/compare/v3.5.1...v3.5.2) (2026-07-26)
 
 
