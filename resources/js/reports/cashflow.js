@@ -12,6 +12,15 @@ initializeSelect2(window.YAFFA.userSettings.language);
 
 import * as toastHelpers from '@/shared/lib/toast';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
+
+$(document).ready(function () {
+    initializeTwoColumnLeftControlPanelToggle({
+        leftControlPanelSelector: '#cashflowLeftControlPanel',
+        mainContentSelector: '#cashflowMainContent',
+        toggleButtonSelector: '#toggleCashflowLeftControlPanelButton',
+    });
+});
 
 window.chartData = [];
 let chart, dateAxis, valueAxis, seriesMonhtly, seriesTotal, seriesInvestment, valueAxisTotal, scrollbarX;

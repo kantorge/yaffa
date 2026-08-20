@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { getArrayParamFromUrl } from '@/shared/lib/helpers';
 
 /**
  * Build a cache key string from a filter object.
@@ -41,12 +42,12 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
   return buildFilterCacheKey({
     date_from: urlParams.get('date_from'),
     date_to: urlParams.get('date_to'),
-    accounts: urlParams.getAll('accounts[]'),
-    categories: urlParams.getAll('categories[]'),
-    payees: urlParams.getAll('payees[]'),
-    tags: urlParams.getAll('tags[]'),
-    types: urlParams.getAll('types[]'),
-    investments: urlParams.getAll('investments[]'),
+    accounts: getArrayParamFromUrl(urlParams, 'accounts'),
+    categories: getArrayParamFromUrl(urlParams, 'categories'),
+    payees: getArrayParamFromUrl(urlParams, 'payees'),
+    tags: getArrayParamFromUrl(urlParams, 'tags'),
+    types: getArrayParamFromUrl(urlParams, 'types'),
+    investments: getArrayParamFromUrl(urlParams, 'investments'),
     locale: (window.YAFFA && window.YAFFA.userSettings.locale) || null,
   });
 }

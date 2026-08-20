@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col btn-group mb-3 mb-xl-0">
+                <div class="col-9 btn-group mb-3 mb-xl-0">
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
@@ -63,7 +63,7 @@
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('transfer')"
-                    :disabled="form.budget || !isBaseSettingsEditsAllowed"
+                    :disabled="!isBaseSettingsEditsAllowed"
                     dusk="transaction-type-transfer"
                     type="button"
                     value="transfer"
@@ -74,7 +74,7 @@
                   </button>
                 </div>
                 <div
-                  class="col d-flex justify-content-between gap-2 mb-0"
+                  class="col-3 d-flex justify-content-between gap-2 mb-0"
                   v-if="!simplified"
                 >
                   <input
@@ -102,35 +102,6 @@
                     <span class="fa-solid fa-arrows-rotate"></span><br />
                     {{ __('Scheduled') }}
                   </label>
-                  <input
-                    class="btn-check"
-                    :disabled="
-                      form.reconciled ||
-                      form.transaction_type == 'transfer' ||
-                      !isBaseSettingsEditsAllowed
-                    "
-                    id="checkbox-standard-transaction-budget"
-                    type="checkbox"
-                    autocomplete="off"
-                    value="1"
-                    v-model="form.budget"
-                  />
-                  <label
-                    class="btn btn-outline-dark w-100"
-                    dusk="checkbox-transaction-budget"
-                    for="checkbox-standard-transaction-budget"
-                    :title="
-                      action === 'replace'
-                        ? __(
-                            'You cannot change schedule settings for this type of action',
-                          )
-                        : ''
-                    "
-                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
-                  >
-                    <span class="fa-solid fa-hourglass-half"></span><br />
-                    {{ __('Budget') }}
-                  </label>
                 </div>
               </div>
             </div>
@@ -150,7 +121,7 @@
                 >
                   <input
                     class="btn-check"
-                    :disabled="form.schedule || form.budget"
+                    :disabled="form.schedule"
                     id="checkbox-standard-transaction-reconciled"
                     type="checkbox"
                     autocomplete="off"
@@ -180,7 +151,7 @@
                   <input
                     type="date"
                     class="form-control"
-                    :disabled="form.schedule || form.budget"
+                    :disabled="form.schedule"
                     id="standard-date"
                     v-model="dateInput"
                   />
@@ -250,9 +221,8 @@
       <div class="row">
         <div class="col-12">
           <transaction-schedule
-            v-if="form.schedule || form.budget"
+            v-if="form.schedule"
             :isSchedule="form.schedule"
-            :isBudget="form.budget"
             :schedule="form.schedule_config"
             :form="form"
             key="current"
@@ -260,12 +230,11 @@
         </div>
         <div class="col-12">
           <transaction-schedule
-            v-if="(form.schedule || form.budget) && action === 'replace'"
+            v-if="form.schedule && action === 'replace'"
             :withCheckbox="true"
             :title="__('Update base schedule')"
             :allowCustomization="false"
             :isSchedule="form.schedule"
-            :isBudget="form.budget"
             :schedule="form.original_schedule_config"
             :form="form"
             field-prefix="original_schedule_config"
@@ -357,18 +326,6 @@
                       dusk="label-amountFrom-currency"
                     >
                       ({{ ammountFromCurrencyLabel }})
-                    </span>
-                    <span v-if="form.budget && !ammountFromCurrencyLabel">
-                      ({{ getCurrencySymbol(locale, baseCurrency.iso_code) }})
-                      <span
-                        class="fa fa-info-circle text-primary"
-                        :title="
-                          __(
-                            'Budget is calculated using your base currency, unless you define an account with an other currency.',
-                          )
-                        "
-                        data-bs-toggle="tooltip"
-                      ></span>
                     </span>
                   </label>
                   <MathInput
@@ -655,7 +612,7 @@
       },
       transaction: Object,
       simplified: {
-        // If true, no schedule or budget option is shown
+        // If true, no schedule option is shown
         type: Boolean,
         default: false,
       },
@@ -709,7 +666,6 @@
         date: todayInUTC(),
         comment: null,
         schedule: false,
-        budget: false,
         reconciled: false,
         catch_up_schedule: false,
         config: {},
@@ -1130,7 +1086,6 @@
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
-          this.form.budget = this.transaction.budget ?? false;
           this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration
@@ -1651,24 +1606,13 @@
         this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
       },
 
-      // Remove the form date value when schedule or budget is enabled, and restore it when disabled
+      // Remove the form date value when schedule is enabled, and restore it when disabled
       'form.schedule': function (newState) {
         if (this.initializingTransaction) {
           return;
         }
 
-        if (newState || this.form.budget) {
-          this.form.date = null;
-        } else {
-          this.form.date = todayInUTC();
-        }
-      },
-      'form.budget': function (newState) {
-        if (this.initializingTransaction) {
-          return;
-        }
-
-        if (newState || this.form.schedule) {
+        if (newState) {
           this.form.date = null;
         } else {
           this.form.date = todayInUTC();

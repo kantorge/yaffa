@@ -157,7 +157,7 @@
     "Budget": "Budget",
     "Budget Chart": "Budget Chart",
     "Budget chart": "Budget chart",
-    "Budget inflation": "Budget inflation",
+    "Yearly inflation": "Yearly inflation",
     "Budget is calculated using your base currency, unless you define an account with an other currency.": "Budget is calculated using your base currency, unless you define an account with an other currency.",
     "Buy": "Buy",
     "Buying cost": "Buying cost",
@@ -1573,5 +1573,9 @@
     "You are in sandbox mode. You cannot enable two-factor authentication.": "You are in sandbox mode. You cannot enable two-factor authentication.",
     "You have not created any API tokens yet.": "You have not created any API tokens yet.",
     "Your account is protected with an authenticator app.": "Your account is protected with an authenticator app.",
-    "e.g. Budgeting script": "e.g. Budgeting script"
+    "e.g. Budgeting script": "e.g. Budgeting script",
+    "Forecast": "Forecast",
+    "Inflation": "Inflation",
+    "Planning": "Planning",
+    ":rate% per year": ":rate% per year"
 }

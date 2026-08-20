@@ -418,7 +418,6 @@
       <transaction-schedule
         v-if="form.schedule"
         :isSchedule="form.schedule"
-        :isBudget="false"
         :schedule="form.schedule_config"
         :form="form"
       ></transaction-schedule>
@@ -430,7 +429,6 @@
         :allowCustomization="false"
         ref="scheduleOriginal"
         :isSchedule="form.schedule"
-        :isBudget="false"
         :schedule="form.original_schedule_config"
         :form="form"
         field-prefix="original_schedule_config"
@@ -596,7 +594,6 @@
         date: toIsoDateString(),
         comment: null,
         schedule: false,
-        budget: false,
         reconciled: false,
         catch_up_schedule: false,
         config: {
@@ -1042,7 +1039,6 @@
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
-          this.form.budget = this.transaction.budget ?? false;
           this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration (handle both saved transactions and AI drafts)

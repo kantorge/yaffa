@@ -4,9 +4,10 @@
 
 @section('content_container_classes', 'container-fluid')
 
-@section('content_header', __('Scheduled and budgeted transactions'))
+@section('content_header', __('Scheduled transactions and budgets'))
 
 @section('content')
+<div id="schedulesPageApp">
 <div class="row">
     <div class="col-12 col-lg-3">
         <div id="onboarding-card">
@@ -43,7 +44,7 @@
                             ]) }}"
                        title="{{ __('New scheduled standard transaction') }}"
                     >
-                        <i class="fa fa-cart-plus"></i>
+                        <i class="fa fa-fw fa-cart-plus"></i>
                     </a>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -57,10 +58,41 @@
                             ]) }}"
                        title="{{ __('New scheduled investment transaction') }}"
                     >
-                        <i class="fa fa-line-chart"></i>
+                        <i class="fa fa-fw fa-line-chart"></i>
                     </a>
                 </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ __('New budget') }}
+                    <button class="btn btn-sm btn-success"
+                       dusk="button-new-budget"
+                       id="button-new-budget"
+                       type="button"
+                       title="{{ __('New budget') }}"
+                    >
+                        <i class="fa fa-fw fa-piggy-bank"></i>
+                    </button>
+                </li>
             </ul>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <div
+                        class="card-title collapse-control"
+                        data-coreui-toggle="collapse"
+                        data-coreui-target="#cardCategories"
+                >
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Filter by category') }}
+                </div>
+            </div>
+            <div class="card-body collapse show" aria-expanded="true" id="cardCategories">
+                <div id="categoryTree"></div>
+                <div class="text-end">
+                    <button type="button" id="category-tree-clear" class="btn btn-default btn-sm">{{ __('Clear selection') }}</button>
+                    <button type="button" id="category-tree-all" class="btn btn-default btn-sm">{{ __('Select all') }}</button>
+                </div>
+            </div>
         </div>
 
         <div class="card mb-3">
@@ -75,14 +107,7 @@
                 </div>
             </div>
             <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
-                <x-tablefilter-sidebar-switch
-                        label=" {{ __('Schedule') }}"
-                        property="schedule"
-                />
-                <x-tablefilter-sidebar-switch
-                        label=" {{ __('Budget') }}"
-                        property="budget"
-                />
+                @include('template.components.tablefilter-sidebar-row-type')
                 <x-tablefilter-sidebar-switch
                         label=" {{ __('Active') }}"
                         property="active"
@@ -104,4 +129,24 @@
     </div>
 </div>
 
+<!-- Budget Form Modal -->
+<budget-form
+    ref="budgetFormNew"
+    action="new"
+    id="newBudgetModal"
+    @budget-saved="onBudgetSaved"
+></budget-form>
+
+<budget-form
+    ref="budgetFormEdit"
+    action="edit"
+    id="editBudgetModal"
+    @budget-saved="onBudgetSaved"
+></budget-form>
+
+<budget-quick-view
+    ref="budgetQuickView"
+    @edit="showEditBudgetModal"
+></budget-quick-view>
+</div>
 @stop

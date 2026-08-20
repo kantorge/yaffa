@@ -136,23 +136,23 @@
     </div>
     <div :class="leftControlPanelCollapsed ? 'col-sm-12' : 'col-sm-9'">
       <div class="left-control-panel-toggle-shell">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
-          @click="toggleLeftControlPanel"
-          :title="leftControlPanelToggleState.title"
-          :aria-label="leftControlPanelToggleState.title"
-          :aria-expanded="leftControlPanelToggleState.ariaExpanded"
-        >
-          <i
-            :class="`fas ${leftControlPanelToggleState.iconClass}`"
-            data-left-control-panel-toggle-icon
-          ></i>
-        </button>
         <div class="card left-control-panel-toggle-card">
           <div
-            class="card-header d-flex align-items-center left-control-panel-toggle-header"
+            class="card-header d-flex align-items-center gap-2 left-control-panel-toggle-header"
           >
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary me-2"
+              @click="toggleLeftControlPanel"
+              :title="leftControlPanelToggleState.title"
+              :aria-label="leftControlPanelToggleState.title"
+              :aria-expanded="leftControlPanelToggleState.ariaExpanded"
+            >
+              <i
+                :class="`fas ${leftControlPanelToggleState.iconClass}`"
+                data-left-control-panel-toggle-icon
+              ></i>
+            </button>
             <ul class="nav nav-tabs card-header-tabs">
               <li class="nav-item">
                 <button
@@ -347,6 +347,7 @@
   import {
     processTransaction,
     initializeBootstrapTooltips,
+    getArrayParamFromUrl,
   } from '@/shared/lib/helpers';
   import { buildFilterCacheKey, buildBreakdownCacheKey } from './helpers';
   import * as toastHelpers from '@/shared/lib/toast';
@@ -414,7 +415,10 @@
         activeTab: 'summary',
         dateFrom,
         dateTo,
-        selectedPreset: urlParams.get('date_from') || urlParams.get('date_to') ? null : datePreset,
+        selectedPreset:
+          urlParams.get('date_from') || urlParams.get('date_to')
+            ? null
+            : datePreset,
         allTypeValues: Object.keys(window.YAFFA.config.transactionTypes || {}),
         standardTypeValues: Object.values(
           window.YAFFA.config.transactionTypes || {},
@@ -804,18 +808,7 @@
        * @returns {string[]} Array of URL parameters
        */
       getUrlParams(paramName) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const regex = new RegExp(`^${paramName}\\[(\\d)?\\]$`);
-
-        let params = [];
-
-        urlParams.forEach((value, key) => {
-          if (regex.test(key)) {
-            params.push(value);
-          }
-        });
-
-        return params;
+        return getArrayParamFromUrl(new URLSearchParams(window.location.search), paramName);
       },
       __,
     },

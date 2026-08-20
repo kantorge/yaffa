@@ -272,12 +272,6 @@ export const transactionColumnDefinition = {
         title: __('Payee'),
         defaultContent: '',
         render: function (_data, _type, row) {
-            // Standalone Budget rows (row_type: 'budget', from includeBudgets=1) have no `config`
-            // - they're not backed by a transaction, so there's no payee/account to show.
-            if (row.row_type === 'budget') {
-                return '';
-            }
-
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
 
             if (typeConfig.category === 'standard') {
@@ -367,27 +361,6 @@ export const transactionColumnDefinition = {
          */
         render: function (_data, type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
-
-            // Standalone Budget rows (row_type: 'budget', from includeBudgets=1) carry their own
-            // flat `amount` string - they aren't backed by a transaction, so there's no `config`.
-            if (row.row_type === 'budget') {
-                const amount = Number(row.amount);
-
-                if (type === 'display') {
-                    const prefix = typeConfig.amount_multiplier === -1
-                        ? '- '
-                        : (typeConfig.amount_multiplier === 1 ? '+ ' : '');
-
-                    return prefix + toFormattedCurrency(
-                        type,
-                        amount,
-                        window.YAFFA.userSettings.locale,
-                        row.transaction_currency
-                    );
-                }
-
-                return amount;
-            }
 
             if (type === 'display') {
                 let prefix = '';
@@ -724,4 +697,82 @@ export function investmentGroupTree(selector, data, changeHandler) {
         })
         .on('select_node.jstree', changeHandler)
         .on('deselect_node.jstree', changeHandler);
+}
+
+/**
+ * Initialize a jsTree plugin for categories: hierarchical (parent/child) and
+ * checkbox-selectable, fetched from the categories API. A simpler sibling of the bespoke
+ * category tree on the budget chart page (resources/js/reports/budgetchart.js) - that one also
+ * drives server-side aggregation (selected IDs as query params, per-node default_aggregation
+ * metadata, URL-param preset restoration), which this plain DataTables-filter use case doesn't
+ * need, so it isn't reused here beyond the same jstree init shape.
+ *
+ * No per-node icon is set (matches the icon-less investment group tree above) - a generic folder/
+ * checkmark icon on every node added no information beyond the node's own text/active styling.
+ *
+ * @param {string} selector
+ * @param {function} changeHandler
+ * @param {number[]} [presetSelectedIds]
+ * @param {Object} [options]
+ * @param {boolean} [options.syncUrl] When true, checking/unchecking a node rewrites the page URL's
+ *   `categories[]` query params to match the tree's current selection (pushState), the same
+ *   preset-filter convention budgetchart.js's own category tree already follows.
+ *
+ * @returns {void}
+ */
+export function categoryTree(selector, changeHandler, presetSelectedIds = [], options = {}) {
+    const { syncUrl = false } = options;
+
+    function handleChange() {
+        if (syncUrl) {
+            const treeInstance = $(selector).jstree(true);
+            const checked = treeInstance ? treeInstance.get_checked() : [];
+            const url = new URL(window.location.href);
+            url.searchParams.delete('categories[]');
+            checked.forEach(id => url.searchParams.append('categories[]', id));
+            window.history.pushState('', '', url.toString());
+        }
+
+        changeHandler();
+    }
+
+    $(selector)
+        .jstree({
+            core: {
+                data: function (_obj, callback) {
+                    fetch('/api/v1/categories?withInactive=1&q=*')
+                        .then(response => response.json())
+                        .then(data => {
+                            const categories = data.map(function (category) {
+                                return {
+                                    id: category.id,
+                                    parent: category.parent_id || '#',
+                                    text: category.active
+                                        ? category.name
+                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>',
+                                    state: {
+                                        selected: presetSelectedIds.includes(category.id)
+                                    },
+                                };
+                            });
+                            callback.call(this, categories);
+                        });
+                },
+                themes: {
+                    dots: false,
+                    icons: false
+                }
+            },
+            plugins: ['checkbox'],
+            checkbox: {
+                keep_selected_style: false
+            },
+        })
+        .on('select_node.jstree', handleChange)
+        .on('deselect_node.jstree', handleChange)
+        .on('ready.jstree', function () {
+            if (presetSelectedIds.length > 0) {
+                handleChange();
+            }
+        });
 }

@@ -157,7 +157,7 @@
     "Budget": "Költségvetés",
     "Budget Chart": "Költségvetési táblázat",
     "Budget chart": "Költségvetési táblázat",
-    "Budget inflation": "Költségvetési infláció",
+    "Yearly inflation": "Éves infláció",
     "Budget is calculated using your base currency, unless you define an account with an other currency.": "A költségvetés az alappénznemed alapján kerül kiszámításra, kivéve, ha más pénznemet használó számlát ad meg.",
     "Buy": "Vétel",
     "Buying cost": "Vásárlási költség",
@@ -1573,5 +1573,9 @@
     "You are in sandbox mode. You cannot enable two-factor authentication.": "Tesztmódban vagy. Nem tudod engedélyezni a kétfaktoros hitelesítést.",
     "You have not created any API tokens yet.": "Még nem hoztál létre API tokent.",
     "Your account is protected with an authenticator app.": "A fiókodat egy hitelesítő alkalmazás védi.",
-    "e.g. Budgeting script": "pl. költségvetési szkript"
+    "e.g. Budgeting script": "pl. költségvetési szkript",
+    "Forecast": "Előrejelzés",
+    "Inflation": "Infláció",
+    "Planning": "Tervezés",
+    ":rate% per year": "évi :rate%"
 }

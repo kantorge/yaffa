@@ -2,8 +2,10 @@ td.dt-nowrap {
     white-space: nowrap;
 }
 
+// !important is required: this is toggled via classList alongside Bootstrap utility classes
+// (e.g. d-flex) that are themselves !important, so a plain `display: none` here would lose.
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .notbold {
@@ -16,6 +18,14 @@ td.dt-nowrap {
 
 .reconcile {
     cursor: pointer;
+}
+
+// jstree's default theme sets .jstree-anchor to white-space: nowrap, so a long category name
+// (e.g. a deeply nested subcategory) overflows the sidebar card to the right instead of wrapping.
+#categoryTree .jstree-anchor {
+    white-space: normal;
+    height: auto;
+    min-height: 24px;
 }
 
 // Hide the DataTables search box
@@ -476,30 +486,11 @@ button[type="submit"] .spinner-border {
 }
 
 .left-control-panel-toggle-shell {
-    position: relative;
-}
-
-.left-control-panel-toggle-card {
-    position: relative;
-    z-index: 2;
-}
-
-.left-control-panel-toggle-header {
-    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .left-control-panel-toggle-handle {
-    position: absolute;
-    left: var(--left-control-panel-toggle-left, 4px);
-    top: var(--left-control-panel-toggle-top, -20px);
-    transform: translateY(var(--left-control-panel-toggle-resting-offset, 10px));
-    opacity: var(--left-control-panel-toggle-resting-opacity, 0.35);
-    transition: transform 0.18s ease, opacity 0.18s ease;
-    z-index: 1;
-}
-
-.left-control-panel-toggle-handle:hover,
-.left-control-panel-toggle-handle:focus-visible {
-    transform: translateY(var(--left-control-panel-toggle-hover-offset, -6px));
-    opacity: var(--left-control-panel-toggle-hover-opacity, 1);
+    align-self: flex-start;
+    margin-bottom: 0.5rem;
 }

@@ -186,7 +186,6 @@
         <transaction-schedule
           :isVisible="transaction.schedule"
           :isSchedule="transaction.schedule"
-          :isBudget="false"
           :schedule="transaction.transaction_schedule || {}"
         ></transaction-schedule>
       </div>

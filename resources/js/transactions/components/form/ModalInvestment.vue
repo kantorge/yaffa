@@ -47,7 +47,6 @@
           transaction_type: 'buy',
           date: new Date(),
           schedule: false,
-          budget: false,
           reconciled: false,
           comment: null,
           config: {
