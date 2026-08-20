@@ -69,10 +69,10 @@
           </dl>
         </div>
 
-        <div class="p-3 rounded border" v-if="isSchedule || isBudget">
+        <div class="p-3 rounded border" v-if="isSchedule">
           <h6 class="text-muted text-uppercase small mb-2">{{ __('Behavior') }}</h6>
           <dl class="field-grid mb-0">
-            <div v-if="isSchedule">
+            <div>
               <dt class="mb-1">{{ __('Automatic recording') }}</dt>
               <dd class="mb-0">
                 <span v-if="schedule.automatic_recording">
@@ -81,22 +81,6 @@
                 <span v-else
                   ><i class="fa fa-ban text-danger" :title="__('No')"></i
                 ></span>
-              </dd>
-            </div>
-            <div v-if="isBudget">
-              <dt class="mb-1">{{ __('Budget inflation') }}</dt>
-              <dd class="mb-0">
-                <span
-                  v-if="
-                    typeof schedule.inflation !== 'undefined' &&
-                    schedule.inflation !== null
-                  "
-                >
-                  {{ schedule.inflation }}%
-                </span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
               </dd>
             </div>
           </dl>
@@ -132,7 +116,6 @@
    * @property {Date} schedule.start_date
    * @property {Date} schedule.next_date
    * @property {Date} schedule.end_date
-   * @property {Number} schedule.inflation
    * @property {Boolean} schedule.automatic_recording
    * @property {String|null} schedule.by_day RFC5545 ordinal weekday token, e.g. "1WE", "-1FR"
    * @property {Number|null} schedule.by_month 1-12, pins a YEARLY by_day rule to a month
@@ -144,7 +127,6 @@
     props: {
       isVisible: Boolean,
       isSchedule: Boolean,
-      isBudget: Boolean,
       schedule: Object,
       locale: {
         type: String,

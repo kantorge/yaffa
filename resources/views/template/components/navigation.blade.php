@@ -81,6 +81,20 @@
                 text="{{ __('Cash flow') }}"
             />
             <x-nav-link
+                href="{{ route('reports.investment_timeline') }}"
+                iconClasses="fa-solid fa-chart-gantt"
+                text="{{ __('Investment timeline') }}"
+            />
+        </ul>
+    </li>
+
+    <li class="nav-group">
+        <a class="nav-link nav-group-toggle" href="#">
+            <i class="nav-icon fa-solid fa-compass"></i>
+            {{ __('Planning') }}
+        </a>
+        <ul class="nav-group-items">
+            <x-nav-link
                 href="{{ route('reports.budgetchart') }}"
                 iconClasses="fa-solid fa-chart-line"
                 text="{{ __('Budget chart') }}"
@@ -89,11 +103,6 @@
                 href="{{ route('report.schedules') }}"
                 iconClasses="fa-solid fa-list"
                 text="{{ __('Schedules and budgets') }}"
-            />
-            <x-nav-link
-                href="{{ route('reports.investment_timeline') }}"
-                iconClasses="fa-solid fa-chart-gantt"
-                text="{{ __('Investment timeline') }}"
             />
         </ul>
     </li>

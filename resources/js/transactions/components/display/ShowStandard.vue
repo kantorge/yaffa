@@ -118,18 +118,6 @@
               </dd>
 
               <dt class="col-6">
-                {{ __('Budget') }}
-              </dt>
-              <dd class="col-6" dusk="label-budget">
-                <i
-                  v-if="transaction.budget"
-                  class="fa fa-check text-success"
-                  :title="__('Yes')"
-                ></i>
-                <i v-else class="fa fa-ban text-danger" :title="__('No')"></i>
-              </dd>
-
-              <dt class="col-6">
                 {{ __('Reconciled') }}
               </dt>
               <dd class="col-6">
@@ -215,9 +203,8 @@
         </div>
 
         <transaction-schedule
-          :isVisible="transaction.schedule || transaction.budget"
+          :isVisible="transaction.schedule"
           :isSchedule="transaction.schedule"
-          :isBudget="transaction.budget"
           :schedule="transaction.transaction_schedule || {}"
         ></transaction-schedule>
       </div>

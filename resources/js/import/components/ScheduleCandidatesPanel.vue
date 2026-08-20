@@ -194,7 +194,6 @@
 
           // Enter this instance as a regular transaction dated at the schedule's next occurrence.
           transaction.schedule = false;
-          transaction.budget = false;
           transaction.date =
             transaction.transaction_schedule?.next_date ?? transaction.date;
           transaction.year_month = transaction.date

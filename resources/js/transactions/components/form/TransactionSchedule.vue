@@ -1,10 +1,10 @@
 <template>
   <div
-    class="card mb-3"
+    :class="bare ? null : 'card mb-3'"
     dusk="card-transaction-schedule"
     :id="'transaction_schedule_' + this.$.vnode.key"
   >
-    <div class="card-header d-flex justify-content-between">
+    <div class="card-header d-flex justify-content-between" v-if="!bare">
       <div class="card-title">
         {{ title }}
       </div>
@@ -17,10 +17,12 @@
         </div>
       </div>
     </div>
-    <div class="card-body">
+    <div :class="bare ? null : 'card-body'">
       <div class="schedule-groups">
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Pattern') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Pattern') }}
+          </h6>
           <div class="mb-3" :class="hasError('frequency') ? 'has-error' : ''">
             <label class="form-label d-block">
               {{ __('Repeats every') }}
@@ -152,10 +154,17 @@
         </div>
 
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Range') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Range') }}
+          </h6>
           <div class="field-grid field-grid-2col">
-            <div :class="{ 'has-error': hasError('start_date') }">
-              <label :for="'schedule_start_' + this.$.vnode.key" class="form-label">
+            <div
+              :class="{ 'has-error': hasError('start_date') || tooManyPeriods }"
+            >
+              <label
+                :for="'schedule_start_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Start date') }}
               </label>
               <input
@@ -166,12 +175,25 @@
                 :disabled="!allowCustomizationData"
                 required
               />
+              <div class="form-text text-danger" v-if="tooManyPeriods">
+                {{
+                  __(
+                    'This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.',
+                    { count: estimatedPeriodCount },
+                  )
+                }}
+              </div>
             </div>
             <div
-              :class="{ 'has-error': hasError('next_date') || nextDateMismatch }"
+              :class="{
+                'has-error': hasError('next_date') || nextDateMismatch,
+              }"
               v-if="isSchedule"
             >
-              <label :for="'schedule_next_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_next_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Next date') }}
                 <span
                   class="fa"
@@ -236,7 +258,10 @@
               of truth, this is a UI aid only.
             -->
             <div :class="{ 'has-error': hasError('count') }">
-              <label :for="'schedule_count_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_count_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('Count') }}
               </label>
               <input
@@ -245,13 +270,18 @@
                 :id="'schedule_count_' + this.$.vnode.key"
                 v-model="countInput"
                 :disabled="!allowCustomizationData"
-                :placeholder="schedule.end_date ? __('Cleared (end date set)') : ''"
+                :placeholder="
+                  schedule.end_date ? __('Cleared (end date set)') : ''
+                "
                 min="1"
                 step="1"
               />
             </div>
             <div :class="{ 'has-error': hasError('end_date') }">
-              <label :for="'schedule_end_' + this.$.vnode.key" class="form-label">
+              <label
+                :for="'schedule_end_' + this.$.vnode.key"
+                class="form-label"
+              >
                 {{ __('End date') }}
                 <i
                   class="fa fa-info-circle text-primary"
@@ -282,9 +312,14 @@
         </div>
 
         <div class="p-3 rounded border" v-if="isSchedule || isBudget">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Behavior') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Behavior') }}
+          </h6>
           <div class="field-grid">
-            <div :class="{ 'has-error': hasError('automatic_recording') }" v-if="isSchedule">
+            <div
+              :class="{ 'has-error': hasError('automatic_recording') }"
+              v-if="isSchedule"
+            >
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -311,12 +346,12 @@
                 </label>
               </div>
             </div>
-            <div :class="{ 'has-error': hasError('inflation') }" v-if="isBudget">
+            <div :class="{ 'has-error': hasError('inflation') }">
               <label
                 :for="'schedule_inflation_' + this.$.vnode.key"
                 class="form-label"
               >
-                {{ __('Budget inflation') }}
+                {{ __('Yearly inflation') }}
               </label>
               <div class="input-group">
                 <input
@@ -351,6 +386,29 @@
     scheduleStartDateParts,
   } from '@/shared/lib/helpers';
 
+  // Mirrors ValidatesRecurrenceRule::MAX_RECURRENCE_PERIODS on the backend - see that
+  // constant's doc comment for why 2000.
+  const MAX_RECURRENCE_PERIODS = 2000;
+
+  // Calendar-based month/year diffs, mirroring Carbon's diffInMonths()/diffInYears() used by
+  // RecurrenceRuleService::estimatePeriodsBetween() on the backend - a whole month/year only
+  // counts once the day-of-month has been reached, unlike a fixed 30/365-day average.
+  function monthsBetween(start, end) {
+    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    if (end.getDate() < start.getDate()) {
+      months -= 1;
+    }
+    return Math.max(months, 0);
+  }
+
+  function yearsBetween(start, end) {
+    let years = end.getFullYear() - start.getFullYear();
+    if (end.getMonth() < start.getMonth() || (end.getMonth() === start.getMonth() && end.getDate() < start.getDate())) {
+      years -= 1;
+    }
+    return Math.max(years, 0);
+  }
+
   export default {
     props: {
       isSchedule: Boolean,
@@ -360,6 +418,12 @@
       title: {
         type: String,
         default: __('Schedule'),
+      },
+      // Skips the outer card chrome (header/card-body wrapper) - for callers that already
+      // provide their own container, e.g. BudgetForm.vue's modal body.
+      bare: {
+        type: Boolean,
+        default: false,
       },
       withCheckbox: {
         type: Boolean,
@@ -371,8 +435,9 @@
       },
       // Which key under form.errors this instance's fields live at. Needed
       // because this same component is reused for the "replace" action's
-      // original-schedule panel, bound to form.original_schedule_config -
-      // without this, that panel could never show its own validation errors.
+      // original-schedule panel (bound to form.original_schedule_config), and
+      // for BudgetForm (whose BudgetRequest validates the same fields as flat
+      // top-level keys, so it passes an empty prefix).
       fieldPrefix: {
         type: String,
         default: 'schedule_config',
@@ -397,7 +462,9 @@
       },
 
       showMonthPicker() {
-        return this.schedule.frequency === 'YEARLY' && this.patternMode === 'weekday';
+        return (
+          this.schedule.frequency === 'YEARLY' && this.patternMode === 'weekday'
+        );
       },
 
       // Distinguishes the two patterns by what actually varies month to month:
@@ -546,14 +613,65 @@
             freq: RRule[this.schedule.frequency],
             interval: this.schedule.interval || 1,
             dtstart: start,
-            until: this.schedule.end_date ? toRRuleDate(this.schedule.end_date) : null,
+            until: this.schedule.end_date
+              ? toRRuleDate(this.schedule.end_date)
+              : null,
             count: this.schedule.count || null,
-            byweekday: this.schedule.by_day ? byDayToRRuleWeekday(this.schedule.by_day) : null,
+            byweekday: this.schedule.by_day
+              ? byDayToRRuleWeekday(this.schedule.by_day)
+              : null,
             bymonth: this.schedule.by_month || null,
           });
         } catch {
           return null;
         }
+      },
+
+      // Client-side mirror of RecurrenceRuleService::estimatePeriodsBetween() on the backend -
+      // the number of periods between start_date and today, at the configured
+      // frequency/interval, is what drives the cost of every later recurrence calculation.
+      // MONTHLY/YEARLY use monthsBetween/yearsBetween; DAILY/WEEKLY use fixed day-per-period
+      // averages. This is a UI aid only; the backend validation remains the actual source of
+      // truth, so a few periods of drift near the cap doesn't matter.
+      estimatedPeriodCount() {
+        if (!this.schedule.frequency || !this.schedule.start_date) {
+          return 0;
+        }
+
+        const start = toRRuleDate(this.schedule.start_date);
+        if (!start) {
+          return 0;
+        }
+
+        const now = new Date();
+        const diffDays = (now - start) / (1000 * 60 * 60 * 24);
+        if (diffDays <= 0) {
+          return 0;
+        }
+
+        const interval = this.schedule.interval || 1;
+
+        if (this.schedule.frequency === 'MONTHLY') {
+          return Math.floor(monthsBetween(start, now) / interval);
+        }
+
+        if (this.schedule.frequency === 'YEARLY') {
+          return Math.floor(yearsBetween(start, now) / interval);
+        }
+
+        const periodDays = {
+          DAILY: 1,
+          WEEKLY: 7,
+        }[this.schedule.frequency];
+        if (!periodDays) {
+          return 0;
+        }
+
+        return Math.floor(diffDays / (periodDays * interval));
+      },
+
+      tooManyPeriods() {
+        return this.estimatedPeriodCount > MAX_RECURRENCE_PERIODS;
       },
 
       // Client-side mirror of TransactionSchedule::occursOn() on the backend:
@@ -651,13 +769,16 @@
     methods: {
       __,
       hasError(field) {
-        return this.form.errors.has(`${this.fieldPrefix}.${field}`);
+        const key = this.fieldPrefix ? `${this.fieldPrefix}.${field}` : field;
+
+        return this.form.errors.has(key);
       },
       clearDate(field) {
         this.schedule[field] = null;
       },
       stepNextDate(direction) {
-        const target = direction === 'back' ? this.previousOccurrence : this.nextOccurrence;
+        const target =
+          direction === 'back' ? this.previousOccurrence : this.nextOccurrence;
         if (target) {
           this.schedule.next_date = fromRRuleDate(target);
         }

@@ -1,4 +1,28 @@
 /**
+ * Read all values for a bracketed array query parameter, accepting both the `name[]=` (repeated
+ * key) and `name[0]=`/`name[1]=` (indexed) forms - both are valid array query-string conventions
+ * or accessible via a PHP request equally, but URLSearchParams.getAll() only matches the exact
+ * key it's given, so a link built with one form silently loses every value if the reader only
+ * checks the other (e.g. a `?categories[0]=87` deep link doing nothing on page load).
+ *
+ * @param {URLSearchParams} searchParams
+ * @param {string} name
+ * @returns {string[]}
+ */
+export function getArrayParamFromUrl(searchParams, name) {
+    const repeated = searchParams.getAll(`${name}[]`);
+    if (repeated.length > 0) {
+        return repeated;
+    }
+
+    const indexedPattern = new RegExp(`^${name}\\[\\d+\\]$`);
+
+    return Array.from(searchParams.entries())
+        .filter(([key]) => indexedPattern.test(key))
+        .map(([, value]) => value);
+}
+
+/**
  * Helper function to get transaction type configuration from window.YAFFA.config.transactionTypes
  * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
  * @returns {object} Transaction type configuration with category, label, multipliers, etc.
@@ -327,6 +351,29 @@ export function processScheduledTransaction(transaction) {
     }
 
     return transaction;
+}
+
+// Human-readable cadence text (e.g. "every month") for a Budget or TransactionSchedule-shaped
+// object, as returned raw by the API (start_date/end_date as ISO datetime strings - see
+// parseIsoDate). Shared so the budget chart's breakdown tables and the budget quick-view modal
+// build the same rrule.js text the same way, translated into the current YAFFA user language.
+export function scheduleCadenceText(schedule) {
+    if (!schedule || !schedule.start_date || !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)) {
+        return '';
+    }
+
+    const { rule } = processScheduledTransaction({
+        transaction_schedule: {
+            start_date: parseIsoDate(schedule.start_date),
+            frequency: schedule.frequency,
+            interval: schedule.interval,
+            end_date: parseIsoDate(schedule.end_date),
+            by_day: schedule.by_day,
+            by_month: schedule.by_month,
+        },
+    }).transaction_schedule;
+
+    return rule.toText();
 }
 
 /**

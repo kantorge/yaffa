@@ -429,7 +429,6 @@
           transaction_type: txType,
           date: draft.date,
           schedule: false,
-          budget: false,
           reconciled: false,
           comment: null,
           config: {
