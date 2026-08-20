@@ -80,6 +80,7 @@
 <script>
   import axios from 'axios';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import { processTransaction } from '@/shared/lib/helpers';
 
   export default {
     name: 'DuplicateCandidatesPanel',
@@ -169,25 +170,7 @@
           const response = await axios.get(
             `/api/v1/transactions/${transactionId}`,
           );
-          const transaction = response.data.transaction;
-          if (transaction?.date) transaction.date = new Date(transaction.date);
-          if (transaction?.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-              transaction.transaction_schedule.start_date = new Date(
-                transaction.transaction_schedule.start_date,
-              );
-            }
-            if (transaction.transaction_schedule.end_date) {
-              transaction.transaction_schedule.end_date = new Date(
-                transaction.transaction_schedule.end_date,
-              );
-            }
-            if (transaction.transaction_schedule.next_date) {
-              transaction.transaction_schedule.next_date = new Date(
-                transaction.transaction_schedule.next_date,
-              );
-            }
-          }
+          const transaction = processTransaction(response.data.transaction);
           window.dispatchEvent(
             new CustomEvent('showTransactionQuickViewModal', {
               detail: {

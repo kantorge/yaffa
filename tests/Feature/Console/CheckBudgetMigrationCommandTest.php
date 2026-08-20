@@ -207,7 +207,9 @@ class CheckBudgetMigrationCommandTest extends TestCase
                 'budget' => false,
             ]);
 
-        // A real schedule (schedule=true) is already handled and out of scope, regardless of budget.
+        // A schedule=true, budget=true transaction with a real account on both sides is
+        // already handled and out of scope - only the accountless legacy hybrid (see the
+        // tests below) is in scope.
         Transaction::factory()
             ->deposit($this->user)
             ->create([
@@ -218,5 +220,43 @@ class CheckBudgetMigrationCommandTest extends TestCase
 
         $this->artisan(CheckBudgetMigration::class)
             ->assertSuccessful();
+    }
+
+    public function test_passes_with_no_issues_for_clean_legacy_schedule_budget_hybrid_with_no_account(): void
+    {
+        // The narrow legacy case budgetOnlyQuery() also covers: schedule=true, budget=true,
+        // with no real account on either side - functionally indistinguishable from a
+        // schedule=false budget-only row, and equally in scope for the transforming migration.
+        $transaction = Transaction::factory()
+            ->deposit($this->user)
+            ->create([
+                'user_id' => $this->user->id,
+                'schedule' => true,
+                'budget' => true,
+            ]);
+
+        $transaction->config->update(['account_from_id' => null, 'account_to_id' => null]);
+
+        $this->artisan(CheckBudgetMigration::class)
+            ->assertSuccessful();
+    }
+
+    public function test_detects_zero_item_transaction_for_legacy_schedule_budget_hybrid_with_no_account(): void
+    {
+        $transaction = Transaction::factory()
+            ->deposit($this->user)
+            ->create([
+                'user_id' => $this->user->id,
+                'schedule' => true,
+                'budget' => true,
+            ]);
+
+        $transaction->config->update(['account_from_id' => null, 'account_to_id' => null]);
+        $transaction->transactionItems()->delete();
+
+        $this->artisan(CheckBudgetMigration::class)
+            ->expectsOutputToContain('Budget-only transactions with zero transaction items: 1 found')
+            ->expectsOutputToContain((string) $transaction->id)
+            ->assertFailed();
     }
 }

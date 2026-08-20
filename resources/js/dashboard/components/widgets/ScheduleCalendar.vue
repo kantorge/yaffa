@@ -441,7 +441,7 @@
           ...transaction,
           schedule: false,
           budget: false,
-          date: transaction.transaction_schedule?.next_date,
+          date: parseIsoDate(transaction.transaction_schedule?.next_date),
         };
 
         const event = new CustomEvent('initiateEnterInstance', {

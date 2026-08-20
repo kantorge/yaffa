@@ -34,6 +34,14 @@ return [
                     'vision' => true,
                     'supported' => true,
                 ],
+                'gpt-5.6-luna' => [
+                    'vision' => true,
+                    'supported' => true,
+                ],
+                'gpt-5.6-terra' => [
+                    'vision' => true,
+                    'supported' => true,
+                ],
             ],
         ],
         'gemini' => [
@@ -45,6 +53,24 @@ return [
                     'supported' => true,
                 ],
                 'gemini-2.5-pro' => [
+                    'vision' => true,
+                    'supported' => true,
+                ],
+                'gemini-3.5-flash-lite' => [
+                    'vision' => true,
+                    'supported' => true,
+                ],
+                'gemini-3.6-flash' => [
+                    'vision' => true,
+                    'supported' => true,
+                ],
+            ],
+        ],
+        'anthropic' => [
+            'name' => 'Anthropic',
+            'supported' => true,
+            'models' => [
+                'claude-haiku-4-5' => [
                     'vision' => true,
                     'supported' => true,
                 ],

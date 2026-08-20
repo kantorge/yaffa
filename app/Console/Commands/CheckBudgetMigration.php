@@ -16,9 +16,17 @@ use Illuminate\Support\Collection;
  * Read-only pre-migration audit for the budget/schedule redesign
  * (see .ai/docs/specifications/budget-schedule-redesign/specification.md, Section 7.1).
  *
- * Reports budget-only transactions (schedule=false, budget=true) that the eventual
- * transforming migration (Section 7.2) cannot safely convert into a `Budget` row
- * without either losing or misattributing data. This command makes no changes.
+ * Reports budget-only transactions — schedule=false, budget=true, plus the narrow set of
+ * legacy schedule=true, budget=true rows with no real account on either side (see
+ * budgetOnlyQuery()) — that the eventual transforming migration (Section 7.2) cannot safely
+ * convert into a `Budget` row without either losing or misattributing data. This command
+ * makes no changes.
+ *
+ * Must stay in lockstep with the transforming migration's own guardAgainstUnsafeData()
+ * (database/migrations/2026_08_05_000002_transform_budget_transactions_to_budgets.php) —
+ * this command ships in a pre-upgrade release and is run before that migration exists, so a
+ * narrower scope here than the migration actually guards against lets users pass this check
+ * and still hit the migration's blocking error later.
  */
 class CheckBudgetMigration extends Command
 {
@@ -86,16 +94,29 @@ class CheckBudgetMigration extends Command
     }
 
     /**
-     * Base query for budget-only transactions: not a schedule, but flagged as a budget.
-     * These are the only rows Section 7.2's transforming migration ever converts.
+     * Base query for budget-only transactions: either not a schedule at all, or a legacy
+     * schedule+budget hybrid with no real account on either side. The latter predates this
+     * redesign's requirement that a schedule transaction always reference real accounts,
+     * could never have fired as a real recorded transaction (no account to record against),
+     * and is functionally indistinguishable from a schedule=false budget-only row. Both are
+     * the only rows Section 7.2's transforming migration ever converts.
      *
      * @return Builder<Transaction>
      */
     private function budgetOnlyQuery(): Builder
     {
         return Transaction::query()
-            ->where('schedule', false)
-            ->where('budget', true);
+            ->where('budget', true)
+            ->where(function (Builder $query): void {
+                $query->where('schedule', false)
+                    ->orWhere(function (Builder $query): void {
+                        $query->where('schedule', true)
+                            ->whereHasMorph('config', [TransactionDetailStandard::class], function (Builder $query): void {
+                                $query->whereNull('account_from_id')
+                                    ->whereNull('account_to_id');
+                            });
+                    });
+            });
     }
 
     /**
