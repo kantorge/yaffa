@@ -58,11 +58,16 @@
             <div class="col-12">
                 <div class="card mb-3">
                     <div class="card-header">
-                        <div class="card-title">
+                        <div
+                                class="card-title collapse-control"
+                                data-coreui-toggle="collapse"
+                                data-coreui-target="#cardSearch"
+                        >
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Search') }}
                         </div>
                     </div>
-                    <ul class="list-group list-group-flush">
+                    <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardSearch">
                         @include('template.components.tablefilter-sidebar-search')
                     </ul>
                 </div>
@@ -79,6 +84,7 @@
                         id="stale-data-warning"
                         data-bs-toggle="tooltip"
                         title="{{ __('Filters have changed since the data was last loaded - reload to see the current selection.') }}"
+                        aria-label="{{ __('Filters have changed since the data was last loaded - reload to see the current selection.') }}"
                     ></i>
                 </div>
                 <div class="text-end">

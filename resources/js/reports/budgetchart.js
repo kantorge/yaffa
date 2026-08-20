@@ -172,6 +172,7 @@ function initChart() {
         const axis = ev.target;
         const now = new Date();
 
+        axis.axisRanges.clear();
         const range = axis.axisRanges.create();
         range.date = new Date(now.getFullYear(), now.getMonth(), 1);
         range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -993,8 +994,6 @@ document.getElementById('clear').addEventListener('click', function() {
 
 // Account type switch
 $('input[name=table_filter_account_scope]').on("change", function() {
-    markDataStale();
-
     // Only selected items are needed, so we need to enable the account selector
     $(accountSelector).prop('disabled', this.value !== 'selected');
 

@@ -227,7 +227,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
 
     private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
     {
-        return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');
+        return '#table tbody tr[data-id="' . $transaction->id . '"][data-row-type="schedule"]' . ($postfix ? ' ' . $postfix : '');
     }
 
     /**

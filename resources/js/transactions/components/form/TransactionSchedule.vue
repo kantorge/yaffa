@@ -390,6 +390,25 @@
   // constant's doc comment for why 2000.
   const MAX_RECURRENCE_PERIODS = 2000;
 
+  // Calendar-based month/year diffs, mirroring Carbon's diffInMonths()/diffInYears() used by
+  // RecurrenceRuleService::estimatePeriodsBetween() on the backend - a whole month/year only
+  // counts once the day-of-month has been reached, unlike a fixed 30/365-day average.
+  function monthsBetween(start, end) {
+    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    if (end.getDate() < start.getDate()) {
+      months -= 1;
+    }
+    return Math.max(months, 0);
+  }
+
+  function yearsBetween(start, end) {
+    let years = end.getFullYear() - start.getFullYear();
+    if (end.getMonth() < start.getMonth() || (end.getMonth() === start.getMonth() && end.getDate() < start.getDate())) {
+      years -= 1;
+    }
+    return Math.max(years, 0);
+  }
+
   export default {
     props: {
       isSchedule: Boolean,
@@ -625,22 +644,29 @@
           return 0;
         }
 
-        const diffDays = (new Date() - start) / (1000 * 60 * 60 * 24);
+        const now = new Date();
+        const diffDays = (now - start) / (1000 * 60 * 60 * 24);
         if (diffDays <= 0) {
           return 0;
+        }
+
+        const interval = this.schedule.interval || 1;
+
+        if (this.schedule.frequency === 'MONTHLY') {
+          return Math.floor(monthsBetween(start, now) / interval);
+        }
+
+        if (this.schedule.frequency === 'YEARLY') {
+          return Math.floor(yearsBetween(start, now) / interval);
         }
 
         const periodDays = {
           DAILY: 1,
           WEEKLY: 7,
-          MONTHLY: 30,
-          YEARLY: 365,
         }[this.schedule.frequency];
         if (!periodDays) {
           return 0;
         }
-
-        const interval = this.schedule.interval || 1;
 
         return Math.floor(diffDays / (periodDays * interval));
       },

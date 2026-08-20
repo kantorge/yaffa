@@ -74,7 +74,7 @@
                     <small>
                         <strong>{{ __('reports.cashflow.rateNoteLabel') }}</strong> {{ __('reports.cashflow.rateNoteBody') }}
                     </small>
-                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="{{ __('Close') }}"></button>
                 </div>
                 <div class="card-body">
                     <div id="placeholder" class="d-flex align-items-end gap-2 placeholder-glow" style="height:500px;">

@@ -1184,6 +1184,7 @@
     "Timeline charts": "Timeline charts",
     "Title": "Title",
     "To": "To",
+    "Toggle button group for row type filtering": "Toggle button group for row type filtering",
     "To use Alpha Vantage, you need to get an API key. The key is free, but you need to register on their website.": "To use Alpha Vantage, you need to get an API key. The key is free, but you need to register on their website.",
     "To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.": "To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.",
     "Total": "Total",

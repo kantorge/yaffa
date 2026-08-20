@@ -1,7 +1,7 @@
 <li class="list-group-item d-flex justify-content-between align-items-center" id="filter-row-type">
     {{ __('Type') }}
     <div
-            aria-label="Toggle button group for row type filtering"
+            aria-label="{{ __('Toggle button group for row type filtering') }}"
             class="btn-group"
             dusk="button-group-table-filter-row-type"
             role="group"

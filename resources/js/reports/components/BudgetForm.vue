@@ -222,6 +222,7 @@
         budgetId: null,
         categorySelect: null,
         accountSelect: null,
+        modal: undefined,
         // The selected account's own currency (iso_code), or null for an account-agnostic
         // budget, which is always priced in the base currency (FR-4).
         accountCurrencyCode: null,

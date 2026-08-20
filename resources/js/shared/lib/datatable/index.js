@@ -1,5 +1,6 @@
 import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate } from '@/shared/lib/i18n';
 import {
+  escapeHtml,
   getTransactionTypeConfig,
   processTransaction,
 } from '@/shared/lib/helpers';
@@ -741,7 +742,13 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
             core: {
                 data: function (_obj, callback) {
                     fetch('/api/v1/categories?withInactive=1&q=*')
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load categories: ${response.status}`);
+                            }
+
+                            return response.json();
+                        })
                         .then(data => {
                             const categories = data.map(function (category) {
                                 return {
@@ -749,14 +756,15 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
                                     parent: category.parent_id || '#',
                                     text: category.active
                                         ? category.name
-                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>',
+                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + escapeHtml(category.name) + '</span>',
                                     state: {
                                         selected: presetSelectedIds.includes(category.id)
                                     },
                                 };
                             });
                             callback.call(this, categories);
-                        });
+                        })
+                        .catch(() => callback.call(this, []));
                 },
                 themes: {
                     dots: false,
@@ -770,6 +778,8 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
         })
         .on('select_node.jstree', handleChange)
         .on('deselect_node.jstree', handleChange)
+        .on('check_all.jstree', handleChange)
+        .on('uncheck_all.jstree', handleChange)
         .on('ready.jstree', function () {
             if (presetSelectedIds.length > 0) {
                 handleChange();

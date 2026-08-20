@@ -358,7 +358,7 @@ export function processScheduledTransaction(transaction) {
 // parseIsoDate). Shared so the budget chart's breakdown tables and the budget quick-view modal
 // build the same rrule.js text the same way, translated into the current YAFFA user language.
 export function scheduleCadenceText(schedule) {
-    if (!schedule || !schedule.frequency || !schedule.start_date) {
+    if (!schedule || !schedule.start_date || !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)) {
         return '';
     }
 
