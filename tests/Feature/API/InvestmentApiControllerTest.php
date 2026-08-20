@@ -469,6 +469,9 @@ class InvestmentApiControllerTest extends TestCase
                 'active' => true,
                 'name' => 'Zero Symbol Investment',
                 'symbol' => '0',
+                // Pinned (not the factory's random asciify default) so this row's own
+                // match is never accidentally due to the isin instead of the symbol.
+                'isin' => 'US1111111111',
             ]);
 
         Investment::factory()
@@ -478,6 +481,11 @@ class InvestmentApiControllerTest extends TestCase
                 'active' => true,
                 'name' => 'Unrelated Investment',
                 'symbol' => 'MSFT',
+                // Pinned to a digit-free-of-'0' value: the factory's default isin is a
+                // random 12-char asciify() string (chr(33)-chr(126)), which has roughly
+                // an 11% chance per row of containing a literal '0' and making this row
+                // spuriously match the "0" search below, per InvestmentFactory.php.
+                'isin' => 'US2222222222',
             ]);
 
         // 'query' alias with a literal "0" must still filter, not be treated as absent
