@@ -272,6 +272,12 @@ export const transactionColumnDefinition = {
         title: __('Payee'),
         defaultContent: '',
         render: function (_data, _type, row) {
+            // Standalone Budget rows (row_type: 'budget', from includeBudgets=1) have no `config`
+            // - they're not backed by a transaction, so there's no payee/account to show.
+            if (row.row_type === 'budget') {
+                return '';
+            }
+
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
 
             if (typeConfig.category === 'standard') {
@@ -361,6 +367,27 @@ export const transactionColumnDefinition = {
          */
         render: function (_data, type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
+
+            // Standalone Budget rows (row_type: 'budget', from includeBudgets=1) carry their own
+            // flat `amount` string - they aren't backed by a transaction, so there's no `config`.
+            if (row.row_type === 'budget') {
+                const amount = Number(row.amount);
+
+                if (type === 'display') {
+                    const prefix = typeConfig.amount_multiplier === -1
+                        ? '- '
+                        : (typeConfig.amount_multiplier === 1 ? '+ ' : '');
+
+                    return prefix + toFormattedCurrency(
+                        type,
+                        amount,
+                        window.YAFFA.userSettings.locale,
+                        row.transaction_currency
+                    );
+                }
+
+                return amount;
+            }
 
             if (type === 'display') {
                 let prefix = '';

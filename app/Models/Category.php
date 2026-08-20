@@ -145,6 +145,11 @@ class Category extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
     public function transaction(): HasManyThrough
     {
         return $this->hasManyThrough(

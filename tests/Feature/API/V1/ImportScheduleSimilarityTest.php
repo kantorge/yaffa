@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\FileImportProfile;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -212,6 +213,14 @@ CSV;
         return $record;
     }
 
+    private function createPayeeEntity(User $user): AccountEntity
+    {
+        return AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+    }
+
     private function createStandardTransaction(
         User $user,
         int $accountFromId,
@@ -221,7 +230,7 @@ CSV;
     ): Transaction {
         $detail = TransactionDetailStandard::query()->create([
             'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId,
+            'account_to_id' => $accountToId ?? $this->createPayeeEntity($user)->id,
             'amount_from' => $amount,
             'amount_to' => $amount,
         ]);
@@ -232,7 +241,6 @@ CSV;
             'transaction_type' => TransactionType::WITHDRAWAL->value,
             'reconciled' => false,
             'schedule' => false,
-            'budget' => false,
             'comment' => null,
             'config_type' => 'standard',
             'config_id' => $detail->id,
@@ -259,7 +267,7 @@ CSV;
     ): Transaction {
         $detail = TransactionDetailStandard::query()->create([
             'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId,
+            'account_to_id' => $accountToId ?? $this->createPayeeEntity($user)->id,
             'amount_from' => $amount,
             'amount_to' => $amount,
         ]);
@@ -270,7 +278,6 @@ CSV;
             'transaction_type' => TransactionType::WITHDRAWAL->value,
             'reconciled' => false,
             'schedule' => true,
-            'budget' => false,
             'comment' => 'Scheduled candidate test transaction',
             'config_type' => 'standard',
             'config_id' => $detail->id,

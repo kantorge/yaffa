@@ -19,7 +19,7 @@ class TransactionService
      * Create a new standalone transaction from a scheduled transaction
      * - clone all the related models
      * - use the next scheduled date as the transaction date
-     * - remove the schedule and budget flags from the transaction
+     * - remove the schedule flag from the transaction
      * - adjust the next date of the original transaction
      */
     public function enterScheduleInstance(Transaction $transaction): void
@@ -34,9 +34,8 @@ class TransactionService
         // Set the date to the next scheduled date
         $newTransaction->date = $transaction->transactionSchedule->next_date;
 
-        // Remove the schedule and budget flags
+        // Remove the schedule flag
         $newTransaction->schedule = false;
-        $newTransaction->budget = false;
 
         // Save the new transaction
         $newTransaction->save();
@@ -228,7 +227,7 @@ class TransactionService
 
     /**
      * This function will initiate the recalculation of the monthly summaries for standard transactions,
-     * based on the properties of the given transaction. (transaction type, schedule, budget)
+     * based on the properties of the given transaction. (transaction type, schedule)
      */
     private function recalculateSummaryStandard(Transaction $transaction): void
     {
@@ -251,8 +250,8 @@ class TransactionService
         /** @var AccountEntity|null $accountTo */
         $accountTo = $config->accountTo;
 
-        if (!$transaction->schedule && !$transaction->budget) {
-            // This is a simple transaction with no schedule or budget attached
+        if (!$transaction->schedule) {
+            // This is a simple transaction with no schedule attached
             // We need to recalculate only the given month for one or both accounts
             if ($accountFrom?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
@@ -283,60 +282,24 @@ class TransactionService
             return;
         }
 
-        if ($transaction->schedule) {
-            // This is a scheduled transaction, optionally with a budget attached
-            // We need to recalculate the entire forecast for one or both accounts
-            if ($accountFrom?->isAccount()) {
-                $job = new CalculateAccountMonthlySummary(
-                    $transaction->user,
-                    'account_balance-forecast',
-                    $accountFrom
-                );
-
-                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-                dispatch($job);
-            }
-
-            if ($accountTo?->isAccount()) {
-                $job = new CalculateAccountMonthlySummary(
-                    $transaction->user,
-                    'account_balance-forecast',
-                    $accountTo
-                );
-
-                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-                dispatch($job);
-            }
-
-            return;
-        }
-
-        // This is a budget-only transaction
-        // We need to recalculate the entire budget for one of the accounts or none
-        // As a budget cannot be transfer, we'll never have both accounts
+        // This is a scheduled transaction
+        // We need to recalculate the entire forecast for one or both accounts
         if ($accountFrom?->isAccount()) {
             $job = new CalculateAccountMonthlySummary(
                 $transaction->user,
-                'account_balance-budget',
+                'account_balance-forecast',
                 $accountFrom
             );
 
             // We don't know how long the schedule will be, so we need to dispatch the job to the queue
             dispatch($job);
-        } elseif ($accountTo?->isAccount()) {
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-budget',
-                $accountTo
-            );
+        }
 
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
-        } else {
-            // No account to assign the budget to
+        if ($accountTo?->isAccount()) {
             $job = new CalculateAccountMonthlySummary(
                 $transaction->user,
-                'account_balance-budget'
+                'account_balance-forecast',
+                $accountTo
             );
 
             // We don't know how long the schedule will be, so we need to dispatch the job to the queue

@@ -35,7 +35,6 @@ use RuntimeException;
  * @property-read AccountEntity $account
  * @property-read Transaction|null $config
  * @property-read Investment $investment
- * @method static Builder|Transaction byScheduleType($type)
  * @method static TransactionDetailInvestmentFactory factory(...$parameters)
  * @method static Builder|TransactionDetailInvestment newModelQuery()
  * @method static Builder|TransactionDetailInvestment newQuery()

@@ -102,7 +102,6 @@ class Payee extends Model
         $account = $this;
 
         return Transaction::where('schedule', 0)
-            ->where('budget', 0)
             ->whereHasMorph(
                 'config',
                 [TransactionDetailStandard::class],

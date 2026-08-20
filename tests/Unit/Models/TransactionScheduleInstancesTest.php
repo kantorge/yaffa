@@ -9,6 +9,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Support\ScheduleInstance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -124,5 +125,65 @@ class TransactionScheduleInstancesTest extends TestCase
         }
 
         $this->assertSame([0, 10, 20], $instances->pluck('running_total')->all());
+    }
+
+    /**
+     * Regression guard for the by_day/by_month drift fixed by routing scheduleInstances() through
+     * RecurrenceRuleService::buildRule() instead of a hand-built Recurr\Rule (see
+     * .ai/docs/features/budget-schedule-redesign/architecture.md, "Known Risks"). Before the fix,
+     * an ordinal-weekday rule like "first Wednesday of every month" silently fell back to plain
+     * FREQ=MONTHLY;INTERVAL=1-from-start_date, landing on the same day-of-month every time
+     * regardless of which weekday it fell on.
+     */
+    public function test_schedule_instances_honor_by_day_ordinal_weekday_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        // 2026-01-07 is the first Wednesday of January 2026.
+        $startDate = Carbon::parse('2026-01-07');
+        $this->assertSame('Wednesday', $startDate->format('l'));
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'by_day' => '1WE',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        // 6 monthly occurrences, one "first Wednesday" per month - a plain FREQ=MONTHLY fallback
+        // would instead land on the 7th of every month, which is only sometimes a Wednesday.
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $this->assertSame(
+                'Wednesday',
+                $instance->date->format('l'),
+                "Occurrence on {$instance->date->toDateString()} is not a Wednesday - by_day was not applied."
+            );
+            $this->assertLessThanOrEqual(
+                7,
+                $instance->date->day,
+                "Occurrence on {$instance->date->toDateString()} is not the FIRST Wednesday of its month."
+            );
+        }
     }
 }

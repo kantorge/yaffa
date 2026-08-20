@@ -713,6 +713,16 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
     public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee(): void
     {
+        // Backend no longer supports accountless budget transactions (transactions.budget was
+        // dropped and account_from_id/account_to_id are now NOT NULL) per
+        // .ai/docs/specifications/budget-schedule-redesign/specification.md. The frontend "Budget"
+        // checkbox on this form has not been removed yet (tracked separately); once it is, this
+        // test should be deleted rather than un-skipped.
+        $this->markTestIncomplete(
+            'Accountless budget transactions are no longer supported by the backend; '
+            . 'pending frontend removal of the Budget checkbox.'
+        );
+
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)

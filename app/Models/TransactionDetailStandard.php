@@ -29,7 +29,6 @@ use RuntimeException;
  * @property-read AccountEntity|null $accountFrom
  * @property-read AccountEntity|null $accountTo
  * @property-read Transaction|null $config
- * @method static Builder|Transaction byScheduleType($type)
  * @method static TransactionDetailStandardFactory factory(...$parameters)
  * @method static Builder|TransactionDetailStandard newModelQuery()
  * @method static Builder|TransactionDetailStandard newQuery()

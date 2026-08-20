@@ -28,8 +28,8 @@ class TransactionFactory extends Factory
             // Get the tags of the user for later use
             $tags = $transaction->user->tags;
 
-            // Ensure that a schedule is created for scheduled or budgeted transactions
-            if ($transaction->schedule || $transaction->budget) {
+            // Ensure that a schedule is created for scheduled transactions
+            if ($transaction->schedule) {
                 TransactionSchedule::factory()
                     ->for($transaction)
                     ->create();
@@ -114,7 +114,6 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            'budget' => false,
             'schedule' => false,
             'comment' => $this->faker->boolean() ? $this->faker->text(191) : null,
             'reconciled' => $this->faker->boolean(),
@@ -151,7 +150,6 @@ class TransactionFactory extends Factory
             'user_id' => $user->id,
             'date' => null,
             'schedule' => 1,
-            'budget' => 0,
             'reconciled' => 0,
             'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             'config_type' => 'standard',
@@ -253,7 +251,6 @@ class TransactionFactory extends Factory
             'user_id' => $user->id,
             'date' => null,
             'schedule' => 1,
-            'budget' => 0,
             'reconciled' => 0,
             'transaction_type' => TransactionTypeEnum::BUY->value,
             'config_type' => 'investment',
@@ -270,7 +267,6 @@ class TransactionFactory extends Factory
             'user_id' => $user->id,
             'date' => null,
             'schedule' => 1,
-            'budget' => 0,
             'reconciled' => 0,
             'transaction_type' => TransactionTypeEnum::DIVIDEND->value,
             'config_type' => 'investment',

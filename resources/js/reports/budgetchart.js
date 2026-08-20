@@ -400,7 +400,7 @@ const tableSelector = '#table';
 window.table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: window.route('api.v1.transactions.scheduled-items', {type: 'any'}),
+        url: window.route('api.v1.transactions.scheduled-items', {type: 'schedule', includeBudgets: 1}),
         type: 'GET',
         dataSrc: function (data) {
             if (!data.transactions) {

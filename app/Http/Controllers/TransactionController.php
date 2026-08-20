@@ -106,9 +106,8 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Adjust date and schedule settings, if entering a recurring item
         if ($action === 'enter') {
-            // Reset schedule and budget flags
+            // Reset schedule flag
             $transaction->schedule = false;
-            $transaction->budget = false;
 
             // Date is next schedule date
             $transaction->date = $transaction->transactionSchedule->next_date;
@@ -228,7 +227,6 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Ensure that the transaction is basic
         $transaction->schedule = false;
-        $transaction->budget = false;
         $transaction->reconciled = false;
 
         $aiDocumentId = $request->input('ai_document_id');

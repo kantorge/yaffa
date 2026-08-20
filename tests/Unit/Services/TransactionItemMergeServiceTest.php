@@ -30,13 +30,13 @@ class TransactionItemMergeServiceTest extends TestCase
     }
 
     /**
-     * Helper to create a standard (non-schedule, non-budget) withdrawal transaction.
+     * Helper to create a standard (non-schedule) withdrawal transaction.
      */
     private function createStandardTransaction(): Transaction
     {
         return Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $this->user->id, 'schedule' => false]);
     }
 
     /**
@@ -191,7 +191,7 @@ class TransactionItemMergeServiceTest extends TestCase
         ]);
         $transaction = Transaction::factory()
             ->withdrawal($user)
-            ->create(['user_id' => $user->id, 'schedule' => false, 'budget' => false]);
+            ->create(['user_id' => $user->id, 'schedule' => false]);
         $transaction->transactionItems()->delete();
 
         $category = $this->createCategory();
@@ -233,7 +233,7 @@ class TransactionItemMergeServiceTest extends TestCase
     {
         $transaction = Transaction::factory()
             ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id, 'schedule' => true, 'budget' => false]);
+            ->create(['user_id' => $this->user->id, 'schedule' => true]);
         $transaction->transactionItems()->delete();
 
         $category = $this->createCategory();

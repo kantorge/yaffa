@@ -29,13 +29,13 @@ use JsonSerializable;
  * @property-read \Illuminate\Support\Carbon $date
  * @property-read \App\Enums\TransactionType $transaction_type
  * @property-read bool $schedule
- * @property-read bool $budget
  * @property-read bool $reconciled
  * @property-read Money|null $cashflow_value
  * @property-read int|null $currency_id
  * @property-read int $originalId
  * @property-read string $transactionGroup
  * @property-read bool $schedule_first_instance
+ * @property-read float $inflationMultiplier
  */
 final class ScheduleInstance implements Arrayable, JsonSerializable
 {

@@ -274,7 +274,6 @@ class PayeeCategoryStatsService
             ->where('transactions.user_id', $user->id)
             ->where('transactions.config_type', 'standard')
             ->where('transactions.schedule', false)
-            ->where('transactions.budget', false)
             ->when(
                 $transactionType !== null,
                 fn ($query) => $query->where('transactions.transaction_type', $transactionType->value),
