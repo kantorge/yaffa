@@ -30,7 +30,7 @@ services:
     env_file:
       - .env
     environment:
-      RUNS_SCHEDULER: FALSE
+      RUNS_SCHEDULER: 'FALSE'
       # Stream Laravel application logs to the container's stderr so they show up
       # in `docker logs`. Overrides LOG_STACK from .env. Remove this line if you
       # prefer file-based logging into the yaffa_storage volume.
@@ -61,11 +61,10 @@ services:
   scheduler:
     image: kantorge/yaffa:latest
     container_name: yaffa_scheduler
-    entrypoint: ['/usr/bin/supervisord', '-c', '/etc/supervisord.conf']
     env_file:
       - .env
     environment:
-      RUNS_SCHEDULER: TRUE
+      RUNS_SCHEDULER: 'TRUE'
       # See note in the `app` service above.
       LOG_STACK: stderr
     volumes:
