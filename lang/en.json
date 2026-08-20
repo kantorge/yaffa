@@ -1578,5 +1578,20 @@
     "Forecast": "Forecast",
     "Inflation": "Inflation",
     "Planning": "Planning",
-    ":rate% per year": ":rate% per year"
+    ":rate% per year": ":rate% per year",
+    "Add new budget": "Add new budget",
+    "Budget saved": "Budget saved",
+    "Cadence": "Cadence",
+    "Deleted (#:id)": "Deleted (#:id)",
+    "Details of budget #:budget": "Details of budget #:budget",
+    "Edit budget": "Edit budget",
+    "Error deleting (#:id): :error": "Error deleting (#:id): :error",
+    "Failed to load budget data": "Failed to load budget data",
+    "Failed to load the budget chart: :error": "Failed to load the budget chart: :error",
+    "Loading the budget chart timed out. Please try again with fewer categories, or try again later.": "Loading the budget chart timed out. Please try again with fewer categories, or try again later.",
+    "No account (base currency)": "No account (base currency)",
+    "No account": "No account",
+    "No account (base currency, account-agnostic)": "No account (base currency, account-agnostic)",
+    "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.",
+    "Failed to load categories": "Failed to load categories"
 }

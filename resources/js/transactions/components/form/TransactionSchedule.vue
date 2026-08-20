@@ -630,10 +630,9 @@
       // Client-side mirror of RecurrenceRuleService::estimatePeriodsBetween() on the backend -
       // the number of periods between start_date and today, at the configured
       // frequency/interval, is what drives the cost of every later recurrence calculation.
-      // Uses fixed day-per-period averages rather than exact calendar-month/year arithmetic
-      // (unlike the backend's Carbon diffInMonths/diffInYears) since this is a UI aid only; the
-      // backend validation remains the actual source of truth, so a few periods of drift near
-      // the cap doesn't matter.
+      // MONTHLY/YEARLY use monthsBetween/yearsBetween; DAILY/WEEKLY use fixed day-per-period
+      // averages. This is a UI aid only; the backend validation remains the actual source of
+      // truth, so a few periods of drift near the cap doesn't matter.
       estimatedPeriodCount() {
         if (!this.schedule.frequency || !this.schedule.start_date) {
           return 0;

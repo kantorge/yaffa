@@ -1578,5 +1578,20 @@
     "Forecast": "Prognoza",
     "Inflation": "Inflacja",
     "Planning": "Planowanie",
-    ":rate% per year": ":rate% rocznie"
+    ":rate% per year": ":rate% rocznie",
+    "Add new budget": "Dodaj nowy budżet",
+    "Budget saved": "Budżet zapisany",
+    "Cadence": "Cykl",
+    "Deleted (#:id)": "Usunięto (#:id)",
+    "Details of budget #:budget": "Szczegóły budżetu #:budget",
+    "Edit budget": "Edytuj budżet",
+    "Error deleting (#:id): :error": "Błąd podczas usuwania (#:id): :error",
+    "Failed to load budget data": "Nie udało się załadować danych budżetu",
+    "Failed to load the budget chart: :error": "Nie udało się załadować wykresu budżetu: :error",
+    "Loading the budget chart timed out. Please try again with fewer categories, or try again later.": "Upłynął limit czasu ładowania wykresu budżetu. Spróbuj ponownie z mniejszą liczbą kategorii lub spróbuj później.",
+    "No account (base currency)": "Brak konta (waluta bazowa)",
+    "No account": "Brak konta",
+    "No account (base currency, account-agnostic)": "Brak konta (waluta bazowa, niezależne od konta)",
+    "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ten wzorzec obejmuje zbyt wiele okresów (:count), aby go zapisać. Wybierz nowszą datę rozpoczęcia lub rzadziej powtarzający się cykl.",
+    "Failed to load categories": "Nie udało się załadować kategorii"
 }

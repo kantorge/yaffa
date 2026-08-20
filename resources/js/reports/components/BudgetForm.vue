@@ -18,7 +18,7 @@
               type="button"
               class="btn-close"
               data-coreui-dismiss="modal"
-              aria-label="Close"
+              :aria-label="__('Close')"
             ></button>
           </div>
           <div class="modal-body">
@@ -202,6 +202,8 @@
       },
     },
 
+    emits: ['budgetSaved'],
+
     data() {
       return {
         form: new Form({
@@ -226,6 +228,9 @@
         // The selected account's own currency (iso_code), or null for an account-agnostic
         // budget, which is always priced in the base currency (FR-4).
         accountCurrencyCode: null,
+        // True while an account is selected but its currency hasn't loaded (yet, or failed) -
+        // keeps the amount suffix from falsely showing the base currency in that window.
+        accountCurrencyPending: false,
       };
     },
 
@@ -234,6 +239,10 @@
         return this.instanceId || this.id;
       },
       currencyCode() {
+        if (this.accountCurrencyPending) {
+          return '';
+        }
+
         return this.accountCurrencyCode || window.YAFFA.userSettings.baseCurrency?.iso_code;
       },
       categorySelectId() {
@@ -386,16 +395,27 @@
       updateAccountCurrency(accountId) {
         if (!accountId) {
           this.accountCurrencyCode = null;
+          this.accountCurrencyPending = false;
           return;
         }
 
+        this.accountCurrencyPending = true;
+
         fetch(route('api.v1.accounts.show', { accountEntity: accountId }))
-          .then((response) => (response.ok ? response.json() : null))
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to load account currency');
+            }
+
+            return response.json();
+          })
           .then((data) => {
             this.accountCurrencyCode = data?.config?.currency?.iso_code ?? null;
+            this.accountCurrencyPending = false;
           })
           .catch(() => {
             this.accountCurrencyCode = null;
+            this.accountCurrencyPending = true;
           });
       },
 
@@ -444,6 +464,7 @@
             }
 
             this.accountCurrencyCode = data.account?.config?.currency?.iso_code ?? null;
+            this.accountCurrencyPending = false;
           })
           .catch((error) => {
             console.error('Error loading budget:', error);
@@ -465,6 +486,7 @@
         this.form.count = null;
         this.form.inflation = null;
         this.accountCurrencyCode = null;
+        this.accountCurrencyPending = false;
 
         if (this.categorySelect) {
           this.categorySelect.empty().val(null).trigger('change');

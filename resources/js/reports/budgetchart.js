@@ -576,7 +576,7 @@ const budgetFormApp = createApp({
 installRouteGlobal(budgetFormApp);
 const budgetForm = budgetFormApp.mount('#budgetChartFormApp');
 
-function deleteBudget(budgetId) {
+function confirmAndDelete(routeName, routeParams, id) {
     Swal.fire({
         animation: false,
         text: __('Are you sure to want to delete this item?'),
@@ -594,17 +594,45 @@ function deleteBudget(budgetId) {
             return;
         }
 
-        window.axios.delete(window.route('api.v1.budgets.destroy', { budget: budgetId }))
+        window.axios.delete(window.route(routeName, routeParams))
             .then(function () {
-                toastHelpers.showSuccessToast(__('Deleted (#:id)', { id: budgetId }));
+                toastHelpers.showSuccessToast(__('Deleted (#:id)', { id }));
                 reloadData();
             })
             .catch(function (error) {
                 toastHelpers.showErrorToast(
-                    __('Error deleting (#:id): :error', { id: budgetId, error: error })
+                    __('Error deleting (#:id): :error', {
+                        id,
+                        error: error.response?.data?.message || error.message,
+                    })
                 );
             });
     });
+}
+
+function deleteBudget(budgetId) {
+    confirmAndDelete('api.v1.budgets.destroy', { budget: budgetId }, budgetId);
+}
+
+function amountColumn() {
+    return {
+        data: 'amount',
+        title: __('Amount'),
+        className: 'dt-nowrap',
+        type: 'num',
+        render: function (data, type, row) {
+            if (type === 'display') {
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    data,
+                    window.YAFFA.userSettings.locale,
+                    row.currency
+                );
+            }
+
+            return data;
+        },
+    };
 }
 
 // FR-7: a breakdown of the standalone Budget rows contributing to the chart - populated
@@ -626,24 +654,7 @@ window.table = $(tableSelector).DataTable({
                 return data || __('No account');
             },
         },
-        {
-            data: 'amount',
-            title: __('Amount'),
-            className: 'dt-nowrap',
-            type: 'num',
-            render: function (data, type, row) {
-                if (type === 'display') {
-                    return dataTableHelpers.toFormattedCurrency(
-                        type,
-                        data,
-                        window.YAFFA.userSettings.locale,
-                        row.currency
-                    );
-                }
-
-                return data;
-            },
-        },
+        amountColumn(),
         {
             data: 'cadence',
             title: __('Cadence'),
@@ -697,34 +708,7 @@ $(tableSelector).on('click', '[data-delete-budget]', function () {
 });
 
 function deleteScheduleTransaction(transactionId) {
-    Swal.fire({
-        animation: false,
-        text: __('Are you sure to want to delete this item?'),
-        icon: 'warning',
-        showCancelButton: true,
-        cancelButtonText: __('Cancel'),
-        confirmButtonText: __('Delete'),
-        buttonsStyling: false,
-        customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
-        },
-    }).then((result) => {
-        if (!result.isConfirmed) {
-            return;
-        }
-
-        window.axios.delete(window.route('api.v1.transactions.destroy', { transaction: transactionId }))
-            .then(function () {
-                toastHelpers.showSuccessToast(__('Deleted (#:id)', { id: transactionId }));
-                reloadData();
-            })
-            .catch(function (error) {
-                toastHelpers.showErrorToast(
-                    __('Error deleting (#:id): :error', { id: transactionId, error: error })
-                );
-            });
-    });
+    confirmAndDelete('api.v1.transactions.destroy', { transaction: transactionId }, transactionId);
 }
 
 // Same idea as the budgets table above, for the schedule-transaction side of the total
@@ -739,24 +723,7 @@ window.scheduleTable = $(scheduleTableSelector).DataTable({
             data: 'category_names',
             title: __('Categories'),
         },
-        {
-            data: 'amount',
-            title: __('Amount'),
-            className: 'dt-nowrap',
-            type: 'num',
-            render: function (data, type, row) {
-                if (type === 'display') {
-                    return dataTableHelpers.toFormattedCurrency(
-                        type,
-                        data,
-                        window.YAFFA.userSettings.locale,
-                        row.currency
-                    );
-                }
-
-                return data;
-            },
-        },
+        amountColumn(),
         {
             data: 'cadence',
             title: __('Cadence'),

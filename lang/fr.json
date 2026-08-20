@@ -1577,5 +1577,20 @@
     "Forecast": "Prévision",
     "Inflation": "Inflation",
     "Planning": "Planification",
-    ":rate% per year": ":rate % par an"
+    ":rate% per year": ":rate % par an",
+    "Add new budget": "Ajouter un nouveau budget",
+    "Budget saved": "Budget enregistré",
+    "Cadence": "Cadence",
+    "Deleted (#:id)": "Supprimé (#:id)",
+    "Details of budget #:budget": "Détails du budget #:budget",
+    "Edit budget": "Modifier le budget",
+    "Error deleting (#:id): :error": "Erreur lors de la suppression (#:id) : :error",
+    "Failed to load budget data": "Échec du chargement des données du budget",
+    "Failed to load the budget chart: :error": "Échec du chargement du graphique de budget : :error",
+    "Loading the budget chart timed out. Please try again with fewer categories, or try again later.": "Le chargement du graphique de budget a expiré. Veuillez réessayer avec moins de catégories, ou réessayer plus tard.",
+    "No account (base currency)": "Aucun compte (devise de base)",
+    "No account": "Aucun compte",
+    "No account (base currency, account-agnostic)": "Aucun compte (devise de base, indépendant du compte)",
+    "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ce modèle couvre trop de périodes (:count) pour être enregistré. Choisissez une date de début plus récente ou une récurrence moins fréquente.",
+    "Failed to load categories": "Échec du chargement des catégories"
 }

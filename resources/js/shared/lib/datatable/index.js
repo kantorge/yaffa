@@ -755,7 +755,7 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
                                     id: category.id,
                                     parent: category.parent_id || '#',
                                     text: category.active
-                                        ? category.name
+                                        ? escapeHtml(category.name)
                                         : '<span class="text-muted" title="' + __('Inactive') + '">' + escapeHtml(category.name) + '</span>',
                                     state: {
                                         selected: presetSelectedIds.includes(category.id)
@@ -764,7 +764,10 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
                             });
                             callback.call(this, categories);
                         })
-                        .catch(() => callback.call(this, []));
+                        .catch(() => {
+                            toastHelpers.showErrorToast(__('Failed to load categories'));
+                            callback.call(this, []);
+                        });
                 },
                 themes: {
                     dots: false,

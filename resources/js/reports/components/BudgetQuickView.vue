@@ -10,7 +10,7 @@
             type="button"
             class="btn-close"
             data-coreui-dismiss="modal"
-            aria-label="Close"
+            :aria-label="__('Close')"
           ></button>
         </div>
         <div class="modal-body" v-if="budget.id">

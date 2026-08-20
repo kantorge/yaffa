@@ -70,9 +70,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
+                // The 7th column is the payee, which contains the account name
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
+                // The 8th column is the category, which contains the investment type
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Buy');
 
             // Calculate the formatted value of the transaction using JavaScript
@@ -90,7 +90,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
+            // The 9th column is the amount, which contains the formatted value
             $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
@@ -134,9 +134,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
+                // The 7th column is the payee, which contains the account name
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
+                // The 8th column is the category, which contains the investment type
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Sell');
 
             // Calculate the formatted value of the transaction using JavaScript
@@ -154,7 +154,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
+            // The 9th column is the amount, which contains the formatted value
             $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
@@ -200,9 +200,9 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
+                // The 7th column is the payee, which contains the account name
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
+                // The 8th column is the category, which contains the investment type
                 ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Dividend');
 
             // Calculate the formatted value of the transaction using JavaScript
@@ -220,7 +220,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
+            // The 9th column is the amount, which contains the formatted value
             $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
