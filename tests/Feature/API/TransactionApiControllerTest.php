@@ -1270,7 +1270,7 @@ class TransactionApiControllerTest extends TestCase
             ->for($this->user)
             ->for(Account::factory()->withUser($this->user)->create(), 'config')
             ->create();
-        $investment = Investment::factory()->for($this->user)->create();
+        $investment = Investment::factory()->for($this->user)->withUser($this->user)->create();
 
         Transaction::factory()
             ->buy_schedule($this->user, [

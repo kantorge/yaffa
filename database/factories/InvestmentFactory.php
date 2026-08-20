@@ -17,9 +17,6 @@ class InvestmentFactory extends Factory
      */
     public function definition(): array
     {
-        /** @var User $user */
-        $user = User::has('investmentGroups')->has('currencies')->inRandomOrder()->first();
-
         $name = $this->faker->unique()->company();
 
         $baseAttributes = [
@@ -31,50 +28,41 @@ class InvestmentFactory extends Factory
             'auto_update' => false,
         ];
 
-        // If a user with investment groups and currencies exists, use it
-        if ($user) {
-            $baseAttributes['investment_group_id'] = $user->investmentGroups()->inRandomOrder()->first()->id;
-            $baseAttributes['currency_id'] = $user->currencies()->inRandomOrder()->first()->id;
-            $baseAttributes['user_id'] = $user->id;
-        } else {
-            // Otherwise, create a new user and related assets
-            $user = User::factory()->create();
-            $baseAttributes['investment_group_id'] = InvestmentGroup::factory()->for($user)->create()->id;
-            $baseAttributes['currency_id'] = Currency::factory()->for($user)->create()->id;
-            $baseAttributes['user_id'] = $user->id;
-        }
+        // investment_group_id, currency_id and user_id must always belong to the same user.
+        // Reusing an arbitrary existing user here (rather than a fresh, self-consistent one)
+        // let for()/withUser() calls silently inherit another user's investment group/currency
+        // - see git history for the currency-mismatch bug this caused.
+        $user = User::factory()->create();
 
-        return $baseAttributes;
+        return array_merge($baseAttributes, [
+            'investment_group_id' => InvestmentGroup::factory()->for($user)->create()->id,
+            'currency_id' => Currency::factory()->for($user)->create()->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     /**
      * Define a state, where the related assets are created for or used from a specific user.
+     *
+     * Always overrides user_id/investment_group_id/currency_id to belong to $user, even if
+     * definition() (or an earlier state) already set them - those earlier values are never
+     * guaranteed to belong to $user, and leaving them in place would silently attach $user's
+     * investment to another user's investment group/currency. Pass explicit attributes to
+     * create() (not an earlier ->state() call) if you need to override a specific field -
+     * create()'s attributes are always applied last and still win.
      */
     public function withUser(User $user): self
     {
-        return $this->state(function (array $attributes) use ($user) {
-            // Set the user_id if not already set
-            if (!isset($attributes['user_id'])) {
-                $attributes['user_id'] = $user->id;
-            }
-
-            // If the investment group is not set, get one, or create a new one for the user
-            if (!isset($attributes['investment_group_id'])) {
-                $attributes['investment_group_id'] = $user->investmentGroups()
-                    ->inRandomOrder()
-                    ->firstOr(fn () => InvestmentGroup::factory()->for($user)->create())
-                    ->id;
-            }
-
-            // If the currency is not set, get one, or create a new one for the user
-            if (!isset($attributes['currency_id'])) {
-                $attributes['currency_id'] = $user->currencies()
-                    ->inRandomOrder()
-                    ->firstOr(fn () => Currency::factory()->for($user)->create())
-                    ->id;
-            }
-
-            return $attributes;
-        });
+        return $this->state(fn () => [
+            'user_id' => $user->id,
+            'investment_group_id' => $user->investmentGroups()
+                ->inRandomOrder()
+                ->firstOr(fn () => InvestmentGroup::factory()->for($user)->create())
+                ->id,
+            'currency_id' => $user->currencies()
+                ->inRandomOrder()
+                ->firstOr(fn () => Currency::factory()->for($user)->create())
+                ->id,
+        ]);
     }
 }

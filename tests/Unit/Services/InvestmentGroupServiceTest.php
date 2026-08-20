@@ -28,8 +28,8 @@ class InvestmentGroupServiceTest extends TestCase
         $user = User::factory()->create();
 
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();
-        Currency::factory()->for($user)->create();
-        Investment::factory()->for($user)->for($investmentGroup)->create();
+        $currency = Currency::factory()->for($user)->create();
+        Investment::factory()->for($user)->for($investmentGroup)->create(['currency_id' => $currency->id]);
 
         $service = new InvestmentGroupService();
         $result = $service->delete($investmentGroup);

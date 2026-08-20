@@ -51,8 +51,8 @@ class InvestmentGroupApiControllerTest extends TestCase
     public function test_doesNotDestroyInvestmentGroupInUse(): void
     {
         $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
-        Currency::factory()->for($this->user)->create();
-        Investment::factory()->for($this->user)->for($investmentGroup)->create();
+        $currency = Currency::factory()->for($this->user)->create();
+        Investment::factory()->for($this->user)->for($investmentGroup)->create(['currency_id' => $currency->id]);
 
         Sanctum::actingAs($this->user, ['*']);
 

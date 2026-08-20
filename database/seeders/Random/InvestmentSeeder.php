@@ -23,7 +23,7 @@ class InvestmentSeeder extends Seeder
         $users->each(function ($user) use ($count) {
             Investment::factory()
                 ->count($count)
-                ->for($user)
+                ->withUser($user)
                 ->create();
         });
     }

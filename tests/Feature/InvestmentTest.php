@@ -33,7 +33,7 @@ class InvestmentTest extends TestCase
     {
         $this->createPrerequisites($user);
 
-        return Investment::factory()->for($user)->create();
+        return Investment::factory()->for($user)->withUser($user)->create();
     }
 
     public function test_user_can_view_list_of_investments(): void
@@ -41,7 +41,7 @@ class InvestmentTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
-        Investment::factory()->for($user)->count(5)->create();
+        Investment::factory()->for($user)->withUser($user)->count(5)->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 

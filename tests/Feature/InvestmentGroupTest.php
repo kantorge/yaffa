@@ -139,8 +139,8 @@ class InvestmentGroupTest extends TestCase
         $user = User::factory()->create();
 
         $investmentGroup = $this->createForUser($user, $this->base_model);
-        Currency::factory()->for($user)->create();
-        Investment::factory()->for($user)->for($investmentGroup)->create();
+        $currency = Currency::factory()->for($user)->create();
+        Investment::factory()->for($user)->for($investmentGroup)->create(['currency_id' => $currency->id]);
 
         $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $investmentGroup->id));
         $response->assertSessionHas('notification_collection.0.type', 'danger');

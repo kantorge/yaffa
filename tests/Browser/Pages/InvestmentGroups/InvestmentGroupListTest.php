@@ -95,7 +95,10 @@ class InvestmentGroupListTest extends DuskTestCase
         $investmentGroupWithInvestment = InvestmentGroup::factory()
             ->for($user)
             ->create();
-        Investment::factory()->for($user)->for($investmentGroupWithInvestment)->create();
+        Investment::factory()
+            ->for($user)
+            ->for($investmentGroupWithInvestment)
+            ->create(['currency_id' => $user->currencies()->firstOrFail()->id]);
 
         // Perform the tests
         $this->browse(function (Browser $browser) use ($user, $standaloneInvestmentGroup, $investmentGroupWithInvestment) {
