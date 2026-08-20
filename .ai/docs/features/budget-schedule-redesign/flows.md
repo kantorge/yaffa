@@ -41,7 +41,7 @@ Only flows that touch permissions, data integrity, or side effects are documente
 |---|---|---|---|
 | 1. `DELETE /api/v1/budgets/{budget}` | Browser → server | `auth:sanctum` + `verified` + `abilities:write`. | None yet. |
 | 2. `Gate::authorize('delete', $budget)` | Server | `BudgetPolicy::delete()` → `isOwnItem()`. Deny case: 403 (same existence-confirming shape as flow 2). | None on deny. |
-| 3. `BudgetService::delete()` | Server | — | `$budget->delete()` (hard delete — `Budget` has no `SoftDeletes` trait). On success, `recalculateAccountBalanceBudget()` is dispatched with the *pre-delete* `account_id`, captured before the row is removed (`app/Services/BudgetService.php:48-55`). A DB-level failure is caught and reported (`report($e)`), returning a 422 with an error message rather than a 500. | Queued recalculation job. |
+| 3. `BudgetService::delete()` | Server | — | `$budget->delete()` (hard delete — `Budget` has no `SoftDeletes` trait). On success, `recalculateAccountBalanceBudget()` is dispatched with the *pre-delete* `account_id`, captured before the row is removed (`app/Services/BudgetService.php:48-55`), queuing a recalculation job. A DB-level failure is caught and reported (`report($e)`), returning a 422 with an error message rather than a 500. |
 
 ## 4. Active-Flag Recalculation (Daily Scheduled Job)
 
@@ -52,7 +52,7 @@ Only flows that touch permissions, data integrity, or side effects are documente
 | Step | Boundary crossed | Authz check | Side effect |
 |---|---|---|---|
 | 1. `routes/console.php` — `Schedule::command(CalculateTransactionScheduleActiveFlags::class)->dailyAt('00:00')`. | System cron | N/A — no request context, no auth. | Command runs. |
-| 2. `CalculateTransactionScheduleActiveFlags::handle()` (`app/Console/Commands/CalculateTransactionScheduleActiveFlags.php:30-45`) — `Transaction::with('transactionSchedule')->isSchedule()->get()` dispatches `CalculateTransactionScheduleActiveFlag` per row; `Budget::all()->each(...)` dispatches `CalculateBudgetActiveFlag` per row. | System | N/A — operates across **all users'** rows; there is no per-user scoping at this layer (correct, since it's a system-wide maintenance job, not a user-triggered action). | One job queued per active-schedule transaction and per `Budget` row in the whole database. |
+| 2. `CalculateTransactionScheduleActiveFlags::handle()` (`app/Console/Commands/CalculateTransactionScheduleActiveFlags.php:30-45`) — `Transaction::with('transactionSchedule')->isSchedule()->lazy()` dispatches `CalculateTransactionScheduleActiveFlag` per row; `Budget::lazy()->each(...)` dispatches `CalculateBudgetActiveFlag` per row. Both use `lazy()` (chunked cursor iteration) rather than loading every row into memory at once. | System | N/A — operates across **all users'** rows; there is no per-user scoping at this layer (correct, since it's a system-wide maintenance job, not a user-triggered action). | One job queued per active-schedule transaction and per `Budget` row in the whole database. |
 | 3. `CalculateBudgetActiveFlag::handle()` (`app/Jobs/CalculateBudgetActiveFlag.php:32-36`) — `$this->budget->active = $this->budget->isActive(); $this->budget->saveQuietly();` | System (queue worker) | — | `saveQuietly()` persists without re-firing model events (so the `updating` hook that would otherwise recompute `active` again doesn't double-run) and without dispatching `CalculateAccountMonthlySummary` — this job only refreshes the flag, it does not itself trigger a forecast recalculation. |
 
 ## 5. Budget-vs-Actual Chart Computation

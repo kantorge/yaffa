@@ -98,9 +98,14 @@ class MergeStandardTransactionItemsCommandTest extends TestCase
     {
         Bus::fake();
 
-        Transaction::factory()
+        $transaction = Transaction::factory()
             ->withdrawal($this->user)
             ->create(['user_id' => $this->user->id, 'schedule' => true]);
+        $transaction->transactionItems()->delete();
+        $transaction->transactionItems()->createMany([
+            ['category_id' => $this->category->id, 'amount' => 10.00, 'comment' => null],
+            ['category_id' => $this->category->id, 'amount' => 20.00, 'comment' => null],
+        ]);
 
         $this->artisan('app:transactions:merge-standard-items', ['userId' => $this->user->id])
             ->assertSuccessful();

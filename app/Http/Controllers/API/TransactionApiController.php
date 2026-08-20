@@ -242,7 +242,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             $budgetRows = Budget::with(['category', 'account.config.currency'])
                 ->where('user_id', $request->user()->id)
                 ->where('active', true)
-                ->when($accountSelection === 'selected', fn ($query) => $query->where('account_id', $accountEntity))
+                ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->where('account_id', $accountEntity))
                 ->when($accountSelection === 'none', fn ($query) => $query->whereNull('account_id'))
                 ->when($categories->count() > 0, fn ($query) => $query->whereIn('category_id', $categories->pluck('id')))
                 ->get()
@@ -259,7 +259,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                     // shared category column renderer works unchanged for a Budget row too.
                     'categories' => [$budget->category],
                     'account_id' => $budget->account_id,
-                    'transaction_currency' => $budget->account_id ? $budget->currency() : $baseCurrency,
+                    'transaction_currency' => ($budget->account_id ? $budget->currency() : null) ?? $baseCurrency,
                     // Synthetic, schedule-shaped period definition - a Budget has no next_date/
                     // automatic_recording (FR-4), which render blank via the same convention an
                     // empty category cell already uses (FR-6).

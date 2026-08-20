@@ -635,7 +635,12 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      */
     private function getAccountBalanceBudgetData(): Collection
     {
-        $budgets = Budget::where('user_id', $this->user->id)
+        // $budget->amount (MoneyCast) resolves its currency via Budget::currency() on every
+        // access below - eager-load what that needs (the account-scoped path, and the user
+        // relation for the account-agnostic/base-currency fallback) instead of lazy-loading it
+        // per row.
+        $budgets = Budget::with(['account.config.currency', 'user'])
+            ->where('user_id', $this->user->id)
             ->where('active', true)
             ->when(
                 $this->accountEntity,

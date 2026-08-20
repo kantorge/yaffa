@@ -183,12 +183,16 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->get();
         }
 
+        // Computed once and reused below, rather than re-plucking ids from $categories inside
+        // every per-item filter closure.
+        $categoryIds = $categories->pluck('id');
+
         // Unify currencies and calculate amounts only for given categories. Summed exactly
         // (BigDecimal) rather than Collection::sum()'s native float +=, since a transaction can
         // have multiple items.
-        $scheduleTransactions->transform(function ($transaction) use ($categories) {
+        $scheduleTransactions->transform(function ($transaction) use ($categoryIds) {
             $transaction->sum = $transaction->transactionItems
-                ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
+                ->filter(fn ($item) => $categoryIds->contains($item->category_id))
                 ->reduce(fn (BigDecimal $carry, $item) => $carry->plus($item->amount->getAmount()), BigDecimal::zero());
 
             return $transaction;
@@ -209,7 +213,7 @@ class ReportApiController extends Controller implements HasMiddleware
         // Same idea as $budgetBreakdown, for the schedule-transaction (forecast) side.
         $scheduleBreakdown = [];
 
-        $scheduleInstances->each(function ($transaction) use (&$forecastCompact, &$scheduleBreakdown, $baseCurrency, $categories, $allCurrencies) {
+        $scheduleInstances->each(function ($transaction) use (&$forecastCompact, &$scheduleBreakdown, $baseCurrency, $categoryIds, $allCurrencies) {
             $period = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
@@ -228,7 +232,7 @@ class ReportApiController extends Controller implements HasMiddleware
             $forecastCompact[$period][$currency_id] = $forecastCompact[$period][$currency_id]->plus($amount);
 
             $categoryNames = $transaction->transactionItems
-                ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
+                ->filter(fn ($item) => $categoryIds->contains($item->category_id))
                 ->pluck('category.name')
                 ->unique()
                 ->values()

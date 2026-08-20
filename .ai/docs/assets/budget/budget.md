@@ -10,6 +10,15 @@ A Budget is a standalone, category-level spending or income target with no linke
 
 A Budget is distinct from a [scheduled transaction](../transactions/schedules.md): a schedule describes a real, specific event ("rent, every month, from checking"), while a Budget describes a target level for a category ("around this much on groceries, in general"). Both feed the same category budget-vs-actual comparison, but a Budget exists precisely for the case where there is no concrete transaction to schedule.
 
+## Schedule vs Budget
+
+A schedule and a Budget are siblings, not variants of one thing:
+
+- A **schedule** is attached to a real `Transaction` and describes a specific expected event — a known payee, a known (or determinable) date, and — for a standard withdrawal/deposit — known categorized items. Use a schedule when you know what the actual transaction will look like.
+- A **Budget** is a standalone entity with no linked transaction — just a category, an optional account, a target amount, and a period. Use a Budget when you have a spending/income target for a category but no single concrete transaction to represent it (no fixed payee, no fixed date, sometimes not even a fixed account).
+
+Both feed the same category budget-vs-actual comparison and the same account-balance forecast (when account-scoped), but neither replaces the other: a schedule cannot express an unattached target, and a Budget cannot represent a specific real event.
+
 ## User Problem
 
 - Users want to set a spending/income target for a category — "about this much on groceries" — without inventing a fake transaction to represent it.

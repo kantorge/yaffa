@@ -57,6 +57,7 @@ class BudgetRequest extends FormRequest
             ],
             'comment' => [
                 'nullable',
+                'string',
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
             ],
 
@@ -86,7 +87,7 @@ class BudgetRequest extends FormRequest
                 // Must be empty, if end_date is provided
                 'prohibits:end_date',
             ],
-            'inflation' => 'nullable|numeric',
+            'inflation' => 'nullable|numeric|min:-100',
         ];
     }
 }

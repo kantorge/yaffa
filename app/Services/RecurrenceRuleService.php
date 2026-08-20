@@ -73,15 +73,18 @@ class RecurrenceRuleService
     public function buildRule(
         Carbon $startDate,
         string $frequency,
-        int $interval,
+        ?int $interval,
         ?Carbon $endDate,
         ?int $count,
         ?string $byDay,
         ?int $byMonth,
     ): Rule {
+        $interval = max($interval ?? 1, 1);
+
         $rule = (new Rule())
             ->setStartDate(new DateTime($startDate->toDateString()))
-            ->setFreq($frequency);
+            ->setFreq($frequency)
+            ->setInterval($interval);
 
         if ($endDate) {
             $rule->setUntil(new DateTime($endDate->toDateString()));
@@ -89,10 +92,6 @@ class RecurrenceRuleService
 
         if ($count) {
             $rule->setCount($count);
-        }
-
-        if ($interval) {
-            $rule->setInterval($interval);
         }
 
         if ($byDay) {

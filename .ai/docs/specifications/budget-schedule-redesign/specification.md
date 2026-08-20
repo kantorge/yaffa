@@ -106,7 +106,7 @@ Scenario planning and debt-tracking forecasting ([future-directions.md](future-d
 
 ### New table: `budgets`
 
-`id`, `user_id` (FK), `category_id` (FK, required), `account_id` (nullable FK to `account_entities`), `transaction_type` (varchar, required, `withdrawal|deposit` — see FR-4), `amount` (decimal), `comment` (nullable varchar), `frequency` (varchar), `interval` (int, default 1), `start_date` (date), `end_date` (nullable date), `count` (nullable int), `inflation` (nullable double), `active` (boolean, not nullable, system-maintained — see FR-4), timestamps. No `currency_id` column — see FR-4. No `next_date`/`automatic_recording` columns — see FR-4.
+`id`, `user_id` (FK), `category_id` (FK, required), `account_id` (nullable FK to `account_entities`), `transaction_type` (enum, `withdrawal|deposit` — see FR-4), `amount` (decimal), `comment` (nullable varchar), `frequency` (varchar), `interval` (int, default 1), `by_day` (nullable varchar, ordinal-weekday pattern), `by_month` (nullable unsigned tinyint), `start_date` (date), `end_date` (nullable date), `count` (nullable int), `inflation` (nullable double), `active` (boolean, not nullable, system-maintained — see FR-4), timestamps. No `currency_id` column — see FR-4. No `next_date`/`automatic_recording` columns — see FR-4.
 
 ### `transactions` table
 

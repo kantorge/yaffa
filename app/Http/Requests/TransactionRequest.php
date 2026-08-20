@@ -232,7 +232,7 @@ class TransactionRequest extends FormRequest
                     // Must be empty, if end_date is provided
                     'prohibits:schedule_config.end_date',
                 ],
-                'schedule_config.inflation' => 'nullable|numeric',
+                'schedule_config.inflation' => 'nullable|numeric|min:-100',
             ]);
         } else {
             $rules = array_merge($rules, [
@@ -267,7 +267,7 @@ class TransactionRequest extends FormRequest
                 'original_schedule_config.by_day' => $this->byDayRule('original_schedule_config.frequency'),
                 'original_schedule_config.by_month' => $this->byMonthRule('original_schedule_config.frequency', 'original_schedule_config.by_day'),
                 'original_schedule_config.count' => 'nullable|integer|gte:1',
-                'original_schedule_config.inflation' => 'nullable|numeric',
+                'original_schedule_config.inflation' => 'nullable|numeric|min:-100',
             ]);
         }
 

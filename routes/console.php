@@ -52,8 +52,10 @@ if (config('yaffa.runs_scheduler')) {
 
     // Batch job cleanup
     // Unfinished batches never get a finished_at, so the default retention (finished batches
-    // only) never touches orphaned/stuck ones - prune those explicitly after 1 hour too.
-    Schedule::command('queue:prune-batches', ['--unfinished' => 1])->daily();
+    // only) never touches orphaned/stuck ones - prune those explicitly too, but with a window
+    // generous enough (24h) that a batch which is merely slow (not actually stuck) never has its
+    // job_batches row deleted while still genuinely in progress.
+    Schedule::command('queue:prune-batches', ['--unfinished' => 24])->daily();
 
     // Prune expired personal access tokens
     Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();

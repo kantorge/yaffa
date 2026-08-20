@@ -95,6 +95,17 @@ class TransactionSchedule extends Model
         return $this->belongsTo(Transaction::class);
     }
 
+    /**
+     * interval isn't cast (unlike Budget::interval), and schedule_config.interval validates as
+     * nullable - normalize before passing to RecurrenceRuleService methods that declare a
+     * non-nullable int $interval, since PHP rejects a literal null there regardless of any
+     * internal fallback.
+     */
+    private function normalizedInterval(): int
+    {
+        return $this->interval ?? 1;
+    }
+
     // Define closures for creating and updating a schedule, so that the active flag can be set
     protected static function booted(): void
     {
@@ -121,7 +132,7 @@ class TransactionSchedule extends Model
         $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
             $this->start_date,
             $this->frequency,
-            $this->interval,
+            $this->normalizedInterval(),
             $this->end_date,
             $this->count,
             $this->by_day,
@@ -202,7 +213,7 @@ class TransactionSchedule extends Model
             $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
                 $this->start_date,
                 $this->frequency,
-                $this->interval,
+                $this->normalizedInterval(),
                 $this->end_date,
                 $this->count,
                 $this->by_day,
@@ -237,7 +248,7 @@ class TransactionSchedule extends Model
         return (new RecurrenceRuleService())->occursOn(
             $this->start_date,
             $this->frequency,
-            $this->interval,
+            $this->normalizedInterval(),
             $this->end_date,
             $this->count,
             $this->by_day,

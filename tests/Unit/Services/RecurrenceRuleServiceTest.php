@@ -105,16 +105,19 @@ class RecurrenceRuleServiceTest extends TestCase
         $service = new RecurrenceRuleService();
 
         // A single-occurrence rule whose one and only date is today: "on or after today" must
-        // include today itself, matching the method's own name.
+        // include today itself, matching the method's own name. Both parameters reuse the same
+        // captured instant rather than two separate Carbon::now() calls, which could otherwise
+        // straddle a midnight boundary and land on two different calendar dates.
+        $now = Carbon::now();
         $this->assertTrue($service->hasOccurrenceOnOrAfter(
-            Carbon::now(),
+            $now,
             'DAILY',
             1,
             null,
             1,
             null,
             null,
-            Carbon::now(),
+            $now,
         ));
     }
 

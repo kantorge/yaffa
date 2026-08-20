@@ -191,7 +191,8 @@ class BudgetApiTest extends TestCase
             'count' => 5,
         ]);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['end_date', 'count']);
     }
 
     /**

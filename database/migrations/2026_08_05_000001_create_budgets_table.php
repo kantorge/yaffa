@@ -19,7 +19,12 @@ return new class () extends Migration {
                 ->nullable()
                 ->constrained('account_entities')
                 ->cascadeOnDelete();
-            $table->string('transaction_type');
+            // Restricted to the two standard directions at the schema level (FR-4/Non-Goals) -
+            // mirrors the existing transactions.transaction_type ENUM precedent
+            // (2026_01_31_000001_add_transaction_type_enum_column_to_transactions_table.php) - so
+            // TransactionType::amountMultiplier() (consumed wherever a Budget's amount is
+            // projected) can never see a value it has no multiplier for.
+            $table->enum('transaction_type', ['withdrawal', 'deposit']);
             $table->decimal('amount', 12, 4)->unsigned();
             $table->string('comment')->nullable();
             $table->string('frequency');
