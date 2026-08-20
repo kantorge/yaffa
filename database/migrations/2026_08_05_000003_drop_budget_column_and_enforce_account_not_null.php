@@ -38,20 +38,30 @@ return new class () extends Migration {
 
         // transactions.budget is part of the composite performance index added in
         // 2026_03_26_000001; it must be dropped and recreated without the column before the
-        // column itself can be dropped.
+        // column itself can be dropped. transactions_user_id_foreign requires a user_id-leading
+        // index to exist at all times, and this index is the only one covering user_id, so MySQL
+        // refuses a bare drop (error 1553). Build the replacement under a temporary name first,
+        // drop the old one, then rename -- a covering index for the FK exists throughout.
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->index(
+                ['user_id', 'config_type', 'schedule', 'date'],
+                'transactions_user_type_flags_date_index_tmp'
+            );
+        });
+
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropIndex('transactions_user_type_flags_date_index');
         });
 
         Schema::table('transactions', function (Blueprint $table) {
-            $table->dropColumn('budget');
+            $table->renameIndex(
+                'transactions_user_type_flags_date_index_tmp',
+                'transactions_user_type_flags_date_index'
+            );
         });
 
         Schema::table('transactions', function (Blueprint $table) {
-            $table->index(
-                ['user_id', 'config_type', 'schedule', 'date'],
-                'transactions_user_type_flags_date_index'
-            );
+            $table->dropColumn('budget');
         });
 
         Schema::table('transaction_details_standard', function (Blueprint $table) {
@@ -68,16 +78,25 @@ return new class () extends Migration {
         });
 
         Schema::table('transactions', function (Blueprint $table) {
+            $table->boolean('budget')->default(false)->after('schedule');
+        });
+
+        // Same FK-covering-index constraint as up(): swap via a temporary index name
+        // instead of dropping transactions_user_type_flags_date_index outright.
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->index(
+                ['user_id', 'config_type', 'schedule', 'budget', 'date'],
+                'transactions_user_type_flags_date_index_tmp'
+            );
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
             $table->dropIndex('transactions_user_type_flags_date_index');
         });
 
         Schema::table('transactions', function (Blueprint $table) {
-            $table->boolean('budget')->default(false)->after('schedule');
-        });
-
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->index(
-                ['user_id', 'config_type', 'schedule', 'budget', 'date'],
+            $table->renameIndex(
+                'transactions_user_type_flags_date_index_tmp',
                 'transactions_user_type_flags_date_index'
             );
         });
