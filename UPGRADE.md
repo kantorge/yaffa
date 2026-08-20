@@ -78,6 +78,8 @@ docker compose up -d app scheduler
 
 The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup.
 
+**Caddy reverse proxy is now a Compose profile.** `docker/docker-compose.yml`'s Caddy service is no longer a commented-out block you manually uncomment — it's gated behind the `https` Compose profile, started with `docker compose --profile https up -d`. If you previously uncommented the old Caddy block by hand, pulling the new `docker-compose.yml` will conflict with (or silently discard) that edit; re-apply your Caddyfile/domain setup and switch to the `--profile https` flag instead of a manual edit. If you run with this profile, also set `APP_PORT` in your `.env` (e.g. `APP_PORT=127.0.0.1:8080`) so the `app` service doesn't also try to bind host port 80 alongside Caddy — see the comments in `docker-compose.yml` for details.
+
 ##### Source code users
 
 ```bash
