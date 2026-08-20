@@ -31,7 +31,7 @@ A scheduled standard withdrawal/deposit's categorized items now always count tow
 
 #### 1. Upgrade to the latest YAFFA 3.x release
 
-Before installing YAFFA 4.x, first update to the latest available YAFFA 3.x release (3.5.2 or later). This ensures the pre-upgrade safety check command described below is available in your existing installation.
+Before installing YAFFA 4.x, first update to the latest available YAFFA 3.x release (3.6.0 or later). This ensures the pre-upgrade safety check command described below is available in your existing installation.
 
 #### 2. Run the pre-upgrade safety check command (optional but recommended)
 
@@ -142,7 +142,7 @@ Two more precision-related changes, transparent to a normal upgrade:
 - `transaction_details_investment.price` is widened from `DECIMAL(10,4)` to `DECIMAL(20,10)` by a new migration, matching `investment_prices.price`'s existing scale. This runs automatically with the rest of the migrations and is non-destructive.
 - `ext-bcmath` is now a required PHP extension (declared in `composer.json`). It's already present in the Sail dev image; if you run PHP outside Sail/Docker, confirm it's compiled in before upgrading (`php -m | grep bcmath`) — it wasn't previously listed among YAFFA's required extensions.
 
-**Action required if you have investment transactions predating a currency change on an account or investment**: an investment transaction's `price` (in the investment's currency) and its `commission`/`tax`/`dividend` (in the account's currency) are now combined with exact `Brick\Money\Money` arithmetic, which requires both sides to share a currency. New transactions are already prevented from mismatching (`TransactionRequest`'s account/investment currency check, and the currency-change confirmation now shown in the account/investment edit forms), but a transaction recorded *before* either guard existed — back when the account or investment's currency was later changed — may still have a mismatched pair. For such a row, `cashflow_value` is now computed as `null` instead of throwing, and a `warning`-level log entry ("Investment transaction cash flow spans mismatched currencies (legacy data)") is written with the transaction ID. Search your logs for that message after upgrading, and manually correct the identified transactions (or the account/investment currency) to restore their cash-flow value.
+**Action required if you have investment transactions predating a currency change on an account or investment**: an investment transaction's `price` (in the investment's currency) and its `commission`/`tax`/`dividend` (in the account's currency) are now combined with exact `Brick\Money\Money` arithmetic, which requires both sides to share a currency. New transactions are already prevented from mismatching (`TransactionRequest`'s account/investment currency check, and the currency-change confirmation now shown in the account/investment edit forms), but a transaction recorded _before_ either guard existed — back when the account or investment's currency was later changed — may still have a mismatched pair. For such a row, `cashflow_value` is now computed as `null` instead of throwing, and a `warning`-level log entry ("Investment transaction cash flow spans mismatched currencies (legacy data)") is written with the transaction ID. Search your logs for that message after upgrading, and manually correct the identified transactions (or the account/investment currency) to restore their cash-flow value.
 
 ### Docker users switching from `mysql/mysql-server:8.0` to `mysql:8.0`
 
