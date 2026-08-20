@@ -30,12 +30,10 @@ class ReportApiController extends Controller implements HasMiddleware
     use ScheduleTrait;
 
     private CategoryService $categoryService;
-    private BudgetService $budgetService;
 
-    public function __construct(BudgetService $budgetService)
+    public function __construct(private BudgetService $budgetService)
     {
         $this->categoryService = new CategoryService();
-        $this->budgetService = $budgetService;
     }
 
     public static function middleware(): array

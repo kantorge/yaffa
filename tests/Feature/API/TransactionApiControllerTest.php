@@ -1183,6 +1183,19 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
+     * Test getting scheduled items rejects accountSelection=selected without accountEntity
+     */
+    public function test_get_scheduled_items_rejects_selected_account_selection_without_account_entity(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?accountSelection=selected');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['accountEntity']);
+    }
+
+    /**
      * Test getting scheduled items with category filter
      */
     public function test_get_scheduled_items_returns_empty_when_category_required_but_not_provided(): void

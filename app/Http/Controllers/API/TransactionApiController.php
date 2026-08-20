@@ -16,6 +16,7 @@ use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
 use App\Http\Requests\API\FindTransactionsRequest;
+use App\Http\Requests\API\GetScheduledItemsRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
@@ -117,7 +118,7 @@ class TransactionApiController extends Controller implements HasMiddleware
      * Returns scheduled transactions filtered by schedule type and optional
      * criteria such as account selection and categories.
      */
-    public function getScheduledItems(Request $request): JsonResponse
+    public function getScheduledItems(GetScheduledItemsRequest $request): JsonResponse
     {
         // Only 'schedule' and 'none' remain meaningful now that the budget flag is gone (FR-1);
         // anything else (including the old 'any') is treated as 'none'.
