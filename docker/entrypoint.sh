@@ -15,15 +15,20 @@ fi
 # The key is persisted in the storage volume (shared with the scheduler container)
 # so restarts and container recreation keep using the same key instead of
 # invalidating existing sessions / encrypted data.
+APP_KEY_FILE="/var/www/html/storage/app/.app_key"
 if [ -z "$APP_KEY" ]; then
-  APP_KEY_FILE="/var/www/html/storage/app/.app_key"
-  if [ -f "$APP_KEY_FILE" ]; then
+  if [ -s "$APP_KEY_FILE" ]; then
     APP_KEY=$(cat "$APP_KEY_FILE")
   else
     echo "No APP_KEY set, generating one..."
     APP_KEY=$(php artisan key:generate --show --no-interaction)
     mkdir -p "$(dirname "$APP_KEY_FILE")"
-    echo -n "$APP_KEY" > "$APP_KEY_FILE"
+    # Write to a temp file and rename into place so a killed/interrupted boot
+    # never leaves a truncated key file for the next boot to blindly reuse.
+    APP_KEY_TMP="$APP_KEY_FILE.$$.tmp"
+    printf '%s' "$APP_KEY" > "$APP_KEY_TMP"
+    chmod 600 "$APP_KEY_TMP"
+    mv "$APP_KEY_TMP" "$APP_KEY_FILE"
   fi
   export APP_KEY
 fi
@@ -45,6 +50,10 @@ fi
 echo "Adjusting storage permissions..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# The broad chmod above would otherwise leave the encryption key group/world-readable.
+if [ -f "$APP_KEY_FILE" ]; then
+  chmod 600 "$APP_KEY_FILE"
+fi
 
 if [ "$RUNS_SCHEDULER" = "TRUE" ]; then
   echo "Startup complete. Launching scheduler/queue supervisor..."

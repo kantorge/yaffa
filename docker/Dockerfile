@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable redis \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-    pdo pdo_mysql mbstring zip xml gd exif
+    pdo pdo_mysql mbstring zip xml gd exif bcmath
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
