@@ -105,7 +105,7 @@ $(dataTableSelector).on('click', '.data-delete:not(.busy)', function () {
     const button = $(this);
     const id = Number(button.data('id'));
 
-    confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
+    confirmDelete(__('Are you sure you want to delete this item?')).then((result) => {
         if (!result.isConfirmed) {
             return;
         }

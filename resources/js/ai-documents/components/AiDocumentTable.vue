@@ -21,6 +21,7 @@
   import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmDelete } from '@/shared/lib/confirm';
 
   const props = defineProps({
     documents: {
@@ -395,17 +396,8 @@
 
     ajaxIsBusy.value = true;
 
-    Swal.fire({
-      text: __('Are you sure you want to delete this document?'),
-      icon: 'warning',
-      showCancelButton: true,
-      cancelButtonText: __('Cancel'),
+    confirmDelete(__('Are you sure you want to delete this document?'), {
       confirmButtonText: __('Delete'),
-      buttonsStyling: false,
-      customClass: {
-        confirmButton: 'btn btn-danger',
-        cancelButton: 'btn btn-secondary ms-3',
-      },
     }).then((result) => {
       if (!result.isConfirmed) {
         ajaxIsBusy.value = false;

@@ -329,6 +329,12 @@
 
       hideAndReset() {
         this.resetForm();
+
+        // The blank reset state is the "clean" baseline for the next time this modal
+        // opens as "new" - without this, FormModal's dirty check would compare
+        // against whatever entry was last edited.
+        this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
+
         this.$refs.formModal.hide();
       },
 

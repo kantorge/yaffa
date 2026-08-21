@@ -10,8 +10,8 @@
     </div>
     <div class="schedule-list d-flex flex-column gap-2">
       <DismissiblePanel
-        v-for="(candidate, index) in candidates"
-        :key="index"
+        v-for="candidate in candidates"
+        :key="candidate.transaction_id"
         class="schedule-card border rounded p-2"
         :class="confidenceCardClass(candidate.confidence_score)"
         @dismiss="$emit('dismiss', candidate.transaction_id)"

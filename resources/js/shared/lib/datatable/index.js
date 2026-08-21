@@ -642,12 +642,13 @@ export function initializeDeleteAssetButtonListener(tableSelector, routeName, su
         const button = $(this);
         const id = Number(button.data('id'));
 
+        button.addClass('busy');
+
         confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
             if (!result.isConfirmed) {
+                button.removeClass('busy');
                 return;
             }
-
-            button.addClass('busy');
 
             axios.delete(window.route(routeName, id))
                 .then(function () {

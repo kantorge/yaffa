@@ -454,6 +454,7 @@
         this.form.reset();
         this.form.errors.clear();
 
+        this.form.name = '';
         this.form.active = true;
         this.form.alias = '';
         this.form.config.category_id = null;
@@ -472,6 +473,10 @@
             this.notPreferredSelect.empty().trigger('change');
           }
         }
+
+        // These blank values are the "clean" baseline for a new payee - without this,
+        // FormModal's dirty check would compare against whatever payee was last edited.
+        this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
 
         // Reset payee ID
         this.payeeId = null;

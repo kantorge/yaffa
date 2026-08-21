@@ -122,7 +122,7 @@
 
         this.table = $table.DataTable({
           language: getDataTablesLanguageOptions() || undefined,
-          data: this.items,
+          data: this.filteredItems || this.items,
           columns: [
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
               'date',

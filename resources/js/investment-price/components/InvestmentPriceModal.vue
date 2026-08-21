@@ -167,7 +167,8 @@
       const modalElement = document.getElementById('investmentPriceModal');
 
       // Use CoreUI Modal instead of Bootstrap Modal
-      if (window.coreui && window.coreui.Modal) {
+      const usingCoreUI = !!(window.coreui && window.coreui.Modal);
+      if (usingCoreUI) {
         this.modal = new window.coreui.Modal(modalElement);
       } else {
         this.modal = new window.bootstrap.Modal(modalElement);
@@ -186,8 +187,9 @@
 
       // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
       // programmatic hide() alike) - ask for confirmation if there are
-      // unsaved changes.
-      modalElement.addEventListener('hide.coreui.modal', (event) => {
+      // unsaved changes. Registered on whichever modal library was actually
+      // instantiated above, since only that one will ever fire its "hide" event.
+      modalElement.addEventListener(usingCoreUI ? 'hide.coreui.modal' : 'hide.bs.modal', (event) => {
         if (this.forceCloseModal) {
           this.forceCloseModal = false;
           return;

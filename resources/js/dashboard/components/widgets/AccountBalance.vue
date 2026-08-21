@@ -1,6 +1,6 @@
 <template>
   <div class="card mb-4" id="widgetAccountBalance">
-    <div class="card-header d-flex justify-content-between">
+    <div class="card-header d-flex justify-content-between align-items-center">
       <div class="card-title">
         {{ __('widget.accountBalance.cardTitle') }}
       </div>

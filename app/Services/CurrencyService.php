@@ -8,9 +8,11 @@ use Throwable;
 
 class CurrencyService
 {
+    /**
+     * @return array{success: bool, error: ?string}
+     */
     public function delete(Currency $currency): array
     {
-        // Base currency cannot be deleted
         if ($currency->base) {
             return [
                 'success' => false,
@@ -28,7 +30,7 @@ class CurrencyService
         } catch (Throwable $e) {
             $error = $e instanceof QueryException && $e->errorInfo[1] === 1451
                 ? __('Currency is in use, cannot be deleted')
-                : __('Database error:') . ' ' . $e->getMessage();
+                : __('A database error occurred.');
 
             return [
                 'success' => false,

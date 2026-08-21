@@ -15,7 +15,7 @@ import { initializeSelect2 } from '@/shared/lib/select2';
 import { initializeBootstrapTooltips, scheduleCadenceText, getArrayParamFromUrl } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
-import Swal from 'sweetalert2';
+import { confirmDelete } from '@/shared/lib/confirm';
 import { createApp } from 'vue';
 import BudgetForm from '@/reports/components/BudgetForm.vue';
 import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
@@ -577,18 +577,8 @@ installRouteGlobal(budgetFormApp);
 const budgetForm = budgetFormApp.mount('#budgetChartFormApp');
 
 function confirmAndDelete(routeName, routeParams, id) {
-    Swal.fire({
-        animation: false,
-        text: __('Are you sure to want to delete this item?'),
-        icon: 'warning',
-        showCancelButton: true,
-        cancelButtonText: __('Cancel'),
+    confirmDelete(__('Are you sure to want to delete this item?'), {
         confirmButtonText: __('Delete'),
-        buttonsStyling: false,
-        customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-        },
     }).then((result) => {
         if (!result.isConfirmed) {
             return;

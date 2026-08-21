@@ -2,7 +2,7 @@
 
 Source: `review.md` in this folder. Each task is scoped to be picked up independently by an agent. Where a task references a "target pattern," that pattern was either the clear existing majority in the codebase, or an explicit decision made with the user during the review (see the decisions table at the end of `review.md`) — do not re-litigate those; if a task turns out to need a decision not covered here, stop and ask rather than guessing.
 
-Run `vendor/bin/sail npm run dev` after any JS/Vue/SCSS change and re-test the affected page before considering a task done, per `resources/js/CLAUDE.md`. Run `./vendor/bin/pint` and `./vendor/bin/phpstan analyse` after any PHP change, per the root `CLAUDE.md`.
+Run `vendor/bin/sail npm run dev` after any JS/Vue/SCSS change and re-test the affected page before considering a task done, per `resources/js/CLAUDE.md`. Run `vendor/bin/sail bin pint --dirty --format agent` and `vendor/bin/sail bin phpstan analyse` after any PHP change, per the root `CLAUDE.md`.
 
 ---
 

@@ -178,6 +178,7 @@
           confirmButtonText: __('Discard changes'),
         }).then((result) => {
           if (result.isConfirmed) {
+            this.form.reset();
             this.hide();
           }
         });

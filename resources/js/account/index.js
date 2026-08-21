@@ -2,11 +2,10 @@ import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
-import Swal from 'sweetalert2'
-
 import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
 import { escapeHtml, transactionLink } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 import {
     booleanToTableIcon,
@@ -217,20 +216,8 @@ table.contextualActions({
                 const account = row[0];
                 ajaxIsBusy = true;
 
-                // Get confirmation from the user using SweetAlert
-                Swal.fire({
-                    animation: false,
-                    text: __('Are you sure to want to delete this item?'),
-                    icon: "warning",
-                    showCancelButton: true,
-                    cancelButtonText: __('Cancel'),
-                    confirmButtonText: __('Confirm'),
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-secondary ms-3'
-                    }
-                }).then((result) => {
+                // Get confirmation from the user
+                confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
                     if (!result.isConfirmed) {
                         ajaxIsBusy = false;
                         return;

@@ -294,9 +294,10 @@ window.table = $(dataTableSelector).DataTable({
 // Listener for delete button. A full invalidate+redraw (rather than removing just the deleted
 // row) is needed because deleting a category also changes children_count on its parent's other
 // rows, which the delete button's own enabled/disabled state depends on.
-initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.categories.destroy', __('Category deleted'), function (id) {
+initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.categories.destroy', __('Category deleted'), function (id, tr) {
     window.categories = window.categories.filter(category => category.id !== id);
     recalculateChildrenCounts(window.categories);
+    table.row(tr).remove();
     table.rows().invalidate().draw(false);
 });
 

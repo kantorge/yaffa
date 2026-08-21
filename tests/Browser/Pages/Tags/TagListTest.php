@@ -154,30 +154,24 @@ class TagListTest extends DuskTestCase
                 // Wait for the table to load
                 ->waitFor('@table-tags');
 
-            // Click the "Delete" button for the first tag
             $browser->with('@table-tags', function ($table) use ($tagToDelete) {
                 $table->click('button.data-delete[data-id="' . $tagToDelete->id . '"]');
             });
 
-            // Wait for the SweetAlert2 confirmation dialog, and cancel it
             $browser->waitFor('.swal2-popup', 5)
-                ->assertSee('Are you sure to want to delete this item?')
+                ->assertSee('Are you sure you want to delete this item?')
                 ->click('.swal2-cancel');
 
-            // Check that the tag is still visible in the table
             $browser->assertSeeIn('#table', $tagToDelete->name);
 
-            // Click the "Delete" button for the first tag again, and confirm this time
             $browser->with('@table-tags', function ($table) use ($tagToDelete) {
                 $table->click('button.data-delete[data-id="' . $tagToDelete->id . '"]');
             });
             $browser->waitFor('.swal2-popup', 5)
                 ->click('.swal2-confirm');
 
-            // Check that a success toast is visible, with no page reload
             $browser->waitFor('.toast.bg-success', 5)
                 ->assertSee('Tag deleted')
-                // Check that the tag is not visible in the table anymore
                 ->assertDontSeeIn('@table-tags', $tagToDelete->name);
         });
     }

@@ -14,11 +14,8 @@ use Illuminate\Support\Facades\Gate;
 
 class CurrencyApiController extends Controller implements HasMiddleware
 {
-    protected CurrencyService $currencyService;
-
-    public function __construct()
+    public function __construct(protected CurrencyService $currencyService)
     {
-        $this->currencyService = new CurrencyService();
     }
 
     public static function middleware(): array

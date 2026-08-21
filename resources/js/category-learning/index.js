@@ -1,6 +1,5 @@
 import 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
-import Swal from 'sweetalert2';
 
 import { createApp } from 'vue';
 import CategoryLearningForm from './components/CategoryLearningForm.vue';
@@ -11,6 +10,7 @@ import { escapeHtml } from '@/shared/lib/helpers';
 import { initializeSelect2 } from '@/shared/lib/select2';
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -303,19 +303,7 @@ const buildTable = (rows) => {
       tableElement.on('click', '.button-delete-learning', function () {
         const id = Number($(this).data('id'));
 
-        Swal.fire({
-          animation: false,
-          text: __('Are you sure to want to delete this item?'),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: __('Cancel'),
-          confirmButtonText: __('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
+        confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
           if (!result.isConfirmed) {
             return;
           }
