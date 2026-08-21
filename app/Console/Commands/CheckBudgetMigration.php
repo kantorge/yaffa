@@ -237,6 +237,14 @@ class CheckBudgetMigration extends Command
                     ? $linkedAccount->currency_id
                     : $this->getBaseCurrency($transaction->user_id)?->id;
 
+                // No linked account and no resolvable base currency: the converted Budget's
+                // currency (FR-4: always derived, never stored) could never be determined either -
+                // flag this rather than silently treating "unknown expected currency" as "no
+                // mismatch found".
+                if ($linkedAccount === null && $expectedCurrencyId === null) {
+                    return true;
+                }
+
                 $actualCurrencyId = $transaction->transaction_currency?->id;
 
                 return $expectedCurrencyId !== null && $actualCurrencyId !== $expectedCurrencyId;
