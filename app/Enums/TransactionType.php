@@ -13,6 +13,9 @@ enum TransactionType: string
     case REMOVE_SHARES = 'remove_shares';
     case DIVIDEND = 'dividend';
     case INTEREST_YIELD = 'interest_yield';
+    case PURCHASED_INTEREST = 'purchased_interest';
+    case PRODUCT_FEE = 'product_fee';
+    case TAX_RELIEF = 'tax_relief';
 
     /**
      * Get the human-readable label for the transaction type
@@ -29,6 +32,9 @@ enum TransactionType: string
             self::REMOVE_SHARES => 'Remove shares',
             self::DIVIDEND => 'Dividend',
             self::INTEREST_YIELD => 'Interest yield',
+            self::PURCHASED_INTEREST => 'Purchased interest',
+            self::PRODUCT_FEE => 'Product fee',
+            self::TAX_RELIEF => 'Tax relief',
         };
     }
 
@@ -48,6 +54,9 @@ enum TransactionType: string
             self::REMOVE_SHARES => null,
             self::DIVIDEND => 1,
             self::INTEREST_YIELD => 1,
+            self::PURCHASED_INTEREST => -1,
+            self::PRODUCT_FEE => -1,
+            self::TAX_RELIEF => 1,
         };
     }
 
@@ -67,6 +76,9 @@ enum TransactionType: string
             self::REMOVE_SHARES => -1,
             self::DIVIDEND => null,
             self::INTEREST_YIELD => null,
+            self::PURCHASED_INTEREST => null,
+            self::PRODUCT_FEE => null,
+            self::TAX_RELIEF => null,
         };
     }
 
@@ -77,7 +89,7 @@ enum TransactionType: string
     {
         return match ($this) {
             self::WITHDRAWAL, self::DEPOSIT, self::TRANSFER => 'standard',
-            self::BUY, self::SELL, self::ADD_SHARES, self::REMOVE_SHARES, self::DIVIDEND, self::INTEREST_YIELD => 'investment',
+            self::BUY, self::SELL, self::ADD_SHARES, self::REMOVE_SHARES, self::DIVIDEND, self::INTEREST_YIELD, self::PURCHASED_INTEREST, self::PRODUCT_FEE, self::TAX_RELIEF => 'investment',
         };
     }
 
@@ -128,7 +140,25 @@ enum TransactionType: string
         return [
             self::DIVIDEND,
             self::INTEREST_YIELD,
+            self::PURCHASED_INTEREST,
+            self::PRODUCT_FEE,
+            self::TAX_RELIEF,
         ];
+    }
+
+    public function dividendMultiplier(): int
+    {
+        return $this === self::PURCHASED_INTEREST ? -1 : 1;
+    }
+
+    public function commissionMultiplier(): int
+    {
+        return -1;
+    }
+
+    public function taxMultiplier(): int
+    {
+        return $this === self::TAX_RELIEF ? 1 : -1;
     }
 
     /**
@@ -201,6 +231,9 @@ enum TransactionType: string
             'label' => $this->label(),
             'amount_multiplier' => $this->amountMultiplier(),
             'quantity_multiplier' => $this->quantityMultiplier(),
+            'dividend_multiplier' => $this->dividendMultiplier(),
+            'commission_multiplier' => $this->commissionMultiplier(),
+            'tax_multiplier' => $this->taxMultiplier(),
             'category' => $this->category(),
         ];
     }
