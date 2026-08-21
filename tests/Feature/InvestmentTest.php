@@ -36,6 +36,16 @@ class InvestmentTest extends TestCase
         return Investment::factory()->for($user)->withUser($user)->create();
     }
 
+    /**
+     * Delete moved to InvestmentApiController (api.v1.investments.destroy) - the web destroy
+     * route/action was removed as dead code. See InvestmentApiControllerTest for delete
+     * behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        return false;
+    }
+
     public function test_user_can_view_list_of_investments(): void
     {
         /** @var User $user */
@@ -353,14 +363,6 @@ class InvestmentTest extends TestCase
         $this->assertSame('https://example.com/price', $investment->provider_settings['url']);
         $this->assertSame('.price', $investment->provider_settings['selector']);
         $this->assertSame(',', $investment->provider_settings['decimal_separator']);
-    }
-
-    public function test_user_can_delete_an_existing_investment(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createPrerequisites($user);
-        $this->assertDestroyWithUser($user);
     }
 
     public function test_investment_show_derives_scheduled_instances_from_next_date(): void

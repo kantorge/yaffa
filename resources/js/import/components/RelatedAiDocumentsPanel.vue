@@ -5,22 +5,16 @@
       <span>{{ __('Related AI documents') }} ({{ candidates.length }})</span>
     </div>
     <div class="d-flex flex-column gap-2">
-      <a
+      <DismissiblePanel
         v-for="candidate in candidates"
         :key="candidate.ai_document_id"
+        tag="a"
         :href="documentUrl(candidate.ai_document_id)"
         target="_blank"
         rel="noopener noreferrer"
-        class="ai-doc-card border border-info rounded p-2 text-decoration-none text-body position-relative"
+        class="ai-doc-card border border-info rounded p-2 text-decoration-none text-body"
+        @dismiss="$emit('dismiss', candidate.ai_document_id)"
       >
-        <button
-          type="button"
-          class="btn-close position-absolute top-0 end-0 m-2"
-          :aria-label="__('Dismiss this suggestion')"
-          :title="__('Dismiss this suggestion')"
-          @click.stop.prevent="$emit('dismiss', candidate.ai_document_id)"
-        ></button>
-
         <!-- Header: merchant + amount -->
         <div class="d-flex justify-content-between align-items-start mb-1 pe-4">
           <span class="fw-semibold text-break me-2">
@@ -64,16 +58,20 @@
             <i class="fa fa-external-link me-1"></i>{{ __('Open AI document') }}
           </span>
         </div>
-      </a>
+      </DismissiblePanel>
     </div>
   </div>
 </template>
 
 <script>
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import DismissiblePanel from '@/shared/ui/DismissiblePanel.vue';
 
   export default {
     name: 'RelatedAiDocumentsPanel',
+    components: {
+      DismissiblePanel,
+    },
     props: {
       candidates: {
         type: Array,

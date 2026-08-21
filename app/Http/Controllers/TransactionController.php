@@ -125,31 +125,6 @@ class TransactionController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @throws AuthorizationException
-     */
-    public function destroy(Transaction $transaction): RedirectResponse
-    {
-        /**
-         * @delete("/transactions/{transaction}")
-         * @name("transactions.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-
-        // Authorize user for transaction
-        Gate::authorize('forceDelete', $transaction);
-
-        // Remove the transaction and its config
-        $transaction->delete();
-        $transaction->config()->delete();
-
-        self::addMessage('Transaction #' . $transaction->id . ' deleted', 'success', '', '', true);
-
-        return redirect()->back();
-    }
-
     public function skipScheduleInstance(Transaction $transaction): RedirectResponse
     {
         /**

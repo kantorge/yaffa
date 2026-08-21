@@ -200,7 +200,7 @@
                   :class="
                     !schedule.next_date
                       ? 'fa-warning text-warning'
-                      : 'fa-info-circle text-primary'
+                      : 'fa-info-circle text-info'
                   "
                   :title="
                     __(
@@ -284,7 +284,7 @@
               >
                 {{ __('End date') }}
                 <i
-                  class="fa fa-info-circle text-primary"
+                  class="fa fa-info-circle text-info"
                   v-if="schedule.count"
                   :title="__('Cleared (count set)')"
                 ></i>
@@ -336,7 +336,7 @@
                 >
                   {{ __('Automatic recording') }}
                   <i
-                    class="fa fa-info-circle text-primary"
+                    class="fa fa-info-circle text-info"
                     :title="
                       __(
                         'The transaction is automatically entered on the next date.',

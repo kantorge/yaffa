@@ -29,7 +29,7 @@
                         id="button-new-investment"
                         href="{{ route('investments.create') }}"
                         title="{{ __('New investment') }}">
-                        <i class="fa fa-fw fa-plus"></i>
+                        <i class="fa fa-plus"></i>
                     </a>
                 </li>
 

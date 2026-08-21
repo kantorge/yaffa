@@ -41,7 +41,7 @@
             <span>
               {{ __('Only count matching items in breakdowns') }}
               <i
-                class="fa fa-info-circle text-primary ms-1"
+                class="fa fa-info-circle text-info ms-1"
                 data-bs-toggle="tooltip"
                 :title="
                   __(

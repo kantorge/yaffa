@@ -5,20 +5,13 @@
       <span>{{ __('Potential duplicates') }} ({{ candidates.length }})</span>
     </div>
     <div class="duplicate-list d-flex flex-column gap-2">
-      <div
+      <DismissiblePanel
         v-for="(candidate, index) in candidates"
         :key="index"
-        class="duplicate-card border rounded p-2 position-relative"
+        class="duplicate-card border rounded p-2"
         :class="confidenceCardClass(candidate.confidence_score)"
+        @dismiss="$emit('dismiss', candidate.transaction_id)"
       >
-        <button
-          type="button"
-          class="btn-close position-absolute top-0 end-0 m-2"
-          :aria-label="__('Dismiss this suggestion')"
-          :title="__('Dismiss this suggestion')"
-          @click="$emit('dismiss', candidate.transaction_id)"
-        ></button>
-
         <!-- Header row: confidence + amount -->
         <div class="d-flex justify-content-between align-items-start mb-1 pe-4">
           <span
@@ -65,14 +58,16 @@
           :disabled="loadingTransactionId === candidate.transaction_id"
           @click="viewTransaction(candidate.transaction_id)"
         >
-          <span
-            v-if="loadingTransactionId === candidate.transaction_id"
-            class="spinner-border spinner-border-sm me-1"
-          ></span>
-          <i v-else class="fa fa-eye me-1"></i>
+          <i
+            :class="
+              loadingTransactionId === candidate.transaction_id
+                ? 'fa fa-spinner fa-spin me-1'
+                : 'fa fa-eye me-1'
+            "
+          ></i>
           {{ __('View existing transaction') }}
         </button>
-      </div>
+      </DismissiblePanel>
     </div>
   </div>
 </template>
@@ -81,9 +76,13 @@
   import axios from 'axios';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
   import { processTransaction } from '@/shared/lib/helpers';
+  import DismissiblePanel from '@/shared/ui/DismissiblePanel.vue';
 
   export default {
     name: 'DuplicateCandidatesPanel',
+    components: {
+      DismissiblePanel,
+    },
     props: {
       candidates: {
         type: Array,

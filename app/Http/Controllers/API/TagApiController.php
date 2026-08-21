@@ -23,7 +23,7 @@ class TagApiController extends Controller implements HasMiddleware
                 'getList', 'getItem',
             ]),
             new Middleware('abilities:write', only: [
-                'patchActive',
+                'patchActive', 'destroy',
             ]),
         ];
     }
@@ -86,5 +86,19 @@ class TagApiController extends Controller implements HasMiddleware
         $tag->save();
 
         return response()->json($tag, Response::HTTP_OK);
+    }
+
+    /**
+     * Delete a tag
+     *
+     * @throws AuthorizationException
+     */
+    public function destroy(Tag $tag): JsonResponse
+    {
+        Gate::authorize('delete', $tag);
+
+        $tag->delete();
+
+        return response()->json(['tag' => $tag], Response::HTTP_OK);
     }
 }

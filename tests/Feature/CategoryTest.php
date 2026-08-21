@@ -25,6 +25,16 @@ class CategoryTest extends TestCase
         $this->setBaseModel(Category::class);
     }
 
+    /**
+     * Delete moved to CategoryApiController (api.v1.categories.destroy) - the web destroy
+     * route/action was removed as dead code. See CategoryApiControllerTest for delete
+     * behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        return false;
+    }
+
     public function test_user_can_view_list_of_categories(): void
     {
         $user = User::factory()->create();
@@ -252,13 +262,6 @@ class CategoryTest extends TestCase
             'id' => $category->id,
             'description' => "updated description\nsecond line",
         ]);
-    }
-
-    public function test_user_can_delete_an_existing_category(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
     }
 
     public function test_user_cannot_open_merge_form_for_other_users_category(): void

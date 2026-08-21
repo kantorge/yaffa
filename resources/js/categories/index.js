@@ -5,6 +5,7 @@ import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     renderDeleteAssetButton,
+    initializeDeleteAssetButtonListener,
 } from '@/shared/lib/datatable';
 
 import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
@@ -287,51 +288,16 @@ window.table = $(dataTableSelector).DataTable({
             });
         });
 
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            let element = $(this);
-            element.addClass('busy');
-
-            // Send request to change investment active state
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.categories.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.categories = window.categories.filter(category => category.id !== data.category.id);
-                    recalculateChildrenCounts(window.categories);
-
-                    row.remove();
-                    table.rows().invalidate().draw(false);
-                    toastHelpers.showSuccessToast(
-                        __('Category deleted')
-                    );
-                },
-                error: function (data) {
-                    toastHelpers.showErrorToast(
-                        __('Error while trying to delete category: ') + data.responseJSON.error
-                    );
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
-                }
-            });
-        });
     }
+});
+
+// Listener for delete button. A full invalidate+redraw (rather than removing just the deleted
+// row) is needed because deleting a category also changes children_count on its parent's other
+// rows, which the delete button's own enabled/disabled state depends on.
+initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.categories.destroy', __('Category deleted'), function (id) {
+    window.categories = window.categories.filter(category => category.id !== id);
+    recalculateChildrenCounts(window.categories);
+    table.rows().invalidate().draw(false);
 });
 
 // Listeners for filters

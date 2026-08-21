@@ -672,8 +672,9 @@
               :form="form"
               dusk="button-save-google-drive"
             >
-              <i v-show="!form.busy" class="fa fa-save me-1"></i>
-              {{
+              <i
+                :class="form.busy ? 'fa me-1 fa-spinner fa-spin' : 'fa me-1 fa-save'"
+              ></i>{{
                 hasConfig
                   ? __('user.googleDriveSettings.buttons.update')
                   : __('user.googleDriveSettings.buttons.save')
@@ -692,8 +693,7 @@
                   'fa me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.testConnection') }}
+              ></i>{{ __('user.googleDriveSettings.buttons.testConnection') }}
             </button>
 
             <button
@@ -705,20 +705,22 @@
               @click="triggerSync"
             >
               <i
-                :class="['fa', syncing ? 'fa-spinner fa-spin' : 'fa-sync']"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.manualSync') }}
+                :class="[
+                  'fa',
+                  'me-1',
+                  syncing ? 'fa-spinner fa-spin' : 'fa-sync',
+                ]"
+              ></i>{{ __('user.googleDriveSettings.buttons.manualSync') }}
             </button>
 
             <button
               v-if="!hasConfig && showForm"
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               dusk="button-cancel-add-google-drive"
               @click="cancelAdd"
             >
-              <i class="fa fa-times me-1"></i>
-              {{ __('user.googleDriveSettings.buttons.cancel') }}
+              <i class="fa me-1 fa-times"></i>{{ __('user.googleDriveSettings.buttons.cancel') }}
             </button>
           </div>
 
@@ -729,8 +731,7 @@
             dusk="button-delete-google-drive"
             @click="deleteConfig"
           >
-            <i class="fa fa-trash"></i>
-            {{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
+            <i class="fa me-1 fa-trash"></i>{{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
           </button>
         </div>
       </div>
@@ -838,7 +839,7 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               data-coreui-dismiss="modal"
               dusk="button-folder-browser-cancel"
             >
@@ -1231,7 +1232,7 @@
               buttonsStyling: false,
               customClass: {
                 confirmButton: 'btn btn-primary',
-                cancelButton: 'btn btn-outline-secondary ms-3',
+                cancelButton: 'btn btn-secondary ms-3',
               },
             });
 
@@ -1436,7 +1437,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (result.isConfirmed) {

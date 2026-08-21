@@ -16,6 +16,4 @@
             :prices="{{ json_encode($prices) }}"
         ></investment-display-container>
     </div>
-
-    @include('template.components.model-delete-form')
 @stop

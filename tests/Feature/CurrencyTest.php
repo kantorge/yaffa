@@ -23,6 +23,16 @@ class CurrencyTest extends TestCase
         $this->setBaseModel(Currency::class);
     }
 
+    /**
+     * Delete moved to CurrencyApiController (api.v1.currencies.destroy) - the web destroy
+     * route/action was removed as dead code (T-02, frontend unification). See
+     * CurrencyApiControllerTest for delete behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        return false;
+    }
+
     public function test_user_can_view_list_of_currencies(): void
     {
         /** @var User $user */
@@ -133,13 +143,6 @@ class CurrencyTest extends TestCase
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
-    }
-
-    public function test_user_can_delete_an_existing_currency(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
     }
 
     public function test_factory_deduplicates_for_authenticated_user_with_explicit_null_user_id(): void

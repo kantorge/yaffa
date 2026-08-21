@@ -29,7 +29,7 @@ Route::view('/terms', 'pages.sandbox-terms')->name('terms');
 /*********************
  * Account and payee related routes
  ********************/
-Route::resource('account-groups', AccountGroupController::class)->except(['show']);
+Route::resource('account-groups', AccountGroupController::class)->except(['show', 'destroy']);
 
 Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
@@ -46,7 +46,7 @@ Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->n
 /*********************
  * Category related routes
  ********************/
-Route::resource('categories', CategoryController::class)->except(['show']);
+Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
 // Routes to display form to merge two categories
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
     ->name('categories.merge.form');
@@ -59,7 +59,7 @@ Route::get('/category-learning', [CategoryLearningController::class, 'index'])
 /*********************
  * Currency and currency rate related routes
  ********************/
-Route::resource('currencies', CurrencyController::class)->except(['show']);
+Route::resource('currencies', CurrencyController::class)->except(['show', 'destroy']);
 Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currencies.setDefault');
 
@@ -69,8 +69,8 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 /*********************
  * Investment related routes
  ********************/
-Route::resource('investment-groups', InvestmentGroupController::class)->except(['show']);
-Route::resource('investments', InvestmentController::class);
+Route::resource('investment-groups', InvestmentGroupController::class)->except(['show', 'destroy']);
+Route::resource('investments', InvestmentController::class)->except(['destroy']);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
@@ -79,7 +79,7 @@ Route::get('/investment-price/list/{investment}', [InvestmentPriceController::cl
  * Tag related routes
  ********************/
 Route::resource('tags', TagController::class)
-    ->except(['show']);
+    ->except(['show', 'destroy']);
 
 /*******************
  * Transaction related routes
@@ -96,8 +96,6 @@ Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 
     ->name('transactions.skipScheduleInstance');
 Route::post('/transactions/create-from-draft', [TransactionController::class, 'createFromDraft'])
     ->name('transactions.createFromDraft');
-Route::resource('transactions', TransactionController::class)
-    ->only(['destroy']);
 
 /*******************
  * Report related routes

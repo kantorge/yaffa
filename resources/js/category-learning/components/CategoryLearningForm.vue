@@ -1,37 +1,13 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form
-          accept-charset="UTF-8"
-          @submit.prevent="onSubmit"
-          autocomplete="off"
-        >
-          <div class="modal-header">
-            <h5 class="modal-title" v-if="action === 'new'">
-              {{ __('Add new category learning entry') }}
-            </h5>
-            <h5 class="modal-title" v-else>
-              {{ __('Edit category learning entry') }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-coreui-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-
-          <div class="modal-body">
-            <AlertErrors
-              :form="form"
-              :message="__('There were some problems with your input.')"
-            />
-            <AlertSuccess
-              :form="form"
-              :message="__('Your changes have been saved!')"
-            />
-
+  <FormModal
+    ref="formModal"
+    :id="id"
+    :action="action"
+    :new-title="__('Add new category learning entry')"
+    :edit-title="__('Edit category learning entry')"
+    :form="form"
+    @submit="onSubmit"
+  >
             <div class="row mb-3">
               <label :for="descriptionInputId" class="form-label col-sm-3">
                 {{ __('Description') }}
@@ -104,24 +80,7 @@
                 </ul>
               </div>
             </div>
-          </div>
-
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-default"
-              data-coreui-dismiss="modal"
-            >
-              {{ __('Close') }}
-            </button>
-            <Button class="btn btn-primary" :disabled="form.busy" :form="form">
-              {{ __('Save') }}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  </FormModal>
 </template>
 
 <script>
@@ -129,17 +88,12 @@
   initializeSelect2(window.YAFFA.userSettings.language);
 
   import Form from 'vform';
-  import {
-    Button,
-    AlertErrors,
-    AlertSuccess,
-  } from 'vform/src/components/bootstrap5';
+
+  import FormModal from '@/shared/ui/FormModal.vue';
 
   export default {
     components: {
-      Button,
-      AlertErrors,
-      AlertSuccess,
+      FormModal,
     },
 
     props: {
@@ -195,7 +149,6 @@
 
     mounted() {
       this.initializeCategorySelect();
-      this.modal = new coreui.Modal(document.getElementById(this.id));
     },
 
     beforeUnmount() {
@@ -217,9 +170,14 @@
           if (learning.category) {
             this.setSelectValue(this.categorySelect, learning.category);
           }
+
+          // The freshly-loaded values are the "clean" baseline for the
+          // dirty check in FormModal, not the blank values the Form was
+          // constructed with.
+          this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
         }
 
-        this.modal.show();
+        this.$refs.formModal.show();
       },
 
       initializeCategorySelect() {
@@ -371,7 +329,7 @@
 
       hideAndReset() {
         this.resetForm();
-        this.modal.hide();
+        this.$refs.formModal.hide();
       },
 
       async onSubmit() {

@@ -172,11 +172,11 @@
               :disabled="selectedFiles.length === 0 || isSubmitting"
             >
               <span v-if="isSubmitting">
-                <span
-                  class="spinner-border spinner-border-sm me-2"
+                <i
+                  class="fa fa-spinner fa-spin me-2"
                   role="status"
                   aria-hidden="true"
-                ></span>
+                ></i>
                 {{ __('Uploading...') }}
               </span>
               <span v-else>
@@ -195,6 +195,7 @@
   import { ref, reactive, computed, onMounted } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   const props = defineProps({
     modalId: {
@@ -236,9 +237,47 @@
     return allowedTypes.map((type) => mimeMap[type] || '').join(',');
   });
 
+  const isDirty = computed(
+    () => selectedFiles.value.length > 0 || form.customPrompt.trim() !== '',
+  );
+
+  // Set right before a programmatic close so the hide.coreui.modal listener
+  // lets it through once without re-running the dirty check.
+  let forceCloseModal = false;
+
+  const closeModal = () => {
+    forceCloseModal = true;
+    modal.value?.hide();
+  };
+
   onMounted(() => {
     if (modalElement.value) {
       modal.value = new coreui.Modal(modalElement.value);
+
+      // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+      // programmatic close alike) - ask for confirmation if there are
+      // unsaved changes.
+      modalElement.value.addEventListener('hide.coreui.modal', (event) => {
+        if (forceCloseModal) {
+          forceCloseModal = false;
+          return;
+        }
+
+        if (!isDirty.value) {
+          return;
+        }
+
+        event.preventDefault();
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          confirmButtonText: __('Discard changes'),
+        }).then((result) => {
+          if (result.isConfirmed) {
+            closeModal();
+          }
+        });
+      });
     }
 
     // Fetch warning dismissal state
@@ -371,7 +410,7 @@
         // Emit event for parent to refresh the list
         emit('document-created', data);
 
-        modal.value?.hide();
+        closeModal();
       } else {
         const data = await response.json();
 
@@ -425,7 +464,7 @@
 
   defineExpose({
     show: () => modal.value?.show(),
-    hide: () => modal.value?.hide(),
+    hide: closeModal,
   });
 </script>
 

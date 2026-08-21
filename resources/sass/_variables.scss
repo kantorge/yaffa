@@ -6,16 +6,16 @@
 // Color system
 
 $white:     #fff !default;
-$gray-base: #3c4b64 !default;
-$gray-100:  #ebedef !default;
-$gray-200:  #d8dbe0 !default;
-$gray-300:  #c4c9d0 !default;
-$gray-400:  #b1b7c1 !default;
-$gray-500:  #9da5b1 !default;
-$gray-600:  #8a93a2 !default;
-$gray-700:  #768192 !default;
-$gray-800:  #636f83 !default;
-$gray-900:  #4f5d73 !default;
+$gray-base: #334155 !default;
+$gray-100:  #f1f5f9 !default;
+$gray-200:  #e2e8f0 !default;
+$gray-300:  #cbd5e1 !default;
+$gray-400:  #94a3b8 !default;
+$gray-500:  #64748b !default;
+$gray-600:  #475569 !default;
+$gray-700:  #334155 !default;
+$gray-800:  #1e293b !default;
+$gray-900:  #0f172a !default;
 $black:     #000015 !default;
 
 // fusv-disable
@@ -50,6 +50,8 @@ $yellow:  #ffc107 !default;
 $green:   #198754 !default;
 $teal:    #20c997 !default;
 $cyan:    #0dcaf0 !default;
+
+$primary: #4F46E5 !default;
 
 // $colors: (
 //   "blue":       $blue,
@@ -272,11 +274,13 @@ $cyan-900: shade-color($cyan, 80%) !default;
 $enable-ltr:                        true !default;
 $enable-rtl:                        false !default;
 
-// CoreUI v5 uses color-translucent($gray-300, .175) which fails with our custom
-// darker gray-300 value (#c4c9d0). Override with a Bootstrap-compatible value.
+// CoreUI v5 uses color-translucent($gray-300, .175), which fails whenever $gray-300
+// is too light relative to $white for that alpha to be reproducible (true for both
+// our original darker gray-300 and the current neutral-slate gray-300). Override
+// with a Bootstrap-compatible literal value instead of letting CoreUI compute it.
 $border-color-translucent:          rgba(0, 0, 0, .175) !default;
 
-// Our custom light-theme grays ($gray-800/#636f83, $gray-900/#4f5d73) are too light
+// Our custom light-theme $gray-800/$gray-900 values aren't guaranteed dark enough
 // for CoreUI v5's dark mode calculations (color-translucent requires a darker base).
 // Override with CoreUI v5's own default dark grays so dark mode computations succeed.
 $gray-800-dark:                     #323a49 !default;
@@ -416,7 +420,7 @@ $gray-900-dark:                     #212631 !default;
 
 // $border-color:                $gray-200 !default;
 
-// $border-radius:               .25rem !default;
+$border-radius:               0.375rem !default;
 // $border-radius-sm:            .2rem !default;
 // $border-radius-lg:            .3rem !default;
 // $border-radius-pill:          50rem !default;

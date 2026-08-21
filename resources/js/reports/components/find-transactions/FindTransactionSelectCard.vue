@@ -6,7 +6,7 @@
       </div>
       <div>
         <button
-          class="btn btn-sm btn-outline-danger"
+          class="btn btn-sm btn-danger"
           @click="clearSelection"
           :disabled="selectedValues.length === 0 || !ready"
           :title="__('Clear selection')"

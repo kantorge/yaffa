@@ -434,6 +434,18 @@
     emits: ['ignore-draft', 'finalize-draft', 'enter-schedule-draft'],
     data() {
       return {
+        // T-08 evaluation: this stays a hand-rolled Set instead of CoreUI's
+        // collapse plugin (data-coreui-toggle="collapse") on purpose. Each
+        // draft row needs fully independent expand/collapse state across a
+        // list whose membership changes with filtering/pagination
+        // (visibleDrafts) — that means creating/destroying a collapse
+        // instance per <tr> on every list change, which the collapse
+        // plugin has no lifecycle hook for from a v-for. It also animates
+        // via `height`, which doesn't transition cleanly on table rows
+        // across browsers. A reactive Set keyed by draft_index gives O(1)
+        // per-row toggle state for free and needs no manual instance
+        // bookkeeping, so it's kept as-is rather than forced onto the
+        // collapse pattern used elsewhere in the app.
         expandedRows: new Set(),
         showDraftRows: true,
         showIgnoredRows: false,

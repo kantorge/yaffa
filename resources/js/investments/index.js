@@ -2,11 +2,10 @@ import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
-import Swal from 'sweetalert2'
-
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 let ajaxIsBusy = false;
 
@@ -25,7 +24,7 @@ let table = $('#investmentSummary').DataTable({
                 // Display the name AND the contextual action trigger icon
                 return `
                     <div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
+                        <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
                         <span>
                             <a href="${window.route('investments.show', row.id)}" title="${__('View investment details')}">${data}</a>
                         </span>
@@ -131,42 +130,46 @@ let table = $('#investmentSummary').DataTable({
 
         // Listener for delete button
         $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+            const button = this;
+
             // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            let element = $(this);
-            element.addClass('busy');
-
-            // Send request to change investment active state
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.investments.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
-
-                    // Remove row from table
-                    $(settings.nTable).DataTable().row($(this).parents('tr')).remove().draw();
-
-                    toastHelpers.showSuccessToast(__('Investment deleted'));
-                },
-                error: function (_data) {
-                    toastHelpers.showErrorToast(__('Error while trying to delete investment'));
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
+            confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
                 }
+
+                let row = $(settings.nTable).DataTable().row($(button).parents('tr'));
+
+                // Change icon to spinner
+                let element = $(button);
+                element.addClass('busy');
+
+                // Send request to change investment active state
+                $.ajax({
+                    type: 'DELETE',
+                    url: window.route('api.v1.investments.destroy', row.data().id),
+                    data: {
+                        "_token": csrfToken,
+                    },
+                    dataType: "json",
+                    context: button,
+                    success: function (data) {
+                        // Update row in table data source
+                        window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
+
+                        // Remove row from table
+                        $(settings.nTable).DataTable().row($(button).parents('tr')).remove().draw();
+
+                        toastHelpers.showSuccessToast(__('Investment deleted'));
+                    },
+                    error: function (_data) {
+                        toastHelpers.showErrorToast(__('Error while trying to delete investment'));
+                    },
+                    complete: function (_data) {
+                        // Restore button icon
+                        element.removeClass('busy');
+                    }
+                });
             });
         });
     },
@@ -270,18 +273,9 @@ table.contextualActions({
 
                 ajaxIsBusy = true;
 
-                // Get confirmation from user using SweetAlert2
-                Swal.fire({
-                    text: __('Are you sure you want to delete this investment?'),
-                    icon: 'warning',
-                    showCancelButton: true,
-                    cancelButtonText: __('Cancel'),
+                // Get confirmation from user
+                confirmDelete(__('Are you sure you want to delete this investment?'), {
                     confirmButtonText: __('Delete'),
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-outline-secondary ms-3'
-                    }
                 }).then((result) => {
                     if (!result.isConfirmed) {
                         ajaxIsBusy = false;

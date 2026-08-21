@@ -153,10 +153,10 @@
                 :disabled="aiSuggesting"
                 @click="requestAiSuggestion"
               >
-                <span
+                <i
                   v-if="aiSuggesting"
-                  class="spinner-border spinner-border-sm me-1"
-                ></span>
+                  class="fa fa-spinner fa-spin me-1"
+                ></i>
                 {{
                   aiSuggesting
                     ? __('Requesting suggestion…')
@@ -166,7 +166,7 @@
               <button
                 v-if="!aiSuggesting"
                 type="button"
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-secondary"
                 @click="showAiPanel = false"
               >
                 {{ __('Cancel') }}
@@ -691,16 +691,16 @@
         :disabled="saving"
         @click="save"
       >
-        <span
+        <i
           v-if="saving"
-          class="spinner-border spinner-border-sm me-1"
-        ></span>
+          class="fa fa-spinner fa-spin me-1"
+        ></i>
         {{ __('Save profile') }}
       </button>
 
       <button
         type="button"
-        class="btn btn-sm btn-outline-secondary ms-auto"
+        class="btn btn-sm btn-secondary ms-auto"
         :disabled="saving"
         @click="$emit('cancel')"
       >

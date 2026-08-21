@@ -167,6 +167,7 @@
   import Decimal from 'decimal.js';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getPayeeCategoryStats } from '@/payee/payee-stats-api';
+  import { confirmDelete } from '@/shared/lib/confirm';
 
   // Matches transaction_items.amount's MoneyCast scale (app/Models/TransactionItem.php).
   const ITEM_AMOUNT_SCALE = 4;
@@ -300,16 +301,15 @@
 
       async applyStandardTransactionItems() {
         if (this.transactionItems.length > 0) {
-          const result = await Swal.fire({
-            title: __('Replace items?'),
-            text: __(
+          const result = await confirmDelete(
+            __(
               'Existing transaction items will be removed and overwritten.',
             ),
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: __('Replace'),
-            cancelButtonText: __('Cancel'),
-          });
+            {
+              title: __('Replace items?'),
+              confirmButtonText: __('Replace'),
+            },
+          );
 
           if (!result.isConfirmed) {
             return;
@@ -338,6 +338,10 @@
               ),
               icon: 'warning',
               confirmButtonText: __('OK'),
+              buttonsStyling: false,
+              customClass: {
+                confirmButton: 'btn btn-primary',
+              },
             });
 
             return;

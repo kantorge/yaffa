@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Budget;
+use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
@@ -63,11 +64,14 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.update' => ['api.v1.budgets.update', 'patch', 'write', ['budget' => 1]],
             'budgets.destroy' => ['api.v1.budgets.destroy', 'delete', 'write', ['budget' => 1]],
             'categories.store' => ['api.v1.categories.store', 'post', 'write', []],
+            'categories.destroy' => ['api.v1.categories.destroy', 'delete', 'write', ['category' => 1]],
             'payees.store' => ['api.v1.payees.store', 'post', 'write', []],
             'tags.patch-active' => ['api.v1.tags.patch-active', 'patch', 'write', ['tag' => 1]],
             'investments.destroy' => ['api.v1.investments.destroy', 'delete', 'write', ['investment' => 1]],
             'account-entities.destroy' => ['api.v1.account-entities.destroy', 'delete', 'write', ['accountEntity' => 1]],
             'account-groups.destroy' => ['api.v1.account-groups.destroy', 'delete', 'write', ['accountGroup' => 1]],
+            'currencies.destroy' => ['api.v1.currencies.destroy', 'delete', 'write', ['currency' => 1]],
+            'tags.destroy' => ['api.v1.tags.destroy', 'delete', 'write', ['tag' => 1]],
             'investment-groups.destroy' => ['api.v1.investment-groups.destroy', 'delete', 'write', ['investmentGroup' => 1]],
             'imports.parse' => ['api.v1.imports.parse', 'post', 'write', []],
             'imports.file-profiles.store' => ['api.v1.imports.file-profiles.store', 'post', 'write', []],
@@ -156,8 +160,14 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.investments.display-data' => [
                 'investment' => $this->createOwnedInvestment($user)->id,
             ],
-            'api.v1.tags.show', 'api.v1.tags.patch-active' => [
+            'api.v1.tags.show', 'api.v1.tags.patch-active', 'api.v1.tags.destroy' => [
                 'tag' => Tag::factory()->for($user)->create()->id,
+            ],
+            'api.v1.currencies.destroy' => [
+                'currency' => Currency::factory()->for($user)->create()->id,
+            ],
+            'api.v1.categories.destroy' => [
+                'category' => Category::factory()->for($user)->create()->id,
             ],
             'api.v1.investments.destroy' => [
                 'investment' => $this->createOwnedInvestment($user)->id,

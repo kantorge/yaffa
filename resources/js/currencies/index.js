@@ -3,14 +3,15 @@ import 'datatables.net-responsive-bs5';
 
 import {
     booleanToTableIcon,
-    genericDataTablesActionButton,
-    initializeDeleteButtonListener
+    genericDataTablesActionButton
 } from '@/shared/lib/datatable';
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { confirmDelete, confirmAction } from '@/shared/lib/confirm';
+import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 
-$(dataTableSelector).DataTable({
+const table = $(dataTableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: window.currencies,
     columns: [
@@ -102,7 +103,7 @@ $(dataTableSelector).DataTable({
                     // Base currency cannot be deleted or set as default
                     (!row.base
                         ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.userSettings.baseCurrency.id + '" class="btn btn-xs btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-fw fa-chart-line"></i></a> ' +
-                        genericDataTablesActionButton(data, 'delete', 'currencies.destroy') +
+                        genericDataTablesActionButton(data, 'delete') +
                         '<a href="' + window.route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary data-set-default" title="' + __('Set as default') + '"><i class="fa-solid fa-fw fa-building-columns"></i></a>'
                         : '');
             },
@@ -117,14 +118,43 @@ $(dataTableSelector).DataTable({
     responsive: true,
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'currencies.destroy');
+$(dataTableSelector).on('click', '.data-delete:not(.busy)', function () {
+    const button = $(this);
+    const id = Number(button.data('id'));
+
+    confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        button.addClass('busy');
+
+        axios.delete(window.route('api.v1.currencies.destroy', id))
+            .then(function () {
+                window.currencies = window.currencies.filter((currency) => currency.id !== id);
+
+                table.row(function (_idx, data) {
+                    return data.id === id;
+                }).remove().draw();
+
+                toastHelpers.showSuccessToast(__('Currency deleted'));
+            })
+            .catch(function (error) {
+                toastHelpers.showErrorToast(error.response?.data?.error || __('Error while trying to delete currency'));
+            })
+            .finally(function () {
+                button.removeClass('busy');
+            });
+    });
+});
 
 // Create a confirmation dialog for the "Set as default" button
 $(dataTableSelector).on('click', 'a.data-set-default', function (event) {
     event.preventDefault();
     const url = $(this).attr('href');
-    if (!confirm(__('Are you sure you want to set this currency as the default one?'))) {
-        return;
-    }
-    window.location.href = url;
+    confirmAction(__('Are you sure you want to set this currency as the default one?')).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
 });

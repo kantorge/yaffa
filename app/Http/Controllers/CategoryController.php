@@ -9,7 +9,6 @@ use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +27,6 @@ class CategoryController extends Controller implements HasMiddleware
             new Middleware('can:viewAny,' . Category::class, only: ['index']),
             new Middleware('can:create,' . Category::class, only: ['create', 'store']),
             new Middleware('can:update,category', only: ['edit', 'update']),
-            new Middleware('can:delete,category', only: ['destroy']),
         ];
     }
 
@@ -143,32 +141,6 @@ class CategoryController extends Controller implements HasMiddleware
         self::addSimpleSuccessMessage(__('Category updated'));
 
         return to_route('categories.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category): RedirectResponse
-    {
-        /**
-         * @delete("/categories/{category}")
-         * @name("categories.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        try {
-            $category->delete();
-            self::addSimpleSuccessMessage(__('Category deleted'));
-
-            return to_route('categories.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleErrorMessage(__('Category is in use, cannot be deleted'));
-            } else {
-                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
-        }
     }
 
     /**

@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
-use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +22,16 @@ class AccountGroupTest extends TestCase
 
         $this->setBaseRoute('account-groups');
         $this->setBaseModel(AccountGroup::class);
+    }
+
+    /**
+     * Delete moved to AccountGroupApiController (api.v1.account-groups.destroy) - the web
+     * destroy route/action was removed as dead code. See AccountGroupApiControllerTest for
+     * delete behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        return false;
     }
 
     public function test_user_can_view_list_of_account_groups(): void
@@ -127,30 +135,5 @@ class AccountGroupTest extends TestCase
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
-    }
-
-    public function test_user_can_delete_an_existing_account_group(): void
-    {
-        $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
-    }
-
-    public function test_user_cannot_delete_account_group_with_attached_account(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-
-        /** @var AccountEntity $accountGroup */
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
-        $account->load('config');
-        $accountGroup = $account->config->accountGroup;
-
-        $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $accountGroup->id));
-        $response->assertSessionHas('notification_collection.0.type', 'danger');
-
-        $this->assertDatabaseHas($accountGroup->getTable(), $accountGroup->toArray());
     }
 }

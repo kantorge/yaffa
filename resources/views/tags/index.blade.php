@@ -31,7 +31,7 @@
                            dusk="button-new-tag"
                            href="{{ route('tags.create') }}" title="{{ __('New tag') }}"
                         >
-                            <i class="fa fa-fw fa-plus" title="{{ __('New tag') }}"></i>
+                            <i class="fa fa-plus" title="{{ __('New tag') }}"></i>
                         </a>
                     </li>
                 </ul>
@@ -70,6 +70,4 @@
             </div>
         </div>
     </div>
-
-    @include('template.components.model-delete-form')
 @stop

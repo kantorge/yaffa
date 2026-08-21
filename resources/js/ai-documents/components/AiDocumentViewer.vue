@@ -797,7 +797,7 @@
       buttonsStyling: false,
       customClass: {
         confirmButton: 'btn btn-warning',
-        cancelButton: 'btn btn-outline-secondary ms-3',
+        cancelButton: 'btn btn-secondary ms-3',
       },
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -848,7 +848,7 @@
       buttonsStyling: false,
       customClass: {
         confirmButton: 'btn btn-danger',
-        cancelButton: 'btn btn-outline-secondary ms-3',
+        cancelButton: 'btn btn-secondary ms-3',
       },
     }).then((result) => {
       if (!result.isConfirmed) {

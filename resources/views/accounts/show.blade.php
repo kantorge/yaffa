@@ -198,6 +198,4 @@
     <transaction-create-investment-modal></transaction-create-investment-modal>
 </div>
 
-@include('template.components.model-delete-form')
-
 @stop

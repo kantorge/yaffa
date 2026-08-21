@@ -1,36 +1,14 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <form
-          accept-charset="UTF-8"
-          @submit.prevent="onSubmit"
-          autocomplete="off"
-        >
-          <div class="modal-header">
-            <h5 class="modal-title" v-if="action == 'new'">
-              {{ __('Add new budget') }}
-            </h5>
-            <h5 class="modal-title" v-if="action == 'edit'">
-              {{ __('Edit budget') }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-coreui-dismiss="modal"
-              :aria-label="__('Close')"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <AlertErrors
-              :form="form"
-              :message="__('There were some problems with your input.')"
-            />
-            <AlertSuccess
-              :form="form"
-              :message="__('Your changes have been saved!')"
-            />
-
+  <FormModal
+    ref="formModal"
+    :id="id"
+    size="lg"
+    :action="action"
+    :new-title="__('Add new budget')"
+    :edit-title="__('Edit budget')"
+    :form="form"
+    @submit="onSubmit"
+  >
             <div class="row mb-3">
               <label :for="categorySelectId" class="form-label col-sm-3">
                 {{ __('Category') }}
@@ -48,7 +26,7 @@
               <label :for="accountSelectId" class="form-label col-sm-3">
                 {{ __('Account') }}
                 <i
-                  class="fa fa-info-circle text-primary"
+                  class="fa fa-info-circle text-info"
                   :title="
                     __(
                       'Optional. Leave empty for an account-agnostic budget, calculated in your base currency.',
@@ -146,26 +124,7 @@
               bare
               key="budget-period"
             ></transaction-schedule>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-default"
-              data-coreui-dismiss="modal"
-            >
-              {{ __('Close') }}
-            </button>
-            <Button
-              class="btn btn-primary"
-              :disabled="form.busy"
-              :form="form"
-              >{{ __('Save') }}</Button
-            >
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  </FormModal>
 </template>
 
 <script>
@@ -173,20 +132,14 @@
   initializeSelect2(window.YAFFA.userSettings.language);
 
   import Form from 'vform';
-  import {
-    Button,
-    AlertErrors,
-    AlertSuccess,
-  } from 'vform/src/components/bootstrap5';
 
+  import FormModal from '@/shared/ui/FormModal.vue';
   import TransactionSchedule from '@/transactions/components/form/TransactionSchedule.vue';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
     components: {
-      Button,
-      AlertErrors,
-      AlertSuccess,
+      FormModal,
       TransactionSchedule,
     },
 
@@ -275,8 +228,6 @@
     mounted() {
       this.initializeCategorySelect();
       this.initializeAccountSelect();
-
-      this.modal = new coreui.Modal(document.getElementById(this.id));
     },
 
     methods: {
@@ -287,7 +238,7 @@
           this.loadBudgetData(budgetId);
         }
 
-        this.modal.show();
+        this.$refs.formModal.show();
       },
 
       initializeCategorySelect() {
@@ -465,6 +416,13 @@
 
             this.accountCurrencyCode = data.account?.config?.currency?.iso_code ?? null;
             this.accountCurrencyPending = false;
+
+            // The freshly-loaded values are the "clean" baseline for the
+            // dirty check in FormModal, not the blank values the Form was
+            // constructed with.
+            this.form.originalData = JSON.parse(
+              JSON.stringify(this.form.data()),
+            );
           })
           .catch((error) => {
             console.error('Error loading budget:', error);
@@ -506,7 +464,7 @@
 
       hideAndReset() {
         this.resetForm();
-        this.modal.hide();
+        this.$refs.formModal.hide();
       },
 
       onSubmit() {
