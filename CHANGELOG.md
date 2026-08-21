@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.1](https://github.com/kantorge/yaffa/compare/v3.6.0...v3.6.1) (2026-08-21)
+
+
+### 🐛 Bug Fixes
+
+* V4 preparations ([068426f](https://github.com/kantorge/yaffa/commit/068426fb91bb2596a0f774bb4eb47a6dc2014498))
+
 ## [3.6.0](https://github.com/kantorge/yaffa/compare/v3.5.2...v3.6.0) (2026-08-20)
 
 
