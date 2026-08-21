@@ -1729,7 +1729,6 @@ INSERT INTO `transactions` (`id`,`ai_document_id`,`user_id`,`date`,`transaction_
 ('26995',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26120',NULL,'-15.0000'),
 ('26996',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26121',NULL,'-10.0000'),
 ('26997',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26122',NULL,'-500.0000'),
-('26999',NULL,'3',NULL,'withdrawal','0','0','1',NULL,'standard','26124',NULL,'-50.0000'),
 ('27000',NULL,'1',NULL,'withdrawal','0','0','1',NULL,'standard','26125',NULL,'-100.0000'),
 ('27001',NULL,'1',NULL,'buy','0','1','0',NULL,'investment','30','1','-270.0000');
 
@@ -4049,7 +4048,6 @@ INSERT INTO `transaction_items` (`id`,`transaction_id`,`category_id`,`amount`,`c
 ('39194','26995','34','15.0000',NULL),
 ('39195','26996','90','10.0000',NULL),
 ('39196','26997','101','500.0000',NULL),
-('39198','26999','157','50.0000',NULL),
 ('39199','27000','11','100.0000',NULL);
 
 -- categories
@@ -4163,7 +4161,6 @@ INSERT INTO `transaction_schedules` (`id`,`transaction_id`,`automatic_recording`
 ('240','26995','0','1','2007-06-01',NULL,NULL,'MONTHLY','1',NULL,NULL),
 ('241','26996','0','1','2007-06-01',NULL,NULL,'MONTHLY','1',NULL,NULL),
 ('242','26997','0','1','2007-06-01',NULL,NULL,'MONTHLY','1',NULL,NULL),
-('243','26999','0','1','2008-06-01',NULL,NULL,'MONTHLY','1',NULL,NULL),
 ('244','27000','0','1','2007-06-01',NULL,NULL,'MONTHLY','3',NULL,NULL),
 ('245','27001','0','1','2008-12-10','2008-12-10',NULL,'MONTHLY','3',NULL,NULL);
 
@@ -5787,7 +5784,6 @@ INSERT INTO `transaction_details_standard` (`id`,`account_from_id`,`account_to_i
 ('26120',NULL,NULL,'15.0000','15.0000'),
 ('26121',NULL,NULL,'10.0000','10.0000'),
 ('26122',NULL,NULL,'500.0000','500.0000'),
-('26124',NULL,NULL,'50.0000','50.0000'),
 ('26125',NULL,NULL,'100.0000','100.0000');
 
 -- transaction_details_investment
