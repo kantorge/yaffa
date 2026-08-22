@@ -1014,11 +1014,7 @@
       this.$nextTick(() => {
         const el = this.$refs.folderBrowserModalEl;
         if (el) {
-          if (window.coreui && window.coreui.Modal) {
-            this.folderBrowserModal = new window.coreui.Modal(el);
-          } else if (window.bootstrap && window.bootstrap.Modal) {
-            this.folderBrowserModal = new window.bootstrap.Modal(el);
-          }
+          this.folderBrowserModal = new window.coreui.Modal(el);
         }
       });
     },
