@@ -6,7 +6,7 @@
       </div>
       <span
         v-if="currentSelectedTypes.length === 0"
-        class="fa fa-info-circle text-primary"
+        class="fa fa-info-circle text-info"
         data-bs-toggle="tooltip"
         data-bs-placement="right"
         :title="

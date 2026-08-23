@@ -1,7 +1,7 @@
 <template>
   <div class="card" id="twoFactorSettings">
     <div class="card-header">
-      <div class="card-title mb-0">{{ __('Two-Factor Authentication') }}</div>
+      <div class="card-title">{{ __('Two-Factor Authentication') }}</div>
     </div>
     <div class="card-body" v-if="sandbox_mode">
       <div class="alert alert-warning mb-0">
@@ -44,7 +44,7 @@
             </button>
             <button
               type="button"
-              class="btn btn-outline-danger btn-sm"
+              class="btn btn-danger btn-sm"
               :disabled="busy"
               dusk="button-disable-2fa"
               @click="disableTwoFactor"
@@ -92,8 +92,7 @@
               :value="revealedRecoveryCodes.join('\n')"
             ></textarea>
             <button type="button" class="btn btn-outline-secondary" @click="copyRecoveryCodes">
-              <i class="fa fa-copy"></i>
-              {{ __('Copy') }}
+              <i class="fa me-1 fa-copy"></i>{{ __('Copy') }}
             </button>
           </div>
           <div class="form-check">
@@ -179,7 +178,7 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               data-coreui-dismiss="modal"
               @click="resetEnrollment"
             >
@@ -337,6 +336,7 @@
       async promptForPassword(title, confirmButtonText) {
         const { value: password, isConfirmed } = await Swal.fire({
           title,
+          icon: 'warning',
           input: 'password',
           inputLabel: __('Enter your password to confirm'),
           inputAttributes: { autocomplete: 'current-password' },
@@ -346,7 +346,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
           inputValidator: (value) => (!value ? __('Password is required.') : undefined),
         });

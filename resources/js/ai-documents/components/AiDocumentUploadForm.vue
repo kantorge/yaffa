@@ -172,11 +172,11 @@
               :disabled="selectedFiles.length === 0 || isSubmitting"
             >
               <span v-if="isSubmitting">
-                <span
-                  class="spinner-border spinner-border-sm me-2"
+                <i
+                  class="fa fa-spinner fa-spin me-2"
                   role="status"
                   aria-hidden="true"
-                ></span>
+                ></i>
                 {{ __('Uploading...') }}
               </span>
               <span v-else>
@@ -191,33 +191,10 @@
   </div>
 </template>
 
-<script setup>
-  import { ref, reactive, computed, onMounted } from 'vue';
+<script>
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
-
-  const props = defineProps({
-    modalId: {
-      type: String,
-      default: 'aiDocumentUploadModal',
-    },
-  });
-
-  const emit = defineEmits(['document-created']);
-
-  const modalElement = ref(null);
-  const fileInput = ref(null);
-  const modal = ref(null);
-
-  const selectedFiles = ref([]);
-  const isDraggingOver = ref(false);
-  const isSubmitting = ref(false);
-  const errors = ref([]);
-  const warningDismissed = ref(false);
-
-  const form = reactive({
-    customPrompt: '',
-  });
+  import { confirmAction } from '@/shared/lib/confirm';
 
   const maxFilesPerSubmission =
     window.aiDocumentConfig?.maxFilesPerSubmission || 5;
@@ -225,208 +202,288 @@
   // Restrictive default for security reasons.
   const allowedTypes = window.aiDocumentConfig?.allowedTypes || ['txt'];
 
-  const allowedMimeTypes = computed(() => {
-    const mimeMap = {
-      pdf: 'application/pdf',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      png: 'image/png',
-      txt: 'text/plain',
-    };
-    return allowedTypes.map((type) => mimeMap[type] || '').join(',');
-  });
+  export default {
+    name: 'AiDocumentUploadForm',
 
-  onMounted(() => {
-    if (modalElement.value) {
-      modal.value = new coreui.Modal(modalElement.value);
-    }
+    props: {
+      modalId: {
+        type: String,
+        default: 'aiDocumentUploadModal',
+      },
+    },
 
-    // Fetch warning dismissal state
-    fetch(
-      route('api.v1.users.me.preferences.get', {
-        key: 'dismissAiDocumentUploadWarning',
-      }),
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        warningDismissed.value = data.value;
-      })
-      .catch((error) => {
-        console.error('Failed to fetch warning dismissal state:', error);
-      });
-  });
+    emits: ['document-created'],
 
-  const handleFileSelection = (event) => {
-    const files = Array.from(event.target.files || []);
-    addFiles(files);
-  };
-
-  const handleFileDrop = (event) => {
-    isDraggingOver.value = false;
-    const files = Array.from(event.dataTransfer.files || []);
-    addFiles(files);
-  };
-
-  const addFiles = (files) => {
-    errors.value = [];
-
-    // Validate total file count
-    if (selectedFiles.value.length + files.length > maxFilesPerSubmission) {
-      errors.value.push(
-        __(
-          `You can upload a maximum of ${maxFilesPerSubmission} files per submission. You currently have ${selectedFiles.value.length} files selected.`,
-        ),
-      );
-      return;
-    }
-
-    const validFiles = [];
-    for (const file of files) {
-      // Check file type
-      const extension = file.name.split('.').pop().toLowerCase();
-      if (!allowedTypes.includes(extension)) {
-        errors.value.push(
-          __(
-            `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ')}`,
-          ),
-        );
-        continue;
-      }
-
-      // Check file size
-      if (file.size > maxFileSize * 1024 * 1024) {
-        errors.value.push(
-          __(
-            `File "${file.name}" exceeds the maximum size of ${maxFileSize}MB`,
-          ),
-        );
-        continue;
-      }
-
-      // Check for duplicates
-      if (selectedFiles.value.some((f) => f.name === file.name)) {
-        errors.value.push(__(`File "${file.name}" is already selected`));
-        continue;
-      }
-
-      validFiles.push(file);
-    }
-
-    selectedFiles.value.push(...validFiles);
-
-    // Reset file input
-    if (fileInput.value) {
-      fileInput.value.value = '';
-    }
-  };
-
-  const removeFile = (fileName) => {
-    selectedFiles.value = selectedFiles.value.filter(
-      (f) => f.name !== fileName,
-    );
-  };
-
-  const onSubmit = async () => {
-    if (selectedFiles.value.length === 0) {
-      errors.value = [__('Please select at least one file')];
-      return;
-    }
-
-    isSubmitting.value = true;
-    errors.value = [];
-
-    try {
-      const formData = new FormData();
-
-      // Add files
-      for (const file of selectedFiles.value) {
-        formData.append('files[]', file);
-      }
-
-      // Add custom prompt if provided
-      if (form.customPrompt.trim()) {
-        formData.append('custom_prompt', form.customPrompt);
-      }
-
-      const response = await fetch(route('api.v1.documents.store'), {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-            .content,
+    data() {
+      return {
+        modal: null,
+        selectedFiles: [],
+        isDraggingOver: false,
+        isSubmitting: false,
+        errors: [],
+        warningDismissed: false,
+        form: {
+          customPrompt: '',
         },
-        body: formData,
-      });
+        maxFilesPerSubmission,
+        maxFileSize,
+        // Set right before a programmatic close so the hide.coreui.modal
+        // listener lets it through once without re-running the dirty check.
+        forceCloseModal: false,
+      };
+    },
 
-      if (response.ok) {
-        const data = await response.json();
-        const successMessage = __(
-          'Document uploaded successfully and queued for processing. You will receive a notification when processing is complete.',
+    computed: {
+      allowedMimeTypes() {
+        const mimeMap = {
+          pdf: 'application/pdf',
+          jpg: 'image/jpeg',
+          jpeg: 'image/jpeg',
+          png: 'image/png',
+          txt: 'text/plain',
+        };
+        return allowedTypes.map((type) => mimeMap[type] || '').join(',');
+      },
+      isDirty() {
+        return (
+          this.selectedFiles.length > 0 || this.form.customPrompt.trim() !== ''
         );
-        toastHelpers.showSuccessToast(successMessage);
+      },
+    },
 
-        // Reset form
-        selectedFiles.value = [];
-        form.customPrompt = '';
+    mounted() {
+      if (this.$refs.modalElement) {
+        this.modal = new coreui.Modal(this.$refs.modalElement);
 
-        // Emit event for parent to refresh the list
-        emit('document-created', data);
+        // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+        // programmatic close alike) - ask for confirmation if there are
+        // unsaved changes.
+        this.$refs.modalElement.addEventListener(
+          'hide.coreui.modal',
+          (event) => {
+            if (this.forceCloseModal) {
+              this.forceCloseModal = false;
+              return;
+            }
 
-        modal.value?.hide();
-      } else {
-        const data = await response.json();
+            if (!this.isDirty) {
+              return;
+            }
 
-        // Handle validation errors
-        if (data.errors) {
-          Object.keys(data.errors).forEach((key) => {
-            errors.value.push(
-              Array.isArray(data.errors[key])
-                ? data.errors[key].join('; ')
-                : data.errors[key],
-            );
-          });
-        } else if (data.message) {
-          errors.value.push(data.message);
-        } else {
-          errors.value.push(
-            __('An error occurred while uploading the document'),
-          );
-        }
+            event.preventDefault();
+
+            confirmAction(
+              __('Are you sure you want to discard any changes?'),
+              {
+                icon: 'warning',
+                confirmButtonText: __('Discard changes'),
+              },
+            ).then((result) => {
+              if (result.isConfirmed) {
+                this.selectedFiles = [];
+                this.form.customPrompt = '';
+                this.closeModal();
+              }
+            });
+          },
+        );
       }
-    } catch (error) {
-      errors.value.push(__('Network error: ' + error.message));
-    } finally {
-      isSubmitting.value = false;
-    }
-  };
 
-  const dismissWarning = async () => {
-    try {
-      const response = await fetch(
-        route('api.v1.users.me.preferences.set', {
+      // Fetch warning dismissal state
+      fetch(
+        route('api.v1.users.me.preferences.get', {
           key: 'dismissAiDocumentUploadWarning',
         }),
-        {
-          method: 'PUT',
-          headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-              .content,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          this.warningDismissed = data.value;
+        })
+        .catch((error) => {
+          console.error('Failed to fetch warning dismissal state:', error);
+        });
+    },
 
-      if (response.ok) {
-        warningDismissed.value = true;
-      }
-    } catch (error) {
-      console.error('Failed to dismiss warning:', error);
-    }
+    methods: {
+      __,
+      closeModal() {
+        this.forceCloseModal = true;
+        this.modal?.hide();
+      },
+      handleFileSelection(event) {
+        const files = Array.from(event.target.files || []);
+        this.addFiles(files);
+      },
+      handleFileDrop(event) {
+        this.isDraggingOver = false;
+        const files = Array.from(event.dataTransfer.files || []);
+        this.addFiles(files);
+      },
+      addFiles(files) {
+        this.errors = [];
+
+        // Validate total file count
+        if (
+          this.selectedFiles.length + files.length >
+          this.maxFilesPerSubmission
+        ) {
+          this.errors.push(
+            __(
+              `You can upload a maximum of ${this.maxFilesPerSubmission} files per submission. You currently have ${this.selectedFiles.length} files selected.`,
+            ),
+          );
+          return;
+        }
+
+        const validFiles = [];
+        for (const file of files) {
+          // Check file type
+          const extension = file.name.split('.').pop().toLowerCase();
+          if (!allowedTypes.includes(extension)) {
+            this.errors.push(
+              __(
+                `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ')}`,
+              ),
+            );
+            continue;
+          }
+
+          // Check file size
+          if (file.size > this.maxFileSize * 1024 * 1024) {
+            this.errors.push(
+              __(
+                `File "${file.name}" exceeds the maximum size of ${this.maxFileSize}MB`,
+              ),
+            );
+            continue;
+          }
+
+          // Check for duplicates
+          if (this.selectedFiles.some((f) => f.name === file.name)) {
+            this.errors.push(__(`File "${file.name}" is already selected`));
+            continue;
+          }
+
+          validFiles.push(file);
+        }
+
+        this.selectedFiles.push(...validFiles);
+
+        // Reset file input
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
+        }
+      },
+      removeFile(fileName) {
+        this.selectedFiles = this.selectedFiles.filter(
+          (f) => f.name !== fileName,
+        );
+      },
+      async onSubmit() {
+        if (this.selectedFiles.length === 0) {
+          this.errors = [__('Please select at least one file')];
+          return;
+        }
+
+        this.isSubmitting = true;
+        this.errors = [];
+
+        try {
+          const formData = new FormData();
+
+          // Add files
+          for (const file of this.selectedFiles) {
+            formData.append('files[]', file);
+          }
+
+          // Add custom prompt if provided
+          if (this.form.customPrompt.trim()) {
+            formData.append('custom_prompt', this.form.customPrompt);
+          }
+
+          const response = await fetch(route('api.v1.documents.store'), {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector(
+                'meta[name="csrf-token"]',
+              ).content,
+            },
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const successMessage = __(
+              'Document uploaded successfully and queued for processing. You will receive a notification when processing is complete.',
+            );
+            toastHelpers.showSuccessToast(successMessage);
+
+            // Reset form
+            this.selectedFiles = [];
+            this.form.customPrompt = '';
+
+            // Emit event for parent to refresh the list
+            this.$emit('document-created', data);
+
+            this.closeModal();
+          } else {
+            const data = await response.json();
+
+            // Handle validation errors
+            if (data.errors) {
+              Object.keys(data.errors).forEach((key) => {
+                this.errors.push(
+                  Array.isArray(data.errors[key])
+                    ? data.errors[key].join('; ')
+                    : data.errors[key],
+                );
+              });
+            } else if (data.message) {
+              this.errors.push(data.message);
+            } else {
+              this.errors.push(
+                __('An error occurred while uploading the document'),
+              );
+            }
+          }
+        } catch (error) {
+          this.errors.push(__('Network error: ' + error.message));
+        } finally {
+          this.isSubmitting = false;
+        }
+      },
+      async dismissWarning() {
+        try {
+          const response = await fetch(
+            route('api.v1.users.me.preferences.set', {
+              key: 'dismissAiDocumentUploadWarning',
+            }),
+            {
+              method: 'PUT',
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector(
+                  'meta[name="csrf-token"]',
+                ).content,
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+
+          if (response.ok) {
+            this.warningDismissed = true;
+          }
+        } catch (error) {
+          console.error('Failed to dismiss warning:', error);
+        }
+      },
+      show() {
+        this.modal?.show();
+      },
+      hide() {
+        this.closeModal();
+      },
+    },
   };
-
-  defineExpose({
-    show: () => modal.value?.show(),
-    hide: () => modal.value?.hide(),
-  });
 </script>
 
 <style scoped>

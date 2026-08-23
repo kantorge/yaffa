@@ -66,7 +66,7 @@
     </div>
     <div class="card-footer text-end">
       <button
-        class="btn btn-sm btn-outline-dark"
+        class="btn btn-sm btn-secondary"
         :id="componentId + 'Clear'"
         @click="clearDates"
       >

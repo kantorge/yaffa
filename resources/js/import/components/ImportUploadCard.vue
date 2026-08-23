@@ -107,12 +107,12 @@
         class="btn btn-primary"
         :disabled="isSubmitDisabled"
       >
-        <span
+        <i
           v-if="loading"
-          class="spinner-border spinner-border-sm me-2"
+          class="fa fa-spinner fa-spin me-2"
           role="status"
           aria-hidden="true"
-        ></span>
+        ></i>
         {{ loading ? __('Parsing...') : __('Upload and parse') }}
       </button>
     </div>

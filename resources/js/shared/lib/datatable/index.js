@@ -5,6 +5,7 @@ import {
   processTransaction,
 } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 const route = window.route;
 
@@ -107,24 +108,6 @@ export function genericDataTablesActionButton(id, action, route) {
     }
 
     return functions[action](id, route);
-}
-
-export function initializeDeleteButtonListener(tableSelector, route) {
-    // Generate click listener for the table element provided
-    $(tableSelector).on("click", ".data-delete", function () {
-        // Confirm the action with the user
-        if (!confirm(__('Are you sure to want to delete this item?'))) {
-            return;
-        }
-
-        // Get the form placed in Blade component
-        let form = document.getElementById('form-delete');
-
-        // Adjust form action and submit
-        // Ziggy route helper is expected to exist at global scope
-        form.action = window.route(route, this.dataset.id);
-        form.submit();
-    });
 }
 
 export function initializeFilterToggle(table, column, name) {
@@ -638,6 +621,48 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
         >
             <i class="fa fa-fw fa-trash"></i>
         </button> `;
+}
+
+/**
+ * Wires the click handler for the `.deleteIcon` button rendered by renderDeleteAssetButton():
+ * confirm -> axios DELETE -> toast, with the busy-class re-entrancy guard shared by every
+ * such delete flow (see currencies/index.js and tags/index.js for the `.data-delete`
+ * equivalent). Row/array bookkeeping is left to the caller via `onDeleted`, since it differs
+ * per entity (e.g. categories also recalculates sibling children counts and needs a full
+ * table invalidate rather than a single row removal).
+ *
+ * @param {string} tableSelector - DataTables container selector, e.g. '#table'
+ * @param {string} routeName - e.g. 'api.v1.account-groups.destroy'
+ * @param {string} successMessage
+ * @param {function(number, jQuery): void} onDeleted - called with the deleted id and the
+ *   button's `<tr>` after a successful delete, to remove the row / update local arrays
+ */
+export function initializeDeleteAssetButtonListener(tableSelector, routeName, successMessage, onDeleted) {
+    $(tableSelector).on('click', 'td > button.deleteIcon:not(.busy)', function () {
+        const button = $(this);
+        const id = Number(button.data('id'));
+
+        button.addClass('busy');
+
+        confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
+            if (!result.isConfirmed) {
+                button.removeClass('busy');
+                return;
+            }
+
+            axios.delete(window.route(routeName, id))
+                .then(function () {
+                    onDeleted(id, button.parents('tr'));
+                    toastHelpers.showSuccessToast(successMessage);
+                })
+                .catch(function (error) {
+                    toastHelpers.showErrorToast(error.response?.data?.error || __('Error while trying to delete item'));
+                })
+                .finally(function () {
+                    button.removeClass('busy');
+                });
+        });
+    });
 }
 
 // Import the jstree plugin

@@ -10,6 +10,7 @@ use App\Http\Controllers\API\ApiTokenApiController;
 use App\Http\Controllers\API\BudgetApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
+use App\Http\Controllers\API\CurrencyApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\FileImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
@@ -33,6 +34,10 @@ use Illuminate\Support\Facades\Route;
 // API V1 - Versioned, resource-oriented routes
 // ============================================================
 Route::prefix('v1')->name('api.v1.')->group(function () {
+    // Currency endpoints
+    Route::delete('/currencies/{currency}', [CurrencyApiController::class, 'destroy'])
+        ->name('currencies.destroy');
+
     // CurrencyRate endpoints
     Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
         ->name('currency-rates.index');
@@ -267,6 +272,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('tags.show');
     Route::patch('/tags/{tag}', [TagApiController::class, 'patchActive'])
         ->name('tags.patch-active');
+    Route::delete('/tags/{tag}', [TagApiController::class, 'destroy'])
+        ->name('tags.destroy');
 
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])

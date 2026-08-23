@@ -4,13 +4,13 @@ import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 import { createApp } from 'vue';
 import PayeeForm from './components/PayeeForm.vue';
-import Swal from 'sweetalert2';
 
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
 import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
 
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 const dataTableSelector = '#table';
 let ajaxIsBusy = false;
@@ -311,19 +311,7 @@ const vueApp = createApp({
 
             ajaxIsBusy = true;
 
-            Swal.fire({
-                animation: false,
-                text: __('Are you sure to want to delete this item?'),
-                icon: 'warning',
-                showCancelButton: true,
-                cancelButtonText: __('Cancel'),
-                confirmButtonText: __('Confirm'),
-                buttonsStyling: false,
-                customClass: {
-                    confirmButton: 'btn btn-danger',
-                    cancelButton: 'btn btn-outline-secondary ms-3',
-                },
-            }).then((result) => {
+            confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
                 if (!result.isConfirmed) {
                     ajaxIsBusy = false;
                     return;
@@ -416,7 +404,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type) {
                 if (type === 'display') {
                     return `<div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
+                        <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
                         <span>${escapeHtml(data)}</span>
                     </div>`;
                 }

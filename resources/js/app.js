@@ -3,6 +3,7 @@ import './bootstrap';
 import { initializeDataTablesI18n } from '@/shared/lib/i18n/datatables';
 import { initializeSidebarVisibilityPersistence } from '@/shared/lib/ui/sidebarVisibilityPersistence';
 import { initializeColorMode } from '@/shared/lib/ui/colorMode';
+import { confirmAction } from '@/shared/lib/confirm';
 
 // One glob map for all .js files under resources/js
 // Exclude files that are statically imported to avoid redundant dynamic imports
@@ -140,8 +141,18 @@ $(function () {
     });
 
     // Generally available cancel button with confirmation
-    $(".cancel.confirm-needed").on("click", function () {
-        return confirm(__('Are you sure to abandon this form?'));
+    $(".cancel.confirm-needed").on("click", function (event) {
+        event.preventDefault();
+
+        const href = this.href;
+
+        confirmAction(__('Are you sure to abandon this form?'), {
+            icon: 'warning',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = href;
+            }
+        });
     });
 });
 

@@ -51,8 +51,8 @@
           </dl>
         </div>
         <div class="modal-footer" v-if="budget.id">
-          <button type="button" class="btn btn-default" data-coreui-dismiss="modal">
-            {{ __('Close') }}
+          <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
+            {{ __('Cancel') }}
           </button>
           <button type="button" class="btn btn-primary" @click="editFromQuickView">
             <i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}

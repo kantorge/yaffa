@@ -16,7 +16,7 @@ document.querySelectorAll('.maintenance-task-btn').forEach((button) => {
                 buttonsStyling: false,
                 customClass: {
                     confirmButton: 'btn btn-danger',
-                    cancelButton: 'btn btn-outline-secondary ms-3',
+                    cancelButton: 'btn btn-secondary ms-3',
                 },
             });
 

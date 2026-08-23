@@ -14,7 +14,7 @@
                 {{ __('Settings') }}
               </div>
               <span
-                class="fa fa-info-circle text-primary"
+                class="fa fa-info-circle text-info"
                 data-bs-toggle="tooltip"
                 data-bs-placement="right"
                 :title="
@@ -151,7 +151,7 @@
                     >
                       {{ __('Skip to nearest future occurrence') }}
                       <i
-                        class="fa fa-info-circle text-primary"
+                        class="fa fa-info-circle text-info"
                         data-bs-toggle="tooltip"
                         data-bs-placement="top"
                         :title="
@@ -202,7 +202,7 @@
                 {{ __('Details') }}
               </div>
               <span
-                class="fa fa-info-circle text-primary"
+                class="fa fa-info-circle text-info"
                 data-bs-toggle="tooltip"
                 data-bs-placement="right"
                 :title="
@@ -313,7 +313,7 @@
                         "
                       />
                       <label
-                        class="btn btn-outline-dark"
+                        class="btn btn-secondary"
                         :class="{ active: storePriceEnabled }"
                         for="store_price_checkbox"
                         :title="
@@ -435,11 +435,10 @@
       ></transaction-schedule>
 
       <div class="card mb-3">
-        <div class="card-body">
+        <div class="card-body" v-if="!fromModal">
           <div class="row justify-content-end">
             <div
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
-              v-if="!fromModal"
               dusk="action-after-save-desktop-button-group"
             >
               <span class="form-label block-label">
@@ -453,7 +452,7 @@
                 <button
                   v-for="item in activeCallbackOptions"
                   :key="item.id"
-                  class="btn btn-outline-dark"
+                  class="btn btn-secondary"
                   :class="{ active: callback === item.value }"
                   type="button"
                   :value="item.value"
@@ -463,10 +462,7 @@
                 </button>
               </div>
             </div>
-            <div
-              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
-              v-if="!fromModal"
-            >
+            <div class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0">
               <label
                 class="form-label"
                 for="callback-selector-mobile-investment"
@@ -487,27 +483,26 @@
                 </option>
               </select>
             </div>
-            <div
-              class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
-            >
-              <button
-                class="btn btn-sm btn-outline-dark align-bottom"
-                @click="onCancel"
-                type="button"
-              >
-                {{ __('Cancel') }}
-              </button>
-              <Button
-                class="btn btn-lg btn-primary ms-3 mt-2"
-                :disabled="form.busy"
-                :form="form"
-                id="transactionFormInvestment-Save"
-              >
-                <span class="fa fa-floppy-disk me-1" v-show="!form.busy"></span>
-                {{ __('Save') }}
-              </Button>
-            </div>
           </div>
+        </div>
+        <div class="card-footer text-end">
+          <Button
+            class="btn btn-lg btn-primary"
+            :disabled="form.busy"
+            :form="form"
+            id="transactionFormInvestment-Save"
+          >
+            <i
+              :class="form.busy ? 'fa me-1 fa-spinner fa-spin' : 'fa me-1 fa-save'"
+            ></i>{{ __('Save') }}
+          </Button>
+          <button
+            class="btn btn-sm btn-secondary ms-3 align-bottom"
+            @click="onCancel"
+            type="button"
+          >
+            {{ __('Cancel') }}
+          </button>
         </div>
       </div>
     </form>
@@ -519,6 +514,7 @@
   import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
@@ -1198,9 +1194,13 @@
       },
 
       onCancel() {
-        if (confirm(__('Are you sure you want to discard any changes?'))) {
-          this.$emit('cancel');
-        }
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.$emit('cancel');
+          }
+        });
         return false;
       },
 

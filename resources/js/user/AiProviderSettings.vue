@@ -246,8 +246,7 @@
               :form="form"
               dusk="button-save-ai-config"
             >
-              <i class="fa fa-save"></i>
-              {{ hasConfig ? __('Update') : __('Save') }}
+              <i class="fa me-1 fa-save"></i>{{ hasConfig ? __('Update') : __('Save') }}
             </Button>
 
             <button
@@ -260,21 +259,20 @@
               <i
                 :class="[
                   'fa',
+                  'me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>
-              {{ __('Test Connection') }}
+              ></i>{{ __('Test Connection') }}
             </button>
 
             <button
               v-if="!hasConfig && showForm"
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               @click="cancelAdd"
               dusk="button-cancel-add-ai-provider"
             >
-              <i class="fa fa-times"></i>
-              {{ __('Cancel') }}
+              <i class="fa me-1 fa-times"></i>{{ __('Cancel') }}
             </button>
           </div>
 
@@ -285,8 +283,7 @@
             @click="deleteConfig"
             dusk="button-delete-ai-config"
           >
-            <i class="fa fa-trash"></i>
-            {{ __('Delete Configuration') }}
+            <i class="fa me-1 fa-trash"></i>{{ __('Delete Configuration') }}
           </button>
         </div>
       </div>
@@ -600,7 +597,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (result.isConfirmed) {

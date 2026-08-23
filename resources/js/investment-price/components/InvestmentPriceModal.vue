@@ -73,10 +73,10 @@
             data-coreui-dismiss="modal"
             :disabled="isSubmitting"
           >
-            <span
+            <i
               v-if="isSubmitting"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
+              class="fa fa-spinner fa-spin me-1"
+            ></i>
             {{ __('Cancel') }}
           </button>
           <button
@@ -86,10 +86,10 @@
             @click="submitForm"
             :disabled="isSubmitting"
           >
-            <span
+            <i
               v-if="isSubmitting"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
+              class="fa fa-spinner fa-spin me-1"
+            ></i>
             {{ isEditMode ? __('Update') : __('Add') }}
           </button>
         </div>
@@ -101,6 +101,7 @@
 <script>
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   export default {
     name: 'InvestmentPriceModal',
@@ -121,9 +122,16 @@
           date: '',
           price: null,
         },
+        // Snapshot of formData (JSON string) taken whenever the form is in
+        // a "clean" state (opened for edit, reset for a new price) - the
+        // dirty check compares the current formData against this.
+        originalFormData: null,
         errors: {},
         isSubmitting: false,
         modal: null,
+        // Set right before a programmatic hide() so the hide.coreui.modal
+        // listener lets it through once without re-running the dirty check.
+        forceCloseModal: false,
       };
     },
     computed: {
@@ -150,18 +158,15 @@
           } else {
             this.resetForm();
           }
+
+          this.originalFormData = JSON.stringify(this.formData);
         },
       },
     },
     mounted() {
       const modalElement = document.getElementById('investmentPriceModal');
 
-      // Use CoreUI Modal instead of Bootstrap Modal
-      if (window.coreui && window.coreui.Modal) {
-        this.modal = new window.coreui.Modal(modalElement);
-      } else {
-        this.modal = new window.bootstrap.Modal(modalElement);
-      }
+      this.modal = new window.coreui.Modal(modalElement);
 
       modalElement.addEventListener('hidden.bs.modal', () => {
         this.resetForm();
@@ -173,12 +178,38 @@
         this.resetForm();
         this.$emit('close');
       });
+
+      // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+      // programmatic hide() alike) - ask for confirmation if there are
+      // unsaved changes.
+      modalElement.addEventListener('hide.coreui.modal', (event) => {
+        if (this.forceCloseModal) {
+          this.forceCloseModal = false;
+          return;
+        }
+
+        if (JSON.stringify(this.formData) === this.originalFormData) {
+          return;
+        }
+
+        event.preventDefault();
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          confirmButtonText: __('Discard changes'),
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.hide();
+          }
+        });
+      });
     },
     methods: {
       show() {
         this.modal.show();
       },
       hide() {
+        this.forceCloseModal = true;
         this.modal.hide();
       },
       resetForm() {

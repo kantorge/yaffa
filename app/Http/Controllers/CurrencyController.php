@@ -11,9 +11,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -28,7 +26,6 @@ class CurrencyController extends Controller implements HasMiddleware
             'verified',
             new Middleware('can:create,' . Currency::class, only: ['create', 'store']),
             new Middleware('can:update,currency', only: ['edit', 'update', 'setDefault']),
-            new Middleware('can:delete,currency', only: ['destroy']),
         ];
     }
 
@@ -133,41 +130,6 @@ class CurrencyController extends Controller implements HasMiddleware
         self::addSimpleSuccessMessage(__('Currency updated'));
 
         return to_route('currencies.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @return Response|RedirectResponse
-     */
-    public function destroy(Currency $currency): Response|RedirectResponse
-    {
-        /**
-         * @delete("/currencies/{currency}")
-         * @name("currencies.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        // Base currency cannot be deleted
-        if ($currency->base) {
-            self::addSimpleErrorMessage(__('Base currency cannot be deleted'));
-
-            return redirect()->back();
-        }
-
-        try {
-            $currency->delete();
-            self::addSimpleSuccessMessage(__('Currency deleted'));
-
-            return to_route('currencies.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));
-            } else {
-                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
-        }
     }
 
     /**

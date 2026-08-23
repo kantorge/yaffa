@@ -1,15 +1,14 @@
 <template>
   <div class="card" id="apiTokenManager">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <div class="card-title mb-0">{{ __('API Tokens') }}</div>
+      <div class="card-title">{{ __('API Tokens') }}</div>
       <button
         type="button"
         class="btn btn-primary btn-sm"
         dusk="button-create-api-token"
         @click="openCreateModal"
       >
-        <i class="fa fa-plus"></i>
-        {{ __('Create Token') }}
+        <i class="fa me-1 fa-plus"></i>{{ __('Create Token') }}
       </button>
     </div>
     <div class="card-body">
@@ -69,7 +68,7 @@
               <td class="text-end">
                 <button
                   type="button"
-                  class="btn btn-outline-danger btn-sm"
+                  class="btn btn-danger btn-sm"
                   :disabled="revokingId === token.id"
                   dusk="button-revoke-api-token"
                   @click="revokeToken(token)"
@@ -77,10 +76,10 @@
                   <i
                     :class="[
                       'fa',
+                      'me-1',
                       revokingId === token.id ? 'fa-spinner fa-spin' : 'fa-trash',
                     ]"
-                  ></i>
-                  {{ __('Revoke') }}
+                  ></i>{{ __('Revoke') }}
                 </button>
               </td>
             </tr>
@@ -138,8 +137,7 @@
                   class="btn btn-outline-secondary"
                   @click="copyToken"
                 >
-                  <i class="fa fa-copy"></i>
-                  {{ __('Copy') }}
+                  <i class="fa me-1 fa-copy"></i>{{ __('Copy') }}
                 </button>
               </div>
               <div class="form-check">
@@ -243,7 +241,7 @@
             <template v-else>
               <button
                 type="button"
-                class="btn btn-outline-secondary"
+                class="btn btn-secondary"
                 data-coreui-dismiss="modal"
                 @click="resetForm"
               >
@@ -421,7 +419,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         });
 

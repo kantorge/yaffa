@@ -3,11 +3,11 @@ import 'datatables.net-bs5';
 import {
     genericDataTablesActionButton,
     renderDeleteAssetButton,
-    initializeStandardExternalSearch
+    initializeStandardExternalSearch,
+    initializeDeleteAssetButtonListener
 } from '@/shared/lib/datatable';
 
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
-import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 
@@ -53,48 +53,12 @@ let table = $(dataTableSelector).DataTable({
     stateSave:      false,
     processing:     true,
     paging:         false,
-    initComplete: function (settings) {
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
+});
 
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            let element = $(this);
-            element.addClass('busy');
-
-            // Send request to delete the investment group
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.investment-groups.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.investmentGroups = window.investmentGroups
-                        .filter(investmentGroup => investmentGroup.id !== data.investmentGroup.id);
-
-                    row.remove().draw();
-
-                    toastHelpers.showSuccessToast(__('Investment group deleted'));
-                },
-                error: function (data) {
-                    toastHelpers.showErrorToast(__('Error while trying to delete investment group: ') + data.responseJSON.error);
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
-                }
-            });
-        });
-    }
+// Listener for delete button
+initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.investment-groups.destroy', __('Investment group deleted'), function (id, tr) {
+    window.investmentGroups = window.investmentGroups.filter(investmentGroup => investmentGroup.id !== id);
+    table.row(tr).remove().draw();
 });
 
 // Listener for external search field

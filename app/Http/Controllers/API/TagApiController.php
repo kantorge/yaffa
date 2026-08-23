@@ -7,6 +7,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
+use App\Services\TagService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,10 @@ use Illuminate\Http\Response;
 
 class TagApiController extends Controller implements HasMiddleware
 {
+    public function __construct(protected TagService $tagService)
+    {
+    }
+
     public static function middleware(): array
     {
         return [
@@ -23,7 +28,7 @@ class TagApiController extends Controller implements HasMiddleware
                 'getList', 'getItem',
             ]),
             new Middleware('abilities:write', only: [
-                'patchActive',
+                'patchActive', 'destroy',
             ]),
         ];
     }
@@ -86,5 +91,19 @@ class TagApiController extends Controller implements HasMiddleware
         $tag->save();
 
         return response()->json($tag, Response::HTTP_OK);
+    }
+
+    /**
+     * Delete a tag
+     *
+     * @throws AuthorizationException
+     */
+    public function destroy(Tag $tag): JsonResponse
+    {
+        Gate::authorize('delete', $tag);
+
+        $this->tagService->delete($tag);
+
+        return response()->json(['tag' => $tag], Response::HTTP_OK);
     }
 }

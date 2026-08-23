@@ -105,9 +105,6 @@ class TransactionTest extends TestCase
 
         $this->get(route('transaction.open', ['transaction' => $transaction->id, 'action' => 'edit']))
             ->assertRedirectToRoute('login');
-
-        $this->delete(route('transactions.destroy', ['transaction' => $transaction->id]))
-            ->assertRedirectToRoute('login');
     }
 
     /**
@@ -127,10 +124,6 @@ class TransactionTest extends TestCase
 
         $this->actingAs($this->user)
             ->get(route('transaction.open', ['transaction' => $transaction->id, 'action' => 'edit']))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-
-        $this->actingAs($this->user)
-            ->delete(route('transactions.destroy', ['transaction' => $transaction->id]))
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
@@ -322,28 +315,6 @@ class TransactionTest extends TestCase
             ]));
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    /**
-     * Test that user can delete their own transaction
-     */
-    public function test_user_can_delete_own_transaction(): void
-    {
-        $transaction = Transaction::factory()
-            ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id]);
-
-        $transactionId = $transaction->id;
-        $configId = $transaction->config_id;
-
-        $response = $this->actingAs($this->user)
-            ->delete(route('transactions.destroy', ['transaction' => $transaction->id]));
-
-        $response->assertRedirect();
-
-        // Verify transaction was deleted
-        $this->assertDatabaseMissing('transactions', ['id' => $transactionId]);
-        $this->assertDatabaseMissing('transaction_details_standard', ['id' => $configId]);
     }
 
     /**

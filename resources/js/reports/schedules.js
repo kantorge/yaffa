@@ -189,7 +189,7 @@ let table = $(tableSelector).DataTable({
                 // Return human readable format of RRule AND the contextual action trigger icon
                 // TODO: translation of rrule strings
                 return `<div class="d-flex justify-content-start align-items-center">
-                    <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i><span>${data.toText()}</span>
+                    <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i><span>${data.toText()}</span>
                 </div>`;
             }
         },
@@ -446,7 +446,7 @@ table.contextualActions({
                     buttonsStyling: false,
                     customClass: {
                         confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-outline-secondary ms-3'
+                        cancelButton: 'btn btn-secondary ms-3'
                     }
                 }).then((result) => {
                     if (!result.isConfirmed) {

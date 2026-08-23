@@ -3,10 +3,11 @@ import "datatables.net-responsive-bs5";
 
 import {
     booleanToTableIcon,
-    genericDataTablesActionButton,
-    initializeDeleteButtonListener
+    genericDataTablesActionButton
 } from '@/shared/lib/datatable';
 import { getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+import { confirmDelete } from '@/shared/lib/confirm';
+import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 
@@ -51,7 +52,7 @@ window.table = $(dataTableSelector).DataTable({
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </a> ` +
                         genericDataTablesActionButton(data, 'edit', 'tags.edit') +
-                        genericDataTablesActionButton(data, 'delete', 'tags.destroy');
+                        genericDataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
@@ -100,7 +101,35 @@ window.table = $(dataTableSelector).DataTable({
     },
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'tags.destroy');
+$(dataTableSelector).on('click', '.data-delete:not(.busy)', function () {
+    const button = $(this);
+    const id = Number(button.data('id'));
+
+    confirmDelete(__('Are you sure you want to delete this item?')).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        button.addClass('busy');
+
+        axios.delete(window.route('api.v1.tags.destroy', id))
+            .then(function () {
+                window.tags = window.tags.filter((tag) => tag.id !== id);
+
+                table.row(function (_idx, data) {
+                    return data.id === id;
+                }).remove().draw();
+
+                toastHelpers.showSuccessToast(__('Tag deleted'));
+            })
+            .catch(function (error) {
+                toastHelpers.showErrorToast(error.response?.data?.error || __('Error while trying to delete tag'));
+            })
+            .finally(function () {
+                button.removeClass('busy');
+            });
+    });
+});
 
 // Listeners for filters
 $('input[name=table_filter_active]').on("change", function() {

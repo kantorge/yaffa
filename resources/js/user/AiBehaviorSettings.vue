@@ -643,8 +643,9 @@
           :form="form"
           dusk="button-save-ai-behavior-settings"
         >
-          <i class="fa fa-save me-1" v-show="!form.busy"></i>
-          {{ __('Save') }}
+          <i
+            :class="form.busy ? 'fa me-1 fa-spinner fa-spin' : 'fa me-1 fa-save'"
+          ></i>{{ __('Save') }}
         </Button>
       </div>
     </form>

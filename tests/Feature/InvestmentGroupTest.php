@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Currency;
-use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +22,16 @@ class InvestmentGroupTest extends TestCase
 
         $this->setBaseRoute('investment-groups');
         $this->setBaseModel(InvestmentGroup::class);
+    }
+
+    /**
+     * Delete moved to InvestmentGroupApiController (api.v1.investment-groups.destroy) - the
+     * web destroy route/action was removed as dead code. See InvestmentGroupApiControllerTest
+     * for delete behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        return false;
     }
 
     public function test_user_can_view_list_of_investment_groups(): void
@@ -128,23 +136,4 @@ class InvestmentGroupTest extends TestCase
         $this->assertTrue($successNotificationExists);
     }
 
-    public function test_user_can_delete_an_existing_investment_group(): void
-    {
-        $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
-    }
-
-    public function test_user_cannot_delete_investment_group_with_attached_investment(): void
-    {
-        $user = User::factory()->create();
-
-        $investmentGroup = $this->createForUser($user, $this->base_model);
-        $currency = Currency::factory()->for($user)->create();
-        Investment::factory()->for($user)->for($investmentGroup)->create(['currency_id' => $currency->id]);
-
-        $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $investmentGroup->id));
-        $response->assertSessionHas('notification_collection.0.type', 'danger');
-
-        $this->assertDatabaseHas($investmentGroup->getTable(), $investmentGroup->toArray());
-    }
 }

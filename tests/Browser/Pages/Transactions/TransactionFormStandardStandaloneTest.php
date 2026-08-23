@@ -127,7 +127,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Switch transaction type to transfer to verify the "return to target account" button
             $browser->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 ->with('@action-after-save-desktop-button-group', function ($buttonGroup) {
                     // After save option "return to selected account" should be always visible
                     $buttonGroup->assertPresent('button[value="returnToPrimaryAccount"]')
@@ -181,7 +182,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_from', 'Investment account EUR', 10)
                 ->click('@transaction-type-deposit')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // No currency should be visible
                 ->assertNotPresent('@label-amountFrom-currency')
@@ -198,7 +200,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_to', 'Investment account EUR', 10)
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // Account in select2 should remain, but no currency symbol should be visible
                 ->assertSeeIn('#account_to + .select2', 'Investment account EUR')
@@ -246,7 +249,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-deposit')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account to, random from dropdown
                 ->select2('#account_to', null, 10)
                 // Select payeee, random from dropdown
@@ -277,7 +281,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account from, with USD currency
                 ->select2ExactSearch('#account_from', 'Cash account USD', 10)
                 // Select account to, with USD currency
@@ -304,7 +309,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account from, with USD currency
                 ->select2ExactSearch('#account_from', 'Cash account USD', 10)
                 // Select account to, with EUR currency
@@ -426,7 +432,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to transfer
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // Add minimum necessary fields
                 ->select2ExactSearch('#account_to', $account->name, 60)
@@ -601,13 +608,15 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Switch to deposit and confirm dialog
                 ->click('@transaction-type-deposit')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible next to the account from dropdown
                 ->assertVisible('#account_from_container > button[data-coreui-target="#newPayeeModal"]')
 
                 // Switch to transfer and confirm dialog
                 ->click('@transaction-type-transfer')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible
                 ->assertMissing('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
                 ->assertMissing('#account_from_container > button[data-coreui-target="#newPayeeModal"]');
@@ -628,14 +637,16 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('@button-add-transaction-item')
                 // Switch to transfer and confirm dialog
                 ->click('@transaction-type-transfer')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the "add transaction item" button is disabled
                 ->assertDisabled('@button-add-transaction-item')
                 // Verify that the previously added transaction item is not visible
                 ->assertMissing('#transaction_item_container .transaction_item_row')
                 // Switch back to withdrawal and confirm dialog
                 ->click('@transaction-type-withdrawal')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the "add transaction item" button is enabled
                 ->assertEnabled('@button-add-transaction-item')
                 // Verify that the previously added transaction item is not visible

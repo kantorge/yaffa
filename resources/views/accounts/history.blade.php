@@ -61,7 +61,6 @@
     <transaction-show-modal></transaction-show-modal>
 </div>
 
-@include('template.components.model-delete-form')
 @include('template.components.transaction-skip-form')
 
 @stop

@@ -1,59 +1,26 @@
 <template>
-  <div class="card mb-3">
-    <div class="card-header">
-      <div
-        class="card-title collapse-control"
-        data-coreui-toggle="collapse"
-        data-coreui-target="#cardOverview"
-      >
-        <i class="fa fa-angle-down"></i>
-        {{ __('Overview') }}
-      </div>
-    </div>
-    <div class="collapse card-body show" aria-expanded="true" id="cardOverview">
-      <dl class="row mb-0">
-        <dt class="col-6">{{ __('Investment') }}</dt>
-        <dd class="col-6">{{ investment.name }}</dd>
-        <dt class="col-6">{{ __('Number of records') }}</dt>
-        <dd class="col-6">{{ investmentPrices.length }}</dd>
-        <dt class="col-6">{{ __('First available data') }}</dt>
-        <dd class="col-6" v-if="investmentPrices.length > 0">
-          {{ formatDate(investmentPrices[0].date) }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-        <dt class="col-6">{{ __('Last available data') }}</dt>
-        <dd class="col-6" v-if="investmentPrices.length > 0">
-          {{ formatDate(investmentPrices[investmentPrices.length - 1].date) }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-        <dt class="col-6">{{ __('Last known price') }}</dt>
-        <dd class="col-6" v-if="investmentPrices.length > 0">
-          {{
-            toFormattedCurrency(
-              investmentPrices[investmentPrices.length - 1].price,
-              locale,
-              investment.currency,
-              'detailed',
-            )
-          }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-      </dl>
-    </div>
-  </div>
+  <record-overview-card
+    :header-rows="headerRows"
+    :records="investmentPrices"
+    :last-value-label="__('Last known price')"
+  >
+    <template #last-value="{ record }">
+      {{
+        toFormattedCurrency(record.price, locale, investment.currency, 'detailed')
+      }}
+    </template>
+  </record-overview-card>
 </template>
 
 <script>
-  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import RecordOverviewCard from '@/shared/ui/RecordOverviewCard.vue';
+  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
 
   export default {
     name: 'InvestmentPriceOverview',
+    components: {
+      RecordOverviewCard,
+    },
     props: {
       investment: {
         type: Object,
@@ -70,10 +37,12 @@
         locale: window.YAFFA.userSettings.locale,
       };
     },
-    methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
+    computed: {
+      headerRows() {
+        return [{ label: this.__('Investment'), value: this.investment.name }];
       },
+    },
+    methods: {
       toFormattedCurrency,
       __,
     },
