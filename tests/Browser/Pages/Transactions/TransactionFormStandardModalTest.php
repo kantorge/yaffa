@@ -115,13 +115,15 @@ class TransactionFormStandardModalTest extends DuskTestCase
 
                 // Switch to deposit and confirm dialog
                 ->click('@transaction-type-deposit')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible next to the account from dropdown
                 ->assertNotPresent('#account_from_container > button[data-coreui-target="#newPayeeModal"]')
 
                 // Switch to transfer and confirm dialog
                 ->click('@transaction-type-transfer')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible
                 ->assertNotPresent('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
                 ->assertNotPresent('#account_from_container > button[data-coreui-target="#newPayeeModal"]');
