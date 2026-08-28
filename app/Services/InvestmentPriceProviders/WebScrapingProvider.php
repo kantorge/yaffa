@@ -69,7 +69,7 @@ class WebScrapingProvider implements InvestmentPriceProvider
             }
 
             $price = $this->parsePriceValue(
-                $result[0]->get('price'),
+                $result[0]['price'],
                 $decimalSeparator,
                 $investment->symbol
             );
