@@ -16,7 +16,12 @@ class ScraperService
     {
         PublicEndpointUrlValidator::assertPublic($url);
 
-        $response = Http::withUserAgent(self::USER_AGENT)->get($url)->throw();
+        $response = Http::withUserAgent(self::USER_AGENT)
+            // Never follow redirects: a validated public host could redirect the
+            // actual request to an internal address, bypassing the check above.
+            ->withOptions(['allow_redirects' => false])
+            ->get($url)
+            ->throw();
 
         $nodes = (new Crawler($response->body()))->filter($selector);
 

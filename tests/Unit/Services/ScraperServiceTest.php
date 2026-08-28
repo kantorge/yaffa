@@ -11,12 +11,18 @@ class ScraperServiceTest extends TestCase
 {
     public function test_scrape_rejects_loopback_url_without_dispatching_request(): void
     {
+        Http::fake();
+
         $service = new ScraperService();
 
         $this->expectException(UnsafeEndpointUrlException::class);
         $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
 
-        $service->scrape('http://127.0.0.1/admin', '.price');
+        try {
+            $service->scrape('http://127.0.0.1/admin', '.price');
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     public function test_scrape_rejects_link_local_metadata_url(): void
