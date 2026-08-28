@@ -22,11 +22,11 @@ use RuntimeException;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index',
-            ])]
+    'index',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'suggest',
-            ])]
+    'store', 'update', 'destroy', 'suggest',
+])]
 class FileImportProfileApiController extends Controller
 {
     /**

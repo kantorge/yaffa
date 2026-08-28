@@ -47,12 +47,12 @@ use RuntimeException;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getItem', 'getScheduledItems', 'findTransactions',
-            ])]
+    'getItem', 'getScheduledItems', 'findTransactions',
+])]
 #[Middleware('abilities:write', only: [
-                'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
-                'updateInvestment', 'skipScheduleInstance', 'destroy',
-            ])]
+    'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
+    'updateInvestment', 'skipScheduleInstance', 'destroy',
+])]
 class TransactionApiController extends Controller
 {
     use CurrencyTrait;

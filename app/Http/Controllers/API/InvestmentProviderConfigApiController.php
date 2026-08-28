@@ -18,11 +18,13 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'index', 'show', 'update', 'test', 'destroy',
-            ])]
+    'index', 'show', 'update', 'test', 'destroy',
+])]
 class InvestmentProviderConfigApiController extends Controller
 {
-    public function __construct(private InvestmentPriceProviderRegistry $providerRegistry) {}
+    public function __construct(private InvestmentPriceProviderRegistry $providerRegistry)
+    {
+    }
 
     /**
      * List investment provider configs

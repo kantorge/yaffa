@@ -20,20 +20,21 @@ use Illuminate\Support\Facades\Gate;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index',
-            ])]
+    'index',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'retrieveMissingCurrencyRateToBase',
-            ])]
+    'store', 'update', 'destroy', 'retrieveMissingCurrencyRateToBase',
+])]
 #[Middleware('abilities:settings', only: [
-                'clearCache',
-            ])]
+    'clearCache',
+])]
 class CurrencyRateApiController extends Controller
 {
     use CurrencyTrait;
     public function __construct(
         protected CurrencyRateService $currencyRateService
-    ) {}
+    ) {
+    }
 
     /**
      * List currency rates

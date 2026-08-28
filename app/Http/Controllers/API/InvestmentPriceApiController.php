@@ -19,16 +19,17 @@ use Illuminate\Support\Facades\Gate;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index', 'checkPrice',
-            ])]
+    'index', 'checkPrice',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'retrieveMissingPrices',
-            ])]
+    'store', 'update', 'destroy', 'retrieveMissingPrices',
+])]
 class InvestmentPriceApiController extends Controller
 {
     public function __construct(
         protected InvestmentService $investmentService
-    ) {}
+    ) {
+    }
 
     /**
      * List investment prices

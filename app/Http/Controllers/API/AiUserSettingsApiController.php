@@ -16,13 +16,14 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'show', 'update',
-            ])]
+    'show', 'update',
+])]
 class AiUserSettingsApiController extends Controller
 {
     public function __construct(
         private AiUserSettingsResolver $settingsResolver
-    ) {}
+    ) {
+    }
 
     /**
      * Get AI settings

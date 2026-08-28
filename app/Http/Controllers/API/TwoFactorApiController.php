@@ -13,8 +13,8 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'enroll', 'confirm', 'disable', 'regenerateRecoveryCodes',
-            ])]
+    'enroll', 'confirm', 'disable', 'regenerateRecoveryCodes',
+])]
 class TwoFactorApiController extends Controller
 {
     /**

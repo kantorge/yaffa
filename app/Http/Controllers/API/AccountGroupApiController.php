@@ -14,8 +14,8 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:write', only: [
-                'destroy',
-            ])]
+    'destroy',
+])]
 class AccountGroupApiController extends Controller
 {
     protected AccountGroupService $accountGroupService;

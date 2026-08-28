@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\DB;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getList', 'getItem',
-            ])]
+    'getList', 'getItem',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'patchActive', 'destroy',
-            ])]
+    'store', 'patchActive', 'destroy',
+])]
 class CategoryApiController extends Controller
 {
     protected CategoryService $categoryService;

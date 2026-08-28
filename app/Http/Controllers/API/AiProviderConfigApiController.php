@@ -21,8 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'show', 'store', 'update', 'destroy', 'test',
-            ])]
+    'show', 'store', 'update', 'destroy', 'test',
+])]
 class AiProviderConfigApiController extends Controller
 {
     /**

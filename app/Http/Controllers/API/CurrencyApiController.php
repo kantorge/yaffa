@@ -14,11 +14,13 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:write', only: [
-                'destroy',
-            ])]
+    'destroy',
+])]
 class CurrencyApiController extends Controller
 {
-    public function __construct(protected CurrencyService $currencyService) {}
+    public function __construct(protected CurrencyService $currencyService)
+    {
+    }
 
     /**
      * Delete a currency

@@ -22,11 +22,11 @@ use Illuminate\Support\Facades\DB;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
-            ])]
+    'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
+])]
 #[Middleware('abilities:write', only: [
-                'recalculateMonthlySummary',
-            ])]
+    'recalculateMonthlySummary',
+])]
 class AccountApiController extends Controller
 {
     use CurrencyTrait;

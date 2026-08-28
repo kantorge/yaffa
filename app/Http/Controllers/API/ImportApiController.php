@@ -20,8 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:write', only: [
-                'parse',
-            ])]
+    'parse',
+])]
 class ImportApiController extends Controller
 {
     public function __construct(
@@ -29,7 +29,8 @@ class ImportApiController extends Controller
         private CsvParserService $csvParserService,
         private ImportNormalizationService $importNormalizationService,
         private ImportDuplicateDetectionService $importDuplicateDetectionService,
-    ) {}
+    ) {
+    }
 
     /**
      * Parse an import file

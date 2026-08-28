@@ -27,21 +27,22 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index', 'show', 'summary',
-            ])]
+    'index', 'show', 'summary',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
-            ])]
+    'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+])]
 #[Middleware('abilities:settings', only: [
-                'cleanupOldFiles',
-            ])]
+    'cleanupOldFiles',
+])]
 class AiDocumentApiController extends Controller
 {
     private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
 
     public function __construct(
         private AiUserSettingsResolver $aiUserSettingsResolver
-    ) {}
+    ) {
+    }
 
     /**
      * Upload a document for AI processing

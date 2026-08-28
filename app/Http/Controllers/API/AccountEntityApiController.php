@@ -17,8 +17,8 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:write', only: [
-                'patchActive', 'destroy', 'recalculateAccountMonthlySummaries',
-            ])]
+    'patchActive', 'destroy', 'recalculateAccountMonthlySummaries',
+])]
 class AccountEntityApiController extends Controller
 {
     /**

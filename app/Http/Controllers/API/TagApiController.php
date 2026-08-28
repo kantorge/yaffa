@@ -15,14 +15,16 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getList', 'getItem',
-            ])]
+    'getList', 'getItem',
+])]
 #[Middleware('abilities:write', only: [
-                'patchActive', 'destroy',
-            ])]
+    'patchActive', 'destroy',
+])]
 class TagApiController extends Controller
 {
-    public function __construct(protected TagService $tagService) {}
+    public function __construct(protected TagService $tagService)
+    {
+    }
 
     /**
      * List tags

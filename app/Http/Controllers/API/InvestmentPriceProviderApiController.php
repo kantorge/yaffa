@@ -18,18 +18,19 @@ use Throwable;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'available',
-            ])]
+    'available',
+])]
 #[Middleware('abilities:write', only: [
-                'testFetch',
-            ])]
+    'testFetch',
+])]
 class InvestmentPriceProviderApiController extends Controller
 {
     public function __construct(
         private InvestmentProviderAvailabilityService $availabilityService,
         private InvestmentPriceProviderRegistry $providerRegistry,
         private InvestmentPriceProviderContextResolver $contextResolver,
-    ) {}
+    ) {
+    }
 
     /**
      * List available investment price providers

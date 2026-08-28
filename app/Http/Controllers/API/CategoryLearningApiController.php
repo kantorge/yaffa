@@ -20,14 +20,16 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index', 'show',
-            ])]
+    'index', 'show',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
-            ])]
+    'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
+])]
 class CategoryLearningApiController extends Controller
 {
-    public function __construct(private CategoryLearningManagementService $managementService) {}
+    public function __construct(private CategoryLearningManagementService $managementService)
+    {
+    }
 
     /**
      * List category learnings

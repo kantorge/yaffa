@@ -23,18 +23,19 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
-            ])]
+    'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
+])]
 #[Middleware('abilities:write', only: [
-                'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
-                'storePayee', 'updatePayee',
-            ])]
+    'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
+    'storePayee', 'updatePayee',
+])]
 class PayeeApiController extends Controller
 {
     public function __construct(
         private PayeeCategoryStatsService $payeeCategoryStatsService,
         private PayeePersistenceService $payeePersistenceService,
-    ) {}
+    ) {
+    }
 
     /**
      * List payees

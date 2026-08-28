@@ -16,14 +16,16 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index', 'getItem',
-            ])]
+    'index', 'getItem',
+])]
 #[Middleware('abilities:write', only: [
-                'store', 'update', 'destroy',
-            ])]
+    'store', 'update', 'destroy',
+])]
 class BudgetApiController extends Controller
 {
-    public function __construct(private readonly BudgetService $budgetService) {}
+    public function __construct(private readonly BudgetService $budgetService)
+    {
+    }
 
     /**
      * Get a list of the user's standalone budgets.

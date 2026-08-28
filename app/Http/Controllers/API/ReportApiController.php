@@ -26,8 +26,8 @@ use Illuminate\Support\Facades\DB;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
-            ])]
+    'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
+])]
 class ReportApiController extends Controller
 {
     use CurrencyTrait;

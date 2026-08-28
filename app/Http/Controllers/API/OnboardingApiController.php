@@ -18,11 +18,11 @@ use Spatie\Onboard\Facades\Onboard;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'getOnboardingData',
-            ])]
+    'getOnboardingData',
+])]
 #[Middleware('abilities:write', only: [
-                'setDismissedFlag', 'setCompletedTourFlag',
-            ])]
+    'setDismissedFlag', 'setCompletedTourFlag',
+])]
 class OnboardingApiController extends Controller
 {
     /**

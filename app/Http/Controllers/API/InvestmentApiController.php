@@ -21,11 +21,11 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
-            ])]
+    'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
+])]
 #[Middleware('abilities:write', only: [
-                'patchActive', 'updateProviderSettings', 'destroy',
-            ])]
+    'patchActive', 'updateProviderSettings', 'destroy',
+])]
 class InvestmentApiController extends Controller
 {
     use ScheduleTrait;
@@ -33,7 +33,8 @@ class InvestmentApiController extends Controller
     public function __construct(
         protected InvestmentService $investmentService,
         protected InvestmentProviderSettingsResolver $providerSettingsResolver
-    ) {}
+    ) {
+    }
 
     /**
      * List investments

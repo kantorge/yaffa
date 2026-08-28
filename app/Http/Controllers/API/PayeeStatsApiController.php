@@ -15,11 +15,13 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-                'categoryStats',
-            ])]
+    'categoryStats',
+])]
 class PayeeStatsApiController extends Controller
 {
-    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService) {}
+    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
+    {
+    }
 
     /**
      * Get payee category stats

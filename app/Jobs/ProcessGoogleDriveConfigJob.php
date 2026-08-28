@@ -35,7 +35,8 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
     public function __construct(
         public int $configId,
         public bool $isManual = false
-    ) {}
+    ) {
+    }
 
     public function handle(GoogleDriveService $driveService, AiUserSettingsResolver $settingsResolver): void
     {

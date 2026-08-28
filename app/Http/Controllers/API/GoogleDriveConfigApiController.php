@@ -23,10 +23,10 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'show', 'store', 'update', 'destroy', 'test',
-                'sync', 'folderName', 'folderNameByCredentials',
-                'folders', 'foldersByCredentials',
-            ])]
+    'show', 'store', 'update', 'destroy', 'test',
+    'sync', 'folderName', 'folderNameByCredentials',
+    'folders', 'foldersByCredentials',
+])]
 class GoogleDriveConfigApiController extends Controller
 {
     /**
@@ -47,7 +47,8 @@ class GoogleDriveConfigApiController extends Controller
 
     public function __construct(
         private GoogleDriveService $googleDriveService
-    ) {}
+    ) {
+    }
 
     /**
      * Get Google Drive configuration

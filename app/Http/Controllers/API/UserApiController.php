@@ -16,8 +16,8 @@ use Illuminate\Validation\Rules\Password;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:settings', only: [
-                'updateSettings', 'changePassword', 'getPreference', 'setPreference',
-            ])]
+    'updateSettings', 'changePassword', 'getPreference', 'setPreference',
+])]
 class UserApiController extends Controller
 {
     /**

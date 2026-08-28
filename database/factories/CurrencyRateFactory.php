@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Currency;
-use App\Models\CurrencyRate;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use InvalidArgumentException;
