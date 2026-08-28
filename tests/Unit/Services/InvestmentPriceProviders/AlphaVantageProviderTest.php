@@ -90,7 +90,7 @@ class AlphaVantageProviderTest extends TestCase
         $provider = new AlphaVantageProvider($client);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Failed to fetch prices from Alpha Vantage');
+        $this->expectExceptionMessageIsOrContains('Failed to fetch prices from Alpha Vantage');
 
         $provider->fetchPrices($investment);
     }
@@ -108,7 +108,7 @@ class AlphaVantageProviderTest extends TestCase
         $provider = new AlphaVantageProvider($client);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Invalid JSON response from Alpha Vantage');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON response from Alpha Vantage');
 
         $provider->fetchPrices($investment);
     }
@@ -130,7 +130,7 @@ class AlphaVantageProviderTest extends TestCase
         $provider = new AlphaVantageProvider($client);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Missing Time Series data');
+        $this->expectExceptionMessageIsOrContains('Missing Time Series data');
 
         $provider->fetchPrices($investment);
     }
@@ -152,7 +152,7 @@ class AlphaVantageProviderTest extends TestCase
         $provider = new AlphaVantageProvider($client);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Alpha Vantage API error');
+        $this->expectExceptionMessageIsOrContains('Alpha Vantage API error');
 
         $provider->fetchPrices($investment);
     }
@@ -174,7 +174,7 @@ class AlphaVantageProviderTest extends TestCase
         $provider = new AlphaVantageProvider($client);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Alpha Vantage rate limit');
+        $this->expectExceptionMessageIsOrContains('Alpha Vantage rate limit');
 
         $provider->fetchPrices($investment);
     }

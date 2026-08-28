@@ -18,7 +18,7 @@ class PublicEndpointUrlValidatorTest extends TestCase
     public function test_rejects_loopback_ip_literal(): void
     {
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         PublicEndpointUrlValidator::assertPublic('http://127.0.0.1/admin');
     }
@@ -26,7 +26,7 @@ class PublicEndpointUrlValidatorTest extends TestCase
     public function test_rejects_ipv6_loopback_literal(): void
     {
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         PublicEndpointUrlValidator::assertPublic('http://[::1]/admin');
     }
@@ -34,7 +34,7 @@ class PublicEndpointUrlValidatorTest extends TestCase
     public function test_rejects_private_range_ip_literal(): void
     {
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         PublicEndpointUrlValidator::assertPublic('http://169.254.169.254/latest/meta-data/');
     }
@@ -42,7 +42,7 @@ class PublicEndpointUrlValidatorTest extends TestCase
     public function test_rejects_localhost_hostname(): void
     {
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         PublicEndpointUrlValidator::assertPublic('http://localhost:8080/');
     }
@@ -50,7 +50,7 @@ class PublicEndpointUrlValidatorTest extends TestCase
     public function test_rejects_url_without_host(): void
     {
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must include a valid host.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must include a valid host.');
 
         PublicEndpointUrlValidator::assertPublic('not-a-url');
     }

@@ -91,7 +91,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Web scraping returned no results');
+        $this->expectExceptionMessageIsOrContains('Web scraping returned no results');
 
         $provider->fetchPrices($investment);
     }
@@ -109,7 +109,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Missing scrape URL');
+        $this->expectExceptionMessageIsOrContains('Missing scrape URL');
 
         $provider->fetchPrices($investment);
     }
@@ -127,7 +127,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Missing scrape selector');
+        $this->expectExceptionMessageIsOrContains('Missing scrape selector');
 
         $provider->fetchPrices($investment);
     }
@@ -145,7 +145,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Invalid price format');
+        $this->expectExceptionMessageIsOrContains('Invalid price format');
 
         $provider->fetchPrices($investment);
     }
@@ -190,7 +190,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         $provider->fetchPrices($investment);
     }
@@ -208,7 +208,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Invalid price value');
+        $this->expectExceptionMessageIsOrContains('Invalid price value');
 
         $provider->fetchPrices($investment);
     }
@@ -226,7 +226,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(InvalidPriceDataException::class);
-        $this->expectExceptionMessage('Invalid price value');
+        $this->expectExceptionMessageIsOrContains('Invalid price value');
 
         $provider->fetchPrices($investment);
     }
@@ -244,7 +244,7 @@ class WebScrapingProviderTest extends TestCase
         $provider = new WebScrapingProvider($scraperService);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Connection failed');
+        $this->expectExceptionMessageIsOrContains('Connection failed');
 
         $provider->fetchPrices($investment);
     }

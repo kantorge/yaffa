@@ -16,7 +16,7 @@ class ScraperServiceTest extends TestCase
         $service = new ScraperService();
 
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         try {
             $service->scrape('http://127.0.0.1/admin', '.price');
@@ -30,7 +30,7 @@ class ScraperServiceTest extends TestCase
         $service = new ScraperService();
 
         $this->expectException(UnsafeEndpointUrlException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         $service->scrape('http://169.254.169.254/latest/meta-data/', 'body');
     }

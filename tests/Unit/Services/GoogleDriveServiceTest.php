@@ -83,7 +83,7 @@ class GoogleDriveServiceTest extends TestCase
     public function test_assert_trusted_auth_endpoints_rejects_untrusted_token_uri(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('token_uri');
+        $this->expectExceptionMessageIsOrContains('token_uri');
 
         GoogleDriveService::assertTrustedAuthEndpoints([
             'token_uri' => 'http://169.254.169.254/latest/meta-data/',
@@ -94,7 +94,7 @@ class GoogleDriveServiceTest extends TestCase
     public function test_assert_trusted_auth_endpoints_rejects_untrusted_auth_uri(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('auth_uri');
+        $this->expectExceptionMessageIsOrContains('auth_uri');
 
         GoogleDriveService::assertTrustedAuthEndpoints([
             'token_uri' => 'https://oauth2.googleapis.com/token',
