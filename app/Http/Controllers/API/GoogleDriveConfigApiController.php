@@ -13,14 +13,21 @@ use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 
-class GoogleDriveConfigApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'show', 'store', 'update', 'destroy', 'test',
+    'sync', 'folderName', 'folderNameByCredentials',
+    'folders', 'foldersByCredentials',
+])]
+class GoogleDriveConfigApiController extends Controller
 {
     /**
      * Required Google service account JSON keys.
@@ -41,21 +48,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     public function __construct(
         private GoogleDriveService $googleDriveService
     ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            // Holds Google OAuth/service-account credentials, so every action - including
-            // reads - requires "settings".
-            new Middleware('abilities:settings', only: [
-                'show', 'store', 'update', 'destroy', 'test',
-                'sync', 'folderName', 'folderNameByCredentials',
-                'folders', 'foldersByCredentials',
-            ]),
-        ];
     }
 
     /**
@@ -92,10 +84,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function store(GoogleDriveConfigRequest $request): JsonResponse
     {
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -127,10 +118,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'googleDriveConfig')]
     public function update(GoogleDriveConfigRequest $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('update', $googleDriveConfig);
-
         $validated = $request->validated();
 
         // Prepare update data
@@ -163,10 +153,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'googleDriveConfig')]
     public function destroy(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('delete', $googleDriveConfig);
-
         $googleDriveConfig->delete();
 
         return response()->json([], Response::HTTP_NO_CONTENT);
@@ -256,10 +245,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('sync', 'googleDriveConfig')]
     public function sync(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('sync', $googleDriveConfig);
-
         if (! $googleDriveConfig->enabled) {
             return response()->json([
                 'error' => [
@@ -284,10 +272,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'googleDriveConfig')]
     public function folderName(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('view', $googleDriveConfig);
-
         $folderId = $request->query('folder_id', $googleDriveConfig->folder_id);
 
         if (empty($folderId)) {
@@ -323,10 +310,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function folderNameByCredentials(Request $request): JsonResponse
     {
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         $validated = $request->validate([
             'folder_id' => ['required', 'string', 'max:255'],
             'service_account_json' => [
@@ -365,10 +351,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'googleDriveConfig')]
     public function folders(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('view', $googleDriveConfig);
-
         $parentId = $request->query('parent_id');
 
         try {
@@ -429,10 +414,9 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function foldersByCredentials(Request $request): JsonResponse
     {
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         $validated = $request->validate([
             'parent_id' => ['nullable', 'string', 'max:255'],
             'service_account_json' => [

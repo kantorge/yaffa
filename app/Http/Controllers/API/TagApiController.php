@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
 use App\Services\TagService;
@@ -12,25 +9,21 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
-class TagApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getList', 'getItem',
+])]
+#[Middleware('abilities:write', only: [
+    'patchActive', 'destroy',
+])]
+class TagApiController extends Controller
 {
     public function __construct(protected TagService $tagService)
     {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'getList', 'getItem',
-            ]),
-            new Middleware('abilities:write', only: [
-                'patchActive', 'destroy',
-            ]),
-        ];
     }
 
     /**
@@ -63,10 +56,9 @@ class TagApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'tag')]
     public function getItem(Tag $tag): JsonResponse
     {
-        Gate::authorize('view', $tag);
-
         return response()
             ->json(
                 $tag,
@@ -81,10 +73,9 @@ class TagApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'tag')]
     public function patchActive(Request $request, Tag $tag): JsonResponse
     {
-        Gate::authorize('update', $tag);
-
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $tag->active = $validated['active'];
@@ -98,10 +89,9 @@ class TagApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'tag')]
     public function destroy(Tag $tag): JsonResponse
     {
-        Gate::authorize('delete', $tag);
-
         $this->tagService->delete($tag);
 
         return response()->json(['tag' => $tag], Response::HTTP_OK);

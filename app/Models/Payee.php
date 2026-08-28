@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\Unguarded;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,30 +54,13 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read int|null $transactions_from_count
  * @mixin \Eloquent
  */
+#[Table(key: 'id')]
+#[WithoutTimestamps]
+#[Unguarded]
+#[Fillable('category_id', 'category_suggestion_dismissed')]
 class Payee extends Model
 {
     use HasFactory;
-
-    protected $guarded = [];
-
-    public $timestamps = false;
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'category_id',
-        'category_suggestion_dismissed',
-    ];
 
     /**
      * Get the attributes that should be cast.

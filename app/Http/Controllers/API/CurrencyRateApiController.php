@@ -13,35 +13,27 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
-class CurrencyRateApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'destroy', 'retrieveMissingCurrencyRateToBase',
+])]
+#[Middleware('abilities:settings', only: [
+    'clearCache',
+])]
+class CurrencyRateApiController extends Controller
 {
     use CurrencyTrait;
     public function __construct(
         protected CurrencyRateService $currencyRateService
     ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index',
-            ]),
-            new Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'retrieveMissingCurrencyRateToBase',
-            ]),
-            // clearCache is an operator-level maintenance action, not a per-record
-            // financial-data write, so it requires "settings" instead of "write".
-            new Middleware('abilities:settings', only: [
-                'clearCache',
-            ]),
-        ];
     }
 
     /**
@@ -52,9 +44,9 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'from')]
     public function index(Request $request, Currency $from, Currency $to): JsonResponse
     {
-        Gate::authorize('view', $from);
         Gate::authorize('view', $to);
 
         $dateFrom = $request->query('date_from');
@@ -141,11 +133,10 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'currency')]
     public function retrieveMissingCurrencyRateToBase(Currency $currency): JsonResponse
     {
         // Authorize user access to requested currency
-        Gate::authorize('view', $currency);
-
         try {
             $currency->retrieveMissingCurrencyRateToBase();
         } catch (CurrencyRateConversionException $e) {

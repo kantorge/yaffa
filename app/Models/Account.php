@@ -7,11 +7,15 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use Brick\Money\Money;
 use Carbon\Carbon;
 use Database\Factories\AccountFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\Unguarded;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection as IlluminateCollection;
@@ -59,32 +63,13 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder<static>|Account whereDefaultDateRange($value)
  * @mixin \Eloquent
  */
+#[Table(key: 'id')]
+#[WithoutTimestamps]
+#[Unguarded]
+#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range')]
 class Account extends Model
 {
     use HasFactory;
-
-    protected $guarded = [];
-
-    public $timestamps = false;
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'opening_balance',
-        'account_group_id',
-        'currency_id',
-        'default_date_range',
-    ];
 
     protected function casts(): array
     {

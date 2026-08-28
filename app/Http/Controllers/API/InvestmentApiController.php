@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Services\InvestmentProviderSettingsResolver;
@@ -16,10 +13,20 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
-class InvestmentApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
+])]
+#[Middleware('abilities:write', only: [
+    'patchActive', 'updateProviderSettings', 'destroy',
+])]
+class InvestmentApiController extends Controller
 {
     use ScheduleTrait;
 
@@ -27,20 +34,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
         protected InvestmentService $investmentService,
         protected InvestmentProviderSettingsResolver $providerSettingsResolver
     ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
-            ]),
-            new Middleware('abilities:write', only: [
-                'patchActive', 'updateProviderSettings', 'destroy',
-            ]),
-        ];
     }
 
     /**
@@ -124,10 +117,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $investment->load(['currency']);
 
         return response()->json($this->serializeInvestment($investment), Response::HTTP_OK);
@@ -138,10 +130,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function getPriceHistory(Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $prices = $this->investmentService->getPrices($investment, ['id', 'date', 'investment_id', 'price']);
 
         // Return data
@@ -153,6 +144,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * Used by the investment detail page to update all visualizations after transaction changes.
      */
+    #[Authorize('view', 'investment')]
     public function getDisplayData(Investment $investment): JsonResponse
     {
         /**
@@ -160,8 +152,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
          * @name("api.v1.investments.display-data")
          * @middlewares("api", "auth:sanctum")
          */
-        Gate::authorize('view', $investment);
-
         // Load investment with related data
         $investment->load(['investmentGroup', 'currency']);
 
@@ -202,10 +192,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'investment')]
     public function patchActive(Request $request, Investment $investment): JsonResponse
     {
-        Gate::authorize('update', $investment);
-
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $investment->active = $validated['active'];
@@ -219,12 +208,11 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'investment')]
     public function updateProviderSettings(
         UpdateInvestmentProviderSettingsRequest $request,
         Investment $investment
     ): JsonResponse {
-        Gate::authorize('update', $investment);
-
         $providerSettings = $request->validated('provider_settings');
 
         $investment->fill([
@@ -336,10 +324,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'investment')]
     public function destroy(Investment $investment): JsonResponse
     {
-        Gate::authorize('delete', $investment);
-
         $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {

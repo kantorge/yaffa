@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -101,6 +103,8 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder<static>|User whereAccountDetailsDateRange($value)
  * @mixin \Eloquent
  */
+#[Fillable('name', 'email', 'password', 'language', 'locale', 'start_date', 'end_date', 'account_details_date_range', 'auto_merge_standard_transaction_items')]
+#[Hidden('password', 'remember_token')]
 class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoFactorAuthenticatable
 {
     use GetsOnboarded;
@@ -109,33 +113,6 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
     use HasFlags;
     use Notifiable;
     use TwoFactorAuthentication;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'language',
-        'locale',
-        'start_date',
-        'end_date',
-        'account_details_date_range',
-        'auto_merge_standard_transaction_items',
-    ];
-
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
 
     /**
      * Get the attributes that should be cast.

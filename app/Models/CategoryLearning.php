@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,19 +35,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CategoryLearning whereUserId($value)
  * @mixin \Eloquent
  */
+#[Table('category_learning')]
+#[Fillable('item_description', 'category_id', 'usage_count', 'active')]
 class CategoryLearning extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    protected $table = 'category_learning';
-
-    protected $fillable = [
-        'item_description',
-        'category_id',
-        'usage_count',
-        'active',
-    ];
 
     protected function casts(): array
     {

@@ -8,10 +8,11 @@ use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Services\RecurrenceRuleService;
 use Brick\Money\Money;
 use Database\Factories\BudgetFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -61,31 +62,11 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Budget whereUserId($value)
  * @mixin Eloquent
  */
+#[Fillable('category_id', 'account_id', 'transaction_type', 'amount', 'comment', 'frequency', 'interval', 'by_day', 'by_month', 'start_date', 'end_date', 'count', 'inflation')]
 class Budget extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'category_id',
-        'account_id',
-        'transaction_type',
-        'amount',
-        'comment',
-        'frequency',
-        'interval',
-        'by_day',
-        'by_month',
-        'start_date',
-        'end_date',
-        'count',
-        'inflation',
-    ];
 
     protected function casts(): array
     {

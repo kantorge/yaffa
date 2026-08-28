@@ -10,32 +10,20 @@ use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\SandboxDemoDataExporter;
-use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
+#[Signature('app:sandbox:reset-database {--skip-date-adjustment : Skip adjusting dates in the database} {--force-sandbox : Allow running this command even if sandbox mode is not enabled}')]
+#[Description('Reset the demo (sandbox) database to an initial state to remove visitor modifications')]
 class ResetDemoDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:sandbox:reset-database
-        {--skip-date-adjustment : Skip adjusting dates in the database}
-        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Reset the demo (sandbox) database to an initial state to remove visitor modifications';
-
     /**
      * Execute the console command.
      */

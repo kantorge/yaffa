@@ -4,17 +4,20 @@ namespace App\Models;
 
 use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Http\Traits\CurrencyTrait;
 use App\Services\InflationCalculator;
 use App\Services\RecurrenceRuleService;
 use App\Support\ScheduleInstance;
+use Bkwld\Cloner\Cloneable;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use App\Http\Traits\CurrencyTrait;
-use Bkwld\Cloner\Cloneable;
 use Carbon\Carbon;
 use Database\Factories\TransactionFactory;
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Appends;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -90,36 +93,14 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
+#[Fillable('ai_document_id', 'date', 'transaction_type', 'reconciled', 'schedule', 'comment', 'config_type', 'config_id', 'user_id')]
+#[Hidden('config_id')]
+#[Appends('transaction_currency')]
 class Transaction extends Model
 {
     use Cloneable;
     use CurrencyTrait;
     use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'ai_document_id',
-        'date',
-        'transaction_type',
-        'reconciled',
-        'schedule',
-        'comment',
-        'config_type',
-        'config_id',
-        'user_id',
-    ];
-
-    protected $hidden = [
-        'config_id',
-    ];
-
-    protected $appends = [
-        'transaction_currency',
-    ];
 
     protected $cloneable_relations = [
         'config',

@@ -11,28 +11,20 @@ use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Prism\Prism\Facades\Prism;
 use Symfony\Component\HttpFoundation\Response;
-use Log;
 
-class AiProviderConfigApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'show', 'store', 'update', 'destroy', 'test',
+])]
+class AiProviderConfigApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            // Holds third-party AI provider API keys, so every action - including reads -
-            // requires "settings", not just "read".
-            new Middleware('abilities:settings', only: [
-                'show', 'store', 'update', 'destroy', 'test',
-            ]),
-        ];
-    }
-
     /**
      * Get the AI provider configuration
      *
@@ -74,10 +66,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', AiProviderConfig::class)]
     public function store(AiProviderConfigRequest $request): JsonResponse
     {
-        Gate::authorize('create', AiProviderConfig::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -112,10 +103,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'aiProviderConfig')]
     public function update(AiProviderConfigRequest $request, AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        Gate::authorize('update', $aiProviderConfig);
-
         $validated = $request->validated();
 
         // Prepare update data
@@ -146,10 +136,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'aiProviderConfig')]
     public function destroy(AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        Gate::authorize('delete', $aiProviderConfig);
-
         $aiProviderConfig->delete();
 
         return response()->json([], Response::HTTP_NO_CONTENT);

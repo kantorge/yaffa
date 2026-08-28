@@ -8,7 +8,7 @@
 - {{ __('mail.labels.document_id') }}: #{{ $document->id }}
 - {{ __('mail.labels.source_type') }}: {{ __('mail.source_types.' . $document->source_type) }}
 - {{ __('mail.labels.submitted') }}: {{ $document->created_at->format('Y-m-d H:i') }}
-- {{ __('mail.labels.processed') }}: {{ optional($document->processed_at)->format('Y-m-d H:i') ?? __('mail.common.na') }}
+- {{ __('mail.labels.processed') }}: {{ $document->processed_at?->format('Y-m-d H:i') ?? __('mail.common.na') }}
 
 @if(!empty($draftData['raw']))
 **{{ __('mail.ai_document_processed.extracted_summary') }}**

@@ -8,25 +8,18 @@ use App\Services\CurrencyService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
-class CurrencyApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:write', only: [
+    'destroy',
+])]
+class CurrencyApiController extends Controller
 {
     public function __construct(protected CurrencyService $currencyService)
     {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:write', only: [
-                'destroy',
-            ]),
-        ];
     }
 
     /**
@@ -34,9 +27,9 @@ class CurrencyApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'currency')]
     public function destroy(Currency $currency): JsonResponse
     {
-        Gate::authorize('delete', $currency);
         $result = $this->currencyService->delete($currency);
 
         if ($result['success']) {

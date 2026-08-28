@@ -3,25 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
+#[Signature('app:user:disable-2fa {email : The email address of the user to disable two-factor authentication for}')]
+#[Description('Break-glass operator command: disable two-factor authentication for a user who lost both their authenticator device and recovery codes.')]
 class DisableTwoFactorAuth extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:user:disable-2fa {email : The email address of the user to disable two-factor authentication for}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Break-glass operator command: disable two-factor authentication for a user who lost both their authenticator device and recovery codes.';
-
     public function handle(): int
     {
         $user = User::where('email', $this->argument('email'))->first();

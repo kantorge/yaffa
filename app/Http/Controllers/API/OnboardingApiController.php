@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -13,25 +11,20 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Spatie\Onboard\Facades\Onboard;
 
-class OnboardingApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getOnboardingData',
+])]
+#[Middleware('abilities:write', only: [
+    'setDismissedFlag', 'setCompletedTourFlag',
+])]
+class OnboardingApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'getOnboardingData',
-            ]),
-            new Middleware('abilities:write', only: [
-                'setDismissedFlag', 'setCompletedTourFlag',
-            ]),
-        ];
-    }
-
     /**
      * Get onboarding data
      *

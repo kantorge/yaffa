@@ -9,29 +9,20 @@ use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
-class AiUserSettingsApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'show', 'update',
+])]
+class AiUserSettingsApiController extends Controller
 {
     public function __construct(
         private AiUserSettingsResolver $settingsResolver
     ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            // Account-level AI preferences are configuration, not financial data, so both
-            // actions - including the read - require "settings".
-            new Middleware('abilities:settings', only: [
-                'show', 'update',
-            ]),
-        ];
     }
 
     /**

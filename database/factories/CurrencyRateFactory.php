@@ -3,15 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\Currency;
-use App\Models\CurrencyRate;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use InvalidArgumentException;
 
 class CurrencyRateFactory extends Factory
 {
-    protected $model = CurrencyRate::class;
-
     /**
      * Define the model's default state.
      */

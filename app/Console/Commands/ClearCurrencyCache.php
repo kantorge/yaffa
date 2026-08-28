@@ -4,22 +4,16 @@ namespace App\Console\Commands;
 
 use App\Http\Traits\CurrencyTrait;
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
+#[Signature('cache:clear-currencies {--user= : Clear cache for specific user ID}')]
+#[Description('Clear currency cache for all users or a specific user')]
 class ClearCurrencyCache extends Command
 {
     use CurrencyTrait;
-
-    /**
-     * The name and signature of the console command.
-     */
-    protected $signature = 'cache:clear-currencies {--user= : Clear cache for specific user ID}';
-
-    /**
-     * The console command description.
-     */
-    protected $description = 'Clear currency cache for all users or a specific user';
 
     /**
      * Execute the console command.

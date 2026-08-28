@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use App\Providers\AppServiceProvider;
 use App\Http\Controllers\Controller;
+use App\Providers\AppServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laragear\TwoFactor\TwoFactorLoginHelper;
 
-class LoginController extends Controller implements HasMiddleware
+#[Middleware('guest', except: ['logout'])]
+#[Middleware('throttle:6,1', only: ['login'])]
+class LoginController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
@@ -36,20 +37,12 @@ class LoginController extends Controller implements HasMiddleware
      */
     protected string $redirectTo = AppServiceProvider::HOME;
 
-    public static function middleware(): array
-    {
-        return [
-            new Middleware('guest', except: ['logout']),
-            new Middleware('throttle:6,1', only: ['login']),
-        ];
-    }
-
     /**
-     * Override the validateLogin method from AuthenticatesUsers trait to add the recaptcha validation.
+     * Override the validateLogin method from AuthenticatesUsers trait to handle the 2FA challenge step.
      *
      * When a 2FA challenge is pending (laragear/two-factor flashed the original credentials into the
      * session and re-rendered this same route with a code form), only the TOTP/recovery code field is
-     * submitted - email/password/recaptcha are intentionally absent from that request.
+     * submitted - email/password are intentionally absent from that request.
      */
     protected function validateLogin(Request $request): void
     {
@@ -61,17 +54,10 @@ class LoginController extends Controller implements HasMiddleware
             return;
         }
 
-        $rules = [
+        $request->validate([
             $this->username() => 'required|string',
             'password' => 'required|string',
-        ];
-
-        if (config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')) {
-            $rules[recaptchaFieldName()] = recaptchaRuleName();
-        }
-
-        $request->validate($rules);
+        ]);
     }
 
     /**

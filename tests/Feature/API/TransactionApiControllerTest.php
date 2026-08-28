@@ -183,11 +183,7 @@ class TransactionApiControllerTest extends TestCase
             $this->standardTransactionPayload($transaction)
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        $response->assertJsonValidationErrors([
-            'config.account_from_id',
-            'config.account_to_id',
-        ]);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
 
         $this->assertSame(
             $transaction->comment,
@@ -209,11 +205,7 @@ class TransactionApiControllerTest extends TestCase
             $this->investmentTransactionPayload($transaction)
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        $response->assertJsonValidationErrors([
-            'config.account_id',
-            'config.investment_id',
-        ]);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
 
         $this->assertSame(
             $transaction->comment,

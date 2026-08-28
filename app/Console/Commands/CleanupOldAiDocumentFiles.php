@@ -4,25 +4,15 @@ namespace App\Console\Commands;
 
 use App\Models\AiDocumentFile;
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
+#[Signature('ai-documents:cleanup-old-files {userId? : Optional user ID for scoped cleanup}')]
+#[Description('Delete old AI document files from local storage based on retention settings')]
 class CleanupOldAiDocumentFiles extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'ai-documents:cleanup-old-files {userId? : Optional user ID for scoped cleanup}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Delete old AI document files from local storage based on retention settings';
-
     /**
      * Execute the console command.
      */

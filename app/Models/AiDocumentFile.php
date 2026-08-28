@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,18 +26,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiDocumentFile whereId($value)
  * @mixin \Eloquent
  */
+#[WithoutTimestamps]
+#[Fillable('ai_document_id', 'file_path', 'file_name', 'file_type')]
 class AiDocumentFile extends Model
 {
     use HasFactory;
-
-    public $timestamps = false;
-
-    protected $fillable = [
-        'ai_document_id',
-        'file_path',
-        'file_name',
-        'file_type',
-    ];
 
     public function aiDocument(): BelongsTo
     {

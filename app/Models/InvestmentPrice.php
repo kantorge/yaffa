@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Observers\InvestmentPriceObserver;
 use Brick\Money\Money;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,21 +34,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Database\Factories\InvestmentPriceFactory factory($count = null, $state = [])
  * @mixin \Eloquent
  */
+#[Fillable('date', 'investment_id', 'price')]
 #[ObservedBy([InvestmentPriceObserver::class])]
 class InvestmentPrice extends Model
 {
     use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'date',
-        'investment_id',
-        'price',
-    ];
 
     /**
      * Get the attributes that should be cast.

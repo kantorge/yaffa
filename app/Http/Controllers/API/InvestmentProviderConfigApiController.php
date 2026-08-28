@@ -2,34 +2,26 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exceptions\PriceProviderException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentProviderConfigRequest;
 use App\Http\Resources\InvestmentProviderConfigResource;
 use App\Models\InvestmentProviderConfig;
-use App\Exceptions\PriceProviderException;
 use App\Services\InvestmentPriceProviderRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
-class InvestmentProviderConfigApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'index', 'show', 'update', 'test', 'destroy',
+])]
+class InvestmentProviderConfigApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            // Holds investment-price-provider API keys, so every action - including reads -
-            // requires "settings".
-            new Middleware('abilities:settings', only: [
-                'index', 'show', 'update', 'test', 'destroy',
-            ]),
-        ];
-    }
-
     public function __construct(private InvestmentPriceProviderRegistry $providerRegistry)
     {
     }
@@ -37,10 +29,9 @@ class InvestmentProviderConfigApiController extends Controller implements HasMid
     /**
      * List investment provider configs
      */
+    #[Authorize('viewAny', InvestmentProviderConfig::class)]
     public function index(Request $request): JsonResponse
     {
-        Gate::authorize('viewAny', InvestmentProviderConfig::class);
-
         $configs = $request->user()
             ->investmentProviderConfigs()
             ->orderBy('provider_key')

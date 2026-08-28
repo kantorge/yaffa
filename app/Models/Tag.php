@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Database\Factories\TagFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,20 +40,11 @@ use Illuminate\Support\Carbon;
  * @property-read int $transaction_count
  * @mixin \Eloquent
  */
+#[Fillable('name', 'active')]
 class Tag extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'active',
-    ];
 
     /**
      * Get the attributes that should be cast.

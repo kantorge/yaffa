@@ -5,7 +5,10 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Database\Factories\InvestmentFactory;
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Appends;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\Unguarded;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -78,6 +81,9 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static Builder<static>|Investment whereLastPriceFetchErrorMessage($value)
  * @mixin Eloquent
  */
+#[Unguarded]
+#[Fillable('name', 'symbol', 'isin', 'comment', 'active', 'auto_update', 'investment_group_id', 'currency_id', 'investment_price_provider', 'provider_settings', 'last_price_fetch_attempted_at', 'last_price_fetch_succeeded_at', 'last_price_fetch_error_at', 'last_price_fetch_error_message')]
+#[Appends('investment_price_provider_name')]
 class Investment extends Model
 {
     use HasFactory;
@@ -85,34 +91,6 @@ class Investment extends Model
 
     /** @var array<string, mixed> */
     public array $provider_credentials = [];
-
-    protected $guarded = [];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'symbol',
-        'isin',
-        'comment',
-        'active',
-        'auto_update',
-        'investment_group_id',
-        'currency_id',
-        'investment_price_provider',
-        'provider_settings',
-        'last_price_fetch_attempted_at',
-        'last_price_fetch_succeeded_at',
-        'last_price_fetch_error_at',
-        'last_price_fetch_error_message',
-    ];
-
-    protected $appends = [
-        'investment_price_provider_name',
-    ];
 
     /**
      * Scope a query to only include active investments.

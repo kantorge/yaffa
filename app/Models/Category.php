@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\Appends;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 /**
  * App\Models\Category
@@ -60,27 +62,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
+#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation')]
+#[Appends('full_name')]
 class Category extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'description',
-        'active',
-        'parent_id',
-        'default_aggregation',
-    ];
-
-    protected $appends = [
-        'full_name',
-    ];
 
     protected function casts(): array
     {

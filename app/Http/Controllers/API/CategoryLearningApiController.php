@@ -9,32 +9,26 @@ use App\Http\Resources\CategoryLearningResource;
 use App\Models\CategoryLearning;
 use App\Models\User;
 use App\Services\CategoryLearningManagementService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
-class CategoryLearningApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index', 'show',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
+])]
+class CategoryLearningApiController extends Controller
 {
     public function __construct(private CategoryLearningManagementService $managementService)
     {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index', 'show',
-            ]),
-            new Middleware('abilities:write', only: [
-                'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
-            ]),
-        ];
     }
 
     /**
@@ -104,10 +98,9 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'categoryLearning')]
     public function update(CategoryLearningRequest $request, CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->update($categoryLearning, $request->validated());
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
@@ -118,10 +111,9 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'categoryLearning')]
     public function deactivate(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->deactivate($categoryLearning);
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
@@ -132,10 +124,9 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'categoryLearning')]
     public function activate(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->activate($categoryLearning);
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
@@ -146,10 +137,9 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'categoryLearning')]
     public function destroy(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('delete', $categoryLearning);
-
         $this->managementService->destroy($categoryLearning);
 
         return response()->json([

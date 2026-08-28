@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AiDocumentSource;
 use App\Enums\AiDocumentStatus;
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,21 +49,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiDocument whereUserId($value)
  * @mixin \Eloquent
  */
+#[Fillable('status', 'source_type', 'processed_transaction_data', 'ai_chat_history', 'google_drive_file_id', 'received_mail_id', 'custom_prompt', 'processed_at')]
 class AiDocument extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    protected $fillable = [
-        'status',
-        'source_type',
-        'processed_transaction_data',
-        'ai_chat_history',
-        'google_drive_file_id',
-        'received_mail_id',
-        'custom_prompt',
-        'processed_at',
-    ];
 
     protected function casts(): array
     {

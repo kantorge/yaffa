@@ -14,27 +14,21 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use RuntimeException;
 
-class FileImportProfileApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'destroy', 'suggest',
+])]
+class FileImportProfileApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index',
-            ]),
-            new Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'suggest',
-            ]),
-        ];
-    }
-
     /**
      * List file import profiles
      *
@@ -43,10 +37,9 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('viewAny', FileImportProfile::class)]
     public function index(Request $request): JsonResponse
     {
-        Gate::authorize('viewAny', FileImportProfile::class);
-
         $user = $request->user();
 
         $query = FileImportProfile::query()
@@ -74,10 +67,9 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', FileImportProfile::class)]
     public function store(FileImportProfileRequest $request): JsonResponse
     {
-        Gate::authorize('create', FileImportProfile::class);
-
         $user = $request->user();
 
         $profile = new FileImportProfile([
@@ -105,10 +97,9 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'profile')]
     public function update(FileImportProfileRequest $request, FileImportProfile $profile): JsonResponse
     {
-        Gate::authorize('update', $profile);
-
         $profile->fill($request->validated());
         $profile->save();
 
@@ -122,10 +113,9 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'profile')]
     public function destroy(FileImportProfile $profile): JsonResponse
     {
-        Gate::authorize('delete', $profile);
-
         if ($profile->accountEntities()->exists()) {
             return response()->json([
                 'message' => __('This profile cannot be deleted because it is set as the default for one or more accounts.'),

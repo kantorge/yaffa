@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
-use App\Http\Controllers\Controller;
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
@@ -17,30 +14,27 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
-class PayeeApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
+])]
+#[Middleware('abilities:write', only: [
+    'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
+    'storePayee', 'updatePayee',
+])]
+class PayeeApiController extends Controller
 {
     public function __construct(
         private PayeeCategoryStatsService $payeeCategoryStatsService,
         private PayeePersistenceService $payeePersistenceService,
     ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
-            ]),
-            new Middleware('abilities:write', only: [
-                'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
-                'storePayee', 'updatePayee',
-            ]),
-        ];
     }
 
     /**
@@ -145,9 +139,9 @@ class PayeeApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
-        Gate::authorize('update', $accountEntity);
         Gate::authorize('view', $category);
 
         $accountEntity->load(['config']);
@@ -166,10 +160,9 @@ class PayeeApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
-        Gate::authorize('update', $accountEntity);
-
         $accountEntity->load(['config']);
         if (! $accountEntity->config instanceof Payee) {
             return response()->noContent(Response::HTTP_BAD_REQUEST);
@@ -186,10 +179,9 @@ class PayeeApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', AccountEntity::class)]
     public function storePayee(AccountEntityRequest $request): JsonResponse
     {
-        Gate::authorize('create', AccountEntity::class);
-
         $newPayee = $this->payeePersistenceService->store($request);
         $newPayee->load($this->payeeResponseRelations());
 
@@ -241,10 +233,9 @@ class PayeeApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'accountEntity')]
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('view', $accountEntity);
-
         $accountEntity->load($this->payeeResponseRelations());
 
         return response()
@@ -259,10 +250,9 @@ class PayeeApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function updatePayee(AccountEntityRequest $request, AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('update', $accountEntity);
-
         if (! $accountEntity->isPayee()) {
             return response()->json([
                 'message' => __('Payee not found'),
