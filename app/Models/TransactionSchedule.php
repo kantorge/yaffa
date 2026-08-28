@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Services\RecurrenceRuleService;
 use Database\Factories\TransactionScheduleFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Exception;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
-use Exception;
 
 /**
  * App\Models\TransactionSchedule
@@ -53,30 +55,11 @@ use Exception;
  * @method static Builder<static>|TransactionSchedule whereAutomaticRecording($value)
  * @mixin \Eloquent
  */
+#[Fillable('transaction_id', 'start_date', 'next_date', 'end_date', 'frequency', 'count', 'interval', 'by_day', 'by_month', 'inflation', 'automatic_recording')]
+#[Hidden('transaction_id')]
 class TransactionSchedule extends Model
 {
     use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'transaction_id',
-        'start_date',
-        'next_date',
-        'end_date',
-        'frequency',
-        'count',
-        'interval',
-        'by_day',
-        'by_month',
-        'inflation',
-        'automatic_recording'
-    ];
-
-    protected $hidden = ['transaction_id'];
 
     protected function casts(): array
     {

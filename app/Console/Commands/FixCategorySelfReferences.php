@@ -3,14 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Models\Category;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:category:fix-self-references {--dry-run : Show affected categories without updating}')]
+#[Description('Fix self-referencing categories (id = parent_id) by setting parent_id to null')]
 class FixCategorySelfReferences extends Command
 {
-    protected $signature = 'app:category:fix-self-references {--dry-run : Show affected categories without updating}';
-
-    protected $description = 'Fix self-referencing categories (id = parent_id) by setting parent_id to null';
-
     public function handle(): int
     {
         $affected = Category::query()

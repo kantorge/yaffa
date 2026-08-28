@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use Carbon\Carbon;
@@ -16,27 +13,23 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
-class AccountApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+                'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
+            ])]
+#[Middleware('abilities:write', only: [
+                'recalculateMonthlySummary',
+            ])]
+class AccountApiController extends Controller
 {
     use CurrencyTrait;
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
-            ]),
-            new Middleware('abilities:write', only: [
-                'recalculateMonthlySummary',
-            ]),
-        ];
-    }
 
     /**
      * List accounts
@@ -246,10 +239,9 @@ class AccountApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'accountEntity')]
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('view', $accountEntity);
-
         $accountEntity->load(['config', 'config.currency']);
 
         return response()
@@ -431,10 +423,9 @@ class AccountApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function recalculateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('update', $accountEntity);
-
         // Check if the account entity is an account
         if ($accountEntity->config_type !== 'account') {
             return response()

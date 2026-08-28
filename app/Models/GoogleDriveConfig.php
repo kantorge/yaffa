@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,26 +49,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoogleDriveConfig whereUserId($value)
  * @mixin \Eloquent
  */
+#[Hidden('service_account_json')]
+#[Fillable('service_account_email', 'service_account_json', 'folder_id', 'folder_name', 'post_import_actions', 'processed_folder_id', 'processed_folder_name', 'sync_interval_minutes', 'enabled')]
 class GoogleDriveConfig extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    protected $hidden = [
-        'service_account_json',
-    ];
-
-    protected $fillable = [
-        'service_account_email',
-        'service_account_json',
-        'folder_id',
-        'folder_name',
-        'post_import_actions',
-        'processed_folder_id',
-        'processed_folder_name',
-        'sync_interval_minutes',
-        'enabled',
-    ];
 
     protected function casts(): array
     {

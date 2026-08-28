@@ -8,32 +8,15 @@ use App\Http\Requests\TwoFactorPasswordRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
-class TwoFactorApiController extends Controller implements HasMiddleware
-{
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            // Enrolling, confirming, disabling, or regenerating recovery codes is an
-            // account-security-changing action, so it requires the "settings" ability -
-            // same bar as any other account/security settings change. This is a no-op for
-            // session requests (TransientToken::can() always returns true); it only
-            // restricts bearer tokens that were not granted "settings" at creation.
-            new Middleware('abilities:settings', only: [
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
                 'enroll', 'confirm', 'disable', 'regenerateRecoveryCodes',
-            ]),
-            // `show` is intentionally left out of any abilities:* gate - it only exposes
-            // a boolean enabled flag, so any authenticated bearer token may read it
-            // regardless of granted abilities. Covered by
-            // test_bearer_token_without_settings_ability_can_still_read_status in
-            // TwoFactorApiControllerAccessTest.
-        ];
-    }
-
+            ])]
+class TwoFactorApiController extends Controller
+{
     /**
      * Get two-factor status
      */

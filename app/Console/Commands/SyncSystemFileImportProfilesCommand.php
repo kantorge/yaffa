@@ -4,14 +4,14 @@ namespace App\Console\Commands;
 
 use App\Models\FileImportProfile;
 use App\Services\Import\SystemFileImportProfileRegistry;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:import:sync-system-profiles')]
+#[Description('Synchronize application-managed system file import profiles')]
 class SyncSystemFileImportProfilesCommand extends Command
 {
-    protected $signature = 'app:import:sync-system-profiles';
-
-    protected $description = 'Synchronize application-managed system file import profiles';
-
     public function handle(SystemFileImportProfileRegistry $registry): int
     {
         $count = 0;

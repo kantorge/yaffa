@@ -10,33 +10,25 @@ use App\Services\BudgetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
-class BudgetApiController extends Controller implements HasMiddleware
-{
-    public function __construct(private readonly BudgetService $budgetService)
-    {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
                 'index', 'getItem',
-            ]),
-            new Middleware('abilities:write', only: [
+            ])]
+#[Middleware('abilities:write', only: [
                 'store', 'update', 'destroy',
-            ]),
-        ];
-    }
+            ])]
+class BudgetApiController extends Controller
+{
+    public function __construct(private readonly BudgetService $budgetService) {}
 
     /**
      * Get a list of the user's standalone budgets.
      */
+    #[Authorize('viewAny', Budget::class)]
     public function index(Request $request): JsonResponse
     {
         /**
@@ -44,8 +36,6 @@ class BudgetApiController extends Controller implements HasMiddleware
          * @name("api.v1.budgets.index")
          * @middlewares("api", "auth:sanctum")
          */
-        Gate::authorize('viewAny', Budget::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -57,6 +47,7 @@ class BudgetApiController extends Controller implements HasMiddleware
     /**
      * Get a budget by ID.
      */
+    #[Authorize('view', 'budget')]
     public function getItem(Budget $budget): JsonResponse
     {
         /**
@@ -64,8 +55,6 @@ class BudgetApiController extends Controller implements HasMiddleware
          * @name("api.v1.budgets.show")
          * @middlewares("api", "auth:sanctum")
          */
-        Gate::authorize('view', $budget);
-
         $budget->load(['category', 'account.config.currency']);
 
         return response()->json($budget, Response::HTTP_OK);
@@ -78,10 +67,9 @@ class BudgetApiController extends Controller implements HasMiddleware
      * @name("api.v1.budgets.store")
      * @middlewares("api", "auth:sanctum")
      */
+    #[Authorize('create', Budget::class)]
     public function store(BudgetRequest $request): JsonResponse
     {
-        Gate::authorize('create', Budget::class);
-
         $budget = $this->budgetService->store($request->user(), $request->validated());
 
         return response()->json($budget, Response::HTTP_CREATED);
@@ -94,10 +82,9 @@ class BudgetApiController extends Controller implements HasMiddleware
      * @name("api.v1.budgets.update")
      * @middlewares("api", "auth:sanctum")
      */
+    #[Authorize('update', 'budget')]
     public function update(BudgetRequest $request, Budget $budget): JsonResponse
     {
-        Gate::authorize('update', $budget);
-
         $budget = $this->budgetService->update($budget, $request->validated());
 
         return response()->json($budget, Response::HTTP_OK);
@@ -106,6 +93,7 @@ class BudgetApiController extends Controller implements HasMiddleware
     /**
      * Delete a budget.
      */
+    #[Authorize('delete', 'budget')]
     public function destroy(Budget $budget): JsonResponse
     {
         /**
@@ -113,7 +101,6 @@ class BudgetApiController extends Controller implements HasMiddleware
          * @name("api.v1.budgets.destroy")
          * @middlewares("api", "auth:sanctum")
          */
-        Gate::authorize('delete', $budget);
         $result = $this->budgetService->delete($budget);
 
         if ($result['success']) {

@@ -14,6 +14,8 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\Timeout;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +23,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
+#[Tries(3)]
+#[Timeout(300)]
 class ProcessGoogleDriveConfigJob implements ShouldQueue
 {
     use Dispatchable;
@@ -28,15 +32,10 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $tries = 3;
-
-    public $timeout = 300;
-
     public function __construct(
         public int $configId,
         public bool $isManual = false
-    ) {
-    }
+    ) {}
 
     public function handle(GoogleDriveService $driveService, AiUserSettingsResolver $settingsResolver): void
     {

@@ -6,26 +6,15 @@ use App\Enums\AiDocumentStatus;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Services\AiUserSettingsResolver;
-use Illuminate\Console\Command;
 use Exception;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
+use Illuminate\Console\Command;
 
+#[Signature('app:process-ai-documents {--limit=10 : Maximum number of documents to process in this run}')]
+#[Description('Process AI documents that are ready for processing')]
 class ProcessAiDocuments extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:process-ai-documents
-                            {--limit=10 : Maximum number of documents to process in this run}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Process AI documents that are ready for processing';
-
     /**
      * Execute the console command.
      */

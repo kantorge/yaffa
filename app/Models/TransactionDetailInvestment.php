@@ -7,11 +7,14 @@ use App\Casts\MoneyCast;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
 use Database\Factories\TransactionDetailInvestmentFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use RuntimeException;
@@ -55,33 +58,12 @@ use RuntimeException;
  * @property-read Transaction|null $transaction
  * @mixin \Eloquent
  */
+#[Table('transaction_details_investment')]
+#[WithoutTimestamps]
+#[Fillable('account_id', 'investment_id', 'price', 'quantity', 'commission', 'tax', 'dividend')]
 class TransactionDetailInvestment extends Model
 {
     use HasFactory;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'transaction_details_investment';
-
-    public $timestamps = false;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'account_id',
-        'investment_id',
-        'price',
-        'quantity',
-        'commission',
-        'tax',
-        'dividend',
-    ];
 
     protected function casts(): array
     {

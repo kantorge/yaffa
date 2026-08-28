@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
@@ -11,7 +10,6 @@ use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\BudgetService;
 use App\Services\CategoryService;
 use App\Services\InflationCalculator;
@@ -21,10 +19,16 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class ReportApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+                'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
+            ])]
+class ReportApiController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -34,17 +38,6 @@ class ReportApiController extends Controller implements HasMiddleware
     public function __construct(private BudgetService $budgetService)
     {
         $this->categoryService = new CategoryService();
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
-            ]),
-        ];
     }
 
     /**

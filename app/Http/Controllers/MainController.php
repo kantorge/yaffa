@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Casts\DecimalCast;
 use App\Casts\MoneyCast;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
@@ -15,9 +12,14 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class MainController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class MainController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -25,14 +27,6 @@ class MainController extends Controller implements HasMiddleware
     private $allAccounts;
 
     private $currentAccount;
-
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
 
     public function account_details(Request $request, AccountEntity $account, $withForecast = null)
     {

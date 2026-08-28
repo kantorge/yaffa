@@ -2,33 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Investment;
-use App\Models\TransactionDetailInvestment;
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class TransactionController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class TransactionController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
-
     public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
@@ -75,6 +69,7 @@ class TransactionController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'transaction')]
     public function openTransaction(Transaction $transaction, string $action): View
     {
         /**
@@ -84,8 +79,6 @@ class TransactionController extends Controller implements HasMiddleware
          */
 
         // Authorize user for transaction
-        Gate::authorize('view', $transaction);
-
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
         if (!in_array($action, $availableActions)) {
@@ -125,6 +118,7 @@ class TransactionController extends Controller implements HasMiddleware
         ]);
     }
 
+    #[Authorize('update', 'transaction')]
     public function skipScheduleInstance(Transaction $transaction): RedirectResponse
     {
         /**
@@ -132,8 +126,6 @@ class TransactionController extends Controller implements HasMiddleware
          * @name("transactions.skipScheduleInstance")
          * @middlewares("web", "auth", "verified")
          */
-        Gate::authorize('update', $transaction);
-
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
 

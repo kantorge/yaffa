@@ -18,40 +18,30 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
-class AiDocumentApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+                'index', 'show', 'summary',
+            ])]
+#[Middleware('abilities:write', only: [
+                'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+            ])]
+#[Middleware('abilities:settings', only: [
+                'cleanupOldFiles',
+            ])]
+class AiDocumentApiController extends Controller
 {
     private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
 
     public function __construct(
         private AiUserSettingsResolver $aiUserSettingsResolver
-    ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index', 'show', 'summary',
-            ]),
-            new Middleware('abilities:write', only: [
-                'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
-            ]),
-            // Operator-level bulk maintenance action, not a per-record financial-data
-            // write, so it requires "settings" instead of "write".
-            new Middleware('abilities:settings', only: [
-                'cleanupOldFiles',
-            ]),
-        ];
-    }
+    ) {}
 
     /**
      * Upload a document for AI processing
@@ -60,10 +50,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', AiDocument::class)]
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
-        Gate::authorize('create', AiDocument::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -107,10 +96,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'aiDocument')]
     public function update(UpdateAiDocumentRequest $request, AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('update', $aiDocument);
-
         if ($request->filled('custom_prompt')) {
             $aiDocument->custom_prompt = $request->input('custom_prompt');
         }
@@ -257,10 +245,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'aiDocument')]
     public function show(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('view', $aiDocument);
-
         $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
         $this->enrichProcessedData($aiDocument);
 
@@ -277,10 +264,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('reprocess', 'aiDocument')]
     public function reprocess(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('reprocess', $aiDocument);
-
         if ($response = $this->ensureAiProcessingEnabled($aiDocument->user)) {
             return $response;
         }
@@ -315,10 +301,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'aiDocument')]
     public function destroy(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('delete', $aiDocument);
-
         // Delete stored files
         foreach ($aiDocument->aiDocumentFiles as $file) {
             /** @var AiDocumentFile $file */
@@ -343,10 +328,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'aiDocument')]
     public function checkDuplicates(AiDocument $aiDocument, DuplicateDetectionService $duplicateService): JsonResponse
     {
-        Gate::authorize('view', $aiDocument);
-
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
             return response()->json([], Response::HTTP_BAD_REQUEST);

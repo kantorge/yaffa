@@ -5,30 +5,16 @@ namespace App\Console\Commands;
 use App\Jobs\CalculateAccountMonthlySummary as CalculateAccountMonthlySummariesJob;
 use App\Models\AccountEntity;
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 use Throwable;
 
+#[Signature('app:cache:account-monthly-summaries ' . '{accountEntityId? : The ID of the account entity to process directly. Takes precedence if set together with the User ID.} ' . '{userId? : The ID of the user to process all their accounts.}' . '{summaryType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} ' . '{dataType? : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.} ')]
+#[Description('Recalculate and cache the monthly summaries for accounts.')]
 class CalculateAccountMonthlySummaries extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:cache:account-monthly-summaries '
-        . '{accountEntityId? : The ID of the account entity to process directly. Takes precedence if set together with the User ID.} '
-        . '{userId? : The ID of the user to process all their accounts.}'
-        . '{summaryType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} '
-        . '{dataType? : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.} ';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Recalculate and cache the monthly summaries for accounts.';
-
     /**
      * Execute the console command.
      * @throws Throwable

@@ -6,24 +6,14 @@ use App\Jobs\CalculateBudgetActiveFlag;
 use App\Jobs\CalculateTransactionScheduleActiveFlag;
 use App\Models\Budget;
 use App\Models\Transaction;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:cache:transaction-schedule-active-flags')]
+#[Description('Recalculate and cache the active flags for all transaction schedules and budgets.')]
 class CalculateTransactionScheduleActiveFlags extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:cache:transaction-schedule-active-flags';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Recalculate and cache the active flags for all transaction schedules and budgets.';
-
     /**
      * Execute the console command.
      */

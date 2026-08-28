@@ -6,38 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TestInvestmentPriceProviderFetchRequest;
 use App\Models\Investment;
 use App\Services\InvestmentPriceProviderContextResolver;
-use App\Services\InvestmentProviderAvailabilityService;
 use App\Services\InvestmentPriceProviderRegistry;
+use App\Services\InvestmentProviderAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class InvestmentPriceProviderApiController extends Controller implements HasMiddleware
-{
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
                 'available',
-            ]),
-            new Middleware('abilities:write', only: [
+            ])]
+#[Middleware('abilities:write', only: [
                 'testFetch',
-            ]),
-        ];
-    }
-
+            ])]
+class InvestmentPriceProviderApiController extends Controller
+{
     public function __construct(
         private InvestmentProviderAvailabilityService $availabilityService,
         private InvestmentPriceProviderRegistry $providerRegistry,
         private InvestmentPriceProviderContextResolver $contextResolver,
-    ) {
-    }
+    ) {}
 
     /**
      * List available investment price providers

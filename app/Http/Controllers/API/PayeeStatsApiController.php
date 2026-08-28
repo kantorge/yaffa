@@ -9,26 +9,17 @@ use App\Services\PayeeCategoryStatsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 
-class PayeeStatsApiController extends Controller implements HasMiddleware
-{
-    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
-    {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
                 'categoryStats',
-            ]),
-        ];
-    }
+            ])]
+class PayeeStatsApiController extends Controller
+{
+    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService) {}
 
     /**
      * Get payee category stats

@@ -25,10 +25,12 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\Timeout;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
+#[Timeout(240)]
 class CalculateAccountMonthlySummary implements ShouldQueue
 {
     use Batchable;
@@ -45,8 +47,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     private ?Carbon $dateTo;
     private InvestmentService $investmentService;
     private BudgetService $budgetService;
-
-    public int $timeout = 240;
 
     /**
      * Create a new job instance.

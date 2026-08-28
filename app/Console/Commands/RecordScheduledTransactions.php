@@ -5,24 +5,14 @@ namespace App\Console\Commands;
 use App\Jobs\RecordScheduledTransaction;
 use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:record-scheduled-transactions')]
+#[Description('Enter transactions in the database which are due, and automatic recording is needed.')]
 class RecordScheduledTransactions extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:record-scheduled-transactions';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Enter transactions in the database which are due, and automatic recording is needed.';
-
     /**
      * Execute the console command.
      */

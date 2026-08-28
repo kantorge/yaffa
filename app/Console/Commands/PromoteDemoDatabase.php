@@ -3,26 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Services\SandboxDemoDataExporter;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:sandbox:promote-database {--force : Skip the confirmation prompt} {--force-sandbox : Allow running this command even if sandbox mode is not enabled}')]
+#[Description('Dump the demo (sandbox) database directly into database/seeders/demo.sql, ready for review and commit')]
 class PromoteDemoDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:sandbox:promote-database
-        {--force : Skip the confirmation prompt}
-        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Dump the demo (sandbox) database directly into database/seeders/demo.sql, ready for review and commit';
-
     /**
      * Execute the console command.
      */

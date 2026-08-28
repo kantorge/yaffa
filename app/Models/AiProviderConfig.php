@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,21 +33,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiProviderConfig whereVisionEnabled($value)
  * @mixin \Eloquent
  */
+#[Hidden('api_key')]
+#[Fillable('provider', 'model', 'api_key', 'vision_enabled')]
 class AiProviderConfig extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    protected $hidden = [
-        'api_key',
-    ];
-
-    protected $fillable = [
-        'provider',
-        'model',
-        'api_key',
-        'vision_enabled',
-    ];
 
     protected function casts(): array
     {

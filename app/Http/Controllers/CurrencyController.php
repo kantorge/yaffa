@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -135,6 +135,7 @@ class CurrencyController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'currency')]
     public function setDefault(Currency $currency): RedirectResponse
     {
         /**
@@ -143,8 +144,6 @@ class CurrencyController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         // Authenticate the user against the currency using CurrencyPolicy
-        Gate::authorize('update', $currency);
-
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));
 

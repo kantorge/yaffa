@@ -6,11 +6,13 @@ use App\Casts\MoneyCast;
 use Bkwld\Cloner\Cloneable;
 use Brick\Money\Money;
 use Database\Factories\TransactionItemFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -40,29 +42,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @mixin Eloquent
  * @mixin \Eloquent
  */
+#[WithoutTimestamps]
+#[Fillable('transaction_id', 'category_id', 'amount', 'comment')]
 class TransactionItem extends Model
 {
     use Cloneable;
     use HasFactory;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'transaction_id',
-        'category_id',
-        'amount',
-        'comment',
-    ];
 
     protected $cloneable_relations = [
         'tags',

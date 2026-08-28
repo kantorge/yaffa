@@ -14,6 +14,7 @@ use Brick\Math\BigDecimal;
 use Brick\Money\Money;
 use Carbon\Carbon;
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -44,27 +45,13 @@ use RuntimeException;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereUserId($value)
  * @mixin Eloquent
  */
+#[Fillable('date', 'user_id', 'account_entity_id', 'transaction_type', 'data_type', 'amount')]
 class AccountMonthlySummary extends Model
 {
     use CurrencyTrait;
 
     // This model is not using the created_at column, only the updated_at column
     public const null CREATED_AT = null;
-
-    protected $fillable = [
-        // First day of the month
-        'date',
-        'user_id',
-        // Reference to the account entity, optionally null for generic budgets
-        'account_entity_id',
-        // Transaction can be: 'account_balance', 'investment_value'
-        'transaction_type',
-        // Data type can be: 'fact', 'forecast', 'budget'
-        'data_type',
-        // The monthly change for standard transactions, and month end value for investments
-        // Always in the currency of the account, or the base currency for generic budgets
-        'amount',
-    ];
 
     protected function casts(): array
     {

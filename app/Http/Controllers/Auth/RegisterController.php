@@ -8,18 +8,19 @@ use App\Models\User;
 use App\Providers\AppServiceProvider;
 use App\Providers\Faker\CurrencyData;
 use App\Services\AiUserSettingsResolver;
-use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
-class RegisterController extends Controller implements HasMiddleware
+#[Middleware('guest')]
+class RegisterController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
@@ -53,13 +54,6 @@ class RegisterController extends Controller implements HasMiddleware
         foreach (CurrencyData::getCurrencies() as $currency) {
             $this->availableCurrencies[$currency['iso_code']] = $currency['name'];
         }
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'guest',
-        ];
     }
 
     /**

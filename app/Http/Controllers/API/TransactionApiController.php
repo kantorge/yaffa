@@ -4,23 +4,18 @@ namespace App\Http\Controllers\API;
 
 use App\Casts\MoneyCast;
 use App\Enums\TransactionType;
-use App\Models\Currency;
-use Brick\Math\RoundingMode;
-use Brick\Money\Money;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\TransactionRequest;
 use App\Http\Requests\API\FindTransactionsRequest;
 use App\Http\Requests\API\GetScheduledItemsRequest;
+use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
 use App\Models\Budget;
+use App\Models\Currency;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -28,23 +23,37 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\User;
-use App\Services\CategoryService;
 use App\Services\CategoryLearningService;
+use App\Services\CategoryService;
 use App\Services\TransactionItemMergeService;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Exception;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
 use RuntimeException;
 
-class TransactionApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+                'getItem', 'getScheduledItems', 'findTransactions',
+            ])]
+#[Middleware('abilities:write', only: [
+                'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
+                'updateInvestment', 'skipScheduleInstance', 'destroy',
+            ])]
+class TransactionApiController extends Controller
 {
     use CurrencyTrait;
 
@@ -56,21 +65,6 @@ class TransactionApiController extends Controller implements HasMiddleware
         $this->categoryService = new CategoryService();
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'getItem', 'getScheduledItems', 'findTransactions',
-            ]),
-            new Middleware('abilities:write', only: [
-                'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
-                'updateInvestment', 'skipScheduleInstance', 'destroy',
-            ]),
-        ];
-    }
-
     /**
      * Reconcile a transaction
      *
@@ -79,10 +73,9 @@ class TransactionApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'transaction')]
     public function reconcile(Request $request, Transaction $transaction): JsonResponse
     {
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validate([
             'reconciled' => ['required', 'boolean'],
         ]);
@@ -98,10 +91,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Get a transaction
      */
+    #[Authorize('view', 'transaction')]
     public function getItem(Transaction $transaction): JsonResponse
     {
-        Gate::authorize('view', $transaction);
-
         $transaction->loadDetails();
 
         return response()->json(
@@ -645,10 +637,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Update a standard transaction
      */
+    #[Authorize('update', 'transaction')]
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -729,10 +720,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Update an investment transaction
      */
+    #[Authorize('update', 'transaction')]
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -825,10 +815,9 @@ class TransactionApiController extends Controller implements HasMiddleware
      *
      * Skips the next scheduled occurrence of a recurring transaction.
      */
+    #[Authorize('update', 'transaction')]
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
-        Gate::authorize('update', $transaction);
-
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
@@ -843,11 +832,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Delete a transaction
      */
+    #[Authorize('delete', 'transaction')]
     public function destroy(Transaction $transaction): JsonResponse
     {
         // Authorize the deletion of the transaction for the owner
-        Gate::authorize('delete', $transaction);
-
         // Load the details of the transaction for the event
         $transaction->loadDetails();
 

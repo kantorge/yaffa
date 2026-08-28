@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -12,31 +9,26 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
-class AccountEntityApiController extends Controller implements HasMiddleware
-{
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:write', only: [
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:write', only: [
                 'patchActive', 'destroy', 'recalculateAccountMonthlySummaries',
-            ]),
-        ];
-    }
-
+            ])]
+class AccountEntityApiController extends Controller
+{
     /**
      * Update account entity active status
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function patchActive(Request $request, AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('update', $accountEntity);
-
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $accountEntity->active = $validated['active'];
@@ -67,10 +59,9 @@ class AccountEntityApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('forceDelete', 'accountEntity')]
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('forceDelete', $accountEntity);
-
         try {
             $accountEntity->delete();
             $accountEntity->config->delete();

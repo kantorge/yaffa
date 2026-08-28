@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CheckPriceInvestmentPriceApiRequest;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\CheckPriceInvestmentPriceApiRequest;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -12,30 +12,23 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
-class InvestmentPriceApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+                'index', 'checkPrice',
+            ])]
+#[Middleware('abilities:write', only: [
+                'store', 'update', 'destroy', 'retrieveMissingPrices',
+            ])]
+class InvestmentPriceApiController extends Controller
 {
     public function __construct(
         protected InvestmentService $investmentService
-    ) {
-    }
-
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-            new Middleware('abilities:read', only: [
-                'index', 'checkPrice',
-            ]),
-            new Middleware('abilities:write', only: [
-                'store', 'update', 'destroy', 'retrieveMissingPrices',
-            ]),
-        ];
-    }
+    ) {}
 
     /**
      * List investment prices
@@ -44,10 +37,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function index(Request $request, Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
@@ -149,10 +141,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function retrieveMissingPrices(Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         // Get latest known date of price date, so we can retrieve missing values
         /** @var InvestmentPrice|null $lastPrice */
         $lastPrice = $investment->investmentPrices()->latest('date')->first();
@@ -176,10 +167,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function checkPrice(CheckPriceInvestmentPriceApiRequest $request, Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $validated = $request->validated();
 
         $existingPrice = InvestmentPrice::where('investment_id', $investment->id)
