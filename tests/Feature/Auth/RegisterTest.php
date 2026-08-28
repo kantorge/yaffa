@@ -26,10 +26,6 @@ class RegisterTest extends TestCase
         config(['yaffa.email_verification_required' => true]);
         // By default, allow infinite users for these tests.
         config(['yaffa.registered_user_limit' => 0]);
-
-        // Ensure that recaptcha is disabled for these tests.
-        config(['recaptcha.api_site_key' => null]);
-        config(['recaptcha.api_secret_key' => null]);
     }
 
     protected function successfulRegistrationRoute(): string

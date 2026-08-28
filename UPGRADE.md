@@ -65,7 +65,15 @@ See the [2.x to 3.x guide](#upgrade-from-yaffa-2x-to-3x) above for Docker-volume
 
 #### 4. Install the new version and apply all changes
 
-No new required environment variables are introduced by this upgrade.
+No new required environment variables are introduced by this upgrade. However, this release bumps the framework to Laravel 13, which changed the *default* values used for `CACHE_PREFIX`, `REDIS_PREFIX`, and `SESSION_COOKIE` when those are left unset (the separator used to build them from `APP_NAME` changed from `_` to `-`, e.g. `yaffa_cache_` → `yaffa-cache-`). If your `.env` doesn't already set these explicitly, add them to pin the previous values and avoid orphaning existing cache/session/queue data on deploy:
+
+```env
+CACHE_PREFIX=yaffa_cache_
+REDIS_PREFIX=yaffa_database_
+SESSION_COOKIE=yaffa_session
+```
+
+(Substitute `yaffa` with the slug of your own `APP_NAME` if you've customized it.)
 
 ##### Docker users
 

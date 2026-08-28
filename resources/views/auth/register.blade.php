@@ -14,9 +14,6 @@
                                 method="POST"
                                 action="{{ route('register') }}"
                                 autocomplete="off"
-                                @if(config('recaptcha.api_site_key'))
-                                    id="form-with-recaptcha"
-                                @endif
                         >
                             @csrf
 
@@ -231,20 +228,7 @@
                                 </div>
                             </div>
 
-                            <button
-                                    @class([
-                                        'btn',
-                                        'btn-block',
-                                        'btn-success',
-                                        'mt-3',
-                                        'g-recaptcha' => config('recaptcha.api_site_key'),
-                                    ])
-                                    type="submit"
-                                    @if(config('recaptcha.api_site_key'))
-                                        data-sitekey="{{ config('recaptcha.api_site_key') }}"
-                                        data-callback="onSubmit"
-                                    @endif
-                            >
+                            <button class="btn btn-block btn-success mt-3" type="submit">
                                 {{ __('Register') }}
                             </button>
                         </form>

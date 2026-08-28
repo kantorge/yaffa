@@ -142,13 +142,6 @@ class RegisterController extends Controller
             ]
         ];
 
-        if (
-            config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')
-        ) {
-            $rules[recaptchaFieldName()] = recaptchaRuleName();
-        }
-
         return Validator::make($data, $rules);
     }
 

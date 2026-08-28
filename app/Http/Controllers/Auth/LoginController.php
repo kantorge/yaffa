@@ -38,11 +38,11 @@ class LoginController extends Controller
     protected string $redirectTo = AppServiceProvider::HOME;
 
     /**
-     * Override the validateLogin method from AuthenticatesUsers trait to add the recaptcha validation.
+     * Override the validateLogin method from AuthenticatesUsers trait to handle the 2FA challenge step.
      *
      * When a 2FA challenge is pending (laragear/two-factor flashed the original credentials into the
      * session and re-rendered this same route with a code form), only the TOTP/recovery code field is
-     * submitted - email/password/recaptcha are intentionally absent from that request.
+     * submitted - email/password are intentionally absent from that request.
      */
     protected function validateLogin(Request $request): void
     {
@@ -54,17 +54,10 @@ class LoginController extends Controller
             return;
         }
 
-        $rules = [
+        $request->validate([
             $this->username() => 'required|string',
             'password' => 'required|string',
-        ];
-
-        if (config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')) {
-            $rules[recaptchaFieldName()] = recaptchaRuleName();
-        }
-
-        $request->validate($rules);
+        ]);
     }
 
     /**

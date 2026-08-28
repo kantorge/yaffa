@@ -5,7 +5,10 @@ namespace Tests\Unit;
 use App\Jobs\GetInvestmentPrices;
 use App\Jobs\Middleware\SkipWhenRateLimited;
 use App\Models\Investment;
+use Illuminate\Queue\Attributes\MaxExceptions;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use ReflectionClass;
 use Tests\TestCase;
 
 class GetInvestmentPricesTest extends TestCase
@@ -14,8 +17,10 @@ class GetInvestmentPricesTest extends TestCase
     {
         $job = new GetInvestmentPrices(new Investment());
 
-        $this->assertSame(0, $job->tries);
-        $this->assertSame(3, $job->maxExceptions);
+        $reflection = new ReflectionClass($job);
+
+        $this->assertSame(0, $reflection->getAttributes(Tries::class)[0]->newInstance()->tries);
+        $this->assertSame(3, $reflection->getAttributes(MaxExceptions::class)[0]->newInstance()->maxExceptions);
         $this->assertSame([10, 30, 60], $job->backoff());
     }
 

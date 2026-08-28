@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
-use Log;
+use Illuminate\Support\Facades\Log;
 use Prism\Prism\Facades\Prism;
 use Symfony\Component\HttpFoundation\Response;
 

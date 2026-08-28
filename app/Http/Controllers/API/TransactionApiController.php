@@ -257,7 +257,7 @@ class TransactionApiController extends Controller
                     // automatic_recording (FR-4), which render blank via the same convention an
                     // empty category cell already uses (FR-6).
                     'transaction_schedule' => [
-                        'start_date' => $budget->start_date?->toDateString(),
+                        'start_date' => $budget->start_date->toDateString(),
                         'end_date' => $budget->end_date?->toDateString(),
                         'next_date' => null,
                         'frequency' => $budget->frequency,
