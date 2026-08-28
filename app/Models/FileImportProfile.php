@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +15,6 @@ use Illuminate\Validation\ValidationException;
  * @property array<string, mixed>|null $mapping_json
  * @property array<string, mixed>|null $options_json
  */
-#[Table('file_import_profiles')]
 #[Fillable('file_type', 'name', 'delimiter', 'has_header_row', 'date_format', 'decimal_separator', 'thousand_separator', 'sign_handling', 'mapping_json', 'options_json', 'active')]
 class FileImportProfile extends Model
 {
