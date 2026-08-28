@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Currency;
+use Illuminate\Database\Eloquent\Collection;
+
 return [
 
     /*
@@ -13,6 +16,9 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        Collection::class,
+        Currency::class,
+    ],
 
 ];
