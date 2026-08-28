@@ -10,7 +10,6 @@ use App\Services\ScraperService;
 use Carbon\Carbon;
 use Exception;
 use Mockery;
-use RoachPHP\ItemPipeline\Item;
 use Tests\TestCase;
 
 class WebScrapingProviderTest extends TestCase
@@ -29,7 +28,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => '$123.45'])]);
+            ->andReturn([['price' => '$123.45']]);
 
         $provider = new WebScrapingProvider($scraperService);
         $prices = $provider->fetchPrices($investment);
@@ -53,7 +52,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => '€1.234,56'])]);
+            ->andReturn([['price' => '€1.234,56']]);
 
         $provider = new WebScrapingProvider($scraperService);
         $prices = $provider->fetchPrices($investment);
@@ -70,7 +69,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => '$1,234.56'])]);
+            ->andReturn([['price' => '$1,234.56']]);
 
         $provider = new WebScrapingProvider($scraperService);
         $prices = $provider->fetchPrices($investment);
@@ -141,7 +140,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => 'not-a-number'])]);
+            ->andReturn([['price' => 'not-a-number']]);
 
         $provider = new WebScrapingProvider($scraperService);
 
@@ -160,7 +159,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => $scrapedPageContent])]);
+            ->andReturn([['price' => $scrapedPageContent]]);
 
         $provider = new WebScrapingProvider($scraperService);
 
@@ -204,7 +203,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => -10.5])]);
+            ->andReturn([['price' => -10.5]]);
 
         $provider = new WebScrapingProvider($scraperService);
 
@@ -222,7 +221,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => 0])]);
+            ->andReturn([['price' => 0]]);
 
         $provider = new WebScrapingProvider($scraperService);
 
@@ -274,7 +273,7 @@ class WebScrapingProviderTest extends TestCase
         $scraperService->shouldReceive('scrape')
             ->once()
             ->with($investment->provider_settings['url'], $investment->provider_settings['selector'])
-            ->andReturn([new Item(['price' => 123.45])]);
+            ->andReturn([['price' => 123.45]]);
 
         $provider = new WebScrapingProvider($scraperService);
         $prices = $provider->fetchPrices($investment, Carbon::parse('2020-01-01'));
