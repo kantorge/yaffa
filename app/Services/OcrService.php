@@ -270,9 +270,6 @@ class OcrService
      * Check if a model supports vision capabilities
      *
      * Vision capability is defined in the config for each model.
-     *
-     * @param AiProviderConfig $config
-     * @return bool
      */
     private function modelSupportsVision(AiProviderConfig $config): bool
     {
@@ -290,9 +287,6 @@ class OcrService
 
     /**
      * Check if OCR is available for this document
-     *
-     * @param AiProviderConfig|null $visionConfig
-     * @return bool
      */
     public function isAvailable(?AiProviderConfig $visionConfig = null): bool
     {

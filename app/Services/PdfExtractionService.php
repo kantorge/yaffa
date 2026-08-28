@@ -58,7 +58,6 @@ class PdfExtractionService
      * - At least one page contains non-empty text
      *
      * @param string $filePath The full file path to the PDF
-     * @return bool
      */
     public function hasExtractableText(string $filePath): bool
     {

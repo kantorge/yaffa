@@ -535,8 +535,6 @@ class GenericApiProvider implements InvestmentPriceProvider
     }
 
     /**
-     * @param  mixed  $rawDate
-     * @param  mixed  $rawPrice
      * @return array{date: string, price: float}|null
      */
     private function normalizeDatePrice(
@@ -567,9 +565,6 @@ class GenericApiProvider implements InvestmentPriceProvider
         ];
     }
 
-    /**
-     * @param  mixed  $rawDate
-     */
     private function parseDate(mixed $rawDate, string $dateFormat, Investment $investment): Carbon
     {
         try {
