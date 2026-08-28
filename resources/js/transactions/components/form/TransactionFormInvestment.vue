@@ -501,7 +501,7 @@
                 class="btn btn-primary ms-2"
                 :disabled="form.busy"
                 :form="form"
-                id="transactionFormStandard-Save"
+                id="transactionFormInvestment-Save"
               >
                 <span class="fa fa-save me-1" v-show="!form.busy"></span>
                 {{ __('Save') }}
