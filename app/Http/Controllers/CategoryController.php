@@ -146,7 +146,7 @@ class CategoryController extends Controller implements HasMiddleware
     /**
      * Display a form to merge two categories.
      */
-    public function mergeCategoriesForm(?Category $categorySource): View
+    public function mergeCategoriesForm(?Category $categorySource = null): View
     {
         /**
          * @get("/categories/merge/{categorySource?}")

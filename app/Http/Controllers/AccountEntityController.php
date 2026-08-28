@@ -397,7 +397,7 @@ class AccountEntityController extends Controller implements HasMiddleware
     /**
      * Display a form to merge two payees, optionally with the source payee preselected.
      */
-    public function mergePayeesForm(?AccountEntity $payeeSource): View
+    public function mergePayeesForm(?AccountEntity $payeeSource = null): View
     {
         /**
          * @get("/payees/merge/{payeeSource?}")

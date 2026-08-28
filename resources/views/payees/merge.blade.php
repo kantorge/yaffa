@@ -85,17 +85,19 @@
                         <span class="help-block">
                             {{ __('This action cannot be undone. Proceed with caution.') }}
                         </span>
-                        @csrf
-                        <button
-                            class="btn btn-sm btn-outline-dark ms-2 me-2"
-                            type="button"
-                            id="cancel"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
-                        <input class="btn btn-primary" type="submit" value="{{ __('Merge payees') }}">
                     </div>
                 </div>
+            </div>
+            <div class="card-footer text-end">
+                @csrf
+                <button
+                    class="btn btn-secondary me-2"
+                    type="button"
+                    id="cancel"
+                >
+                    {{ __('Cancel') }}
+                </button>
+                <input class="btn btn-primary" type="submit" value="{{ __('Merge payees') }}">
             </div>
         </div>
     </form>

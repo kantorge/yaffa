@@ -27,6 +27,10 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
         return input.toString();
     }
 
+    // API money fields (MoneyCast) serialize as decimal strings; Number.prototype.toLocaleString
+    // is required for the currency style options below to take effect.
+    input = Number(input);
+
     let minDigits = currencySettings.min_digits || 0;
     // Allow maxDigits to be 0 if explicitly set, otherwise default to undefined to prevent issues with potential null values
     let maxDigits = currencySettings.max_digits ?? undefined;

@@ -127,6 +127,17 @@ if (document.readyState === 'loading') {
     initializeColorMode();
 }
 
+// The "pre-render" class (see master.blade.php and _layout.scss) disables the sidebar/
+// wrapper layout transition for the very first style/layout pass, since geometry other CSS
+// (and CoreUI's own JS) derives from .sidebar-family elements isn't stable until then. Two
+// animation frames is enough for that first pass to settle before re-enabling the transition
+// for later, user-triggered toggles.
+requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        document.body.classList.remove('pre-render');
+    });
+});
+
 // Notifications
 import '@/shared/lib/notifications/displayNotifications';
 
@@ -140,11 +151,25 @@ $(function () {
         window.location.href = route('account-entity.show', {account_entity: this.value});
     });
 
-    // Generally available cancel button with confirmation
+    // Generally available cancel button with confirmation, only asked when the form is dirty
+    $(".cancel.confirm-needed").each(function () {
+        const $form = $(this).closest("form");
+        if ($form.length) {
+            $form.data("initialState", $form.serialize());
+        }
+    });
+
     $(".cancel.confirm-needed").on("click", function (event) {
         event.preventDefault();
 
         const href = this.href;
+        const $form = $(this).closest("form");
+        const isDirty = $form.length && $form.serialize() !== $form.data("initialState");
+
+        if (!isDirty) {
+            window.location.href = href;
+            return;
+        }
 
         confirmAction(__('Are you sure to abandon this form?'), {
             icon: 'warning',

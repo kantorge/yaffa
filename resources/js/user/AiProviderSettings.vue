@@ -174,7 +174,7 @@
                   name="api_key"
                   v-model="form.api_key"
                   :placeholder="
-                    hasConfig
+                    hasConfig && !providerChanged
                       ? __('Leave blank to keep existing key')
                       : __('Enter your API key')
                   "
@@ -195,7 +195,7 @@
               <HasError field="api_key" :form="form" />
               <small
                 class="form-text text-muted"
-                v-if="hasConfig"
+                v-if="hasConfig && !providerChanged"
                 dusk="api-key-hint"
               >
                 {{
@@ -246,7 +246,8 @@
               :form="form"
               dusk="button-save-ai-config"
             >
-              <i class="fa me-1 fa-save"></i>{{ hasConfig ? __('Update') : __('Save') }}
+              <i class="fa me-1 fa-save"></i
+              >{{ hasConfig ? __('Update') : __('Save') }}
             </Button>
 
             <button
@@ -262,7 +263,8 @@
                   'me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>{{ __('Test Connection') }}
+              ></i
+              >{{ __('Test Connection') }}
             </button>
 
             <button
@@ -326,6 +328,7 @@
         vision_enabled: false,
       }),
       configId: null,
+      originalProvider: null,
       hasConfig: false,
       showForm: false,
       testResult: null,
@@ -441,7 +444,17 @@
         return (
           this.form.provider &&
           this.form.model &&
-          (this.form.api_key || this.hasConfig)
+          (this.form.api_key || (this.hasConfig && !this.providerChanged))
+        );
+      },
+      // A different provider cannot be expected to accept the key stored for the
+      // previous one, so once the provider selection changes, a fresh key is required
+      // rather than silently reusing the existing one.
+      providerChanged() {
+        return (
+          this.hasConfig &&
+          this.originalProvider !== null &&
+          this.form.provider !== this.originalProvider
         );
       },
     },
@@ -476,6 +489,7 @@
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
+              this.originalProvider = response.data.provider;
               this.form.provider = response.data.provider;
               this.form.model = response.data.model;
               this.form.vision_enabled = Boolean(response.data.vision_enabled);
@@ -534,6 +548,7 @@
               );
 
               this.configId = response.data.id;
+              this.originalProvider = this.form.provider;
               this.hasConfig = true;
               this.showForm = true;
               this.form.api_key = ''; // Clear API key field after save
@@ -559,10 +574,14 @@
         this.testingConnection = true;
         this.testResult = null;
 
+        // A new provider cannot be expected to accept the key stored for the previous
+        // one, so only fall back to the existing key when the provider hasn't changed.
+        const useExistingKey = this.hasConfig && !this.providerChanged;
+
         const testData = {
           provider: this.form.provider,
           model: this.form.model,
-          api_key: this.form.api_key || '__existing__', // Use placeholder if using existing key
+          api_key: this.form.api_key || (useExistingKey ? '__existing__' : ''),
         };
 
         axios
@@ -609,6 +628,7 @@
               )
               .then(() => {
                 this.configId = null;
+                this.originalProvider = null;
                 this.hasConfig = false;
                 this.showForm = false;
                 this.form.reset();

@@ -72,17 +72,19 @@
                     </div>
                     <div class="col-md-6">
                         <span class="form-label d-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
-                        @csrf
-                        <button
-                            class="btn btn-sm btn-outline-dark"
-                            type="button"
-                            id="cancel"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
-                        <input class="btn btn-primary" type="submit" value="{{ __('Merge categories') }}">
                     </div>
                 </div>
+            </div>
+            <div class="card-footer text-end">
+                @csrf
+                <button
+                    class="btn btn-secondary me-2"
+                    type="button"
+                    id="cancel"
+                >
+                    {{ __('Cancel') }}
+                </button>
+                <input class="btn btn-primary" type="submit" value="{{ __('Merge categories') }}">
             </div>
         </div>
     </form>

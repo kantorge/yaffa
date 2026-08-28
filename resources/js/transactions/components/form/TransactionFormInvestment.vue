@@ -62,7 +62,7 @@
                     v-model="form.schedule"
                   />
                   <label
-                    class="btn btn-outline-dark w-100"
+                    class="btn btn-outline-secondary w-100"
                     dusk="checkbox-transaction-schedule"
                     for="checkbox-investment-transaction-schedule"
                     :title="
@@ -435,10 +435,11 @@
       ></transaction-schedule>
 
       <div class="card mb-3">
-        <div class="card-body" v-if="!fromModal">
+        <div class="card-body">
           <div class="row justify-content-end">
             <div
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
+              v-if="!fromModal"
               dusk="action-after-save-desktop-button-group"
             >
               <span class="form-label block-label">
@@ -452,7 +453,7 @@
                 <button
                   v-for="item in activeCallbackOptions"
                   :key="item.id"
-                  class="btn btn-secondary"
+                  class="btn btn-outline-secondary"
                   :class="{ active: callback === item.value }"
                   type="button"
                   :value="item.value"
@@ -462,7 +463,10 @@
                 </button>
               </div>
             </div>
-            <div class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0">
+            <div
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
+              v-if="!fromModal"
+            >
               <label
                 class="form-label"
                 for="callback-selector-mobile-investment"
@@ -483,26 +487,27 @@
                 </option>
               </select>
             </div>
+            <div
+              class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
+            >
+              <button
+                class="btn btn btn-secondary"
+                @click="onCancel"
+                type="button"
+              >
+                {{ __('Cancel') }}
+              </button>
+              <Button
+                class="btn btn-primary ms-2"
+                :disabled="form.busy"
+                :form="form"
+                id="transactionFormStandard-Save"
+              >
+                <span class="fa fa-save me-1" v-show="!form.busy"></span>
+                {{ __('Save') }}
+              </Button>
+            </div>
           </div>
-        </div>
-        <div class="card-footer text-end">
-          <Button
-            class="btn btn-lg btn-primary"
-            :disabled="form.busy"
-            :form="form"
-            id="transactionFormInvestment-Save"
-          >
-            <i
-              :class="form.busy ? 'fa me-1 fa-spinner fa-spin' : 'fa me-1 fa-save'"
-            ></i>{{ __('Save') }}
-          </Button>
-          <button
-            class="btn btn-sm btn-secondary ms-3 align-bottom"
-            @click="onCancel"
-            type="button"
-          >
-            {{ __('Cancel') }}
-          </button>
         </div>
       </div>
     </form>
@@ -749,7 +754,9 @@
             dtstart: start,
             until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
             count: schedule.count || null,
-            byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
+            byweekday: schedule.by_day
+              ? byDayToRRuleWeekday(schedule.by_day)
+              : null,
             bymonth: schedule.by_month || null,
           });
 
