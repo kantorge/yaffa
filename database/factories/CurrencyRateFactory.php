@@ -10,8 +10,6 @@ use InvalidArgumentException;
 
 class CurrencyRateFactory extends Factory
 {
-    protected $model = CurrencyRate::class;
-
     /**
      * Define the model's default state.
      */
