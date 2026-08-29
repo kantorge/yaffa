@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Account;
+use App\Models\Payee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,5 +32,27 @@ class AccountEntityFactory extends Factory
             'alias' => $this->faker->boolean(30) ? $this->faker->word() : null,
             'user_id' => User::factory(),
         ];
+    }
+
+    /**
+     * Define a state, where the entity's config is an Account for the given user.
+     * MorphTo::associate() (via for()) sets config_type automatically.
+     */
+    public function asAccount(User $user, array $accountAttributes = []): static
+    {
+        return $this
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->state($accountAttributes), 'config');
+    }
+
+    /**
+     * Define a state, where the entity's config is a Payee for the given user.
+     * MorphTo::associate() (via for()) sets config_type automatically.
+     */
+    public function asPayee(User $user, array $payeeAttributes = []): static
+    {
+        return $this
+            ->for($user)
+            ->for(Payee::factory()->withUser($user)->state($payeeAttributes), 'config');
     }
 }

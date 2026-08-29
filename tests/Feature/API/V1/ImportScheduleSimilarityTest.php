@@ -3,11 +3,8 @@
 namespace Tests\Feature\API\V1;
 
 use App\Enums\TransactionType;
-use App\Models\Account;
-use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\FileImportProfile;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -17,10 +14,12 @@ use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 
 class ImportScheduleSimilarityTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     public function test_csv_parse_enriches_drafts_with_schedule_candidates_and_similarity_scores(): void
@@ -177,17 +176,6 @@ CSV;
         $response->assertJsonCount(0, 'drafts.0.schedule_candidates');
     }
 
-    private function createAccountEntity(User $user): AccountEntity
-    {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
-    }
-
     private function createSystemProfile(): FileImportProfile
     {
         $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
@@ -213,51 +201,6 @@ CSV;
         return $record;
     }
 
-    private function createPayeeEntity(User $user): AccountEntity
-    {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
-    }
-
-    private function createStandardTransaction(
-        User $user,
-        int $accountFromId,
-        ?int $accountToId,
-        float $amount,
-        string $date,
-    ): Transaction {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId ?? $this->createPayeeEntity($user)->id,
-            'amount_from' => $amount,
-            'amount_to' => $amount,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => TransactionType::WITHDRAWAL->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        $category = Category::factory()->for($user)->create(['active' => true]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $category->id,
-            'amount' => $amount,
-            'comment' => 'Non-schedule candidate test item',
-        ]);
-
-        return $transaction;
-    }
-
     private function createScheduledStandardTransaction(
         User $user,
         int $accountFromId,
@@ -272,8 +215,7 @@ CSV;
             'amount_to' => $amount,
         ]);
 
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
+        $transaction = new Transaction([
             'date' => $nextDate,
             'transaction_type' => TransactionType::WITHDRAWAL->value,
             'reconciled' => false,
@@ -282,6 +224,8 @@ CSV;
             'config_type' => 'standard',
             'config_id' => $detail->id,
         ]);
+        $transaction->user_id = $user->id;
+        $transaction->save();
 
         $category = Category::factory()->for($user)->create(['active' => true]);
 

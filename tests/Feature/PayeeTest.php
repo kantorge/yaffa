@@ -42,7 +42,7 @@ class PayeeTest extends TestCase
 
     protected function createResourceForAuthTest(User $user): AccountEntity
     {
-        return AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        return AccountEntity::factory()->asPayee($user)->create();
     }
 
     public function test_user_can_view_list_of_payees(): void
@@ -50,10 +50,7 @@ class PayeeTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->count(5)
+        AccountEntity::factory()->asPayee($user)->count(5)
             ->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'payee']));
@@ -127,7 +124,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -148,7 +145,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -173,7 +170,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -202,10 +199,7 @@ class PayeeTest extends TestCase
     public function test_user_cannot_open_merge_form_for_other_users_payee(): void
     {
         $sourceOwner = User::factory()->create();
-        $payee = AccountEntity::factory()
-            ->for($sourceOwner)
-            ->for(Payee::factory()->withUser($sourceOwner), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($sourceOwner)->create();
 
         $otherUser = User::factory()->create();
 
@@ -219,15 +213,9 @@ class PayeeTest extends TestCase
         $sourceOwner = User::factory()->create();
         $targetOwner = User::factory()->create();
 
-        $foreignPayee = AccountEntity::factory()
-            ->for($sourceOwner)
-            ->for(Payee::factory()->withUser($sourceOwner), 'config')
-            ->create();
+        $foreignPayee = AccountEntity::factory()->asPayee($sourceOwner)->create();
 
-        $ownPayee = AccountEntity::factory()
-            ->for($targetOwner)
-            ->for(Payee::factory()->withUser($targetOwner), 'config')
-            ->create();
+        $ownPayee = AccountEntity::factory()->asPayee($targetOwner)->create();
 
         $response = $this->actingAs($targetOwner)
             ->postJson(route('payees.merge.submit'), [

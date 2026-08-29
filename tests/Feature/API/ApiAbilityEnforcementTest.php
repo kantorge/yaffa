@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Budget;
@@ -10,7 +9,6 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Payee;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -193,24 +191,18 @@ class ApiAbilityEnforcementTest extends TestCase
 
     private function createOwnedAccountEntity(User $user): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        return AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+        ]);
     }
 
     private function createOwnedPayee(User $user): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        return AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+        ]);
     }
 
     private function createOwnedInvestment(User $user): Investment

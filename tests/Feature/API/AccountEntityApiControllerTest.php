@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
@@ -36,12 +34,9 @@ class AccountEntityApiControllerTest extends TestCase
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
-        $accountEntity = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'active' => false,
-            ]);
+        $accountEntity = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
 
         Sanctum::actingAs($user, ['*']);
         $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
@@ -64,12 +59,9 @@ class AccountEntityApiControllerTest extends TestCase
         $this->createForUser($user, Currency::class);
 
         /** @var AccountEntity $accountEntity */
-        $accountEntity = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'active' => false,
-            ]);
+        $accountEntity = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
 
         // Try to update the account entity as an unauthenticated user
         $response = $this->patchJson(
@@ -121,20 +113,11 @@ class AccountEntityApiControllerTest extends TestCase
             'locale' => 'en-US',
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account']);
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account']);
+        AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account']);
+        AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account']);
 
         $otherUser = User::factory()->create();
-        AccountEntity::factory()
-            ->for($otherUser)
-            ->for(Account::factory()->withUser($otherUser), 'config')
-            ->create(['config_type' => 'account']);
+        AccountEntity::factory()->asAccount($otherUser)->create(['config_type' => 'account']);
 
         Sanctum::actingAs($user, ['*']);
         $response = $this->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
@@ -155,13 +138,7 @@ class AccountEntityApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $account */
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(
-                Payee::factory()->withUser($user),
-                'config'
-            )
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $payee->load('config');
 
@@ -188,12 +165,9 @@ class AccountEntityApiControllerTest extends TestCase
         $this->createForUser($user, Currency::class);
 
         /** @var AccountEntity $account */
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'active' => false,
-            ]);
+        $account = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
 
         $account->load('config');
 
@@ -229,15 +203,9 @@ class AccountEntityApiControllerTest extends TestCase
             ->for($user)
             ->create();
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         // Create a standard transaction with specific data
         Transaction::factory()

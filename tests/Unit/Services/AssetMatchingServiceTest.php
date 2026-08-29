@@ -2,11 +2,9 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiUserSettings;
 use App\Models\Category;
-use App\Models\Payee;
 use App\Models\User;
 use App\Services\AssetMatchingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,25 +24,19 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Amazon',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Amazon',
+            'alias' => null,
+        ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Lidl',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Lidl',
+            'alias' => null,
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchPayees('AMAZON MARKETPLACE EU SARL');
@@ -63,15 +55,12 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Online Shop',
-                'alias' => 'Amazon',
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Online Shop',
+            'alias' => 'Amazon',
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchPayees('AMAZON MARKETPLACE EU SARL');
@@ -90,15 +79,12 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Lidl',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Lidl',
+            'alias' => null,
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchPayees('AMAZON MARKETPLACE EU SARL');
@@ -116,15 +102,12 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => false,
-                'name' => 'Amazon',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => false,
+            'name' => 'Amazon',
+            'alias' => null,
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchPayees('AMAZON MARKETPLACE EU SARL');
@@ -142,25 +125,19 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Auchan Magyarorszag Kft',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Auchan Magyarorszag Kft',
+            'alias' => null,
+        ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Lidl Magyarorszag',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Lidl Magyarorszag',
+            'alias' => null,
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchPayees('AUCHAN MAGYARORSZAG KFT');
@@ -180,35 +157,26 @@ class AssetMatchingServiceTest extends TestCase
             'asset_max_suggestions' => 1,
         ]);
 
-        $expectedTopMatch = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-                'name' => 'Alpha Account',
-                'alias' => null,
-            ]);
+        $expectedTopMatch = AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+            'name' => 'Alpha Account',
+            'alias' => null,
+        ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-                'name' => 'Beta Account',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+            'name' => 'Beta Account',
+            'alias' => null,
+        ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-                'name' => 'Gamma Account',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+            'name' => 'Gamma Account',
+            'alias' => null,
+        ]);
 
         $service = new AssetMatchingService($user);
         $matches = $service->matchAccounts('alpha');

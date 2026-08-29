@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\User;
@@ -70,10 +69,7 @@ class CurrencyApiControllerTest extends TestCase
         /** @var Currency $currency */
         $currency = Currency::factory()->for($user)->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        AccountEntity::factory()->asAccount($user, ['currency_id' => $currency->id])->create();
 
         $response = $this->actingAs($user)
             ->deleteJson(route('api.v1.currencies.destroy', ['currency' => $currency->id]));

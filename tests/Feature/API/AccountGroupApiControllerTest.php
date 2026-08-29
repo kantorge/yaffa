@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\User;
@@ -50,10 +49,7 @@ class AccountGroupApiControllerTest extends TestCase
 
     public function test_doesNotDestroyAccountGroupInUse(): void
     {
-        $account = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($this->user)->create();
         $account->load('config');
         $accountGroup = $account->config->accountGroup;
 

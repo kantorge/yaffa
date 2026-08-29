@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
@@ -430,15 +428,9 @@ class CategoryApiControllerTest extends TestCase
             ->for($user)
             ->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        AccountEntity::factory()->asAccount($user)->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         // Create a standard transaction with specific data
         $transaction = Transaction::factory()

@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,13 +31,10 @@ class AccountApiControllerTest extends TestCase
         $currencies = $user->currencies()->get();
 
         // One account with base name
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currencies->first()->id]), 'config')
-            ->create([
-                'active' => true,
-                'name' => self::BASE_ACCOUNT_NAME
-            ]);
+        AccountEntity::factory()->asAccount($user, ['currency_id' => $currencies->first()->id])->create([
+            'active' => true,
+            'name' => self::BASE_ACCOUNT_NAME
+        ]);
 
         // Other user with dummy data and same account name
         /** @var User $user2 */
@@ -47,13 +42,10 @@ class AccountApiControllerTest extends TestCase
         $this->createForUser($user2, AccountGroup::class);
         $this->createForUser($user2, Currency::class);
 
-        AccountEntity::factory()
-            ->for($user2)
-            ->for(Account::factory()->withUser($user2), 'config')
-            ->create([
-                'active' => true,
-                'name' => self::BASE_ACCOUNT_NAME
-            ]);
+        AccountEntity::factory()->asAccount($user2)->create([
+            'active' => true,
+            'name' => self::BASE_ACCOUNT_NAME
+        ]);
 
         Sanctum::actingAs($user, ['*']);
 
@@ -68,13 +60,10 @@ class AccountApiControllerTest extends TestCase
 
         // Only active items are returned by default
         // We create a new item for primary user with similar name, but not active, other currency
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currencies->last()->id]), 'config')
-            ->create([
-                'active' => false,
-                'name' => self::BASE_ACCOUNT_NAME . " - inactive",
-            ]);
+        AccountEntity::factory()->asAccount($user, ['currency_id' => $currencies->last()->id])->create([
+            'active' => false,
+            'name' => self::BASE_ACCOUNT_NAME . " - inactive",
+        ]);
 
         $response = $this->getJson('/api/v1/accounts?q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
@@ -95,13 +84,10 @@ class AccountApiControllerTest extends TestCase
 
         // Default limit is applied for number of results
         for ($i = 1; $i <= 20; $i++) {
-            AccountEntity::factory()
-                ->for($user)
-                ->for(Account::factory()->withUser($user), 'config')
-                ->create([
-                    'active' => true,
-                    'name' => self::BASE_ACCOUNT_NAME . " - clone - " . $i,
-                ]);
+            AccountEntity::factory()->asAccount($user)->create([
+                'active' => true,
+                'name' => self::BASE_ACCOUNT_NAME . " - clone - " . $i,
+            ]);
         }
 
         $response = $this->getJson('/api/v1/accounts?q=clone');
@@ -141,10 +127,7 @@ class AccountApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $accountEntity */
-        $accountEntity = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($user)->create();
 
         Artisan::shouldReceive('call')
             ->once()
@@ -166,10 +149,7 @@ class AccountApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payeeEntity */
-        $payeeEntity = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payeeEntity = AccountEntity::factory()->asPayee($user)->create();
 
         Artisan::shouldReceive('call')->never();
 

@@ -4,7 +4,6 @@ namespace Tests\Feature\API;
 
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\Budget;
@@ -14,7 +13,6 @@ use App\Models\Currency;
 use App\Events\TransactionUpdated;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Payee;
 use App\Services\CategoryLearningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -350,22 +348,9 @@ class TransactionApiControllerTest extends TestCase
      */
     private function createStandardEntities(): array
     {
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
         $category = Category::factory()->for($this->user)->create(['active' => true]);
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
 
         return [
             'account_entity_id' => $accountEntity->id,
@@ -553,10 +538,7 @@ class TransactionApiControllerTest extends TestCase
         // unique currency name - see CalculateAccountMonthlySummaryTest for precedent).
         InvestmentGroup::factory()->for($this->user)->create();
         $currency = Currency::factory()->for($this->user)->create();
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
         $investment = Investment::factory()
             ->for($this->user)
             ->create(['currency_id' => $currency->id]);
@@ -616,21 +598,8 @@ class TransactionApiControllerTest extends TestCase
         $foreignCategory->user_id = $otherUser->id;
         $foreignCategory->save();
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
 
         $response = $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'create',
@@ -663,22 +632,10 @@ class TransactionApiControllerTest extends TestCase
         Sanctum::actingAs($this->user, ['*']);
 
         $otherUser = User::factory()->create();
-        $foreignAccount = Account::factory()->withUser($otherUser)->create();
-        $foreignAccountEntity = AccountEntity::factory()->create([
-            'user_id' => $otherUser->id,
-            'config_type' => 'account',
-            'config_id' => $foreignAccount->id,
-            'active' => true,
-        ]);
+        $foreignAccountEntity = AccountEntity::factory()->asAccount($otherUser)->create(['active' => true]);
 
-        $ownPayee = Payee::factory()->withUser($this->user)->create();
         $ownCategory = Category::factory()->for($this->user)->create(['active' => true]);
-        $ownPayeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $ownPayee->id,
-            'active' => true,
-        ]);
+        $ownPayeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
 
         $response = $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'create',
@@ -721,13 +678,7 @@ class TransactionApiControllerTest extends TestCase
         $foreignInvestment->user_id = $otherUser->id;
         $foreignInvestment->save();
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -765,10 +716,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -808,10 +756,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -850,10 +795,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -892,10 +834,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -934,10 +873,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -976,10 +912,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $currency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -1008,22 +941,9 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
         $category = Category::factory()->for($this->user)->create(['active' => true]);
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
 
         $response = $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'create',
@@ -1059,22 +979,9 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
         $category = Category::factory()->for($this->user)->create(['active' => true]);
-
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
 
         $response = $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'create',
@@ -1121,10 +1028,7 @@ class TransactionApiControllerTest extends TestCase
             'currency_id' => $investmentCurrency->id,
             'investment_group_id' => $investmentGroup->id,
         ]);
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(['currency_id' => $accountCurrency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $accountCurrency->id])->create();
 
         $response = $this->postJson(route('api.v1.transactions.store-investment'), [
             'action' => 'create',
@@ -1258,10 +1162,7 @@ class TransactionApiControllerTest extends TestCase
         $standardTransaction->transactionItems()->update(['category_id' => $category->id]);
 
         InvestmentGroup::factory()->for($this->user)->create();
-        $accountEntity = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Account::factory()->withUser($this->user)->create(), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create();
         $investment = Investment::factory()->for($this->user)->withUser($this->user)->create();
 
         Transaction::factory()
@@ -1336,22 +1237,9 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
 
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
 
         $categoryExact = Category::factory()->for($this->user)->create(['active' => true]);
         $categoryAi = Category::factory()->for($this->user)->create(['active' => true]);
@@ -1441,22 +1329,9 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
 
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
 
         $originalCategory = Category::factory()->for($this->user)->create(['active' => true]);
         $newCategory = Category::factory()->for($this->user)->create(['active' => true]);
@@ -1516,22 +1391,9 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
-        $payee = Payee::factory()->withUser($this->user)->create();
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
 
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
-
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
 
         $category = Category::factory()->for($this->user)->create(['active' => true]);
 
@@ -1591,7 +1453,6 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $account = Account::factory()->withUser($this->user)->create();
         $currency = $this->user->currencies()->first() ?: Currency::factory()->for($this->user)->create();
         $investmentGroup = $this->user->investmentGroups()->first() ?: InvestmentGroup::factory()->for($this->user)->create();
 
@@ -1601,12 +1462,7 @@ class TransactionApiControllerTest extends TestCase
             'investment_group_id' => $investmentGroup->id,
         ]);
 
-        $accountEntity = AccountEntity::factory()->create([
-            'user_id' => $this->user->id,
-            'config_type' => 'account',
-            'config_id' => $account->id,
-            'active' => true,
-        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
 
         $aiDocument = AiDocument::factory()->for($this->user)->create([
             'status' => 'ready_for_review',

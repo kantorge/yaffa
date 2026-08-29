@@ -2,23 +2,17 @@
 
 namespace Tests\Feature\API\V1;
 
-use App\Enums\TransactionType;
-use App\Models\Account;
-use App\Models\AccountEntity;
-use App\Models\Category;
 use App\Models\FileImportProfile;
-use App\Models\Payee;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\Import\SystemFileImportProfileRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 
 class ImportDuplicateDetectionTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     public function test_csv_parse_enriches_drafts_with_duplicate_candidates_and_similarity_scores(): void
@@ -93,14 +87,7 @@ CSV;
         $user = User::factory()->create();
         $accountEntity = $this->createAccountEntity($user);
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Grocery Store',
-            ]);
+        $payee = $this->createPayeeEntity($user, ['active' => true, 'name' => 'Grocery Store']);
 
         $existing = $this->createStandardTransaction($user, $accountEntity->id, $payee->id, 50.00, '2025-01-20');
 
@@ -127,17 +114,6 @@ QIF;
         $this->assertNotContains('account_to', $matchedOn);
     }
 
-    private function createAccountEntity(User $user): AccountEntity
-    {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
-    }
-
     private function createSystemProfile(): FileImportProfile
     {
         $definition = (new SystemFileImportProfileRegistry())->profiles()[0];
@@ -161,50 +137,5 @@ QIF;
         $record->save();
 
         return $record;
-    }
-
-    private function createPayeeEntity(User $user): AccountEntity
-    {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
-    }
-
-    private function createStandardTransaction(
-        User $user,
-        int $accountFromId,
-        ?int $accountToId,
-        float $amount,
-        string $date,
-    ): Transaction {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId ?? $this->createPayeeEntity($user)->id,
-            'amount_from' => $amount,
-            'amount_to' => $amount,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => TransactionType::WITHDRAWAL->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        $category = Category::factory()->for($user)->create(['active' => true]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $category->id,
-            'amount' => $amount,
-            'comment' => 'Imported duplicate candidate',
-        ]);
-
-        return $transaction;
     }
 }

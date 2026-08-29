@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,10 +26,7 @@ class AccountShowDatePresetTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $account */
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        return AccountEntity::factory()->asAccount($user)->create();
     }
 
     /**

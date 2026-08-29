@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e959642131cde699522e4d84c39cf20f",
+    "content-hash": "ad95ed1e4a3d7023a73fe234f0f599b3",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -12345,12 +12345,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kantorge/laravel-dusk-select2.git",
-                "reference": "560b9b5b1a22adec487ac257405060c3b1c6e1d9"
+                "reference": "9eaa2959a9f0afa4b42111640068ba703d79b6dc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/560b9b5b1a22adec487ac257405060c3b1c6e1d9",
-                "reference": "560b9b5b1a22adec487ac257405060c3b1c6e1d9",
+                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/9eaa2959a9f0afa4b42111640068ba703d79b6dc",
+                "reference": "9eaa2959a9f0afa4b42111640068ba703d79b6dc",
                 "shasum": ""
             },
             "require-dev": {
@@ -12383,7 +12383,7 @@
             "support": {
                 "source": "https://github.com/kantorge/laravel-dusk-select2/tree/custom_package"
             },
-            "time": "2026-02-12T16:57:10+00:00"
+            "time": "2026-08-29T12:03:55+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -13682,5 +13682,5 @@
         "ext-bcmath": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

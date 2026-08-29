@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
@@ -29,10 +28,7 @@ class TransactionScheduleInstancesTest extends TestCase
             'end_date' => now()->addYears(5),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()

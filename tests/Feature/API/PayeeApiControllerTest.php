@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\API;
 
-use App\Enums\TransactionType as TransactionTypeEnum;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Payee;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 
 class PayeeApiControllerTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     private const BASE_PAYEE_NAME = 'Same payee name';
@@ -30,13 +25,7 @@ class PayeeApiControllerTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $payee = Payee::factory()->withUser($user)->create();
-        $payeeEntity = AccountEntity::factory()->create([
-            'user_id' => $user->id,
-            'config_type' => 'payee',
-            'config_id' => $payee->id,
-            'active' => true,
-        ]);
+        $payeeEntity = $this->createPayeeEntity($user, ['active' => true]);
 
         $foreignCategory = Category::factory()->for($otherUser)->create([
             'active' => true,
@@ -58,13 +47,10 @@ class PayeeApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         // One payee with base name
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(), 'config')
-            ->create([
-                'active' => true,
-                'name' => self::BASE_PAYEE_NAME,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'active' => true,
+            'name' => self::BASE_PAYEE_NAME,
+        ]);
 
         // Other user with dummy data and same payee name
         /** @var User $user2 */
@@ -72,13 +58,10 @@ class PayeeApiControllerTest extends TestCase
         $this->createForUser($user2, AccountGroup::class);
         $this->createForUser($user2, Currency::class);
 
-        AccountEntity::factory()
-            ->for($user2)
-            ->for(Payee::factory()->withUser($user2), 'config')
-            ->create([
-                'active' => true,
-                'name' => self::BASE_PAYEE_NAME,
-            ]);
+        AccountEntity::factory()->asPayee($user2)->create([
+            'active' => true,
+            'name' => self::BASE_PAYEE_NAME,
+        ]);
 
         // Query string is applied
         $response = $this->actingAs($user)->getJson('/api/v1/payees?q=' . self::BASE_PAYEE_NAME);
@@ -91,13 +74,10 @@ class PayeeApiControllerTest extends TestCase
 
         // Only active items are returned by default
         // We create a new item for primary user with similar name, but not active, other currency
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(), 'config')
-            ->create([
-                'active' => false,
-                'name' => self::BASE_PAYEE_NAME . ' - inactive',
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'active' => false,
+            'name' => self::BASE_PAYEE_NAME . ' - inactive',
+        ]);
 
         $response = $this->actingAs($user)->getJson('/api/v1/payees?q=' . self::BASE_PAYEE_NAME);
         $response->assertStatus(Response::HTTP_OK);
@@ -112,13 +92,10 @@ class PayeeApiControllerTest extends TestCase
 
         // Default limit is applied for number of results
         for ($i = 1; $i <= 20; $i++) {
-            AccountEntity::factory()
-                ->for($user)
-                ->for(Payee::factory()->withUser($user), 'config')
-                ->create([
-                    'active' => true,
-                    'name' => self::BASE_PAYEE_NAME . ' - clone - ' . $i,
-                ]);
+            AccountEntity::factory()->asPayee($user)->create([
+                'active' => true,
+                'name' => self::BASE_PAYEE_NAME . ' - clone - ' . $i,
+            ]);
         }
 
         $response = $this->actingAs($user)->getJson('/api/v1/payees?q=clone');
@@ -146,22 +123,12 @@ class PayeeApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
-            ->create([
-                'active' => true,
-                'config_type' => 'payee',
-                'name' => 'Dominant Payee',
-            ]);
+        $payee = AccountEntity::factory()->asPayee($user, ['category_id' => null])->create([
+            'active' => true,
+            'name' => 'Dominant Payee',
+        ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'active' => true,
-                'config_type' => 'account',
-            ]);
+        $account = $this->createAccountEntity($user);
 
         $dominantCategory = Category::factory()->for($user)->create(['active' => true]);
         $otherCategory = Category::factory()->for($user)->create(['active' => true]);
@@ -182,39 +149,6 @@ class PayeeApiControllerTest extends TestCase
         $response->assertJsonPath('max_category_id', $dominantCategory->id);
         $response->assertJsonPath('sum', 8);
         $response->assertJsonPath('max', 6);
-    }
-
-    private function createTransactionWithCategory(
-        User $user,
-        int $accountId,
-        int $payeeId,
-        int $categoryId,
-        Carbon $date
-    ): void {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountId,
-            'account_to_id' => $payeeId,
-            'amount_from' => 10,
-            'amount_to' => 10,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $categoryId,
-            'amount' => 10,
-            'comment' => 'Test item',
-        ]);
     }
 
     public function test_user_can_create_payee_via_api(): void
@@ -279,17 +213,10 @@ class PayeeApiControllerTest extends TestCase
 
         /** @var AccountEntity $payee */
         $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(
-                Payee::factory()
-                    ->withUser($user)
-                    ->create(['category_id' => $currentDefaultCategory->id]),
-                'config'
-            )
+            ->asPayee($user, ['category_id' => $currentDefaultCategory->id])
             ->create([
                 'name' => 'Editable Payee',
                 'active' => true,
-                'config_type' => 'payee',
                 'alias' => 'initial alias',
             ]);
 
@@ -375,17 +302,10 @@ class PayeeApiControllerTest extends TestCase
 
         /** @var AccountEntity $payee */
         $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(
-                Payee::factory()
-                    ->withUser($user)
-                    ->create(['category_id' => $currentDefaultCategory->id]),
-                'config'
-            )
+            ->asPayee($user, ['category_id' => $currentDefaultCategory->id])
             ->create([
                 'name' => 'Editable Payee',
                 'active' => true,
-                'config_type' => 'payee',
             ]);
 
         $payee->categoryPreference()->sync([
@@ -429,19 +349,10 @@ class PayeeApiControllerTest extends TestCase
         $existingPreferredCategory = Category::factory()->for($user)->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(
-                Payee::factory()
-                    ->withUser($user)
-                    ->create(),
-                'config'
-            )
-            ->create([
-                'name' => 'Editable Payee',
-                'active' => true,
-                'config_type' => 'payee',
-            ]);
+        $payee = AccountEntity::factory()->asPayee($user)->create([
+            'name' => 'Editable Payee',
+            'active' => true,
+        ]);
 
         $payee->categoryPreference()->sync([
             $existingPreferredCategory->id => ['preferred' => true],
@@ -471,10 +382,7 @@ class PayeeApiControllerTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this->actingAs($user)->patchJson(
             route('api.v1.account-entities.patch-active', [
@@ -504,10 +412,7 @@ class PayeeApiControllerTest extends TestCase
         $category = Category::factory()->for($user)->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this->actingAs($user)->postJson(route('api.v1.payees.category-suggestions.accept', [
             'accountEntity' => $payee->id,
@@ -529,10 +434,7 @@ class PayeeApiControllerTest extends TestCase
         $user2 = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()
-            ->for($user1)
-            ->for(Payee::factory()->withUser($user1), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user1)->create();
 
         $response = $this->actingAs($user2)->patchJson(
             route('api.v1.payees.update', [

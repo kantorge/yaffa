@@ -11,7 +11,6 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\BudgetService;
@@ -56,14 +55,8 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'end_date' => now()->addMonths(12)->endOfMonth(),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */
@@ -160,7 +153,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
                 ->withUser($user)
                 ->create(['currency_id' => $currency->id]), 'config')
             ->create();
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        AccountEntity::factory()->asPayee($user)->create();
         $investment = Investment::factory()
             ->for($user)
             ->withUser($user)
@@ -259,15 +252,9 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(['opening_balance' => 1000]), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user, ['opening_balance' => 1000])->create();
 
         // Create one non-scheduled withdrawal per month for three consecutive months
         $monthMinus2 = now()->startOfMonth()->subMonths(2);
@@ -548,14 +535,8 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'end_date' => now()->addMonths(14)->endOfMonth(),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         $scheduleStart = now()->startOfMonth()->subMonths(2);
 
@@ -617,10 +598,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'end_date' => now()->addMonths(3)->endOfMonth(),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         $category = Category::factory()->for($user)->create();
 
@@ -714,10 +692,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'end_date' => now()->addMonths(14)->endOfMonth(),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         $category = Category::factory()->for($user)->create();
 

@@ -10,7 +10,6 @@ use App\Models\AccountMonthlySummary;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -83,10 +82,7 @@ class AccountMonthlySummaryTest extends TestCase
             )
             ->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         // Also create an investment group and an investment
         InvestmentGroup::factory()

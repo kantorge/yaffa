@@ -32,13 +32,7 @@ class AccountTest extends TestCase
     private function createAccountForUser(User $user): AccountEntity
     {
         /** @var AccountEntity $account */
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(
-                Account::factory()->withUser($user),
-                'config'
-            )
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         return $account;
     }
@@ -117,10 +111,7 @@ class AccountTest extends TestCase
 
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->count(5)
+        AccountEntity::factory()->asAccount($user)->count(5)
             ->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'account']));
@@ -239,10 +230,7 @@ class AccountTest extends TestCase
         $account = $this->createAccountAndUser();
         $user = $account->user;
 
-        $attributes = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->raw();
+        $attributes = AccountEntity::factory()->asAccount($user)->raw();
 
         $response = $this
             ->actingAs($user)

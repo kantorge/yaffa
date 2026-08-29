@@ -3,42 +3,25 @@
 namespace Tests\Feature;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
-use App\Models\Account;
-use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Payee;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 
 class PayeeStatsApiControllerTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     public function test_category_stats_returns_category_full_name_and_deferred_ids(): void
     {
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Coffee Shop',
-            ]);
+        $payee = $this->createPayeeEntity($user, ['active' => true, 'name' => 'Coffee Shop']);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
 
         $primaryCategory = Category::factory()->for($user)->create(['active' => 1, 'name' => 'Food']);
         $secondaryCategory = Category::factory()->for($user)->create(['active' => 1, 'name' => 'Drinks']);
@@ -60,21 +43,9 @@ class PayeeStatsApiControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        $payee = $this->createPayeeEntity($user, ['active' => true]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
 
         $expenseCategory = Category::factory()->for($user)->create(['active' => 1, 'name' => 'Expense']);
         $incomeCategory = Category::factory()->for($user)->create(['active' => 1, 'name' => 'Income']);
@@ -122,22 +93,9 @@ class PayeeStatsApiControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Coffee Shop',
-            ]);
+        $payee = $this->createPayeeEntity($user, ['active' => true, 'name' => 'Coffee Shop']);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
 
         $primaryCategory = Category::factory()->for($user)->create(['active' => 1]);
         $secondaryCategory = Category::factory()->for($user)->create(['active' => 1]);
@@ -169,13 +127,7 @@ class PayeeStatsApiControllerTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($otherUser)
-            ->for(Payee::factory()->withUser($otherUser), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        $payee = $this->createPayeeEntity($otherUser, ['active' => true]);
 
         $response = $this->actingAs($user)
             ->getJson(
@@ -183,39 +135,5 @@ class PayeeStatsApiControllerTest extends TestCase
             );
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    private function createTransactionWithCategory(
-        User $user,
-        int $accountId,
-        int $payeeId,
-        int $categoryId,
-        \Carbon\Carbon $date,
-        TransactionTypeEnum $transactionType = TransactionTypeEnum::WITHDRAWAL,
-    ): void {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountId,
-            'account_to_id' => $payeeId,
-            'amount_from' => 10,
-            'amount_to' => 10,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => $transactionType->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $categoryId,
-            'amount' => 10,
-            'comment' => 'Test item',
-        ]);
     }
 }

@@ -2,23 +2,16 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\TransactionType as TransactionTypeEnum;
-use App\Models\Account;
-use App\Models\AccountEntity;
 use App\Models\AiUserSettings;
-use App\Models\Category;
-use App\Models\Payee;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\DuplicateDetectionService;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 
 class DuplicateDetectionServiceTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     public function test_find_duplicates_uses_user_date_window(): void
@@ -32,21 +25,8 @@ class DuplicateDetectionServiceTest extends TestCase
             'duplicate_similarity_threshold' => 0.0,
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
-
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
+        $payee = $this->createPayeeEntity($user, ['active' => true]);
 
         $this->createStandardTransaction(
             user: $user,
@@ -79,21 +59,8 @@ class DuplicateDetectionServiceTest extends TestCase
             'duplicate_similarity_threshold' => 1.0,
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
-
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
+        $payee = $this->createPayeeEntity($user, ['active' => true]);
 
         $transaction = $this->createStandardTransaction(
             user: $user,
@@ -130,21 +97,8 @@ class DuplicateDetectionServiceTest extends TestCase
             'duplicate_similarity_threshold' => 0.0,
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
-
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
+        $payee = $this->createPayeeEntity($user, ['active' => true]);
 
         $transaction = $this->createStandardTransaction(
             user: $user,
@@ -177,44 +131,5 @@ class DuplicateDetectionServiceTest extends TestCase
         $this->assertSame($transaction->id, $exactMatches[0]['id']);
         $this->assertSame(1.0, $exactMatches[0]['similarity']);
         $this->assertLessThan($exactMatches[0]['similarity'], $toleranceMatches[0]['similarity']);
-    }
-
-    private function createStandardTransaction(
-        User $user,
-        int $accountFromId,
-        int $accountToId,
-        float $amount,
-        Carbon $date,
-    ): Transaction {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountFromId,
-            'account_to_id' => $accountToId,
-            'amount_from' => $amount,
-            'amount_to' => $amount,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        $category = Category::factory()->for($user)->create([
-            'active' => true,
-        ]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $category->id,
-            'amount' => $amount,
-            'comment' => 'Duplicate detection test item',
-        ]);
-
-        return $transaction;
     }
 }

@@ -7,7 +7,6 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
@@ -179,10 +178,7 @@ class TransactionScheduleTest extends TestCase
             )
             ->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()

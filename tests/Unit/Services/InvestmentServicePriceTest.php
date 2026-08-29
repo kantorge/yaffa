@@ -6,7 +6,6 @@ use App\Contracts\InvestmentPriceProvider;
 use App\Events\InvestmentPricesUpdated;
 use App\Exceptions\PriceProviderException;
 use App\Jobs\CalculateAccountMonthlySummary;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -49,10 +48,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         TransactionDetailInvestment::factory()
             ->for($investment)
@@ -200,7 +196,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create transactions
         Transaction::factory()
@@ -231,8 +227,8 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account1 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
-        $account2 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account1 = AccountEntity::factory()->asAccount($user)->create();
+        $account2 = AccountEntity::factory()->asAccount($user)->create();
 
         // Create transactions in different accounts
         Transaction::factory()
@@ -286,7 +282,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         Transaction::factory()
             ->for($user)
@@ -309,7 +305,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create stored price (newer)
         InvestmentPrice::factory()->for($investment)->create([
@@ -339,7 +335,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create stored price (older)
         InvestmentPrice::factory()->for($investment)->create([
@@ -409,7 +405,7 @@ class InvestmentServicePriceTest extends TestCase
     public function test_get_latest_prices_batch_matches_single_lookups_across_multiple_investments(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Investment A: stored price wins over an older transaction price
         $investmentA = Investment::factory()->for($user)->withUser($user)->create();
@@ -556,8 +552,8 @@ class InvestmentServicePriceTest extends TestCase
 
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account1 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
-        $account2 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account1 = AccountEntity::factory()->asAccount($user)->create();
+        $account2 = AccountEntity::factory()->asAccount($user)->create();
 
         TransactionDetailInvestment::factory()->for($investment)->for($account1, 'account')->create();
         TransactionDetailInvestment::factory()->for($investment)->for($account2, 'account')->create();
@@ -580,7 +576,7 @@ class InvestmentServicePriceTest extends TestCase
         $user = User::factory()->create();
         $investmentA = Investment::factory()->for($user)->withUser($user)->create();
         $investmentB = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // account holds investmentB only
         TransactionDetailInvestment::factory()->for($investmentB)->for($account, 'account')->create();

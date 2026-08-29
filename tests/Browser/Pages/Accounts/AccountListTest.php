@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages\Accounts;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
@@ -41,17 +40,11 @@ class AccountListTest extends DuskTestCase
         AccountGroup::factory()->for($user)->create(['name' => 'Default Group']);
 
         // Create 5 active accounts and 3 inactive accounts for the user
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(), 'config')
-            ->count(5)
+        AccountEntity::factory()->asAccount($user)->count(5)
             ->create([
                 'active' => true,
             ]);
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(), 'config')
-            ->count(3)
+        AccountEntity::factory()->asAccount($user)->count(3)
             ->create([
                 'active' => false,
             ]);

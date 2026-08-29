@@ -8,7 +8,6 @@ use App\Models\AccountGroup;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -156,10 +155,7 @@ class BudgetApiTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
         Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.budgets.store'), [

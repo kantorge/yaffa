@@ -2,20 +2,14 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\AiResponseParseException;
 use App\Exceptions\InvalidAiResponseSchemaException;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\AiProviderConfig;
 use App\Models\AiUserSettings;
 use App\Models\Category;
-use App\Models\Payee;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\AiExtractionSchemaValidator;
 use App\Services\AiPromptBuilder;
@@ -23,14 +17,15 @@ use App\Services\CategoryLearningService;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\ProcessDocumentService;
 use App\Services\TextExtractionService;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesTestTransactions;
 use Tests\TestCase;
 use RuntimeException;
 use Exception;
 
 class ProcessDocumentServiceTest extends TestCase
 {
+    use CreatesTestTransactions;
     use RefreshDatabase;
 
     public function test_extract_transaction_data_throws_typed_exception_for_malformed_ai_json(): void
@@ -502,25 +497,13 @@ class ProcessDocumentServiceTest extends TestCase
         $accountName = 'Main Wallet';
         $payeeName = 'Coffee Shop';
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-                'name' => $accountName,
-                'alias' => null,
-            ]);
+        $account = $this->createAccountEntity($user, ['name' => $accountName, 'alias' => null]);
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => $payeeName,
-                'alias' => null,
-            ]);
+        $payee = AccountEntity::factory()->asPayee($user)->create([
+            'active' => true,
+            'name' => $payeeName,
+            'alias' => null,
+        ]);
 
         $document = AiDocument::factory()
             ->for($user)
@@ -767,22 +750,12 @@ class ProcessDocumentServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Coffee Shop',
-            ]);
+        $payee = AccountEntity::factory()->asPayee($user)->create([
+            'active' => true,
+            'name' => 'Coffee Shop',
+        ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        $account = $this->createAccountEntity($user);
 
         $category = Category::factory()->for($user)->create(['active' => 1]);
 
@@ -891,38 +864,5 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame($category->id, $result[0]['recommended_category_id']);
         $this->assertSame('ai', $result[0]['match_type']);
         $this->assertSame(0.9, $result[0]['confidence_score']);
-    }
-
-    private function createTransactionWithCategory(
-        User $user,
-        int $accountId,
-        int $payeeId,
-        int $categoryId,
-        Carbon $date
-    ): void {
-        $detail = TransactionDetailStandard::query()->create([
-            'account_from_id' => $accountId,
-            'account_to_id' => $payeeId,
-            'amount_from' => 10,
-            'amount_to' => 10,
-        ]);
-
-        $transaction = Transaction::query()->create([
-            'user_id' => $user->id,
-            'date' => $date,
-            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
-            'reconciled' => false,
-            'schedule' => false,
-            'comment' => null,
-            'config_type' => 'standard',
-            'config_id' => $detail->id,
-        ]);
-
-        TransactionItem::query()->create([
-            'transaction_id' => $transaction->id,
-            'category_id' => $categoryId,
-            'amount' => 10,
-            'comment' => 'Test item',
-        ]);
     }
 }

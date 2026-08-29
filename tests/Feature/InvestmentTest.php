@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Investment;
@@ -436,10 +435,7 @@ class InvestmentTest extends TestCase
             'investment_group_id' => $investmentGroup->id,
         ]);
 
-        $accountEntity = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currency->id]), 'config')
-            ->create();
+        $accountEntity = AccountEntity::factory()->asAccount($user, ['currency_id' => $currency->id])->create();
 
         Transaction::factory()
             ->for($user)

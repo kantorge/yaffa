@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\Category;
 use App\Models\FileImportProfile;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Import\SystemFileImportProfileRegistry;
@@ -183,25 +181,19 @@ QIF;
 
     private function createAccountEntity(User $user): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        return AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+        ]);
     }
 
     private function createPayeeEntity(User $user, string $name): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => $name,
-            ]);
+        return AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => $name,
+        ]);
     }
 
     private function createSystemProfile(): FileImportProfile

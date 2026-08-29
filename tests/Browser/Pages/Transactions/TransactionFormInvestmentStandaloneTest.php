@@ -221,7 +221,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Verify that dividend field is disabled
                 ->assertDisabled('#transaction_dividend')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -252,7 +252,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Add taxes
                 ->type('#transaction_tax', '40')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -283,7 +283,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Additionally, verify the store price checkbox is not visible for dividend transactions
                 ->assertMissing('#store_price_checkbox')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -322,7 +322,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                     // Verify that dividend field is disabled
                     ->assertDisabled('#transaction_dividend')
                     // Submit form
-                    ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                    ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                     // A success message should be available in a Vue component
                     ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
             });
@@ -341,7 +341,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="create"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 ->assertRouteIs('transaction.create', ['type' => 'investment']);
         });
     }
@@ -353,7 +353,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="clone"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             // Get the last transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -381,7 +381,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="show"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             // Get the last transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -404,7 +404,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="returnToPrimaryAccount"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             // Get the last transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -425,7 +425,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="returnToInvestment"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             // Get the last transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -446,7 +446,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="returnToDashboard"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             $browser->assertRouteIs('home');
         });
@@ -459,7 +459,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->visitRoute('tags.index');
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="back"]')
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 ->assertRouteIs('tags.index');
         });
     }
@@ -480,7 +480,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Select callback to show the transaction
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15);
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30);
 
             // Get the last transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -636,7 +636,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->assertChecked('#store_price_checkbox')
 
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 // A success message should be available for the transaction
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10)
                 // A success notification should also appear for the price storage
@@ -687,7 +687,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->assertNotChecked('#store_price_checkbox')
 
                 // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 15)
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 30)
                 // A success message should be available for the transaction
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
 

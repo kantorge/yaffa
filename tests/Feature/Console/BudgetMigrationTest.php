@@ -6,7 +6,6 @@ use App\Models\AccountEntity;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionSchedule;
 use App\Models\User;
@@ -129,10 +128,7 @@ class BudgetMigrationTest extends TestCase
 
     private function createPayeeEntity(User $user): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create();
+        return AccountEntity::factory()->asPayee($user)->create();
     }
 
     /**
