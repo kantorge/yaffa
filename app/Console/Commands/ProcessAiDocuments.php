@@ -25,7 +25,7 @@ class ProcessAiDocuments extends Command
         // Get candidate documents ready for processing
         $documentIds = AiDocument::query()
             ->where('status', AiDocumentStatus::ReadyForProcessing->value)
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at')
             ->limit($limit)
             ->pluck('id');
 

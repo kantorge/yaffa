@@ -169,10 +169,6 @@ class TextExtractionService
 
     /**
      * Check if document can be processed (has required OCR for images)
-     *
-     * @param AiDocument $document
-     * @param AiProviderConfig|null $visionConfig
-     * @return bool
      */
     public function canProcess(AiDocument $document, ?AiProviderConfig $visionConfig = null): bool
     {

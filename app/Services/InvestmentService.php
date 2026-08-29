@@ -512,7 +512,6 @@ class InvestmentService
      *
      * @template TItem of InvestmentPrice|Transaction
      * @param  Collection<int, TItem>|null  $items
-     * @return TItem|null
      */
     private function latestOnOrBefore(?Collection $items, ?Carbon $onOrBefore): InvestmentPrice|Transaction|null
     {
