@@ -59,7 +59,7 @@ class ProcessDocumentServiceTest extends TestCase
         };
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('Invalid AI response payload structure');
+        $this->expectExceptionMessageIsOrContains('Invalid AI response payload structure');
 
         $service->extractData($config, 'Receipt text');
     }
@@ -99,7 +99,7 @@ class ProcessDocumentServiceTest extends TestCase
         };
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('missing required keys');
+        $this->expectExceptionMessageIsOrContains('missing required keys');
 
         $service->extractData($config, 'Receipt text');
     }

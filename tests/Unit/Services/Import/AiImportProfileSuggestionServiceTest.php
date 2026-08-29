@@ -50,7 +50,7 @@ class AiImportProfileSuggestionServiceTest extends TestCase
     public function test_trim_csv_throws_for_empty_content(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('could not be parsed as a CSV file');
+        $this->expectExceptionMessageIsOrContains('could not be parsed as a CSV file');
 
         $this->service->trimCsvToSampleRows('');
     }

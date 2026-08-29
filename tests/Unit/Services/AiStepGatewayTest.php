@@ -171,7 +171,7 @@ class AiStepGatewayTest extends TestCase
         };
 
         $this->expectException(AiResponseParseException::class);
-        $this->expectExceptionMessage('matches array');
+        $this->expectExceptionMessageIsOrContains('matches array');
 
         $gateway->matchCategoriesBatch($config, $document, 'Prompt', true);
     }

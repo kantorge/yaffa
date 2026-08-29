@@ -175,7 +175,7 @@ class InvestmentServicePriceTest extends TestCase
         $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('unknown provider');
+        $this->expectExceptionMessageIsOrContains('unknown provider');
 
         $service->fetchAndSavePrices($investment);
     }
@@ -191,7 +191,7 @@ class InvestmentServicePriceTest extends TestCase
         $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('no price provider configured');
+        $this->expectExceptionMessageIsOrContains('no price provider configured');
 
         $service->fetchAndSavePrices($investment);
     }
