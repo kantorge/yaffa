@@ -17,6 +17,7 @@ use App\Services\InflationCalculator;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -682,30 +683,25 @@ class ReportApiController extends Controller
         $currenciesWithMissingRates = [];
         $debugRows = [];
         $compact = [];
-        $monthlySummaries->each(function ($summary) use (&$compact, &$currenciesWithMissingRates, &$debugRows, $baseCurrency, $allRatesMap) {
-            // First of all, if the amount is 0, we can skip this summary.
-            // Pre-existing latent bug, left as-is: $summary->amount is a numeric string (the
-            // raw SQL SUM() result via the query builder, never cast), so this === 0 never
-            // matches and the guard never fires. Harmless for the accumulated totals (a
-            // zero contributes nothing either way), but fixing the comparison would start
-            // skipping all-zero rows and could make an all-zero month disappear from
-            // chartData entirely instead of appearing as a zero-value point - a visible
-            // chart behavior change, not a precision fix, so it's out of scope here.
-            if ($summary->amount === 0) {
-                return;
-            }
 
-            $month = $summary->date;
-
-            // Check if the given month is already in the compact array
-            if (!array_key_exists($month, $compact)) {
-                $compact[$month] = [
-                    'month' => $month,
+        // Pre-seed every month in the presented range with zero values, so a month with no
+        // underlying summary rows (e.g. zero net change that month) still appears in chartData
+        // as a zero-value point instead of being skipped entirely.
+        if ($monthlySummaries->isNotEmpty()) {
+            $period = CarbonPeriod::create($monthlySummaries->min('date'), '1 month', $monthlySummaries->max('date'));
+            foreach ($period as $month) {
+                $key = $month->format('Y-m-d');
+                $compact[$key] = [
+                    'month' => $key,
                     'account_balance' => BigDecimal::zero(),
                     'account_balance_running_total' => BigDecimal::zero(),
                     'investment_value' => BigDecimal::zero(),
                 ];
             }
+        }
+
+        $monthlySummaries->each(function ($summary) use (&$compact, &$currenciesWithMissingRates, &$debugRows, $baseCurrency, $allRatesMap) {
+            $month = $summary->date;
 
             // Calculate the amount in the base currency, using the currency rate closest to the given date.
             // If the account entity is missing (for generic budgets), the base currency is used.
