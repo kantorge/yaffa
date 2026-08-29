@@ -10,6 +10,7 @@ use App\Services\BudgetService;
 use App\Services\RecurrenceRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class BudgetServiceTest extends TestCase
@@ -127,5 +128,74 @@ class BudgetServiceTest extends TestCase
 
         $this->assertCount(1, $occurrences);
         $this->assertSame('2024-01-15', $occurrences[0]->toDateString());
+    }
+
+    /**
+     * Regression coverage for the performance-audit finding that projectOccurrences() recomputed
+     * the recurrence expansion from scratch on every call. Seeds the exact cache key it computes
+     * with a sentinel value - if the method actually hits the cache instead of recomputing, it
+     * returns the sentinel verbatim rather than the real occurrence dates.
+     */
+    public function test_project_occurrences_uses_the_cached_result(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $budget = Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::parse('2024-01-15'),
+            'end_date' => null,
+            'count' => null,
+        ]);
+
+        $from = Carbon::parse('2024-01-01');
+        $to = Carbon::parse('2024-04-01');
+
+        $cacheKey = "budget-occurrences:{$budget->id}:{$budget->updated_at->timestamp}:"
+            . "{$from->toDateString()}:{$to->toDateString()}";
+        Cache::put($cacheKey, ['2099-01-01'], now()->addHour());
+
+        $occurrences = $this->service()->projectOccurrences($budget, $from, $to);
+
+        $this->assertCount(1, $occurrences);
+        $this->assertSame('2099-01-01', $occurrences[0]->toDateString());
+    }
+
+    /**
+     * Touching the budget (which bumps updated_at) must change the cache key so the next call
+     * recomputes instead of serving a stale result from before the change.
+     */
+    public function test_project_occurrences_recomputes_after_the_budget_is_touched(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $budget = Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::parse('2024-01-15'),
+            'end_date' => null,
+            'count' => null,
+        ]);
+
+        $from = Carbon::parse('2024-01-01');
+        $to = Carbon::parse('2024-04-01');
+
+        $before = $this->service()->projectOccurrences($budget, $from, $to);
+        $this->assertCount(3, $before);
+
+        // Second-precision timestamp cache key: without a real time gap, an update landing in
+        // the same wall-clock second as create() wouldn't change updated_at->timestamp.
+        $this->travel(1)->seconds();
+        $budget->update(['frequency' => 'WEEKLY']);
+
+        $after = $this->service()->projectOccurrences($budget, $from, $to);
+
+        $this->assertGreaterThan(count($before), count($after));
     }
 }

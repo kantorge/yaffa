@@ -41,7 +41,9 @@ class AccountEntityApiController extends Controller
      * Recalculate account monthly summaries
      *
      * Queues a background job to recalculate the cached monthly summaries for all
-     * accounts belonging to the current user.
+     * accounts belonging to the current user. Stale/stuck batches from a previous run are
+     * cancelled by the command itself (CalculateAccountMonthlySummaries) before it dispatches
+     * fresh ones, so every caller of that command gets the same guard.
      */
     public function recalculateAccountMonthlySummaries(Request $request): JsonResponse
     {

@@ -132,6 +132,8 @@
         // Set right before a programmatic hide() so the hide.coreui.modal
         // listener lets it through once without re-running the dirty check.
         forceCloseModal: false,
+        // True while the modal is mid fade-in/out transition (see hide()).
+        modalTransitioning: false,
       };
     },
     computed: {
@@ -167,6 +169,16 @@
       const modalElement = document.getElementById('investmentPriceModal');
 
       this.modal = new window.coreui.Modal(modalElement);
+
+      // CoreUI's Modal.hide() silently no-ops if called while the modal is still
+      // mid "show" transition (its internal _isTransitioning guard) - track that
+      // state ourselves so hide() can defer instead of losing the call outright.
+      modalElement.addEventListener('show.coreui.modal', () => {
+        this.modalTransitioning = true;
+      });
+      modalElement.addEventListener('shown.coreui.modal', () => {
+        this.modalTransitioning = false;
+      });
 
       modalElement.addEventListener('hidden.bs.modal', () => {
         this.resetForm();
@@ -210,6 +222,17 @@
       },
       hide() {
         this.forceCloseModal = true;
+
+        // A fast programmatic edit-and-submit can call hide() before the
+        // modal's own fade-in transition has finished; CoreUI's Modal.hide()
+        // silently no-ops in that state, so defer until it's done showing.
+        if (this.modalTransitioning) {
+          document
+            .getElementById('investmentPriceModal')
+            .addEventListener('shown.coreui.modal', () => this.modal.hide(), { once: true });
+          return;
+        }
+
         this.modal.hide();
       },
       resetForm() {

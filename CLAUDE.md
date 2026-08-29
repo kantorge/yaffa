@@ -6,7 +6,7 @@ YAFFA (Yet Another Free Financial Application) is a self-hosted personal finance
 
 ## Tech Stack
 
-- **PHP 8.4 / Laravel 12** — MVC + Services architecture
+- **PHP 8.4 / Laravel 13** — MVC + Services architecture
 - **Vue 3 (Options API)** + **Bootstrap 5.3** + **CoreUI** — multi-page app, NOT a SPA
 - **MySQL 8** — primary database
 - **Redis** — queue backend for background jobs

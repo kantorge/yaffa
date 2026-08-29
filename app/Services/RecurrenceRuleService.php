@@ -109,12 +109,12 @@ class RecurrenceRuleService
      * The ArrayTransformer used to expand a rule into concrete occurrences,
      * configured identically wherever it's needed.
      */
-    private function makeArrayTransformer(): ArrayTransformer
+    private function makeArrayTransformer(?int $virtualLimit = null): ArrayTransformer
     {
         $transformer = new ArrayTransformer();
         $transformerConfig = new ArrayTransformerConfig();
         $transformerConfig->enableLastDayOfMonthFix();
-        $transformerConfig->setVirtualLimit(self::RECURRENCE_VIRTUAL_LIMIT);
+        $transformerConfig->setVirtualLimit($virtualLimit ?? self::RECURRENCE_VIRTUAL_LIMIT);
         $transformer->setConfig($transformerConfig);
 
         return $transformer;
@@ -278,9 +278,10 @@ class RecurrenceRuleService
         ?int $byMonth,
         Carbon $from,
         Carbon $to,
+        ?int $virtualLimit = null,
     ): RecurrenceCollection {
         $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
-        $transformer = $this->makeArrayTransformer();
+        $transformer = $this->makeArrayTransformer($virtualLimit);
 
         $constraint = new BetweenConstraint(
             new DateTime($from->toDateString()),

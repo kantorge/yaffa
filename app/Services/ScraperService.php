@@ -14,12 +14,21 @@ class ScraperService
      */
     public function scrape(string $url, string $selector): array
     {
-        PublicEndpointUrlValidator::assertPublic($url);
+        $resolvedIps = PublicEndpointUrlValidator::assertPublic($url);
+
+        $requestOptions = ['allow_redirects' => false];
+
+        $pinnedCurlOptions = PublicEndpointUrlValidator::buildDnsPinningCurlOptions($url, $resolvedIps);
+        if ($pinnedCurlOptions !== []) {
+            $requestOptions['curl'] = $pinnedCurlOptions;
+        }
 
         $response = Http::withUserAgent(self::USER_AGENT)
             // Never follow redirects: a validated public host could redirect the
             // actual request to an internal address, bypassing the check above.
-            ->withOptions(['allow_redirects' => false])
+            // Pin the connection to the already-validated IP(s) to close the DNS-rebinding
+            // gap between validation and this request (see PublicEndpointUrlValidator).
+            ->withOptions($requestOptions)
             ->get($url)
             ->throw();
 

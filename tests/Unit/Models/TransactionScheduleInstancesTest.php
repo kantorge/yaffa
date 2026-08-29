@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\ScheduleInstance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -181,5 +182,90 @@ class TransactionScheduleInstancesTest extends TestCase
                 "Occurrence on {$instance->date->toDateString()} is not the FIRST Wednesday of its month."
             );
         }
+    }
+
+    /**
+     * Regression coverage for the performance-audit finding that scheduleInstances() recomputed
+     * the recurrence expansion from scratch on every call. Seeds the exact cache key it computes
+     * with a sentinel value - if the method actually hits the cache instead of recomputing, the
+     * returned instance carries the sentinel date verbatim rather than a real occurrence date.
+     */
+    public function test_schedule_instances_uses_the_cached_occurrence_dates(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['end_date' => now()->addYears(2)]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => Carbon::parse('2024-01-01'),
+            'next_date' => Carbon::parse('2024-01-01'),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+        $schedule = $transaction->transactionSchedule;
+
+        $constraintStart = Carbon::parse('2024-01-01');
+        $maxLookAhead = Carbon::parse('2024-04-01');
+
+        $cacheKey = "schedule-occurrences:{$schedule->id}:{$schedule->updated_at->timestamp}:"
+            . "{$transaction->updated_at->timestamp}:2024-01-01:2024-04-01:500";
+        Cache::put($cacheKey, ['2099-01-01'], now()->addHour());
+
+        $instances = $transaction->scheduleInstances($constraintStart, $maxLookAhead);
+
+        $this->assertCount(1, $instances);
+        $this->assertSame('2099-01-01', $instances->first()->date->toDateString());
+    }
+
+    /**
+     * Touching the schedule (which bumps updated_at) must change the cache key so the next call
+     * recomputes instead of serving a stale result from before the change.
+     */
+    public function test_schedule_instances_recompute_after_the_schedule_is_touched(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['end_date' => now()->addYears(2)]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => Carbon::parse('2024-01-01'),
+            'next_date' => Carbon::parse('2024-01-01'),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $constraintStart = Carbon::parse('2024-01-01');
+        $maxLookAhead = Carbon::parse('2024-04-01');
+
+        $before = $transaction->scheduleInstances($constraintStart->clone(), $maxLookAhead->clone());
+        $this->assertCount(4, $before);
+
+        // Second-precision timestamp cache key: without a real time gap, an update landing in
+        // the same wall-clock second as create() wouldn't change updated_at->timestamp.
+        $this->travel(1)->seconds();
+        $transaction->transactionSchedule->update(['frequency' => 'WEEKLY']);
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $after = $transaction->scheduleInstances($constraintStart->clone(), $maxLookAhead->clone());
+
+        $this->assertGreaterThan($before->count(), $after->count());
     }
 }

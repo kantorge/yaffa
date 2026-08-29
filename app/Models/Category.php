@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use App\Observers\CategoryObserver;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -64,6 +66,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  */
 #[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation')]
 #[Appends('full_name')]
+#[ObservedBy([CategoryObserver::class])]
 class Category extends Model
 {
     use HasFactory;

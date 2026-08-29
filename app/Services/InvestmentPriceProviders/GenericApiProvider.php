@@ -63,7 +63,7 @@ class GenericApiProvider implements InvestmentPriceProvider
                 'allow_redirects' => false,
             ];
 
-            $pinnedCurlOptions = $this->buildDnsPinningCurlOptions($resolvedEndpointUrl, $resolvedIps);
+            $pinnedCurlOptions = PublicEndpointUrlValidator::buildDnsPinningCurlOptions($resolvedEndpointUrl, $resolvedIps);
             if ($pinnedCurlOptions !== []) {
                 $requestOptions['curl'] = $pinnedCurlOptions;
             }
@@ -500,38 +500,6 @@ class GenericApiProvider implements InvestmentPriceProvider
                 $exception
             );
         }
-    }
-
-    /**
-     * Pins the connection to the already-validated IP address(es) so a short-TTL DNS
-     * record can't resolve to a different (internal) address between validation and
-     * the actual request (DNS-rebinding TOCTOU).
-     *
-     * @param  array<int, string>  $resolvedIps
-     * @return array<int, mixed>
-     */
-    private function buildDnsPinningCurlOptions(string $endpointUrl, array $resolvedIps): array
-    {
-        if ($resolvedIps === []) {
-            return [];
-        }
-
-        $host = parse_url($endpointUrl, PHP_URL_HOST);
-        if (! is_string($host) || $host === '') {
-            return [];
-        }
-
-        $scheme = parse_url($endpointUrl, PHP_URL_SCHEME);
-        $port = parse_url($endpointUrl, PHP_URL_PORT) ?? (Str::lower((string) $scheme) === 'http' ? 80 : 443);
-
-        $addresses = array_map(
-            static fn (string $ip): string => str_contains($ip, ':') ? "[{$ip}]" : $ip,
-            $resolvedIps
-        );
-
-        return [
-            CURLOPT_RESOLVE => [sprintf('%s:%d:%s', mb_trim($host, '[]'), $port, implode(',', $addresses))],
-        ];
     }
 
     /**

@@ -9,6 +9,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 #[Signature('app:cache:account-monthly-summaries ' . '{accountEntityId? : The ID of the account entity to process directly. Takes precedence if set together with the User ID.} ' . '{userId? : The ID of the user to process all their accounts.}' . '{summaryType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} ' . '{dataType? : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.} ')]
@@ -85,32 +86,22 @@ class CalculateAccountMonthlySummaries extends Command
 
             // Now we need to dispatch the jobs prepared above
             if (! empty($jobs['account_balance-fact'] ?? [])) {
-                Bus::batch($jobs['account_balance-fact'])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch($jobs['account_balance-fact'], 'account_balance-fact-' . $user->id);
             }
 
             if (! empty($jobs['investment_value-fact'] ?? [])) {
-                Bus::batch($jobs['investment_value-fact'])
-                    ->name('CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch($jobs['investment_value-fact'], 'investment_value-fact-' . $user->id);
             }
 
             if (! empty($jobs['account_balance-forecast'] ?? [])) {
-                Bus::batch($jobs['account_balance-forecast'])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-forecast-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch($jobs['account_balance-forecast'], 'account_balance-forecast-' . $user->id);
             }
 
             if (! empty($jobs['investment_value-forecast'] ?? [])) {
-                Bus::batch($jobs['investment_value-forecast'])
-                    ->name('CalculateAccountMonthlySummariesJob-investment_value-forecast-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch($jobs['investment_value-forecast'], 'investment_value-forecast-' . $user->id);
             }
 
-            Bus::batch($jobs['account_balance-budget'])
-                ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
-                ->dispatch();
+            $this->dispatchBatch($jobs['account_balance-budget'], 'account_balance-budget-' . $user->id);
         });
     }
 
@@ -156,46 +147,62 @@ class CalculateAccountMonthlySummaries extends Command
         // Create a job for the given accountEntity, summaryType and dataType
         if ($summaryType === 'account_balance' || $summaryType === null) {
             if ($dataType === 'fact' || $dataType === null) {
-                Bus::batch([
-                    new CalculateAccountMonthlySummariesJob($user, 'account_balance-fact', $accountEntity)
-                ])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch(
+                    [new CalculateAccountMonthlySummariesJob($user, 'account_balance-fact', $accountEntity)],
+                    'account_balance-fact-' . $user->id
+                );
             }
 
             if ($dataType === 'forecast' || $dataType === null) {
-                Bus::batch([
-                    new CalculateAccountMonthlySummariesJob($user, 'account_balance-forecast', $accountEntity)
-                ])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-forecast-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch(
+                    [new CalculateAccountMonthlySummariesJob($user, 'account_balance-forecast', $accountEntity)],
+                    'account_balance-forecast-' . $user->id
+                );
             }
 
             if ($dataType === 'budget' || $dataType === null) {
-                Bus::batch([
-                    new CalculateAccountMonthlySummariesJob($user, 'account_balance-budget', $accountEntity)
-                ])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch(
+                    [new CalculateAccountMonthlySummariesJob($user, 'account_balance-budget', $accountEntity)],
+                    'account_balance-budget-' . $user->id
+                );
             }
         }
 
         if ($summaryType === 'investment_value' || $summaryType === null) {
             if ($dataType === 'fact' || $dataType === null) {
-                Bus::batch([
-                    new CalculateAccountMonthlySummariesJob($user, 'investment_value-fact', $accountEntity)
-                ])
-                    ->name('CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch(
+                    [new CalculateAccountMonthlySummariesJob($user, 'investment_value-fact', $accountEntity)],
+                    'investment_value-fact-' . $user->id
+                );
             }
 
             if ($dataType === 'forecast' || $dataType === null) {
-                Bus::batch([
-                    new CalculateAccountMonthlySummariesJob($user, 'investment_value-forecast', $accountEntity)
-                ])
-                    ->name('CalculateAccountMonthlySummariesJob-investment_value-forecast-' . $user->id)
-                    ->dispatch();
+                $this->dispatchBatch(
+                    [new CalculateAccountMonthlySummariesJob($user, 'investment_value-forecast', $accountEntity)],
+                    'investment_value-forecast-' . $user->id
+                );
             }
         }
+    }
+
+    /**
+     * Dispatch a named batch, first cancelling any of its own same-named predecessors still in
+     * flight (e.g. stuck from a previous run). Cancelling makes
+     * CalculateAccountMonthlySummary::handle() bail out as soon as a stuck/queued job for that
+     * batch is next dequeued, instead of racing this fresh dispatch.
+     *
+     * @param  array<CalculateAccountMonthlySummariesJob>  $jobs
+     */
+    private function dispatchBatch(array $jobs, string $nameSuffix): void
+    {
+        $name = 'CalculateAccountMonthlySummariesJob-' . $nameSuffix;
+
+        DB::table('job_batches')
+            ->where('name', $name)
+            ->whereNull('finished_at')
+            ->pluck('id')
+            ->each(fn ($batchId) => Bus::findBatch($batchId)?->cancel());
+
+        Bus::batch($jobs)->name($name)->dispatch();
     }
 }

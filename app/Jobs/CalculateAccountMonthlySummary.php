@@ -71,6 +71,13 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      */
     public function handle(InvestmentService $investmentService, BudgetService $budgetService): void
     {
+        // Batch cancellation only marks the batch; a job already on the queue still gets
+        // dequeued and must check this itself before touching the DB (see
+        // AccountEntityApiController::recalculateAccountMonthlySummaries).
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+
         $this->investmentService = $investmentService;
         $this->budgetService = $budgetService;
 

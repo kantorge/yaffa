@@ -7,6 +7,7 @@ use App\Models\AccountEntity;
 use App\Models\Budget;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 class BudgetService
@@ -90,21 +91,28 @@ class BudgetService
      */
     public function projectOccurrences(Budget $budget, Carbon $from, Carbon $to): array
     {
-        $recurrence = $this->recurrenceRuleService->getRecurrenceBetween(
-            $budget->start_date,
-            $budget->frequency,
-            $budget->interval ?? 1,
-            $budget->end_date,
-            $budget->count,
-            $budget->by_day,
-            $budget->by_month,
-            $from,
-            $to,
-        );
+        $cacheKey = "budget-occurrences:{$budget->id}:{$budget->updated_at->timestamp}:"
+            . "{$from->toDateString()}:{$to->toDateString()}";
 
-        return collect($recurrence)
-            ->map(fn ($occurrence) => Carbon::instance($occurrence->getStart()))
-            ->values()
-            ->all();
+        $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use ($budget, $from, $to) {
+            $recurrence = $this->recurrenceRuleService->getRecurrenceBetween(
+                $budget->start_date,
+                $budget->frequency,
+                $budget->interval ?? 1,
+                $budget->end_date,
+                $budget->count,
+                $budget->by_day,
+                $budget->by_month,
+                $from,
+                $to,
+            );
+
+            return collect($recurrence)
+                ->map(fn ($occurrence) => Carbon::instance($occurrence->getStart())->toDateString())
+                ->values()
+                ->all();
+        });
+
+        return collect($dateStrings)->map(fn ($date) => Carbon::parse($date))->values()->all();
     }
 }

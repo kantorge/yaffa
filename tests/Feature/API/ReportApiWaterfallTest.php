@@ -195,4 +195,48 @@ class ReportApiWaterfallTest extends TestCase
 
         $this->assertEquals(-25.0, $bucketValue());
     }
+
+    /**
+     * A Category edit (rename/reparent/delete) isn't scoped to one transaction date the way
+     * a Transaction change is, so CategoryObserver invalidates the whole per-user cache via
+     * CategoryWaterfallCacheService::forgetAllForUser(), which bumps a per-user version
+     * embedded in key() rather than deleting the old key outright (see that method's
+     * docblock) - so the assertion here is that key() starts pointing at a fresh,
+     * not-yet-cached entry, not that the old literal key is gone.
+     */
+    public function test_waterfall_cache_key_changes_when_category_is_updated(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $account = $this->createAccount($this->baseCurrency);
+        $category = Category::factory()->for($this->user)->create(['name' => 'Original']);
+
+        $transactionConfig = TransactionDetailStandard::factory()
+            ->withdrawal($this->user)
+            ->create(['account_from_id' => $account->id]);
+
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->create([
+                'schedule' => false,
+                'date' => '2025-01-10',
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+                'config_type' => 'standard',
+                'config_id' => $transactionConfig->id,
+            ]);
+        $transaction->transactionItems()->delete();
+        TransactionItem::factory()->for($transaction)->create(['category_id' => $category->id, 'amount' => 10]);
+
+        $routeParams = ['transactionType' => 'standard', 'dataType' => 'result', 'year' => 2025, 'month' => 1];
+        $this->getJson(route('api.v1.reports.waterfall', $routeParams))->assertOk();
+
+        $cacheKeyBefore = CategoryWaterfallCacheService::key($this->user->id, 'standard', 'result', 2025, 1);
+        $this->assertTrue(Cache::has($cacheKeyBefore));
+
+        $category->update(['name' => 'Renamed']);
+
+        $cacheKeyAfter = CategoryWaterfallCacheService::key($this->user->id, 'standard', 'result', 2025, 1);
+        $this->assertNotEquals($cacheKeyBefore, $cacheKeyAfter);
+        $this->assertFalse(Cache::has($cacheKeyAfter));
+    }
 }

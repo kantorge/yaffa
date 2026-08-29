@@ -57,7 +57,7 @@ If something is unclear or missing, STOP and ask for clarification.
 
 ## Coding Standards
 
-- Laravel 12 conventions
+- Laravel 13 conventions
 - Type hints where reasonable
 - Clear method and variable names
 - Small, composable methods

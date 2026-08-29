@@ -58,4 +58,29 @@ class ScraperServiceTest extends TestCase
 
         $this->assertSame([], $result);
     }
+
+    public function test_scrape_pins_the_request_to_the_validated_ip(): void
+    {
+        Http::fake([
+            '8.8.8.8/*' => Http::response('<html><body><span class="price">123.45</span></body></html>'),
+        ]);
+
+        // The `curl` request option isn't part of the recorded PSR-7 request Http::assertSent
+        // inspects, so capture it via a Guzzle-level middleware instead, which does see it.
+        $capturedCurlOptions = null;
+        Http::globalMiddleware(function (callable $handler) use (&$capturedCurlOptions) {
+            return function ($request, array $options) use ($handler, &$capturedCurlOptions) {
+                $capturedCurlOptions = $options['curl'] ?? null;
+
+                return $handler($request, $options);
+            };
+        });
+
+        $service = new ScraperService();
+        $service->scrape('https://8.8.8.8/price', '.price');
+
+        $this->assertIsArray($capturedCurlOptions);
+        $this->assertArrayHasKey(CURLOPT_RESOLVE, $capturedCurlOptions);
+        $this->assertStringContainsString('8.8.8.8:443:8.8.8.8', $capturedCurlOptions[CURLOPT_RESOLVE][0]);
+    }
 }

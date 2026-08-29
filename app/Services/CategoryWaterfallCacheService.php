@@ -18,8 +18,9 @@ class CategoryWaterfallCacheService
     public static function key(int $userId, string $transactionType, string $dataType, int $year, ?int $month): string
     {
         return sprintf(
-            'categoryWaterfall_v1_user_%d_%s_%s_%d_%s',
+            'categoryWaterfall_v1_user_%d_ver_%d_%s_%s_%d_%s',
             $userId,
+            self::version($userId),
             $transactionType,
             $dataType,
             $year,
@@ -30,6 +31,29 @@ class CategoryWaterfallCacheService
     public static function ttl(): CarbonInterface
     {
         return now()->addDays(7);
+    }
+
+    /**
+     * Invalidate every cached waterfall entry for the user (all years/months/types), for
+     * changes that aren't scoped to one transaction date - e.g. a Category rename, reparent,
+     * or delete, which can affect every period's rendering.
+     *
+     * Bumps a per-user version embedded in key() instead of enumerating every possible
+     * year/month key: old entries become unreachable and simply expire via ttl().
+     */
+    public static function forgetAllForUser(int $userId): void
+    {
+        Cache::increment(self::versionKey($userId));
+    }
+
+    private static function version(int $userId): int
+    {
+        return (int) Cache::get(self::versionKey($userId), 1);
+    }
+
+    private static function versionKey(int $userId): string
+    {
+        return 'categoryWaterfall_version_user_' . $userId;
     }
 
     /**

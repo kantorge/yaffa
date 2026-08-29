@@ -27,24 +27,23 @@ The original design (see SPECIFICATION.md history) treated this as a "Phase 2, s
 
 ### The mechanism (already proven, just needs repeating)
 
-Every `API` controller implements `Illuminate\Routing\Controllers\HasMiddleware` and declares `auth:sanctum` + `verified` via a static `middleware()` method — confirmed uniform across all 26 controllers in `app/Http/Controllers/API/`. `TwoFactorApiController` already extends this pattern with a real ability gate:
+**Updated for `release/v4`:** this section originally described a `HasMiddleware`-interface/static-`middleware()`-method pattern. The Laravel 13 upgrade (landed on this branch after this feature and the budget/schedule redesign were first built) replaced that across the codebase with PHP 8 class/method attributes — `Illuminate\Routing\Attributes\Controllers\Middleware` and `...\Authorize`. Verified current: 26 of the 27 controllers in `app/Http/Controllers/API/` now use the attribute form; only `ApiTokenApiController` still implements `HasMiddleware`/`middleware()`, because its auth-mode check is a closure (an `abort(403)` if the resolved token is a `PersonalAccessToken`), and the attribute form only accepts a named middleware string — it can't express an inline closure. `TwoFactorApiController` (the controller this section originally used as the worked example) now looks like this:
 
 ```php
-public static function middleware(): array
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'enroll', 'confirm', 'disable', 'regenerateRecoveryCodes',
+])]
+class TwoFactorApiController extends Controller
 {
-    return [
-        'auth:sanctum',
-        'verified',
-        new Middleware('abilities:settings', only: [
-            'enroll', 'confirm', 'disable', 'regenerateRecoveryCodes',
-        ]),
-    ];
+    // ...
 }
 ```
 
-`abilities:<name>` resolves to Sanctum's `CheckAbilities` middleware (aliased in `bootstrap/app.php` as `abilities`/`ability`, added in this feature but otherwise unused until now) — it calls `$request->user()->tokenCan($ability)`, which is a no-op `true` for session requests (`TransientToken::can()` always returns `true`) and checks the real `abilities` column for bearer tokens. `Illuminate\Routing\Controllers\Middleware` (imported as `use Illuminate\Routing\Controllers\Middleware;`) lets `only`/`except` scope the check to specific controller methods, so a single controller can require different abilities for different actions.
+`abilities:<name>` still resolves to Sanctum's `CheckAbilities` middleware (aliased in `bootstrap/app.php` as `abilities`/`ability`) exactly as before — it calls `$request->user()->tokenCan($ability)`, a no-op `true` for session requests (`TransientToken::can()` always returns `true`) and a real check against the `abilities` column for bearer tokens. `only`/`except` still scope the check to specific controller methods, so a single controller can require different abilities for different actions — only the declaration syntax (class attribute instead of an array entry inside a static method) changed. Likewise, the `Gate::authorize(...)` calls this doc originally showed inline inside controller methods are now `#[Authorize('ability', Model::class|'routeParam')]` method attributes (e.g. `BudgetApiController::store()` carries `#[Authorize('create', Budget::class)]` rather than calling `Gate::authorize()` in its body) — see `.ai/docs/features/budget-schedule-redesign/permissions.md` for a worked example with exact line numbers.
 
-**The work per controller is: add one or more `Middleware::class` entries to the existing `middleware()` array, scoped by method name.** No route changes, no new middleware classes, no changes to session-request behavior (verified: session requests pass every `abilities:*` check trivially).
+**The work per controller was: add one or more `Middleware(...)` attributes above the class, scoped by method name via `only`/`except`.** No route changes, no new middleware classes, no changes to session-request behavior (verified: session requests pass every `abilities:*` check trivially). This mechanism note is about *how* the gate is declared, not *whether* it fires — the actual ability-to-controller mapping in the table below was independently re-checked against the current code and still matches.
 
 ### The ability-to-endpoint mapping
 

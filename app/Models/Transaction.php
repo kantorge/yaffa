@@ -26,9 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Recurr\Transformer\ArrayTransformer;
-use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\BetweenConstraint;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * App\Models\Transaction
@@ -354,27 +352,6 @@ class Transaction extends Model
         }
         $constraintStart->startOfDay();
 
-        // Routed through RecurrenceRuleService::buildRule() (not a hand-built Recurr\Rule) so
-        // by_day/by_month ordinal-weekday patterns (e.g. "first Wednesday of every month") are
-        // honored here the same as every other recurrence call site - see that method's docblock
-        // and architecture.md's former "Known Risks" entry for this method.
-        $rule = (new RecurrenceRuleService())->buildRule(
-            $this->transactionSchedule->start_date,
-            $this->transactionSchedule->frequency,
-            $this->transactionSchedule->interval,
-            $this->transactionSchedule->end_date,
-            $this->transactionSchedule->count,
-            $this->transactionSchedule->by_day,
-            $this->transactionSchedule->by_month,
-        );
-
-        $transformer = new ArrayTransformer();
-
-        $transformerConfig = new ArrayTransformerConfig();
-        $transformerConfig->setVirtualLimit($virtualLimit);
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformer->setConfig($transformerConfig);
-
         if ($this->transactionSchedule->end_date === null) {
             $endDate = $maxLookAhead;
         } else {
@@ -382,7 +359,37 @@ class Transaction extends Model
         }
         $endDate->startOfDay();
 
-        $constraint = new BetweenConstraint($constraintStart, $endDate, true);
+        // Keyed on both the schedule's own updated_at and this transaction row's updated_at:
+        // only the date list is cached below (not $baseAttributes/$baseRelations, which are
+        // rebuilt fresh per call from $this), but keying on both is the safe choice for anyone
+        // who extends this cache to also cover per-occurrence attributes later.
+        $cacheKey = "schedule-occurrences:{$this->transactionSchedule->id}:"
+            . "{$this->transactionSchedule->updated_at->timestamp}:{$this->updated_at->timestamp}:"
+            . "{$constraintStart->toDateString()}:{$endDate->toDateString()}:{$virtualLimit}";
+
+        $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use (
+            $constraintStart,
+            $endDate,
+            $virtualLimit,
+        ) {
+            $recurrence = (new RecurrenceRuleService())->getRecurrenceBetween(
+                $this->transactionSchedule->start_date,
+                $this->transactionSchedule->frequency,
+                $this->transactionSchedule->interval,
+                $this->transactionSchedule->end_date,
+                $this->transactionSchedule->count,
+                $this->transactionSchedule->by_day,
+                $this->transactionSchedule->by_month,
+                \Illuminate\Support\Carbon::instance($constraintStart),
+                \Illuminate\Support\Carbon::instance($endDate),
+                $virtualLimit,
+            );
+
+            return collect($recurrence)
+                ->map(fn ($occurrence) => Carbon::instance($occurrence->getStart())->toDateString())
+                ->values()
+                ->all();
+        });
 
         // Every virtual occurrence shares the same attributes/relations as $this - only the
         // date and "is this the first instance" flag differ per occurrence. Resolving the
@@ -413,9 +420,9 @@ class Transaction extends Model
         $scheduleStartDate = new \Illuminate\Support\Carbon($this->transactionSchedule->start_date);
         $inflationRate = $this->transactionSchedule->inflation;
 
-        foreach ($transformer->transform($rule, $constraint) as $instance) {
+        foreach ($dateStrings as $dateString) {
             $attributes = $baseAttributes;
-            $instanceDate = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $instanceDate = \Illuminate\Support\Carbon::parse($dateString);
             $attributes['date'] = $instanceDate;
             $attributes['schedule_first_instance'] = $first;
             $attributes['inflationMultiplier'] = (string) $inflationCalculator->applyAnnualRate(
