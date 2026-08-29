@@ -614,7 +614,7 @@
 
         try {
           const response = await axios.get(
-            '/api/v1/transactions/scheduled-items?type=schedule',
+            '/api/v1/transactions/scheduled-items?type=schedule&includeItemDetails=0',
           );
 
           this.transactions = response.data.transactions

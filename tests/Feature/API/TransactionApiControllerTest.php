@@ -1310,6 +1310,28 @@ class TransactionApiControllerTest extends TestCase
         $this->assertCount(0, $response->json('transactions'));
     }
 
+    /**
+     * includeItemDetails=0 (used by the dashboard ScheduleCalendar widget, which never reads
+     * transaction_items) skips the transactionItems/category/tags eager loads entirely; the
+     * default (and includeItemDetails=1) keeps them for account-show and the schedules report.
+     */
+    public function test_scheduled_items_can_omit_item_details(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertArrayHasKey('transaction_items', $response->json('transactions.0'));
+
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule&includeItemDetails=0');
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertArrayNotHasKey('transaction_items', $response->json('transactions.0'));
+    }
+
     public function test_store_standard_finalization_updates_category_learning(): void
     {
         Sanctum::actingAs($this->user, ['*']);

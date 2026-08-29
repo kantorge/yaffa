@@ -91,7 +91,7 @@ class TransactionScheduleInstancesInflationTest extends TestCase
         $this->assertGreaterThan(0, $instances->count());
 
         foreach ($instances as $instance) {
-            $this->assertSame(1.0, $instance->inflationMultiplier);
+            $this->assertSame('1', $instance->inflationMultiplier);
         }
     }
 }

@@ -90,6 +90,45 @@ class PayeeCategoryStatsService
             excludeDismissed: false,
         );
 
+        return $this->hydrateSuggestions($user, $payees);
+    }
+
+    /**
+     * Get suggestion data for a payee default category recommendation.
+     *
+     * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
+     */
+    public function getDefaultSuggestion(User $user): ?array
+    {
+        $payees = $this->getEligibleDefaultSuggestions(
+            user: $user,
+            months: null,
+            onlyActive: true,
+            excludeDismissed: true,
+        );
+
+        if ($payees->isEmpty()) {
+            return null;
+        }
+
+        $payees = $this->hydrateSuggestions($user, $payees);
+
+        if ($payees->isEmpty()) {
+            return null;
+        }
+
+        return $payees->random();
+    }
+
+    /**
+     * Attach payee and category display names to eligible suggestions, dropping any
+     * whose payee or category no longer resolves.
+     *
+     * @param  Collection<int, array{payee_id: int, sum: int, max: int, max_category_id: int}>  $payees
+     * @return Collection<int, array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}>
+     */
+    private function hydrateSuggestions(User $user, Collection $payees): Collection
+    {
         if ($payees->isEmpty()) {
             return collect();
         }
@@ -123,36 +162,6 @@ class PayeeCategoryStatsService
             })
             ->filter()
             ->values();
-    }
-
-    /**
-     * Get suggestion data for a payee default category recommendation.
-     *
-     * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
-     */
-    public function getDefaultSuggestion(User $user): ?array
-    {
-        $payees = $this->getEligibleDefaultSuggestions(
-            user: $user,
-            months: null,
-            onlyActive: true,
-            excludeDismissed: true,
-        );
-
-        if ($payees->isEmpty()) {
-            return null;
-        }
-
-        $payee = $this->getDefaultSuggestionsForAllPayees($user)
-            ->keyBy('payee_id')
-            ->only($payees->pluck('payee_id')->all())
-            ->values();
-
-        if ($payee->isEmpty()) {
-            return null;
-        }
-
-        return $payee->random();
     }
 
     /**

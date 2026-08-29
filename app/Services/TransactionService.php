@@ -195,7 +195,7 @@ class TransactionService
         // exception escape.
         $firstCurrency = $terms[0]->getCurrency();
         foreach ($terms as $term) {
-            if (! $term->getCurrency()->is($firstCurrency)) {
+            if (! $term->getCurrency()->isEqualTo($firstCurrency)) {
                 Log::warning('Investment transaction cash flow spans mismatched currencies (legacy data)', [
                     'transaction_id' => $transaction->id,
                 ]);

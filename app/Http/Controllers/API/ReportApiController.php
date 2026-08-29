@@ -12,6 +12,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Services\BudgetService;
 use App\Services\CategoryService;
+use App\Services\CategoryWaterfallCacheService;
 use App\Services\InflationCalculator;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
@@ -21,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 #[Middleware('auth:sanctum')]
@@ -285,7 +287,8 @@ class ReportApiController extends Controller
                 // Same "apply to a unit multiplier" pattern as Transaction::scheduleInstances()'s
                 // inflationMultiplier, so $budget->amount's exact BigDecimal is only ever
                 // multiplied (never added to/subtracted from a float).
-                $multiplier = $inflationCalculator->applyAnnualRate(
+                // Cast to string: BigDecimal::multipliedBy() below deprecates a raw float operand.
+                $multiplier = (string) $inflationCalculator->applyAnnualRate(
                     1.0,
                     $budget->inflation,
                     $budget->start_date,
@@ -414,6 +417,25 @@ class ReportApiController extends Controller
         int $year,
         int|null $month = null
     ): JsonResponse {
+        $cacheKey = CategoryWaterfallCacheService::key($request->user()->id, $transactionType, $dataType, $year, $month);
+
+        $payload = Cache::remember($cacheKey, CategoryWaterfallCacheService::ttl(), fn () => $this->buildCategoryWaterfallPayload($request, $transactionType, $year, $month));
+
+        return response()->json(
+            ['result' => 'success', ...$payload],
+            Response::HTTP_OK
+        );
+    }
+
+    /**
+     * @return array{chartData: array, warnings: array}
+     */
+    private function buildCategoryWaterfallPayload(
+        Request $request,
+        string $transactionType,
+        int $year,
+        int|null $month
+    ): array {
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
@@ -548,17 +570,12 @@ class ReportApiController extends Controller
 
         $missingRateCurrencies = $this->getMissingRateCurrencies($currenciesWithMissingRates);
 
-        // Return fetched and prepared data
-        return response()->json(
-            [
-                'result' => 'success',
-                'chartData' => $result,
-                'warnings' => [
-                    'currenciesWithoutRates' => $missingRateCurrencies,
-                ],
+        return [
+            'chartData' => $result,
+            'warnings' => [
+                'currenciesWithoutRates' => $missingRateCurrencies,
             ],
-            Response::HTTP_OK
-        );
+        ];
     }
 
     /**

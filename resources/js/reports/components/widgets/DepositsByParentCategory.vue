@@ -58,7 +58,6 @@
           this.updateChartData(newTransactions);
         },
         immediate: true,
-        deep: true,
       },
       matchingItemsOnly() {
         this.updateChartData(this.transactions);

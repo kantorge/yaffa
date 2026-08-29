@@ -104,11 +104,8 @@
       },
     },
     watch: {
-      listTransactions: {
-        handler() {
-          this.redrawDataTable();
-        },
-        deep: true,
+      listTransactions() {
+        this.redrawDataTable();
       },
       busy(newBusy) {
         if (this.dataTable) {

@@ -10,7 +10,6 @@ use Brick\Money\Money;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -70,26 +69,9 @@ class MoneyCast implements CastsAttributes, SerializesCastableAttributes
 
     /**
      * Unwrap a Money back to a float, for consumers not yet migrated to exact arithmetic.
-     *
-     * ponytail: logs every call, no dedup - fine for locating remaining Phase 4 call
-     * sites, but will be noisy on a hot loop (e.g. CalculateAccountMonthlySummary).
-     * Add per-caller dedup (or drop to Log::debug) if this gets noisy in practice.
      */
     public static function toFloat(?Money $money): ?float
     {
-        if ($money !== null) {
-            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $caller = $trace[1] ?? [];
-
-            Log::warning('MoneyCast::toFloat() called by a not-yet-migrated consumer', [
-                'caller' => isset($caller['class'])
-                    ? $caller['class'] . ($caller['type'] ?? '::') . $caller['function']
-                    : ($caller['function'] ?? 'unknown'),
-                'file' => $trace[0]['file'] ?? null,
-                'line' => $trace[0]['line'] ?? null,
-            ]);
-        }
-
         return $money?->getAmount()->toFloat();
     }
 

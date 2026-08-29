@@ -35,7 +35,7 @@ use JsonSerializable;
  * @property-read int $originalId
  * @property-read string $transactionGroup
  * @property-read bool $schedule_first_instance
- * @property-read float $inflationMultiplier
+ * @property-read string $inflationMultiplier
  */
 final class ScheduleInstance implements Arrayable, JsonSerializable
 {

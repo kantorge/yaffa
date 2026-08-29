@@ -21,6 +21,7 @@ class GetScheduledItemsRequest extends FormRequest
             'accountSelection'  => ['nullable', 'string'],
             'accountEntity'     => ['required_if:accountSelection,selected', 'integer'],
             'includeBudgets'    => ['nullable', 'boolean'],
+            'includeItemDetails' => ['nullable', 'boolean'],
         ];
     }
 }

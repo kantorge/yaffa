@@ -130,17 +130,26 @@ class TransactionApiController extends Controller
         $accountSelection = $request->query('accountSelection');
         $accountEntity = $request->query('accountEntity');
 
-        // Get all standard transactions
-        $standardTransactions = Transaction::with([
+        // Category/tag breakdown per item is only rendered by the account-show and
+        // schedules-report tables (via processTransaction()'s transaction_items -> categories/tags
+        // derivation); the dashboard ScheduleCalendar widget never reads transaction_items, so it
+        // opts out to skip these joins.
+        $standardTransactionRelations = [
             'config',
             'config.accountFrom',
             'config.accountTo',
             'currency',
             'transactionSchedule',
-            'transactionItems',
-            'transactionItems.category',
-            'transactionItems.tags',
-        ])
+        ];
+
+        if (!$request->has('includeItemDetails') || $request->boolean('includeItemDetails')) {
+            $standardTransactionRelations[] = 'transactionItems';
+            $standardTransactionRelations[] = 'transactionItems.category';
+            $standardTransactionRelations[] = 'transactionItems.tags';
+        }
+
+        // Get all standard transactions
+        $standardTransactions = Transaction::with($standardTransactionRelations)
             ->where('user_id', $request->user()->id)
             ->where('schedule', $type === 'schedule')
             ->byType('standard')

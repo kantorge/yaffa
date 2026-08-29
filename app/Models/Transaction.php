@@ -93,7 +93,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
-#[Fillable('ai_document_id', 'date', 'transaction_type', 'reconciled', 'schedule', 'comment', 'config_type', 'config_id', 'user_id')]
+#[Fillable('ai_document_id', 'date', 'transaction_type', 'reconciled', 'schedule', 'comment', 'config_type', 'config_id')]
 #[Hidden('config_id')]
 #[Appends('transaction_currency')]
 class Transaction extends Model
@@ -418,9 +418,7 @@ class Transaction extends Model
             $instanceDate = \Illuminate\Support\Carbon::instance($instance->getStart());
             $attributes['date'] = $instanceDate;
             $attributes['schedule_first_instance'] = $first;
-            // FR-8: which periods exist is decided above (FR-5's occurrence rule); this only
-            // decides the multiplier a consumer should apply to this occurrence's amount(s).
-            $attributes['inflationMultiplier'] = $inflationCalculator->applyAnnualRate(
+            $attributes['inflationMultiplier'] = (string) $inflationCalculator->applyAnnualRate(
                 1.0,
                 $inflationRate,
                 $scheduleStartDate,

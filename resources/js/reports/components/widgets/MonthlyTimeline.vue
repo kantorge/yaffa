@@ -55,7 +55,6 @@
           this.updateChartData(newTransactions);
         },
         immediate: true,
-        deep: true,
       },
     },
     methods: {

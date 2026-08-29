@@ -8,6 +8,7 @@ use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Services\CategoryWaterfallCacheService;
 use App\Services\TransactionService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -41,6 +42,12 @@ class ProcessTransactionUpdated
         // Based on the type of the transaction, dispatch a job to update the relevant monthly summaries
         // We also need to determine, if the change actually requires an update to the monthly summaries
         $changedAttributes = $event->changedAttributes;
+
+        CategoryWaterfallCacheService::forgetForDate($transaction->user_id, $transaction->date);
+        if (isset($changedAttributes['transaction']['date'])) {
+            // The date moved: the old month/year also needs invalidating, since it lost this transaction.
+            CategoryWaterfallCacheService::forgetForDate($transaction->user_id, Carbon::parse($changedAttributes['transaction']['date']));
+        }
 
         // For an investment transaction the fact and forecast summaries need to be updated
         // We need to check if the account has been changed, as it would require a recalculation of the summaries for both accounts

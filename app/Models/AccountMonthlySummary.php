@@ -102,7 +102,10 @@ class AccountMonthlySummary extends Model
         $startOfMonth = $month->clone()->startOfMonth();
         $endOfMonth = $month->clone()->endOfMonth();
 
-        // Get the sum of all the standard transactions for the given month for this account
+        // Get the sum of all the standard transactions for the given month for this account.
+        // Uses rawValue() with a raw SUM() rather than the ->sum() shorthand: the shorthand
+        // routes through Builder::numericAggregate(), which float-casts any decimal-point
+        // result, silently losing precision before it ever reaches BigDecimal.
         $valueFrom = DB::table('transactions')
             ->join(
                 'transaction_details_standard',
@@ -114,7 +117,7 @@ class AccountMonthlySummary extends Model
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
             ->where('transaction_details_standard.account_from_id', $accountEntity->id)
-            ->sum('transaction_details_standard.amount_from');
+            ->rawValue('SUM(transaction_details_standard.amount_from)') ?? '0';
 
         $valueTo = DB::table('transactions')
             ->join(
@@ -127,7 +130,7 @@ class AccountMonthlySummary extends Model
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
             ->where('transaction_details_standard.account_to_id', $accountEntity->id)
-            ->sum('transaction_details_standard.amount_to');
+            ->rawValue('SUM(transaction_details_standard.amount_to)') ?? '0';
 
         // Get the cash flow value for all investment transactions for the given month for this account
         $valueInvestment = DB::table('transactions')
@@ -141,12 +144,12 @@ class AccountMonthlySummary extends Model
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('schedule', 0)
             ->where('transaction_details_investment.account_id', $accountEntity->id)
-            ->sum('cashflow_value');
+            ->rawValue('SUM(cashflow_value)') ?? '0';
 
-        // The three raw SQL sums are already exact DECIMAL strings from PDO (never
-        // float-cast) - combine them via BigDecimal instead of native float arithmetic,
-        // the same repeated-summation drift pattern AMOUNT_COMPARISON_EPSILON was
-        // invented to tolerate (FR-1), one layer further downstream.
+        // The three raw SQL sums are exact DECIMAL strings from PDO - combine them via
+        // BigDecimal instead of native float arithmetic, the same repeated-summation
+        // drift pattern AMOUNT_COMPARISON_EPSILON was invented to tolerate (FR-1), one
+        // layer further downstream.
         return BigDecimal::of($valueInvestment)->plus($valueTo)->minus($valueFrom);
     }
 

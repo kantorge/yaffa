@@ -7,7 +7,6 @@ use Brick\Math\RoundingMode;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Casts a DECIMAL column that is a quantity or ratio (not an actual currency amount -
@@ -45,26 +44,9 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
 
     /**
      * Unwrap a BigDecimal back to a float, for consumers not yet migrated to exact arithmetic.
-     *
-     * Logs every call, no dedup - fine for locating remaining Phase 4 call sites, but will
-     * be noisy on a hot loop (e.g. CalculateAccountMonthlySummary). Add per-caller dedup (or
-     * drop to Log::debug) if this gets noisy in practice.
      */
     public static function toFloat(?BigDecimal $value): ?float
     {
-        if ($value !== null) {
-            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $caller = $trace[1] ?? [];
-
-            Log::debug('DecimalCast::toFloat() called by a not-yet-migrated consumer', [
-                'caller' => isset($caller['class'])
-                    ? $caller['class'] . ($caller['type'] ?? '::') . $caller['function']
-                    : ($caller['function'] ?? 'unknown'),
-                'file' => $trace[0]['file'] ?? null,
-                'line' => $trace[0]['line'] ?? null,
-            ]);
-        }
-
         return $value?->toFloat();
     }
 }

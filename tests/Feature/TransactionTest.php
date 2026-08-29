@@ -494,4 +494,42 @@ class TransactionTest extends TestCase
         $this->assertNull($transaction->config->getRelation('accountFrom'));
         $response->assertDontSee('Other User Secret Account');
     }
+
+    public function test_create_from_draft_ignores_spoofed_user_id(): void
+    {
+        \App\Models\Currency::factory()->for($this->user)->create(['base' => true]);
+
+        $otherUser = User::factory()->create();
+        \App\Models\Currency::factory()->for($otherUser)->create([
+            'base' => true,
+            'name' => 'Other User Secret Currency',
+            'iso_code' => 'ZZZ',
+        ]);
+
+        $draftData = [
+            'config_type' => 'standard',
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+            'date' => now()->format('Y-m-d'),
+            'user_id' => $otherUser->id,
+            'config' => [
+                'account_from_id' => null,
+                'account_to_id' => null,
+                'amount_from' => 100,
+                'amount_to' => 100,
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('transactions.createFromDraft'), [
+                'transaction' => json_encode($draftData),
+            ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        /** @var Transaction $transaction */
+        $transaction = $response->viewData('transaction');
+        $this->assertNotSame($otherUser->id, $transaction->user_id);
+        $response->assertDontSee('Other User Secret Currency');
+        $response->assertDontSee('ZZZ');
+    }
 }

@@ -11,7 +11,9 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\User;
+use App\Services\CategoryWaterfallCacheService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -136,5 +138,61 @@ class ReportApiWaterfallTest extends TestCase
         $this->assertNotNull($bucket);
         // Withdrawal => negative sign; must be exactly -0.30, not a float-drift artifact.
         $this->assertSame(-0.30, $bucket['value']);
+    }
+
+    /**
+     * The waterfall query is now cached (see CategoryWaterfallCacheService): identical
+     * requests must not re-hit the DB, but a cache entry must also actually go stale once
+     * CategoryWaterfallCacheService::forgetForDate() is invoked for its period - which is
+     * what every TransactionCreated/Updated/Deleted listener now does.
+     */
+    public function test_waterfall_response_is_cached_until_explicitly_invalidated(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $account = $this->createAccount($this->baseCurrency);
+        $category = Category::factory()->for($this->user)->create();
+
+        $transactionConfig = TransactionDetailStandard::factory()
+            ->withdrawal($this->user)
+            ->create(['account_from_id' => $account->id]);
+
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->create([
+                'schedule' => false,
+                'date' => '2025-01-10',
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+                'config_type' => 'standard',
+                'config_id' => $transactionConfig->id,
+            ]);
+
+        $transaction->transactionItems()->delete();
+        $item = TransactionItem::factory()->for($transaction)->create(['category_id' => $category->id, 'amount' => 10]);
+
+        $routeParams = [
+            'transactionType' => 'standard',
+            'dataType' => 'result',
+            'year' => 2025,
+            'month' => 1,
+        ];
+
+        $bucketValue = fn () => collect($this->getJson(route('api.v1.reports.waterfall', $routeParams))->json('chartData'))
+            ->firstWhere('category_id', $category->id)['value'];
+
+        $this->assertEquals(-10.0, $bucketValue());
+
+        $cacheKey = CategoryWaterfallCacheService::key($this->user->id, 'standard', 'result', 2025, 1);
+        $this->assertTrue(Cache::has($cacheKey));
+
+        // Change the underlying data without going through the API (so no invalidating
+        // event fires) - the cached response must still be served.
+        $item->update(['amount' => 25]);
+        $this->assertEquals(-10.0, $bucketValue());
+
+        CategoryWaterfallCacheService::forgetForDate($this->user->id, $transaction->date);
+        $this->assertFalse(Cache::has($cacheKey));
+
+        $this->assertEquals(-25.0, $bucketValue());
     }
 }

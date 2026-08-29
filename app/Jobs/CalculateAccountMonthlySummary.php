@@ -673,7 +673,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 // Same "apply to a unit multiplier" pattern as Transaction::scheduleInstances()'s
                 // inflationMultiplier, so the exact BigDecimal amount below is only ever multiplied
                 // (never added to/subtracted from a float).
-                $multiplier = $inflationCalculator->applyAnnualRate(
+                // Cast to string: BigDecimal::multipliedBy() below deprecates a raw float operand.
+                $multiplier = (string) $inflationCalculator->applyAnnualRate(
                     1.0,
                     $budget->inflation,
                     $budget->start_date,
