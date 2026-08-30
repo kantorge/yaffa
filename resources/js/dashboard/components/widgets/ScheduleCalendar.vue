@@ -294,6 +294,18 @@
           this.hideActivePopover();
         }, this.popoverHideDelayMs);
       },
+      detachPopoverListeners() {
+        const tip = this.getPopoverTipElement();
+        if (!tip) {
+          return;
+        }
+
+        tip.removeEventListener('click', this.onPopoverActionClick);
+        tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
+        tip.removeEventListener('mouseleave', this.schedulePopoverHide);
+        tip.removeEventListener('focusin', this.clearPopoverHideTimer);
+        tip.removeEventListener('focusout', this.schedulePopoverHide);
+      },
       hideActivePopover() {
         this.clearPopoverHideTimer();
 
@@ -301,24 +313,25 @@
           return;
         }
 
-        const tip = this.getPopoverTipElement();
-        if (tip) {
-          tip.removeEventListener('click', this.onPopoverActionClick);
-          tip.removeEventListener('mouseenter', this.clearPopoverHideTimer);
-          tip.removeEventListener('mouseleave', this.schedulePopoverHide);
-          tip.removeEventListener('focusin', this.clearPopoverHideTimer);
-          tip.removeEventListener('focusout', this.schedulePopoverHide);
-        }
-
+        this.detachPopoverListeners();
         this.activePopover.hide();
       },
+      // Deliberately does not call hideActivePopover()/hide() first: Bootstrap's
+      // hide() is animated and defers a callback via _queueCallback until the CSS
+      // transition ends. dispose() (BaseComponent.dispose()) nulls every own
+      // property on the instance immediately, including _activeTrigger - if that
+      // deferred hide() callback then fires on the disposed instance, it throws
+      // inside _isWithActiveTrigger() ("Cannot convert undefined or null to
+      // object"). dispose() alone already removes the tip from the DOM, so the
+      // animated hide is unnecessary here.
       disposeActivePopover() {
-        this.hideActivePopover();
+        this.clearPopoverHideTimer();
 
         if (!this.activePopover) {
           return;
         }
 
+        this.detachPopoverListeners();
         this.activePopover.dispose();
         this.activePopover = null;
         this.activePopoverTrigger = null;
