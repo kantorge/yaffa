@@ -1,10 +1,14 @@
 <?php
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\AccountEntity;
 use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
+use App\Models\User;
+use App\Services\BudgetService;
+use App\Services\InvestmentService;
 use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -42,6 +46,8 @@ return new class () extends Migration {
             ->each(function (Transaction $transaction): void {
                 $this->convertTransaction($transaction);
             });
+
+        $this->recalculateAccountBalanceBudgetBuckets();
     }
 
     public function down(): void
@@ -111,6 +117,38 @@ return new class () extends Migration {
         // (polymorphic relation, no FK), so it must be deleted explicitly.
         $config->delete();
         $transaction->delete();
+    }
+
+    /**
+     * `CalculateAccountMonthlySummary::getAccountBalanceBudgetData()` reads only `Budget` rows
+     * (see architecture.md's FR-3 note); every `account_balance-budget` cache bucket this
+     * migration's conversion above could have affected belongs to a (user_id, account_id) pair
+     * that now has a `Budget` row from it, since converted rows are the only `Budget` rows that
+     * can exist at this point in a fresh upgrade (the standalone-Budget UI/API doesn't exist
+     * before this migration runs).
+     *
+     * Recalculated synchronously (handle() called directly, not queued) so this is guaranteed
+     * complete before `php artisan migrate` returns, instead of leaving stale/zero budget
+     * projections until a queue worker or the nightly cron catches up.
+     */
+    private function recalculateAccountBalanceBudgetBuckets(): void
+    {
+        $investmentService = app(InvestmentService::class);
+        $budgetService = app(BudgetService::class);
+
+        Budget::query()
+            ->select('user_id', 'account_id')
+            ->distinct()
+            ->get()
+            ->each(function (Budget $bucket) use ($investmentService, $budgetService): void {
+                $user = User::findOrFail($bucket->user_id);
+                $accountEntity = $bucket->account_id !== null
+                    ? AccountEntity::find($bucket->account_id)
+                    : null;
+
+                (new CalculateAccountMonthlySummary($user, 'account_balance-budget', $accountEntity))
+                    ->handle($investmentService, $budgetService);
+            });
     }
 
     /**

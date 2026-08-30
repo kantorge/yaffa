@@ -274,6 +274,16 @@ class BudgetMigrationTest extends TestCase
         $this->assertSame('2025-12-31', $budget->end_date->toDateString());
         $this->assertSame(6, $budget->count);
         $this->assertEqualsWithDelta(3.5, $budget->inflation, 0.0001);
+        // The migration recalculates the account_balance-budget cache bucket synchronously, so
+        // this converted Budget's projection is already reflected in account_monthly_summaries
+        // by the time migrate returns - not left stale/zero until a queue worker or the nightly
+        // cron catches up (see the migration's recalculateAccountBalanceBudgetBuckets()).
+        $this->assertDatabaseHas('account_monthly_summaries', [
+            'user_id' => $this->user->id,
+            'account_entity_id' => $accountId,
+            'transaction_type' => 'account_balance',
+            'data_type' => 'budget',
+        ]);
         Budget::where('user_id', $this->user->id)->delete();
 
         // Sums amounts per distinct category when converting.
