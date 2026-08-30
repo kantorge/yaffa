@@ -364,7 +364,7 @@ class Transaction extends Model
         // rebuilt fresh per call from $this), but keying on both is the safe choice for anyone
         // who extends this cache to also cover per-occurrence attributes later.
         $cacheKey = "schedule-occurrences:{$this->transactionSchedule->id}:"
-            . "{$this->transactionSchedule->updated_at->timestamp}:{$this->updated_at->timestamp}:"
+            . "{$this->transactionSchedule->updated_at?->timestamp}:{$this->updated_at?->timestamp}:"
             . "{$constraintStart->toDateString()}:{$endDate->toDateString()}:{$virtualLimit}";
 
         $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use (

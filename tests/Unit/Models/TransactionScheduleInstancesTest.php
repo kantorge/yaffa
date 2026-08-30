@@ -268,4 +268,46 @@ class TransactionScheduleInstancesTest extends TestCase
 
         $this->assertGreaterThan($before->count(), $after->count());
     }
+
+    /**
+     * Regression guard: rows loaded from database/seeders/demo.sql (and any other raw-SQL import
+     * that skips Eloquent) have NULL created_at/updated_at, since the INSERT statements omit those
+     * columns and both are nullable with no DB default. scheduleInstances()'s cache-key builder
+     * previously dereferenced ->timestamp on that null unconditionally, which broke the 3.6.1 -> v4
+     * upgrade path (Transaction.php:367, "Attempt to read property \"timestamp\" on null") as soon
+     * as a scheduled transaction's forecast was recalculated.
+     */
+    public function test_schedule_instances_tolerate_null_updated_at_timestamps(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYear(),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => now()->startOfMonth(),
+            'next_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        DB::table('transactions')->where('id', $transaction->id)->update(['updated_at' => null]);
+        DB::table('transaction_schedules')->where('id', $transaction->transactionSchedule->id)->update(['updated_at' => null]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+        $this->assertNull($transaction->updated_at);
+        $this->assertNull($transaction->transactionSchedule->updated_at);
+
+        $instances = $transaction->scheduleInstances();
+
+        $this->assertGreaterThan(0, $instances->count());
+    }
 }
