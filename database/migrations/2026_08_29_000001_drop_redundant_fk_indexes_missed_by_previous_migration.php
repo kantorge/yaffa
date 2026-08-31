@@ -24,23 +24,31 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up(): void
     {
-        Schema::table('account_entity_category_preference', function (Blueprint $table) {
-            $table->dropIndex('account_entity_category_preference_account_entity_id_foreign');
-        });
+        if (Schema::hasIndex('account_entity_category_preference', 'account_entity_category_preference_account_entity_id_foreign')) {
+            Schema::table('account_entity_category_preference', function (Blueprint $table) {
+                $table->dropIndex('account_entity_category_preference_account_entity_id_foreign');
+            });
+        }
 
-        Schema::table('transaction_items_tags', function (Blueprint $table) {
-            $table->dropIndex('transaction_items_tags_tag_id_foreign');
-        });
+        if (Schema::hasIndex('transaction_items_tags', 'transaction_items_tags_tag_id_foreign')) {
+            Schema::table('transaction_items_tags', function (Blueprint $table) {
+                $table->dropIndex('transaction_items_tags_tag_id_foreign');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('account_entity_category_preference', function (Blueprint $table) {
-            $table->index('account_entity_id', 'account_entity_category_preference_account_entity_id_foreign');
-        });
+        if (! Schema::hasIndex('account_entity_category_preference', 'account_entity_category_preference_account_entity_id_foreign')) {
+            Schema::table('account_entity_category_preference', function (Blueprint $table) {
+                $table->index('account_entity_id', 'account_entity_category_preference_account_entity_id_foreign');
+            });
+        }
 
-        Schema::table('transaction_items_tags', function (Blueprint $table) {
-            $table->index('tag_id', 'transaction_items_tags_tag_id_foreign');
-        });
+        if (! Schema::hasIndex('transaction_items_tags', 'transaction_items_tags_tag_id_foreign')) {
+            Schema::table('transaction_items_tags', function (Blueprint $table) {
+                $table->index('tag_id', 'transaction_items_tags_tag_id_foreign');
+            });
+        }
     }
 };
