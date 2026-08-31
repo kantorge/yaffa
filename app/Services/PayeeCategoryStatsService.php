@@ -296,7 +296,7 @@ class PayeeCategoryStatsService
             ->addSelect('transaction_items.category_id');
 
         if ($months !== null) {
-            $query->where('transactions.date', '>=', now()->subMonths($months)->startOfDay());
+            $query->where('transactions.date', '>=', now()->subMonthsNoOverflow($months)->startOfDay());
         }
 
         if ($payeeId !== null) {

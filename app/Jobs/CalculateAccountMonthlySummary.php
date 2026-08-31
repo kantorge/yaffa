@@ -536,7 +536,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         }
 
         // The first date to calculate the forecast is the next month after now
-        $firstForecastDate = Carbon::now()->addMonth();
+        $firstForecastDate = Carbon::now()->addMonthNoOverflow();
 
         // We need to forecast until the user's end date
         $lastForecastDate = $this->user->end_date;
