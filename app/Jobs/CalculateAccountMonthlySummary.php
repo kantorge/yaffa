@@ -29,6 +29,7 @@ use Illuminate\Queue\Attributes\Timeout;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Bus;
 
 #[Timeout(240)]
 class CalculateAccountMonthlySummary implements ShouldQueue
@@ -64,6 +65,38 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         $this->task = $task;
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
+    }
+
+    /**
+     * The job_batches.name this task would be dispatched under, matching the pattern
+     * CalculateAccountMonthlySummaries::dispatchBatch() already builds
+     * ('CalculateAccountMonthlySummariesJob-{task}-{userId}'). The sole source of truth for this
+     * format, so readers (AccountMonthlySummary::isCalculationInProgress()) and every dispatch
+     * site name their batches identically instead of hand-building the string per call site.
+     */
+    public static function batchName(int $userId, string $task): string
+    {
+        return 'CalculateAccountMonthlySummariesJob-' . $task . '-' . $userId;
+    }
+
+    /**
+     * Dispatch a single instance of this job as its own named batch, so it shows up in
+     * AccountMonthlySummary::isCalculationInProgress() the same way the full recalculation
+     * command's batches do. Unlike CalculateAccountMonthlySummaries::dispatchBatch(), this does
+     * NOT cancel same-named predecessors - these incremental dispatches (one per edited
+     * transaction/budget) target one account at a time and may legitimately run concurrently with
+     * an unrelated account's still-in-flight job of the same task.
+     */
+    public static function dispatchNamed(
+        User $user,
+        string $task,
+        ?AccountEntity $accountEntity = null,
+        ?Carbon $dateFrom = null,
+        ?Carbon $dateTo = null
+    ): void {
+        Bus::batch([new self($user, $task, $accountEntity, $dateFrom, $dateTo)])
+            ->name(self::batchName($user->id, $task))
+            ->dispatch();
     }
 
     /**

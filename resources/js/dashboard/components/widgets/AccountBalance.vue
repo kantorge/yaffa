@@ -120,6 +120,7 @@
 <script>
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { pollUntilReady } from '@/shared/lib/busyPoll';
 
   export default {
     props: {
@@ -137,8 +138,7 @@
         // Expected values: loading, data-loaded, data-not-available, error
         state: 'loading',
         errorMessage: null,
-        retryInterval: 5000,
-        retryTimeoutId: null,
+        cancelPoll: null,
       };
     },
 
@@ -201,34 +201,25 @@
 
         this.state = 'loading';
 
-        axios
-          .get(this.route('api.v1.accounts.balance'))
-          .then((response) => {
-            // Check if the response is valid data
-            if (response.data.result === 'busy') {
+        this.cancelPoll = pollUntilReady(
+          () => axios.get(this.route('api.v1.accounts.balance')).then((response) => response.data),
+          {
+            onBusy: (message) => {
               this.state = 'data-not-available';
-              this.errorMessage = response.data.message;
+              this.errorMessage = message;
+            },
+            onReady: (data) => {
+              this.accountBalanceData = data.accountBalanceData;
+              this.state = 'data-available';
+            },
+            onError: (error) => {
+              this.state = 'error';
+              this.errorMessage = error.message;
 
-              // Retry after current interval
-              this.retryTimeoutId = setTimeout(() => {
-                this.getAccountBalanceData();
-              }, this.retryInterval);
-
-              // Increase retry interval
-              this.retryInterval *= 2;
-
-              return;
-            }
-
-            this.accountBalanceData = response.data.accountBalanceData;
-            this.state = 'data-available';
-          })
-          .catch((error) => {
-            this.state = 'error';
-            this.errorMessage = error.message;
-
-            toastHelpers.showErrorToast(error.message);
-          });
+              toastHelpers.showErrorToast(error.message);
+            },
+          }
+        );
       },
 
       getRoute: function (account) {
@@ -245,9 +236,9 @@
     },
 
     beforeDestroy() {
-      // Clear any pending retry timeout when the component is destroyed
-      if (this.retryTimeoutId) {
-        clearTimeout(this.retryTimeoutId);
+      // Cancel any pending retry when the component is destroyed
+      if (this.cancelPoll) {
+        this.cancelPoll();
       }
     },
   };

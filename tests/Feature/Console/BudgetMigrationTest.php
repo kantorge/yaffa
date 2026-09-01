@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\TransactionSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -247,11 +248,18 @@ class BudgetMigrationTest extends TestCase
             'comment' => null,
         ]);
         $accountId = $transaction->config->account_from_id;
+        // Relative to now (not hardcoded past literals) so the schedule's recurrence window
+        // always overlaps CalculateAccountMonthlySummary's projection horizon
+        // (BudgetService::projectOccurrences is bounded by [now()->startOfMonth(), user->end_date])
+        // regardless of when this test runs - a fixed past date range would eventually fall
+        // entirely before "now" and silently stop producing any account_monthly_summaries row.
+        $scheduleStart = Carbon::now()->subMonths(6)->startOfMonth()->addDays(14);
+        $scheduleEnd = Carbon::now()->addMonths(6)->endOfMonth();
         TransactionSchedule::factory()->for($transaction)->create([
             'frequency' => 'MONTHLY',
             'interval' => 2,
-            'start_date' => '2025-01-15',
-            'end_date' => '2025-12-31',
+            'start_date' => $scheduleStart,
+            'end_date' => $scheduleEnd,
             'count' => 6,
             'inflation' => 3.5,
         ]);
@@ -270,8 +278,8 @@ class BudgetMigrationTest extends TestCase
         $this->assertEqualsWithDelta(42.50, $budget->amount->getAmount()->toFloat(), 0.0001);
         $this->assertSame('MONTHLY', $budget->frequency);
         $this->assertSame(2, $budget->interval);
-        $this->assertSame('2025-01-15', $budget->start_date->toDateString());
-        $this->assertSame('2025-12-31', $budget->end_date->toDateString());
+        $this->assertSame($scheduleStart->toDateString(), $budget->start_date->toDateString());
+        $this->assertSame($scheduleEnd->toDateString(), $budget->end_date->toDateString());
         $this->assertSame(6, $budget->count);
         $this->assertEqualsWithDelta(3.5, $budget->inflation, 0.0001);
         // The migration recalculates the account_balance-budget cache bucket synchronously, so

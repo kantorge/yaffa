@@ -9,6 +9,7 @@ namespace App\Models;
 
 use App\Casts\MoneyCast;
 use App\Http\Traits\CurrencyTrait;
+use App\Jobs\CalculateAccountMonthlySummary;
 use App\Services\InvestmentService;
 use Brick\Math\BigDecimal;
 use Brick\Money\Money;
@@ -90,6 +91,37 @@ class AccountMonthlySummary extends Model
         }
 
         return $currency;
+    }
+
+    /**
+     * Whether a CalculateAccountMonthlySummary batch for this user is still running, i.e. any
+     * report reading this table right now could see an incomplete recalculation. Optionally
+     * narrowed to specific tasks (e.g. only the fact tasks a fact-only report reads), otherwise
+     * matches any task. Shared by every reader (account balance, cash flow report) so the
+     * "in progress" and staleness rules can't drift between them the way they used to.
+     *
+     * A batch older than 1 hour is treated as orphaned/stuck rather than genuinely in progress,
+     * since these jobs normally complete within seconds.
+     *
+     * @param  string[]  $tasks  e.g. ['account_balance-fact', 'investment_value-fact']. Empty matches any task.
+     */
+    public static function isCalculationInProgress(int $userId, array $tasks = []): bool
+    {
+        return DB::table('job_batches')
+            ->when(
+                $tasks !== [],
+                fn ($query) => $query->whereIn(
+                    'name',
+                    array_map(
+                        fn (string $task) => CalculateAccountMonthlySummary::batchName($userId, $task),
+                        $tasks
+                    )
+                ),
+                fn ($query) => $query->where('name', 'like', CalculateAccountMonthlySummary::batchName($userId, '%'))
+            )
+            ->whereNull('finished_at')
+            ->where('created_at', '>', now()->subHour()->getTimestamp())
+            ->exists();
     }
 
     /**

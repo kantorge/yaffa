@@ -18,7 +18,6 @@ use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -91,10 +90,8 @@ class InvestmentService
                 return;
             }
 
-            Bus::batch([
-                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-fact', $accountEntity),
-                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-forecast', $accountEntity),
-            ])->dispatch();
+            CalculateAccountMonthlySummary::dispatchNamed($accountEntity->user, 'investment_value-fact', $accountEntity);
+            CalculateAccountMonthlySummary::dispatchNamed($accountEntity->user, 'investment_value-forecast', $accountEntity);
         });
     }
 

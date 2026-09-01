@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\AccountMonthlySummary;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -268,19 +269,9 @@ class AccountApiController extends Controller
             throw new AuthorizationException('You do not have permission to access this account entity.');
         }
 
-        // Before proceeding with any calculation, check if any batch jobs are running for this user for fact data
-        // Batches older than 1 hour are treated as orphaned/stuck rather than genuinely in progress,
-        // since the underlying jobs normally complete within seconds.
-        $batchJobsCount = DB::table('job_batches')
-            ->whereIn('name', [
-                'CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id,
-                'CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id,
-            ])
-            ->where('finished_at', null)
-            ->where('created_at', '>', now()->subHour()->getTimestamp())
-            ->count();
-
-        if ($batchJobsCount > 0) {
+        // Before proceeding with any calculation, check if the fact data this endpoint reads is
+        // still being (re)calculated for this user.
+        if (AccountMonthlySummary::isCalculationInProgress($user->id, ['account_balance-fact', 'investment_value-fact'])) {
             return response()
                 ->json(
                     [

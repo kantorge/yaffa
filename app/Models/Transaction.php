@@ -348,6 +348,13 @@ class Transaction extends Model
         }
 
         if ($constraintStart === null) {
+            if ($this->transactionSchedule->next_date === null) {
+                // No next_date means the schedule is exhausted (e.g. a count-limited
+                // rule whose occurrences are all in the past) - there is nothing left
+                // to generate, so don't fall back to "now" as a fresh start date.
+                return $scheduleInstances;
+            }
+
             $constraintStart = new Carbon($this->transactionSchedule->next_date);
         }
         $constraintStart->startOfDay();

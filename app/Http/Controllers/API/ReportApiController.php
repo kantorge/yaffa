@@ -6,6 +6,7 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\AccountMonthlySummary;
 use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
@@ -608,16 +609,16 @@ class ReportApiController extends Controller
     {
         $user = $request->user();
 
-        // Before proceeding with any calculation, check if any batch jobs are running for this user
-        // Batches older than 1 hour are treated as orphaned/stuck rather than genuinely in progress,
-        // since the underlying jobs normally complete within seconds.
-        $batchJobsCount = DB::table('job_batches')
-            ->where('name', 'like', 'CalculateAccountMonthlySummariesJob-%-' . $user->id)
-            ->where('finished_at', null)
-            ->where('created_at', '>', now()->subHour()->getTimestamp())
-            ->count();
+        // Check if forecast is required
+        $withForecast = $request->query('withForecast') ?? false;
 
-        if ($batchJobsCount > 0) {
+        // Before proceeding with any calculation, check if the data this request reads is still
+        // being (re)calculated for this user. A fact-only request only needs to wait on fact
+        // batches; a forecast-inclusive request also reads forecast/budget rows, so it must wait
+        // on any task.
+        $tasksToCheck = $withForecast ? [] : ['account_balance-fact', 'investment_value-fact'];
+
+        if (AccountMonthlySummary::isCalculationInProgress($user->id, $tasksToCheck)) {
             return response()
                 ->json(
                     [
@@ -627,9 +628,6 @@ class ReportApiController extends Controller
                     Response::HTTP_OK
                 );
         }
-
-        // Check if forecast is required
-        $withForecast = $request->query('withForecast') ?? false;
 
         // Get monthly average currency rate for all currencies
         $baseCurrency = $this->getBaseCurrency();

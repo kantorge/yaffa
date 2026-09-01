@@ -6,6 +6,7 @@ import * as helpers from '@/shared/lib/helpers';
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
 import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
+import { pollUntilReady } from '@/shared/lib/busyPoll';
 import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';
@@ -330,68 +331,68 @@ let getAccountBalance = function () {
             elementCurrentBalance.innerHTML =
                 '<i class="fa fa-fw fa-spinner fa-spin"></i>';
 
-    axios.get('/api/v1/accounts/' + window.account.id + '/balance')
-        .then(function (response) {
-            // Check if the response is valid data
-            if (response.data.result === 'busy') {
+    pollUntilReady(
+        () => axios.get('/api/v1/accounts/' + window.account.id + '/balance').then((response) => response.data),
+        {
+            onBusy: function (message) {
                 elementOpeningBalance.innerHTML =
                     elementCurrentCash.innerHTML =
                         elementCurrentBalance.innerHTML =
                             `<i
                                  class="text-warning fa-solid fa-triangle-exclamation"
-                                 title="${response.data.message}"
+                                 title="${message}"
                          ></i>`;
+            },
+            onReady: function (data) {
+                let balance = data.accountBalanceData[0];
 
-                setTimeout(getAccountBalance, 5000);
-                return;
-            }
-            let balance = response.data.accountBalanceData[0];
-
-            elementOpeningBalance.innerText = toFormattedCurrency(
-                balance.config.opening_balance,
-                window.YAFFA.userSettings.locale,
-                balance.config.currency
-            );
-
-            elementCurrentCash.innerText = toFormattedCurrency(
-                balance.cash,
-                window.YAFFA.userSettings.locale,
-                window.YAFFA.userSettings.baseCurrency
-            );
-
-            if (balance.hasOwnProperty('cash_foreign')) {
-                elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
-                    balance.cash_foreign,
+                elementOpeningBalance.innerText = toFormattedCurrency(
+                    balance.config.opening_balance,
                     window.YAFFA.userSettings.locale,
                     balance.config.currency
                 );
-            }
 
-            elementCurrentBalance.innerText = toFormattedCurrency(
-                balance.sum,
-                window.YAFFA.userSettings.locale,
-                window.YAFFA.userSettings.baseCurrency
-            );
-
-            if (balance.hasOwnProperty('sum_foreign')) {
-                elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
-                    balance.sum_foreign,
+                elementCurrentCash.innerText = toFormattedCurrency(
+                    balance.cash,
                     window.YAFFA.userSettings.locale,
-                    balance.config.currency
+                    window.YAFFA.userSettings.baseCurrency
                 );
-            }
-        })
-        .catch(function (error) {
-            elementOpeningBalance.innerHTML =
-                elementCurrentCash.innerHTML =
-                    elementCurrentBalance.innerHTML =
-                        `<i
+
+                if (balance.hasOwnProperty('cash_foreign')) {
+                    elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
+                        balance.cash_foreign,
+                        window.YAFFA.userSettings.locale,
+                        balance.config.currency
+                    );
+                }
+
+                elementCurrentBalance.innerText = toFormattedCurrency(
+                    balance.sum,
+                    window.YAFFA.userSettings.locale,
+                    window.YAFFA.userSettings.baseCurrency
+                );
+
+                if (balance.hasOwnProperty('sum_foreign')) {
+                    elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
+                        balance.sum_foreign,
+                        window.YAFFA.userSettings.locale,
+                        balance.config.currency
+                    );
+                }
+            },
+            onError: function (error) {
+                elementOpeningBalance.innerHTML =
+                    elementCurrentCash.innerHTML =
+                        elementCurrentBalance.innerHTML =
+                            `<i
                                  class="text-danger fa-solid fa-triangle-exclamation"
                                  title="${__('Error while retrieving data')}"
                          ></i>`;
 
-            toastHelpers.showErrorToast(error.message);
-        });
+                toastHelpers.showErrorToast(error.message);
+            },
+        }
+    );
 }
 getAccountBalance();
 

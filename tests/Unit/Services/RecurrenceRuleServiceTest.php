@@ -209,6 +209,85 @@ class RecurrenceRuleServiceTest extends TestCase
         ));
     }
 
+    public function test_get_occurrences_after_finds_nothing_for_an_exhausted_count_limited_rule(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        // A one-time (count=1) rule whose single occurrence was years ago must not manufacture
+        // a phantom "fresh" occurrence just because the query window starts long after it -
+        // regression for a bug where a matured bond's one-time sell schedule kept re-firing in
+        // every forecast run.
+        $recurrence = $service->getOccurrencesAfter(
+            Carbon::now()->subYears(3),
+            'DAILY',
+            1,
+            null,
+            1,
+            null,
+            null,
+            Carbon::now(),
+        );
+
+        $this->assertSame(0, $recurrence->count());
+    }
+
+    public function test_get_recurrence_between_finds_nothing_for_an_exhausted_count_limited_rule(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $recurrence = $service->getRecurrenceBetween(
+            Carbon::now()->subYears(3),
+            'DAILY',
+            1,
+            null,
+            1,
+            null,
+            null,
+            Carbon::now(),
+            Carbon::now()->addYears(30),
+        );
+
+        $this->assertSame(0, $recurrence->count());
+    }
+
+    public function test_has_occurrence_on_or_after_is_false_for_an_exhausted_count_limited_rule(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertFalse($service->hasOccurrenceOnOrAfter(
+            Carbon::now()->subYears(3),
+            'DAILY',
+            1,
+            null,
+            1,
+            null,
+            null,
+            Carbon::now(),
+        ));
+    }
+
+    public function test_get_recurrence_between_still_finds_a_later_occurrence_of_a_count_limited_rule(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        // Sanity check for the above: a count-limited rule with occurrences still ahead of the
+        // window must keep resolving them, not be treated as exhausted just because it has a
+        // count at all.
+        $recurrence = $service->getRecurrenceBetween(
+            Carbon::now()->subMonths(2),
+            'MONTHLY',
+            1,
+            null,
+            5,
+            null,
+            null,
+            Carbon::now(),
+            Carbon::now()->addYears(1),
+        );
+
+        $this->assertGreaterThan(0, $recurrence->count());
+    }
+
     public function test_estimate_periods_between_returns_zero_when_reference_date_is_not_after_start(): void
     {
         $service = new RecurrenceRuleService();

@@ -284,26 +284,13 @@ class TransactionService
 
         // This is a scheduled transaction
         // We need to recalculate the entire forecast for one or both accounts
+        // We don't know how long the schedule will be, so we need to dispatch the job to the queue
         if ($accountFrom?->isAccount()) {
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-forecast',
-                $accountFrom
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $accountFrom);
         }
 
         if ($accountTo?->isAccount()) {
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-forecast',
-                $accountTo
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $accountTo);
         }
     }
 
@@ -328,43 +315,25 @@ class TransactionService
             // This is a simple transaction with no schedule attached
             // As the investment summaries store the cummulated value, we need to recalculate all months
             // Theoretically, an investment transaction always has an account
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'investment_value-fact',
-                $account
-            );
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'investment_value-fact', $account);
 
             // As the change probably affects the balance of the account, we also need to recalculate the standard summaries for the account
-            $job = new CalculateAccountMonthlySummary(
+            CalculateAccountMonthlySummary::dispatchNamed(
                 $transaction->user,
                 'account_balance-fact',
                 $account,
                 $transaction->date->clone()->startOfMonth(),
                 $transaction->date->clone()->endOfMonth()
             );
-            dispatch($job);
         }
 
         if ($transaction->schedule) {
             // This is a scheduled transaction, we need to recalculate the entire forecast for the account, as the baseline changes
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-forecast',
-                $account
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $account);
         }
 
         // We always need to recalculate the entire forecast for the account, as the baseline changes
-        $job = new CalculateAccountMonthlySummary(
-            $transaction->user,
-            'investment_value-forecast',
-            $account
-        );
-        dispatch($job);
+        CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'investment_value-forecast', $account);
     }
 
     private function getStandardConfig(Transaction $transaction): ?TransactionDetailStandard

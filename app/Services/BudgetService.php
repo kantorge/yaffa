@@ -79,7 +79,7 @@ class BudgetService
     {
         $accountEntity = $accountId ? AccountEntity::find($accountId) : null;
 
-        dispatch(new CalculateAccountMonthlySummary($user, 'account_balance-budget', $accountEntity));
+        CalculateAccountMonthlySummary::dispatchNamed($user, 'account_balance-budget', $accountEntity);
     }
 
     /**

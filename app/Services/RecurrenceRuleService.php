@@ -13,6 +13,7 @@ use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\AfterConstraint;
 use Recurr\Transformer\Constraint\BetweenConstraint;
+use DateTimeInterface;
 
 /**
  * Shared calendar-occurrence math for anything defined by a
@@ -30,6 +31,46 @@ class RecurrenceRuleService
      * against a genuinely malformed/infinite rule without breaking realistic long-lived rules.
      */
     private const int RECURRENCE_VIRTUAL_LIMIT = 100000;
+
+    /**
+     * Resolve occurrences of $rule that start within [$after, $before] (bounds inclusive iff
+     * $inclusive), used everywhere below that previously called
+     * `$transformer->transform($rule, new BetweenConstraint(...), false)` directly.
+     *
+     * That `false` (countConstraintFailures) tells Recurr not to spend a rule's `count` budget
+     * on candidate occurrences that fail the constraint - the right call for the overwhelming
+     * majority of rules (count === null, no budget to protect), since it lets BetweenConstraint
+     * stop the transformer as soon as it passes $before instead of scanning to virtualLimit.
+     * But for a rule that DOES have a count, it means occurrences before the window don't count
+     * against it either: a count-limited rule whose real occurrences are entirely in the past
+     * (e.g. a one-time bond-maturity sell, already recorded years ago) gets its count budget
+     * treated as untouched, and the scan - which must walk every candidate day/period from
+     * start_date up to $before before it can conclude anything, since none of those pre-window
+     * candidates increment the transformer's own scan counter either - manufactures a phantom
+     * "fresh" occurrence at the window's edge instead of correctly finding none.
+     *
+     * A count-limited rule only ever produces $count occurrences total, so computing that small,
+     * unconstrained set up front and filtering it in PHP is both correct (count is spent
+     * normally, in rule order, independent of any window) and cheap - genuinely cheaper than the
+     * miscounting scan above, not just safer.
+     */
+    private function transformWithinWindow(
+        Rule $rule,
+        DateTimeInterface $after,
+        DateTimeInterface $before,
+        bool $inclusive,
+        ?int $virtualLimit,
+    ): RecurrenceCollection {
+        $transformer = $this->makeArrayTransformer($virtualLimit);
+
+        if ($rule->getCount() === null) {
+            $constraint = new BetweenConstraint($after, $before, $inclusive);
+
+            return $transformer->transform($rule, $constraint, false);
+        }
+
+        return $transformer->transform($rule)->startsBetween($after, $before, $inclusive);
+    }
 
     /**
      * Cheap analytic estimate of how many recurrence periods fall between $startDate and
@@ -182,16 +223,14 @@ class RecurrenceRuleService
     ): bool {
         try {
             $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
-            $transformer = $this->makeArrayTransformer();
 
             $after = new DateTime($onOrAfterDate->toDateString());
             $windowStart = $startDate->greaterThan($onOrAfterDate) ? $startDate : $onOrAfterDate;
             $before = new DateTime(
                 $windowStart->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
             );
-            $constraint = new BetweenConstraint($after, $before, true);
 
-            $recurrence = $transformer->transform($rule, $constraint, false);
+            $recurrence = $this->transformWithinWindow($rule, $after, $before, true, null);
         } catch (InvalidArgument|InvalidWeekday|Exception) {
             return false;
         }
@@ -246,15 +285,13 @@ class RecurrenceRuleService
         Carbon $afterDate,
     ): RecurrenceCollection {
         $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
-        $transformer = $this->makeArrayTransformer();
 
         $after = new DateTime($afterDate->toDateString());
         $before = new DateTime(
             $afterDate->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
         );
-        $constraint = new BetweenConstraint($after, $before, false);
 
-        return $transformer->transform($rule, $constraint, false);
+        return $this->transformWithinWindow($rule, $after, $before, false, null);
     }
 
     /**
@@ -281,15 +318,14 @@ class RecurrenceRuleService
         ?int $virtualLimit = null,
     ): RecurrenceCollection {
         $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
-        $transformer = $this->makeArrayTransformer($virtualLimit);
 
-        $constraint = new BetweenConstraint(
+        return $this->transformWithinWindow(
+            $rule,
             new DateTime($from->toDateString()),
             new DateTime($to->toDateString()),
-            true
+            true,
+            $virtualLimit,
         );
-
-        return $transformer->transform($rule, $constraint, false);
     }
 
     /**

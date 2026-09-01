@@ -13,6 +13,7 @@ initializeSelect2(window.YAFFA.userSettings.language);
 import * as toastHelpers from '@/shared/lib/toast';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
+import { pollUntilReady } from '@/shared/lib/busyPoll';
 
 $(document).ready(function () {
     initializeTwoColumnLeftControlPanelToggle({
@@ -128,73 +129,76 @@ function reloadData() {
 
     document.getElementById('btnReload').disabled = true;
 
-    fetch(url)
-        .then(response => response.json())
-        .then(function (data) {
-            // Check if the result is busy, which means the data is not ready yet
-            if (data.result === 'busy') {
+    pollUntilReady(
+        () => fetch(url).then(response => response.json()),
+        {
+            onBusy: function (message) {
                 document.getElementById('placeholder').classList.remove('hidden');
                 document.getElementById('chartdiv').classList.add('hidden');
 
-                toastHelpers.showWarningToast(data.message);
+                toastHelpers.showWarningToast(message);
+            },
+            onReady: onCashflowDataReady,
+            onError: function (error) {
+                console.error(error);
+                document.getElementById('btnReload').disabled = false;
+            },
+        }
+    );
+}
 
-                return;
-            }
+function onCashflowDataReady(data) {
+    cachedChartData = data.chartData;
+    chart.data = data.chartData;
+    chart.invalidateData();
+    document.getElementById('placeholder').classList.add('hidden');
+    document.getElementById('chartdiv').classList.remove('hidden');
 
-            cachedChartData = data.chartData;
-            chart.data = data.chartData;
-            chart.invalidateData();
-            document.getElementById('placeholder').classList.add('hidden');
-            document.getElementById('chartdiv').classList.remove('hidden');
+    // Log exchange rate details to the browser console to help diagnose currency conversion issues
+    if (data.debug && data.debug.length > 0) {
+        const baseCurrency = window.YAFFA.userSettings.baseCurrency.iso_code;
+        const flaggedCount = data.debug.filter(r => r.flags && r.flags.length > 0).length;
+        const groupLabel = flaggedCount > 0
+            ? `Cashflow debug ⚠ ${flaggedCount} flagged row(s) (base currency: ${baseCurrency})`
+            : `Cashflow debug: currency exchange rate details (base currency: ${baseCurrency})`;
 
-            // Log exchange rate details to the browser console to help diagnose currency conversion issues
-            if (data.debug && data.debug.length > 0) {
-                const baseCurrency = window.YAFFA.userSettings.baseCurrency.iso_code;
-                const flaggedCount = data.debug.filter(r => r.flags && r.flags.length > 0).length;
-                const groupLabel = flaggedCount > 0
-                    ? `Cashflow debug ⚠ ${flaggedCount} flagged row(s) (base currency: ${baseCurrency})`
-                    : `Cashflow debug: currency exchange rate details (base currency: ${baseCurrency})`;
+        console.groupCollapsed(groupLabel);
+        console.table(data.debug.map(row => ({
+            'Month': row.month,
+            'Type': row.transaction_type,
+            'Currency': row.currency_iso_code,
+            'Raw amount': row.raw_amount,
+            'Exchange rate': row.is_base_currency
+                ? '(base currency, rate: 1)'
+                : (row.exchange_rate != null ? row.exchange_rate : '⚠ no rate found, used 1:1 fallback'),
+            'Rate source month': row.rate_source_month != null
+                ? row.rate_source_month
+                : (row.is_base_currency ? '(base currency)' : '⚠ no rate found, fallback to 1:1'),
+            'Converted amount': row.converted_amount,
+            'Flags': row.flags && row.flags.length > 0 ? row.flags.join(', ') : '',
+        })));
 
-                console.groupCollapsed(groupLabel);
-                console.table(data.debug.map(row => ({
-                    'Month': row.month,
-                    'Type': row.transaction_type,
-                    'Currency': row.currency_iso_code,
-                    'Raw amount': row.raw_amount,
-                    'Exchange rate': row.is_base_currency
-                        ? '(base currency, rate: 1)'
-                        : (row.exchange_rate != null ? row.exchange_rate : '⚠ no rate found, used 1:1 fallback'),
-                    'Rate source month': row.rate_source_month != null
-                        ? row.rate_source_month
-                        : (row.is_base_currency ? '(base currency)' : '⚠ no rate found, fallback to 1:1'),
-                    'Converted amount': row.converted_amount,
-                    'Flags': row.flags && row.flags.length > 0 ? row.flags.join(', ') : '',
-                })));
+        const flaggedRows = data.debug.filter(r => r.flags && r.flags.length > 0);
+        if (flaggedRows.length > 0) {
+            console.warn('Flagged rows:', flaggedRows);
+        }
 
-                const flaggedRows = data.debug.filter(r => r.flags && r.flags.length > 0);
-                if (flaggedRows.length > 0) {
-                    console.warn('Flagged rows:', flaggedRows);
-                }
+        console.groupEnd();
+    }
 
-                console.groupEnd();
-            }
+    // Check for warnings about currencies without rates
+    if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
+        const currencyList = data.warnings.currenciesWithoutRates
+            .map(c => `${c.name} (${c.iso_code})`)
+            .join(', ');
 
-            // Check for warnings about currencies without rates
-            if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
-                const currencyList = data.warnings.currenciesWithoutRates
-                    .map(c => `${c.name} (${c.iso_code})`)
-                    .join(', ');
+        toastHelpers.showWarningToast(
+            __('reports.cashflow.missingRatesWarningPrefix') + currencyList +
+            '. ' + __('reports.cashflow.missingRatesWarningSuffix')
+        );
+    }
 
-                toastHelpers.showWarningToast(
-                    __('reports.cashflow.missingRatesWarningPrefix') + currencyList +
-                    '. ' + __('reports.cashflow.missingRatesWarningSuffix')
-                );
-            }
-        })
-        .catch(error => console.error(error))
-        .finally(() => {
-            document.getElementById('btnReload').disabled = false;
-        });
+    document.getElementById('btnReload').disabled = false;
 }
 
 const elementAccountSelector = '#cashflowAccount';

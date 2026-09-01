@@ -563,10 +563,15 @@ class InvestmentServicePriceTest extends TestCase
 
         $service->recalculateRelatedAccounts($investment);
 
-        Bus::assertBatchCount(2);
-        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->jobs->count() === 2
-                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary
-                && $batch->jobs->last() instanceof CalculateAccountMonthlySummary);
+        // One named batch per (account, task) pair - fact and forecast are dispatched separately
+        // so each is individually visible to AccountMonthlySummary::isCalculationInProgress().
+        Bus::assertBatchCount(4);
+        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->name === CalculateAccountMonthlySummary::batchName($user->id, 'investment_value-fact')
+                && $batch->jobs->count() === 1
+                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary);
+        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->name === CalculateAccountMonthlySummary::batchName($user->id, 'investment_value-forecast')
+                && $batch->jobs->count() === 1
+                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary);
     }
 
     public function test_recalculate_related_accounts_does_not_include_accounts_holding_other_investments(): void
