@@ -42,14 +42,12 @@ adoption") is marked `✅ Completed`, but the two spots above were never actuall
 exact decimal handling - only `TransactionItemContainer.vue`'s allocation logic and the
 `MathInput` precision-clamp feature (see below) were.
 
+## Interaction with FR-8 (input clamping, Phase 5)
+
+`specification.md` FR-8 re-points `MathInput`'s `precision` prop from `Currency.detailed_decimal_precision` (a display setting) to the price field's actual storage scale (10). That widens how many fractional digits a *human* can deliberately type into the price field via `MathInput` — previously capped well under 10 by the currency's configured display precision, now capped only by the column's real scale. It does not change the concrete failure scenario this document is about (an automated price-feed import, or an unedited round-trip through `processTransaction()`/`updateAmount()`, already bypasses any manual-entry clamp regardless of where it's set). It does mean "Suggested scope for a first pass" item 5 below — full precision-preserving evaluation in `MathInput` itself — moves slightly higher priority once FR-8 ships, since a human can now realistically trigger it by hand, not just receive it from an import.
+
 ## What's already correct - do not change
 
-- **`MathInput`'s `precision` prop clamping user-typed input.** `TransactionFormInvestment.vue`
-  passes `pricePrecision` (`Currency.detailed_decimal_precision`, a small user-configurable
-  display precision, typically well under 10) to the price field's `MathInput`. This
-  deliberately limits how many fractional digits a *human* can enter - a real, intentional
-  FR-6 feature, decoupled from the DB's max scale-10 storage capacity (which exists for
-  price-feed imports, not manual entry). Don't widen this or treat it as the bug.
 - **`TransactionItemContainer.vue`'s allocation logic** (`getSuggestedItemsFromHistory()` /
   `roundAmount()`, lines ~399-449). It already does the whole computation in `Decimal` and
   only converts to `Number` once, at the very end, for a scale-4 field. That's correct and
@@ -124,9 +122,11 @@ avoids the blur-with-no-edit case, but doesn't help an input that *is* an expres
 4. `ShowInvestment.vue` and `datatable/index.js`: convert their `price`-involving arithmetic
    to `Decimal`, following `ResultsCard.vue`'s existing pattern.
 5. Actual precision-preserving evaluation in `MathInput` for the case where the user *does*
-   type a high-precision price (option A/B above for `evaluate()`) - lower priority, since a
-   human rarely types 10 significant fractional digits by hand; the resubmission-drift case
-   (item 1-3) is the one with a real-world trigger (price-provider imports).
+   type a high-precision price (option A/B above for `evaluate()`) - the resubmission-drift
+   case (item 1-3) remains the one with the most common real-world trigger (price-provider
+   imports), but this item is no longer purely hypothetical for manual entry once FR-8
+   widens the price field's `MathInput` clamp to the full storage scale (10) - re-evaluate
+   its priority alongside FR-8's rollout rather than treating it as always-lower-priority.
 
 ## Acceptance check
 
@@ -140,7 +140,8 @@ is byte-for-byte unchanged.
 
 - Scale-4 fields (`amount`, `quantity`, `commission`, `tax`, `dividend`) - not at risk, leave
   as `Number`.
-- `MathInput`'s `precision`-prop clamping behavior for manual entry - already correct,
-  don't touch.
+- `MathInput`'s `precision`-prop clamping *mechanism* (the `Decimal.toDecimalPlaces()` call) -
+  correct and out of scope here. Its precision *source* for the price field is being changed
+  by `specification.md` FR-8, tracked there, not in this document.
 - Report endpoints (`/api/v1/reports/*`) - already documented (`UPGRADE.md`) as returning
   plain JSON numbers by design; no change needed there.

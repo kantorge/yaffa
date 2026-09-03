@@ -11,7 +11,8 @@ See [background.md](background.md) for the current-state analysis, the real-vs-p
 - Remove the two proven float-precision workarounds (`AMOUNT_COMPARISON_EPSILON`, `round2()`) and replace them with exact decimal arithmetic, at zero new dependency cost (Phase 0).
 - Fix the `investment_prices.price` / `transaction_details_investment.price` decimal-scale inconsistency for the same logical value.
 - Establish a `MoneyCast`/`DecimalCast` pattern that can replace the blanket `'float'` Eloquent casts incrementally, model by model, without a big-bang rewrite (Phase 1+).
-- Close the gap where `Currency.generic_decimal_precision`/`detailed_decimal_precision` are computed but never used to clamp a submitted value (Phase 3).
+- Close the gap where `Currency.generic_decimal_precision`/`detailed_decimal_precision` are computed but never used anywhere (Phase 3).
+- Keep input clamping/validation and display formatting governed by two distinct numbers that are never conflated: each field's fixed storage scale (`MoneyCast`/`DecimalCast`'s scale — a technical ceiling) governs what can be entered and persisted; `Currency.generic_decimal_precision`/`detailed_decimal_precision` (a user-configurable, per-currency setting) governs only the display floor, paired with the storage scale as the display ceiling so trailing zeros beyond what a currency conventionally shows are trimmed rather than padded or truncated (Phase 5, FR-8).
 - Keep each phase independently reviewable, testable, and shippable — a phase must not require a later phase's code to compile or pass its own tests.
 
 ## 3. Non-Goals
@@ -19,7 +20,8 @@ See [background.md](background.md) for the current-state analysis, the real-vs-p
 - A full backend/frontend BigDecimal migration delivered as one change. Phases 1-4 are scoped and sequenced but not committed to a single release. **All named dependencies are approved** (`brick/math`/`brick/money` for Phases 1-2; `decimal.js`'s promotion to a direct npm dependency for Phase 0/FR-3 and Phase 3/FR-6) — every phase may proceed in order.
 - FX rate staleness/reconciliation between a transfer's implied rate and the `CurrencyRate` table — an existing, deliberate product decision, not a precision bug (see background.md).
 - Investment cost-basis/realized-gain calculation — does not exist in the codebase yet, so there is nothing here to harden.
-- Any change to `resources/js/shared/lib/i18n/format.js`'s display formatting — it is already correctly centralized and reused; this work changes what value is computed and stored, not how a correct value is displayed.
+- Any change to `resources/js/shared/lib/i18n/format.js`'s underlying formatting mechanism — it is already correctly centralized on `Intl.NumberFormat` and reused across 30+ call sites, and stays that way. FR-8 changes the `minimumFractionDigits`/`maximumFractionDigits` *values* that function is called with (a floor/ceiling split instead of forcing an exact digit count), not the mechanism itself.
+- A per-call-site override of the digit-count policy (e.g. a DataTable column keeping a fixed width while a card trims trailing zeros). No amount column in the current UI enforces fixed-width/decimal alignment (confirmed: no `text-end`/numeric CSS class on any amount column), so FR-8 applies one policy — floor from currency precision, ceiling from storage scale — uniformly through `toFormattedCurrency()`'s existing `generic`/`detailed` argument, which every call site already passes correctly.
 - Performance work. Arbitrary-precision arithmetic is not a speed improvement (background.md); no phase here should be justified or measured on that basis.
 
 ## 4. Functional Requirements
@@ -61,7 +63,9 @@ A second concrete illustrative site: `app/Services/TransactionService.php`'s `ge
 
 ### FR-6: Frontend decimal adoption — Phase 3, builds on FR-3's direct `decimal.js` dependency — ✅ Completed
 
-Clamp `MathInput.vue`'s emitted value (`resources/js/shared/ui/form/MathInput.vue:40,56`) to the relevant field's expected precision, finally using `Currency.generic_decimal_precision`/`detailed_decimal_precision` for more than display (background.md notes these fields are currently display-only). Extend `decimal.js` usage to `TransactionItemContainer.vue`'s allocation path (replacing the `toFixed(4)`/remainder-reconciliation workaround at lines 404-436), `TransactionFormStandard.vue`'s `allocatedAmount`/`remainingAmount*` computed properties (lines 802-827), and the API-response parsing layer, which must start parsing FR-4's decimal-string JSON output instead of assuming a JSON number.
+Clamp `MathInput.vue`'s emitted value (`resources/js/shared/ui/form/MathInput.vue:40,56`) to a per-field precision using `decimal.js`, so a math-expression evaluation like `"0.1+0.2"` never emits a float-drift artifact (`0.30000000000000004`). Extend `decimal.js` usage to `TransactionItemContainer.vue`'s allocation path (replacing the `toFixed(4)`/remainder-reconciliation workaround at lines 404-436), `TransactionFormStandard.vue`'s `allocatedAmount`/`remainingAmount*` computed properties (lines 802-827), and the API-response parsing layer, which must start parsing FR-4's decimal-string JSON output instead of assuming a JSON number.
+
+**Shipped precision source, superseded by FR-8.** The initial implementation sourced `MathInput`'s clamp from `Currency.generic_decimal_precision`/`detailed_decimal_precision` — a per-currency *display* setting — reasoning that it doubled as a reasonable input ceiling. FR-8 corrects this: a currency's display precision and a field's storage ceiling are different numbers for different purposes, and conflating them silently blocks users from recording a fraction their currency setup allows the database to hold (e.g. a 0-decimal currency's transaction being unable to carry sub-unit amounts a user legitimately tracks). FR-8 re-points the clamp at each field's actual storage scale; `generic_decimal_precision`/`detailed_decimal_precision` move to being purely a display floor (see FR-8).
 
 ### FR-7: Migrate materialized caches onto the new arithmetic path — Phase 4 — ✅ Completed
 
@@ -85,6 +89,16 @@ Concrete illustrative site: `app/Models/AccountMonthlySummary.php`'s `calculateA
 - `getCashflowData()` — `$compact[month][transaction_type]` and the cross-month `$runningTotal` (a running total across a user's entire history is exactly the kind of long summation chain most prone to float drift).
 
 All three now accumulate via `BigDecimal`, collapsing to `float` only once, immediately before each `response()->json()` call — the same "exact accumulation, `Number` only at the chart-consumption boundary" rule Phase 3 established for `MonthlyTimeline.vue` on the frontend, applied here on the backend side. The currency-rate multiplication itself (`$value->multipliedBy((string) ($rate ?? 1))`) stays on the `BigDecimal` path rather than being upgraded to `Money::convertedTo()`/an explicit rounding mode: `$rate` comes from `allCurrencyRatesByMonth()`'s `AVG(rate)` SQL aggregate, already an inexact monthly average, so a rounding mode at that step wouldn't add anything — matching background.md's "modest risk, not correctness-critical" framing for conversion rounding, as distinct from its "real, already-proven risk" framing for summation drift.
+
+### FR-8: Decouple input clamping/validation from currency display precision — Phase 5 — Not started
+
+Re-point every `MathInput.vue` consumer's `precision` prop from `Currency.generic_decimal_precision`/`detailed_decimal_precision` to a fixed, per-field storage-scale constant matching that field's `MoneyCast`/`DecimalCast` declaration: 4 for `transaction_items.amount`, `transaction_details_standard.amount_from`/`amount_to`, and `transaction_details_investment.commission`/`tax`/`dividend`; 10 for `transaction_details_investment.price`. Since nothing today exposes a model's cast scale to the frontend, add a small shared JS constant (e.g. `resources/js/shared/lib/money/scale.js`) declaring these values, with a comment in both that file and each PHP model's `casts()` cross-referencing the other — there is no single source of truth for this number across the stack, so an out-of-sync edit on one side is a silent correctness bug on the other.
+
+Affected call sites: `TransactionFormStandard.vue`'s `amountFromPrecision`/`amountToPrecision` computed properties, `TransactionItemContainer.vue`/`TransactionItem.vue`'s `precision` prop, `TransactionFormInvestment.vue`'s price/commission/tax/dividend fields. `quantity` stays unclamped (not a currency amount, per FR-6's existing carve-out). None of these computed properties need the currency object for this purpose any longer — only for display (see below) — which simplifies them.
+
+**Display formatting.** `resources/js/shared/lib/i18n/format.js:38-44` currently sets `minimumFractionDigits = maximumFractionDigits = generic_decimal_precision` (or `detailed_decimal_precision`), forcing an exact digit count. Change this to a floor/ceiling split: `minimumFractionDigits = generic_decimal_precision ?? 0` (or `detailed_decimal_precision ?? generic_decimal_precision ?? 0`), `maximumFractionDigits = ` the same per-field storage-scale constant FR-8 introduces above. `Intl.NumberFormat` trims trailing zeros between the floor and ceiling automatically, so a whole-number amount in a 2-decimal currency still shows `"10.00"` (the floor), a value with real fractional content up to the storage scale shows all of it (e.g. `"12.3456"`), and nothing shows a meaningless `"123.0000"` just because the column can hold four digits. This requires no per-call-site change: every one of the ~40 `toFormattedCurrency()`/`toFormattedCurrency()`-via-DataTables-wrapper call sites already passes `generic` or `detailed` correctly (the `detailed` calls are already, without exception, the rate/price fields this FR assigns a scale-10 ceiling to). Remove the dead `min_digits`/`max_digits` currencySettings fallback (`format.js:34-36`) — declared and defaulted but never populated by any caller — once the floor/ceiling split lands.
+
+**Validation.** Add an explicit `decimal:0,<scale>` Laravel rule (matching each field's storage scale) to `TransactionRequest`'s `amount_from`/`amount_to`/item `amount`/investment `price`/`commission`/`tax`/`dividend` rules, alongside the existing `max:` magnitude bound — same precedent FR-2 set for `config.price`. Today a value with more fractional digits than a column supports (e.g. `12.34567` into a scale-4 field) passes validation and is silently rounded by `MoneyCast::set()`'s `HalfUp` tolerance (`tests.md` gap #3, `architecture.md`'s Known Risks). Once the frontend clamp is re-pointed at the storage scale, the two should agree by construction, but the validation rule closes the gap for any client that bypasses `MathInput` (a non-browser API consumer, a future integration).
 
 ## 5. Data Model Changes
 
@@ -117,6 +131,11 @@ All three now accumulate via `BigDecimal`, collapsing to `float` only once, imme
 - **FR-7 follow-up (investment valuation):** `app/Services/InvestmentService.php` (`getLatestPriceExact()`/`getLatestPricesBatchExact()` added; `resolveCombinedPrice()`/`extractTransactionPrice()`/`getLatestCombinedPrice()` now compute `BigDecimal`), `app/Models/AccountMonthlySummary.php` (`calculateInvestmentValueFact()` now returns `BigDecimal`), `app/Jobs/CalculateAccountMonthlySummary.php` (`getInvestmentValueFactData()`/`getInvestmentValueForecastData()` — exact quantity × price, new `sumBigDecimal()` helper, `(string) $amount` before `insert()`).
 - **FR-7 follow-up (report aggregation):** `app/Http/Controllers/API/ReportApiController.php` (`getCategoryWaterfallData()`, `budgetChart()`, `getCashflowData()` — all category/period/month accumulators now `BigDecimal`, collapsed to `float` only at each `response()->json()` boundary), `app/Models/Transaction.php` (`$sum` dynamic-property docblock changed from `float|null` to `BigDecimal|null`, matching `budgetChart()`'s now-exact per-transaction item sum).
 
+**Phase 5 (not started, no new dependencies):**
+
+- `app/Http/Requests/TransactionRequest.php` — add `decimal:0,<scale>` rules for `amount_from`/`amount_to`/item `amount`/investment `price`/`commission`/`tax`/`dividend`, matching each field's `MoneyCast`/`DecimalCast` scale (FR-8).
+- Equivalent Form Requests for any other user-facing entry point into these fields (e.g. `InvestmentPriceRequest`, already partially covered by FR-2's precedent).
+
 ## 7. Frontend Components to Update
 
 **Phase 0:**
@@ -131,6 +150,12 @@ All three now accumulate via `BigDecimal`, collapsing to `float` only once, imme
 - `resources/js/transactions/components/form/TransactionFormStandard.vue` — allocation/remainder computed properties (FR-6).
 - API-response parsing layer (wherever transaction/investment JSON responses are consumed) — parse decimal-string fields into `Decimal` instances instead of assuming a JSON number (FR-6).
 - `resources/js/transactions/components/form/TransactionFormInvestment.vue`, `resources/js/investments/components/ResultsCard.vue`, `resources/js/reports/components/widgets/MonthlyTimeline.vue` — convert remaining raw-float arithmetic sites identified in background.md, once the fields they read are backed by FR-5's cast.
+
+**Phase 5 (not started, no new dependencies):**
+
+- New shared constant module (e.g. `resources/js/shared/lib/money/scale.js`) declaring each field family's storage scale, cross-referenced with the matching `MoneyCast`/`DecimalCast` declaration in `app/Models/*.php` (FR-8).
+- `resources/js/shared/ui/form/MathInput.vue` consumers — `TransactionFormStandard.vue`'s `amountFromPrecision`/`amountToPrecision`, `TransactionItemContainer.vue`/`TransactionItem.vue`'s `precision` prop, `TransactionFormInvestment.vue`'s price/commission/tax/dividend fields — re-point from `getDecimalPrecision(currency)` to the new storage-scale constant (FR-8).
+- `resources/js/shared/lib/i18n/format.js` — `toFormattedCurrency()`'s `minimumFractionDigits`/`maximumFractionDigits` computation changes from forcing an exact digit count to a floor (currency precision)/ceiling (storage scale) split; remove the dead `min_digits`/`max_digits` fallback (FR-8).
 
 ## 8. Testing Requirements
 
@@ -168,6 +193,12 @@ Per `.ai/agents/testing.agent.md`:
 - Manually exercise the transaction-item split/merge flow in the UI and confirm no false "amounts don't match" error appears for values that previously relied on the epsilon tolerance.
 - Manually load the Monthly Breakdown report (`find-transactions`) and confirm totals/averages render identically to before the `round2()` replacement.
 
+### Backend/Frontend Tests (Phase 5, FR-8)
+
+- Feature test for `TransactionRequest`'s new `decimal:0,<scale>` rules: a value at exactly the field's storage scale passes, one with more fractional digits than the scale allows fails validation (closes `tests.md` gap #3 — today it's silently rounded, not rejected).
+- Unit test for `format.js`'s revised `toFormattedCurrency()`: a whole-number amount in a currency with `generic_decimal_precision = 2` still renders with two decimals (floor not dropped); a value carrying more fractional digits than the currency's configured precision, up to the field's storage scale, renders all of them (ceiling not truncated); a value at exactly the storage scale never renders a digit beyond it, even if `maximumFractionDigits` were mis-set higher.
+- Manual/story-level check: enter a value with more decimals than a 0-decimal currency's `generic_decimal_precision` into a `MathInput` field (e.g. a standard transaction's amount); confirm it's accepted up to the field's storage scale (4) rather than silently rounded to a whole number on blur, and that the saved value round-trips unchanged through display (no `123.0000`-style padding, no silent truncation).
+
 ## 9. Acceptance Criteria
 
 1. `TransactionItemMergeService` no longer contains a float-epsilon tolerance; the comparison is exact at the target scale, using `bcmath` (no new Composer dependency).
@@ -176,10 +207,11 @@ Per `.ai/agents/testing.agent.md`:
 4. `vendor/bin/sail artisan test --compact` (scoped to `TransactionItemMergeService` and the new migration test), `./vendor/bin/pint --dirty`, and `npx eslint resources/js --ext .js,.vue` (scoped to the changed file) all pass.
 5. `brick/math`/`brick/money` (FR-4/FR-5) and `decimal.js` as a direct dependency (FR-3/FR-6) are all approved — no phase in this document is blocked on a dependency decision.
 6. `composer.json` declares `"ext-bcmath": "*"`, and no code path calls `Money::formatTo()` — the runtime extension footprint stays limited to `bcmath` (documented per FR-1) with no undocumented `ext-intl` dependency introduced.
+7. `MathInput.vue`'s clamp and `TransactionRequest`'s validation agree on the same per-field storage scale (not the currency's configured display precision), and `toFormattedCurrency()` never forces a fixed digit count — it always trims between the currency's precision (floor) and the field's storage scale (ceiling) (FR-8).
 
 ## 10. Rollout Plan
 
-This is an **implementation order**. All four phases are unblocked on dependencies — `decimal.js` (FR-3/FR-6) and `brick/math`/`brick/money` (FR-4/FR-5) are all approved — so the ordering below reflects build sequencing (what depends on what compiling/passing tests first), not approval gates.
+This is an **implementation order**. All five phases are unblocked on dependencies — `decimal.js` (FR-3/FR-6) and `brick/math`/`brick/money` (FR-4/FR-5) are all approved, and FR-8 (Phase 5) needs no new dependency — so the ordering below reflects build sequencing (what depends on what compiling/passing tests first), not approval gates.
 
 ### Phase 0 — Fix the two proven bugs, zero new dependencies except one direct-dependency promotion — ✅ Completed
 
@@ -220,3 +252,11 @@ This is an **implementation order**. All four phases are unblocked on dependenci
 **Dependency approval needed:** none beyond what's already been approved by this point.
 **State at end of phase:** `cashflow_value` and `account_monthly_summaries` are computed via the same exact-decimal path as everything upstream of them — drift can no longer re-enter through denormalized data.
 **Shipped:** `MoneyCast` applied to `Account::opening_balance` (own currency), `Transaction::cashflow_value` (the transaction's own currency, reusing `transaction_currency`'s base-currency fallback), and `AccountMonthlySummary::amount` (the account's currency when `account_entity_id` is set, else the user's base currency for generic budgets). `TransactionService::getTransactionCashFlow()` now returns `Money` end-to-end (previously unwrapped to float internally even after FR-5). `AccountMonthlySummary::calculateAccountBalanceFact()` combines its three raw SQL `SUM()` results via `BigDecimal` instead of native float `+`/`-`. `CalculateAccountMonthlySummary`'s forecast and budget paths gained a `sumMoney()` helper to combine Money-cast Collection values exactly, replacing the `Collection::sum('cashflow_value')` string-key form that can't handle Money objects at all. `AccountMonthlySummary::insert()` (bulk, cast-bypassing) still receives plain decimal strings, unchanged. Investment valuation (`quantity × price`) was initially left on its existing float path — reasoned at the time to be covered by the Non-Goals note on investment cost-basis/valuation — but that call was revisited and migrated in the FR-7 follow-up above: it's a valuation multiplication already writing to `account_monthly_summaries.amount`, not the cost-basis/gain calculation the Non-Goal actually excludes.
+
+### Phase 5 — Decouple input clamping/validation from currency display precision — Not started
+
+**Scope:** FR-8.
+**Depends on:** Phase 3 (the `MathInput`/`format.js` surfaces this phase corrects must already exist).
+**Dependency approval:** none — no new library; `decimal.js` and `Intl.NumberFormat` are already in place.
+**State at end of phase:** a currency's `generic_decimal_precision`/`detailed_decimal_precision` governs display only (a floor, paired with each field's storage scale as ceiling); `MathInput.vue` and `TransactionRequest` agree on the same storage-scale ceiling for input and validation; no user is blocked from recording a fraction their currency's official precision doesn't anticipate but the column can hold; no display ever pads a value with digits it doesn't have.
+**To be shipped:** the shared JS storage-scale constant, `MathInput` consumers re-pointed to it, `format.js`'s floor/ceiling split (and removal of the dead `min_digits`/`max_digits` fallback), and `TransactionRequest`'s new `decimal:0,<scale>` validation rules — see Sections 6-9 above for the itemized list.
