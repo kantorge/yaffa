@@ -7,6 +7,10 @@ import Swal from 'sweetalert2';
  * @param {Object} options Optional overrides.
  * @param {string} [options.title] Dialog title.
  * @param {string} [options.confirmButtonText] Defaults to "Confirm".
+ * @param {string|HTMLElement} [options.target] Element (or selector) to append the popup to.
+ *        Defaults to SweetAlert2's own default of 'body'. Pass the modal element (or a descendant
+ *        of it) when confirming inside a Bootstrap/CoreUI modal - otherwise the modal's focus trap
+ *        treats the popup as "outside" and steals focus back into the modal on every focusin.
  *
  * @returns {Promise} The SweetAlert2 result promise.
  */
@@ -24,6 +28,7 @@ export function confirmDelete(text, options = {}) {
         },
         cancelButtonText: __('Cancel'),
         confirmButtonText: options.confirmButtonText || __('Confirm'),
+        ...(options.target ? { target: options.target } : {}),
     });
 }
 
@@ -35,6 +40,10 @@ export function confirmDelete(text, options = {}) {
  * @param {string} [options.title] Dialog title.
  * @param {string} [options.icon] Defaults to "question".
  * @param {string} [options.confirmButtonText] Defaults to "Confirm".
+ * @param {string|HTMLElement} [options.target] Element (or selector) to append the popup to.
+ *        Defaults to SweetAlert2's own default of 'body'. Pass the modal element (or a descendant
+ *        of it) when confirming inside a Bootstrap/CoreUI modal - otherwise the modal's focus trap
+ *        treats the popup as "outside" and steals focus back into the modal on every focusin.
  *
  * @returns {Promise} The SweetAlert2 result promise.
  */
@@ -52,5 +61,6 @@ export function confirmAction(text, options = {}) {
         },
         cancelButtonText: __('Cancel'),
         confirmButtonText: options.confirmButtonText || __('Confirm'),
+        ...(options.target ? { target: options.target } : {}),
     });
 }

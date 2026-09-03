@@ -67,7 +67,12 @@
                 value="dayOfMonth"
                 v-model="patternMode"
                 :id="'schedule_pattern_day_of_month_' + this.$.vnode.key"
-                :disabled="!allowCustomizationData"
+                :disabled="!allowCustomizationData || !showPatternPicker"
+                :title="
+                  !showPatternPicker
+                    ? __('Available for monthly or yearly frequency')
+                    : ''
+                "
               />
               <label
                 class="form-check-label"
@@ -383,6 +388,7 @@
     ordinalOptions,
     weekdayOptions,
     monthOptions,
+    monthLabels,
     scheduleStartDateParts,
   } from '@/shared/lib/helpers';
 
@@ -470,7 +476,23 @@
       // Distinguishes the two patterns by what actually varies month to month:
       // a fixed day NUMBER vs. a weekday-based rule. Spells out the day number
       // (once known) so it doesn't read almost identically to the weekday option.
+      // Only meaningful for MONTHLY/YEARLY (matching showPatternPicker) - for
+      // DAILY/WEEKLY there's no "day of month" to speak of, so it's worded
+      // frequency-neutrally instead.
       dayOfMonthPatternLabel() {
+        if (!this.showPatternPicker) {
+          return __('On the same day as the start date');
+        }
+
+        if (this.schedule.frequency === 'YEARLY') {
+          return this.startDateDayOfMonth && this.startDateMonth
+            ? __('On :month :day each year', {
+                month: monthLabels[this.startDateMonth],
+                day: this.startDateDayOfMonth,
+              })
+            : __('On the same month and day each year');
+        }
+
         return this.startDateDayOfMonth
           ? __('On day :day of the month', { day: this.startDateDayOfMonth })
           : __('On the same day each month');

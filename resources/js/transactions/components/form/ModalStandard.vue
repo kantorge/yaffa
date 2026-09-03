@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="modal-transaction-form-standard">
+  <div class="modal fade" id="modal-transaction-form-standard" tabindex="-1">
     <div class="modal-dialog modal-xxl">
       <div class="modal-content">
         <div class="modal-header">
@@ -15,6 +15,7 @@
         </div>
         <div class="modal-body d-none d-lg-block">
           <transaction-form-standard
+            ref="form"
             :action="action"
             :transaction="transactionData"
             :simplified="true"
@@ -41,6 +42,7 @@
   import TransactionFormStandard from './TransactionFormStandard.vue';
   import { transactionLink } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   export default {
     name: 'CreateStandardTransactionModal',
@@ -72,13 +74,46 @@
     data() {
       let data = {
         action: 'create',
+        // Set right before a programmatic hide() so the hide.coreui.modal listener
+        // lets it through once without re-running the dirty check.
+        forceClose: false,
       };
       data.transactionData = Object.assign({}, this.transaction);
       return data;
     },
     methods: {
-      onCancel() {
+      hide() {
+        this.forceClose = true;
         this.modal.hide();
+      },
+      onCancel() {
+        this.hide();
+      },
+      // Cancelable pre-dismiss hook (backdrop click, Esc, close button) - ask for
+      // confirmation only if the form has unsaved changes. The in-form Cancel button
+      // already runs its own dirty check before emitting 'cancel', which routes
+      // through hide() and is let through here via forceClose.
+      onHide(event) {
+        if (this.forceClose) {
+          this.forceClose = false;
+          return;
+        }
+
+        if (!this.$refs.form?.isDirty()) {
+          return;
+        }
+
+        event.preventDefault();
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          confirmButtonText: __('Discard changes'),
+          target: '#modal-transaction-form-standard',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.hide();
+          }
+        });
       },
       onSuccess(transaction, options = {}) {
         // Emit a custom event to global scope about the new transaction to be displayed as a notification
@@ -123,7 +158,7 @@
         window.dispatchEvent(transactionEvent);
 
         // Hide the modal
-        this.modal.hide();
+        this.hide();
       },
       onInitiateEnterInstance(transaction) {
         this.action = 'enter';
@@ -171,6 +206,9 @@
       this.modal = new coreui.Modal(
         document.getElementById('modal-transaction-form-standard'),
       );
+      document
+        .getElementById('modal-transaction-form-standard')
+        .addEventListener('hide.coreui.modal', this.onHide);
     },
     beforeUnmount() {
       // Clean up event listeners when component is destroyed
@@ -182,6 +220,9 @@
         'initiateCreateFromDraft',
         this.handleInitiateCreateFromDraft,
       );
+      document
+        .getElementById('modal-transaction-form-standard')
+        .removeEventListener('hide.coreui.modal', this.onHide);
     },
     computed: {
       modalTitle() {

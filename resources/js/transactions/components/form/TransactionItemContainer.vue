@@ -308,6 +308,7 @@
             {
               title: __('Replace items?'),
               confirmButtonText: __('Replace'),
+              target: this.dropdownParentSelector,
             },
           );
 

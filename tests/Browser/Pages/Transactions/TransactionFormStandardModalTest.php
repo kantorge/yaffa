@@ -3,6 +3,7 @@
 namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\User;
+use Facebook\WebDriver\WebDriverKeys;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -205,6 +206,149 @@ class TransactionFormStandardModalTest extends DuskTestCase
             $transaction = \App\Models\Transaction::orderByDesc('id')->first();
             $this->assertNotNull($transaction);
             $this->assertEquals(100, $transaction->config->amount_from->getAmount()->toFloat());
+        });
+    }
+
+    public function test_transaction_type_confirm_dialog_keeps_focus_off_the_modal(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => 1])
+                ->waitForText('Account details')
+                ->click('#create-standard-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormStandard')
+                // Wait for the preselected account (loaded async via select2) to settle -
+                // clicking transaction-type-deposit while it's still in flight can race with
+                // select2's own focus handling while it applies the account value.
+                ->waitUsing(
+                    10,
+                    100,
+                    fn () => ($browser->script(
+                        "return document.querySelector('#account_from')?.value || null;"
+                    )[0] ?? null) !== null
+                )
+                // Switch to deposit and let the SweetAlert2 confirm dialog open
+                ->click('@transaction-type-deposit')
+                ->waitFor('.swal2-popup', 5);
+
+            // The CoreUI modal's focus trap only refocuses elements it doesn't
+            // .contains() - the dialog must render inside the modal for focus to
+            // stay put, otherwise the trap steals it back onto the last-clicked
+            // button and a keyboard confirm/cancel would hit the form instead.
+            $focusInsidePopup = $browser->script(
+                "return !!(document.activeElement && document.activeElement.closest('.swal2-popup'));"
+            )[0] ?? false;
+
+            $this->assertTrue(
+                $focusInsidePopup,
+                'Focus should stay inside the SweetAlert2 popup instead of being pulled back into the modal.'
+            );
+
+            $browser->click('.swal2-confirm')
+                ->waitUntilMissing('.swal2-popup', 5);
+        });
+    }
+
+    public function test_modal_close_does_not_confirm_when_form_is_untouched(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => 1])
+                ->waitForText('Account details')
+                ->click('#create-standard-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormStandard')
+                // Wait for the preselected account (loaded async via select2) to settle,
+                // so the isDirty() baseline snapshot has actually been taken.
+                ->waitUsing(
+                    10,
+                    100,
+                    fn () => ($browser->script(
+                        "return document.querySelector('#account_from')?.value || null;"
+                    )[0] ?? null) !== null
+                )
+                // Close via the modal's own dismiss button (not the form's Cancel button)
+                ->click('#modal-transaction-form-standard .btn-close')
+                ->waitUntilMissing('#modal-transaction-form-standard', 5)
+                ->assertNotPresent('.swal2-popup');
+        });
+    }
+
+    public function test_modal_close_confirms_discard_when_form_is_dirty(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => 1])
+                ->waitForText('Account details')
+                ->click('#create-standard-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormStandard')
+                ->type('#standard-comment', 'dirty comment')
+                ->click('#modal-transaction-form-standard .btn-close')
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
+                ->waitUntilMissing('#modal-transaction-form-standard', 5);
+        });
+    }
+
+    public function test_escape_key_closes_modal_when_form_is_untouched(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => 1])
+                ->waitForText('Account details')
+                ->click('#create-standard-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormStandard')
+                // Wait for the preselected account (loaded async via select2) to settle,
+                // so the isDirty() baseline snapshot has actually been taken.
+                ->waitUsing(
+                    10,
+                    100,
+                    fn () => ($browser->script(
+                        "return document.querySelector('#account_from')?.value || null;"
+                    )[0] ?? null) !== null
+                );
+
+            // CoreUI's FocusTrap.activate() calls trapElement.focus() on show - this only
+            // works if the modal root has tabindex="-1" (it's a plain <div> otherwise, and
+            // .focus() on a non-focusable element is a silent no-op). Confirm focus actually
+            // landed inside the modal, since that's what lets a bubbled Escape keydown reach
+            // CoreUI's own dismiss listener (bound on the modal root) in the first place.
+            $focusInsideModal = $browser->script(
+                "return !!(document.activeElement && document.activeElement.closest('#modal-transaction-form-standard'));"
+            )[0] ?? false;
+            $this->assertTrue(
+                $focusInsideModal,
+                'Focus should land inside the modal on open, otherwise a bubbled Escape keydown never reaches it.'
+            );
+
+            // Send Escape to whatever currently has focus (not to a specific selector),
+            // to prove the key actually reaches the modal via normal focus/bubbling.
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+
+            $browser->waitUntilMissing('#modal-transaction-form-standard', 5)
+                ->assertNotPresent('.swal2-popup');
+        });
+    }
+
+    public function test_escape_key_confirms_discard_when_form_is_dirty(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => 1])
+                ->waitForText('Account details')
+                ->click('#create-standard-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormStandard')
+                ->type('#standard-comment', 'dirty comment');
+
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+
+            $browser->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
+                ->waitUntilMissing('#modal-transaction-form-standard', 5);
         });
     }
 }

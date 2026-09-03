@@ -5,6 +5,7 @@ namespace Tests\Browser\Pages\Transactions;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\User;
+use Facebook\WebDriver\WebDriverKeys;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -181,8 +182,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
             $selectedInvestment = $browser->text('#investment + .select2 .select2-selection__rendered');
 
             $browser
-                // Cancel the dialog by clicking the close button
+                // Cancel the dialog by clicking the close button - the form is dirty
+                // (an investment was selected), so a discard-changes confirm is expected
                 ->click('#modal-transaction-form-investment .modal-header .btn-close')
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Wait for the modal to close
                 ->waitUntilMissing('#modal-transaction-form-investment', 10)
 
@@ -202,4 +206,54 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
         });
     }
 
+    public function test_escape_key_closes_modal_when_form_is_untouched(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
+                ->waitForText('Account details')
+                ->click('#create-investment-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormInvestment')
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10);
+
+            // CoreUI's FocusTrap.activate() calls trapElement.focus() on show - this only
+            // works if the modal root has tabindex="-1" (it's a plain <div> otherwise, and
+            // .focus() on a non-focusable element is a silent no-op). Confirm focus actually
+            // landed inside the modal, since that's what lets a bubbled Escape keydown reach
+            // CoreUI's own dismiss listener (bound on the modal root) in the first place.
+            $focusInsideModal = $browser->script(
+                "return !!(document.activeElement && document.activeElement.closest('#modal-transaction-form-investment'));"
+            )[0] ?? false;
+            $this->assertTrue(
+                $focusInsideModal,
+                'Focus should land inside the modal on open, otherwise a bubbled Escape keydown never reaches it.'
+            );
+
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+
+            $browser->waitUntilMissing('#modal-transaction-form-investment', 5)
+                ->assertNotPresent('.swal2-popup');
+        });
+    }
+
+    public function test_escape_key_confirms_discard_when_form_is_dirty(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
+                ->waitForText('Account details')
+                ->click('#create-investment-transaction-button')
+                ->waitForText('Finalize transaction draft')
+                ->waitFor('#transactionFormInvestment')
+                ->waitFor('#investment', 10)
+                ->select2('#investment', null, 10);
+
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+
+            $browser->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
+                ->waitUntilMissing('#modal-transaction-form-investment', 5);
+        });
+    }
 }

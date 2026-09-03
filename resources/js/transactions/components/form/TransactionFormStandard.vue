@@ -566,12 +566,12 @@
 <script>
   import { RRule } from 'rrule';
   import {
-    todayInUTC,
     processTransaction,
     initializeBootstrapTooltips,
     parseIsoDate,
     byDayToRRuleWeekday,
     toDateInputValue,
+    toIsoDateString,
     toRRuleDate,
   } from '@/shared/lib/helpers';
   import {
@@ -665,7 +665,7 @@
       data.form = new Form({
         transaction_type: 'withdrawal',
         config_type: 'standard',
-        date: todayInUTC(),
+        date: toIsoDateString(),
         comment: null,
         schedule: false,
         reconciled: false,
@@ -1010,7 +1010,7 @@
         });
 
       // Load default value for account FROM, based on transaction type
-      this.getDefaultAccountDetails(
+      const accountFromReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_from_id,
         'from',
       );
@@ -1056,7 +1056,7 @@
         });
 
       // Load default value for account TO
-      this.getDefaultAccountDetails(
+      const accountToReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_to_id,
         'to',
       );
@@ -1066,6 +1066,12 @@
 
       // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
+
+      // Snapshot the settled post-load state (both account details loaded and
+      // synced into form.config) as the isDirty() baseline.
+      Promise.all([accountFromReady, accountToReady]).then(() => {
+        this.$nextTick(() => this.markFormClean());
+      });
     },
 
     beforeUnmount() {
@@ -1085,8 +1091,10 @@
           // Transaction type is now directly the enum value string
           this.form.transaction_type = this.transaction.transaction_type;
 
-          // Populate date from source transaction, and ensure that it's a Date object
-          this.form.date = parseIsoDate(this.transaction.date);
+          // Populate date from source transaction as a plain 'YYYY-MM-DD' string - a Date
+          // object here would be re-expressed in UTC by JSON.stringify() on submit, shifting
+          // the calendar day for anyone east of UTC unless the field happens to get touched.
+          this.form.date = toDateInputValue(this.transaction.date) || null;
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
@@ -1116,8 +1124,12 @@
               .forEach((item) => this.form.items.push(item));
           }
 
-          // Copy schedule config
-          // TODO: date conversion should take place here, or elsewehere?
+          // Copy schedule config. Dates are kept as plain 'YYYY-MM-DD' strings, never
+          // Date objects - a Date survives fine in the UI (toDateInputValue reads it with
+          // local getters), but JSON.stringify() on submit serializes it via toISOString(),
+          // which re-expresses it in UTC and can shift the calendar day back by one for
+          // anyone east of UTC unless the field happens to get touched (which replaces it
+          // with a string via the date input's setter, masking the bug).
           if (this.transaction.transaction_schedule) {
             this.form.schedule_config.frequency =
               this.transaction.transaction_schedule.frequency;
@@ -1130,17 +1142,17 @@
             this.form.schedule_config.by_month =
               this.transaction.transaction_schedule.by_month;
 
-            this.form.schedule_config.start_date = parseIsoDate(
-              this.transaction.transaction_schedule.start_date,
-            );
-            this.form.schedule_config.next_date = parseIsoDate(
-              this.transaction.transaction_schedule.next_date,
-            );
+            this.form.schedule_config.start_date =
+              toDateInputValue(this.transaction.transaction_schedule.start_date) ||
+              null;
+            this.form.schedule_config.next_date =
+              toDateInputValue(this.transaction.transaction_schedule.next_date) ||
+              null;
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
-            this.form.schedule_config.end_date = parseIsoDate(
-              this.transaction.transaction_schedule.end_date,
-            );
+            this.form.schedule_config.end_date =
+              toDateInputValue(this.transaction.transaction_schedule.end_date) ||
+              null;
 
             this.form.schedule_config.inflation =
               this.transaction.transaction_schedule.inflation;
@@ -1161,9 +1173,9 @@
               this.form.schedule_config.by_month;
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
-            this.form.original_schedule_config.start_date = parseIsoDate(
-              this.form.schedule_config.start_date,
-            );
+            // Already a plain string at this point (see the schedule_config copy above).
+            this.form.original_schedule_config.start_date =
+              this.form.schedule_config.start_date;
             this.form.original_schedule_config.automatic_recording =
               this.form.schedule_config.automatic_recording;
 
@@ -1171,19 +1183,16 @@
             this.form.original_schedule_config.next_date = null;
 
             // Set new schedule start date to today
-            this.form.schedule_config.start_date = todayInUTC();
+            this.form.schedule_config.start_date = toIsoDateString();
 
             // If this is a schedule, then set the new next date to today
             if (this.form.schedule) {
-              this.form.schedule_config.next_date = todayInUTC();
+              this.form.schedule_config.next_date = toIsoDateString();
             }
 
             // The end date carried over from the original schedule may now be
             // in the past relative to the new start date - the new schedule
             // can't already be over before its first occurrence, so clear it.
-            // Compared as calendar-date strings (not raw timestamps), since
-            // todayInUTC() and parseIsoDate() don't share the same
-            // time-of-day representation in every timezone.
             const newEndDateValue = toDateInputValue(
               this.form.schedule_config.end_date,
             );
@@ -1195,9 +1204,10 @@
             }
 
             // Set original schedule end date to today - 1 day
-            this.form.original_schedule_config.end_date = new Date(
-              todayInUTC().getTime() - 24 * 60 * 60 * 1000,
-            );
+            const originalEndDate = new Date();
+            originalEndDate.setDate(originalEndDate.getDate() - 1);
+            this.form.original_schedule_config.end_date =
+              toIsoDateString(originalEndDate);
           }
         }
 
@@ -1210,6 +1220,19 @@
         this.$nextTick(() => {
           this.initializingTransaction = false;
         });
+
+        // The originalData snapshot itself is taken once the account/payee details
+        // requested by the caller (mounted()/the transaction watcher) have finished
+        // loading - see markFormClean() and its call sites. Assigning config.account_*_id
+        // above doesn't keep form.originalData in sync the way form.update() does, and
+        // those fields can still be reset and asynchronously repopulated afterwards
+        // (e.g. onChangeTransactionType(..., true) forcing a reset before the accounts
+        // are reselected), so snapshotting here would capture a transient, not final, state.
+      },
+
+      // Snapshot the current state as the "clean" baseline isDirty() compares against.
+      markFormClean() {
+        this.form.update(this.form.data());
       },
 
       normalizeTransactionItem(rawItem) {
@@ -1252,7 +1275,7 @@
           __(
             'Are you sure, you want to change the transaction type? Some data might get lost.',
           ),
-          { icon: 'warning' },
+          { icon: 'warning', target: this.dropdownParentSelector },
         ).then((result) => {
           if (result.isConfirmed) {
             this.onChangeTransactionType(newState, false);
@@ -1432,7 +1455,10 @@
 
         const selector = '#account_' + type;
 
-        $.ajax({
+        // Returned so callers can wait for the select2 population (and the
+        // form field sync it triggers via a dispatched 'change' event) to
+        // settle before treating the form as loaded.
+        return $.ajax({
           url: this.getAccountApiUrl(type) + '/' + account_entity_id,
           data: {
             _token: this.csrfToken,
@@ -1444,14 +1470,30 @@
       },
 
       onCancel() {
+        if (!this.isDirty()) {
+          this.$emit('cancel');
+          return false;
+        }
+
         confirmAction(__('Are you sure you want to discard any changes?'), {
           icon: 'warning',
+          target: this.dropdownParentSelector,
         }).then((result) => {
           if (result.isConfirmed) {
             this.$emit('cancel');
           }
         });
         return false;
+      },
+
+      // True once any field differs from its state right after the form finished
+      // loading (new/cloned/editing/finalizing, etc - see the originalData snapshot
+      // at the end of initializeTransaction()).
+      isDirty() {
+        return (
+          JSON.stringify(this.form.data()) !==
+          JSON.stringify(this.form.originalData)
+        );
       },
 
       onSubmit() {
@@ -1552,7 +1594,7 @@
         }
         const endDate = new Date(date);
         endDate.setDate(endDate.getDate() - 1);
-        this.form.original_schedule_config.end_date = endDate;
+        this.form.original_schedule_config.end_date = toIsoDateString(endDate);
       },
       __,
 
@@ -1607,11 +1649,23 @@
         this.onChangeTransactionType(transaction.transaction_type, true);
 
         // Load default value for accounts
-        this.getDefaultAccountDetails(
+        const accountFromReady = this.getDefaultAccountDetails(
           transaction.config.account_from_id,
           'from',
         );
-        this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
+        const accountToReady = this.getDefaultAccountDetails(
+          transaction.config.account_to_id,
+          'to',
+        );
+
+        // Snapshot the settled post-load state as the isDirty() baseline - see
+        // markFormClean(). onChangeTransactionType(..., true) above force-resets
+        // config.account_from_id/account_to_id before the calls above
+        // asynchronously repopulate them, so this must wait for both to settle
+        // rather than snapshotting right after initializeTransaction().
+        Promise.all([accountFromReady, accountToReady]).then(() => {
+          this.$nextTick(() => this.markFormClean());
+        });
       },
 
       // Remove the form date value when schedule is enabled, and restore it when disabled
@@ -1623,7 +1677,7 @@
         if (newState) {
           this.form.date = null;
         } else {
-          this.form.date = todayInUTC();
+          this.form.date = toIsoDateString();
         }
       },
     },

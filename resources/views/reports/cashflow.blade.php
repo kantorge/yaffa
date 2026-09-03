@@ -37,14 +37,14 @@
                     {{ __('Show on same axis') }}
                     <div>
                         <input type="checkbox" class="btn-check" id="singleAxis" checked autocomplete="off">
-                        <label class="btn btn-sm btn-outline-secondary" for="singleAxis" title="{{ __('Show on same axis') }}"><i class="fa fa-lock"></i></label>
+                        <label class="btn btn-sm btn-outline-secondary" for="singleAxis" title="{{ __('Show on same axis') }}"><i class="fa fa-fw fa-lock"></i></label>
                     </div>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     {{ __('With forecast') }}
                     <div>
                         <input type="checkbox" class="btn-check" id="withForecast" {{ $withForecast ? 'checked' : '' }} autocomplete="off">
-                        <label class="btn btn-sm btn-outline-secondary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-calendar"></i></label>
+                        <label class="btn btn-sm btn-outline-secondary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-fw fa-calendar"></i></label>
                     </div>
                 </li>
             </ul>

@@ -161,7 +161,13 @@
       // schedule doesn't use an ordinal-weekday rule (by_day empty).
       patternDescription() {
         if (!this.schedule.by_day) {
-          const day = scheduleStartDateParts(this.schedule.start_date)?.day;
+          const { day, month } = scheduleStartDateParts(this.schedule.start_date) ?? {};
+
+          if (this.schedule.frequency === 'YEARLY') {
+            return day && month && this.monthLabels[month]
+              ? __('On :month :day each year', { month: this.monthLabels[month], day })
+              : __('On the same month and day each year');
+          }
 
           return day
             ? __('On day :day of the month', { day })

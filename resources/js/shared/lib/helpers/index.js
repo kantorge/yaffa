@@ -113,12 +113,6 @@ export function toDateInputValue(value) {
     return match ? match[1] : '';
 }
 
-// Function to create a new date in UTC
-export function todayInUTC() {
-    let date = new Date();
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-}
-
 // RRule reads a Date's UTC getters, not its local ones, so a local-midnight
 // Date (e.g. from parseIsoDate) has to be re-expressed with matching UTC
 // fields before use - otherwise occurrences can land a day off for anyone
@@ -308,12 +302,14 @@ export const ordinalOptions = Object.entries(ordinalLabels).map(([value, label])
 export const weekdayOptions = Object.entries(weekdayLabels).map(([value, label]) => ({ value, label }));
 export const monthOptions = Object.entries(monthLabels).map(([value, label]) => ({ value: Number(value), label }));
 
-// schedule.start_date may be either a Date object (set via parseIsoDate/todayInUTC
-// elsewhere) or a 'YYYY-MM-DD' string (written back by a date input's computed
-// setter). Date objects here are always local-midnight, so local getters are
-// safe; strings are parsed directly to sidestep new Date(string) being
-// UTC-interpreted. Shared by TransactionSchedule.vue and its read-only display
-// Schedule.vue so both derive the day-of-month pattern the same way.
+// schedule.start_date may be either a Date object (as processTransaction() leaves it
+// on a read-only display transaction) or a 'YYYY-MM-DD' string (the form's own
+// schedule_config, and a date input's computed setter, always use strings - see
+// TransactionFormStandard.vue/TransactionFormInvestment.vue). Date objects here are
+// always local-midnight, so local getters are safe; strings are parsed directly to
+// sidestep new Date(string) being UTC-interpreted. Shared by TransactionSchedule.vue
+// and its read-only display Schedule.vue so both derive the day-of-month pattern the
+// same way.
 export function scheduleStartDateParts(value) {
     if (!value) {
         return null;
