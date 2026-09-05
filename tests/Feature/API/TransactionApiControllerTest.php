@@ -1011,6 +1011,206 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
+     * config.amount_from/amount_to accept a value at exactly transaction_details_standard's
+     * DECIMAL(12,4) scale - the new `decimal:0,4` rule (specification.md FR-8) must not reject
+     * a value the column can genuinely hold in full.
+     */
+    public function test_store_standard_accepts_amount_at_exact_decimal_4_scale(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
+        $category = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                // Exactly 4 decimal places - fits the column's scale in full.
+                'amount_from' => '10.1234',
+                'amount_to' => '10.1234',
+            ],
+            'items' => [
+                [
+                    'amount' => '10.1234',
+                    'category_id' => $category->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+    }
+
+    /**
+     * config.amount_from/amount_to reject a value with more fractional digits than
+     * transaction_details_standard's DECIMAL(12,4) scale allows - the new `decimal:0,4` rule
+     * (specification.md FR-8) rejects over-precise input outright instead of letting it reach
+     * MoneyCast::set()'s silent HalfUp rounding.
+     */
+    public function test_store_standard_rejects_amount_with_excess_decimal_places(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $accountEntity = AccountEntity::factory()->asAccount($this->user)->create(['active' => true]);
+        $payeeEntity = AccountEntity::factory()->asPayee($this->user)->create(['active' => true]);
+        $category = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+            'action' => 'create',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                // 5 decimal places - within magnitude, but exceeds the column's scale.
+                'amount_from' => '10.12345',
+                'amount_to' => '10.12345',
+            ],
+            'items' => [
+                [
+                    'amount' => '10.12345',
+                    'category_id' => $category->id,
+                    'tags' => [],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.amount_from', 'config.amount_to', 'items.0.amount']);
+    }
+
+    /**
+     * config.price rejects a value with more fractional digits than
+     * transaction_details_investment.price's DECIMAL(20,10) scale allows (specification.md FR-8).
+     * Magnitude alone doesn't catch this - 1234.56789012345 is well within the DECIMAL(20,10)
+     * max, but carries 15 decimal digits.
+     */
+    public function test_store_investment_rejects_price_with_excess_decimal_places(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => '1234.567890123456',
+                'quantity' => 1,
+                'commission' => 0,
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.price']);
+    }
+
+    /**
+     * config.commission rejects a value with more fractional digits than
+     * transaction_details_investment.commission's DECIMAL(14,4) scale allows (specification.md
+     * FR-8).
+     */
+    public function test_store_investment_rejects_commission_with_excess_decimal_places(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'buy',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'price' => 10,
+                'quantity' => 1,
+                'commission' => '1.23456',
+                'tax' => 0,
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.commission']);
+    }
+
+    /**
+     * config.dividend rejects a value with more fractional digits than
+     * transaction_details_investment.dividend's DECIMAL(12,4) scale allows (specification.md
+     * FR-8).
+     */
+    public function test_store_investment_rejects_dividend_with_excess_decimal_places(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $currency = Currency::factory()->for($this->user)->create();
+        $investmentGroup = InvestmentGroup::factory()->for($this->user)->create();
+        $investment = Investment::factory()->create([
+            'user_id' => $this->user->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+        $accountEntity = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $currency->id])->create();
+
+        $response = $this->postJson(route('api.v1.transactions.store-investment'), [
+            'action' => 'create',
+            'transaction_type' => 'dividend',
+            'config_type' => 'investment',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+                'dividend' => '1.23456',
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['config.dividend']);
+    }
+
+    /**
      * Closes the TODO: an investment transaction's account and investment must share a
      * currency, since commission/tax/dividend are cast to the account's currency (MoneyCast)
      * while price is cast to the investment's - a mismatch would otherwise only surface as an

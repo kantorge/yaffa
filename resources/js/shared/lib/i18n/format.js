@@ -1,10 +1,8 @@
 /**
  * @param {number} input The number to be formatted as currency.
  * @param {string} locale The locale to be used for formatting.
- * @param {Object} currencySettings Object with settings to apply. Expected key(s): iso_code. Optional key(s): min_digits, max_digits, generic_decimal_precision, detailed_decimal_precision.
+ * @param {Object} currencySettings Object with settings to apply. Expected key(s): iso_code. Optional key(s): generic_decimal_precision, detailed_decimal_precision.
  * @property {string} currencySettings.iso_code
- * @property {number} currencySettings.min_digits
- * @property {number} currencySettings.max_digits
  * @property {number|null} currencySettings.generic_decimal_precision
  * @property {number|null} currencySettings.detailed_decimal_precision
  * @param {'generic'|'detailed'} [precision='generic'] Whether to apply generic or detailed decimal precision from the currency settings.
@@ -12,6 +10,7 @@
  * @type {string}
  */
 import { parseIsoDate } from '@/shared/lib/helpers';
+import { STORAGE_SCALE } from '@/shared/lib/money/scale';
 
 export function toFormattedCurrency(input, locale, currencySettings, precision = 'generic') {
     // Fallback to raw input if currency settings are missing
@@ -31,17 +30,15 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
     // is required for the currency style options below to take effect.
     input = Number(input);
 
-    let minDigits = currencySettings.min_digits || 0;
-    // Allow maxDigits to be 0 if explicitly set, otherwise default to undefined to prevent issues with potential null values
-    let maxDigits = currencySettings.max_digits ?? undefined;
-
-    if (precision === 'generic' && currencySettings.generic_decimal_precision != null) {
-        minDigits = currencySettings.generic_decimal_precision;
-        maxDigits = currencySettings.generic_decimal_precision;
-    } else if (precision === 'detailed' && currencySettings.detailed_decimal_precision != null) {
-        minDigits = currencySettings.detailed_decimal_precision;
-        maxDigits = currencySettings.detailed_decimal_precision;
-    }
+    // Floor: the currency's conventional precision (display-only setting). Ceiling: the
+    // field's actual storage scale. Intl.NumberFormat trims trailing zeros between the two,
+    // so a whole amount still shows the currency's usual decimals and a value with real
+    // fractional content shows all of it, up to what the column can actually hold - never
+    // padding zeros just because the ceiling allows them, never truncating real digits.
+    const minDigits = precision === 'detailed'
+        ? (currencySettings.detailed_decimal_precision ?? currencySettings.generic_decimal_precision ?? 0)
+        : (currencySettings.generic_decimal_precision ?? 0);
+    const maxDigits = precision === 'detailed' ? STORAGE_SCALE.PRICE : STORAGE_SCALE.AMOUNT;
 
     return input.toLocaleString(
         locale,
@@ -86,26 +83,6 @@ export function toFormattedDate(input, locale, fallback, allowIsoParse = false, 
     }
 
     return date.toLocaleDateString(locale, dateOptions);
-}
-
-/**
- * Resolve a currency's configured decimal precision (generic or detailed), the same
- * fields toFormattedCurrency() uses for display, for callers that need the raw number
- * (e.g. to clamp an input value) rather than a formatted string.
- *
- * @param {Object} currencySettings Object with generic_decimal_precision/detailed_decimal_precision.
- * @param {'generic'|'detailed'} [precision='generic']
- * @returns {number|null} The configured precision, or null if unset/unavailable.
- */
-export function getDecimalPrecision(currencySettings, precision = 'generic') {
-    if (!currencySettings) {
-        return null;
-    }
-
-    const key = precision === 'detailed' ? 'detailed_decimal_precision' : 'generic_decimal_precision';
-    const value = currencySettings[key];
-
-    return value === null || value === undefined ? null : value;
 }
 
 /**

@@ -283,6 +283,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(12,4) range
                     'max:99999999.9999',
+                    'decimal:0,4',
                 ],
                 'items.*.category_id' => [
                     'required',
@@ -315,6 +316,7 @@ class TransactionRequest extends FormRequest
                         'gt:0',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
                     'config.amount_to' => [
                         'required',
@@ -323,6 +325,7 @@ class TransactionRequest extends FormRequest
                         'same:config.amount_from',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
 
                     // Technical field, but required for standard transaction
@@ -346,6 +349,7 @@ class TransactionRequest extends FormRequest
                         'gt:0',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
                     'config.amount_to' => [
                         'required',
@@ -354,6 +358,7 @@ class TransactionRequest extends FormRequest
                         'same:config.amount_from',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
 
                     // Technical fields, but required for standard transaction
@@ -377,6 +382,7 @@ class TransactionRequest extends FormRequest
                         'gt:0',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
                     'config.amount_to' => [
                         'required',
@@ -384,6 +390,7 @@ class TransactionRequest extends FormRequest
                         'gt:0',
                         // Fit in signed DECIMAL(12,4) range
                         'max:99999999.9999',
+                        'decimal:0,4',
                     ],
                 ]);
             }
@@ -405,6 +412,7 @@ class TransactionRequest extends FormRequest
                     'gte:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
                 'config.tax' => [
                     'nullable',
@@ -412,6 +420,7 @@ class TransactionRequest extends FormRequest
                     'gte:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
             ]);
 
@@ -438,6 +447,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(20,10) range
                     'max:9999999999.9999999999',
+                    'decimal:0,10',
                 ],
                 'config.quantity' => [
                     'required',
@@ -445,6 +455,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
             ];
         }
@@ -458,6 +469,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
             ];
         }
@@ -471,6 +483,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(12,4) range
                     'max:99999999.9999',
+                    'decimal:0,4',
                 ],
             ];
         }
