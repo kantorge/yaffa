@@ -455,6 +455,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
             ];
         }
@@ -468,6 +469,7 @@ class TransactionRequest extends FormRequest
                     'gt:0',
                     // Fit in signed DECIMAL(14,4) range
                     'max:9999999999.9999',
+                    'decimal:0,4',
                 ],
             ];
         }

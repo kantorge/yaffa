@@ -39,12 +39,22 @@ edit) already triggers the lossy round-trip.
 
 This is a real gap, not a hypothetical: `specification.md` FR-6 ("Frontend decimal
 adoption") is marked `✅ Completed`, but the two spots above were never actually converted to
-exact decimal handling - only `TransactionItemContainer.vue`'s allocation logic and the
-`MathInput` precision-clamp feature (see below) were.
+exact decimal handling - only `TransactionItemContainer.vue`'s allocation logic and
+`MathInput`'s `Decimal`-based rounding were.
 
-## Interaction with FR-8 (input clamping, Phase 5 — shipped)
+## Current `MathInput` behavior (FR-8)
 
-`specification.md` FR-8 has re-pointed `MathInput`'s `precision` prop from `Currency.detailed_decimal_precision` (a display setting) to the price field's actual storage scale (`STORAGE_SCALE.PRICE = 10`, `resources/js/shared/lib/money/scale.js`). This widened how many fractional digits a *human* can deliberately type into the price field via `MathInput` — previously capped well under 10 by the currency's configured display precision, now capped only by the column's real scale (`TransactionFormInvestment.vue`'s `pricePrecision` computed property). It does not change the concrete failure scenario this document is about (an automated price-feed import, or an unedited round-trip through `processTransaction()`/`updateAmount()`, already bypassed any manual-entry clamp regardless of where it was set). It does mean "Suggested scope for a first pass" item 5 below — full precision-preserving evaluation in `MathInput` itself — is no longer purely hypothetical for manual entry: a human can now realistically type a 10-significant-digit price and trigger `mathjs`'s float-based `evaluate()` losing precision before the `Decimal` clamp ever sees it, not just receive that precision loss from an import.
+`MathInput.vue` has no per-field precision configuration. It rounds every value it emits,
+price included, to a fixed `FLOAT_NOISE_CLEANUP_SCALE = 10` constant, purely to normalize
+floating-point noise from `mathjs`'s `evaluate()` - never to enforce the price field's real
+storage scale. It shows a warning toast whenever that rounding actually changes the value
+(`Decimal.equals()` comparing the pre- and post-round value). This does not touch the concrete
+failure scenario this document is about: `processTransaction()` collapsing an already-stored
+`DECIMAL(20,10)` value to a native `Number` on every fetch, independent of whether the user
+ever interacts with `MathInput`. "Suggested scope for a first pass" item 5 below
+(precision-preserving evaluation inside `MathInput` itself, i.e. not routing a plain decimal
+through `mathjs`'s float `evaluate()` at all) remains open: the warning toast surfaces that
+precision was lost on manual entry, but doesn't prevent `evaluate()` from losing it.
 
 ## What's already correct - do not change
 
@@ -124,9 +134,10 @@ avoids the blur-with-no-edit case, but doesn't help an input that *is* an expres
 5. Actual precision-preserving evaluation in `MathInput` for the case where the user *does*
    type a high-precision price (option A/B above for `evaluate()`) - the resubmission-drift
    case (item 1-3) remains the one with the most common real-world trigger (price-provider
-   imports), but this item is no longer purely hypothetical for manual entry now that FR-8
-   has widened the price field's `MathInput` clamp to the full storage scale (10) - this item's
-   priority should be reassessed with that in mind, rather than treated as always-lower-priority.
+   imports). A human manually typing an 11+-decimal price now gets a warning that precision
+   was lost (see "Current `MathInput` behavior" above), but `evaluate()` still loses it before
+   `Decimal` ever sees the value - the warning surfaces the symptom, not the root cause this
+   item describes.
 
 ## Acceptance check
 
@@ -140,9 +151,10 @@ is byte-for-byte unchanged.
 
 - Scale-4 fields (`amount`, `quantity`, `commission`, `tax`, `dividend`) - not at risk, leave
   as `Number`.
-- `MathInput`'s `precision`-prop clamping *mechanism* (the `Decimal.toDecimalPlaces()` call) -
-  correct and out of scope here. Its precision *source* for the price field was changed by
-  `specification.md` FR-8 (now shipped - see "Interaction with FR-8" above), tracked there,
-  not in this document.
+- `MathInput`'s rounding mechanism (the `Decimal.toDecimalPlaces()` call and its
+  `Decimal.equals()`-gated warning toast) - correct and out of scope here. There is no
+  per-field `precision` prop; `MathInput` rounds every field, price included, to the same
+  fixed `FLOAT_NOISE_CLEANUP_SCALE = 10`. Tracked in `specification.md` FR-8, not in this
+  document.
 - Report endpoints (`/api/v1/reports/*`) - already documented (`UPGRADE.md`) as returning
   plain JSON numbers by design; no change needed there.

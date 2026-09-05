@@ -46,8 +46,10 @@ class MoneyCast implements CastsAttributes, SerializesCastableAttributes
 
         $amount = $value instanceof Money ? $value->getAmount() : BigDecimal::of((string) $value);
 
-        // HALF_UP here (rather than the stricter UNNECESSARY used on read) tolerates
-        // over-precise input until FR-6 adds real input clamping in the UI layer.
+        // HALF_UP here (rather than the stricter UNNECESSARY used on read) is a backstop
+        // for any write path that bypasses Form Request validation (e.g. a queued job
+        // constructing a model directly) - TransactionRequest/InvestmentPriceRequest's
+        // decimal:0,<scale> rule is the primary gate rejecting over-precise input outright.
         return [$key => (string) $amount->toScale($this->scale, RoundingMode::HalfUp)];
     }
 

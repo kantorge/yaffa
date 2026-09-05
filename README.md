@@ -35,7 +35,6 @@ There are several features **planned** to be implemented:
 - Further charts, reports and dashboards.
 - Handling multiple users as a family in one app instance.
 - Better onboarding experience, or a tutorial.
-- YAFFA is not using dedicated libraries for precise decimal calculations for monetary values. As it is not an accounting software, but a personal finance application, this should not be a real problem. It is planned to be implemented in the future, to avoid any potential issues with calculations and currency conversions. In the meantime, be aware, if this is a concern for you.
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
 If you are looking to have these in a budget app or expense tracker, then YAFFA might not be the best choice for you.
@@ -46,6 +45,7 @@ If you are looking to have these in a budget app or expense tracker, then YAFFA 
   - Also, YAFFA supports automatic creation of scheduled transactions and entry of simple recurring transactions, to speed up the process of recording transactions.
 - Native mobile app
   - YAFFA is optimized for desktop browsers. The interface is responsive to support mobile view, but not fully optimized for mobile devices.
+- YAFFA is a personal finance application, not an accounting application. The precision of the calculations should be sufficient for personal finance, but it is not guaranteed to be accurate enough for accounting purposes. Similarly, the precision is not designed to be sufficient for cryptocurrency transactions and prices.
 
 Read more about the [features of YAFFA](https://yaffa.cc/features-of-yaffa-personal-finance-application/)
 
@@ -57,8 +57,7 @@ You can try out YAFFA without installing it. Take a look at the application at h
 - Do you want a full test drive to explore the application as if it were your own instance? You can register a new account at https://sandbox.yaffa.cc/register
 
 ⚠️ **Important!** This is not a production environment or a free service.
-Use it only to experiment with YAFFA's functionality and UI.
-The database is regularly wiped without prior notice.
+Use it only to experiment with YAFFA's functionality and UI. The database is regularly wiped without prior notice.
 
 💡 **Tip:** use a fake or disposable email address to sign up. The email address does not need to be verified.
 
