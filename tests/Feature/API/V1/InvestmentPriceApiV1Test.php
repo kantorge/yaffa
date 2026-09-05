@@ -237,6 +237,39 @@ class InvestmentPriceApiV1Test extends TestCase
         $response->assertUnprocessable()->assertJsonValidationErrors(['price']);
     }
 
+    /**
+     * price rejects a value with more fractional digits than investment_prices.price's
+     * DECIMAL(20,10) scale allows - the new `decimal:0,10` rule (specification.md FR-8).
+     * Magnitude alone doesn't catch this - the value is well within the column's max.
+     */
+    public function test_v1_price_rejects_excess_decimal_places(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson(route('api.v1.investment-prices.store'), [
+                'investment_id' => $this->investment->id,
+                'date' => '2024-01-15',
+                'price' => '1234.567890123456',
+            ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['price']);
+    }
+
+    /**
+     * price accepts a value at exactly investment_prices.price's DECIMAL(20,10) scale - the
+     * new rule must not reject a value the column can genuinely hold in full.
+     */
+    public function test_v1_price_accepts_value_at_exact_decimal_scale(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson(route('api.v1.investment-prices.store'), [
+                'investment_id' => $this->investment->id,
+                'date' => '2024-01-15',
+                'price' => '1234.5678901234',
+            ]);
+
+        $response->assertCreated();
+    }
+
     public function test_v1_update_modifies_price(): void
     {
         $price = InvestmentPrice::factory()->for($this->investment)->create(['date' => '2024-01-15', 'price' => 100.00]);

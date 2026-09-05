@@ -577,9 +577,9 @@
   import {
     __,
     getCurrencySymbol,
-    getDecimalPrecision,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
+  import { STORAGE_SCALE } from '@/shared/lib/money/scale';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -789,27 +789,15 @@
         return '';
       },
 
-      // The currency amount_from/the item amounts are denominated in - mirrors
-      // ammountFromCurrencyLabel's account-selection logic, but returns the
-      // currency object itself rather than just its display symbol.
-      amountFromCurrency() {
-        if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
-          return this.from.account_currency || null;
-        }
-
-        if (this.form.transaction_type === 'deposit') {
-          return this.to.account_currency || null;
-        }
-
-        return null;
-      },
-
+      // Input clamp ceiling for amount_from/amount_to/item amounts - the fields'
+      // actual storage scale (MoneyCast(4, ...)), not the currency's configured
+      // display precision. See specification.md FR-8.
       amountFromPrecision() {
-        return getDecimalPrecision(this.amountFromCurrency);
+        return STORAGE_SCALE.AMOUNT;
       },
 
       amountToPrecision() {
-        return getDecimalPrecision(this.to.account_currency);
+        return STORAGE_SCALE.AMOUNT;
       },
 
       // Calculate the summary of all existing items and their values, using

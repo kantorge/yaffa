@@ -538,9 +538,9 @@
   import {
     __,
     getCurrencySymbol,
-    getDecimalPrecision,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
+  import { STORAGE_SCALE } from '@/shared/lib/money/scale';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -689,12 +689,15 @@
           .toNumber();
       },
 
+      // Input clamp ceiling - the field's actual storage scale (MoneyCast's
+      // scale: 10 for price, 4 for commission/tax/dividend), not the currency's
+      // configured display precision. See specification.md FR-8.
       pricePrecision() {
-        return getDecimalPrecision(this.currency, 'detailed');
+        return STORAGE_SCALE.PRICE;
       },
 
       moneyPrecision() {
-        return getDecimalPrecision(this.currency, 'generic');
+        return STORAGE_SCALE.AMOUNT;
       },
 
       transactionTypeSettings() {

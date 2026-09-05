@@ -42,9 +42,9 @@ adoption") is marked `✅ Completed`, but the two spots above were never actuall
 exact decimal handling - only `TransactionItemContainer.vue`'s allocation logic and the
 `MathInput` precision-clamp feature (see below) were.
 
-## Interaction with FR-8 (input clamping, Phase 5)
+## Interaction with FR-8 (input clamping, Phase 5 — shipped)
 
-`specification.md` FR-8 re-points `MathInput`'s `precision` prop from `Currency.detailed_decimal_precision` (a display setting) to the price field's actual storage scale (10). That widens how many fractional digits a *human* can deliberately type into the price field via `MathInput` — previously capped well under 10 by the currency's configured display precision, now capped only by the column's real scale. It does not change the concrete failure scenario this document is about (an automated price-feed import, or an unedited round-trip through `processTransaction()`/`updateAmount()`, already bypasses any manual-entry clamp regardless of where it's set). It does mean "Suggested scope for a first pass" item 5 below — full precision-preserving evaluation in `MathInput` itself — moves slightly higher priority once FR-8 ships, since a human can now realistically trigger it by hand, not just receive it from an import.
+`specification.md` FR-8 has re-pointed `MathInput`'s `precision` prop from `Currency.detailed_decimal_precision` (a display setting) to the price field's actual storage scale (`STORAGE_SCALE.PRICE = 10`, `resources/js/shared/lib/money/scale.js`). This widened how many fractional digits a *human* can deliberately type into the price field via `MathInput` — previously capped well under 10 by the currency's configured display precision, now capped only by the column's real scale (`TransactionFormInvestment.vue`'s `pricePrecision` computed property). It does not change the concrete failure scenario this document is about (an automated price-feed import, or an unedited round-trip through `processTransaction()`/`updateAmount()`, already bypassed any manual-entry clamp regardless of where it was set). It does mean "Suggested scope for a first pass" item 5 below — full precision-preserving evaluation in `MathInput` itself — is no longer purely hypothetical for manual entry: a human can now realistically type a 10-significant-digit price and trigger `mathjs`'s float-based `evaluate()` losing precision before the `Decimal` clamp ever sees it, not just receive that precision loss from an import.
 
 ## What's already correct - do not change
 
@@ -124,9 +124,9 @@ avoids the blur-with-no-edit case, but doesn't help an input that *is* an expres
 5. Actual precision-preserving evaluation in `MathInput` for the case where the user *does*
    type a high-precision price (option A/B above for `evaluate()`) - the resubmission-drift
    case (item 1-3) remains the one with the most common real-world trigger (price-provider
-   imports), but this item is no longer purely hypothetical for manual entry once FR-8
-   widens the price field's `MathInput` clamp to the full storage scale (10) - re-evaluate
-   its priority alongside FR-8's rollout rather than treating it as always-lower-priority.
+   imports), but this item is no longer purely hypothetical for manual entry now that FR-8
+   has widened the price field's `MathInput` clamp to the full storage scale (10) - this item's
+   priority should be reassessed with that in mind, rather than treated as always-lower-priority.
 
 ## Acceptance check
 
@@ -141,7 +141,8 @@ is byte-for-byte unchanged.
 - Scale-4 fields (`amount`, `quantity`, `commission`, `tax`, `dividend`) - not at risk, leave
   as `Number`.
 - `MathInput`'s `precision`-prop clamping *mechanism* (the `Decimal.toDecimalPlaces()` call) -
-  correct and out of scope here. Its precision *source* for the price field is being changed
-  by `specification.md` FR-8, tracked there, not in this document.
+  correct and out of scope here. Its precision *source* for the price field was changed by
+  `specification.md` FR-8 (now shipped - see "Interaction with FR-8" above), tracked there,
+  not in this document.
 - Report endpoints (`/api/v1/reports/*`) - already documented (`UPGRADE.md`) as returning
   plain JSON numbers by design; no change needed there.
