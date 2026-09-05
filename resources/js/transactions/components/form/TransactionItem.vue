@@ -197,6 +197,7 @@
 </template>
 
 <script>
+  import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import { __ } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
@@ -572,13 +573,22 @@
           .toggleClass('d-none d-md-block');
       },
 
-      // Add the currently available remainder amount to this item
+      // Add the currently available remainder amount to this item, using the
+      // live bound amount (not the possibly-stale `amount` prop) and exact
+      // decimal arithmetic to avoid float drift - matches roundAmount() in
+      // TransactionItemContainer.vue for the same transaction_items.amount
+      // field. Assigning amountData (rather than poking the DOM directly)
+      // keeps Vue's own reactive state in sync and reuses the existing
+      // amountData watcher to emit update:amount.
       loadRemainder() {
-        const element = $(this.$el).find('input.transaction_item_amount');
-        const amount = (this.amount || 0) + this.remainingAmount;
+        const amount = new Decimal(this.amountData || 0).plus(
+          this.remainingAmount || 0,
+        );
 
-        element.val(amount);
-        this.$emit('update:amount', amount);
+        this.amountData =
+          this.precision === null
+            ? amount.toNumber()
+            : amount.toDecimalPlaces(this.precision).toNumber();
       },
 
       /**
