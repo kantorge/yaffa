@@ -280,7 +280,6 @@
                         id="transaction_price"
                         v-model="form.config.price"
                         :disabled="!transactionTypeSettings.price"
-                        :precision="pricePrecision"
                         @input="onPriceChange"
                       ></MathInput>
                       <span
@@ -347,7 +346,6 @@
                         id="transaction_dividend"
                         v-model="form.config.dividend"
                         :disabled="!transactionTypeSettings.dividend"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -367,7 +365,6 @@
                         class="form-control"
                         id="transaction_commission"
                         v-model="form.config.commission"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -385,7 +382,6 @@
                         class="form-control"
                         id="transaction_tax"
                         v-model="form.config.tax"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -540,7 +536,6 @@
     getCurrencySymbol,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
-  import { STORAGE_SCALE } from '@/shared/lib/money/scale';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -687,17 +682,6 @@
               .times(this.transactionTypeSettings.amount_multiplier || 0),
           )
           .toNumber();
-      },
-
-      // Input clamp ceiling - the field's actual storage scale (MoneyCast's
-      // scale: 10 for price, 4 for commission/tax/dividend), not the currency's
-      // configured display precision. See specification.md FR-8.
-      pricePrecision() {
-        return STORAGE_SCALE.PRICE;
-      },
-
-      moneyPrecision() {
-        return STORAGE_SCALE.AMOUNT;
       },
 
       transactionTypeSettings() {

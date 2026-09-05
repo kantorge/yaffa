@@ -332,7 +332,6 @@
                     class="form-control"
                     id="transaction_amount_from"
                     v-model="form.config.amount_from"
-                    :precision="amountFromPrecision"
                   ></MathInput>
                 </div>
                 <div
@@ -367,7 +366,6 @@
                     class="form-control"
                     id="transaction_amount_to"
                     v-model="form.config.amount_to"
-                    :precision="amountToPrecision"
                   ></MathInput>
                 </div>
               </div>
@@ -480,7 +478,6 @@
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
-            :precision="amountFromPrecision"
             :dropdown-parent-selector="dropdownParentSelector"
           ></transaction-item-container>
         </div>
@@ -579,7 +576,6 @@
     getCurrencySymbol,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
-  import { STORAGE_SCALE } from '@/shared/lib/money/scale';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -787,17 +783,6 @@
         }
 
         return '';
-      },
-
-      // Input clamp ceiling for amount_from/amount_to/item amounts - the fields'
-      // actual storage scale (MoneyCast(4, ...)), not the currency's configured
-      // display precision. See specification.md FR-8.
-      amountFromPrecision() {
-        return STORAGE_SCALE.AMOUNT;
-      },
-
-      amountToPrecision() {
-        return STORAGE_SCALE.AMOUNT;
       },
 
       // Calculate the summary of all existing items and their values, using

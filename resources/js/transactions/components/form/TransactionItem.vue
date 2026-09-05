@@ -132,7 +132,6 @@
           <MathInput
             class="form-control transaction_item_amount"
             v-model="amountData"
-            :precision="precision"
           ></MathInput>
 
           <button
@@ -221,10 +220,6 @@
       tags: Array,
       remainingAmount: Number,
       payee: [Number, String],
-      precision: {
-        type: Number,
-        default: null,
-      },
       match_type: {
         type: String,
         default: null,
@@ -575,20 +570,15 @@
 
       // Add the currently available remainder amount to this item, using the
       // live bound amount (not the possibly-stale `amount` prop) and exact
-      // decimal arithmetic to avoid float drift - matches roundAmount() in
-      // TransactionItemContainer.vue for the same transaction_items.amount
-      // field. Assigning amountData (rather than poking the DOM directly)
-      // keeps Vue's own reactive state in sync and reuses the existing
-      // amountData watcher to emit update:amount.
+      // decimal arithmetic - Decimal.plus() introduces no rounding error of
+      // its own, so the result matches the exact remainder, with no digit
+      // limit applied. Assigning amountData (rather than poking the DOM
+      // directly) keeps Vue's own reactive state in sync and reuses the
+      // existing amountData watcher to emit update:amount.
       loadRemainder() {
-        const amount = new Decimal(this.amountData || 0).plus(
-          this.remainingAmount || 0,
-        );
-
-        this.amountData =
-          this.precision === null
-            ? amount.toNumber()
-            : amount.toDecimalPlaces(this.precision).toNumber();
+        this.amountData = new Decimal(this.amountData || 0)
+          .plus(this.remainingAmount || 0)
+          .toNumber();
       },
 
       /**

@@ -103,7 +103,6 @@
           :currencySymbol="currencySymbol"
           :remainingAmount="remainingAmount"
           :payee="payee"
-          :precision="precision"
           :dropdown-parent-selector="dropdownParentSelector"
         ></transaction-item>
       </div>
@@ -192,10 +191,6 @@
       enabled: {
         type: Boolean,
         default: true,
-      },
-      precision: {
-        type: Number,
-        default: null,
       },
       dropdownParentSelector: {
         type: String,
