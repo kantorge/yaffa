@@ -332,7 +332,6 @@
                     class="form-control"
                     id="transaction_amount_from"
                     v-model="form.config.amount_from"
-                    :precision="amountFromPrecision"
                   ></MathInput>
                 </div>
                 <div
@@ -367,7 +366,6 @@
                     class="form-control"
                     id="transaction_amount_to"
                     v-model="form.config.amount_to"
-                    :precision="amountToPrecision"
                   ></MathInput>
                 </div>
               </div>
@@ -480,7 +478,6 @@
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
-            :precision="amountFromPrecision"
             :dropdown-parent-selector="dropdownParentSelector"
           ></transaction-item-container>
         </div>
@@ -577,7 +574,6 @@
   import {
     __,
     getCurrencySymbol,
-    getDecimalPrecision,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
@@ -787,29 +783,6 @@
         }
 
         return '';
-      },
-
-      // The currency amount_from/the item amounts are denominated in - mirrors
-      // ammountFromCurrencyLabel's account-selection logic, but returns the
-      // currency object itself rather than just its display symbol.
-      amountFromCurrency() {
-        if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
-          return this.from.account_currency || null;
-        }
-
-        if (this.form.transaction_type === 'deposit') {
-          return this.to.account_currency || null;
-        }
-
-        return null;
-      },
-
-      amountFromPrecision() {
-        return getDecimalPrecision(this.amountFromCurrency);
-      },
-
-      amountToPrecision() {
-        return getDecimalPrecision(this.to.account_currency);
       },
 
       // Calculate the summary of all existing items and their values, using

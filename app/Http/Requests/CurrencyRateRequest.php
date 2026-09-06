@@ -21,7 +21,9 @@ class CurrencyRateRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:0.0000000001',
+                // Fit in signed DECIMAL(20,10) range
                 'max:9999999999.9999999999',
+                'decimal:0,10',
             ],
             'from_id' => [
                 'required',

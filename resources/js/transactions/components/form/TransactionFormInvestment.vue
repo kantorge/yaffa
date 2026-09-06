@@ -280,7 +280,6 @@
                         id="transaction_price"
                         v-model="form.config.price"
                         :disabled="!transactionTypeSettings.price"
-                        :precision="pricePrecision"
                         @input="onPriceChange"
                       ></MathInput>
                       <span
@@ -347,7 +346,6 @@
                         id="transaction_dividend"
                         v-model="form.config.dividend"
                         :disabled="!transactionTypeSettings.dividend"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -367,7 +365,6 @@
                         class="form-control"
                         id="transaction_commission"
                         v-model="form.config.commission"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -385,7 +382,6 @@
                         class="form-control"
                         id="transaction_tax"
                         v-model="form.config.tax"
-                        :precision="moneyPrecision"
                       ></MathInput>
                     </div>
                   </div>
@@ -538,7 +534,6 @@
   import {
     __,
     getCurrencySymbol,
-    getDecimalPrecision,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
@@ -687,14 +682,6 @@
               .times(this.transactionTypeSettings.amount_multiplier || 0),
           )
           .toNumber();
-      },
-
-      pricePrecision() {
-        return getDecimalPrecision(this.currency, 'detailed');
-      },
-
-      moneyPrecision() {
-        return getDecimalPrecision(this.currency, 'generic');
       },
 
       transactionTypeSettings() {
