@@ -33,12 +33,16 @@ td.dt-nowrap {
     display: none;
 }
 
-// Show/hide dataTables actions icon based on the row hover state
+// Dim/highlight dataTables actions icon based on the row hover state. Left dimmed rather than
+// fully hidden (opacity: 0) so it stays visible and tappable on touch devices, which have no
+// :hover state to reveal it from.
 table.dataTable tr .hover-icon {
-    opacity: 0;
+    opacity: 0.4;
     transition: opacity .2s ease-out;
     cursor: pointer;
     transition-delay: .2s;
+    // Widen the tap/click target beyond the glyph itself - three thin dots are an easy miss.
+    padding: 0.5rem;
 }
 
 table.dataTable tr:hover .hover-icon {
@@ -128,12 +132,14 @@ table.dataTable tr.table-warning {
 }
 
 // DataTables detects dark mode via [data-bs-theme="dark"], not CoreUI's [data-coreui-theme="dark"].
-// This means --dt-row-stripe stays at its default "0, 0, 0" (black) in dark mode — a black
-// overlay on a dark background is invisible. Fix: set white rgb values and override the
+// This means --dt-row_background-stripe stays at its default "0, 0, 0" (black) in dark mode — a
+// black overlay on a dark background is invisible. Fix: set white rgb values and override the
 // hardcoded 0.05 box-shadow opacity to something visible.
+// Variable names match DataTables 3's dataTables.bootstrap5.css (renamed from --dt-row-stripe /
+// --dt-row-hover / --dt-row-selected* in DataTables 2).
 [data-coreui-theme="dark"] {
-    --dt-row-stripe: 255, 255, 255;
-    --dt-row-hover: 255, 255, 255;
+    --dt-row_background-stripe: 255, 255, 255;
+    --dt-row_background-hover: 255, 255, 255;
 
     table.table.dataTable.table-striped > tbody > tr:nth-of-type(2n+1) > * {
         box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.07);
@@ -141,9 +147,9 @@ table.dataTable tr.table-warning {
 }
 
 :root {
-    --dt-row-selected: 235, 237, 239;
-    --dt-row-selected-text: 0, 0, 0;
-    --dt-row-selected-link: var(--cui-link-color-rgb);
+    --dt-row_background-selected: 235, 237, 239;
+    --dt-row-text_color-selected: 0, 0, 0;
+    --dt-row-link_color-selected: var(--cui-link-color-rgb);
 }
 
 // Sidebar form settings

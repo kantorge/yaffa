@@ -275,7 +275,7 @@
   import { nextTick } from 'vue';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import Swal from 'sweetalert2';
 
   export default {
@@ -563,7 +563,7 @@
         }
       },
       formatDate(value) {
-        return value ? new Date(value).toLocaleString() : __('Never');
+        return value ? toFormattedDateTime(value, window.YAFFA.userSettings.locale) : __('Never');
       },
       humanize(value) {
         return value

@@ -1,5 +1,4 @@
 import 'datatables.net-bs5';
-import "datatables.net-responsive-bs5";
 
 import {
     booleanToTableIcon,
@@ -240,7 +239,6 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     drawCallback: function () {
         initializeBootstrapTooltips(document.querySelector(dataTableSelector));
     },

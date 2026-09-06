@@ -6,11 +6,14 @@ use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 use Tests\TestCase;
 
 class CurrencyRateTest extends TestCase
 {
+    use RefreshDatabase;
+
     private function createUniqeCurrencyForUser(User $user): Currency
     {
         // Get the currencies supported by the mock provider

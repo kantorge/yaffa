@@ -114,7 +114,7 @@ class TransactionScheduleInstancesTest extends TestCase
 
         $instances = $transaction->scheduleInstances();
 
-        // Calling code (e.g. MainController::account_details()) stashes ad-hoc values onto
+        // Calling code (e.g. AccountEntityController::history()) stashes ad-hoc values onto
         // virtual instances after generation (a running total, in that case) - confirm the DTO
         // supports arbitrary get/set the same way a replicated Eloquent model did.
         foreach ($instances as $index => $instance) {

@@ -1,4 +1,4 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate } from '@/shared/lib/i18n';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
 import {
   escapeHtml,
   getTransactionTypeConfig,
@@ -323,7 +323,7 @@ export const transactionColumnDefinition = {
                     return typeConfig.label + " " + row.config.quantity;
                 }
 
-                return typeConfig.label + " " + row.config.quantity.toLocaleString(window.YAFFA.userSettings.locale, {
+                return typeConfig.label + " " + toFormattedNumber(row.config.quantity, window.YAFFA.userSettings.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
                 }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.userSettings.locale, row.transaction_currency);
@@ -479,6 +479,38 @@ export const transactionColumnDefinition = {
     },
 }
 
+/**
+ * Deletes a transaction via the API, removes its row from `selector`'s DataTable (matched by
+ * `id`), and shows a toast - shared logic behind the button-driven initializeAjaxDeleteButton()
+ * below and any other trigger (e.g. a contextual-actions menu item) that already knows the id
+ * without a `[data-delete]` button to read it from.
+ *
+ * @param {string} selector DataTables container selector the row lives in
+ * @param {number} id
+ * @returns {Promise<void>} Rejects (after showing the error toast) so a caller doing its own
+ *   busy-state bookkeeping (see initializeAjaxDeleteButton) can still hook .catch().
+ */
+export function deleteTransactionRow(selector, id) {
+    return axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+        .then(function () {
+            // Find and remove original row in schedule table
+            let row = $(selector).dataTable().api().row(function (_idx, data) {
+                return data.id === id;
+            });
+
+            row.remove().draw();
+
+            // Emit a custom event to global scope about the result
+            toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
+        })
+        .catch(function (error) {
+            // Emit a custom event to global scope about the result
+            toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
+
+            throw error;
+        });
+}
+
 export function initializeAjaxDeleteButton(selector, successCallback) {
     $(selector).on("click", "[data-delete]", function () {
         // Prevent running multiple times in parallel
@@ -490,30 +522,64 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
 
         $(this).addClass('busy');
 
-        axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+        deleteTransactionRow(selector, id)
             .then(function () {
-                // Find and remove original row in schedule table
-                let row = $(selector).dataTable().api().row(function (_idx, data) {
-                    return data.id === id;
-                });
-
-                row.remove().draw();
-
-                // Emit a custom event to global scope about the result
-                toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
-
                 // Execute callback if provided
                 if (typeof successCallback === 'function') {
                     successCallback();
                 }
             })
-            .catch(function (error) {
-                // Emit a custom event to global scope about the result
-                toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
-
+            .catch(function () {
                 $(selector).find(".busy[data-delete]").removeClass('busy')
             });
     });
+}
+
+/**
+ * Fetches a transaction and dispatches the showTransactionQuickViewModal event that
+ * TransactionShowModal.vue listens for - shared logic behind the button-driven
+ * initializeQuickViewButton() below and any other trigger (e.g. a contextual-actions menu item)
+ * that already knows the id without a `button.transaction-quickview` to read it from.
+ *
+ * @param {number|string} id
+ * @returns {Promise<void>}
+ */
+export function triggerTransactionQuickView(id) {
+    return fetch('/api/v1/transactions/' + id)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+
+            return response.json();
+        })
+        .then(function (data) {
+            // Normalizes dates and the decimal-string Money/BigDecimal fields (price,
+            // quantity, amount_from/to, etc.) back to plain JS values - same as every
+            // other consumer of a /api/v1/transactions/* response.
+            let transaction = processTransaction(data.transaction);
+
+            // Emit global event for modal to display
+            let event = new CustomEvent('showTransactionQuickViewModal', {
+                detail: {
+                    transaction: transaction,
+                    controls: {
+                        show: true,
+                        edit: true,
+                        clone: true,
+                        skip: true,
+                        enter: true,
+                        delete: true,
+                    }
+                }
+            });
+            window.dispatchEvent(event);
+        })
+        .catch((error) => {
+            toastHelpers.showErrorToast(
+                __('Error getting transactions: :error', {error: error})
+            );
+        });
 }
 
 // Initialize event listener for quick-view button
@@ -527,33 +593,7 @@ export function initializeQuickViewButton(selector) {
         $(this).addClass('busy');
         let el = $(this);
 
-        fetch('/api/v1/transactions/' + this.dataset.id)
-            .then(response => response.json())
-            .then(function (data) {
-                // Normalizes dates and the decimal-string Money/BigDecimal fields (price,
-                // quantity, amount_from/to, etc.) back to plain JS values - same as every
-                // other consumer of a /api/v1/transactions/* response.
-                let transaction = processTransaction(data.transaction);
-
-                // Emit global event for modal to display
-                let event = new CustomEvent('showTransactionQuickViewModal', {
-                    detail: {
-                        transaction: transaction,
-                        controls: {
-                            show: true,
-                            edit: true,
-                            clone: true,
-                            skip: true,
-                            enter: true,
-                            delete: true,
-                        }
-                    }
-                });
-                window.dispatchEvent(event);
-            })
-            .catch((error) => {
-                console.log(error);
-            })
+        triggerTransactionQuickView(this.dataset.id)
             .finally(() => {
                 el.removeClass('busy');
             });

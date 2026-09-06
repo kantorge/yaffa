@@ -36,7 +36,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
 
   export default {
     name: 'CurrentAssetsCard',
@@ -57,7 +57,7 @@
         if (value === 0) {
           return '0';
         }
-        return value.toLocaleString(this.locale, {
+        return toFormattedNumber(value, this.locale, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 4,
         });

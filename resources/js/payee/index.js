@@ -1,5 +1,4 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 import { createApp } from 'vue';
@@ -7,7 +6,7 @@ import PayeeForm from './components/PayeeForm.vue';
 
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
-import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
 
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
@@ -403,10 +402,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Name'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return `<div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
-                        <span>${escapeHtml(data)}</span>
-                    </div>`;
+                    return escapeHtml(data);
                 }
 
                 return data;
@@ -434,7 +430,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type, row) {
                 if (type === 'display') {
                     if (data > 0) {
-                        const formattedCount = data.toLocaleString(window.YAFFA.userSettings.locale, {
+                        const formattedCount = toFormattedNumber(data, window.YAFFA.userSettings.locale, {
                             maximumFractionDigits: 0,
                             useGrouping: true,
                         });
@@ -510,6 +506,16 @@ window.table = $(dataTableSelector).DataTable({
             },
             searchable: true,
         },
+        {
+            title: __('Actions'),
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            },
+            className: 'text-center',
+            orderable: false,
+            searchable: false,
+        },
     ],
     createdRow: function (row, data) {
         if (!data.config?.category && !data.category_suggestion) {
@@ -535,7 +541,6 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     select: {
         select: true,
         info: false,

@@ -37,7 +37,7 @@
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '@/shared/lib/datatable';
-  import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+  import { __, getDataTablesLanguageOptions, toFormattedNumber } from '@/shared/lib/i18n';
   import { toIsoDateString } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -231,7 +231,7 @@
             title: __('Quantity'),
             render: function (data) {
               return data !== null && data !== ''
-                ? Number(data).toLocaleString(vm.locale)
+                ? toFormattedNumber(data, vm.locale)
                 : '';
             },
           },

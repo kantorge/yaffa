@@ -1,5 +1,6 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
+import 'datatables.net-select-bs5';
+import 'datatables-contextual-actions';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import * as helpers from '@/shared/lib/helpers';
@@ -123,16 +124,15 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            data: 'id',
             title: __("Actions"),
-            render: function (data) {
-                return dataTableHelpers.dataTablesActionButton(data, 'quickView') +
-                    dataTableHelpers.dataTablesActionButton(data, 'show') +
-                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                    dataTableHelpers.dataTablesActionButton(data, 'delete');
+            defaultContent: '',
+            // See resources/js/account/history.js's historyTable for the reference shape: the
+            // actual actions are defined once in the contextualActions() call below and shown
+            // on demand in a context menu - this cell only needs to render a trigger icon.
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            className: "dt-nowrap",
+            className: "text-center",
             orderable: false,
             searchable: false,
         }
@@ -146,6 +146,8 @@ let dtHistory = $(selectorHistoryTable).DataTable({
      * @returns {void}
      */
     createdRow: function (row, data) {
+        $(row).attr('data-id', data.id);
+
         // Color coding for the amount column
         if (data.current_cash_flow > 0) {
             $('td', row).eq(4).addClass('text-success');
@@ -168,13 +170,87 @@ let dtHistory = $(selectorHistoryTable).DataTable({
     order: [
         [0, "asc"]
     ],
-    responsive: true,
+    // Required so the contextualActions plugin below has row selection to work with; info:false
+    // suppresses the extra "(1 row selected)" text it would otherwise append.
+    select: {
+        select: true,
+        info: false,
+        style: 'os',
+    },
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
     stateSave: false,
     processing: true,
     paging: false,
+});
+
+// Contextual actions for dtHistory, replacing the always-rendered per-row action buttons
+// (see the Actions column's render() above). Items mirror exactly what those buttons used to do.
+dtHistory.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Quick view'),
+            iconClass: 'fa fa-eye',
+            contextMenuClasses: ['text-success'],
+            action: function (row) {
+                dataTableHelpers.triggerTransactionQuickView(row[0].id);
+            },
+        },
+        {
+            type: 'option',
+            title: __('View details'),
+            iconClass: 'fa fa-search',
+            contextMenuClasses: ['text-success'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'show' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Clone'),
+            iconClass: 'fa fa-clone',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+            },
+        },
+        {
+            type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            action: function (row) {
+                dataTableHelpers.deleteTransactionRow(selectorHistoryTable, row[0].id)
+                    .then(getAccountBalance)
+                    .catch(() => {});
+            },
+        },
+    ],
 });
 
 let dtSchedule = $(selectorScheduleTable).DataTable({
@@ -200,18 +276,12 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            data: 'id',
             title: __("Actions"),
             defaultContent: '',
-            render: function (data) {
-                return '<button class="btn btn-xs btn-success create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Adjust and enter instance') + '"><i class="fa fa-fw fa-pencil"></i></button> ' +
-                    dataTableHelpers.dataTablesActionButton(data, 'skip') +
-                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
-                    dataTableHelpers.dataTablesActionButton(data, 'delete');
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            className: "dt-nowrap",
+            className: "text-center",
             orderable: false,
             searchable: false,
         }
@@ -226,6 +296,8 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
      * @returns {void}
      */
     createdRow: function (row, data) {
+        $(row).attr('data-id', data.id);
+
         // This data is required, but just to be on the safe side, let's validate it
         if (data.transaction_schedule.next_date) {
             if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
@@ -258,7 +330,13 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         // Next date is the first column
         [0, "asc"]
     ],
-    responsive: true,
+    // Required so the contextualActions plugin below has row selection to work with; info:false
+    // suppresses the extra "(1 row selected)" text it would otherwise append.
+    select: {
+        select: true,
+        info: false,
+        style: 'os',
+    },
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
@@ -267,55 +345,138 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
     paging: false,
 });
 
-dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
+// Contextual actions for dtSchedule, replacing the always-rendered per-row action buttons
+// (see the Actions column's render() above). Items mirror exactly what those buttons/delegated
+// click handlers used to do - same "adjust and enter instance" draft event, same AJAX skip/delete.
+dtSchedule.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Adjust and enter instance'),
+            iconClass: 'fa fa-pencil',
+            contextMenuClasses: ['text-success fw-bold'],
+            action: function (row) {
+                // TODO: should this data be passed back and forth instead of storing it?
+                recentTransactionDraftId = Number(row[0].id);
 
-// Skip instance via API
-$(selectorScheduleTable).on("click", "[data-skip]", function () {
-    // Prevent running multiple times in parallel
-    if ($(this).hasClass("busy")) {
-        return false;
-    }
+                const transaction = {...row[0]};
 
-    let id = Number(this.dataset.id);
+                // Remove schedule data
+                transaction.schedule = false;
 
-    $(this).addClass('busy');
+                // Adjust the date to the next scheduled date
+                transaction.date = transaction.transaction_schedule.next_date;
 
-    axios.patch('/api/v1/transactions/' + id + '/skip')
-        .then(function (response) {
-            // Find and update original row in schedule table
-            let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
-                return Number(data.id) === id;
-            });
-
-            let data = row.data();
-            let newNextDate = response.data.transaction.transaction_schedule.next_date;
-            // If next date exists, update the row. Otherwise remove it.
-            if (newNextDate) {
-                data.transaction_schedule.next_date = helpers.parseIsoDate(newNextDate);
-                row.data(data).draw();
-
-                toastHelpers.showToast(
-                    __('Success'),
-                    __('Schedule instance skipped.'),
-                    'bg-success',
-                    {
-                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                // Dispatch event
+                const event = new CustomEvent('initiateEnterInstance', {
+                    detail: {
+                        transaction: transaction,
                     }
-                );
-            } else {
-                row.remove().draw();
+                });
+                window.dispatchEvent(event);
+            },
+        },
+        {
+            type: 'option',
+            title: __('Skip current schedule'),
+            iconClass: 'fa fa-forward',
+            contextMenuClasses: ['text-warning fw-bold'],
+            action: function (row) {
+                const id = row[0].id;
 
-                toastHelpers.showToast(
-                    __('Success'),
-                    __('Schedule instance skipped. This schedule has ended.'),
-                    'bg-success',
-                    {
-                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
-                    }
-                );
-            }
-            // The redraw will also remove the busy class
-        });
+                axios.patch('/api/v1/transactions/' + id + '/skip')
+                    .then(function (response) {
+                        // Find and update original row in schedule table
+                        let scheduleRow = dtSchedule.row(function (_idx, data, _node) {
+                            return Number(data.id) === id;
+                        });
+
+                        let data = scheduleRow.data();
+                        let newNextDate = response.data.transaction.transaction_schedule.next_date;
+                        // If next date exists, update the row. Otherwise remove it.
+                        if (newNextDate) {
+                            data.transaction_schedule.next_date = helpers.parseIsoDate(newNextDate);
+                            scheduleRow.data(data).draw();
+
+                            toastHelpers.showToast(
+                                __('Success'),
+                                __('Schedule instance skipped.'),
+                                'bg-success',
+                                {
+                                    headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                                }
+                            );
+                        } else {
+                            scheduleRow.remove().draw();
+
+                            toastHelpers.showToast(
+                                __('Success'),
+                                __('Schedule instance skipped. This schedule has ended.'),
+                                'bg-success',
+                                {
+                                    headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                                }
+                            );
+                        }
+                    })
+                    .catch(function (error) {
+                        toastHelpers.showErrorToast(
+                            __('Error skipping transaction (#:transactionId): :error', {transactionId: id, error: error})
+                        );
+                    });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Clone'),
+            iconClass: 'fa fa-clone',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit and create new schedule'),
+            iconClass: 'fa fa-calendar',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'replace' });
+            },
+        },
+        {
+            type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            action: function (row) {
+                dataTableHelpers.deleteTransactionRow(selectorScheduleTable, row[0].id);
+            },
+        },
+    ],
 });
 
 // Define and run a function to get the account balance
@@ -395,10 +556,6 @@ let getAccountBalance = function () {
     );
 }
 getAccountBalance();
-
-// Delete instance via API
-dataTableHelpers.initializeAjaxDeleteButton(selectorHistoryTable, getAccountBalance);
-dataTableHelpers.initializeAjaxDeleteButton(selectorScheduleTable);
 
 // Reconciled button listener
 $(selectorHistoryTable).on("click", "i.reconcile", function () {
@@ -529,29 +686,6 @@ $('#create-investment-transaction-button').on('click', function () {
         detail: {
             transaction: transaction,
             type: 'investment',
-        }
-    });
-    window.dispatchEvent(event);
-});
-
-// Set up event listener that stores the currently selected transaction and dispatches an event
-$(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', function () {
-    // TODO: should this data be passed back and forth instead of storing it?
-    recentTransactionDraftId = Number($(this).data('draft'));
-
-    const draft = dtSchedule.row($(this).parentsUntil('tr')).data();
-    const transaction = {...draft};
-
-    // Remove schedule data
-    transaction.schedule = false;
-
-    // Adjust the date to the next scheduled date
-    transaction.date = transaction.transaction_schedule.next_date;
-
-    // Dispatch event
-    const event = new CustomEvent('initiateEnterInstance', {
-        detail: {
-            transaction: transaction,
         }
     });
     window.dispatchEvent(event);

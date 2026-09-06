@@ -4,15 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use App\Casts\DecimalCast;
+use App\Casts\MoneyCast;
 use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
+use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
 use App\Models\Category;
+use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
 use App\Services\PayeeCategoryStatsService;
 use App\Services\PayeePersistenceService;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -25,6 +32,12 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller implements HasMiddleware
 {
+    use ScheduleTrait;
+
+    private array $allAccounts = [];
+
+    private ?AccountEntity $currentAccount = null;
+
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
         private readonly PayeePersistenceService $payeePersistenceService,
@@ -37,6 +50,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             'auth',
             'verified',
             new Middleware('can:view,account_entity', only: ['show']),
+            new Middleware('can:view,account', only: ['history']),
             new Middleware('can:create,' . AccountEntity::class, only: ['create', 'store']),
             new Middleware('can:update,account_entity', only: ['edit', 'update']),
         ];
@@ -461,5 +475,198 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         return to_route('account-entity.index', ['type' => 'payee']);
+    }
+
+    /**
+     * Display the full transaction history of an account, optionally with forecasted scheduled items.
+     */
+    public function history(Request $request, AccountEntity $account, ?string $withForecast = null): View
+    {
+        /**
+         * @get("/account/history/{account}/{withForecast?}")
+         * @name("account.history")
+         * @middlewares("web", "auth", "verified")
+         */
+        if (!$account->isAccount()) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
+        $user = $request->user();
+
+        // Get account details and load to class variable
+        $this->currentAccount = $account->load([
+            'config',
+            'config.currency',
+        ]);
+
+        // Get all accounts and payees so their name can be reused
+        $this->allAccounts = AccountEntity::where('user_id', $user->id)
+            ->pluck('name', 'id')
+            ->all();
+
+        // Get standard transactions related to selected account (one-time AND scheduled)
+        $standardTransactions = Transaction::query()
+            ->where('user_id', $user->id)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailStandard::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_from_id', $account->id);
+                    $query->orWhere('account_to_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'config.accountFrom.config',
+                'config.accountTo.config',
+                'transactionItems',
+                'transactionItems.category.parent',
+                'transactionItems.tags',
+                'transactionSchedule',
+            ])
+            ->get()
+            ->loadMorph('config.accountFrom.config', [
+                Account::class => ['currency'],
+            ])
+            ->loadMorph('config.accountTo.config', [
+                Account::class => ['currency'],
+            ]);
+
+        // Get all investment transactions related to selected account (one-time AND scheduled)
+        $investmentTransactions = Transaction::query()
+            ->where('user_id', $user->id)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'config.investment.currency',
+                'config.account.config.currency',
+                'transactionSchedule',
+            ])
+            ->get();
+
+        // Unify and merge two transaction types
+        /** @var Account $accountConfig */
+        $accountConfig = $account->config;
+
+        $transactions = $standardTransactions
+            ->concat($investmentTransactions)
+            // Add custom and pre-calculated attributes
+            ->map(function ($transaction) use ($accountConfig) {
+                if ($transaction->schedule) {
+                    $transaction->transactionGroup = 'schedule';
+                } else {
+                    $transaction->transactionGroup = 'history';
+                }
+
+                if ($transaction->isStandard() && $transaction->config instanceof TransactionDetailStandard) {
+                    $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier()
+                        ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
+                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
+                    $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
+                    $transaction->amount_from = MoneyCast::toFloat($transaction->config->amount_from);
+                    $transaction->amount_to = MoneyCast::toFloat($transaction->config->amount_to);
+                    $transaction->tags = $transaction->tags()->values();
+                    $transaction->categories = $transaction->categories()->values();
+
+                    // Everything the frontend needs from these has already been flattened
+                    // onto the transaction above - dropping them keeps the JSON payload sent
+                    // to the browser (and the toArray()/json_encode() work to build it) from
+                    // scaling with the full nested account/currency/category object graph.
+                    $transaction->unsetRelation('config');
+                    $transaction->unsetRelation('transactionItems');
+
+                    // Only the investment branch's category/amount rendering reads
+                    // transaction_currency on the frontend - skip computing and
+                    // serializing this appended accessor for standard rows entirely.
+                    $transaction->makeHidden('transaction_currency');
+                } elseif ($transaction->isInvestment() && $transaction->config instanceof TransactionDetailInvestment) {
+                    $amount = MoneyCast::toFloat($transaction->cashflow_value) ?? 0;
+
+                    $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier();
+                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
+                    $transaction->account_to_name = $transaction->config->investment->name;
+                    $transaction->amount_from = ($amount < 0 ? -$amount : null);
+                    $transaction->amount_to = ($amount > 0 ? $amount : null);
+                    $transaction->tags = [];
+                    $transaction->categories = [];
+                    $transaction->quantity = DecimalCast::toFloat($transaction->config->quantity);
+                    $transaction->price = MoneyCast::toFloat($transaction->config->price);
+                    $transaction->setRelation('currency', $accountConfig->currency);
+
+                    // Note: config.account/config.investment are NOT unset here, unlike the
+                    // standard branch above - config itself stays (the frontend reads
+                    // config.quantity/config.price directly), and its commission/tax/dividend/
+                    // price MoneyCast fields re-resolve their currency via these relations on
+                    // every serialize() call, so dropping them here would just turn into a
+                    // fresh per-row lazy load when this gets json_encode()'d.
+                    $transaction->unsetRelation('transactionItems');
+                }
+
+                return $transaction;
+            })
+            // Drop scheduled transactions, which are not active (next date is empty)
+            ->filter(fn ($transaction) => ! $transaction->schedule
+                || ($transaction->transactionSchedule?->next_date !== null));
+
+        // Add schedule to history items, if needeed
+        if ($withForecast) {
+            $transactions = $transactions->concat(
+                $this->getScheduleInstances(
+                    $transactions
+                        ->filter(fn ($transaction) => $transaction->schedule),
+                    'next',
+                )
+            );
+        }
+
+        // Final ordering and running total calculation
+        $subTotal = 0;
+
+        $data = $transactions
+            ->filter(
+                fn ($transaction) =>
+                $transaction->transactionGroup === 'history'
+                || $transaction->transactionGroup === 'forecast'
+            )
+            ->sortBy(function ($transaction) {
+                // Sort by date first, then by amount multiplier for consistent ordering
+                return [
+                    $transaction->date->timestamp,
+                    $transaction->transaction_type->amountMultiplier() ?? 0,
+                ];
+            })
+            // Add the opening balance dummy item to the beginning of transaction list
+            ->prepend($accountConfig->openingBalance())
+            ->map(function ($transaction) use (&$subTotal) {
+                $subTotal += ($transaction->transactionOperator === 1
+                    ? $transaction->amount_to
+                    : -1 * $transaction->amount_from);
+                $transaction->running_total = $subTotal;
+
+                return $transaction;
+            })
+            ->values();
+
+        JavaScriptFacade::put([
+            'currency' => $accountConfig->currency,
+            'transactionData' => $data,
+            'scheduleData' => $transactions
+                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
+                ->values(),
+        ]);
+
+        return view(
+            'accounts.history',
+            [
+                'account' => $account,
+                'withForecast' => $withForecast,
+            ]
+        );
     }
 }

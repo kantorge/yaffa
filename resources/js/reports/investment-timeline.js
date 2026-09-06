@@ -6,7 +6,7 @@ import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
 import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import * as toastHelpers from '@/shared/lib/toast';
@@ -161,7 +161,8 @@ fetch('/api/v1/investments/timeline')
         window.chartData = data.map(function(item) {
             item.value = item.quantity * item.last_price;
 
-            item.formatted_quantity = item.quantity.toLocaleString(
+            item.formatted_quantity = toFormattedNumber(
+                item.quantity,
                 window.YAFFA.userSettings.locale,
                 {
                     minimumFractionDigits: 0,

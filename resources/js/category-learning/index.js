@@ -1,5 +1,4 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
 
 import { createApp } from 'vue';
 import CategoryLearningForm from './components/CategoryLearningForm.vue';
@@ -249,7 +248,6 @@ const buildTable = (rows) => {
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     initComplete: function (settings) {
       const tableElement = $(settings.nTable);
 

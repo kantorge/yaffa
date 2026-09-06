@@ -3,7 +3,7 @@ import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
-import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
 
@@ -21,14 +21,7 @@ let table = $('#investmentSummary').DataTable({
                     return data;
                 }
 
-                // Display the name AND the contextual action trigger icon
-                return `
-                    <div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
-                        <span>
-                            <a href="${window.route('investments.show', row.id)}" title="${__('View investment details')}">${data}</a>
-                        </span>
-                    </div>`;
+                return `<a href="${window.route('investments.show', row.id)}" title="${__('View investment details')}">${data}</a>`;
             },
             type: "html",
         },
@@ -58,7 +51,7 @@ let table = $('#investmentSummary').DataTable({
             title: __("Quantity"),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data.toLocaleString(window.YAFFA.userSettings.locale, {maximumFractionDigits: 2, useGrouping: true});
+                    return toFormattedNumber(data, window.YAFFA.userSettings.locale, {maximumFractionDigits: 2, useGrouping: true});
                 }
                 return data;
             },
@@ -92,6 +85,16 @@ let table = $('#investmentSummary').DataTable({
             },
             type: "num",
             className: 'dt-nowrap',
+        },
+        {
+            title: __("Actions"),
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            },
+            className: "text-center",
+            orderable: false,
+            searchable: false,
         }
     ],
     order: [

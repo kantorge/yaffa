@@ -2,7 +2,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
-import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
 import { escapeHtml, transactionLink } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
@@ -25,10 +25,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type, row) {
                 // Return name with link for display
                 if (type === 'display') {
-                    return `<div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
-                        <a href="${window.route('account-entity.show', {account_entity: row.id})}" title="${__('Show details')}">${data}</a>
-                    </div>`;
+                    return `<a href="${window.route('account-entity.show', {account_entity: row.id})}" title="${__('Show details')}">${data}</a>`;
                 }
 
                 // Raw value is returned otherwise
@@ -68,7 +65,7 @@ window.table = $(dataTableSelector).DataTable({
                     if (data > 0) {
                         return `<a href="${window.route('reports.transactions', {accounts: [row.id]})}"
                         title="${__('Show transactions')}"
-                        >${data.toLocaleString(window.YAFFA.userSettings.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
+                        >${toFormattedNumber(data, window.YAFFA.userSettings.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
                     }
                     return data;
                 }
@@ -89,6 +86,16 @@ window.table = $(dataTableSelector).DataTable({
                 }
                 return data;
             }
+        },
+        {
+            title: __("Actions"),
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            },
+            className: "text-center",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function(row, data) {
@@ -105,7 +112,6 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             let row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
