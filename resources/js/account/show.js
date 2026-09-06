@@ -429,6 +429,11 @@ dtSchedule.contextualActions({
                                 }
                             );
                         }
+                    })
+                    .catch(function (error) {
+                        toastHelpers.showErrorToast(
+                            __('Error skipping transaction (#:transactionId): :error', {transactionId: id, error: error})
+                        );
                     });
             },
         },

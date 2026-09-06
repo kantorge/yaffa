@@ -546,7 +546,13 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
  */
 export function triggerTransactionQuickView(id) {
     return fetch('/api/v1/transactions/' + id)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+
+            return response.json();
+        })
         .then(function (data) {
             // Normalizes dates and the decimal-string Money/BigDecimal fields (price,
             // quantity, amount_from/to, etc.) back to plain JS values - same as every
@@ -570,7 +576,9 @@ export function triggerTransactionQuickView(id) {
             window.dispatchEvent(event);
         })
         .catch((error) => {
-            console.log(error);
+            toastHelpers.showErrorToast(
+                __('Error getting transactions: :error', {error: error})
+            );
         });
 }
 

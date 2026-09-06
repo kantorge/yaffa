@@ -478,8 +478,7 @@ class AccountEntityController extends Controller implements HasMiddleware
     }
 
     /**
-     * Display the full transaction history of an account, optionally with forecasted
-     * scheduled items.
+     * Display the full transaction history of an account, optionally with forecasted scheduled items.
      */
     public function history(Request $request, AccountEntity $account, ?string $withForecast = null): View
     {
@@ -488,6 +487,10 @@ class AccountEntityController extends Controller implements HasMiddleware
          * @name("account.history")
          * @middlewares("web", "auth", "verified")
          */
+        if (!$account->isAccount()) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
         $user = $request->user();
 
         // Get account details and load to class variable
@@ -502,12 +505,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ->all();
 
         // Get standard transactions related to selected account (one-time AND scheduled)
-        $standardTransactions = Transaction::where(function ($query) {
-            $query->where('schedule', 1)
-                ->orWhere(function ($query) {
-                    $query->where('schedule', false);
-                });
-        })
+        $standardTransactions = Transaction::query()
             ->where('user_id', $user->id)
             ->whereHasMorph(
                 'config',
@@ -535,12 +533,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             ]);
 
         // Get all investment transactions related to selected account (one-time AND scheduled)
-        $investmentTransactions = Transaction::where(function ($query) {
-            $query->where('schedule', 1)
-                ->orWhere(function ($query) {
-                    $query->where('schedule', false);
-                });
-        })
+        $investmentTransactions = Transaction::query()
             ->where('user_id', $user->id)
             ->whereHasMorph(
                 'config',
