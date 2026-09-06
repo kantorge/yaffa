@@ -1034,7 +1034,6 @@ class TransactionApiControllerTest extends TestCase
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
-                // Exactly 4 decimal places - fits the column's scale in full.
                 'amount_from' => '10.1234',
                 'amount_to' => '10.1234',
             ],
@@ -1075,7 +1074,6 @@ class TransactionApiControllerTest extends TestCase
             'config' => [
                 'account_from_id' => $accountEntity->id,
                 'account_to_id' => $payeeEntity->id,
-                // 5 decimal places - within magnitude, but exceeds the column's scale.
                 'amount_from' => '10.12345',
                 'amount_to' => '10.12345',
             ],

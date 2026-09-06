@@ -24,6 +24,12 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
         return $value === null ? null : BigDecimal::of($value);
     }
 
+    /**
+     * HALF_UP here is a backstop for any write path that bypasses Form Request validation
+     * (e.g. a queued job constructing a model directly) - TransactionRequest/CurrencyRateRequest's
+     * decimal:0,<scale> rule is the primary gate rejecting over-precise input outright; read
+     * (get()) never rounds, since a DB value is already at-scale.
+     */
     public function set(Model $model, string $key, mixed $value, array $attributes): array
     {
         if ($value === null) {
@@ -32,11 +38,6 @@ class DecimalCast implements CastsAttributes, SerializesCastableAttributes
 
         $decimal = $value instanceof BigDecimal ? $value : BigDecimal::of((string) $value);
 
-        // HALF_UP here is a backstop for any write path that bypasses Form Request
-        // validation (e.g. a queued job constructing a model directly) -
-        // TransactionRequest/CurrencyRateRequest's decimal:0,<scale> rule is the primary
-        // gate rejecting over-precise input outright; read (get()) never rounds, since a
-        // DB value is already at-scale.
         return [$key => (string) $decimal->toScale($this->scale, RoundingMode::HalfUp)];
     }
 
