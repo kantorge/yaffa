@@ -1,5 +1,4 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
 
 import {
     booleanToTableIcon,
@@ -115,7 +114,6 @@ const table = $(dataTableSelector).DataTable({
     order: [
         [0, 'asc'] // Name
     ],
-    responsive: true,
 });
 
 $(dataTableSelector).on('click', '.data-delete:not(.busy)', function () {

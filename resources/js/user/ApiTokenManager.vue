@@ -267,7 +267,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import Swal from 'sweetalert2';
 
@@ -326,7 +326,7 @@
         }
       },
       formatDate(value) {
-        return value ? new Date(value).toLocaleString() : __('Never');
+        return value ? toFormattedDateTime(value, window.YAFFA.userSettings.locale) : __('Never');
       },
       openCreateModal() {
         this.resetForm();

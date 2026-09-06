@@ -18,7 +18,7 @@
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
+  import { __, getDataTablesLanguageOptions, toFormattedDate, toFormattedDateTime } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
   import { confirmDelete } from '@/shared/lib/confirm';
@@ -503,15 +503,9 @@
               return value;
             }
 
-            return `
-              <div class="d-flex justify-content-start align-items-center">
-                <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i>
-                <span class="ai-document-title-wrapper">
-                  <a href="${route('ai-documents.show', {
-                    aiDocument: row.id,
-                  })}" title="${escapeHtml(value)}" class="ai-document-title-link">${escapeHtml(value)}</a>
-                </span>
-              </div>`;
+            return `<a href="${route('ai-documents.show', {
+              aiDocument: row.id,
+            })}" title="${escapeHtml(value)}" class="ai-document-title-link">${escapeHtml(value)}</a>`;
           },
           type: 'html',
         },
@@ -542,8 +536,8 @@
           data: 'created_at',
           title: __('Received at'),
           render: (value, type) => {
-            if (type === 'display' && value && value.toLocaleString) {
-              return value.toLocaleString(window.YAFFA.userSettings.locale);
+            if (type === 'display' && value) {
+              return toFormattedDateTime(value, window.YAFFA.userSettings.locale);
             }
 
             return value;
@@ -596,6 +590,16 @@
             );
           },
           className: 'dt-nowrap',
+          orderable: false,
+          searchable: false,
+        },
+        {
+          title: __('Actions'),
+          defaultContent: '',
+          render: () => {
+            return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+          },
+          className: 'text-center',
           orderable: false,
           searchable: false,
         },
@@ -795,11 +799,6 @@
 </script>
 
 <style scoped>
-  .ai-document-title-wrapper {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
   .ai-document-title-link {
     display: inline-block;
     max-width: 100%;

@@ -186,11 +186,8 @@ let table = $(tableSelector).DataTable({
             data: "transaction_schedule.rule",
             title: __("Schedule settings"),
             render: function (data) {
-                // Return human readable format of RRule AND the contextual action trigger icon
                 // TODO: translation of rrule strings
-                return `<div class="d-flex justify-content-start align-items-center">
-                    <i class="hover-icon fa me-2 fa-ellipsis-vertical"></i><span>${data.toText()}</span>
-                </div>`;
+                return data.toText();
             }
         },
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.userSettings.locale),
@@ -219,6 +216,16 @@ let table = $(tableSelector).DataTable({
             render: budgetAwareAmount,
         },
         dataTableHelpers.transactionColumnDefinition.extra,
+        {
+            title: __("Actions"),
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            },
+            className: "text-center",
+            orderable: false,
+            searchable: false,
+        },
     ],
     createdRow: function (row, data) {
         $(row).attr('data-id', data.id);

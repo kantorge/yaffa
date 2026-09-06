@@ -289,7 +289,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, getCachedDateTimeFormatter } from '@/shared/lib/i18n';
   import {
     buildBreakdownCacheKey,
     round2,
@@ -579,7 +579,7 @@
       formatMonthHeader(month) {
         const [year, mon] = month.split('-').map(Number);
         const date = new Date(year, mon - 1, 1);
-        return new Intl.DateTimeFormat(this.locale, {
+        return getCachedDateTimeFormatter(this.locale, {
           month: '2-digit',
           year: 'numeric',
         }).format(date);

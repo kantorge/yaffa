@@ -862,7 +862,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
@@ -970,7 +970,7 @@
           if (Number.isNaN(date.getTime())) {
             return this.lastSyncAt;
           }
-          return date.toLocaleString();
+          return toFormattedDateTime(date, window.YAFFA.userSettings.locale);
         } catch {
           return this.lastSyncAt;
         }

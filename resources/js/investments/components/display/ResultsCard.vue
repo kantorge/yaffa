@@ -115,7 +115,7 @@
 
 <script>
   import Decimal from 'decimal.js';
-  import { toFormattedCurrency, __ } from '@/shared/lib/i18n';
+  import { toFormattedCurrency, toFormattedNumber, __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
 
@@ -348,7 +348,7 @@
       toFormattedCurrency,
       formatQuantity(value) {
         if (value === 0) return '0';
-        return value.toLocaleString(this.locale, {
+        return toFormattedNumber(value, this.locale, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 4,
         });

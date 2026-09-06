@@ -545,7 +545,7 @@
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
@@ -573,7 +573,7 @@
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.created_at).toLocaleString(locale);
+    return toFormattedDateTime(aiDocument.value.created_at, locale);
   });
 
   const processedAtLabel = computed(() => {
@@ -581,7 +581,7 @@
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.processed_at).toLocaleString(locale);
+    return toFormattedDateTime(aiDocument.value.processed_at, locale);
   });
 
   const statusLabel = computed(

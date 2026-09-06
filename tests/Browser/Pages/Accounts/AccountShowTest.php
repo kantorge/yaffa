@@ -323,7 +323,7 @@ class AccountShowTest extends DuskTestCase
                 // Wait for table to reload with the transaction
                 ->waitUsing(10, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
                 // Verify the transaction is shown
-                ->assertPresent(('button.transaction-quickview[data-id="' . $transaction->id . '"]'));
+                ->assertPresent('#historyTable tbody tr[data-id="' . $transaction->id . '"]');
         });
     }
 }

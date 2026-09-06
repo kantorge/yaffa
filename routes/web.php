@@ -11,7 +11,6 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
-use App\Http\Controllers\MainController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
@@ -35,7 +34,7 @@ Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
     ->except(['destroy']);
 
-Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
+Route::get('/account/history/{account}/{withForecast?}', [AccountEntityController::class, 'history'])
     ->name('account.history');
 
 // Routes to display form to merge two payees

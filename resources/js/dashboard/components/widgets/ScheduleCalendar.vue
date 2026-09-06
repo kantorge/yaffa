@@ -42,7 +42,7 @@
     getTransactionTypeConfig,
     parseIsoDate,
   } from '@/shared/lib/helpers';
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import FullCalendar from '@fullcalendar/vue3';
   import dayGridPlugin from '@fullcalendar/daygrid';
@@ -232,7 +232,7 @@
           }
 
           if (quantity !== null && quantity !== undefined) {
-            label += `\n${this.__('Quantity')}: ${Number(quantity).toLocaleString(this.locale)}`;
+            label += `\n${this.__('Quantity')}: ${toFormattedNumber(quantity, this.locale)}`;
           }
 
           return label;

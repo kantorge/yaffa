@@ -33,12 +33,16 @@ td.dt-nowrap {
     display: none;
 }
 
-// Show/hide dataTables actions icon based on the row hover state
+// Dim/highlight dataTables actions icon based on the row hover state. Left dimmed rather than
+// fully hidden (opacity: 0) so it stays visible and tappable on touch devices, which have no
+// :hover state to reveal it from.
 table.dataTable tr .hover-icon {
-    opacity: 0;
+    opacity: 0.4;
     transition: opacity .2s ease-out;
     cursor: pointer;
     transition-delay: .2s;
+    // Widen the tap/click target beyond the glyph itself - three thin dots are an easy miss.
+    padding: 0.5rem;
 }
 
 table.dataTable tr:hover .hover-icon {
