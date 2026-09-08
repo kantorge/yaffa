@@ -80,15 +80,18 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
     // currency style options below to take effect.
     input = Number(input);
 
-    // Floor: the currency's conventional precision (display-only setting). Ceiling: the
-    // field's actual storage scale. Intl.NumberFormat trims trailing zeros between the two,
-    // so a whole amount still shows the currency's usual decimals and a value with real
-    // fractional content shows all of it, up to what the column can actually hold - never
-    // padding zeros just because the ceiling allows them, never truncating real digits.
+    // 'detailed' (rate/price fields): floor is the currency's conventional precision, ceiling
+    // is the field's storage scale - Intl.NumberFormat trims trailing zeros between the two, so
+    // a value with real fractional content up to the storage scale still shows all of it.
+    // 'generic' (everyday balances/totals): no floor - Intl.NumberFormat never pads a whole
+    // number with zeros it doesn't have. The currency's configured precision is a ceiling only,
+    // rounding any real fractional content down to at most that many digits.
     const minDigits = precision === 'detailed'
         ? (currencySettings.detailed_decimal_precision ?? currencySettings.generic_decimal_precision ?? 0)
+        : 0;
+    const maxDigits = precision === 'detailed'
+        ? STORAGE_SCALE.PRICE
         : (currencySettings.generic_decimal_precision ?? 0);
-    const maxDigits = precision === 'detailed' ? STORAGE_SCALE.PRICE : STORAGE_SCALE.AMOUNT;
 
     return getCachedNumberFormatter(locale, {
         style: 'currency',
