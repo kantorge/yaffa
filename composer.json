@@ -39,7 +39,6 @@
         "spatie/laravel-onboard": "^2.6",
         "symfony/css-selector": "^8.1",
         "symfony/dom-crawler": "^8.1",
-        "symfony/http-client": "^7.4",
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {
