@@ -101,8 +101,8 @@ let table = $('#investmentSummary').DataTable({
         [0, 'asc']
     ],
     initComplete: function (settings) {
-        $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
-            var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+        $(settings.table).on("click", "td.activeIcon > i:not(.inProgress)", function () {
+            var row = $(settings.table).DataTable().row($(this).parents('tr'));
 
             // Change icon to spinner
             $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
@@ -126,13 +126,13 @@ let table = $('#investmentSummary').DataTable({
                 },
                 complete: function (_data) {
                     // Re-render row
-                    row.invalidate();
+                    row.invalidate().draw(false);
                 }
             });
         });
 
         // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+        $(settings.table).on("click", "td > button.deleteIcon:not(.busy)", function () {
             const button = this;
 
             // Confirm the action with the user
@@ -141,7 +141,7 @@ let table = $('#investmentSummary').DataTable({
                     return;
                 }
 
-                let row = $(settings.nTable).DataTable().row($(button).parents('tr'));
+                let row = $(settings.table).DataTable().row($(button).parents('tr'));
 
                 // Change icon to spinner
                 let element = $(button);
@@ -161,7 +161,7 @@ let table = $('#investmentSummary').DataTable({
                         window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
 
                         // Remove row from table
-                        $(settings.nTable).DataTable().row($(button).parents('tr')).remove().draw();
+                        $(settings.table).DataTable().row($(button).parents('tr')).remove().draw();
 
                         toastHelpers.showSuccessToast(__('Investment deleted'));
                     },

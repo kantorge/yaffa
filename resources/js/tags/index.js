@@ -68,8 +68,8 @@ window.table = $(dataTableSelector).DataTable({
     processing: true,
     paging: false,
     initComplete: function (settings) {
-        $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
-            var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+        $(settings.table).on("click", "td.activeIcon > i:not(.inProgress)", function () {
+            var row = $(settings.table).DataTable().row($(this).parents('tr'));
 
             // Change icon to spinner
             $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
@@ -93,7 +93,7 @@ window.table = $(dataTableSelector).DataTable({
                 },
                 complete: function (_data) {
                     // Re-render row
-                    row.invalidate();
+                    row.invalidate().draw(false);
                 }
             });
         });

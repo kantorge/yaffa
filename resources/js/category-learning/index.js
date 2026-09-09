@@ -249,7 +249,7 @@ const buildTable = (rows) => {
     processing: true,
     paging: false,
     initComplete: function (settings) {
-      const tableElement = $(settings.nTable);
+      const tableElement = $(settings.table);
 
       tableElement.on('click', '.button-edit-learning', function () {
         const id = Number($(this).data('id'));

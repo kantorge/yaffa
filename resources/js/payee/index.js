@@ -75,7 +75,7 @@ function normalizePayee(payee) {
 }
 
 function getRowFromEvent(settings, element) {
-    const table = $(settings.nTable).DataTable();
+    const table = $(settings.table).DataTable();
     let rowElement = $(element).closest('tr');
 
     if (rowElement.hasClass('child')) {
@@ -547,7 +547,7 @@ window.table = $(dataTableSelector).DataTable({
         style: 'os',
     },
     initComplete: function (settings) {
-        $(settings.nTable).on('click', 'td.activeIcon > i', function () {
+        $(settings.table).on('click', 'td.activeIcon > i', function () {
             const row = getRowFromEvent(settings, this);
 
             // Do not request change if previous request is still in progress
@@ -587,7 +587,7 @@ window.table = $(dataTableSelector).DataTable({
             });
         });
 
-        $(settings.nTable).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
+        $(settings.table).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
             const row = getRowFromEvent(settings, this);
             const payee = row.data();
 

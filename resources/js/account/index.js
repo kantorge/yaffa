@@ -113,8 +113,8 @@ window.table = $(dataTableSelector).DataTable({
     processing: true,
     paging: false,
     initComplete : function(settings) {
-        $(settings.nTable).on("click", "td.activeIcon > i", function() {
-            let row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+        $(settings.table).on("click", "td.activeIcon > i", function() {
+            let row = $(settings.table).DataTable().row( $(this).parents('tr') );
 
             // Do not request change if previous request is still in progress
             if ($(this).hasClass("fa-spinner")) {
@@ -149,7 +149,7 @@ window.table = $(dataTableSelector).DataTable({
                 },
                 complete: function(_data) {
                     // Re-render row
-                    row.invalidate();
+                    row.invalidate().draw(false);
                 }
             });
         });

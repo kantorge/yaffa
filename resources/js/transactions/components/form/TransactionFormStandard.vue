@@ -1091,6 +1091,11 @@
           // Note: AI-specific properties (description, match_type, confidence_score) are used during
           // finalization but NOT persisted to the database. Only the user-selected category_id and
           // optional comment are saved. The 'description' field is preserved for category learning.
+          //
+          // form.reset() (called by the transaction watcher before this runs) restores items from
+          // the last markFormClean() snapshot, not an empty array - so this must be cleared explicitly
+          // or items from a previously opened transaction leak into this one.
+          this.form.items = [];
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
               .map((item) => this.normalizeTransactionItem(item))

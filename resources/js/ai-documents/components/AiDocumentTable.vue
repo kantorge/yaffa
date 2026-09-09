@@ -459,7 +459,7 @@
   };
 
   const detectedDateRangeFilterFn = (settings, _searchData, dataIndex) => {
-    if (!tableElement.value || settings.nTable !== tableElement.value) {
+    if (!tableElement.value || settings.table !== tableElement.value) {
       return true;
     }
 
