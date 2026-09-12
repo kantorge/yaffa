@@ -72,7 +72,14 @@ class BudgetApiController extends Controller
     #[Authorize('create', Budget::class)]
     public function store(BudgetRequest $request): JsonResponse
     {
-        $budget = $this->budgetService->store($request->user(), $request->validated());
+        $validated = $request->validated();
+
+        // 'replace' additionally closes out the source budget named by 'id' - see
+        // BudgetService::replace(). Ownership of that source budget is enforced by
+        // BudgetRequest's 'id' rule, not re-checked here.
+        $budget = ($validated['action'] ?? null) === 'replace'
+            ? $this->budgetService->replace($request->user(), $validated)
+            : $this->budgetService->store($request->user(), $validated);
 
         return response()->json($budget, Response::HTTP_CREATED);
     }

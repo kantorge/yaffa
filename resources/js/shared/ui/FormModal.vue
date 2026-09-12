@@ -11,6 +11,9 @@
             <h5 class="modal-title" v-if="action === 'new'">
               {{ newTitle }}
             </h5>
+            <h5 class="modal-title" v-else-if="action === 'replace' && replaceTitle">
+              {{ replaceTitle }}
+            </h5>
             <h5 class="modal-title" v-else>
               {{ editTitle }}
             </h5>
@@ -23,7 +26,11 @@
           </div>
           <div class="modal-body">
             <AlertErrors :form="form" :message="errorMessage" />
-            <AlertSuccess :form="form" :message="successMessage" />
+            <AlertSuccess
+              v-if="showSuccessAlert"
+              :form="form"
+              :message="successMessage"
+            />
 
             <slot></slot>
           </div>
@@ -98,6 +105,12 @@
         type: String,
         required: true,
       },
+      // Optional - falls back to editTitle when absent, so existing consumers with no
+      // 'replace' action need no changes.
+      replaceTitle: {
+        type: String,
+        default: null,
+      },
       // The vform Form instance driving this modal's fields, errors, and
       // busy state.
       form: {
@@ -111,6 +124,14 @@
       successMessage: {
         type: String,
         default: () => __('Your changes have been saved!'),
+      },
+      // Consumers that already surface a toast on save (see showSuccessToast() calls) can turn
+      // this off - vform's own AlertSuccess is otherwise a stale duplicate: `form.successful` is
+      // deliberately excluded from Form.reset() (see vform's Form.ignore), so it stays true from
+      // the previous save and re-renders the instant the modal is reopened for a new edit.
+      showSuccessAlert: {
+        type: Boolean,
+        default: true,
       },
     },
 

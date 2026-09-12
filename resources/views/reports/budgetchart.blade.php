@@ -114,8 +114,17 @@
                     </button>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body position-relative">
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
+                <div
+                    id="chart-loading-overlay"
+                    class="position-absolute top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center bg-body bg-opacity-75"
+                    style="z-index: 10;"
+                >
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -148,6 +157,12 @@
         ref="budgetFormEdit"
         action="edit"
         id="editBudgetModal"
+        @budget-saved="onBudgetSaved"
+    ></budget-form>
+    <budget-form
+        ref="budgetFormReplace"
+        action="replace"
+        id="replaceBudgetModal"
         @budget-saved="onBudgetSaved"
     ></budget-form>
     <budget-quick-view ref="budgetQuickView" @edit="showEditBudgetModal"></budget-quick-view>

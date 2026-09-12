@@ -94,7 +94,7 @@
 
         const prefix = this.budget.transaction_type === 'withdrawal' ? '- ' : '+ ';
 
-        return prefix + toFormattedCurrency(this.budget.amount, this.locale, currency, 'detailed');
+        return prefix + toFormattedCurrency(this.budget.amount, this.locale, currency);
       },
       cadenceText() {
         return scheduleCadenceText(this.budget);

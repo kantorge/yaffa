@@ -362,6 +362,104 @@ class BudgetApiTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
+    /**
+     * The 'replace' action (mirroring TransactionApiController's schedule replace flow) must not
+     * rewrite the source budget's own history: it closes the source row's end_date and creates a
+     * brand new row for the new pattern/amount, rather than mutating the source in place.
+     */
+    public function test_replace_action_closes_source_budget_and_creates_a_new_one(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Currency::factory()->for($user)->create(['base' => true]);
+        Sanctum::actingAs($user, ['*']);
+
+        $sourceStartDate = Carbon::now()->subMonths(2)->startOfDay();
+        $source = Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'amount' => 100,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => $sourceStartDate,
+            'end_date' => null,
+            'count' => null,
+        ]);
+
+        $newStartDate = Carbon::now()->startOfDay();
+        $originalEndDate = $newStartDate->copy()->subDay();
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'action' => 'replace',
+            'id' => $source->id,
+            'category_id' => $category->id,
+            'transaction_type' => $source->transaction_type->value,
+            'amount' => 200,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => $newStartDate->toDateString(),
+            'original_schedule_config' => [
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'start_date' => $sourceStartDate->toDateString(),
+                'end_date' => $originalEndDate->toDateString(),
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED)
+            ->assertJsonPath('amount', '200.0000');
+        $this->assertSame($newStartDate->toDateString(), Carbon::parse($response->json('start_date'))->toDateString());
+
+        $newBudgetId = $response->json('id');
+        $this->assertNotSame($source->id, $newBudgetId);
+
+        // The source keeps its own amount/pattern - only end_date is closed.
+        $this->assertDatabaseHas('budgets', [
+            'id' => $source->id,
+            'amount' => 100,
+            'end_date' => $originalEndDate->toDateString(),
+        ]);
+        $this->assertDatabaseHas('budgets', [
+            'id' => $newBudgetId,
+            'amount' => 200,
+            'start_date' => $newStartDate->toDateString(),
+        ]);
+    }
+
+    public function test_replace_action_requires_the_source_budget_to_be_owned_by_the_user(): void
+    {
+        $owner = User::factory()->create();
+        $ownerCategory = Category::factory()->for($owner)->create();
+        $source = Budget::factory()->create([
+            'user_id' => $owner->id,
+            'category_id' => $ownerCategory->id,
+        ]);
+
+        $otherUser = User::factory()->create();
+        $otherCategory = Category::factory()->for($otherUser)->create();
+        Sanctum::actingAs($otherUser, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'action' => 'replace',
+            'id' => $source->id,
+            'category_id' => $otherCategory->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 200,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->toDateString(),
+            'original_schedule_config' => [
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'start_date' => Carbon::now()->subMonth()->toDateString(),
+                'end_date' => Carbon::now()->subDay()->toDateString(),
+            ],
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['id']);
+    }
+
     public function test_index_returns_only_the_authenticated_users_budgets(): void
     {
         $user = User::factory()->create();

@@ -88,6 +88,8 @@ const computeMovingAverage = (baseData, interval) => {
 // distinct contributing Budget row (a recurring budget appears in every period it lands in;
 // the drill-down cares about "which budgets contribute," not "how many times"). When the same
 // budget's amount differs across periods (FR-8 inflation), the most recent period's amount wins.
+// FR-8: also tracks the earliest-period amount alongside the latest (existing 'amount'), so the
+// drill-down can show both ends of the range when inflation makes them differ.
 function buildBudgetBreakdownRows(rawData) {
     const byBudgetId = new Map();
 
@@ -95,16 +97,29 @@ function buildBudgetBreakdownRows(rawData) {
         (periodEntry.budgetBreakdown || []).forEach(function (row) {
             const existing = byBudgetId.get(row.budget_id);
 
-            if (!existing || periodEntry.date > existing.periodDate) {
+            if (!existing) {
                 byBudgetId.set(row.budget_id, {
                     budget_id: row.budget_id,
                     category_name: row.category_name,
                     account_name: row.account_name,
                     amount: row.amount,
+                    amountStart: row.amount,
                     currency: row.currency,
                     cadence: scheduleCadenceText(row.transaction_schedule),
+                    inflation: row.transaction_schedule?.inflation || null,
+                    periodDateStart: periodEntry.date,
                     periodDate: periodEntry.date,
                 });
+                return;
+            }
+
+            if (periodEntry.date > existing.periodDate) {
+                existing.amount = row.amount;
+                existing.periodDate = periodEntry.date;
+            }
+            if (periodEntry.date < existing.periodDateStart) {
+                existing.amountStart = row.amount;
+                existing.periodDateStart = periodEntry.date;
             }
         });
     });
@@ -121,15 +136,28 @@ function buildScheduleBreakdownRows(rawData) {
         (periodEntry.scheduleBreakdown || []).forEach(function (row) {
             const existing = byTransactionId.get(row.transaction_id);
 
-            if (!existing || periodEntry.date > existing.periodDate) {
+            if (!existing) {
                 byTransactionId.set(row.transaction_id, {
                     transaction_id: row.transaction_id,
                     category_names: (row.category_names || []).join(', '),
                     amount: row.amount,
+                    amountStart: row.amount,
                     currency: row.currency,
                     cadence: scheduleCadenceText(row.transaction_schedule),
+                    inflation: row.transaction_schedule?.inflation || null,
+                    periodDateStart: periodEntry.date,
                     periodDate: periodEntry.date,
                 });
+                return;
+            }
+
+            if (periodEntry.date > existing.periodDate) {
+                existing.amount = row.amount;
+                existing.periodDate = periodEntry.date;
+            }
+            if (periodEntry.date < existing.periodDateStart) {
+                existing.amountStart = row.amount;
+                existing.periodDateStart = periodEntry.date;
             }
         });
     });
@@ -290,8 +318,12 @@ function markDataFresh() {
     staleDataWarning.classList.add('d-none');
 }
 
+const chartLoadingOverlay = document.getElementById('chart-loading-overlay');
+
 let reloadData = function () {
     elementRefreshButton.disabled = true;
+    chartLoadingOverlay.classList.remove('d-none');
+    chartLoadingOverlay.classList.add('d-flex');
     const selectedCategories = ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked', true) : []);
 
     $.ajax({
@@ -365,6 +397,8 @@ let reloadData = function () {
         })
         .always(function () {
             elementRefreshButton.disabled = false;
+            chartLoadingOverlay.classList.add('d-none');
+            chartLoadingOverlay.classList.remove('d-flex');
         });
 }
 
@@ -555,6 +589,9 @@ const budgetFormApp = createApp({
         showEditBudgetModal(budgetId) {
             this.$refs.budgetFormEdit.show(budgetId);
         },
+        showReplaceBudgetModal(budgetId) {
+            this.$refs.budgetFormReplace.show(budgetId);
+        },
         showBudgetQuickView(budgetId) {
             fetch(route('api.v1.budgets.show', { budget: budgetId }))
                 .then((response) => (response.ok ? response.json() : null))
@@ -611,24 +648,39 @@ function amountColumn() {
         className: 'dt-nowrap',
         type: 'num',
         render: function (data, type, row) {
-            if (type === 'display') {
-                return dataTableHelpers.toFormattedCurrency(
-                    type,
-                    data,
-                    window.YAFFA.userSettings.locale,
-                    row.currency
-                );
+            if (type !== 'display') {
+                return data;
             }
 
-            return data;
+            const end = dataTableHelpers.toFormattedCurrency(
+                type,
+                data,
+                window.YAFFA.userSettings.locale,
+                row.currency
+            );
+
+            // FR-8: when inflation compounds the amount across periods, show both the starting
+            // and ending value instead of only the most recent (already-inflated) occurrence.
+            if (!row.inflation || row.amountStart === data) {
+                return end;
+            }
+
+            const start = dataTableHelpers.toFormattedCurrency(
+                type,
+                row.amountStart,
+                window.YAFFA.userSettings.locale,
+                row.currency
+            );
+
+            return start + ' &rarr; ' + end;
         },
     };
 }
 
 // FR-7: a breakdown of the standalone Budget rows contributing to the chart - populated
 // directly from budgetChart()'s own response (see buildBudgetBreakdownRows() / reloadData())
-// rather than a separate request. Only edit/delete are offered (via BudgetApiController
-// routes) - a Budget row has no schedule to enter/skip and no linked transaction to clone/replace.
+// rather than a separate request. View/edit/replace/delete are offered (via BudgetApiController
+// routes) - a Budget row has no schedule to enter/skip and no linked transaction to clone.
 window.table = $(tableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: [],
@@ -662,6 +714,9 @@ window.table = $(tableSelector).DataTable({
                     <button class="btn btn-xs btn-primary" data-edit-budget="${budgetId}" type="button" title="${__('Edit')}">
                         <i class="fa fa-fw fa-edit"></i>
                     </button>
+                    <button class="btn btn-xs btn-primary" data-replace-budget="${budgetId}" type="button" title="${__('Edit and create new budget period')}">
+                        <i class="fa fa-fw fa-calendar"></i>
+                    </button>
                     <button class="btn btn-xs btn-danger" data-delete-budget="${budgetId}" type="button" title="${__('Delete')}">
                         <i class="fa fa-fw fa-trash"></i>
                     </button>
@@ -691,6 +746,10 @@ $(tableSelector).on('click', '[data-view-budget]', function () {
 
 $(tableSelector).on('click', '[data-edit-budget]', function () {
     budgetForm.showEditBudgetModal(Number(this.dataset.editBudget));
+});
+
+$(tableSelector).on('click', '[data-replace-budget]', function () {
+    budgetForm.showReplaceBudgetModal(Number(this.dataset.replaceBudget));
 });
 
 $(tableSelector).on('click', '[data-delete-budget]', function () {

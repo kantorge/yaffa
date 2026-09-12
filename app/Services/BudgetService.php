@@ -8,6 +8,7 @@ use App\Models\Budget;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class BudgetService
@@ -40,6 +41,41 @@ class BudgetService
         }
 
         return $budget;
+    }
+
+    /**
+     * Replace a budget's recurrence going forward without rewriting its history: closes out the
+     * source budget (its recurrence fields are overwritten with $data['original_schedule_config'],
+     * which the frontend has already end_date-capped to the day before the new budget's
+     * start_date) and creates $data as a brand new Budget row - mirroring how
+     * TransactionApiController's 'replace' action closes a TransactionSchedule and creates a new
+     * Transaction+TransactionSchedule, but simpler here since a Budget's recurrence fields live on
+     * the row itself rather than a separate schedule model.
+     */
+    public function replace(User $user, array $data): Budget
+    {
+        return DB::transaction(function () use ($user, $data) {
+            $sourceBudget = Budget::query()
+                ->where('id', $data['id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            $originalAccountId = $sourceBudget->account_id;
+
+            $sourceBudget->fill($data['original_schedule_config']);
+            $sourceBudget->save();
+
+            $newBudget = $this->store($user, $data);
+
+            // store() above already recalculated the new budget's own account_id bucket, which
+            // reflects the source budget's just-saved end_date too when both share an account -
+            // only a *different* source account needs its own, separate recalculation.
+            if ($originalAccountId !== $newBudget->account_id) {
+                $this->recalculateAccountBalanceBudget($user, $originalAccountId);
+            }
+
+            return $newBudget;
+        });
     }
 
     public function delete(Budget $budget): array
@@ -91,7 +127,10 @@ class BudgetService
      */
     public function projectOccurrences(Budget $budget, Carbon $from, Carbon $to): array
     {
-        $cacheKey = "budget-occurrences:{$budget->id}:{$budget->updated_at->timestamp}:"
+        // updated_at can be null for rows inserted outside Eloquent (e.g. the demo seed's raw
+        // INSERT, which omits timestamp columns) - the null-safe access mirrors
+        // Transaction::scheduleInstances()'s identical schedule-occurrence cache key.
+        $cacheKey = "budget-occurrences:{$budget->id}:{$budget->updated_at?->timestamp}:"
             . "{$from->toDateString()}:{$to->toDateString()}";
 
         $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use ($budget, $from, $to) {

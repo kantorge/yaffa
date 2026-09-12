@@ -6,7 +6,9 @@
     :action="action"
     :new-title="__('Add new budget')"
     :edit-title="__('Edit budget')"
+    :replace-title="__('Edit and create new budget period')"
     :form="form"
+    :show-success-alert="false"
     @submit="onSubmit"
   >
             <div class="row mb-3">
@@ -61,7 +63,7 @@
                   :id="withdrawalRadioId"
                   v-model="form.transaction_type"
                 />
-                <label class="btn btn-outline-dark" :for="withdrawalRadioId">
+                <label class="btn btn-outline-primary" :for="withdrawalRadioId">
                   <span class="fa fa-circle-minus text-danger"></span><br />
                   {{ __('Withdrawal') }}
                 </label>
@@ -73,7 +75,7 @@
                   :id="depositRadioId"
                   v-model="form.transaction_type"
                 />
-                <label class="btn btn-outline-dark" :for="depositRadioId">
+                <label class="btn btn-outline-primary" :for="depositRadioId">
                   <span class="fa fa-circle-plus text-success"></span><br />
                   {{ __('Deposit') }}
                 </label>
@@ -124,6 +126,20 @@
               bare
               key="budget-period"
             ></transaction-schedule>
+
+            <transaction-schedule
+              v-if="action === 'replace' && form.original_schedule_config"
+              :isSchedule="false"
+              :isBudget="true"
+              :withCheckbox="true"
+              :title="__('Update base period')"
+              :allowCustomization="false"
+              :schedule="form.original_schedule_config"
+              :form="form"
+              fieldPrefix="original_schedule_config"
+              ref="scheduleOriginal"
+              key="budget-period-original"
+            ></transaction-schedule>
   </FormModal>
 </template>
 
@@ -136,6 +152,11 @@
   import FormModal from '@/shared/ui/FormModal.vue';
   import TransactionSchedule from '@/transactions/components/form/TransactionSchedule.vue';
   import { __ } from '@/shared/lib/i18n';
+  import {
+    toIsoDateString,
+    toDateInputValue,
+    parseIsoDate,
+  } from '@/shared/lib/helpers';
 
   export default {
     components: {
@@ -222,6 +243,14 @@
         }
 
         return route('api.v1.budgets.update', { budget: this.budgetId });
+      },
+    },
+
+    watch: {
+      // On change of the new period's start date, adjust the source period's closing end
+      // date to the previous day.
+      'form.start_date': function (newDate) {
+        this.syncScheduleStartDate(newDate);
       },
     },
 
@@ -393,7 +422,16 @@
             this.form.category_id = data.category_id;
             this.form.account_id = data.account_id;
             this.form.transaction_type = data.transaction_type;
-            this.form.amount = data.amount;
+            // The API returns the raw MoneyCast decimal string (fixed 4-decimal scale) - round
+            // it down to the currency's own generic precision so the amount field doesn't show
+            // e.g. "100000,0000" for a currency (HUF) that has no fractional unit at all.
+            const currency =
+              data.account?.config?.currency || window.YAFFA.userSettings.baseCurrency;
+            const precision = currency?.generic_decimal_precision ?? 0;
+            this.form.amount =
+              data.amount !== null && data.amount !== undefined
+                ? Number(parseFloat(data.amount).toFixed(precision))
+                : data.amount;
             this.form.comment = data.comment;
             this.form.frequency = data.frequency;
             this.form.interval = data.interval;
@@ -416,6 +454,41 @@
 
             this.accountCurrencyCode = data.account?.config?.currency?.iso_code ?? null;
             this.accountCurrencyPending = false;
+
+            // 'replace' (mirroring TransactionFormStandard's schedule-clone flow): this
+            // budget is the *source* being closed out, not the one being edited - duplicate
+            // its just-loaded recurrence into original_schedule_config (which will close on
+            // save), then move the new period's own start date to today.
+            if (this.action === 'replace') {
+              this.form.id = budgetId;
+
+              this.form.original_schedule_config = {
+                frequency: this.form.frequency,
+                interval: this.form.interval,
+                by_day: this.form.by_day,
+                by_month: this.form.by_month,
+                count: this.form.count,
+                inflation: this.form.inflation,
+                start_date: this.form.start_date,
+              };
+
+              this.form.start_date = toIsoDateString();
+
+              // The end date carried over from the source period may now be in the past
+              // relative to the new start date - the new period can't already be over
+              // before its first occurrence, so clear it.
+              const newEndDateValue = toDateInputValue(this.form.end_date);
+              const newStartDateValue = toDateInputValue(this.form.start_date);
+              if (newEndDateValue && newEndDateValue < newStartDateValue) {
+                this.form.end_date = null;
+              }
+
+              // Close the source period the day before the new one starts.
+              const originalEndDate = new Date();
+              originalEndDate.setDate(originalEndDate.getDate() - 1);
+              this.form.original_schedule_config.end_date =
+                toIsoDateString(originalEndDate);
+            }
 
             // The freshly-loaded values are the "clean" baseline for the
             // dirty check in FormModal, not the blank values the Form was
@@ -443,6 +516,9 @@
         this.form.end_date = null;
         this.form.count = null;
         this.form.inflation = null;
+        this.form.action = this.action;
+        this.form.id = null;
+        this.form.original_schedule_config = null;
         this.accountCurrencyCode = null;
         this.accountCurrencyPending = false;
 
@@ -454,6 +530,28 @@
         }
 
         this.budgetId = null;
+      },
+
+      // Keeps the source period's closing end date one day behind the new period's start
+      // date as the user edits it live, mirroring TransactionFormStandard's
+      // syncScheduleStartDate() - unless the "Customize" checkbox has been used to take
+      // manual control of the source period.
+      syncScheduleStartDate(newDate) {
+        if (
+          !newDate ||
+          !this.form.original_schedule_config ||
+          !this.$refs.scheduleOriginal ||
+          this.$refs.scheduleOriginal.allowCustomizationData
+        ) {
+          return;
+        }
+        const date = parseIsoDate(newDate);
+        if (!date) {
+          return;
+        }
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() - 1);
+        this.form.original_schedule_config.end_date = toIsoDateString(endDate);
       },
 
       processAfterSubmit(response) {
@@ -468,11 +566,12 @@
       },
 
       onSubmit() {
-        if (this.action === 'new') {
-          this.form
-            .post(route('api.v1.budgets.store'), this.form)
-            .then((response) => this.processAfterSubmit(response));
-        } else {
+        this.form.action = this.action;
+
+        // 'new' and 'replace' both create a budget row via the store endpoint; 'replace'
+        // additionally closes the source budget named by form.id/original_schedule_config
+        // (see BudgetService::replace()). Only 'edit' patches the existing row in place.
+        if (this.action === 'edit') {
           if (this.formUrl === null) {
             this.form.errors.set({
               general: __('Failed to determine API endpoint'),
@@ -484,7 +583,13 @@
           this.form
             .patch(this.formUrl, this.form)
             .then((response) => this.processAfterSubmit(response));
+
+          return;
         }
+
+        this.form
+          .post(route('api.v1.budgets.store'), this.form)
+          .then((response) => this.processAfterSubmit(response));
       },
       __,
     },

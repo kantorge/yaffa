@@ -119,6 +119,25 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
 
+  // The end of the default/reset date range should track the latest recorded transaction, not a
+  // future scheduled instance (those are projections, not results) - only fall back to including
+  // scheduled dates when there are no non-scheduled transactions at all to bound the range with.
+  function computeDateBounds(transactions) {
+    const allDates = transactions.map((t) => new Date(t.date));
+    const actualDates = transactions
+      .filter((t) => !t.schedule)
+      .map((t) => new Date(t.date));
+
+    return {
+      from: allDates.length ? new Date(Math.min(...allDates)) : new Date(),
+      to: actualDates.length
+        ? new Date(Math.max(...actualDates))
+        : allDates.length
+          ? new Date(Math.max(...allDates))
+          : new Date(),
+    };
+  }
+
   export default {
     name: 'ResultsCard',
     props: {
@@ -130,13 +149,9 @@
     },
     emits: ['update:date-from', 'update:date-to'],
     data() {
-      const allDates = this.transactions.map((t) => new Date(t.date));
-      const minDate = allDates.length
-        ? new Date(Math.min(...allDates))
-        : new Date();
-      const maxDate = allDates.length
-        ? new Date(Math.max(...allDates))
-        : new Date();
+      const { from: minDate, to: maxDate } = computeDateBounds(
+        this.transactions,
+      );
       return {
         locale: window.YAFFA
           ? window.YAFFA.userSettings.locale
@@ -354,13 +369,9 @@
         });
       },
       resetDates() {
-        const allDates = this.transactions.map((t) => new Date(t.date));
-        this.internalDateFrom = allDates.length
-          ? new Date(Math.min(...allDates))
-          : new Date();
-        this.internalDateTo = allDates.length
-          ? new Date(Math.max(...allDates))
-          : new Date();
+        const { from, to } = computeDateBounds(this.transactions);
+        this.internalDateFrom = from;
+        this.internalDateTo = to;
       },
       calculateYears(to, from) {
         const diffMs = to - from;
