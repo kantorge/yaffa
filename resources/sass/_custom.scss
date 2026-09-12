@@ -2,6 +2,14 @@ td.dt-nowrap {
     white-space: nowrap;
 }
 
+// Shrinks a column to its content's width (e.g. a single action icon) instead of sharing
+// in DataTables' autoWidth distribution, which otherwise gives it as much room as any other
+// column and leaves less for columns that actually need to wrap.
+td.dt-shrink, th.dt-shrink {
+    width: 1%;
+    white-space: nowrap;
+}
+
 // !important is required: this is toggled via classList alongside Bootstrap utility classes
 // (e.g. d-flex) that are themselves !important, so a plain `display: none` here would lose.
 .hidden {

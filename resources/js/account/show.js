@@ -132,7 +132,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             render: function (_data, _type, _row) {
                 return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            className: "text-center",
+            className: "text-center dt-shrink",
             orderable: false,
             searchable: false,
         }
@@ -281,7 +281,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
             render: function (_data, _type, _row) {
                 return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            className: "text-center",
+            className: "text-center dt-shrink",
             orderable: false,
             searchable: false,
         }
@@ -578,7 +578,7 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
             let row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
-                return data.id === currentId
+                return Number(data.id) === currentId
             });
             let data = row.data()
 
