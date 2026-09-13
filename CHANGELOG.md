@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.2](https://github.com/kantorge/yaffa/compare/v3.6.1...v3.6.2) (2026-09-13)
+
+
+### 🐛 Bug Fixes
+
+* prevent duplicate scheduled transactions from overlapping executions ([#544](https://github.com/kantorge/yaffa/issues/544)) ([dbed841](https://github.com/kantorge/yaffa/commit/dbed841aa251bf0a8e84525dd55cd504b5cd9e19))
+
 ## [3.6.1](https://github.com/kantorge/yaffa/compare/v3.6.0...v3.6.1) (2026-08-21)
 
 
