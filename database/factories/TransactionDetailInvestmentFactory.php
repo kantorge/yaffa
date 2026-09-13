@@ -196,4 +196,44 @@ class TransactionDetailInvestmentFactory extends Factory
             $this->withUser($user, $configAttributes)
         ));
     }
+
+    /**
+     * Transaction type is ADD_SHARES - no trade price, commission/tax are optional
+     *
+     * @param User $user
+     * @return Factory
+     */
+    public function add_shares(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(fn (array $attributes) => array_merge(
+            [
+                'price' => null,
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => null,
+                'tax' => null,
+                'dividend' => null,
+            ],
+            $this->withUser($user, $configAttributes)
+        ));
+    }
+
+    /**
+     * Transaction type is REMOVE_SHARES - no trade price, commission/tax are optional
+     *
+     * @param User $user
+     * @return Factory
+     */
+    public function remove_shares(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(fn (array $attributes) => array_merge(
+            [
+                'price' => null,
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => null,
+                'tax' => null,
+                'dividend' => null,
+            ],
+            $this->withUser($user, $configAttributes)
+        ));
+    }
 }

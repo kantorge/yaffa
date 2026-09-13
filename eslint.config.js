@@ -29,9 +29,5 @@ module.exports = defineConfig([
             ecmaVersion: 2020,
             parserOptions: {},
         },
-        rules: {
-            "vue/html-indent": ["error", 2],
-            indent: ["error", 2],
-        },
     },
 ]);

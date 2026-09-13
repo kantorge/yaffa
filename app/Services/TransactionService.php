@@ -160,16 +160,19 @@ class TransactionService
 
         $multiplier = $transaction->transaction_type->amountMultiplier();
 
-        if ($multiplier === null) {
-            return null;
-        }
-
         // Build the cash flow from whichever terms are present, exactly (Money/BigDecimal),
         // treating a missing (nullable) field as no contribution - same as the previous
         // float expression, where a null operand was implicitly treated as 0.
+        //
+        // $multiplier is null for ADD_SHARES/REMOVE_SHARES (they have no price/quantity-driven
+        // cash amount - the quantity change itself isn't a cash flow), but a fee can still be
+        // recorded against them (see investment-transactions.md's "Optional properties:
+        // commission, tax" for both). Only the price*quantity term needs a multiplier; a
+        // commission/tax term below still applies without one, so a fee on one of these two
+        // types isn't silently dropped from the account's cash flow.
         $terms = [];
 
-        if ($config->price !== null && $config->quantity !== null) {
+        if ($multiplier !== null && $config->price !== null && $config->quantity !== null) {
             $terms[] = $config->price->multipliedBy($config->quantity, RoundingMode::HalfUp)->multipliedBy($multiplier);
         }
         if ($config->dividend !== null) {

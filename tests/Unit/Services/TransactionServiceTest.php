@@ -262,6 +262,65 @@ class TransactionServiceTest extends TestCase
     }
 
     /**
+     * add_shares/remove_shares have no price, so amountMultiplier() is null for them - they
+     * carry no cash flow on their own.
+     */
+    public function test_get_transaction_cash_flow_for_investment_add_shares_without_fee_returns_null(): void
+    {
+        $transaction = Transaction::factory()
+            ->add_shares($this->user, [
+                'quantity' => 5,
+                'commission' => null,
+                'tax' => null,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        $this->assertNull($cashFlow);
+    }
+
+    /**
+     * A commission/tax recorded against an add_shares correction is still a real cash cost
+     * even though the share increase itself has no price - it must reduce the cash flow
+     * rather than being dropped because amountMultiplier() is null for this type.
+     */
+    public function test_get_transaction_cash_flow_for_investment_add_shares_with_fee(): void
+    {
+        $transaction = Transaction::factory()
+            ->add_shares($this->user, [
+                'quantity' => 5,
+                'commission' => 2,
+                'tax' => 1,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        // Add shares: 0 (no price/quantity term) - commission - tax = -3
+        $this->assertCashFlowEquals(-3, $cashFlow);
+    }
+
+    /**
+     * Mirror of the add_shares case above for remove_shares.
+     */
+    public function test_get_transaction_cash_flow_for_investment_remove_shares_with_fee(): void
+    {
+        $transaction = Transaction::factory()
+            ->remove_shares($this->user, [
+                'quantity' => 5,
+                'commission' => 2,
+                'tax' => 1,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        // Remove shares: 0 (no price/quantity term) - commission - tax = -3
+        $this->assertCashFlowEquals(-3, $cashFlow);
+    }
+
+    /**
      * Test entering a scheduled transaction instance
      */
     public function test_enter_schedule_instance_creates_new_transaction(): void

@@ -243,6 +243,40 @@ class TransactionFactory extends Factory
     }
 
     /**
+     * Transaction type is ADD_SHARES investment
+     *
+     * @param User $user
+     * @param array $configAttributes
+     * @return Factory
+     */
+    public function add_shares(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => $user->id,
+            'transaction_type' => TransactionTypeEnum::ADD_SHARES->value,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()->add_shares($user, $configAttributes)->create($configAttributes),
+        ]);
+    }
+
+    /**
+     * Transaction type is REMOVE_SHARES investment
+     *
+     * @param User $user
+     * @param array $configAttributes
+     * @return Factory
+     */
+    public function remove_shares(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => $user->id,
+            'transaction_type' => TransactionTypeEnum::REMOVE_SHARES->value,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()->remove_shares($user, $configAttributes)->create($configAttributes),
+        ]);
+    }
+
+    /**
      * Transaction type is BUY investment and has SCHEDULE
      */
     public function buy_schedule(User $user, array $configAttributes = []): Factory
