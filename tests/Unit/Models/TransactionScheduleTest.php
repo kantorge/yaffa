@@ -14,6 +14,7 @@ use App\Models\TransactionSchedule;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class TransactionScheduleTest extends TestCase
@@ -149,5 +150,75 @@ class TransactionScheduleTest extends TestCase
         ]);
 
         $this->assertFalse($schedule->isActive());
+    }
+
+    /**
+     * Guards against skipNextInstance() being called without a row lock - without it,
+     * this test still passes today (it's a single-threaded, sequential call), but the
+     * lock is what stops a genuinely concurrent caller (e.g. a double-submitted manual
+     * "skip"/"enter" click) from computing the next occurrence off the same stale
+     * next_date another caller already advanced past. See
+     * test_skip_next_instance_does_not_lose_an_update_to_a_concurrent_caller below for
+     * the behavioral guarantee this enables.
+     */
+    public function test_skip_next_instance_locks_the_schedule_row_for_update(): void
+    {
+        $user = User::factory()->create();
+
+        $transaction = Transaction::factory()
+            ->withdrawal_schedule($user)
+            ->create(['user_id' => $user->id]);
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = $query->sql;
+        });
+
+        $transaction->transactionSchedule->skipNextInstance();
+
+        $lockedRead = collect($queries)->contains(
+            fn (string $sql) => str_contains($sql, 'transaction_schedules') && str_contains(mb_strtolower($sql), 'for update')
+        );
+
+        $this->assertTrue($lockedRead, 'Expected a `select ... for update` query against transaction_schedules.');
+    }
+
+    /**
+     * Simulates two overlapping callers of skipNextInstance() (e.g. a double-submitted
+     * manual "skip"/"enter" click) that both loaded the schedule before either advanced
+     * it. Without the row lock, both compute the next occurrence from the same stale
+     * next_date and the second save() overwrites the first with an identical value -
+     * one of the two advances is silently lost.
+     */
+    public function test_skip_next_instance_does_not_lose_an_update_to_a_concurrent_caller(): void
+    {
+        $user = User::factory()->create();
+
+        $transaction = Transaction::factory()
+            ->withdrawal_schedule($user)
+            ->hasTransactionSchedule([
+                'start_date' => now()->subMonths(2),
+                'next_date' => now(),
+                'end_date' => null,
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'count' => null,
+            ])
+            ->create(['user_id' => $user->id]);
+
+        $scheduleId = $transaction->transactionSchedule->id;
+        $originalNextDate = $transaction->transactionSchedule->next_date;
+
+        $copyA = TransactionSchedule::find($scheduleId);
+        $copyB = TransactionSchedule::find($scheduleId);
+
+        $this->assertTrue($copyA->skipNextInstance());
+        $this->assertTrue($copyB->skipNextInstance());
+
+        $finalNextDate = TransactionSchedule::find($scheduleId)->next_date;
+
+        // Both calls should have taken effect - two months on from the original, not
+        // one (which is what a lost update would produce).
+        $this->assertTrue($finalNextDate->equalTo($originalNextDate->copy()->addMonthsNoOverflow(2)));
     }
 }
