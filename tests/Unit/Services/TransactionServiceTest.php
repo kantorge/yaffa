@@ -295,6 +295,42 @@ class TransactionServiceTest extends TestCase
     }
 
     /**
+     * Guards against a regression where two overlapping executions of the same due
+     * schedule (e.g. a redelivered or duplicated queue job) could both read next_date
+     * before either advanced it, recording the same occurrence twice.
+     */
+    public function test_enter_schedule_instance_is_not_duplicated_by_concurrent_execution(): void
+    {
+        $scheduledTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->hasTransactionSchedule([
+                'start_date' => now()->subMonths(5),
+                'next_date' => now(),
+                'end_date' => null,
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'count' => null,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        // Simulate two overlapping job executions, both loading the schedule before
+        // either one advances it.
+        $transactionA = Transaction::find($scheduledTransaction->id);
+        $transactionA->loadMissing('transactionSchedule');
+        $transactionB = Transaction::find($scheduledTransaction->id);
+        $transactionB->loadMissing('transactionSchedule');
+
+        $this->service->enterScheduleInstance($transactionA);
+        $this->service->enterScheduleInstance($transactionB);
+
+        $recordedCount = Transaction::where('schedule', false)
+            ->where('user_id', $this->user->id)
+            ->count();
+
+        $this->assertEquals(1, $recordedCount);
+    }
+
+    /**
      * Test recalculate monthly summaries dispatches job for simple standard transaction
      */
     public function test_recalculate_monthly_summaries_for_simple_standard_transaction(): void

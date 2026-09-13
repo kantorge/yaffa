@@ -9,6 +9,8 @@ use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Models\TransactionSchedule;
+use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
@@ -21,28 +23,47 @@ class TransactionService
      */
     public function enterScheduleInstance(Transaction $transaction): void
     {
-        // Ensure the schedule is loaded
-        $transaction->loadMissing('transactionSchedule');
+        // Snapshot next_date as the caller observed it, before acquiring the lock below -
+        // used to detect whether a concurrent execution already advanced past it.
+        $observedNextDate = $transaction->loadMissing('transactionSchedule')->transactionSchedule->next_date;
 
-        // Clone the transaction using cloner
-        /** @var Transaction $newTransaction */
-        $newTransaction = $transaction->duplicate();
+        DB::transaction(function () use ($transaction, $observedNextDate) {
+            // Lock the schedule row for the duration of this transaction, so that two
+            // overlapping executions for the same due schedule (e.g. a redelivered or
+            // duplicated queue job) can't both read next_date before either one advances
+            // it, which would otherwise record the same occurrence twice.
+            /** @var TransactionSchedule $schedule */
+            $schedule = TransactionSchedule::query()
+                ->where('transaction_id', $transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Set the date to the next scheduled date
-        $newTransaction->date = $transaction->transactionSchedule->next_date;
+            // A concurrent execution already recorded and advanced this occurrence while
+            // we were waiting for the lock - nothing left to do.
+            if (! ($schedule->next_date?->equalTo($observedNextDate) ?? $observedNextDate === null)) {
+                return;
+            }
 
-        // Remove the schedule and budget flags
-        $newTransaction->schedule = false;
-        $newTransaction->budget = false;
+            // Clone the transaction using cloner
+            /** @var Transaction $newTransaction */
+            $newTransaction = $transaction->duplicate();
 
-        // Save the new transaction
-        $newTransaction->save();
+            // Set the date to the next scheduled date
+            $newTransaction->date = $schedule->next_date;
 
-        // Merge transaction items if the user's setting is enabled
-        (new TransactionItemMergeService())->mergeIfEnabled($newTransaction);
+            // Remove the schedule and budget flags
+            $newTransaction->schedule = false;
+            $newTransaction->budget = false;
 
-        // Adjust the next date of the original transaction
-        $transaction->transactionSchedule->skipNextInstance();
+            // Save the new transaction
+            $newTransaction->save();
+
+            // Merge transaction items if the user's setting is enabled
+            (new TransactionItemMergeService())->mergeIfEnabled($newTransaction);
+
+            // Adjust the next date of the original transaction
+            $schedule->skipNextInstance();
+        });
     }
 
     /**
