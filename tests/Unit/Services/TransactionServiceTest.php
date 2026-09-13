@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\TransactionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -296,8 +297,9 @@ class TransactionServiceTest extends TestCase
 
     /**
      * Guards against a regression where two overlapping executions of the same due
-     * schedule (e.g. a redelivered or duplicated queue job) could both read next_date
-     * before either advanced it, recording the same occurrence twice.
+     * schedule (e.g. a redelivered or duplicated queue job) could both act on the
+     * next_date they each observed before either one advanced it, recording the same
+     * occurrence twice.
      */
     public function test_enter_schedule_instance_is_not_duplicated_by_concurrent_execution(): void
     {
@@ -328,6 +330,34 @@ class TransactionServiceTest extends TestCase
             ->count();
 
         $this->assertEquals(1, $recordedCount);
+    }
+
+    /**
+     * The staleness check above only protects against duplicates if the schedule row is
+     * actually read with a locking (FOR UPDATE) query - otherwise two real overlapping
+     * connections could each take their own snapshot of the pre-advance next_date and
+     * both pass the staleness check. This directly asserts the locking clause is present,
+     * so removing lockForUpdate() fails deterministically instead of only under a real
+     * multi-connection race (which the test above, run single-threaded, cannot exercise).
+     */
+    public function test_enter_schedule_instance_locks_the_schedule_row_for_update(): void
+    {
+        $scheduledTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = $query->sql;
+        });
+
+        $this->service->enterScheduleInstance($scheduledTransaction);
+
+        $lockedScheduleRead = collect($queries)->contains(
+            fn (string $sql) => str_contains($sql, 'transaction_schedules') && str_contains(mb_strtolower($sql), 'for update')
+        );
+
+        $this->assertTrue($lockedScheduleRead, 'Expected a `select ... for update` query against transaction_schedules.');
     }
 
     /**

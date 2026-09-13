@@ -11,6 +11,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class TransactionService
 {
@@ -61,8 +62,12 @@ class TransactionService
             // Merge transaction items if the user's setting is enabled
             (new TransactionItemMergeService())->mergeIfEnabled($newTransaction);
 
-            // Adjust the next date of the original transaction
-            $schedule->skipNextInstance();
+            // Adjust the next date of the original transaction - if this fails, roll back
+            // the cloned transaction too, so the schedule stays due and is retried as a
+            // single clean attempt instead of accumulating duplicates.
+            if (! $schedule->skipNextInstance()) {
+                throw new RuntimeException('Unable to advance transaction schedule ' . $schedule->id . ' after recording an instance.');
+            }
         });
     }
 
