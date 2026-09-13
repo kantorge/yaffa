@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
 use Recurr\RecurrenceCollection;
@@ -129,16 +130,29 @@ class TransactionSchedule extends Model
 
     /**
      * Skip the next instance of this schedule, and return if it was successful.
+     *
+     * Locks and refreshes this row from the latest committed state first, so two
+     * overlapping callers (e.g. a double-submitted "skip"/"enter" click, or automatic
+     * recording racing a manual action on the same schedule) are serialized instead of
+     * both computing the next occurrence from the same stale next_date - which would
+     * silently lose one of the two advances.
      */
     public function skipNextInstance(): bool
     {
-        try {
-            $this->next_date = $this->getNextInstance();
-        } catch (InvalidArgument|InvalidWeekday|Exception) {
-            return false;
-        }
+        return DB::transaction(function () {
+            $this->setRawAttributes(
+                static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getAttributes(),
+                true
+            );
 
-        return $this->save();
+            try {
+                $this->next_date = $this->getNextInstance();
+            } catch (InvalidArgument|InvalidWeekday|Exception) {
+                return false;
+            }
+
+            return $this->save();
+        });
     }
 
     /**
