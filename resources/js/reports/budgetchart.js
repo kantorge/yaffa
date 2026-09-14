@@ -31,6 +31,8 @@ initializeSelect2(window.YAFFA.userSettings.language);
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
 
+const getSelectedCategoryIds = () => ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked').map(String) : []);
+
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
 const computeMovingAverage = (baseData, interval) => {
@@ -592,6 +594,9 @@ const budgetFormApp = createApp({
         showReplaceBudgetModal(budgetId) {
             this.$refs.budgetFormReplace.show(budgetId);
         },
+        showNewBudgetModal() {
+            this.$refs.budgetFormNew.show();
+        },
         showBudgetQuickView(budgetId) {
             fetch(route('api.v1.budgets.show', { budget: budgetId }))
                 .then((response) => (response.ok ? response.json() : null))
@@ -606,6 +611,19 @@ const budgetFormApp = createApp({
             // A Budget's own amount/period/account feeds directly into the chart's aggregate
             // totals, so only a full reload (not a local row patch) keeps both the chart and
             // this breakdown table correct.
+            reloadData();
+        },
+        onNewBudgetSaved(budget) {
+            const selectedCategoryIds = getSelectedCategoryIds();
+
+            // A budget created for a category outside the current selection wouldn't show up in
+            // this chart anyway - warn instead of silently reloading data that won't change.
+            if (selectedCategoryIds.length > 0 && !selectedCategoryIds.includes(String(budget.category_id))) {
+                toastHelpers.showWarningToast(__('The new budget\'s category is not part of the current selection, so the chart was not refreshed.'));
+                return;
+            }
+
+            toastHelpers.showSuccessToast(__('Budget saved'));
             reloadData();
         },
     },
@@ -754,6 +772,10 @@ $(tableSelector).on('click', '[data-replace-budget]', function () {
 
 $(tableSelector).on('click', '[data-delete-budget]', function () {
     deleteBudget(Number(this.dataset.deleteBudget));
+});
+
+document.getElementById('button-new-budget').addEventListener('click', function () {
+    budgetForm.showNewBudgetModal();
 });
 
 function deleteScheduleTransaction(transactionId) {

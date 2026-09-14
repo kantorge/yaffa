@@ -129,9 +129,19 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between">
                 <div class="card-title">
                     {{ __('Budgets using the selected categories') }}
+                </div>
+                <div>
+                    <button
+                            class="btn btn-sm btn-success"
+                            id="button-new-budget"
+                            type="button"
+                            title="{{ __('New budget') }}"
+                    >
+                        <i class="fa fa-fw fa-piggy-bank"></i>
+                    </button>
                 </div>
             </div>
             <div class="card-body no-datatable-search">
@@ -140,9 +150,22 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between">
                 <div class="card-title">
                     {{ __('Scheduled transactions using the selected categories') }}
+                </div>
+                <div>
+                    <a
+                            class="btn btn-sm btn-success"
+                            href="{{ route('transaction.create', [
+                                'type' => 'standard',
+                                'schedule' => '1',
+                                'callback' => 'back'
+                            ]) }}"
+                            title="{{ __('New scheduled standard transaction') }}"
+                    >
+                        <i class="fa fa-fw fa-cart-plus"></i>
+                    </a>
                 </div>
             </div>
             <div class="card-body no-datatable-search">
@@ -164,6 +187,12 @@
         action="replace"
         id="replaceBudgetModal"
         @budget-saved="onBudgetSaved"
+    ></budget-form>
+    <budget-form
+        ref="budgetFormNew"
+        action="new"
+        id="newBudgetModal"
+        @budget-saved="onNewBudgetSaved"
     ></budget-form>
     <budget-quick-view ref="budgetQuickView" @edit="showEditBudgetModal"></budget-quick-view>
 </div>
