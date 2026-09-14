@@ -1,8 +1,29 @@
 <?php
 
+// Read the version from the composer.json file. This is used in the footer, but has no other purpose.
+$version = json_decode(file_get_contents(base_path('composer.json')))->version;
+
+// deploy.php writes the deployed git ref (tag/branch) to BUILD_REF, and Deployer's own
+// deploy:update_code task writes the exact commit SHA to REVISION. Neither file exists
+// outside a deployed release (e.g. local dev), so 'build' is null there.
+// When the deployed ref is the official version tag, the version number alone is enough,
+// so 'build' stays null and nothing extra is shown.
+$build = null;
+if (file_exists(base_path('BUILD_REF'))) {
+    $ref = mb_trim(file_get_contents(base_path('BUILD_REF')));
+    if ($ref !== $version && $ref !== "v{$version}") {
+        $build = $ref;
+        if (file_exists(base_path('REVISION'))) {
+            $build .= '@' . mb_substr(mb_trim(file_get_contents(base_path('REVISION'))), 0, 7);
+        }
+    }
+}
+
 return [
-    // Read the version from the composer.json file. This is used in the footer, but has no other purpose.
-    'version' => json_decode(file_get_contents(base_path('composer.json')))->version,
+    'version' => $version,
+    // Non-null only for a deployed release whose ref doesn't match the version tag
+    // (e.g. a manual deploy of an unreleased branch) — see comment above.
+    'build' => $build,
 
     'admin_email' => env('ADMIN_EMAIL', 'admin@yaffa.test'),
     'registered_user_limit' => intval(env('REGISTERED_USER_LIMIT')),

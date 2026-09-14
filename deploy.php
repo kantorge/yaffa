@@ -20,8 +20,13 @@ task('deploy:upload_assets', static function () {
     upload('public/build/', '{{ release_path }}/public/build');
 });
 
+task('deploy:write_build_ref', static function () {
+    run('echo {{target}} > {{release_path}}/BUILD_REF');
+});
+
 before('deploy:prepare', 'build:assets');
 after('deploy:vendors', 'deploy:upload_assets');
+after('deploy:update_code', 'deploy:write_build_ref');
 
 host('private')
     ->set('hostname', getenv('SSH_HOST'))
