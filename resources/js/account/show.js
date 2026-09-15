@@ -577,7 +577,7 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         contentType: 'application/json',
         headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
-            let row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
+            let row = $(selectorHistoryTable).DataTable().row(function (_idx, data, _node) {
                 return Number(data.id) === currentId
             });
             let data = row.data()

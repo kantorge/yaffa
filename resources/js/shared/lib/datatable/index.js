@@ -494,8 +494,8 @@ export function deleteTransactionRow(selector, id) {
     return axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
         .then(function () {
             // Find and remove original row in schedule table
-            let row = $(selector).dataTable().api().row(function (_idx, data) {
-                return data.id === id;
+            let row = $(selector).DataTable().row(function (_idx, data) {
+                return Number(data.id) === id;
             });
 
             row.remove().draw();

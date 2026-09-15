@@ -22,10 +22,10 @@ const tableSelector = '#table';
 // auto-increment ids, so `id` alone cannot identify a row in this merged listing - row_type must
 // always be checked alongside it.
 function findRowByIdentity(id, rowType) {
-    return $(tableSelector).dataTable().api().row(function (_idx, data) {
+    return $(tableSelector).DataTable().row(function (_idx, data) {
         const dataRowType = data.row_type === 'budget' ? 'budget' : 'schedule';
 
-        return data.id === id && dataRowType === rowType;
+        return Number(data.id) === id && dataRowType === rowType;
     });
 }
 
