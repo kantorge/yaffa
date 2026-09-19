@@ -28,6 +28,9 @@
           @change="emitFilters"
         >
           <option value="">{{ __('Any') }}</option>
+          <option value="unprocessed">
+            {{ __('Unprocessed (not finalized)') }}
+          </option>
           <option v-for="(label, key) in statusOptions" :key="key" :value="key">
             {{ label }}
           </option>

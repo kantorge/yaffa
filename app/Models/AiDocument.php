@@ -6,11 +6,14 @@ use App\Enums\AiDocumentSource;
 use App\Enums\AiDocumentStatus;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -22,9 +25,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $google_drive_file_id
  * @property int|null $received_mail_id
  * @property string|null $custom_prompt
- * @property \Illuminate\Support\Carbon|null $processed_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $processed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, AiDocumentFile> $aiDocumentFiles
  * @property-read int|null $ai_document_files_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, AiDocumentFile> $files
@@ -87,6 +90,15 @@ class AiDocument extends Model
     public function transaction(): HasOne
     {
         return $this->hasOne(Transaction::class);
+    }
+
+    /**
+     * Documents untouched since the cutoff: both created_at and updated_at are older than it.
+     */
+    #[Scope]
+    protected function olderThan(Builder $query, Carbon $cutoff): Builder
+    {
+        return $query->where('created_at', '<', $cutoff)->where('updated_at', '<', $cutoff);
     }
 
     public static function statusLabels(): array

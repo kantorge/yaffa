@@ -36,6 +36,7 @@ class AiUserSettingsFactory extends Factory
             'duplicate_amount_tolerance_percent' => 10.0,
             'duplicate_similarity_threshold' => 0.5,
             'category_matching_mode' => 'child_preferred',
+            'document_retention_days' => null,
         ];
     }
 

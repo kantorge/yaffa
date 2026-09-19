@@ -724,6 +724,22 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
+  // 'unprocessed' is a pseudo status matching every status except finalized
+  const statusFilterPattern = (status) => {
+    if (!status) {
+      return '';
+    }
+
+    const labels =
+      status === 'unprocessed'
+        ? Object.entries(props.statusLabels)
+            .filter(([key]) => key !== 'finalized')
+            .map(([, label]) => label)
+        : [props.statusLabels[status] || status];
+
+    return `^(${labels.map(escapeRegex).join('|')})$`;
+  };
+
   const applyFilters = ({
     status,
     source,
@@ -735,12 +751,11 @@
       return;
     }
 
-    const statusValue = status ? props.statusLabels[status] || status : '';
     const sourceValue = source ? props.sourceLabels[source] || source : '';
 
     // Use exact match with regex for status and source filters
     table.value.column(COLUMN_INDEX.status).search(
-      statusValue ? `^${escapeRegex(statusValue)}$` : '',
+      statusFilterPattern(status),
       true, // regex
       false, // smart
       true, // case insensitive

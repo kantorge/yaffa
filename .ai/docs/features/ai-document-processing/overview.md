@@ -80,6 +80,7 @@ AI Document Processing helps users turn receipts, invoices, email confirmations,
 ## Core Logic / Rules
 
 - One submission produces one reviewable draft transaction in the MVP.
+- If the user sets a retention period in the AI settings, finalized documents (with their stored files and received emails) are deleted automatically after it; the finalized transaction stays. Unprocessed documents are never deleted automatically, the user is reminded by email instead.
 - Users do not directly switch document status; statuses change through processing, review, reprocessing, and finalization.
 - A failed document cannot be finalized as-is; it must be reprocessed or handled separately.
 - AI suggestions assist the user, but the final transaction is only created after human review and save.

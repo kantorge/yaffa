@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AiUserSettingsResolver;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
@@ -27,7 +29,7 @@ class UserController extends Controller
         return view('user.settings');
     }
 
-    public function aiSettings(): View
+    public function aiSettings(Request $request): View
     {
         /**
          * @get("/user/ai-settings")
@@ -46,6 +48,7 @@ class UserController extends Controller
         JavaScript::put([
             'aiProviders' => config('ai-documents.providers'),
             'aiSettingsPageMeta' => [
+                'drive_keeps_imported_files' => $request->user()->googleDriveKeepsImportedFiles(),
                 'incoming_email' => [
                     'enabled' => ! empty($incomingReceiptsEmail),
                     'configured' => $incomingEmailConfigured,
@@ -75,7 +78,7 @@ class UserController extends Controller
         return view('user.investment-provider-settings');
     }
 
-    public function maintenance(): View
+    public function maintenance(Request $request, AiUserSettingsResolver $aiUserSettingsResolver): View
     {
         /**
          * @get("/user/maintenance")
@@ -83,6 +86,9 @@ class UserController extends Controller
          * @middlewares("web", "auth", "verified")
          */
 
-        return view('user.maintenance');
+        return view('user.maintenance', [
+            'driveKeepsImportedFiles' => $request->user()->googleDriveKeepsImportedFiles(),
+            'aiDocumentRetentionDays' => $aiUserSettingsResolver->resolveForUser($request->user())['document_retention_days'],
+        ]);
     }
 }

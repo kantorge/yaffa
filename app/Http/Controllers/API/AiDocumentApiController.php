@@ -409,10 +409,9 @@ class AiDocumentApiController extends Controller
     {
         $filename = 'text_input_' . now()->timestamp . '.txt';
 
-        $path = Storage::disk('local')->put(
-            "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}",
-            $textInput
-        );
+        // Storage::put() returns a bool, not the path
+        $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";
+        Storage::disk('local')->put($path, $textInput);
 
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,
