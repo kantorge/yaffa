@@ -3,6 +3,7 @@
 namespace Tests\Feature\API;
 
 use App\Models\Transaction;
+use App\Models\TransactionSchedule;
 use App\Models\User;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
@@ -1853,12 +1854,12 @@ class TransactionApiControllerTest extends TestCase
 
         $transactionId = $response->json('transaction.id');
         $this->assertNotNull($transactionId);
-        $this->assertDatabaseHas('transaction_schedules', [
-            'transaction_id' => $transactionId,
-            'frequency' => 'MONTHLY',
-            'by_day' => '-1FR',
-            'by_month' => null,
-        ]);
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
+        $this->assertDatabaseHas('transaction_schedules', ['transaction_id' => $transactionId]);
+        $schedule = TransactionSchedule::where('transaction_id', $transactionId)->firstOrFail();
+        $this->assertSame('MONTHLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertNull($schedule->by_month);
     }
 
     public function test_store_standard_schedule_accepts_valid_yearly_weekday_and_month_rule(): void
@@ -1883,12 +1884,12 @@ class TransactionApiControllerTest extends TestCase
 
         $transactionId = $response->json('transaction.id');
         $this->assertNotNull($transactionId);
-        $this->assertDatabaseHas('transaction_schedules', [
-            'transaction_id' => $transactionId,
-            'frequency' => 'YEARLY',
-            'by_day' => '-1FR',
-            'by_month' => 11,
-        ]);
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
+        $this->assertDatabaseHas('transaction_schedules', ['transaction_id' => $transactionId]);
+        $schedule = TransactionSchedule::where('transaction_id', $transactionId)->firstOrFail();
+        $this->assertSame('YEARLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertSame(11, $schedule->by_month);
     }
 
     public function test_store_standard_schedule_rejects_next_date_that_is_not_a_rule_occurrence(): void
@@ -2097,13 +2098,15 @@ class TransactionApiControllerTest extends TestCase
         // original_schedule_config omitted next_date entirely, so it must be
         // cleared rather than persisted verbatim - see
         // TransactionApiController::handleSourceTransactionUpdates().
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
         $this->assertDatabaseHas('transaction_schedules', [
             'id' => $sourceTransaction->transactionSchedule->id,
-            'frequency' => 'YEARLY',
-            'by_day' => '-1FR',
-            'by_month' => 11,
             'next_date' => null,
         ]);
+        $schedule = $sourceTransaction->transactionSchedule->fresh();
+        $this->assertSame('YEARLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertSame(11, $schedule->by_month);
     }
 
     private function standardTransactionPayload(Transaction $transaction): array

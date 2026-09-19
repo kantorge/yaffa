@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Casts\RecurrenceCountCast;
+use App\Models\Concerns\HasRecurrenceRule;
 use App\Services\RecurrenceRuleService;
 use Database\Factories\TransactionScheduleFactory;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,12 +26,15 @@ use Recurr\Exception\InvalidWeekday;
  * @property int $transaction_id
  * @property Carbon $start_date
  * @property Carbon|null $next_date
- * @property Carbon|null $end_date
- * @property string $frequency
- * @property int $interval
- * @property string|null $by_day
- * @property int|null $by_month
- * @property int|null $count
+ * @property Carbon|null $end_date virtual, decomposed from `rrule`
+ * @property string $rrule RFC 5545 RRULE string - the only persisted recurrence-shape column
+ * @property string $frequency virtual, decomposed from `rrule`
+ * @property int $interval virtual, decomposed from `rrule`
+ * @property string|null $by_day virtual, decomposed from `rrule`
+ * @property int|null $by_month virtual, decomposed from `rrule`
+ * @property int|null $count virtual, decomposed from `rrule`
+ * @property int|null $days_before_month_end virtual, decomposed from `rrule`
+ * @property bool $last_business_day_of_month virtual, decomposed from `rrule`
  * @property float|null $inflation
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -39,14 +45,11 @@ use Recurr\Exception\InvalidWeekday;
  * @method static Builder|TransactionSchedule newModelQuery()
  * @method static Builder|TransactionSchedule newQuery()
  * @method static Builder|TransactionSchedule query()
- * @method static Builder|TransactionSchedule whereCount($value)
  * @method static Builder|TransactionSchedule whereCreatedAt($value)
- * @method static Builder|TransactionSchedule whereEndDate($value)
- * @method static Builder|TransactionSchedule whereFrequency($value)
  * @method static Builder|TransactionSchedule whereId($value)
  * @method static Builder|TransactionSchedule whereInflation($value)
- * @method static Builder|TransactionSchedule whereInterval($value)
  * @method static Builder|TransactionSchedule whereNextDate($value)
+ * @method static Builder|TransactionSchedule whereRrule($value)
  * @method static Builder|TransactionSchedule whereStartDate($value)
  * @method static Builder|TransactionSchedule whereTransactionId($value)
  * @method static Builder|TransactionSchedule whereUpdatedAt($value)
@@ -55,38 +58,51 @@ use Recurr\Exception\InvalidWeekday;
  * @method static Builder<static>|TransactionSchedule whereAutomaticRecording($value)
  * @mixin \Eloquent
  */
-#[Fillable('transaction_id', 'start_date', 'next_date', 'end_date', 'frequency', 'count', 'interval', 'by_day', 'by_month', 'inflation', 'automatic_recording')]
-#[Hidden('transaction_id')]
+#[Fillable(
+    'transaction_id',
+    'start_date',
+    'next_date',
+    'end_date',
+    'frequency',
+    'count',
+    'interval',
+    'by_day',
+    'by_month',
+    'days_before_month_end',
+    'last_business_day_of_month',
+    'inflation',
+    'automatic_recording',
+)]
+#[Hidden('transaction_id', 'rrule')]
+#[Appends(
+    'frequency',
+    'interval',
+    'count',
+    'end_date',
+    'by_day',
+    'by_month',
+    'days_before_month_end',
+    'last_business_day_of_month',
+)]
 class TransactionSchedule extends Model
 {
     use HasFactory;
+    use HasRecurrenceRule;
 
     protected function casts(): array
     {
         return [
             'next_date' => 'date',
             'start_date' => 'date',
-            'end_date' => 'date',
-            'by_month' => 'integer',
             'automatic_recording' => 'boolean',
-            'active' => 'boolean'
+            'active' => 'boolean',
+            'count' => RecurrenceCountCast::class,
         ];
     }
 
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
-    }
-
-    /**
-     * interval isn't cast (unlike Budget::interval), and schedule_config.interval validates as
-     * nullable - normalize before passing to RecurrenceRuleService methods that declare a
-     * non-nullable int $interval, since PHP rejects a literal null there regardless of any
-     * internal fallback.
-     */
-    private function normalizedInterval(): int
-    {
-        return $this->interval ?? 1;
     }
 
     // Define closures for creating and updating a schedule, so that the active flag can be set
@@ -114,12 +130,7 @@ class TransactionSchedule extends Model
 
         $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
             $this->start_date,
-            $this->frequency,
-            $this->normalizedInterval(),
-            $this->end_date,
-            $this->count,
-            $this->by_day,
-            $this->by_month,
+            $this->effectiveRrule(),
             $this->next_date,
         );
 
@@ -195,12 +206,7 @@ class TransactionSchedule extends Model
         try {
             $recurrence = (new RecurrenceRuleService())->getOccurrencesAfter(
                 $this->start_date,
-                $this->frequency,
-                $this->normalizedInterval(),
-                $this->end_date,
-                $this->count,
-                $this->by_day,
-                $this->by_month,
+                $this->effectiveRrule(),
                 Carbon::now(),
             );
         } catch (InvalidArgument|InvalidWeekday|Exception) {
@@ -230,12 +236,7 @@ class TransactionSchedule extends Model
     {
         return (new RecurrenceRuleService())->occursOn(
             $this->start_date,
-            $this->frequency,
-            $this->normalizedInterval(),
-            $this->end_date,
-            $this->count,
-            $this->by_day,
-            $this->by_month,
+            $this->effectiveRrule(),
             $date,
         );
     }

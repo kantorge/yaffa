@@ -3,20 +3,70 @@
 namespace Tests\Unit\Services;
 
 use App\Services\RecurrenceRuleService;
+use DateTime;
 use Illuminate\Support\Carbon;
+use Recurr\Rule;
 use Tests\TestCase;
 
 class RecurrenceRuleServiceTest extends TestCase
 {
+    /**
+     * Builds an RRULE string the same way App\Models\Concerns\HasRecurrenceRule composes one from
+     * discrete fields, so every test below can keep expressing its input the same way the old,
+     * pre-rrule-storage version of this test suite did (frequency/interval/end_date/count/by_day/
+     * by_month), rather than hand-writing RFC 5545 strings.
+     */
+    private function makeRrule(
+        string $frequency,
+        int $interval = 1,
+        ?Carbon $endDate = null,
+        ?int $count = null,
+        ?string $byDay = null,
+        ?int $byMonth = null,
+        ?int $daysBeforeMonthEnd = null,
+        bool $lastBusinessDayOfMonth = false,
+    ): string {
+        $rule = (new Rule())->setFreq($frequency)->setInterval($interval);
+
+        if ($endDate) {
+            $rule->setUntil(new DateTime($endDate->toDateString()));
+        }
+
+        if ($count) {
+            $rule->setCount($count);
+        }
+
+        if ($daysBeforeMonthEnd !== null) {
+            $rule->setByMonthDay([-($daysBeforeMonthEnd + 1)]);
+
+            if ($frequency === 'YEARLY' && $byMonth) {
+                $rule->setByMonth([$byMonth]);
+            }
+        } elseif ($lastBusinessDayOfMonth) {
+            $rule->setByDay(['MO', 'TU', 'WE', 'TH', 'FR']);
+            $rule->setBySetPosition([-1]);
+
+            if ($frequency === 'YEARLY' && $byMonth) {
+                $rule->setByMonth([$byMonth]);
+            }
+        } elseif ($byDay) {
+            $rule->setByDay([$byDay]);
+
+            if ($frequency === 'YEARLY' && $byMonth) {
+                $rule->setByMonth([$byMonth]);
+            }
+        }
+
+        return $rule->getString();
+    }
+
     public function test_get_recurrence_returns_occurrences_up_to_end_date(): void
     {
         $service = new RecurrenceRuleService();
 
         $recurrence = $service->getRecurrence(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            1,
-            Carbon::parse('2024-01-05'),
+            $this->makeRrule('DAILY', 1, Carbon::parse('2024-01-05')),
         );
 
         $this->assertSame(5, $recurrence->count());
@@ -28,10 +78,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $recurrence = $service->getRecurrence(
             Carbon::parse('2024-01-01'),
-            'MONTHLY',
-            1,
-            null,
-            3,
+            $this->makeRrule('MONTHLY', 1, null, 3),
         );
 
         $this->assertSame(3, $recurrence->count());
@@ -43,9 +90,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $recurrence = $service->getRecurrence(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            2,
-            Carbon::parse('2024-01-07'),
+            $this->makeRrule('DAILY', 2, Carbon::parse('2024-01-07')),
         );
 
         // 01-01, 01-03, 01-05, 01-07
@@ -58,12 +103,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertTrue($service->hasOccurrenceOnOrAfter(
             Carbon::now()->subDays(10),
-            'DAILY',
-            1,
-            null,
-            null,
-            null,
-            null,
+            $this->makeRrule('DAILY'),
             Carbon::now(),
         ));
     }
@@ -74,12 +114,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertFalse($service->hasOccurrenceOnOrAfter(
             Carbon::now()->subDays(10),
-            'DAILY',
-            1,
-            Carbon::now()->subDay(),
-            null,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, Carbon::now()->subDay()),
             Carbon::now(),
         ));
     }
@@ -90,12 +125,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertFalse($service->hasOccurrenceOnOrAfter(
             Carbon::now()->subDays(10),
-            'INVALID_FREQUENCY',
-            1,
-            null,
-            null,
-            null,
-            null,
+            'FREQ=INVALID_FREQUENCY',
             Carbon::now(),
         ));
     }
@@ -111,12 +141,7 @@ class RecurrenceRuleServiceTest extends TestCase
         $now = Carbon::now();
         $this->assertTrue($service->hasOccurrenceOnOrAfter(
             $now,
-            'DAILY',
-            1,
-            null,
-            1,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, null, 1),
             $now,
         ));
     }
@@ -127,12 +152,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $recurrence = $service->getRecurrence(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            1,
-            Carbon::parse('2024-01-05'),
-            null,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, Carbon::parse('2024-01-05')),
             Carbon::parse('2024-01-01'),
         );
 
@@ -146,12 +166,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $recurrence = $service->getRecurrence(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            1,
-            Carbon::parse('2024-01-05'),
-            null,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, Carbon::parse('2024-01-05')),
             Carbon::parse('2024-01-01'),
             afterDateInclusive: true,
         );
@@ -169,12 +184,7 @@ class RecurrenceRuleServiceTest extends TestCase
         // fall inside it; only the nearest one matters here.
         $recurrence = $service->getOccurrencesAfter(
             Carbon::parse('2024-01-01'),
-            'YEARLY',
-            1,
-            null,
-            null,
-            '-1FR',
-            11,
+            $this->makeRrule('YEARLY', 1, null, null, '-1FR', 11),
             Carbon::parse('2024-01-01'),
         );
 
@@ -185,27 +195,70 @@ class RecurrenceRuleServiceTest extends TestCase
     public function test_occurs_on_matches_a_by_day_pattern(): void
     {
         $service = new RecurrenceRuleService();
+        $rrule = $this->makeRrule('YEARLY', 1, null, null, '-1FR', 11);
 
         $this->assertTrue($service->occursOn(
             Carbon::parse('2024-01-01'),
-            'YEARLY',
-            1,
-            null,
-            null,
-            '-1FR',
-            11,
+            $rrule,
             Carbon::parse('2024-11-29'),
         ));
 
         $this->assertFalse($service->occursOn(
             Carbon::parse('2024-01-01'),
-            'YEARLY',
-            1,
-            null,
-            null,
-            '-1FR',
-            11,
+            $rrule,
             Carbon::parse('2024-11-28'),
+        ));
+    }
+
+    public function test_occurs_on_matches_a_days_before_month_end_pattern(): void
+    {
+        $service = new RecurrenceRuleService();
+        // 5 days before the end of each month - February 2024 (leap year, 29 days): 2024-02-24.
+        $rrule = $this->makeRrule('MONTHLY', 1, null, null, null, null, 5);
+
+        $this->assertTrue($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            $rrule,
+            Carbon::parse('2024-02-24'),
+        ));
+
+        // February 2023 (non-leap, 28 days): 2023-02-23.
+        $this->assertTrue($service->occursOn(
+            Carbon::parse('2023-01-01'),
+            $rrule,
+            Carbon::parse('2023-02-23'),
+        ));
+
+        $this->assertFalse($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            $rrule,
+            Carbon::parse('2024-02-25'),
+        ));
+    }
+
+    public function test_occurs_on_matches_a_last_business_day_of_month_pattern(): void
+    {
+        $service = new RecurrenceRuleService();
+        $rrule = $this->makeRrule('MONTHLY', 1, null, null, null, null, null, true);
+
+        // March 2024 ends on a Sunday - the last business day is Friday 2024-03-29.
+        $this->assertTrue($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            $rrule,
+            Carbon::parse('2024-03-29'),
+        ));
+
+        $this->assertFalse($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            $rrule,
+            Carbon::parse('2024-03-31'),
+        ));
+
+        // June 2024 ends on a Sunday too - last business day is Friday 2024-06-28.
+        $this->assertTrue($service->occursOn(
+            Carbon::parse('2024-01-01'),
+            $rrule,
+            Carbon::parse('2024-06-28'),
         ));
     }
 
@@ -219,12 +272,7 @@ class RecurrenceRuleServiceTest extends TestCase
         // every forecast run.
         $recurrence = $service->getOccurrencesAfter(
             Carbon::now()->subYears(3),
-            'DAILY',
-            1,
-            null,
-            1,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, null, 1),
             Carbon::now(),
         );
 
@@ -237,12 +285,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $recurrence = $service->getRecurrenceBetween(
             Carbon::now()->subYears(3),
-            'DAILY',
-            1,
-            null,
-            1,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, null, 1),
             Carbon::now(),
             Carbon::now()->addYears(30),
         );
@@ -256,12 +299,7 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertFalse($service->hasOccurrenceOnOrAfter(
             Carbon::now()->subYears(3),
-            'DAILY',
-            1,
-            null,
-            1,
-            null,
-            null,
+            $this->makeRrule('DAILY', 1, null, 1),
             Carbon::now(),
         ));
     }
@@ -275,12 +313,7 @@ class RecurrenceRuleServiceTest extends TestCase
         // count at all.
         $recurrence = $service->getRecurrenceBetween(
             Carbon::now()->subMonths(2),
-            'MONTHLY',
-            1,
-            null,
-            5,
-            null,
-            null,
+            $this->makeRrule('MONTHLY', 1, null, 5),
             Carbon::now(),
             Carbon::now()->addYears(1),
         );
@@ -294,15 +327,13 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertSame(0, $service->estimatePeriodsBetween(
             Carbon::parse('2024-06-01'),
-            'DAILY',
-            1,
+            'FREQ=DAILY;INTERVAL=1',
             Carbon::parse('2024-06-01'),
         ));
 
         $this->assertSame(0, $service->estimatePeriodsBetween(
             Carbon::parse('2024-06-01'),
-            'DAILY',
-            1,
+            'FREQ=DAILY;INTERVAL=1',
             Carbon::parse('2024-01-01'),
         ));
     }
@@ -313,15 +344,13 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertSame(10, $service->estimatePeriodsBetween(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            1,
+            'FREQ=DAILY;INTERVAL=1',
             Carbon::parse('2024-01-11'),
         ));
 
         $this->assertSame(5, $service->estimatePeriodsBetween(
             Carbon::parse('2024-01-01'),
-            'DAILY',
-            2,
+            'FREQ=DAILY;INTERVAL=2',
             Carbon::parse('2024-01-11'),
         ));
     }
@@ -332,15 +361,13 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $this->assertSame(6, $service->estimatePeriodsBetween(
             Carbon::parse('2024-01-01'),
-            'MONTHLY',
-            1,
+            'FREQ=MONTHLY;INTERVAL=1',
             Carbon::parse('2024-07-01'),
         ));
 
         $this->assertSame(3, $service->estimatePeriodsBetween(
             Carbon::parse('2020-01-01'),
-            'YEARLY',
-            1,
+            'FREQ=YEARLY;INTERVAL=1',
             Carbon::parse('2023-01-01'),
         ));
     }
@@ -351,11 +378,21 @@ class RecurrenceRuleServiceTest extends TestCase
 
         $periods = $service->estimatePeriodsBetween(
             Carbon::now()->subYears(1000),
-            'DAILY',
-            1,
+            'FREQ=DAILY;INTERVAL=1',
             Carbon::now(),
         );
 
         $this->assertGreaterThan(2000, $periods);
+    }
+
+    public function test_estimate_periods_between_defaults_interval_when_absent_from_rrule(): void
+    {
+        $service = new RecurrenceRuleService();
+
+        $this->assertSame(10, $service->estimatePeriodsBetween(
+            Carbon::parse('2024-01-01'),
+            'FREQ=DAILY',
+            Carbon::parse('2024-01-11'),
+        ));
     }
 }

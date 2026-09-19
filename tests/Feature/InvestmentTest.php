@@ -385,14 +385,17 @@ class InvestmentTest extends TestCase
             ])
             ->create();
 
-        $scheduledTransaction->transactionSchedule()->update([
+        // frequency/end_date/count are virtual (decomposed from `rrule`, not real columns), so
+        // this must go through the model instance (fill()/save()), not the relation query
+        // builder's raw mass-update - active is recomputed automatically either way (next_date
+        // is set, so isActive() is true regardless).
+        $scheduledTransaction->transactionSchedule->update([
             'start_date' => '2026-01-01',
             'next_date' => '2026-03-01',
             'end_date' => '2026-04-01',
             'frequency' => 'MONTHLY',
             'interval' => 1,
             'count' => null,
-            'active' => true,
         ]);
 
         $response = $this->actingAs($user)->get(route('investments.show', $investment));

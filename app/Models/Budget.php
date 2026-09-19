@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Casts\RecurrenceCountCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ModelOwnedByUserTrait;
+use App\Models\Concerns\HasRecurrenceRule;
 use App\Services\RecurrenceRuleService;
 use Brick\Money\Money;
 use Database\Factories\BudgetFactory;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,13 +31,16 @@ use Illuminate\Support\Carbon;
  * @property-read Money $amount
  * @property-write Money|string|int|float $amount
  * @property string|null $comment
- * @property string $frequency
- * @property int $interval
- * @property string|null $by_day
- * @property int|null $by_month
+ * @property string $rrule RFC 5545 RRULE string - the only persisted recurrence-shape column
+ * @property string $frequency virtual, decomposed from `rrule`
+ * @property int $interval virtual, decomposed from `rrule`
+ * @property string|null $by_day virtual, decomposed from `rrule`
+ * @property int|null $by_month virtual, decomposed from `rrule`
+ * @property int|null $days_before_month_end virtual, decomposed from `rrule`
+ * @property bool $last_business_day_of_month virtual, decomposed from `rrule`
  * @property Carbon $start_date
- * @property Carbon|null $end_date
- * @property int|null $count
+ * @property Carbon|null $end_date virtual, decomposed from `rrule`
+ * @property int|null $count virtual, decomposed from `rrule`
  * @property float|null $inflation
  * @property bool $active
  * @property Carbon|null $created_at
@@ -50,22 +57,47 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Budget whereAmount($value)
  * @method static Builder|Budget whereCategoryId($value)
  * @method static Builder|Budget whereComment($value)
- * @method static Builder|Budget whereCount($value)
  * @method static Builder|Budget whereCreatedAt($value)
- * @method static Builder|Budget whereEndDate($value)
- * @method static Builder|Budget whereFrequency($value)
  * @method static Builder|Budget whereId($value)
  * @method static Builder|Budget whereInflation($value)
- * @method static Builder|Budget whereInterval($value)
+ * @method static Builder|Budget whereRrule($value)
  * @method static Builder|Budget whereStartDate($value)
  * @method static Builder|Budget whereUpdatedAt($value)
  * @method static Builder|Budget whereUserId($value)
  * @mixin Eloquent
  */
-#[Fillable('category_id', 'account_id', 'transaction_type', 'amount', 'comment', 'frequency', 'interval', 'by_day', 'by_month', 'start_date', 'end_date', 'count', 'inflation')]
+#[Fillable(
+    'category_id',
+    'account_id',
+    'transaction_type',
+    'amount',
+    'comment',
+    'frequency',
+    'interval',
+    'by_day',
+    'by_month',
+    'days_before_month_end',
+    'last_business_day_of_month',
+    'start_date',
+    'end_date',
+    'count',
+    'inflation',
+)]
+#[Hidden('rrule')]
+#[Appends(
+    'frequency',
+    'interval',
+    'count',
+    'end_date',
+    'by_day',
+    'by_month',
+    'days_before_month_end',
+    'last_business_day_of_month',
+)]
 class Budget extends Model
 {
     use HasFactory;
+    use HasRecurrenceRule;
     use ModelOwnedByUserTrait;
 
     protected function casts(): array
@@ -74,12 +106,9 @@ class Budget extends Model
             'transaction_type' => TransactionTypeEnum::class,
             'amount' => MoneyCast::class . ':4,currency',
             'start_date' => 'date',
-            'end_date' => 'date',
-            'count' => 'integer',
-            'interval' => 'integer',
-            'by_month' => 'integer',
             'inflation' => 'float',
             'active' => 'boolean',
+            'count' => RecurrenceCountCast::class,
         ];
     }
 
@@ -136,12 +165,7 @@ class Budget extends Model
     {
         return (new RecurrenceRuleService())->hasOccurrenceOnOrAfter(
             $this->start_date,
-            $this->frequency,
-            $this->interval ?? 1,
-            $this->end_date,
-            $this->count,
-            $this->by_day,
-            $this->by_month,
+            $this->effectiveRrule(),
             Carbon::now(),
         );
     }

@@ -58,7 +58,12 @@
           -->
           <div
             class="p-2 rounded bg-body-tertiary"
-            :class="{ 'has-error': hasError('by_day') }"
+            :class="{
+              'has-error':
+                hasError('by_day') ||
+                hasError('days_before_month_end') ||
+                hasError('last_business_day_of_month'),
+            }"
           >
             <div class="form-check mb-1">
               <input
@@ -135,25 +140,124 @@
                     {{ option.label }}
                   </option>
                 </select>
-                <template v-if="showMonthPicker">
-                  <span class="text-muted">{{ __('of') }}</span>
-                  <select
-                    class="form-select schedule-month-select"
-                    dusk="select-schedule-by-month"
-                    :id="'schedule_by_month_' + this.$.vnode.key"
-                    v-model.number="schedule.by_month"
-                    :disabled="!allowCustomizationData"
-                  >
-                    <option
-                      v-for="option in monthOptions"
-                      :key="option.value"
-                      :value="option.value"
-                    >
-                      {{ option.label }}
-                    </option>
-                  </select>
-                </template>
               </template>
+              <template v-if="patternMode === 'weekday' && showMonthPicker">
+                <span class="text-muted">{{ __('of') }}</span>
+                <select
+                  class="form-select schedule-month-select"
+                  dusk="select-schedule-by-month"
+                  :id="'schedule_by_month_' + this.$.vnode.key"
+                  v-model.number="schedule.by_month"
+                  :disabled="!allowCustomizationData"
+                >
+                  <option
+                    v-for="option in monthOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </template>
+            </div>
+
+            <div class="form-check mb-1 mt-1">
+              <input
+                class="form-check-input"
+                type="radio"
+                value="daysBeforeMonthEnd"
+                v-model="patternMode"
+                dusk="radio-schedule-pattern-days-before-month-end"
+                :id="'schedule_pattern_days_before_month_end_' + this.$.vnode.key"
+                :disabled="!allowCustomizationData || !showPatternPicker"
+                :title="
+                  !showPatternPicker
+                    ? __('Available for monthly or yearly frequency')
+                    : ''
+                "
+              />
+              <label
+                class="form-check-label"
+                :for="'schedule_pattern_days_before_month_end_' + this.$.vnode.key"
+              >
+                {{ __('A number of days before the end of the month') }}
+              </label>
+            </div>
+            <div
+              class="d-flex flex-wrap align-items-center gap-2 mb-1"
+              v-if="patternMode === 'daysBeforeMonthEnd' && showPatternPicker"
+            >
+              <input
+                type="number"
+                class="form-control schedule-days-before-month-end-input"
+                dusk="input-schedule-days-before-month-end"
+                :id="'schedule_days_before_month_end_' + this.$.vnode.key"
+                v-model="daysBeforeMonthEndInput"
+                :disabled="!allowCustomizationData"
+                min="0"
+                max="27"
+                step="1"
+              />
+              <template v-if="showMonthPicker">
+                <span class="text-muted">{{ __('of') }}</span>
+                <select
+                  class="form-select schedule-month-select"
+                  :id="'schedule_days_before_month_end_by_month_' + this.$.vnode.key"
+                  v-model.number="schedule.by_month"
+                  :disabled="!allowCustomizationData"
+                >
+                  <option
+                    v-for="option in monthOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </template>
+            </div>
+
+            <div class="form-check mb-0">
+              <input
+                class="form-check-input"
+                type="radio"
+                value="lastBusinessDayOfMonth"
+                v-model="patternMode"
+                dusk="radio-schedule-pattern-last-business-day"
+                :id="'schedule_pattern_last_business_day_' + this.$.vnode.key"
+                :disabled="!allowCustomizationData || !showPatternPicker"
+                :title="
+                  !showPatternPicker
+                    ? __('Available for monthly or yearly frequency')
+                    : ''
+                "
+              />
+              <label
+                class="form-check-label"
+                :for="'schedule_pattern_last_business_day_' + this.$.vnode.key"
+              >
+                {{ __('The last business day of the month') }}
+              </label>
+            </div>
+            <div
+              class="d-flex flex-wrap align-items-center gap-2"
+              v-if="patternMode === 'lastBusinessDayOfMonth' && showPatternPicker && showMonthPicker"
+            >
+              <span class="text-muted">{{ __('of') }}</span>
+              <select
+                class="form-select schedule-month-select"
+                :id="'schedule_last_business_day_by_month_' + this.$.vnode.key"
+                v-model.number="schedule.by_month"
+                :disabled="!allowCustomizationData"
+              >
+                <option
+                  v-for="option in monthOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -382,6 +486,7 @@
   import { __ } from '@/shared/lib/i18n';
   import {
     byDayToRRuleWeekday,
+    businessDayWeekdays,
     toDateInputValue,
     toRRuleDate,
     fromRRuleDate,
@@ -469,7 +574,8 @@
 
       showMonthPicker() {
         return (
-          this.schedule.frequency === 'YEARLY' && this.patternMode === 'weekday'
+          this.schedule.frequency === 'YEARLY' &&
+          ['weekday', 'daysBeforeMonthEnd', 'lastBusinessDayOfMonth'].includes(this.patternMode)
         );
       },
 
@@ -520,26 +626,49 @@
         return this.startDateParts?.month ?? null;
       },
 
-      // Toggles between the default "same day of month as start date"
-      // behavior (by_day empty) and an ordinal-weekday rule (by_day set).
+      // Toggles between the default "same day of month as start date" behavior and the three
+      // mutually-exclusive month-scoped patterns (ordinal weekday / days-before-month-end /
+      // last-business-day) - only one of by_day/days_before_month_end/last_business_day_of_month
+      // is ever set at a time, mirroring the backend's exclusivity validation.
       patternMode: {
         get() {
-          return this.schedule.by_day ? 'weekday' : 'dayOfMonth';
+          if (this.schedule.by_day) return 'weekday';
+          if (this.schedule.days_before_month_end != null) return 'daysBeforeMonthEnd';
+          if (this.schedule.last_business_day_of_month) return 'lastBusinessDayOfMonth';
+          return 'dayOfMonth';
         },
         set(value) {
+          this.schedule.by_day = null;
+          this.schedule.days_before_month_end = null;
+          this.schedule.last_business_day_of_month = false;
+
           if (value === 'dayOfMonth') {
-            this.schedule.by_day = null;
             this.schedule.by_month = null;
             return;
           }
 
-          if (!this.schedule.by_day) {
+          if (value === 'weekday') {
             this.schedule.by_day = '1MO';
+          } else if (value === 'daysBeforeMonthEnd') {
+            this.schedule.days_before_month_end = 0;
+          } else if (value === 'lastBusinessDayOfMonth') {
+            this.schedule.last_business_day_of_month = true;
           }
 
           if (this.schedule.frequency === 'YEARLY' && !this.schedule.by_month) {
             this.schedule.by_month = this.startDateMonth;
           }
+        },
+      },
+
+      // Native <input type="number"> reads/writes plain strings; normalize an emptied field
+      // back to null, matching days_before_month_end's nullable-integer convention.
+      daysBeforeMonthEndInput: {
+        get() {
+          return this.schedule.days_before_month_end ?? '';
+        },
+        set(value) {
+          this.schedule.days_before_month_end = value === '' ? null : Number(value);
         },
       },
 
@@ -630,20 +759,28 @@
           return null;
         }
 
+        const ruleOptions = {
+          freq: RRule[this.schedule.frequency],
+          interval: this.schedule.interval || 1,
+          dtstart: start,
+          until: this.schedule.end_date
+            ? toRRuleDate(this.schedule.end_date)
+            : null,
+          count: this.schedule.count || null,
+          bymonth: this.schedule.by_month || null,
+        };
+
+        if (this.schedule.days_before_month_end != null) {
+          ruleOptions.bymonthday = -(this.schedule.days_before_month_end + 1);
+        } else if (this.schedule.last_business_day_of_month) {
+          ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+          ruleOptions.bysetpos = -1;
+        } else if (this.schedule.by_day) {
+          ruleOptions.byweekday = byDayToRRuleWeekday(this.schedule.by_day);
+        }
+
         try {
-          return new RRule({
-            freq: RRule[this.schedule.frequency],
-            interval: this.schedule.interval || 1,
-            dtstart: start,
-            until: this.schedule.end_date
-              ? toRRuleDate(this.schedule.end_date)
-              : null,
-            count: this.schedule.count || null,
-            byweekday: this.schedule.by_day
-              ? byDayToRRuleWeekday(this.schedule.by_day)
-              : null,
-            bymonth: this.schedule.by_month || null,
-          });
+          return new RRule(ruleOptions);
         } catch {
           return null;
         }
@@ -760,13 +897,15 @@
     },
 
     watch: {
-      // Keeps the client from ever submitting a by_day/by_month combination
-      // the backend would reject (ordinal weekday requires MONTHLY/YEARLY,
-      // month only applies to YEARLY).
+      // Keeps the client from ever submitting a month-scoped pattern/by_month combination the
+      // backend would reject (ordinal weekday/days-before-month-end/last-business-day all
+      // require MONTHLY/YEARLY, month only applies to YEARLY).
       'schedule.frequency'(newFrequency) {
         if (!['MONTHLY', 'YEARLY'].includes(newFrequency)) {
           this.schedule.by_day = null;
           this.schedule.by_month = null;
+          this.schedule.days_before_month_end = null;
+          this.schedule.last_business_day_of_month = false;
         } else if (newFrequency === 'MONTHLY') {
           this.schedule.by_month = null;
         }

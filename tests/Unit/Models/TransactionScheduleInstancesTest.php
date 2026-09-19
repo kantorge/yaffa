@@ -185,6 +185,107 @@ class TransactionScheduleInstancesTest extends TestCase
     }
 
     /**
+     * scheduleInstances() must honor the days-before-month-end pattern (recurrence-rrule-
+     * storage.md FR-14) the same way it honors by_day above - every occurrence lands the
+     * configured number of days before its month's last day.
+     */
+    public function test_schedule_instances_honor_days_before_month_end_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $startDate = Carbon::parse('2026-01-01');
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'days_before_month_end' => 4,
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $expected = $instance->date->clone()->endOfMonth()->subDays(4);
+            $this->assertSame(
+                $expected->toDateString(),
+                $instance->date->toDateString(),
+                "Occurrence is not 4 days before the end of its month."
+            );
+        }
+    }
+
+    /**
+     * scheduleInstances() must honor the last-business-day-of-month pattern (recurrence-rrule-
+     * storage.md FR-14) - every occurrence is a weekday, and no later weekday exists in the same
+     * month.
+     */
+    public function test_schedule_instances_honor_last_business_day_of_month_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $startDate = Carbon::parse('2026-01-01');
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'last_business_day_of_month' => true,
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $this->assertNotContains($instance->date->format('l'), ['Saturday', 'Sunday']);
+
+            for ($day = $instance->date->clone()->addDay(); $day->month === $instance->date->month; $day->addDay()) {
+                $this->assertContains(
+                    $day->format('l'),
+                    ['Saturday', 'Sunday'],
+                    "{$day->toDateString()} is a later weekday in the same month as the reported last business day."
+                );
+            }
+        }
+    }
+
+    /**
      * Regression coverage for the performance-audit finding that scheduleInstances() recomputed
      * the recurrence expansion from scratch on every call. Seeds the exact cache key it computes
      * with a sentinel value - if the method actually hits the cache instead of recomputing, the

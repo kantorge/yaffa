@@ -327,23 +327,41 @@ export function scheduleStartDateParts(value) {
     return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
 }
 
+// The 5 weekdays used by the "last business day of month" pattern - shared so the rrule.js
+// builder below and TransactionSchedule.vue's pattern picker agree on the exact set.
+export const businessDayWeekdays = ['MO', 'TU', 'WE', 'TH', 'FR'];
+
 export function processScheduledTransaction(transaction) {
     if (transaction.transaction_schedule) {
         const schedule = transaction.transaction_schedule;
+        // by_month pairs with whichever month-scoped pattern (ordinal by_day, days-before-
+        // month-end, last-business-day) is active on a YEARLY rule - mirrors the backend's
+        // HasRecurrenceRule::effectiveRrule().
+        const hasMonthScopedPattern = Boolean(
+            schedule.by_day || schedule.days_before_month_end != null || schedule.last_business_day_of_month,
+        );
+        const byMonth = hasMonthScopedPattern && schedule.frequency === 'YEARLY'
+            ? schedule.by_month || null
+            : null;
 
-        transaction.transaction_schedule.rule = new RRule({
+        const ruleOptions = {
             dtstart: toRRuleDate(schedule.start_date),
             freq: RRule[schedule.frequency],
             interval: schedule.interval,
             until: toRRuleDate(schedule.end_date),
-            byweekday: schedule.by_day ? byDayToRRuleWeekday(schedule.by_day) : null,
-            // Mirrors TransactionSchedule::buildRule() on the backend: by_month
-            // only applies alongside a YEARLY by_day rule, otherwise it's ignored.
-            bymonth:
-                schedule.by_day && schedule.frequency === 'YEARLY'
-                    ? schedule.by_month || null
-                    : null,
-        });
+            bymonth: byMonth,
+        };
+
+        if (schedule.days_before_month_end != null) {
+            ruleOptions.bymonthday = -(schedule.days_before_month_end + 1);
+        } else if (schedule.last_business_day_of_month) {
+            ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+            ruleOptions.bysetpos = -1;
+        } else if (schedule.by_day) {
+            ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
+        }
+
+        transaction.transaction_schedule.rule = new RRule(ruleOptions);
     }
 
     return transaction;
@@ -366,6 +384,8 @@ export function scheduleCadenceText(schedule) {
             end_date: parseIsoDate(schedule.end_date),
             by_day: schedule.by_day,
             by_month: schedule.by_month,
+            days_before_month_end: schedule.days_before_month_end,
+            last_business_day_of_month: schedule.last_business_day_of_month,
         },
     }).transaction_schedule;
 

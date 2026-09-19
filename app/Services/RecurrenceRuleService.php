@@ -16,9 +16,10 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
 use DateTimeInterface;
 
 /**
- * Shared calendar-occurrence math for anything defined by a
- * frequency/interval/start_date/end_date/count(/by_day/by_month) recurrence
- * rule (TransactionSchedule, Budget).
+ * Shared calendar-occurrence math for anything defined by a start_date + RFC 5545 RRULE string
+ * (TransactionSchedule, Budget). Every method here takes the RRULE string as-is; composing it
+ * from discrete fields (frequency/interval/by_day/etc.) is the owning model's job (see
+ * App\Models\Concerns\HasRecurrenceRule), not this service's.
  */
 class RecurrenceRuleService
 {
@@ -79,18 +80,26 @@ class RecurrenceRuleService
      * transformer. A by_day/by_month ordinal-weekday rule still yields ~1 occurrence per base
      * period, so period count (not exact occurrence count) is intentionally used as the proxy.
      * Returns 0 when $referenceDate is on or before $startDate (nothing to scan yet).
+     *
+     * Deliberately not routed through the transformer/Rule object at all (kept this cheap so the
+     * synchronous request-validation path that calls it stays fast) - just picks the FREQ=/
+     * INTERVAL= tokens out of the RRULE string with a trivial regex, not a full
+     * Rule::createFromString() parse.
      */
     public function estimatePeriodsBetween(
         Carbon $startDate,
-        string $frequency,
-        int $interval,
+        string $rrule,
         Carbon $referenceDate,
     ): int {
         if ($referenceDate->lessThanOrEqualTo($startDate)) {
             return 0;
         }
 
-        $interval = max($interval, 1);
+        preg_match('/(?:^|;)FREQ=([A-Z]+)/', $rrule, $freqMatch);
+        preg_match('/(?:^|;)INTERVAL=(\d+)/', $rrule, $intervalMatch);
+
+        $frequency = $freqMatch[1] ?? null;
+        $interval = max((int) ($intervalMatch[1] ?? 1), 1);
 
         $periods = match ($frequency) {
             'DAILY' => $startDate->diffInDays($referenceDate) / $interval,
@@ -104,46 +113,15 @@ class RecurrenceRuleService
     }
 
     /**
-     * The one place a Recurr\Rule gets constructed from a frequency/interval/start_date/
-     * end_date/count/by_day/by_month tuple - public so a caller that needs the raw Rule itself
-     * (e.g. Transaction::scheduleInstances(), which runs its own ArrayTransformer/constraint
-     * with a caller-supplied virtualLimit rather than one of this service's own occurrence
-     * methods) still goes through this instead of hand-building one and silently dropping
-     * by_day/by_month, per this service's own class-level contract.
+     * The one place a Recurr\Rule gets constructed from a start_date + RRULE string - public so
+     * a caller that needs the raw Rule itself (e.g. Transaction::scheduleInstances(), which runs
+     * its own ArrayTransformer/constraint with a caller-supplied virtualLimit rather than one of
+     * this service's own occurrence methods) still goes through this instead of hand-building
+     * one.
      */
-    public function buildRule(
-        Carbon $startDate,
-        string $frequency,
-        ?int $interval,
-        ?Carbon $endDate,
-        ?int $count,
-        ?string $byDay,
-        ?int $byMonth,
-    ): Rule {
-        $interval = max($interval ?? 1, 1);
-
-        $rule = (new Rule())
-            ->setStartDate(new DateTime($startDate->toDateString()))
-            ->setFreq($frequency)
-            ->setInterval($interval);
-
-        if ($endDate) {
-            $rule->setUntil(new DateTime($endDate->toDateString()));
-        }
-
-        if ($count) {
-            $rule->setCount($count);
-        }
-
-        if ($byDay) {
-            $rule->setByDay([$byDay]);
-
-            if ($frequency === 'YEARLY' && $byMonth) {
-                $rule->setByMonth([$byMonth]);
-            }
-        }
-
-        return $rule;
+    public function buildRule(Carbon $startDate, string $rrule): Rule
+    {
+        return Rule::createFromString($rrule, new DateTime($startDate->toDateString()));
     }
 
     /**
@@ -181,16 +159,11 @@ class RecurrenceRuleService
      */
     public function getRecurrence(
         Carbon $startDate,
-        string $frequency,
-        int $interval = 1,
-        ?Carbon $endDate = null,
-        ?int $count = null,
-        ?string $byDay = null,
-        ?int $byMonth = null,
+        string $rrule,
         ?Carbon $afterDate = null,
         bool $afterDateInclusive = false,
     ): RecurrenceCollection {
-        $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+        $rule = $this->buildRule($startDate, $rrule);
         $transformer = $this->makeArrayTransformer();
 
         $constraint = $afterDate
@@ -213,21 +186,16 @@ class RecurrenceRuleService
      */
     public function hasOccurrenceOnOrAfter(
         Carbon $startDate,
-        string $frequency,
-        int $interval,
-        ?Carbon $endDate,
-        ?int $count,
-        ?string $byDay,
-        ?int $byMonth,
+        string $rrule,
         Carbon $onOrAfterDate,
     ): bool {
         try {
-            $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+            $rule = $this->buildRule($startDate, $rrule);
 
             $after = new DateTime($onOrAfterDate->toDateString());
             $windowStart = $startDate->greaterThan($onOrAfterDate) ? $startDate : $onOrAfterDate;
             $before = new DateTime(
-                $windowStart->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
+                $windowStart->copy()->addDays($this->recurrenceLookaheadDays($rule))->toDateString()
             );
 
             $recurrence = $this->transformWithinWindow($rule, $after, $before, true, null);
@@ -245,9 +213,9 @@ class RecurrenceRuleService
      * calendar-day approximations for month/year lengths since exact unit arithmetic isn't
      * needed for a safety margin.
      */
-    private function recurrenceLookaheadDays(string $frequency, ?int $interval): int
+    private function recurrenceLookaheadDays(Rule $rule): int
     {
-        $periodDays = match ($frequency) {
+        $periodDays = match ($rule->getFreqAsText()) {
             'DAILY' => 1,
             'WEEKLY' => 7,
             'MONTHLY' => 31,
@@ -255,7 +223,7 @@ class RecurrenceRuleService
             default => 366,
         };
 
-        return $periodDays * max($interval ?? 1, 1) * 2;
+        return $periodDays * max($rule->getInterval(), 1) * 2;
     }
 
     /**
@@ -276,19 +244,14 @@ class RecurrenceRuleService
      */
     public function getOccurrencesAfter(
         Carbon $startDate,
-        string $frequency,
-        int $interval,
-        ?Carbon $endDate,
-        ?int $count,
-        ?string $byDay,
-        ?int $byMonth,
+        string $rrule,
         Carbon $afterDate,
     ): RecurrenceCollection {
-        $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+        $rule = $this->buildRule($startDate, $rrule);
 
         $after = new DateTime($afterDate->toDateString());
         $before = new DateTime(
-            $afterDate->copy()->addDays($this->recurrenceLookaheadDays($frequency, $interval))->toDateString()
+            $afterDate->copy()->addDays($this->recurrenceLookaheadDays($rule))->toDateString()
         );
 
         return $this->transformWithinWindow($rule, $after, $before, false, null);
@@ -307,17 +270,12 @@ class RecurrenceRuleService
      */
     public function getRecurrenceBetween(
         Carbon $startDate,
-        string $frequency,
-        int $interval,
-        ?Carbon $endDate,
-        ?int $count,
-        ?string $byDay,
-        ?int $byMonth,
+        string $rrule,
         Carbon $from,
         Carbon $to,
         ?int $virtualLimit = null,
     ): RecurrenceCollection {
-        $rule = $this->buildRule($startDate, $frequency, $interval, $endDate, $count, $byDay, $byMonth);
+        $rule = $this->buildRule($startDate, $rrule);
 
         return $this->transformWithinWindow(
             $rule,
@@ -344,15 +302,12 @@ class RecurrenceRuleService
      */
     public function occursOn(
         Carbon $startDate,
-        string $frequency,
-        int $interval,
-        ?Carbon $endDate,
-        ?int $count,
-        ?string $byDay,
-        ?int $byMonth,
+        string $rrule,
         Carbon $date,
     ): bool {
-        // Bound the rule's own UNTIL to $date (unless the caller's $endDate is earlier)
+        $rule = $this->buildRule($startDate, $rrule);
+
+        // Bound the rule's own UNTIL to $date (unless the rule's own UNTIL is already earlier)
         // rather than relying solely on the BetweenConstraint below to short-circuit:
         // Recurr doesn't reliably stop early for a YEARLY+BYMONTH+ordinal-BYDAY rule (e.g.
         // "-1FR" of November) with no UNTIL/COUNT - measured ~33s at RECURRENCE_VIRTUAL_LIMIT
@@ -361,12 +316,13 @@ class RecurrenceRuleService
         // candidate. Capping UNTIL makes the rule itself stop generating right after $date,
         // independent of that stopsTransformer quirk, while still resolving correctly for
         // dates arbitrarily far from $startDate.
-        $searchEndDate = $endDate && $endDate->lessThan($date) ? $endDate : $date;
-
-        $rule = $this->buildRule($startDate, $frequency, $interval, $searchEndDate, $count, $byDay, $byMonth);
-        $transformer = $this->makeArrayTransformer();
-
+        $existingUntil = $rule->getUntil();
         $day = new DateTime($date->toDateString());
+        if ($rule->getCount() === null && (!$existingUntil || $existingUntil > $day)) {
+            $rule->setUntil($day);
+        }
+
+        $transformer = $this->makeArrayTransformer();
         $constraint = new BetweenConstraint($day, $day, true);
 
         return $transformer->transform($rule, $constraint)->count() > 0;

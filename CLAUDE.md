@@ -48,8 +48,8 @@ Read `.ai/docs/` before implementing a feature — it describes the domain model
 | ----------------------------- | ---------------------------------------------------------------------------- |
 | `.ai/docs/product-context.md` | Philosophy, goals, non-goals                                                 |
 | `.ai/docs/assets/`            | Entity definitions (account, transaction, category, payee, investment, etc.) |
-| `.ai/docs/features/`          | Feature specifications (AI document processing, reports, dashboard, etc.)    |
-| `.ai/docs/specifications/`    | Implementation specs                                                         |
+| `.ai/docs/features/`          | As-built feature docs, extracted from code post-implementation (architecture, flows, permissions, tests, variables) |
+| `.ai/docs/specifications/`    | Pre-implementation design specs (background/rationale, spec, future directions) |
 
 Code is always the source of truth if docs and code conflict. Notify the user if you find discrepancies, and suggest doc updates.
 

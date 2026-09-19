@@ -6,6 +6,8 @@ Redefine how YAFFA models the "schedule" and "budget" transaction concepts, and 
 
 See [background.md](background.md) for the current-model analysis, the problems that motivated this change, and the principle this specification implements. This document does not restate that rationale — it defines what to build.
 
+This specification is now shipped (4.0.0). For a not-yet-implemented extension that replaces this document's `frequency`/`interval`/`count`/`end_date`/`by_day`/`by_month` columns with a single RFC5545 `rrule` string (and adds two more recurrence patterns — days-before-month-end, last-working-day-of-month — as a consequence of that storage change, needing no schema of their own), see [recurrence-rrule-storage.md](recurrence-rrule-storage.md).
+
 ## 2. Goals
 
 - Remove the `budget` boolean/flag from `Transaction` entirely — no replacement flag, not even an opt-out.

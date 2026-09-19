@@ -381,12 +381,7 @@ class Transaction extends Model
         ) {
             $recurrence = (new RecurrenceRuleService())->getRecurrenceBetween(
                 $this->transactionSchedule->start_date,
-                $this->transactionSchedule->frequency,
-                $this->transactionSchedule->interval,
-                $this->transactionSchedule->end_date,
-                $this->transactionSchedule->count,
-                $this->transactionSchedule->by_day,
-                $this->transactionSchedule->by_month,
+                $this->transactionSchedule->effectiveRrule(),
                 \Illuminate\Support\Carbon::instance($constraintStart),
                 \Illuminate\Support\Carbon::instance($endDate),
                 $virtualLimit,

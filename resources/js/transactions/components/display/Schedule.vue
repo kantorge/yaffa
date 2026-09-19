@@ -118,7 +118,9 @@
    * @property {Date} schedule.end_date
    * @property {Boolean} schedule.automatic_recording
    * @property {String|null} schedule.by_day RFC5545 ordinal weekday token, e.g. "1WE", "-1FR"
-   * @property {Number|null} schedule.by_month 1-12, pins a YEARLY by_day rule to a month
+   * @property {Number|null} schedule.by_month 1-12, pins a YEARLY month-scoped pattern to a month
+   * @property {Number|null} schedule.days_before_month_end 0-27, e.g. 0 = the last day of the month
+   * @property {Boolean} schedule.last_business_day_of_month
    * @property {Object} window.YAFFA
    */
   export default {
@@ -160,6 +162,30 @@
       // description (matching the form's dayOfMonthPatternLabel) when the
       // schedule doesn't use an ordinal-weekday rule (by_day empty).
       patternDescription() {
+        if (this.schedule.days_before_month_end != null) {
+          const label =
+            this.schedule.days_before_month_end === 0
+              ? __('The last day of the month')
+              : __(':count days before the end of the month', {
+                  count: this.schedule.days_before_month_end,
+                });
+
+          if (this.schedule.by_month && this.monthLabels[this.schedule.by_month]) {
+            return __(':pattern of :month', {
+              pattern: label,
+              month: this.monthLabels[this.schedule.by_month],
+            });
+          }
+
+          return label;
+        }
+
+        if (this.schedule.last_business_day_of_month) {
+          return this.schedule.by_month && this.monthLabels[this.schedule.by_month]
+            ? __('The last business day of :month', { month: this.monthLabels[this.schedule.by_month] })
+            : __('The last business day of the month');
+        }
+
         if (!this.schedule.by_day) {
           const { day, month } = scheduleStartDateParts(this.schedule.start_date) ?? {};
 
