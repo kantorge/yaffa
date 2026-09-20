@@ -4021,31 +4021,31 @@ INSERT INTO `transaction_items` (`id`,`transaction_id`,`category_id`,`amount`,`c
 ('39189','26951','43','522.0000',NULL);
 
 -- budgets
-INSERT INTO `budgets` (`id`,`user_id`,`category_id`,`account_id`,`transaction_type`,`amount`,`comment`,`frequency`,`interval`,`by_day`,`by_month`,`start_date`,`end_date`,`count`,`inflation`,`active`) VALUES
-('1','1','2',NULL,'withdrawal','50.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-01-01',NULL,NULL,'2','1'),
-('2','1','5',NULL,'withdrawal','100.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-01-01',NULL,NULL,NULL,'1'),
-('3','1','14',NULL,'withdrawal','10.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-01-01',NULL,NULL,'3','1'),
-('4','1','110',NULL,'withdrawal','15.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-07-01','2007-12-31',NULL,NULL,'0'),
-('5','1','110',NULL,'withdrawal','20.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-01-01',NULL,NULL,'4','1'),
-('6','1','119',NULL,'withdrawal','80.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-07-01',NULL,NULL,NULL,'1'),
-('7','1','123',NULL,'withdrawal','70.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,'5','1'),
-('8','1','121',NULL,'withdrawal','20.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,NULL,'1'),
-('9','1','114',NULL,'withdrawal','30.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,'2.5','1'),
-('10','1','116',NULL,'withdrawal','10.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,NULL,'1'),
-('11','1','19',NULL,'withdrawal','30.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,'3.5','1'),
-('12','1','34',NULL,'withdrawal','15.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,NULL,'1'),
-('13','1','90',NULL,'withdrawal','10.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01',NULL,NULL,'4.5','1'),
-('14','1','101',NULL,'withdrawal','400.0000',NULL,'MONTHLY','1',NULL,NULL,'2007-06-01','2018-04-30',NULL,NULL,'1'),
-('16','1','11',NULL,'withdrawal','100.0000',NULL,'MONTHLY','3',NULL,NULL,'2007-06-01',NULL,NULL,'2.2','1'),
-('17','1','117',NULL,'withdrawal','40.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-02-01',NULL,NULL,NULL,'1'),
-('18','1','113',NULL,'withdrawal','60.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-02-01',NULL,NULL,'3','1'),
-('19','1','118',NULL,'withdrawal','45.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-02-01',NULL,NULL,NULL,'1'),
-('20','1','115',NULL,'withdrawal','15.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-02-01',NULL,NULL,'4.5','1'),
-('21','1','29',NULL,'withdrawal','25.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-03-01',NULL,NULL,NULL,'1'),
-('22','1','36',NULL,'deposit','100.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-03-01',NULL,NULL,'2.5','1'),
-('23','1','25','45','withdrawal','30.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-04-01',NULL,NULL,NULL,'1'),
-('24','1','92','10','withdrawal','50.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-04-01',NULL,NULL,'4.5','1'),
-('25','1','42','9','deposit','40.0000',NULL,'MONTHLY','1',NULL,NULL,'2008-05-01',NULL,NULL,NULL,'1');
+INSERT INTO `budgets` (`id`,`user_id`,`category_id`,`account_id`,`transaction_type`,`amount`,`comment`,`rrule`,`start_date`,`inflation`,`active`) VALUES
+('1','1','2',NULL,'withdrawal','50.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-01-01','2','1'),
+('2','1','5',NULL,'withdrawal','100.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-01-01',NULL,'1'),
+('3','1','14',NULL,'withdrawal','10.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-01-01','3','1'),
+('4','1','110',NULL,'withdrawal','15.0000',NULL,'FREQ=MONTHLY;UNTIL=20071231T000000;INTERVAL=1','2007-07-01',NULL,'0'),
+('5','1','110',NULL,'withdrawal','20.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-01-01','4','1'),
+('6','1','119',NULL,'withdrawal','80.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-07-01',NULL,'1'),
+('7','1','123',NULL,'withdrawal','70.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01','5','1'),
+('8','1','121',NULL,'withdrawal','20.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01',NULL,'1'),
+('9','1','114',NULL,'withdrawal','30.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01','2.5','1'),
+('10','1','116',NULL,'withdrawal','10.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01',NULL,'1'),
+('11','1','19',NULL,'withdrawal','30.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01','3.5','1'),
+('12','1','34',NULL,'withdrawal','15.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01',NULL,'1'),
+('13','1','90',NULL,'withdrawal','10.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2007-06-01','4.5','1'),
+('14','1','101',NULL,'withdrawal','400.0000',NULL,'FREQ=MONTHLY;UNTIL=20180430T000000;INTERVAL=1','2007-06-01',NULL,'1'),
+('16','1','11',NULL,'withdrawal','100.0000',NULL,'FREQ=MONTHLY;INTERVAL=3','2007-06-01','2.2','1'),
+('17','1','117',NULL,'withdrawal','40.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-02-01',NULL,'1'),
+('18','1','113',NULL,'withdrawal','60.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-02-01','3','1'),
+('19','1','118',NULL,'withdrawal','45.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-02-01',NULL,'1'),
+('20','1','115',NULL,'withdrawal','15.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-02-01','4.5','1'),
+('21','1','29',NULL,'withdrawal','25.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-03-01',NULL,'1'),
+('22','1','36',NULL,'deposit','100.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-03-01','2.5','1'),
+('23','1','25','45','withdrawal','30.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-04-01',NULL,'1'),
+('24','1','92','10','withdrawal','50.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-04-01','4.5','1'),
+('25','1','42','9','deposit','40.0000',NULL,'FREQ=MONTHLY;INTERVAL=1','2008-05-01',NULL,'1');
 
 -- categories
 INSERT INTO `categories` (`id`,`user_id`,`name`,`description`,`active`,`parent_id`,`default_aggregation`) VALUES
@@ -4137,15 +4137,15 @@ INSERT INTO `flags` (`id`,`name`,`flaggable_type`,`flaggable_id`) VALUES
 ('2','dismissCashflowRateNote','App\\Models\\User','1');
 
 -- transaction_schedules
-INSERT INTO `transaction_schedules` (`id`,`transaction_id`,`automatic_recording`,`active`,`start_date`,`next_date`,`end_date`,`frequency`,`interval`,`by_day`,`by_month`,`count`,`inflation`) VALUES
-('225','26951','0','1','2007-07-15','2008-11-15',NULL,'MONTHLY','1',NULL,NULL,NULL,NULL),
-('226','26953','0','1','2007-07-31','2008-11-30',NULL,'MONTHLY','1',NULL,NULL,NULL,NULL),
-('227','26954','0','1','2007-08-05','2008-12-05',NULL,'MONTHLY','1',NULL,NULL,NULL,NULL),
-('228','26955','0','1','2008-07-24','2008-12-24',NULL,'MONTHLY','1',NULL,NULL,NULL,NULL),
-('229','26956','0','0','2007-07-21',NULL,'2008-06-21','MONTHLY','1',NULL,NULL,NULL,NULL),
-('230','26957','0','1','2008-07-21','2008-12-21',NULL,'MONTHLY','1',NULL,NULL,NULL,NULL),
-('234','26966','0','1','2009-01-14','2009-01-14',NULL,'DAILY','1',NULL,NULL,'1',NULL),
-('245','27001','0','1','2008-12-10','2008-12-10',NULL,'MONTHLY','3',NULL,NULL,NULL,NULL);
+INSERT INTO `transaction_schedules` (`id`,`transaction_id`,`automatic_recording`,`active`,`start_date`,`next_date`,`rrule`,`inflation`) VALUES
+('225','26951','0','1','2007-07-15','2008-11-15','FREQ=MONTHLY;INTERVAL=1',NULL),
+('226','26953','0','1','2007-07-31','2008-11-30','FREQ=MONTHLY;INTERVAL=1',NULL),
+('227','26954','0','1','2007-08-05','2008-12-05','FREQ=MONTHLY;INTERVAL=1',NULL),
+('228','26955','0','1','2008-07-24','2008-12-24','FREQ=MONTHLY;INTERVAL=1',NULL),
+('229','26956','0','0','2007-07-21',NULL,'FREQ=MONTHLY;UNTIL=20080621T000000;INTERVAL=1',NULL),
+('230','26957','0','1','2008-07-21','2008-12-21','FREQ=MONTHLY;INTERVAL=1',NULL),
+('234','26966','0','1','2009-01-14','2009-01-14','FREQ=DAILY;COUNT=1;INTERVAL=1',NULL),
+('245','27001','0','1','2008-12-10','2008-12-10','FREQ=MONTHLY;INTERVAL=3',NULL);
 
 -- account_groups
 INSERT INTO `account_groups` (`id`,`user_id`,`name`) VALUES

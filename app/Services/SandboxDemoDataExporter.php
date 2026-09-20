@@ -60,8 +60,9 @@ class SandboxDemoDataExporter
      * Shift every configured date column by the given number of months (negative to shift back).
      *
      * config('demo.seed_date_shift_columns') is keyed by table name, each entry shaped as
-     * array{columns: list<string>, scope: array<string, mixed>|null} - columns are the date
-     * columns to shift, scope is an optional where()-clause array restricting which rows are shifted.
+     * array{columns: list<string>, scope: array<string, mixed>|null, rrule_column?: string} - columns
+     * are the date columns to shift, scope is an optional where()-clause array restricting which
+     * rows are shifted, rrule_column is an optional RRULE string column whose UNTIL date is shifted.
      */
     public function shiftDates(int $months): void
     {
@@ -74,7 +75,37 @@ class SandboxDemoDataExporter
             DB::table($table)
                 ->when($definition['scope'], fn ($query) => $query->where($definition['scope']))
                 ->update($updates);
+
+            if (isset($definition['rrule_column'])) {
+                $this->shiftRruleUntil($table, $definition['rrule_column'], $definition['scope'], $months);
+            }
         }
+    }
+
+    /**
+     * Shift the UNTIL date embedded in an RRULE string column. Uses the same end-of-month clamping
+     * as MySQL's DATE_ADD (addMonthsNoOverflow), so an UNTIL stays consistent with the start_date
+     * shifted by shiftDates() above. Only the date part is touched; any T-time suffix is kept.
+     *
+     * @param  array<string, mixed>|null  $scope
+     */
+    private function shiftRruleUntil(string $table, string $column, ?array $scope, int $months): void
+    {
+        DB::table($table)
+            ->when($scope, fn ($query) => $query->where($scope))
+            ->where($column, 'like', '%UNTIL=%')
+            ->get(['id', $column])
+            ->each(function ($row) use ($table, $column, $months): void {
+                $shifted = preg_replace_callback(
+                    '/UNTIL=(\d{8})/',
+                    fn (array $m): string => 'UNTIL=' . Carbon::createFromFormat('!Ymd', $m[1])
+                        ->addMonthsNoOverflow($months)
+                        ->format('Ymd'),
+                    $row->{$column}
+                );
+
+                DB::table($table)->where('id', $row->id)->update([$column => $shifted]);
+            });
     }
 
     /**

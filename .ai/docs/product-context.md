@@ -53,7 +53,6 @@ Users host their own instance to retain full control over their financial data. 
 - No automatic bank synchronization
 - No native mobile application (responsive web only)
 - Not intended as strict accounting software
-- Precision handling for monetary values is currently limited (planned improvement)
 
 ---
 
