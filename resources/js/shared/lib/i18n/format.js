@@ -85,13 +85,14 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
     // a value with real fractional content up to the storage scale still shows all of it.
     // 'generic' (everyday balances/totals): no floor - Intl.NumberFormat never pads a whole
     // number with zeros it doesn't have. The currency's configured precision is a ceiling only,
-    // rounding any real fractional content down to at most that many digits.
+    // rounding any real fractional content down to at most that many digits. When it isn't
+    // configured (null), undefined lets Intl apply the currency's own default (e.g. 2 for EUR).
     const minDigits = precision === 'detailed'
         ? (currencySettings.detailed_decimal_precision ?? currencySettings.generic_decimal_precision ?? 0)
         : 0;
     const maxDigits = precision === 'detailed'
         ? STORAGE_SCALE.PRICE
-        : (currencySettings.generic_decimal_precision ?? 0);
+        : (currencySettings.generic_decimal_precision ?? undefined);
 
     return getCachedNumberFormatter(locale, {
         style: 'currency',

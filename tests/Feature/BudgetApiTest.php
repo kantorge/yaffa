@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
@@ -651,5 +652,116 @@ class BudgetApiTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonValidationErrors(['days_before_month_end']);
+    }
+
+    public function test_last_business_day_of_month_requires_a_monthly_or_yearly_frequency(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'WEEKLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subDay()->toDateString(),
+            'last_business_day_of_month' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['last_business_day_of_month']);
+    }
+
+    public function test_yearly_last_business_day_of_month_requires_by_month(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'YEARLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subDay()->toDateString(),
+            'last_business_day_of_month' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['by_month']);
+    }
+
+    public function test_last_business_day_of_month_is_mutually_exclusive_with_days_before_month_end(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subDay()->toDateString(),
+            'days_before_month_end' => 3,
+            'last_business_day_of_month' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['days_before_month_end', 'last_business_day_of_month']);
+    }
+
+    public function test_days_before_month_end_rejects_a_negative_value(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subDay()->toDateString(),
+            'days_before_month_end' => -1,
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors(['days_before_month_end']);
+    }
+
+    #[DataProvider('daysBeforeMonthEndBoundaryProvider')]
+    public function test_days_before_month_end_accepts_the_inclusive_boundaries(int $days): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        Currency::factory()->for($user)->create(['base' => true]);
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->postJson(route('api.v1.budgets.store'), [
+            'category_id' => $category->id,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => Carbon::now()->subDay()->toDateString(),
+            'days_before_month_end' => $days,
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED)
+            ->assertJsonPath('days_before_month_end', $days);
+    }
+
+    public static function daysBeforeMonthEndBoundaryProvider(): array
+    {
+        return [
+            'last day of the month' => [0],
+            'upper bound' => [27],
+        ];
     }
 }

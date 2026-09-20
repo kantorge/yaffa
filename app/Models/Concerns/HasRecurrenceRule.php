@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Carbon;
 use Recurr\Rule;
+use TypeError;
 
 /**
  * Backs the discrete recurrence fields (frequency/interval/count/end_date/by_day/by_month, plus
@@ -48,7 +49,7 @@ trait HasRecurrenceRule
         });
     }
 
-    public function fill(array $attributes)
+    public function fill(array $attributes): static
     {
         $result = parent::fill($attributes);
         $this->composeRrule();
@@ -64,12 +65,16 @@ trait HasRecurrenceRule
      * etc.) rebuild via effectiveRrule() on every call and already handle this same failure via
      * their own try/catch - request-level validation (ValidatesRecurrenceRule) is the actual
      * guard against ever persisting an invalid combination.
+     *
+     * TypeError is tolerated alongside Exception: a malformed pending value (e.g. a non-numeric
+     * days_before_month_end) makes the arithmetic in effectiveRrule() throw one, and it must not
+     * turn a request the validation rules would answer with a 422 into a 500 first.
      */
     private function composeRrule(): void
     {
         try {
             $rrule = $this->effectiveRrule();
-        } catch (Exception) {
+        } catch (Exception|TypeError) {
             return;
         }
 
@@ -178,7 +183,7 @@ trait HasRecurrenceRule
      *
      * @return Attribute
      */
-    private function recurrenceAttribute(string $field, ?Closure $decompose = null)
+    private function recurrenceAttribute(string $field, ?Closure $decompose = null): mixed
     {
         return Attribute::make(
             get: fn () => $this->getRecurrenceField($field, $decompose),

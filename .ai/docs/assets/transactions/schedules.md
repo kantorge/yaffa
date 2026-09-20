@@ -81,8 +81,10 @@ Important interpretation rules:
 
 ### Storage
 
-All of the above (except `start_date`, which remains its own column) is stored as a single RFC 5545
-RRULE string in one `rrule` column, not one column per field. `TransactionSchedule` exposes them as
+The recurrence-shape fields above (frequency, interval, end date, count, and the month-scoped
+pattern) are stored as a single RFC 5545 RRULE string in one `rrule` column, not one column per
+field. `start_date`, `next_date`, `automatic_recording`, and `inflation` remain their own columns.
+`TransactionSchedule` exposes the recurrence-shape fields as
 virtual attributes (`App\Models\Concerns\HasRecurrenceRule`, shared with `Budget`) that compose into
 and decompose out of that string transparently — request/response payloads and the edit form are
 unaffected and never see the raw RRULE text. See

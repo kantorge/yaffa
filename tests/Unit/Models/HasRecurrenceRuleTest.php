@@ -5,6 +5,7 @@ namespace Tests\Unit\Models;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Models\TransactionSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -87,6 +88,17 @@ class HasRecurrenceRuleTest extends TestCase
         $this->assertTrue($reloaded->last_business_day_of_month);
         $this->assertNull($reloaded->days_before_month_end);
         $this->assertNull($reloaded->by_day);
+    }
+
+    public function test_a_non_numeric_month_end_value_is_tolerated_instead_of_thrown(): void
+    {
+        $schedule = new TransactionSchedule([
+            'frequency' => 'MONTHLY',
+            'days_before_month_end' => 'abc',
+        ]);
+
+        $this->assertArrayNotHasKey('rrule', $schedule->getAttributes());
+        $this->assertSame('abc', $schedule->days_before_month_end);
     }
 
     public function test_transaction_schedule_rrule_is_not_mass_assignable(): void

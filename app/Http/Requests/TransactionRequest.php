@@ -13,6 +13,7 @@ use Closure;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use TypeError;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
 
@@ -100,9 +101,10 @@ class TransactionRequest extends FormRequest
                 if (!$schedule->occursOn(Carbon::parse($value))) {
                     $fail(__('The :attribute must be a date the schedule actually recurs on.'));
                 }
-            } catch (InvalidArgument|InvalidWeekday|Exception) {
-                // A malformed rule (e.g. an invalid frequency/by_day combination) is
-                // already surfaced by the other rules on those fields - don't pile on.
+            } catch (InvalidArgument|InvalidWeekday|Exception|TypeError) {
+                // A malformed rule (e.g. an invalid frequency/by_day combination, or a
+                // non-numeric days_before_month_end) is already surfaced by the other rules on
+                // those fields - don't pile on.
             }
         };
     }

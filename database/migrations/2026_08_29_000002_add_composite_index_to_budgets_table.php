@@ -36,8 +36,13 @@ return new class () extends Migration {
         // this down() has recreated budgets_user_id_foreign as a real (not implicitly
         // FK-generated) index, a later up() no longer causes MySQL to silently drop it again -
         // so a second up()/down() cycle (e.g. a test that resets/reapplies migrations repeatedly)
-        // must not try to recreate or rename over an index that's already there.
-        if (!Schema::hasIndex('budgets', 'budgets_user_id_foreign')) {
+        // must not try to recreate or rename over an index that's already there. The same goes
+        // for the temp index itself, which a down() interrupted between creating it and the
+        // rename below would leave behind - retrying must not fail on a duplicate key name.
+        if (
+            !Schema::hasIndex('budgets', 'budgets_user_id_foreign')
+            && !Schema::hasIndex('budgets', 'budgets_user_id_foreign_tmp')
+        ) {
             Schema::table('budgets', function (Blueprint $table) {
                 $table->index('user_id', 'budgets_user_id_foreign_tmp');
             });

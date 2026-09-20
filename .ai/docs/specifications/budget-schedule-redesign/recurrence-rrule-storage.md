@@ -7,9 +7,11 @@ That draft is not implemented and is replaced by this one before any code was wr
 [architecture.md](../../features/budget-schedule-redesign/architecture.md)/`RecurrenceRuleService`
 for the base mechanism this addendum reshapes.
 
-**Status: not yet implemented.** Pre-implementation handoff, unlike specification.md (which
-documents already-shipped work). This is a `release/v4` change, and v4 has not shipped to any
-external user — this is the deliberate timing this addendum relies on (Section 7).
+**Status: implemented** (backend, migrations, frontend, tests, docs), in the still-unreleased 4.0.0
+line. Written as a pre-implementation handoff; Section 14's checklist records what has landed.
+Still open: FR-16's one-off personal-instance steps, the frontend rebuild/manual UI check, and the
+final quality gates. This was a `release/v4` change, and v4 has not shipped to any external user —
+this is the deliberate timing this addendum relies on (Section 7).
 
 ## 1. Purpose and Motivation
 
@@ -455,28 +457,28 @@ once `rrule` is backfilled — then frontend (unaffected in contract, but rebuil
 tests, then docs.
 
 ### Backend — recurrence engine
-- [ ] `RecurrenceRuleService::buildRule()` — rewrite to `(Carbon $startDate, string $rrule): Rule`
+- [x] `RecurrenceRuleService::buildRule()` — rewrite to `(Carbon $startDate, string $rrule): Rule`
       via `Rule::createFromString()`.
-- [ ] Rewrite `getRecurrence()`, `hasOccurrenceOnOrAfter()`, `getOccurrencesAfter()`,
+- [x] Rewrite `getRecurrence()`, `hasOccurrenceOnOrAfter()`, `getOccurrencesAfter()`,
       `getRecurrenceBetween()`, `occursOn()` to the single-`rrule`-parameter signature.
-- [ ] `estimatePeriodsBetween()` — parse `FREQ=`/`INTERVAL=` out of the `rrule` string instead of
+- [x] `estimatePeriodsBetween()` — parse `FREQ=`/`INTERVAL=` out of the `rrule` string instead of
       taking them as parameters.
 
 ### Backend — models
-- [ ] `TransactionSchedule.php` — drop old casts; add `Attribute::make()` virtual properties for
+- [x] `TransactionSchedule.php` — drop old casts; add `Attribute::make()` virtual properties for
       `frequency`/`interval`/`count`/`end_date`/`by_day`/`by_month`/`days_before_month_end`/
       `last_business_day_of_month`; add `saving()` composer hook; update all internal
       `RecurrenceRuleService` call sites.
-- [ ] `Budget.php` — same treatment, including `booted()`'s `hasOccurrenceOnOrAfter()` call and its
+- [x] `Budget.php` — same treatment, including `booted()`'s `hasOccurrenceOnOrAfter()` call and its
       own `saving()` composer hook.
-- [ ] `Transaction.php::scheduleInstances()` — update its direct `buildRule()` call.
-- [ ] `BudgetService.php::projectOccurrences()` — update its `getRecurrenceBetween()` call.
+- [x] `Transaction.php::scheduleInstances()` — update its direct `buildRule()` call.
+- [x] `BudgetService.php::projectOccurrences()` — update its `getRecurrenceBetween()` call.
 
 ### Backend — validation
-- [ ] `ValidatesRecurrenceRule` — add `daysBeforeMonthEndRule()`, `lastBusinessDayOfMonthRule()`;
+- [x] `ValidatesRecurrenceRule` — add `daysBeforeMonthEndRule()`, `lastBusinessDayOfMonthRule()`;
       extend `byDayRule()`'s exclusivity closure both ways; widen `byMonthRule()`'s
       required/prohibited condition to all 3 month-scoped patterns.
-- [ ] Confirm `BudgetRequest`/`TransactionRequest` need no field-name changes (verification task,
+- [x] Confirm `BudgetRequest`/`TransactionRequest` need no field-name changes (verification task,
       not new code, per FR-13).
 
 ### Database — `transaction_schedules` (FR-15, real backfill)
@@ -503,30 +505,30 @@ tests, then docs.
       and before this branch is proposed for merge toward the release branch.
 
 ### Frontend (contract unchanged — verify, extend for month-end patterns only)
-- [ ] `shared/lib/helpers/index.js` — `bymonthday`/`bysetpos`+`byweekday` branches.
-- [ ] `TransactionSchedule.vue` — 2 new `patternMode` options + exclusivity/`by_month` wiring.
-- [ ] `BudgetForm.vue` — extend field list.
-- [ ] `Schedule.vue` — 2 new human-readable summary branches.
-- [ ] i18n labels.
+- [x] `shared/lib/helpers/index.js` — `bymonthday`/`bysetpos`+`byweekday` branches.
+- [x] `TransactionSchedule.vue` — 2 new `patternMode` options + exclusivity/`by_month` wiring.
+- [x] `BudgetForm.vue` — extend field list.
+- [x] `Schedule.vue` — 2 new human-readable summary branches.
+- [x] i18n labels.
 - [ ] `vendor/bin/sail npm run dev` rebuild; manual UI check (transaction schedule form + Budget
       modal) confirming no regression from the storage change.
 
 ### Tests
-- [ ] `RecurrenceRuleServiceTest` — rewritten around `rrule`-string input; month-end pattern edge
+- [x] `RecurrenceRuleServiceTest` — rewritten around `rrule`-string input; month-end pattern edge
       cases (leap year/February, weekend-ending month).
-- [ ] Round-trip test: set virtual attributes → save → reload → read back unchanged.
-- [ ] Test: `rrule` is not mass-assignable.
-- [ ] Request-validation feature tests for month-end field exclusivity/frequency/`by_month`.
-- [ ] `scheduleInstances()` regression test (existing pattern + both new ones).
+- [x] Round-trip test: set virtual attributes → save → reload → read back unchanged.
+- [x] Test: `rrule` is not mass-assignable.
+- [x] Request-validation feature tests for month-end field exclusivity/frequency/`by_month`.
+- [x] `scheduleInstances()` regression test (existing pattern + both new ones).
 - [x] Migration golden-output test (FR-15) —
       `tests/Feature/Console/TransactionScheduleRruleMigrationTest.php`, plus the guard-blocks-drop
       case.
 
 ### Docs (after implementation lands)
-- [ ] `.ai/docs/assets/transactions/schedules.md` / `.ai/docs/assets/budget/budget.md`.
-- [ ] `.ai/docs/features/budget-schedule-redesign/architecture.md`.
-- [ ] `.ai/docs/features/budget-schedule-redesign/variables.md` (confirm no new variables).
-- [ ] `UPGRADE.md` — document the `transaction_schedules` recurrence backfill in the 3.x→4.x
+- [x] `.ai/docs/assets/transactions/schedules.md` / `.ai/docs/assets/budget/budget.md`.
+- [x] `.ai/docs/features/budget-schedule-redesign/architecture.md`.
+- [x] `.ai/docs/features/budget-schedule-redesign/variables.md` (confirm no new variables).
+- [x] `UPGRADE.md` — document the `transaction_schedules` recurrence backfill in the 3.x→4.x
       section, alongside the existing budget-conversion notes (Section 13).
 
 ### Quality gates

@@ -54,8 +54,9 @@ Because a Budget has no linked transaction to derive a direction from, it stores
 
 A Budget has its own period definition (frequency, interval, start date, optional end date, optional count, an optional month-scoped pattern, optional inflation rate) — the same recurrence vocabulary a schedule uses (including the same three mutually-exclusive month-scoped patterns: ordinal weekday, days-before-month-end, last-business-day-of-month — see [Schedule Settings](../transactions/schedules.md)), computed through the same shared recurrence logic, but evaluated in aggregate per period rather than advanced instance-by-instance the way a schedule's `next_date` is. A Budget has no `next_date` and no automatic-recording option: there is no transaction for it to record.
 
-Like a schedule, all of this (except `start_date`) is stored as a single RFC 5545 RRULE string in
-one `rrule` column, not one column per field — see
+Like a schedule, the recurrence-shape fields (frequency, interval, end date, count, and the
+month-scoped pattern) are stored as a single RFC 5545 RRULE string in one `rrule` column, not one
+column per field; `start_date` and `inflation` remain their own columns — see
 [recurrence-rrule-storage.md](../../specifications/budget-schedule-redesign/recurrence-rrule-storage.md).
 
 ### Currency
