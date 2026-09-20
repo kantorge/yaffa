@@ -28,6 +28,19 @@ A scheduled standard withdrawal/deposit's categorized items now always count tow
 - **Schedule/Budget recurrence storage collapsed into a single `rrule` column.** `transaction_schedules.frequency`/`interval`/`count`/`end_date` (and, if present, `by_day`/`by_month`) are consolidated into one RFC 5545 RRULE string column (`rrule`) and the old columns are dropped. This runs automatically as part of the migration step below and needs no manual input — the request/response contract for schedules and budgets is unchanged (you still work with the same discrete frequency/interval/day/month fields in the UI and API; only the underlying storage changed). See below for the backup recommendation, since this conversion has no downgrade path once the old columns are dropped.
 - If you have any custom integrations or scripts against the endpoints above, update them before upgrading.
 
+### Automatic Cleanup of Old AI Documents
+
+A daily scheduled task can now delete old **finalized** AI documents, together with their stored files and received emails, to keep the database and storage from growing indefinitely. The transaction created from a document is kept.
+
+- It is an **opt-in, per-user setting**: each user sets "Delete finalized documents after (days)" in the "Document Retention" section of their AI settings. Blank (the default) keeps everything, so nothing is deleted unless a user asks for it. There is no environment variable for it (the `AI_DOCUMENT_FILE_RETENTION_DAYS` variable that appeared in earlier example files never had an effect and is not read).
+- Documents that are not finalized are never deleted. Users with such documents older than their retention period get one reminder email per day, linking to the filtered document list, until they finalize or delete them.
+- The task runs on the container where `RUNS_SCHEDULER` is enabled, and needs a working queue worker and mail configuration for the reminders.
+- **Google Drive imports:** if a Drive import has no post-import action (see the Google Drive settings), the imported files stay in the monitored folder. After their documents are deleted, a manual full sync can import those files again as duplicates. YAFFA shows a warning when a retention period is enabled in such a setup; configure a post-import action (move or rename processed files) first.
+- Deleting an AI document, manually or by the cleanup, no longer deletes the transaction created from it (the foreign key is now `ON DELETE SET NULL`). Before this change, deleting a finalized document deleted its transaction as well.
+- Documents created from pasted text stored an invalid file path, which a migration now repairs.
+- Deleted documents cannot be restored. Back up before enabling it on an existing installation.
+- The "Old AI document cleanup" action of the maintenance page deletes documents (not only files), following the same rules. It is disabled until a retention period is set.
+
 ### Step-by-step Guide
 
 #### 1. Upgrade to the latest YAFFA 3.x release
@@ -254,10 +267,6 @@ Add the following new environment variables to your `.env` file before running m
 AI_DOCUMENT_MAX_FILES_PER_SUBMISSION=3
 AI_DOCUMENT_MAX_FILE_SIZE_MB=20
 AI_DOCUMENT_ALLOWED_TYPES=pdf,jpg,jpeg,png,txt
-
-# Optional file retention (cleanup job is planned, not yet implemented)
-# Set to 0 or a negative value to disable
-AI_DOCUMENT_FILE_RETENTION_DAYS=90
 ```
 
 **Tesseract OCR (optional — only needed if you want to process images without a Vision AI model):**

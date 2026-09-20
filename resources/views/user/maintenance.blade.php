@@ -63,16 +63,21 @@
                     <div>
                         <h5 class="card-title mb-1">{{ __('maintenance.aiDocumentOldFiles.title') }}</h5>
                         <p class="card-text text-muted mb-0">
-                            {{ __('maintenance.aiDocumentOldFiles.description', ['days' => config('ai-documents.local_storage_file_retention.retention_days')]) }}
+                            @if ($aiDocumentRetentionDays)
+                                {{ __('maintenance.aiDocumentOldFiles.description', ['days' => $aiDocumentRetentionDays]) }}
+                            @else
+                                {{ __('maintenance.aiDocumentOldFiles.disabled') }}
+                            @endif
                         </p>
                     </div>
                     <div class="ms-4 flex-shrink-0">
                         <button
                             type="button"
                             class="btn btn-outline-danger maintenance-task-btn"
+                            @disabled(! $aiDocumentRetentionDays)
                             data-route="{{ route('api.v1.maintenance.cleanup-ai-document-old-files') }}"
                             data-method="POST"
-                            data-confirm-text="{{ __('maintenance.aiDocumentOldFiles.confirmText', ['days' => config('ai-documents.local_storage_file_retention.retention_days')]) }}"
+                            data-confirm-text="{{ __('maintenance.aiDocumentOldFiles.confirmText', ['days' => $aiDocumentRetentionDays]) }}{{ $driveKeepsImportedFiles ? ' ' . __('maintenance.aiDocumentOldFiles.driveWarning') : '' }}"
                         >
                             <i class="fa fa-trash me-2"></i>
                             {{ __('maintenance.aiDocumentOldFiles.action') }}

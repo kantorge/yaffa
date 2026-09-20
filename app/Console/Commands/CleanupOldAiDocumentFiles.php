@@ -2,15 +2,15 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AiDocumentFile;
+use App\Jobs\CleanupOldAiDocuments;
+use App\Models\AiUserSettings;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 #[Signature('ai-documents:cleanup-old-files {userId? : Optional user ID for scoped cleanup}')]
-#[Description('Delete old AI document files from local storage based on retention settings')]
+#[Description('Delete finalized AI documents and their files after the retention period, and remind users about old unprocessed ones')]
 class CleanupOldAiDocumentFiles extends Command
 {
     /**
@@ -18,56 +18,22 @@ class CleanupOldAiDocumentFiles extends Command
      */
     public function handle(): int
     {
-        $retentionDays = (int) config('ai-documents.local_storage_file_retention.retention_days', 90);
-
-        if ($retentionDays <= 0) {
-            $this->info('AI document file cleanup is disabled because retention_days is 0 or empty.');
-
-            return Command::SUCCESS;
-        }
-
         $userId = $this->argument('userId');
-        if ($userId !== null) {
-            $user = User::query()->find((int) $userId);
-            if ($user === null) {
-                $this->error('Invalid userId');
+        if ($userId !== null && User::query()->find((int) $userId) === null) {
+            $this->error('Invalid userId');
 
-                return Command::FAILURE;
-            }
+            return Command::FAILURE;
         }
 
-        $cutoffDate = now()->subDays($retentionDays);
-        $deletedFileCount = 0;
-        $missingFileCount = 0;
-        $deletedRecordCount = 0;
+        // Retention is a per-user AI setting; users without a retention period are left alone.
+        $userIds = AiUserSettings::query()
+            ->where('document_retention_days', '>', 0)
+            ->when($userId !== null, fn ($query) => $query->where('user_id', (int) $userId))
+            ->pluck('user_id');
 
-        $query = AiDocumentFile::query()
-            ->whereNotNull('file_path')
-            ->where('file_path', '!=', '')
-            ->whereHas('aiDocument', function ($builder) use ($cutoffDate, $userId): void {
-                $builder->where('created_at', '<', $cutoffDate);
+        $userIds->each(fn (int $id) => CleanupOldAiDocuments::dispatch($id));
 
-                if ($userId !== null) {
-                    $builder->where('user_id', (int) $userId);
-                }
-            });
-
-        $query->chunkById(200, function ($files) use (&$deletedFileCount, &$missingFileCount, &$deletedRecordCount): void {
-            foreach ($files as $file) {
-                /** @var AiDocumentFile $file */
-                if (Storage::disk('local')->exists($file->file_path)) {
-                    Storage::disk('local')->delete($file->file_path);
-                    $deletedFileCount++;
-                } else {
-                    $missingFileCount++;
-                }
-
-                $file->delete();
-                $deletedRecordCount++;
-            }
-        });
-
-        $this->info("AI document cleanup finished. Deleted files: {$deletedFileCount}, Missing files: {$missingFileCount}, Deleted records: {$deletedRecordCount}.");
+        $this->info("AI document cleanup dispatched for {$userIds->count()} user(s).");
 
         return Command::SUCCESS;
     }

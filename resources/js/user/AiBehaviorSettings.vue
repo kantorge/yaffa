@@ -132,6 +132,54 @@
 
           <hr class="my-3" />
 
+          <!-- Document retention -->
+          <h6 class="text-muted mb-3">{{ __('Document Retention') }}</h6>
+
+          <div class="row mb-3">
+            <label
+              for="document_retention_days"
+              class="col-form-label col-sm-4"
+            >
+              {{ __('Delete finalized documents after (days)') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="document_retention_days"
+                  name="document_retention_days"
+                  v-model.number="form.document_retention_days"
+                  min="1"
+                  max="3650"
+                  :placeholder="__('Keep forever')"
+                />
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __(
+                      'Finalized documents older than this are deleted daily, together with their stored files and received emails. The transactions created from them are kept.',
+                    )
+                  "
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Optional. Documents that are not finalized are never deleted; you get a daily reminder email about the old ones instead. Leave blank to keep everything.',
+                  )
+                }}
+              </small>
+              <HasError field="document_retention_days" :form="form" />
+            </div>
+          </div>
+
+          <hr class="my-3" />
+
           <!-- Category matching -->
           <h6 class="text-muted mb-3">{{ __('Category Matching') }}</h6>
 
@@ -657,6 +705,7 @@
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
+  import Swal from 'sweetalert2';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
 
   export default {
@@ -690,7 +739,9 @@
         duplicate_amount_tolerance_percent: null,
         duplicate_similarity_threshold: null,
         category_matching_mode: 'child_preferred',
+        document_retention_days: null,
       }),
+      savedRetentionDays: null,
       loading: true,
       warnings: [],
       sandbox_mode: window.YAFFA.config.sandbox_mode,
@@ -744,6 +795,9 @@
               data.duplicate_similarity_threshold ?? null;
             this.form.category_matching_mode =
               data.category_matching_mode ?? 'child_preferred';
+            this.form.document_retention_days =
+              data.document_retention_days ?? null;
+            this.savedRetentionDays = this.form.document_retention_days;
             this.warnings = this.normalizeWarnings(data.warnings ?? []);
 
             this.$emit('ai-processing-changed', this.form.ai_enabled);
@@ -758,11 +812,20 @@
             this.loading = false;
           });
       },
-      onSubmit() {
+      async onSubmit() {
         const _vue = this;
-        this.form.busy = true;
 
         const payload = { ...this.form.data() };
+
+        if (payload.document_retention_days === '') {
+          payload.document_retention_days = null;
+        }
+
+        if (!(await this.confirmRetentionChange(payload.document_retention_days))) {
+          return;
+        }
+
+        this.form.busy = true;
 
         // Normalize null for optional Tesseract image limit fields
         if (payload.image_max_width_vision === '') {
@@ -794,6 +857,9 @@
             );
             this.form.generic_document_language =
               response.data?.generic_document_language ?? '';
+            this.form.document_retention_days =
+              response.data?.document_retention_days ?? null;
+            this.savedRetentionDays = this.form.document_retention_days;
             this.warnings = this.normalizeWarnings(
               response.data?.warnings ?? [],
             );
@@ -817,6 +883,35 @@
           .finally(() => {
             _vue.form.busy = false;
           });
+      },
+      // Enabling or changing the retention is destructive: when a Google Drive import leaves the
+      // imported files in the folder, deleted documents can be imported again as duplicates.
+      async confirmRetentionChange(retentionDays) {
+        const driveKeepsFiles =
+          window.aiSettingsPageMeta?.drive_keeps_imported_files === true;
+
+        if (
+          !retentionDays ||
+          retentionDays === this.savedRetentionDays ||
+          !driveKeepsFiles
+        ) {
+          return true;
+        }
+
+        const result = await Swal.fire({
+          icon: 'warning',
+          text: __('maintenance.aiDocumentOldFiles.driveWarning'),
+          confirmButtonText: __('Confirm'),
+          cancelButtonText: __('Cancel'),
+          showCancelButton: true,
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        });
+
+        return result.isConfirmed;
       },
       normalizeWarnings(warnings) {
         if (!Array.isArray(warnings)) {

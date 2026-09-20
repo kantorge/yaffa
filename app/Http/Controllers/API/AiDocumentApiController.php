@@ -22,7 +22,9 @@ use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
@@ -68,16 +70,24 @@ class AiDocumentApiController extends Controller
             'custom_prompt' => $request->input('custom_prompt'),
         ]);
 
-        // Store uploaded files
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $this->storeFile($document, $file);
+        try {
+            // Store uploaded files
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $this->storeFile($document, $file);
+                }
             }
-        }
 
-        // Store text input if provided
-        if ($request->input('text_input')) {
-            $this->storeTextFile($document, $request->input('text_input'));
+            // Store text input if provided
+            if ($request->input('text_input')) {
+                $this->storeTextFile($document, $request->input('text_input'));
+            }
+        } catch (Throwable $e) {
+            // Don't leave a half-stored document (or its files) behind; cascades to the file records.
+            Storage::disk('local')->deleteDirectory("ai_documents/{$document->user_id}/{$document->id}");
+            $document->delete();
+
+            throw $e;
         }
 
         // Dispatch processing job
@@ -157,9 +167,12 @@ class AiDocumentApiController extends Controller
     }
 
     /**
-     * Cleanup old AI document files
+     * Cleanup old AI documents
      *
-     * Queues a background job that removes old AI document files for the authenticated user.
+     * Queues the retention cleanup for the authenticated user. It deletes finalized AI documents older
+     * than the user's retention period (`document_retention_days`), together with their stored files and
+     * received emails, and emails a reminder about older documents that are not finalized. The
+     * transactions created from the documents are kept. Does nothing if no retention period is set.
      */
     public function cleanupOldFiles(Request $request): JsonResponse
     {
@@ -393,6 +406,10 @@ class AiDocumentApiController extends Controller
             'local'
         );
 
+        if ($path === false) {
+            throw new RuntimeException("Failed to store uploaded file {$filename}.");
+        }
+
         // Create database record
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,
@@ -409,10 +426,12 @@ class AiDocumentApiController extends Controller
     {
         $filename = 'text_input_' . now()->timestamp . '.txt';
 
-        $path = Storage::disk('local')->put(
-            "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}",
-            $textInput
-        );
+        // Storage::put() returns a bool, not the path
+        $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";
+
+        if (! Storage::disk('local')->put($path, $textInput)) {
+            throw new RuntimeException("Failed to store text input {$filename}.");
+        }
 
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,

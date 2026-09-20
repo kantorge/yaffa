@@ -237,6 +237,19 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
     }
 
     /**
+     * Whether an enabled Google Drive import leaves the imported files in the monitored folder (no
+     * post-import action). Deleting the documents created from them lets a manual full sync import
+     * those files again as duplicates.
+     */
+    public function googleDriveKeepsImportedFiles(): bool
+    {
+        return $this->googleDriveConfigs()
+            ->where('enabled', true)
+            ->get()
+            ->contains(fn (GoogleDriveConfig $config) => empty($config->post_import_actions));
+    }
+
+    /**
      * @return HasMany<CategoryLearning, $this>
      */
     public function categoryLearning(): HasMany
