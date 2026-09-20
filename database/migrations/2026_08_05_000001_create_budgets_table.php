@@ -27,13 +27,12 @@ return new class () extends Migration {
             $table->enum('transaction_type', ['withdrawal', 'deposit']);
             $table->decimal('amount', 12, 4)->unsigned();
             $table->string('comment')->nullable();
-            $table->string('frequency');
-            $table->integer('interval')->default(1);
-            $table->string('by_day', 4)->nullable();
-            $table->unsignedTinyInteger('by_month')->nullable();
+            // Recurrence shape (frequency/interval/count/end_date/by_day/by_month) is stored as a
+            // single RFC 5545 RRULE string rather than one column per component - see
+            // .ai/docs/specifications/budget-schedule-redesign/recurrence-rrule-storage.md and
+            // App\Models\Concerns\HasRecurrenceRule, which composes/decomposes it.
+            $table->text('rrule');
             $table->date('start_date');
-            $table->date('end_date')->nullable();
-            $table->integer('count')->nullable();
             $table->double('inflation')->nullable();
             $table->boolean('active')->default(false);
             $table->timestamps();

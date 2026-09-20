@@ -25,6 +25,7 @@ A scheduled standard withdrawal/deposit's categorized items now always count tow
   - `ReportApiController`'s budget-vs-actual chart endpoint response shape changed: each period entry now also includes a `budgetBreakdown` array listing the individual `Budget` rows (with `account_id`/`account_name`) that contributed to the total, and a `scheduleBreakdown` array for the schedule-derived side.
   - New CRUD endpoints: `GET/POST /api/v1/budgets`, `GET/PATCH/DELETE /api/v1/budgets/{budget}`.
 - **UI change:** the "Budget" checkbox/section on the standard transaction form is removed. Standalone Budgets are created, edited, and deleted from the existing Schedules & Budgets report page (Reports → Schedules and Budgets) instead, alongside real schedules.
+- **Schedule/Budget recurrence storage collapsed into a single `rrule` column.** `transaction_schedules.frequency`/`interval`/`count`/`end_date` (and, if present, `by_day`/`by_month`) are consolidated into one RFC 5545 RRULE string column (`rrule`) and the old columns are dropped. This runs automatically as part of the migration step below and needs no manual input — the request/response contract for schedules and budgets is unchanged (you still work with the same discrete frequency/interval/day/month fields in the UI and API; only the underlying storage changed). See below for the backup recommendation, since this conversion has no downgrade path once the old columns are dropped.
 - If you have any custom integrations or scripts against the endpoints above, update them before upgrading.
 
 ### Step-by-step Guide
@@ -102,12 +103,13 @@ npm install && npm run build
 
 The migration step will:
 
-- Create the new `budgets` table.
+- Backfill `transaction_schedules.rrule` from every existing schedule's `frequency`/`interval`/`count`/`end_date`, then drop those columns. This step refuses to proceed if any row is somehow left without a resulting `rrule` value (should never happen — every combination the pre-upgrade UI could produce is representable).
+- Create the new `budgets` table (using the same `rrule` storage).
 - Convert every remaining budget-only transaction into `Budget` row(s) (one per distinct category, summing amounts within a category), carrying over its account (only if the non-null side is a real account, not a payee), transaction type, and recurrence settings — then hard-delete the source transaction. This step refuses to proceed if step 2's check would report any issue, even if you skipped running it manually.
 - Drop the `transactions.budget` column.
 - Make `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`.
 
-**Note**: the data conversion is irreversible once the `budget` column is dropped. Ensure you have a backup (step 3) before proceeding.
+**Note**: both the schedule recurrence backfill and the budget-to-`Budget` conversion are irreversible once their respective old columns are dropped. Ensure you have a backup (step 3) before proceeding.
 
 #### 5. Review your converted Budgets (recommended)
 

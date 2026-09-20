@@ -65,7 +65,10 @@ A scheduled transaction may include the following schedule properties:
   - monthly
   - yearly
 - interval
-- day-of-week pattern (`by_day`), for ordinal-weekday recurrence such as "first Wednesday of every month" or, combined with month (`by_month`), "last Friday of November every year" — only meaningful for monthly/yearly frequencies
+- one of three mutually-exclusive month-scoped patterns, only meaningful for monthly/yearly frequencies (a plain schedule with none of these set simply recurs on the same day-of-month as its start date):
+  - day-of-week pattern (`by_day`), for ordinal-weekday recurrence such as "first Wednesday of every month" or, combined with month (`by_month`), "last Friday of November every year"
+  - days before month end (`days_before_month_end`, 0-27; 0 means the last day of the month), for a pattern such as "5 days before the end of every month"
+  - last business day of month (`last_business_day_of_month`), a weekday-only rule with no holiday calendar
 - automatic recording
 - inflation (optional), the same flat-annual-rate calculation described in [Budget](../budget/budget.md)'s "Inflation" section — see "Where Inflation Applies" below for exactly which outputs it affects
 
@@ -75,6 +78,17 @@ Important interpretation rules:
 - end date and count are alternative ways of defining when recurrence stops
 - next date must actually be a real occurrence of the configured recurrence rule (validated server-side); it is trusted verbatim when a scheduled instance is recorded
 - when replacing a schedule with a new recurrence pattern, a next date that no longer matches the new rule is cleared rather than carried over
+
+### Storage
+
+The recurrence-shape fields above (frequency, interval, end date, count, and the month-scoped
+pattern) are stored as a single RFC 5545 RRULE string in one `rrule` column, not one column per
+field. `start_date`, `next_date`, `automatic_recording`, and `inflation` remain their own columns.
+`TransactionSchedule` exposes the recurrence-shape fields as
+virtual attributes (`App\Models\Concerns\HasRecurrenceRule`, shared with `Budget`) that compose into
+and decompose out of that string transparently — request/response payloads and the edit form are
+unaffected and never see the raw RRULE text. See
+[recurrence-rrule-storage.md](../../specifications/budget-schedule-redesign/recurrence-rrule-storage.md).
 
 ## Catching Up a Missed Schedule
 

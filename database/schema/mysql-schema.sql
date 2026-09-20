@@ -190,13 +190,8 @@ CREATE TABLE `budgets` (
   `transaction_type` enum('withdrawal','deposit') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(12,4) unsigned NOT NULL,
   `comment` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `frequency` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `interval` int NOT NULL DEFAULT '1',
-  `by_day` varchar(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `by_month` tinyint unsigned DEFAULT NULL,
+  `rrule` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` date NOT NULL,
-  `end_date` date DEFAULT NULL,
-  `count` int DEFAULT NULL,
   `inflation` double DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
@@ -689,12 +684,7 @@ CREATE TABLE `transaction_schedules` (
   `active` tinyint(1) NOT NULL DEFAULT '1',
   `start_date` date NOT NULL,
   `next_date` date DEFAULT NULL,
-  `end_date` date DEFAULT NULL,
-  `frequency` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `interval` int NOT NULL DEFAULT '1',
-  `by_day` varchar(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `by_month` tinyint unsigned DEFAULT NULL,
-  `count` int DEFAULT NULL,
+  `rrule` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `inflation` double DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -856,7 +846,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (68,'2026_04_24_162
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (69,'2026_05_25_000001_add_active_flag_to_category_learning_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (70,'2026_07_07_000001_drop_redundant_config_id_config_type_index_from_transactions_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (71,'2026_07_23_000001_create_two_factor_authentications_table',2);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (72,'2026_08_04_000001_add_by_day_to_transaction_schedules_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (72,'2026_08_04_000001_add_rrule_to_transaction_schedules_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (89,'2026_08_04_000002_backfill_rrule_on_transaction_schedules_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (90,'2026_08_04_000003_drop_recurrence_columns_from_transaction_schedules_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (73,'2026_08_05_000001_create_budgets_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (74,'2026_08_05_000002_transform_budget_transactions_to_budgets',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (75,'2026_08_05_000003_drop_budget_column_and_enforce_account_not_null',2);
@@ -868,3 +860,4 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (84,'2026_08_29_000
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (85,'2026_08_29_000002_add_composite_index_to_budgets_table',4);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (86,'2026_08_29_000003_add_second_composite_index_to_account_monthly_summaries_table',5);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (87,'2026_08_29_000004_add_second_composite_index_to_transactions_table',6);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (88,'2026_08_30_000001_recalculate_forecasts_for_schedule_inflation',7);

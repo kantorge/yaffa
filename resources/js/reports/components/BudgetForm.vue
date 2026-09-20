@@ -190,6 +190,8 @@
           interval: 1,
           by_day: null,
           by_month: null,
+          days_before_month_end: null,
+          last_business_day_of_month: false,
           start_date: null,
           end_date: null,
           count: null,
@@ -437,6 +439,8 @@
             this.form.interval = data.interval;
             this.form.by_day = data.by_day;
             this.form.by_month = data.by_month;
+            this.form.days_before_month_end = data.days_before_month_end;
+            this.form.last_business_day_of_month = data.last_business_day_of_month;
             this.form.start_date = data.start_date;
             this.form.end_date = data.end_date;
             this.form.count = data.count;
@@ -467,6 +471,8 @@
                 interval: this.form.interval,
                 by_day: this.form.by_day,
                 by_month: this.form.by_month,
+                days_before_month_end: this.form.days_before_month_end,
+                last_business_day_of_month: this.form.last_business_day_of_month,
                 count: this.form.count,
                 inflation: this.form.inflation,
                 start_date: this.form.start_date,

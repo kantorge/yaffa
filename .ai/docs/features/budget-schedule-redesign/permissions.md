@@ -29,7 +29,7 @@ Both auth modes from the API-access feature apply unchanged here: a session requ
 
 ### `TransactionSchedule` (via its parent `Transaction`)
 
-Unchanged by this redesign except for the new `by_day`/`by_month`/`catch_up_schedule` fields riding through the existing path. There is no dedicated `TransactionSchedulePolicy` — a schedule is edited exclusively as an embedded `schedule_config` on its parent `Transaction`, so `TransactionPolicy` (`app/Policies/TransactionPolicy.php`) is the sole authorization surface, identical in shape to `BudgetPolicy` (`isOwnItem()` = `$user->id === $transaction->user_id`, `viewAny`/`create` always `true`).
+Unchanged by this redesign except for the new `by_day`/`by_month`/`days_before_month_end`/`last_business_day_of_month`/`catch_up_schedule` fields riding through the existing path. Recurrence shape is persisted as one `rrule` column that no request can write: it is not `$fillable`, is `#[Hidden]`, and `HasRecurrenceRule::composeRrule()` derives it only from the validated discrete fields (pinned by `HasRecurrenceRuleTest::test_*_rrule_is_not_mass_assignable`). The new patterns add no new endpoint, policy, or ability — they are validated in `ValidatesRecurrenceRule` (mutually exclusive, MONTHLY/YEARLY only), which is a data-integrity gate, not an authz one. There is no dedicated `TransactionSchedulePolicy` — a schedule is edited exclusively as an embedded `schedule_config` on its parent `Transaction`, so `TransactionPolicy` (`app/Policies/TransactionPolicy.php`) is the sole authorization surface, identical in shape to `BudgetPolicy` (`isOwnItem()` = `$user->id === $transaction->user_id`, `viewAny`/`create` always `true`).
 
 | Operation | Enforcement |
 |---|---|

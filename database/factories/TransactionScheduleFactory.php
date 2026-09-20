@@ -43,4 +43,28 @@ class TransactionScheduleFactory extends Factory
             'by_month' => $byMonth,
         ]);
     }
+
+    /**
+     * State for "N days before month end" (0 = the last day of the month).
+     */
+    public function withDaysBeforeMonthEnd(int $days = 0, ?int $byMonth = null): static
+    {
+        return $this->state(fn () => [
+            'frequency' => $byMonth ? 'YEARLY' : 'MONTHLY',
+            'days_before_month_end' => $days,
+            'by_month' => $byMonth,
+        ]);
+    }
+
+    /**
+     * State for "last working day of the month".
+     */
+    public function withLastBusinessDayOfMonth(?int $byMonth = null): static
+    {
+        return $this->state(fn () => [
+            'frequency' => $byMonth ? 'YEARLY' : 'MONTHLY',
+            'last_business_day_of_month' => true,
+            'by_month' => $byMonth,
+        ]);
+    }
 }

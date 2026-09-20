@@ -13,6 +13,7 @@ use Closure;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use TypeError;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
 
@@ -44,6 +45,8 @@ class TransactionRequest extends FormRequest
             'schedule_config.count' => __('schedule count'),
             'schedule_config.by_day' => __('schedule day of week'),
             'schedule_config.by_month' => __('schedule month'),
+            'schedule_config.days_before_month_end' => __('schedule days before month end'),
+            'schedule_config.last_business_day_of_month' => __('schedule last business day of month'),
             'schedule_config.inflation' => __('schedule inflation'),
             'original_schedule_config.start_date' => __('original schedule start date'),
             'original_schedule_config.next_date' => __('original schedule next date'),
@@ -53,6 +56,8 @@ class TransactionRequest extends FormRequest
             'original_schedule_config.count' => __('original schedule count'),
             'original_schedule_config.by_day' => __('original schedule day of week'),
             'original_schedule_config.by_month' => __('original schedule month'),
+            'original_schedule_config.days_before_month_end' => __('original schedule days before month end'),
+            'original_schedule_config.last_business_day_of_month' => __('original schedule last business day of month'),
             'original_schedule_config.inflation' => __('original schedule inflation'),
         ];
     }
@@ -88,15 +93,18 @@ class TransactionRequest extends FormRequest
                 'count' => $this->input("{$prefix}.count"),
                 'by_day' => $this->input("{$prefix}.by_day"),
                 'by_month' => $this->input("{$prefix}.by_month"),
+                'days_before_month_end' => $this->input("{$prefix}.days_before_month_end"),
+                'last_business_day_of_month' => $this->boolean("{$prefix}.last_business_day_of_month"),
             ]);
 
             try {
                 if (!$schedule->occursOn(Carbon::parse($value))) {
                     $fail(__('The :attribute must be a date the schedule actually recurs on.'));
                 }
-            } catch (InvalidArgument|InvalidWeekday|Exception) {
-                // A malformed rule (e.g. an invalid frequency/by_day combination) is
-                // already surfaced by the other rules on those fields - don't pile on.
+            } catch (InvalidArgument|InvalidWeekday|Exception|TypeError) {
+                // A malformed rule (e.g. an invalid frequency/by_day combination, or a
+                // non-numeric days_before_month_end) is already surfaced by the other rules on
+                // those fields - don't pile on.
             }
         };
     }
@@ -223,8 +231,27 @@ class TransactionRequest extends FormRequest
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
                 ],
                 'schedule_config.interval' => 'nullable|integer|gte:1',
-                'schedule_config.by_day' => $this->byDayRule('schedule_config.frequency'),
-                'schedule_config.by_month' => $this->byMonthRule('schedule_config.frequency', 'schedule_config.by_day'),
+                'schedule_config.by_day' => $this->byDayRule(
+                    'schedule_config.frequency',
+                    'schedule_config.days_before_month_end',
+                    'schedule_config.last_business_day_of_month',
+                ),
+                'schedule_config.by_month' => $this->byMonthRule(
+                    'schedule_config.frequency',
+                    'schedule_config.by_day',
+                    'schedule_config.days_before_month_end',
+                    'schedule_config.last_business_day_of_month',
+                ),
+                'schedule_config.days_before_month_end' => $this->daysBeforeMonthEndRule(
+                    'schedule_config.frequency',
+                    'schedule_config.by_day',
+                    'schedule_config.last_business_day_of_month',
+                ),
+                'schedule_config.last_business_day_of_month' => $this->lastBusinessDayOfMonthRule(
+                    'schedule_config.frequency',
+                    'schedule_config.by_day',
+                    'schedule_config.days_before_month_end',
+                ),
                 'schedule_config.count' => [
                     'nullable',
                     'integer',
@@ -264,8 +291,27 @@ class TransactionRequest extends FormRequest
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
                 ],
                 'original_schedule_config.interval' => 'nullable|integer|gte:1',
-                'original_schedule_config.by_day' => $this->byDayRule('original_schedule_config.frequency'),
-                'original_schedule_config.by_month' => $this->byMonthRule('original_schedule_config.frequency', 'original_schedule_config.by_day'),
+                'original_schedule_config.by_day' => $this->byDayRule(
+                    'original_schedule_config.frequency',
+                    'original_schedule_config.days_before_month_end',
+                    'original_schedule_config.last_business_day_of_month',
+                ),
+                'original_schedule_config.by_month' => $this->byMonthRule(
+                    'original_schedule_config.frequency',
+                    'original_schedule_config.by_day',
+                    'original_schedule_config.days_before_month_end',
+                    'original_schedule_config.last_business_day_of_month',
+                ),
+                'original_schedule_config.days_before_month_end' => $this->daysBeforeMonthEndRule(
+                    'original_schedule_config.frequency',
+                    'original_schedule_config.by_day',
+                    'original_schedule_config.last_business_day_of_month',
+                ),
+                'original_schedule_config.last_business_day_of_month' => $this->lastBusinessDayOfMonthRule(
+                    'original_schedule_config.frequency',
+                    'original_schedule_config.by_day',
+                    'original_schedule_config.days_before_month_end',
+                ),
                 'original_schedule_config.count' => 'nullable|integer|gte:1',
                 'original_schedule_config.inflation' => 'nullable|numeric|min:-100',
             ]);

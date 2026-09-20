@@ -3,6 +3,7 @@
 namespace Tests\Feature\API;
 
 use App\Models\Transaction;
+use App\Models\TransactionSchedule;
 use App\Models\User;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
@@ -18,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class TransactionApiControllerTest extends TestCase
@@ -1343,6 +1345,70 @@ class TransactionApiControllerTest extends TestCase
     }
 
     /**
+     * @return array<string, array{0: array<string, mixed>, 1: array<string, mixed>}>
+     */
+    public static function recurrencePatternProvider(): array
+    {
+        $none = [
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => false,
+        ];
+
+        return [
+            'ordinal weekday' => [['by_day' => '-1FR'], [...$none, 'by_day' => '-1FR']],
+            'days before month end' => [
+                ['days_before_month_end' => 3],
+                [...$none, 'days_before_month_end' => 3],
+            ],
+            'last business day' => [
+                ['last_business_day_of_month' => true],
+                [...$none, 'last_business_day_of_month' => true],
+            ],
+        ];
+    }
+
+    /**
+     * The Schedules & Budgets table builds a Budget row's `transaction_schedule` by hand (no
+     * model serialization, so no #[Appends]) and feeds it to scheduleCadenceText(): every
+     * month-scoped pattern field must be listed explicitly or the table describes the budget as
+     * a plain monthly cadence.
+     */
+    #[DataProvider('recurrencePatternProvider')]
+    public function test_scheduled_items_budget_rows_expose_the_recurrence_pattern_fields(
+        array $pattern,
+        array $expected,
+    ): void {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $category = Category::factory()->for($this->user)->create();
+
+        Budget::factory()->create(array_merge([
+            'user_id' => $this->user->id,
+            'category_id' => $category->id,
+            'account_id' => null,
+            'transaction_type' => 'withdrawal',
+            'amount' => 150,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => now()->subDay(),
+            'end_date' => null,
+            'count' => null,
+        ], $pattern));
+
+        $response = $this->getJson(route('api.v1.transactions.scheduled-items') . '?type=schedule&includeBudgets=1');
+        $response->assertStatus(Response::HTTP_OK);
+
+        $schedule = $response->json('transactions.0.transaction_schedule');
+
+        foreach ($expected as $field => $value) {
+            $this->assertArrayHasKey($field, $schedule, "transaction_schedule.{$field} is missing");
+            $this->assertSame($value, $schedule[$field], "transaction_schedule.{$field}");
+        }
+    }
+
+    /**
      * Investment transactions structurally have no categorized items, so they can never match a
      * category filter - mirrors the exclusion already applied in findTransactions(). Without this,
      * checking a category on the schedules/budgets report would still show every scheduled
@@ -1853,12 +1919,12 @@ class TransactionApiControllerTest extends TestCase
 
         $transactionId = $response->json('transaction.id');
         $this->assertNotNull($transactionId);
-        $this->assertDatabaseHas('transaction_schedules', [
-            'transaction_id' => $transactionId,
-            'frequency' => 'MONTHLY',
-            'by_day' => '-1FR',
-            'by_month' => null,
-        ]);
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
+        $this->assertDatabaseHas('transaction_schedules', ['transaction_id' => $transactionId]);
+        $schedule = TransactionSchedule::where('transaction_id', $transactionId)->firstOrFail();
+        $this->assertSame('MONTHLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertNull($schedule->by_month);
     }
 
     public function test_store_standard_schedule_accepts_valid_yearly_weekday_and_month_rule(): void
@@ -1883,12 +1949,12 @@ class TransactionApiControllerTest extends TestCase
 
         $transactionId = $response->json('transaction.id');
         $this->assertNotNull($transactionId);
-        $this->assertDatabaseHas('transaction_schedules', [
-            'transaction_id' => $transactionId,
-            'frequency' => 'YEARLY',
-            'by_day' => '-1FR',
-            'by_month' => 11,
-        ]);
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
+        $this->assertDatabaseHas('transaction_schedules', ['transaction_id' => $transactionId]);
+        $schedule = TransactionSchedule::where('transaction_id', $transactionId)->firstOrFail();
+        $this->assertSame('YEARLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertSame(11, $schedule->by_month);
     }
 
     public function test_store_standard_schedule_rejects_next_date_that_is_not_a_rule_occurrence(): void
@@ -2097,13 +2163,436 @@ class TransactionApiControllerTest extends TestCase
         // original_schedule_config omitted next_date entirely, so it must be
         // cleared rather than persisted verbatim - see
         // TransactionApiController::handleSourceTransactionUpdates().
+        // frequency/by_day/by_month are virtual (decomposed from `rrule`), not real columns.
         $this->assertDatabaseHas('transaction_schedules', [
             'id' => $sourceTransaction->transactionSchedule->id,
-            'frequency' => 'YEARLY',
-            'by_day' => '-1FR',
-            'by_month' => 11,
             'next_date' => null,
         ]);
+        $schedule = $sourceTransaction->transactionSchedule->fresh();
+        $this->assertSame('YEARLY', $schedule->frequency);
+        $this->assertSame('-1FR', $schedule->by_day);
+        $this->assertSame(11, $schedule->by_month);
+    }
+
+    /**
+     * Month-end recurrence patterns (days_before_month_end / last_business_day_of_month) on the
+     * schedule side. BudgetApiTest pins the same rules for budgets; TransactionRequest builds its
+     * own schedule_config / original_schedule_config rule sets from the shared
+     * ValidatesRecurrenceRule trait, so each side needs its own coverage.
+     *
+     * @return array<string, array{0: array<string, mixed>, 1: list<string>}>
+     */
+    public static function invalidMonthEndScheduleConfigProvider(): array
+    {
+        $base = [
+            'start_date' => '2026-01-01',
+            'next_date' => '2026-01-01',
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+        ];
+
+        return [
+            'by_day with days_before_month_end' => [
+                [...$base, 'by_day' => '1WE', 'days_before_month_end' => 3],
+                ['by_day', 'days_before_month_end'],
+            ],
+            'by_day with last_business_day_of_month' => [
+                [...$base, 'by_day' => '1WE', 'last_business_day_of_month' => true],
+                ['by_day', 'last_business_day_of_month'],
+            ],
+            'days_before_month_end with last_business_day_of_month' => [
+                [...$base, 'days_before_month_end' => 3, 'last_business_day_of_month' => true],
+                ['days_before_month_end', 'last_business_day_of_month'],
+            ],
+            'days_before_month_end with incompatible frequency' => [
+                [...$base, 'frequency' => 'WEEKLY', 'days_before_month_end' => 3],
+                ['days_before_month_end'],
+            ],
+            'last_business_day_of_month with incompatible frequency' => [
+                [...$base, 'frequency' => 'WEEKLY', 'last_business_day_of_month' => true],
+                ['last_business_day_of_month'],
+            ],
+            'yearly days_before_month_end without by_month' => [
+                [...$base, 'frequency' => 'YEARLY', 'days_before_month_end' => 3],
+                ['by_month'],
+            ],
+            'yearly last_business_day_of_month without by_month' => [
+                [...$base, 'frequency' => 'YEARLY', 'last_business_day_of_month' => true],
+                ['by_month'],
+            ],
+            'days_before_month_end above the 27 cap' => [
+                [...$base, 'days_before_month_end' => 28],
+                ['days_before_month_end'],
+            ],
+            'days_before_month_end below zero' => [
+                [...$base, 'days_before_month_end' => -1],
+                ['days_before_month_end'],
+            ],
+            // Reaches nextDateOccursOnRule()'s `new TransactionSchedule([...])` with a value that
+            // makes effectiveRrule()'s arithmetic throw a TypeError: it must stay a 422, not a 500.
+            'non-numeric days_before_month_end' => [
+                [...$base, 'days_before_month_end' => 'abc'],
+                ['days_before_month_end'],
+            ],
+        ];
+    }
+
+    #[DataProvider('invalidMonthEndScheduleConfigProvider')]
+    public function test_store_standard_schedule_rejects_invalid_month_end_patterns(
+        array $scheduleConfig,
+        array $expectedErrorFields,
+    ): void {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildCreateScheduledStandardPayload(['schedule_config' => $scheduleConfig])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(
+            array_map(fn (string $field) => "schedule_config.{$field}", $expectedErrorFields)
+        );
+        $this->assertDatabaseCount('transaction_schedules', 0);
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: array<string, mixed>}>
+     */
+    public static function validMonthEndScheduleConfigProvider(): array
+    {
+        $base = ['start_date' => '2026-01-01', 'interval' => 1];
+        $none = [
+            'frequency' => 'MONTHLY',
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => false,
+        ];
+
+        return [
+            // Jan 2026 has 31 days: 3 days before month end is the 28th.
+            'monthly days before month end' => [
+                [...$base, 'next_date' => '2026-01-28', 'frequency' => 'MONTHLY', 'days_before_month_end' => 3],
+                [...$none, 'days_before_month_end' => 3],
+            ],
+            // 2026-01-31 is a Saturday, so the last business day is Friday the 30th.
+            'monthly last business day' => [
+                [...$base, 'next_date' => '2026-01-30', 'frequency' => 'MONTHLY', 'last_business_day_of_month' => true],
+                [...$none, 'last_business_day_of_month' => true],
+            ],
+            // 2026 is not a leap year: 0 days before the end of February is the 28th.
+            'yearly days before month end pinned to a month' => [
+                [
+                    ...$base,
+                    'next_date' => '2026-02-28',
+                    'frequency' => 'YEARLY',
+                    'by_month' => 2,
+                    'days_before_month_end' => 0,
+                ],
+                [...$none, 'frequency' => 'YEARLY', 'by_month' => 2, 'days_before_month_end' => 0],
+            ],
+        ];
+    }
+
+    #[DataProvider('validMonthEndScheduleConfigProvider')]
+    public function test_store_standard_schedule_accepts_valid_month_end_patterns(
+        array $scheduleConfig,
+        array $expected,
+    ): void {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildCreateScheduledStandardPayload(['schedule_config' => $scheduleConfig])
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $schedule = TransactionSchedule::firstOrFail();
+        foreach ($expected as $field => $value) {
+            $this->assertSame($value, $schedule->{$field}, $field);
+        }
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>}>
+     */
+    public static function nonOccurrenceMonthEndNextDateProvider(): array
+    {
+        $base = ['start_date' => '2026-01-01', 'frequency' => 'MONTHLY', 'interval' => 1];
+
+        return [
+            // Jan 27 is 4 days before the end of the month, not 3.
+            'days_before_month_end off by one' => [
+                [...$base, 'days_before_month_end' => 3, 'next_date' => '2026-01-27'],
+            ],
+            // Thursday the 29th is a business day, but not the last one (Friday the 30th is).
+            'not the last business day' => [
+                [...$base, 'last_business_day_of_month' => true, 'next_date' => '2026-01-29'],
+            ],
+            // Saturday the 31st is the last calendar day, but not a business day.
+            'last calendar day that is a weekend' => [
+                [...$base, 'last_business_day_of_month' => true, 'next_date' => '2026-01-31'],
+            ],
+        ];
+    }
+
+    #[DataProvider('nonOccurrenceMonthEndNextDateProvider')]
+    public function test_store_standard_schedule_rejects_next_date_that_is_not_a_month_end_occurrence(
+        array $scheduleConfig,
+    ): void {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildCreateScheduledStandardPayload(['schedule_config' => $scheduleConfig])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['schedule_config.next_date']);
+    }
+
+    public function test_replace_rejects_conflicting_month_end_patterns_in_original_schedule_config(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $sourceTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildReplaceStandardPayload($sourceTransaction, [
+                'original_schedule_config' => [
+                    'start_date' => now()->subMonth()->format('Y-m-d'),
+                    'frequency' => 'MONTHLY',
+                    'interval' => 1,
+                    'by_day' => '1WE',
+                    'last_business_day_of_month' => true,
+                ],
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors([
+            'original_schedule_config.by_day',
+            'original_schedule_config.last_business_day_of_month',
+        ]);
+    }
+
+    public function test_replace_rewrites_original_schedule_to_a_month_end_pattern(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $sourceTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $sourceTransaction->transactionSchedule->update([
+            'frequency' => 'DAILY',
+            'interval' => 1,
+            'by_day' => null,
+            'by_month' => null,
+            // The 15th is never the last day of a month, so it can't survive as a valid
+            // occurrence of the new rule below and must be cleared.
+            'next_date' => '2024-01-15',
+        ]);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildReplaceStandardPayload($sourceTransaction, [
+                'original_schedule_config' => [
+                    'start_date' => now()->subMonth()->format('Y-m-d'),
+                    'frequency' => 'MONTHLY',
+                    'interval' => 1,
+                    'days_before_month_end' => 0,
+                ],
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $schedule = $sourceTransaction->transactionSchedule->fresh();
+        $this->assertNull($schedule->next_date);
+        $this->assertSame('MONTHLY', $schedule->frequency);
+        $this->assertSame(0, $schedule->days_before_month_end);
+        $this->assertFalse($schedule->last_business_day_of_month);
+        $this->assertNull($schedule->by_day);
+    }
+
+    /**
+     * The enter flow round-trips the source schedule through attributesToArray() (which relies
+     * on #[Appends] to include the virtual pattern fields) and advances next_date through the
+     * pattern: after recording Jan 30 (the last business day), the next occurrence is Feb 27
+     * (Feb 28, 2026 is a Saturday), and the pattern itself survives.
+     */
+    public function test_store_standard_enter_advances_a_last_business_day_schedule_along_its_pattern(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $sourceTransaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $sourceTransaction->transactionSchedule->update([
+            'start_date' => '2026-01-01',
+            'next_date' => '2026-01-30',
+            'end_date' => null,
+            'count' => null,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => true,
+            'automatic_recording' => false,
+        ]);
+
+        Event::fake([TransactionUpdated::class]);
+
+        $response = $this->postJson(
+            route('api.v1.transactions.store-standard'),
+            $this->buildEnterStandardPayload($sourceTransaction, ['date' => '2026-01-30'])
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $schedule = $sourceTransaction->transactionSchedule->fresh();
+        $this->assertSame('2026-02-27', $schedule->next_date->toDateString());
+        $this->assertTrue($schedule->last_business_day_of_month);
+
+        Event::assertDispatched(
+            TransactionUpdated::class,
+            fn (TransactionUpdated $event) => $event->transaction->id === $sourceTransaction->id
+                && ($event->changedAttributes['schedule_config']['last_business_day_of_month'] ?? null) === true
+        );
+    }
+
+    /**
+     * A scheduled standard transaction whose start/next dates are valid under both the plain
+     * monthly rule and "last day of the month" (Jan 31), so that a recurrence-only edit changes
+     * nothing on the schedule except its RRULE.
+     */
+    private function createPlainMonthlyScheduleOnTheLastDay(): Transaction
+    {
+        $transaction = Transaction::factory()
+            ->withdrawal_schedule($this->user)
+            ->create(['user_id' => $this->user->id]);
+
+        $transaction->transactionSchedule->update([
+            'start_date' => '2026-01-31',
+            'next_date' => '2026-01-31',
+            'end_date' => null,
+            'count' => null,
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => false,
+            'inflation' => null,
+            'automatic_recording' => false,
+        ]);
+
+        return $transaction;
+    }
+
+    /**
+     * Build an "edit" payload for a scheduled standard $transaction with plain numeric amounts
+     * (standardTransactionPayload() forwards the cast Money values, which don't validate as
+     * numbers) and the given schedule_config.
+     */
+    private function buildUpdateScheduledStandardPayload(Transaction $transaction, array $scheduleConfig): array
+    {
+        $transaction->loadMissing('config');
+        $entities = $this->createStandardEntities();
+
+        return [
+            'action' => 'edit',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'reconciled' => false,
+            'schedule' => true,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $transaction->config->account_from_id,
+                'account_to_id' => $transaction->config->account_to_id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                ['amount' => 10, 'category_id' => $entities['category_id'], 'tags' => []],
+            ],
+            'schedule_config' => $scheduleConfig,
+        ];
+    }
+
+    /**
+     * HasRecurrenceRule::fill() composes `rrule` eagerly precisely so that the getDirty() call in
+     * updateStandard() sees a recurrence-only edit; ProcessTransactionUpdated then keys off the
+     * presence of `schedule_config` to recalculate the forecast. If composing were deferred to
+     * `saving`, this edit would look like a no-op and the forecast would silently go stale.
+     */
+    public function test_update_standard_reports_a_recurrence_only_edit_as_a_schedule_config_change(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $transaction = $this->createPlainMonthlyScheduleOnTheLastDay();
+
+        Event::fake([TransactionUpdated::class]);
+
+        $response = $this->patchJson(
+            route('api.v1.transactions.update-standard', $transaction),
+            $this->buildUpdateScheduledStandardPayload($transaction, [
+                'start_date' => '2026-01-31',
+                'next_date' => '2026-01-31',
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'days_before_month_end' => 0,
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        $this->assertSame(0, $transaction->transactionSchedule->fresh()->days_before_month_end);
+
+        Event::assertDispatched(
+            TransactionUpdated::class,
+            fn (TransactionUpdated $event) => $event->transaction->id === $transaction->id
+                && array_key_exists('schedule_config', $event->changedAttributes)
+                && array_key_exists('rrule', $event->changedAttributes['schedule_config'])
+        );
+    }
+
+    /**
+     * Twin of the test above, so that one can't pass vacuously: re-submitting the identical
+     * recurrence must NOT be reported as a schedule change.
+     */
+    public function test_update_standard_does_not_report_an_unchanged_recurrence_as_a_schedule_config_change(): void
+    {
+        Sanctum::actingAs($this->user, ['*']);
+
+        $transaction = $this->createPlainMonthlyScheduleOnTheLastDay();
+
+        Event::fake([TransactionUpdated::class]);
+
+        $response = $this->patchJson(
+            route('api.v1.transactions.update-standard', $transaction),
+            $this->buildUpdateScheduledStandardPayload($transaction, [
+                'start_date' => '2026-01-31',
+                'next_date' => '2026-01-31',
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+            ])
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        Event::assertDispatched(
+            TransactionUpdated::class,
+            fn (TransactionUpdated $event) => $event->transaction->id === $transaction->id
+                && !array_key_exists('schedule_config', $event->changedAttributes)
+        );
     }
 
     private function standardTransactionPayload(Transaction $transaction): array

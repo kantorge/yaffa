@@ -255,12 +255,15 @@ class BudgetMigrationTest extends TestCase
         // entirely before "now" and silently stop producing any account_monthly_summaries row.
         $scheduleStart = Carbon::now()->subMonths(6)->startOfMonth()->addDays(14);
         $scheduleEnd = Carbon::now()->addMonths(6)->endOfMonth();
+        // end_date and count are mutually exclusive (RFC 5545 UNTIL/COUNT can't coexist in one
+        // rrule - enforced by request validation's `prohibits` rules) - only end_date is set
+        // here since it's what the projection-window assertion below depends on.
         TransactionSchedule::factory()->for($transaction)->create([
             'frequency' => 'MONTHLY',
             'interval' => 2,
             'start_date' => $scheduleStart,
             'end_date' => $scheduleEnd,
-            'count' => 6,
+            'count' => null,
             'inflation' => 3.5,
         ]);
 
@@ -280,7 +283,7 @@ class BudgetMigrationTest extends TestCase
         $this->assertSame(2, $budget->interval);
         $this->assertSame($scheduleStart->toDateString(), $budget->start_date->toDateString());
         $this->assertSame($scheduleEnd->toDateString(), $budget->end_date->toDateString());
-        $this->assertSame(6, $budget->count);
+        $this->assertNull($budget->count);
         $this->assertEqualsWithDelta(3.5, $budget->inflation, 0.0001);
         // The migration recalculates the account_balance-budget cache bucket synchronously, so
         // this converted Budget's projection is already reflected in account_monthly_summaries

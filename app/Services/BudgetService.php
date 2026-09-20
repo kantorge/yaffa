@@ -136,12 +136,7 @@ class BudgetService
         $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use ($budget, $from, $to) {
             $recurrence = $this->recurrenceRuleService->getRecurrenceBetween(
                 $budget->start_date,
-                $budget->frequency,
-                $budget->interval ?? 1,
-                $budget->end_date,
-                $budget->count,
-                $budget->by_day,
-                $budget->by_month,
+                $budget->effectiveRrule(),
                 $from,
                 $to,
             );
