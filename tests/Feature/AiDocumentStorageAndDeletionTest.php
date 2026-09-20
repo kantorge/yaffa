@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use Tests\TestCase;
 
 class AiDocumentStorageAndDeletionTest extends TestCase
@@ -33,6 +34,26 @@ class AiDocumentStorageAndDeletionTest extends TestCase
         $file = AiDocumentFile::query()->firstOrFail();
         $this->assertSame("ai_documents/{$user->id}/{$file->ai_document_id}/{$file->file_name}", $file->file_path);
         $this->assertSame('Coffee 4.50 USD', Storage::disk('local')->get($file->file_path));
+    }
+
+    public function test_a_failed_file_write_leaves_no_document_behind_and_queues_nothing(): void
+    {
+        Queue::fake();
+        Storage::fake('local');
+        $disk = Mockery::mock(Storage::disk('local'));
+        $disk->shouldReceive('put')->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $user = User::factory()->create();
+        AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
+        Sanctum::actingAs($user, ['*']);
+
+        $this->postJson(route('api.v1.documents.store'), ['text_input' => 'Coffee 4.50 USD'])
+            ->assertServerError();
+
+        $this->assertDatabaseCount('ai_documents', 0);
+        $this->assertDatabaseCount('ai_document_files', 0);
+        Queue::assertNothingPushed();
     }
 
     public function test_deleting_a_document_keeps_its_transaction(): void

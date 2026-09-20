@@ -22,7 +22,9 @@ use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
@@ -68,16 +70,24 @@ class AiDocumentApiController extends Controller
             'custom_prompt' => $request->input('custom_prompt'),
         ]);
 
-        // Store uploaded files
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $this->storeFile($document, $file);
+        try {
+            // Store uploaded files
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $this->storeFile($document, $file);
+                }
             }
-        }
 
-        // Store text input if provided
-        if ($request->input('text_input')) {
-            $this->storeTextFile($document, $request->input('text_input'));
+            // Store text input if provided
+            if ($request->input('text_input')) {
+                $this->storeTextFile($document, $request->input('text_input'));
+            }
+        } catch (Throwable $e) {
+            // Don't leave a half-stored document (or its files) behind; cascades to the file records.
+            Storage::disk('local')->deleteDirectory("ai_documents/{$document->user_id}/{$document->id}");
+            $document->delete();
+
+            throw $e;
         }
 
         // Dispatch processing job
@@ -393,6 +403,10 @@ class AiDocumentApiController extends Controller
             'local'
         );
 
+        if ($path === false) {
+            throw new RuntimeException("Failed to store uploaded file {$filename}.");
+        }
+
         // Create database record
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,
@@ -411,7 +425,10 @@ class AiDocumentApiController extends Controller
 
         // Storage::put() returns a bool, not the path
         $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";
-        Storage::disk('local')->put($path, $textInput);
+
+        if (! Storage::disk('local')->put($path, $textInput)) {
+            throw new RuntimeException("Failed to store text input {$filename}.");
+        }
 
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,

@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -105,21 +106,60 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
         Storage::disk('local')->assertExists($strayFile);
     }
 
-    public function test_it_ignores_file_paths_that_are_not_a_document_directory(): void
+    public function test_it_never_deletes_files_outside_the_users_document_directory(): void
     {
         $user = $this->user();
+        $other = $this->user();
         $document = $this->document($user, 'finalized', 100);
-        Storage::disk('local')->put('unrelated/keep.txt', 'keep');
-        Storage::disk('local')->put('loose/only.txt', 'tracked');
-        AiDocumentFile::factory()->for($document)->create(['file_path' => '1', 'file_name' => 'x.txt', 'file_type' => 'txt']);
-        AiDocumentFile::factory()->for($document)->create(['file_path' => 'loose/only.txt', 'file_name' => 'only.txt', 'file_type' => 'txt']);
+        $foreign = "ai_documents/{$other->id}/1/theirs.txt";
+        foreach (['unrelated/keep.txt', 'loose/only.txt', $foreign, "ai_documents/{$user->id}/../{$other->id}/1/theirs.txt"] as $path) {
+            Storage::disk('local')->put($path, 'keep');
+        }
+        foreach (['1', 'loose/only.txt', $foreign, "ai_documents/{$user->id}/x/../../{$other->id}/1/theirs.txt"] as $path) {
+            AiDocumentFile::factory()->for($document)->create(['file_path' => $path, 'file_name' => 'x.txt', 'file_type' => 'txt']);
+        }
 
         $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
 
         $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
-        Storage::disk('local')->assertMissing('loose/only.txt');
-        $this->assertTrue(Storage::disk('local')->directoryExists('loose'));
-        Storage::disk('local')->assertExists('unrelated/keep.txt');
+        foreach (['unrelated/keep.txt', 'loose/only.txt', $foreign] as $path) {
+            Storage::disk('local')->assertExists($path);
+        }
+    }
+
+    public function test_it_never_deletes_files_reached_through_a_symlink(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $outside = Storage::disk('local')->path('outside');
+        $userRoot = Storage::disk('local')->path("ai_documents/{$user->id}");
+        Storage::disk('local')->put('outside/secret.txt', 'keep');
+        mkdir($userRoot, 0755, true);
+        symlink($outside, "{$userRoot}/{$document->id}");
+        AiDocumentFile::factory()->for($document)->create([
+            'file_path' => "ai_documents/{$user->id}/{$document->id}/secret.txt",
+            'file_name' => 'secret.txt',
+            'file_type' => 'txt',
+        ]);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Storage::disk('local')->assertExists('outside/secret.txt');
+    }
+
+    public function test_it_keeps_the_document_when_its_files_cannot_be_deleted(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $this->attachFile($document);
+        $disk = Mockery::mock(Storage::disk('local'));
+        $disk->shouldReceive('delete')->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+        $this->assertDatabaseCount('ai_document_files', 1);
     }
 
     public function test_it_keeps_finalized_documents_that_are_recent_or_were_updated_recently(): void
