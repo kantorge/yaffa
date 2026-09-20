@@ -673,7 +673,8 @@
               dusk="button-save-google-drive"
             >
               <i
-                :class="form.busy ? 'fa me-1 fa-spinner fa-spin' : 'fa me-1 fa-save'"
+                class="fa me-1 fa-save"
+                v-show="!form.busy"
               ></i>{{
                 hasConfig
                   ? __('user.googleDriveSettings.buttons.update')

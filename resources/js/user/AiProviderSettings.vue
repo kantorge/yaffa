@@ -246,7 +246,7 @@
               :form="form"
               dusk="button-save-ai-config"
             >
-              <i class="fa me-1 fa-save"></i
+              <i class="fa me-1 fa-save" v-show="!form.busy"></i
               >{{ hasConfig ? __('Update') : __('Save') }}
             </Button>
 
