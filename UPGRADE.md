@@ -13,12 +13,12 @@ Table of contents:
 
 This version removes the `budget` flag from `Transaction` and replaces it with a standalone `Budget` entity: a category-level spending/income target with no linked transaction. See [`.ai/docs/assets/budget/budget.md`](.ai/docs/assets/budget/budget.md) and [`.ai/docs/assets/transactions/schedules.md`](.ai/docs/assets/transactions/schedules.md) for the concept-level explanation.
 
-A scheduled standard withdrawal/deposit's categorized items now always count toward category budget comparison — this used to require a separate `budget` flag on the transaction, which no longer exists and has no replacement opt-in/opt-out.
+A scheduled standard withdrawal/deposit's categorized items now always count toward category budget comparison - this used to require a separate `budget` flag on the transaction, which no longer exists and has no replacement opt-in/opt-out.
 
 ### Breaking Changes
 
 - **`transactions.budget` column removed.** There is no replacement flag. A scheduled standard withdrawal/deposit with categorized items counts toward budget comparison automatically; a standalone target with no linked transaction is now a `Budget` row instead.
-- **New standalone `Budget` entity and `budgets` table.** Existing transactions that were budget-only (`schedule = false, budget = true`, i.e. created via the old "Budget" checkbox with no schedule) are automatically converted to one `Budget` row per distinct category, then **hard-deleted** from `transactions` — this data migration has no downgrade path (see below).
+- **New standalone `Budget` entity and `budgets` table.** Existing transactions that were budget-only (`schedule = false, budget = true`, i.e. created via the old "Budget" checkbox with no schedule) are automatically converted to one `Budget` row per distinct category, then **hard-deleted** from `transactions` - this data migration has no downgrade path (see below).
 - **`transaction_details_standard.account_from_id`/`account_to_id` are now `NOT NULL`.** These were only nullable to support the old budget-only transaction case; that case no longer exists after the conversion above.
 - **API changes:**
   - `GET /api/v1/transactions/scheduled-items` — the `type` query parameter no longer accepts `budget`, `budget_only`, `both`, or `any`; only `schedule` and `none` remain meaningful. A new `includeBudgets=1` parameter merges standalone `Budget` rows into the response (used by the Schedules & Budgets report only).
@@ -26,6 +26,7 @@ A scheduled standard withdrawal/deposit's categorized items now always count tow
   - New CRUD endpoints: `GET/POST /api/v1/budgets`, `GET/PATCH/DELETE /api/v1/budgets/{budget}`.
 - **UI change:** the "Budget" checkbox/section on the standard transaction form is removed. Standalone Budgets are created, edited, and deleted from the existing Schedules & Budgets report page (Reports → Schedules and Budgets) instead, alongside real schedules.
 - **Schedule/Budget recurrence storage collapsed into a single `rrule` column.** `transaction_schedules.frequency`/`interval`/`count`/`end_date` (and, if present, `by_day`/`by_month`) are consolidated into one RFC 5545 RRULE string column (`rrule`) and the old columns are dropped. This runs automatically as part of the migration step below and needs no manual input — the request/response contract for schedules and budgets is unchanged (you still work with the same discrete frequency/interval/day/month fields in the UI and API; only the underlying storage changed). See below for the backup recommendation, since this conversion has no downgrade path once the old columns are dropped.
+- **reCAPTCHA support removed.** The login, registration, and password reset forms no longer use reCAPTCHA, and `RECAPTCHA_SITE_KEY`/`RECAPTCHA_SECRET_KEY` are no longer read; you can delete them from your `.env`. If you expose a public instance, note that this bot protection is gone (login attempts remain rate limited, and users can now enable optional two-factor authentication, see below).
 - If you have any custom integrations or scripts against the endpoints above, update them before upgrading.
 
 ### Automatic Cleanup of Old AI Documents
@@ -40,99 +41,6 @@ A daily scheduled task can now delete old **finalized** AI documents, together w
 - Documents created from pasted text stored an invalid file path, which a migration now repairs.
 - Deleted documents cannot be restored. Back up before enabling it on an existing installation.
 - The "Old AI document cleanup" action of the maintenance page deletes documents (not only files), following the same rules. It is disabled until a retention period is set.
-
-### Step-by-step Guide
-
-#### 1. Upgrade to the latest YAFFA 3.x release
-
-Before installing YAFFA 4.x, first update to the latest available YAFFA 3.x release (3.6.0 or later). This ensures the pre-upgrade safety check command described below is available in your existing installation.
-
-#### 2. Run the pre-upgrade safety check command (optional but recommended)
-
-Run the following command on your current YAFFA 3.x release before installing YAFFA 4.x:
-
-```bash
-php artisan app:check:budget-migration
-```
-
-This command is read-only and reports any pre-existing data it cannot safely convert:
-
-- a budget-only transaction with zero transaction items
-- a budget-only transaction where the only non-null account side is actually a payee, not a real account
-- a transfer or investment transaction with a stray `budget = true` flag (should never happen, but was never enforced at the database level)
-- a budget-only transaction whose currency doesn't match its linked account's current currency
-
-The 4.x migration **refuses to run** while any of these are reported, to avoid silently dropping or misattributing data. If the command reports issues, resolve them (edit or delete the flagged transactions) and run it again until it succeeds.
-
-**Note:** this command is removed again once you're on 4.x — once the conversion has run, the state it checks for can no longer occur.
-
-#### 3. Backup your database
-
-Before running any migrations, create a complete backup of your database. There is no native downgrade path for the budget-to-`Budget` data conversion (see below), so a backup is your only way back to 3.x if something goes wrong.
-
-```bash
-# Example for MySQL/MariaDB
-mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
-```
-
-See the [2.x to 3.x guide](#upgrade-from-yaffa-2x-to-3x) above for Docker-volume backup examples if you're running the packaged Docker setup.
-
-#### 4. Install the new version and apply all changes
-
-No new required environment variables are introduced by this upgrade. However, this release bumps the framework to Laravel 13, which changed the *default* values used for `CACHE_PREFIX`, `REDIS_PREFIX`, and `SESSION_COOKIE` when those are left unset (the separator used to build them from `APP_NAME` changed from `_` to `-`, e.g. `yaffa_cache_` → `yaffa-cache-`). If your `.env` doesn't already set these explicitly, add them to pin the previous values and avoid orphaning existing cache/session/queue data on deploy:
-
-```env
-CACHE_PREFIX=yaffa_cache_
-REDIS_PREFIX=yaffa_database_
-SESSION_COOKIE=yaffa_session
-```
-
-(Substitute `yaffa` with the slug of your own `APP_NAME` if you've customized it.)
-
-##### Docker users
-
-```bash
-docker compose pull
-docker compose stop app scheduler
-docker compose up -d db
-docker compose up -d app scheduler
-```
-
-The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup.
-
-**Caddy reverse proxy is now a Compose profile.** `docker/docker-compose.yml`'s Caddy service is no longer a commented-out block you manually uncomment — it's gated behind the `https` Compose profile, started with `docker compose --profile https up -d`. If you previously uncommented the old Caddy block by hand, pulling the new `docker-compose.yml` will conflict with (or silently discard) that edit; re-apply your Caddyfile/domain setup and switch to the `--profile https` flag instead of a manual edit. If you run with this profile, also set `APP_PORT` in your `.env` (e.g. `APP_PORT=127.0.0.1:8080`) so the `app` service doesn't also try to bind host port 80 alongside Caddy — see the comments in `docker-compose.yml` for details.
-
-##### Source code users
-
-```bash
-git pull
-composer install
-php artisan migrate
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-npm install && npm run build
-```
-
-The migration step will:
-
-- Backfill `transaction_schedules.rrule` from every existing schedule's `frequency`/`interval`/`count`/`end_date`, then drop those columns. This step refuses to proceed if any row is somehow left without a resulting `rrule` value (should never happen — every combination the pre-upgrade UI could produce is representable).
-- Create the new `budgets` table (using the same `rrule` storage).
-- Convert every remaining budget-only transaction into `Budget` row(s) (one per distinct category, summing amounts within a category), carrying over its account (only if the non-null side is a real account, not a payee), transaction type, and recurrence settings — then hard-delete the source transaction. This step refuses to proceed if step 2's check would report any issue, even if you skipped running it manually.
-- Drop the `transactions.budget` column.
-- Make `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`.
-
-**Note**: both the schedule recurrence backfill and the budget-to-`Budget` conversion are irreversible once their respective old columns are dropped. Ensure you have a backup (step 3) before proceeding.
-
-#### 5. Review your converted Budgets (recommended)
-
-After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
-
-## Upgrade within YAFFA 3.x
-
-## Upgrade within YAFFA 3.x
-
-Most 3.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
 ### API Access Tokens & Two-Factor Authentication
 
@@ -166,6 +74,106 @@ Two more precision-related changes, transparent to a normal upgrade:
 - `ext-bcmath` is now a required PHP extension (declared in `composer.json`). It's already present in the Sail dev image; if you run PHP outside Sail/Docker, confirm it's compiled in before upgrading (`php -m | grep bcmath`) — it wasn't previously listed among YAFFA's required extensions.
 
 **Action required if you have investment transactions predating a currency change on an account or investment**: an investment transaction's `price` (in the investment's currency) and its `commission`/`tax`/`dividend` (in the account's currency) are now combined with exact `Brick\Money\Money` arithmetic, which requires both sides to share a currency. New transactions are already prevented from mismatching (`TransactionRequest`'s account/investment currency check, and the currency-change confirmation now shown in the account/investment edit forms), but a transaction recorded _before_ either guard existed — back when the account or investment's currency was later changed — may still have a mismatched pair. For such a row, `cashflow_value` is now computed as `null` instead of throwing, and a `warning`-level log entry ("Investment transaction cash flow spans mismatched currencies (legacy data)") is written with the transaction ID. Search your logs for that message after upgrading, and manually correct the identified transactions (or the account/investment currency) to restore their cash-flow value.
+
+### Step-by-step Guide
+
+#### 1. Upgrade to the latest YAFFA 3.x release
+
+Before installing YAFFA 4.x, first update to the latest available YAFFA 3.x release (3.6.0 or later). This ensures the pre-upgrade safety check command described below is available in your existing installation.
+
+#### 2. Run the pre-upgrade safety check command (optional but recommended)
+
+Run the following command on your current YAFFA 3.x release before installing YAFFA 4.x:
+
+```bash
+php artisan app:check:budget-migration
+```
+
+This command is read-only and reports any pre-existing data it cannot safely convert:
+
+- a budget-only transaction with zero transaction items
+- a budget-only transaction where the only non-null account side is actually a payee, not a real account
+- a transfer or investment transaction with a stray `budget = true` flag (should never happen, but was never enforced at the database level)
+- a budget-only transaction whose currency doesn't match its linked account's current currency
+
+The 4.x migration **refuses to run** while any of these are reported, to avoid silently dropping or misattributing data. If the command reports issues, resolve them (edit or delete the flagged transactions) and run it again until it succeeds.
+
+**Note:** this command is removed again once you're on 4.x — once the conversion has run, the state it checks for can no longer occur.
+
+#### 3. Backup your database
+
+Before running any migrations, create a complete backup of your database. **`php artisan migrate:rollback` is not a way back to 3.x.** It restores the table structure but not the data, so a backup is your only way back if something goes wrong. Specifically, a rollback leaves you with:
+
+- **Schedules without recurrence.** The old `frequency`, `interval`, `count`, `end_date`, `by_day`, and `by_month` columns are re-created empty (`frequency` is a blank string, `interval` defaults to `1`), and `rrule` is cleared. Every existing schedule loses its recurrence settings, and the 3.x application cannot use those rows.
+- **No budget-only transactions.** The `transactions.budget` column comes back as `false` on every row, and the budget-only transactions that were converted into `Budget` rows (and hard-deleted) are not re-created. The `Budget` rows themselves are left in place, unused by 3.x.
+- **Nullable accounts again**, on `transaction_details_standard.account_from_id`/`account_to_id`, which is the only part that is a true reversal.
+
+Restore the database from the backup and reinstall the 3.x release instead.
+
+```bash
+# Example for MySQL/MariaDB
+mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
+```
+
+See the [2.x to 3.x guide](#upgrade-from-yaffa-2x-to-3x) above for Docker-volume backup examples if you're running the packaged Docker setup.
+
+#### 4. Install the new version and apply all changes
+
+No new required environment variables are introduced by this upgrade. However, this release bumps the framework to Laravel 13, which changed the _default_ values used for `CACHE_PREFIX`, `REDIS_PREFIX`, and `SESSION_COOKIE` when those are left unset (the separator used to build them from `APP_NAME` changed from `_` to `-`, e.g. `yaffa_cache_` → `yaffa-cache-`). If your `.env` doesn't already set these explicitly, add them to pin the previous values and avoid orphaning existing cache/session/queue data on deploy:
+
+```env
+CACHE_PREFIX=yaffa_cache_
+REDIS_PREFIX=yaffa_database_
+SESSION_COOKIE=yaffa_session
+```
+
+(Substitute `yaffa` with the slug of your own `APP_NAME` if you've customized it.)
+
+##### Docker users
+
+```bash
+docker compose pull
+docker compose stop app scheduler
+docker compose up -d db
+docker compose up -d app scheduler
+```
+
+The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup. Only the `app` container does this; the `scheduler` container waits for it to become healthy.
+
+**`APP_KEY` no longer needs to be set manually.** If `APP_KEY` is empty, the container generates one on first boot and keeps it in the storage volume (`storage/app/.app_key`), so restarts and container re-creation keep using the same key. If you already have an `APP_KEY` in your `.env` or Compose environment, it keeps being used, so nothing changes for you. Do not delete the storage volume without also keeping a copy of the key, since the key protects sessions and encrypted data.
+
+**Caddy reverse proxy is now a Compose profile.** `docker/docker-compose.yml`'s Caddy service is no longer a commented-out block you manually uncomment — it's gated behind the `https` Compose profile, started with `docker compose --profile https up -d`. If you previously uncommented the old Caddy block by hand, pulling the new `docker-compose.yml` will conflict with (or silently discard) that edit; re-apply your Caddyfile/domain setup and switch to the `--profile https` flag instead of a manual edit. If you run with this profile, also set `APP_PORT` in your `.env` (e.g. `APP_PORT=127.0.0.1:8080`) so the `app` service doesn't also try to bind host port 80 alongside Caddy — see the comments in `docker-compose.yml` for details.
+
+##### Source code users
+
+```bash
+git pull
+composer install
+php artisan migrate
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+npm install && npm run build
+```
+
+The migration step will:
+
+- Backfill `transaction_schedules.rrule` from every existing schedule's `frequency`/`interval`/`count`/`end_date`, then drop those columns. This step refuses to proceed if any row is somehow left without a resulting `rrule` value (should never happen — every combination the pre-upgrade UI could produce is representable).
+- Create the new `budgets` table (using the same `rrule` storage).
+- Convert every remaining budget-only transaction into `Budget` row(s) (one per distinct category, summing amounts within a category), carrying over its account (only if the non-null side is a real account, not a payee), transaction type, and recurrence settings — then hard-delete the source transaction. This step refuses to proceed if step 2's check would report any issue, even if you skipped running it manually.
+- Drop the `transactions.budget` column.
+- Make `transaction_details_standard.account_from_id`/`account_to_id` `NOT NULL`.
+- Add missing unique keys and indexes for performance and data integrity. Before adding the unique keys to the tag pivot table (`transaction_items_tags`) and to the payee category preference table (`account_entity_category_preference`), any duplicate rows are removed automatically: for a tag attached to the same item more than once the oldest row is kept, and for a duplicated category preference the most recently saved one is kept. Duplicates only inflated tag counts or repeated a preference, so no manual step is needed. This runs on the same migration and is part of the backup recommendation.
+
+**Note**: both the schedule recurrence backfill and the budget-to-`Budget` conversion are irreversible in practice once their respective old columns are dropped: rolling the migrations back does not restore the data (see step 3). Ensure you have a backup before proceeding.
+
+#### 5. Review your converted Budgets (recommended)
+
+After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
+
+## Upgrade within YAFFA 3.x
+
+Most 3.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
 ### Docker users switching from `mysql/mysql-server:8.0` to `mysql:8.0`
 
