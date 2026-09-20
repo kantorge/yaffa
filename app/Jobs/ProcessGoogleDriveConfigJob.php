@@ -90,7 +90,8 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 }
 
                 // Download file
-                $storagePath = "ai_documents/{$user->id}/" . Str::uuid() . "/{$file['name']}";
+                $fileName = $this->safeFileName($file['name']);
+                $storagePath = "ai_documents/{$user->id}/" . Str::uuid() . "/{$fileName}";
                 $fullPath = storage_path('app/' . $storagePath);
 
                 try {
@@ -123,7 +124,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                 AiDocumentFile::create([
                     'ai_document_id' => $aiDocument->id,
                     'file_path' => $storagePath,
-                    'file_name' => $file['name'],
+                    'file_name' => $fileName,
                     'file_type' => $ext,
                 ]);
 
@@ -184,5 +185,15 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * A Drive file name can be set by anyone with write access to the monitored folder and becomes
+     * part of the storage path, so only its last segment (without control characters) is used. The
+     * caller has already checked the extension, so the result always ends in an allowed one.
+     */
+    private function safeFileName(string $name): string
+    {
+        return preg_replace('/[\x00-\x1F\x7F]/', '', basename(str_replace('\\', '/', $name)));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\CleanupOldAiDocuments;
 use App\Mail\AiDocumentsAwaitingAction;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
@@ -277,5 +278,63 @@ class CleanupOldAiDocumentFilesCommandTest extends TestCase
     {
         $this->artisan('ai-documents:cleanup-old-files', ['userId' => 999999])
             ->assertFailed();
+    }
+
+    public function test_a_queued_job_does_nothing_if_the_setting_was_cleared_before_it_ran(): void
+    {
+        $user = $this->user(30);
+        $document = $this->document($user, 'finalized', 100);
+        $file = $this->attachFile($document);
+        $job = new CleanupOldAiDocuments($user->id);
+
+        // Dispatched while a retention period was set, but the user cleared it before the worker got to it
+        AiUserSettings::where('user_id', $user->id)->update(['document_retention_days' => null]);
+        dispatch_sync($job);
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertExists($file->file_path);
+
+        // Control: with the period set again, the same job deletes the document
+        AiUserSettings::where('user_id', $user->id)->update(['document_retention_days' => 30]);
+        dispatch_sync($job);
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+    }
+
+    public function test_the_reminder_is_sent_on_every_run_until_the_document_is_handled(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'ready_for_review', 100);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 2);
+
+        // Finalizing touches the document, so it is neither reminded about nor deleted any more
+        $document->update(['status' => 'finalized']);
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 2);
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+    }
+
+    /**
+     * Rows imported before Drive file names were sanitized can hold a path Flysystem cannot address.
+     */
+    public function test_a_file_with_a_backslash_in_its_name_is_left_alone_while_the_document_is_deleted(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $path = "ai_documents/{$user->id}/{$document->id}/a\\b.txt";
+        $absolutePath = Storage::disk('local')->path($path);
+        mkdir(dirname($absolutePath), 0755, true);
+        file_put_contents($absolutePath, 'content');
+        AiDocumentFile::factory()->for($document)->create(['file_path' => $path, 'file_name' => 'a\\b.txt', 'file_type' => 'txt']);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+        $this->assertFileExists($absolutePath);
     }
 }

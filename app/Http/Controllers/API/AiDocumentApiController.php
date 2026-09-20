@@ -167,9 +167,12 @@ class AiDocumentApiController extends Controller
     }
 
     /**
-     * Cleanup old AI document files
+     * Cleanup old AI documents
      *
-     * Queues a background job that removes old AI document files for the authenticated user.
+     * Queues the retention cleanup for the authenticated user. It deletes finalized AI documents older
+     * than the user's retention period (`document_retention_days`), together with their stored files and
+     * received emails, and emails a reminder about older documents that are not finalized. The
+     * transactions created from the documents are kept. Does nothing if no retention period is set.
      */
     public function cleanupOldFiles(Request $request): JsonResponse
     {
