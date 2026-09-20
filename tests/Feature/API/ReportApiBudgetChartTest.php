@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -319,6 +320,103 @@ class ReportApiBudgetChartTest extends TestCase
         $this->assertNull($agnosticEntry['account_id']);
         $this->assertNull($agnosticEntry['account_name']);
         $this->assertEqualsWithDelta(-100.0, $agnosticEntry['amount'], 0.001);
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: array<string, mixed>}>
+     */
+    public static function recurrencePatternProvider(): array
+    {
+        $none = [
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => false,
+        ];
+
+        return [
+            'ordinal weekday' => [['by_day' => '-1FR'], [...$none, 'by_day' => '-1FR']],
+            'days before month end' => [
+                ['days_before_month_end' => 3],
+                [...$none, 'days_before_month_end' => 3],
+            ],
+            'last business day' => [
+                ['last_business_day_of_month' => true],
+                [...$none, 'last_business_day_of_month' => true],
+            ],
+        ];
+    }
+
+    /**
+     * The breakdown tooltips build each row's `transaction_schedule` by hand (no model
+     * serialization, so no #[Appends]) and feed it to scheduleCadenceText(): every month-scoped
+     * pattern field (and count) must be listed explicitly, for both the schedule-derived and the
+     * standalone-Budget breakdown, or the cadence text degrades to a plain monthly rule.
+     */
+    #[DataProvider('recurrencePatternProvider')]
+    public function test_breakdowns_expose_the_recurrence_pattern_fields(array $pattern, array $expected): void
+    {
+        $user = User::factory()->create([
+            'end_date' => now()->addMonths(2)->endOfMonth(),
+        ]);
+        Currency::factory()->for($user)->fromIsoCodes(['USD'])->create(['base' => true]);
+
+        $category = Category::factory()->for($user)->create();
+        $currentMonth = now()->startOfMonth();
+        $recurrence = [
+            'frequency' => 'MONTHLY',
+            'interval' => 1,
+            'start_date' => $currentMonth,
+            'end_date' => null,
+            'count' => null,
+            'inflation' => null,
+        ];
+        $resetPattern = [
+            'by_day' => null,
+            'by_month' => null,
+            'days_before_month_end' => null,
+            'last_business_day_of_month' => false,
+        ];
+
+        Budget::factory()->create(array_merge($recurrence, $pattern, [
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'account_id' => null,
+            'transaction_type' => 'withdrawal',
+            'amount' => 100,
+        ]));
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()->for($user)->withdrawal_schedule($user)->create();
+        $transaction->transactionItems()->delete();
+        $transaction->transactionItems()->create(['category_id' => $category->id, 'amount' => 50]);
+        $transaction->config()->update(['amount_from' => 50, 'amount_to' => 50]);
+        $transaction->transactionSchedule->update(array_merge($recurrence, $resetPattern, $pattern, [
+            'next_date' => $currentMonth,
+            'active' => true,
+        ]));
+
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this->getJson(route('api.v1.reports.budget-chart', [
+            'categories' => [$category->id],
+        ]));
+        $response->assertOk();
+
+        $entry = $this->periodEntry($response->json('chartData'), $currentMonth);
+        $this->assertNotNull($entry);
+
+        foreach (['scheduleBreakdown', 'budgetBreakdown'] as $breakdown) {
+            $this->assertCount(1, $entry[$breakdown], "{$breakdown} should list the one contributing row");
+
+            $schedule = $entry[$breakdown][0]['transaction_schedule'];
+
+            $this->assertArrayHasKey('count', $schedule, "{$breakdown}.count is missing");
+            foreach ($expected as $field => $value) {
+                $this->assertArrayHasKey($field, $schedule, "{$breakdown}.{$field} is missing");
+                $this->assertSame($value, $schedule[$field], "{$breakdown}.{$field}");
+            }
+        }
     }
 
     public function test_inactive_budget_does_not_contribute_to_the_chart(): void

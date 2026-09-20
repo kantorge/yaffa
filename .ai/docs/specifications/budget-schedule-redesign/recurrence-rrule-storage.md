@@ -9,9 +9,8 @@ for the base mechanism this addendum reshapes.
 
 **Status: implemented** (backend, migrations, frontend, tests, docs), in the still-unreleased 4.0.0
 line. Written as a pre-implementation handoff; Section 14's checklist records what has landed.
-Still open: FR-16's one-off personal-instance steps, the frontend rebuild/manual UI check, and the
-final quality gates. This was a `release/v4` change, and v4 has not shipped to any external user —
-this is the deliberate timing this addendum relies on (Section 7).
+Still open: the frontend rebuild/manual UI check and the final quality gates. This was a
+`release/v4` change, and v4 has not shipped to any external user — this is the deliberate timing this addendum relies on (Section 7).
 
 ## 1. Purpose and Motivation
 
@@ -198,7 +197,7 @@ Unlike `budgets` (created fresh by this same branch, so no external installation
 operator data. `by_day`/`by_month` are the only two columns on this table that are genuinely
 unshipped (added, and now removed again, within this same unreleased line). Collapsing this
 table's recurrence shape into `rrule` therefore needs a real, three-step migration sequence that
-runs for every 3.x→4.0 upgrader — not a personal-instance-only script:
+runs for every 3.x→4.0 upgrader:
 
 1. `2026_08_04_000001_add_rrule_to_transaction_schedules_table` — adds `rrule` (`text`, nullable
    for this transition only). This is the file that originally added `by_day`/`by_month`; since
@@ -224,29 +223,6 @@ No separate Artisan command, no "delete before merge" lifecycle — this is ordi
 history, run automatically by `php artisan migrate` for every operator the same way the sibling
 `budgets` conversion (`2026_08_05_000002`/`000003`) already is. See Section 7 for full ordering
 against the `budgets` migrations.
-
-### FR-16: Temporary, personal-instance-only backfill for `budgets` (non-shipping)
-
-Discovered post-implementation, not part of the original addendum: the branch author's own
-instance already ran the pre-rewrite `2026_08_05_000001_create_budgets_table` (old
-frequency/interval/by_day/by_month/count/end_date columns) before this addendum rewrote that file
-to create `rrule` directly (see Section 7's exception note). Since Laravel matches migrations by
-filename, redeploying the rewritten file never re-runs it there, so that instance's `budgets` table
-would otherwise stay in the old shape forever while every other part of the deployed code
-(`Budget`'s `HasRecurrenceRule` wiring) assumes `rrule` exists — breaking every `Budget` read/write
-outright.
-
-Unlike FR-15, this genuinely **is** a one-off, non-shipping fix (no other installation has ever run
-any shape of `create_budgets_table`, so no other installation can ever be in this state):
-
-- `app:dev:migrate-budgets-recurrence-to-rrule` (`app/Console/Commands/MigrateBudgetsRecurrenceToRrule.php`)
-  — no-ops immediately if `budgets.frequency` doesn't exist (i.e. this instance already has the
-  rrule-based shape); otherwise adds `rrule` nullable if missing, then backfills every row from the
-  old columns via the same private, throwaway `Recurr\Rule` assembly pattern as FR-15's original
-  command.
-- Reports migrated/failed counts, same as FR-15.
-- Does **not** drop the old columns itself — the author does that manually (throwaway local
-  migration or direct DDL) after verifying the backfill, then deletes this command. Never ships.
 
 ## 6. Data Model Changes
 
@@ -283,18 +259,6 @@ drop-column migration on top of it that no real installation would ever need. Th
 "always additive, never rewrite a shipped migration" practice resumes the moment 4.0.0 actually
 tags.
 
-**Exception: the branch author's own personal instance already ran the pre-rewrite
-`create_budgets_table`** (old frequency/interval/by_day/by_month/count/end_date columns), before
-this addendum rewrote that file to create `rrule` directly. Laravel matches migrations by
-filename, so redeploying the rewritten file to that instance never re-runs it — its `budgets`
-table stays in the old shape indefinitely unless fixed separately. Unlike `transaction_schedules`,
-this can *only* ever affect that one instance (no other installation has ever run any shape of
-`create_budgets_table`), so it's fixed by a one-off, non-shipping Artisan command
-(`app:dev:migrate-budgets-recurrence-to-rrule`, see FR-16) rather than a permanent guarded
-migration — the same "temporary, delete once used" lifecycle originally (and wrongly) proposed for
-`transaction_schedules` in an earlier draft of this addendum, correctly scoped this time to a
-condition only one instance can ever hit.
-
 **`transaction_schedules` — real backfill migration (FR-15), because this table predates 4.0.**
 Unlike `budgets`, `transaction_schedules` is part of the schema every 3.x installation already
 runs, and its `frequency`/`interval`/`count`/`end_date` columns hold real operator data — this is
@@ -302,8 +266,7 @@ not a greenfield table, and dropping those columns outright would destroy every 
 installation's schedules on upgrade. Only `by_day`/`by_month` (added, and now removed, entirely
 within this unshipped branch) can be treated like `budgets`. The migration sequence is therefore
 add → backfill → guarded drop (FR-15's three files), which runs identically for every 3.x
-upgrader and for the branch author's own already-provisioned instance alike — there is no separate
-personal-instance path or non-shipping script.
+upgrader — there is no separate path or non-shipping script.
 
 **Combined ordering** (by migration timestamp, all in the public history):
 
@@ -412,8 +375,7 @@ from the superseded draft since it's still required:
    new in this branch and no installation has ever had one.
 8. `transaction_schedules`' real, pre-existing `frequency`/`interval`/`count`/`end_date` data
    survives the upgrade intact: the FR-15 add/backfill/guarded-drop migration sequence (Section 7)
-   is ordinary, shipping migration history — no separate script, no personal-instance special
-   case — and its golden-output test (Section 10) confirms the backfilled `rrule` reproduces each
+   is ordinary, shipping migration history — no separate script — and its golden-output test (Section 10) confirms the backfilled `rrule` reproduces each
    legacy column shape exactly.
 9. `UPGRADE.md`'s 3.x→4.x section documents this backfill (backup guidance, no downgrade path once
    the old columns are dropped) alongside the existing budget-conversion notes.
@@ -494,15 +456,6 @@ tests, then docs.
       schema directly.
 - [x] Confirm no other migration in `database/migrations/` references
       `frequency`/`interval`/`count`/`end_date`/`by_day`/`by_month` on either table.
-
-### Database/tooling — `budgets` on the branch author's own instance (FR-16, temporary, non-shipping)
-- [x] `app:dev:migrate-budgets-recurrence-to-rrule` Artisan command — no-ops on a fresh install,
-      backfills `rrule` from the old columns on the one already-affected instance.
-- [ ] Run it against the affected instance; verify output.
-- [ ] Drop the old columns on that instance (a local, non-shipping migration or manual DDL —
-      author's call).
-- [ ] Delete the command and its test from the branch once that instance is confirmed migrated
-      and before this branch is proposed for merge toward the release branch.
 
 ### Frontend (contract unchanged — verify, extend for month-end patterns only)
 - [x] `shared/lib/helpers/index.js` — `bymonthday`/`bysetpos`+`byweekday` branches.
