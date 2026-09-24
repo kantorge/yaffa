@@ -264,6 +264,25 @@ class TransactionScheduleTest extends TestCase
         $this->assertFalse($schedule->isActive());
     }
 
+    /**
+     * A COUNT-bounded rule is filtered via RecurrenceCollection::startsBetween(), which
+     * preserves keys - so the first remaining occurrence is not at index 0.
+     */
+    public function test_get_next_instance_with_count_returns_the_first_occurrence_after_next_date(): void
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'start_date' => Carbon::parse('2026-01-01'),
+            'next_date' => Carbon::parse('2026-01-01'),
+            'end_date' => null,
+            'frequency' => 'DAILY',
+            'interval' => 1,
+            'count' => 3,
+        ]);
+
+        $this->assertSame('2026-01-02', $schedule->getNextInstance()->format('Y-m-d'));
+    }
+
     public function testCatchUpToDateReturnsFalseWhenRecurrenceThrowsException(): void
     {
         /** @var TransactionSchedule $schedule */

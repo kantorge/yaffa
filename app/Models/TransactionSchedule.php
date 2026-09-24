@@ -139,7 +139,7 @@ class TransactionSchedule extends Model
             return null;
         }
 
-        return $recurrence[0]->getStart();
+        return $recurrence->first()->getStart();
     }
 
     /**
