@@ -30,6 +30,14 @@ return new class () extends Migration {
         Schema::table('transaction_items_tags', function (Blueprint $table) {
             $table->unique(['tag_id', 'transaction_item_id']);
         });
+
+        // Left over from down(), which needs a plain tag_id index while the unique key is gone.
+        // The unique key covers the foreign key again, so it is redundant here.
+        if (Schema::hasIndex('transaction_items_tags', 'transaction_items_tags_tag_id_index')) {
+            Schema::table('transaction_items_tags', function (Blueprint $table) {
+                $table->dropIndex('transaction_items_tags_tag_id_index');
+            });
+        }
     }
 
     public function down(): void

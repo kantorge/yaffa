@@ -41,6 +41,14 @@ return new class () extends Migration {
         Schema::table('account_entity_category_preference', function (Blueprint $table) {
             $table->unique(['account_entity_id', 'category_id'], 'account_entity_category_preference_unique');
         });
+
+        // Left over from down(), which needs a plain account_entity_id index while the unique key
+        // is gone. The unique key covers the foreign key again, so it is redundant here.
+        if (Schema::hasIndex('account_entity_category_preference', 'account_entity_category_preference_account_entity_id_index')) {
+            Schema::table('account_entity_category_preference', function (Blueprint $table) {
+                $table->dropIndex('account_entity_category_preference_account_entity_id_index');
+            });
+        }
     }
 
     public function down(): void
