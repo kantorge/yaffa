@@ -41,6 +41,7 @@ class SandboxDemoDataExporterTest extends TestCase
             'next_date' => '2008-11-21',
             'frequency' => 'MONTHLY',
             'end_date' => '2008-01-31',
+            'count' => null,
         ]);
 
         app(SandboxDemoDataExporter::class)->shiftDates(12);
