@@ -106,12 +106,13 @@
           class="btn btn-sm btn-ghost-dark ms-1"
           type="button"
           @click="toggleWithInactive"
-          v-html="
+        >
+          {{
             withClosed
               ? __('widget.accountBalance.hideButton')
               : __('widget.accountBalance.showButton')
-          "
-        ></button>
+          }}
+        </button>
       </div>
     </div>
   </div>
