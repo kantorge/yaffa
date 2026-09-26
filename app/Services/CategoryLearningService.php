@@ -69,13 +69,14 @@ class CategoryLearningService
         }
 
         // Create new learning record
-        CategoryLearning::create([
-            'user_id' => $this->user->id,
+        $learning = new CategoryLearning([
             'item_description' => $normalizedDescription,
             'category_id' => $categoryId,
             'usage_count' => 1,
             'active' => true,
         ]);
+        $learning->user_id = $this->user->id;
+        $learning->save();
 
         return 'created';
     }

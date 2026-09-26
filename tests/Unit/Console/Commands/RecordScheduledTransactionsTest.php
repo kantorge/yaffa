@@ -3,9 +3,7 @@
 namespace Tests\Unit\Console\Commands;
 
 use App\Jobs\RecordScheduledTransaction;
-use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -25,8 +23,8 @@ class RecordScheduledTransactionsTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user), 'config')->create();
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        AccountEntity::factory()->asAccount($user)->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */

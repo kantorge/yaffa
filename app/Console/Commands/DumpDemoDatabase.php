@@ -3,25 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Services\SandboxDemoDataExporter;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:sandbox:dump-database {--force-sandbox : Allow running this command even if sandbox mode is not enabled}')]
+#[Description('Dump the demo (sandbox) database to a SQL file to facilitate making changes to the demo dataset')]
 class DumpDemoDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:sandbox:dump-database
-        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Dump the demo (sandbox) database to a SQL file to facilitate making changes to the demo dataset';
-
     /**
      * Execute the console command.
      */

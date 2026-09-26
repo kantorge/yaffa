@@ -4,24 +4,14 @@ namespace App\Console\Commands;
 
 use App\Models\ReceivedMail;
 use App\Services\EmailHtmlSanitizerService;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:mail:sanitize-received-html {--dry-run : Report affected records without updating them}')]
+#[Description('Re-sanitize existing ReceivedMail.html records with the current HTML sanitizer (for records stored before sanitization was enforced)')]
 class SanitizeReceivedMailHtml extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:mail:sanitize-received-html {--dry-run : Report affected records without updating them}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Re-sanitize existing ReceivedMail.html records with the current HTML sanitizer (for records stored before sanitization was enforced)';
-
     public function handle(EmailHtmlSanitizerService $sanitizer): int
     {
         $dryRun = (bool) $this->option('dry-run');

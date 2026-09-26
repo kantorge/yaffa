@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentReprocessResetTest extends TestCase
 {
@@ -40,7 +41,10 @@ class AiDocumentReprocessResetTest extends TestCase
             'processed_at' => now(),
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson("/api/v1/documents/{$document->id}/reprocess")
             ->assertOk()
             ->assertJsonPath('status', 'ready_for_processing');

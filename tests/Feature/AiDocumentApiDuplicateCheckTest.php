@@ -6,6 +6,7 @@ use App\Models\AiDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentApiDuplicateCheckTest extends TestCase
 {
@@ -19,7 +20,10 @@ class AiDocumentApiDuplicateCheckTest extends TestCase
             'processed_transaction_data' => null,
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.documents.checkDuplicates', ['aiDocument' => $document]));
 
         $response->assertStatus(400);
@@ -38,7 +42,10 @@ class AiDocumentApiDuplicateCheckTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->postJson(route('api.v1.documents.checkDuplicates', ['aiDocument' => $document]));
 
         $response->assertStatus(200)

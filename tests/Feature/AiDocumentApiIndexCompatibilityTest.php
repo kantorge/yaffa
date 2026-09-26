@@ -8,6 +8,7 @@ use App\Models\AiDocumentFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentApiIndexCompatibilityTest extends TestCase
 {
@@ -22,7 +23,10 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
             'file_name' => 'receipt.pdf',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.index', ['per_page' => 10]));
 
         $response->assertStatus(200)
@@ -67,7 +71,10 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
             'created_at' => now()->subDays(20),
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.index', [
                 'date_from' => now()->subDays(90)->format('Y-m-d'),
                 'date_to' => now()->format('Y-m-d'),
@@ -94,7 +101,10 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
             'custom_prompt' => 'Different content',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.index', [
                 'status' => 'processing',
                 'source_type' => 'manual_upload',
@@ -138,7 +148,10 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.index', ['per_page' => 10]));
 
         $response->assertOk()

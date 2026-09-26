@@ -4,24 +4,14 @@ namespace App\Console\Commands;
 
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:currency-rates:get {iso_codes?*}')]
+#[Description('Run retrieval of currency rates for all currencies against the base currency.')]
 class GetCurrencyRates extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:currency-rates:get {iso_codes?*}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Run retrieval of currency rates for all currencies against the base currency.';
-
     /**
      * Execute the console command.
      */

@@ -33,8 +33,8 @@
         </div>
       </div>
     </div>
-    <div class="card-body" id="transaction_item_container">
-      <div class="list-group" v-for="item in transactionItems" :key="item.id">
+    <div id="transaction_item_container" class="card-body">
+      <div v-for="item in transactionItems" :key="item.id" class="list-group">
         <transaction-item
           :id="item.id"
           :amount="Number(item.amount)"
@@ -54,7 +54,7 @@
         {{ __('No items added') }}
       </div>
     </div>
-    <div class="card-footer d-sm-none" v-if="transactionItems.length > 0">
+    <div v-if="transactionItems.length > 0" class="card-footer d-sm-none">
       <div class="text-end">
         <div class="btn-group">
           <button

@@ -1,6 +1,6 @@
 <template>
-  <div class="card mb-4" id="widgetAccountBalance">
-    <div class="card-header d-flex justify-content-between">
+  <div id="widgetAccountBalance" class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
       <div class="card-title">
         {{ __('widget.accountBalance.cardTitle') }}
       </div>
@@ -8,39 +8,39 @@
         {{ toFormattedCurrency(totalValue, locale, baseCurrency) }}
       </div>
     </div>
-    <ul class="list-group list-group-flush" v-if="state === 'loading'">
+    <ul v-if="state === 'loading'" class="list-group list-group-flush">
       <li
+        v-for="i in 5"
+        :key="i"
         aria-hidden="true"
         class="list-group-item placeholder-glow"
-        v-for="i in 5"
-        v-bind:key="i"
       >
         <span class="placeholder col-12"></span>
       </li>
     </ul>
     <ul
-      class="list-group list-group-flush"
       v-if="state === 'data-not-available'"
+      class="list-group list-group-flush"
     >
       <li class="list-group-item list-group-item-warning">
         {{ errorMessage }}
       </li>
     </ul>
-    <ul class="list-group list-group-flush" v-if="state === 'error'">
+    <ul v-if="state === 'error'" class="list-group list-group-flush">
       <li class="list-group-item list-group-item-danger">
         {{ __('widget.accountBalance.loadErrorPrefix') }}
         {{ errorMessage }}
       </li>
     </ul>
     <ul
-      class="list-group list-group-flush"
-      id="accordionAccountBalance"
       v-if="state === 'data-available'"
+      id="accordionAccountBalance"
+      class="list-group list-group-flush"
     >
       <li
-        class="list-group-item"
         v-for="(accountGroup, accountGroupId) in accountBalanceDataByGroups"
-        v-bind:key="accountGroupId"
+        :key="accountGroupId"
+        class="list-group-item"
       >
         <div class="d-flex justify-content-between">
           <span
@@ -65,10 +65,10 @@
           aria-expanded="false"
         >
           <a
+            v-for="(account, index) in accountGroup.accounts"
+            :key="index"
             class="list-group-item d-flex justify-content-between list-group-item-action"
             :href="getRoute(account)"
-            v-for="(account, index) in accountGroup.accounts"
-            v-bind:key="index"
           >
             <span>
               {{ account.name }}
@@ -106,12 +106,13 @@
           class="btn btn-sm btn-ghost-dark ms-1"
           type="button"
           @click="toggleWithInactive"
-          v-html="
+        >
+          {{
             withClosed
               ? __('widget.accountBalance.hideButton')
               : __('widget.accountBalance.showButton')
-          "
-        ></button>
+          }}
+        </button>
       </div>
     </div>
   </div>
@@ -120,6 +121,7 @@
 <script>
   import { __, toFormattedCurrency } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { pollUntilReady } from '@/shared/lib/busyPoll';
 
   export default {
     props: {
@@ -137,13 +139,8 @@
         // Expected values: loading, data-loaded, data-not-available, error
         state: 'loading',
         errorMessage: null,
-        retryInterval: 5000,
-        retryTimeoutId: null,
+        cancelPoll: null,
       };
-    },
-
-    created() {
-      this.getAccountBalanceData();
     },
 
     computed: {
@@ -165,7 +162,7 @@
             return;
           }
 
-          if (!groups.hasOwnProperty(account.account_group_id)) {
+          if (!Object.hasOwn(groups, account.account_group_id)) {
             groups[account.account_group_id] = {
               name: account.account_group_name,
               accounts: [],
@@ -188,6 +185,17 @@
       },
     },
 
+    created() {
+      this.getAccountBalanceData();
+    },
+
+    beforeUnmount() {
+      // Cancel any pending retry when the component is destroyed
+      if (this.cancelPoll) {
+        this.cancelPoll();
+      }
+    },
+
     methods: {
       getAccountBalanceData: function () {
         // Verify if base currency is set. Without this, the widget cannot be displayed.
@@ -201,34 +209,28 @@
 
         this.state = 'loading';
 
-        axios
-          .get(this.route('api.v1.accounts.balance'))
-          .then((response) => {
-            // Check if the response is valid data
-            if (response.data.result === 'busy') {
+        this.cancelPoll = pollUntilReady(
+          () =>
+            axios
+              .get(this.route('api.v1.accounts.balance'))
+              .then((response) => response.data),
+          {
+            onBusy: (message) => {
               this.state = 'data-not-available';
-              this.errorMessage = response.data.message;
+              this.errorMessage = message;
+            },
+            onReady: (data) => {
+              this.accountBalanceData = data.accountBalanceData;
+              this.state = 'data-available';
+            },
+            onError: (error) => {
+              this.state = 'error';
+              this.errorMessage = error.message;
 
-              // Retry after current interval
-              this.retryTimeoutId = setTimeout(() => {
-                this.getAccountBalanceData();
-              }, this.retryInterval);
-
-              // Increase retry interval
-              this.retryInterval *= 2;
-
-              return;
-            }
-
-            this.accountBalanceData = response.data.accountBalanceData;
-            this.state = 'data-available';
-          })
-          .catch((error) => {
-            this.state = 'error';
-            this.errorMessage = error.message;
-
-            toastHelpers.showErrorToast(error.message);
-          });
+              toastHelpers.showErrorToast(error.message);
+            },
+          },
+        );
       },
 
       getRoute: function (account) {
@@ -242,13 +244,6 @@
       },
       toFormattedCurrency,
       __,
-    },
-
-    beforeDestroy() {
-      // Clear any pending retry timeout when the component is destroyed
-      if (this.retryTimeoutId) {
-        clearTimeout(this.retryTimeoutId);
-      }
     },
   };
 </script>

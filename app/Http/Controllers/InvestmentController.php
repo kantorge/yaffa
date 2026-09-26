@@ -32,7 +32,6 @@ class InvestmentController extends Controller implements HasMiddleware
             new Middleware('can:view,investment', only: ['show']),
             new Middleware('can:create,' . Investment::class, only: ['create', 'store']),
             new Middleware('can:update,investment', only: ['edit', 'update']),
-            new Middleware('can:delete,investment', only: ['destroy']),
         ];
     }
 
@@ -166,28 +165,6 @@ class InvestmentController extends Controller implements HasMiddleware
         self::addSimpleSuccessMessage(__('Investment added'));
 
         return to_route('investments.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Investment $investment): RedirectResponse
-    {
-        /**
-         * @delete("/investments/{investment}")
-         * @name("investments.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-
-        $result = $this->investmentService->delete($investment);
-
-        if ($result['success']) {
-            self::addSimpleSuccessMessage(__('Investment deleted'));
-            return to_route('investments.index');
-        }
-
-        self::addSimpleErrorMessage($result['error']);
-        return redirect()->back();
     }
 
     public function show(Investment $investment): View

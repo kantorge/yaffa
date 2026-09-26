@@ -1,15 +1,15 @@
 <template>
-  <div class="card mb-3" :id="`findTransactionsSelectCard-${property}`">
+  <div :id="`findTransactionsSelectCard-${property}`" class="card mb-3">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __(title) }}
       </div>
       <div>
         <button
-          class="btn btn-sm btn-outline-danger"
-          @click="clearSelection"
+          class="btn btn-sm btn-danger"
           :disabled="selectedValues.length === 0 || !ready"
           :title="__('Clear selection')"
+          @click="clearSelection"
         >
           <i class="fa fa-fw fa-times"></i>
         </button>
@@ -28,7 +28,6 @@
 
   export default {
     name: 'FindTransactionSelectCard',
-    emits: ['update', 'preset-ready'],
     props: {
       property: {
         type: String,
@@ -54,7 +53,7 @@
       },
       presetItemIds: {
         type: Array,
-        default: [],
+        default: () => [],
       },
       // API path for the details endpoint
       detailsApiPath: {
@@ -66,6 +65,7 @@
         default: 'name',
       },
     },
+    emits: ['update', 'preset-ready'],
 
     data() {
       return {

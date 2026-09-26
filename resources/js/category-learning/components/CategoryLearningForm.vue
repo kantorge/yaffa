@@ -1,127 +1,85 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form
-          accept-charset="UTF-8"
-          @submit.prevent="onSubmit"
-          autocomplete="off"
-        >
-          <div class="modal-header">
-            <h5 class="modal-title" v-if="action === 'new'">
-              {{ __('Add new category learning entry') }}
-            </h5>
-            <h5 class="modal-title" v-else>
-              {{ __('Edit category learning entry') }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-coreui-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-
-          <div class="modal-body">
-            <AlertErrors
-              :form="form"
-              :message="__('There were some problems with your input.')"
-            />
-            <AlertSuccess
-              :form="form"
-              :message="__('Your changes have been saved!')"
-            />
-
-            <div class="row mb-3">
-              <label :for="descriptionInputId" class="form-label col-sm-3">
-                {{ __('Description') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="descriptionInputId"
-                  maxlength="255"
-                  type="text"
-                  v-model="form.item_description"
-                  @keyup="onDescriptionChange"
-                />
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <label :for="activeInputId" class="form-label col-sm-3">
-                {{ __('Active') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  :id="activeInputId"
-                  class="checkbox-inline"
-                  type="checkbox"
-                  value="1"
-                  v-model="form.active"
-                />
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <label :for="categorySelectId" class="form-label col-sm-3">
-                {{ __('Category') }}
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="categorySelectId"
-                  class="form-select category"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
-
-            <div class="row mb-3" v-show="similarLearnings.length > 0">
-              <hr />
-              <span class="form-label col-sm-3">{{
-                __('Similar category learning entries')
-              }}</span>
-              <div class="col-sm-9">
-                <ul class="list-unstyled" id="similar-learning-list">
-                  <li
-                    class="mt-2"
-                    v-for="learning in similarLearnings"
-                    :key="learning.id"
-                  >
-                    <a href="#" @click.prevent="onSelectLearning(learning)">
-                      {{ learning.item_description }}
-                      <span class="text-muted"
-                        >({{
-                          learning.category?.full_name ||
-                          learning.category?.name
-                        }})</span
-                      >
-                      <span v-if="!learning.active" class="text-warning">
-                        - {{ __('inactive, click to activate') }}</span
-                      >
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-default"
-              data-coreui-dismiss="modal"
-            >
-              {{ __('Close') }}
-            </button>
-            <Button class="btn btn-primary" :disabled="form.busy" :form="form">
-              {{ __('Save') }}
-            </Button>
-          </div>
-        </form>
+  <FormModal
+    :id="id"
+    ref="formModal"
+    :action="action"
+    :new-title="__('Add new category learning entry')"
+    :edit-title="__('Edit category learning entry')"
+    :form="form"
+    @submit="onSubmit"
+  >
+    <div class="row mb-3">
+      <label :for="descriptionInputId" class="form-label col-sm-3">
+        {{ __('Description') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="descriptionInputId"
+          v-model="form.item_description"
+          class="form-control"
+          maxlength="255"
+          type="text"
+          @keyup="onDescriptionChange"
+        />
       </div>
     </div>
-  </div>
+
+    <div class="row mb-3">
+      <label :for="activeInputId" class="form-label col-sm-3">
+        {{ __('Active') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="activeInputId"
+          v-model="form.active"
+          class="checkbox-inline"
+          type="checkbox"
+          value="1"
+        />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <label :for="categorySelectId" class="form-label col-sm-3">
+        {{ __('Category') }}
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="categorySelectId"
+          class="form-select category"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
+
+    <div v-show="similarLearnings.length > 0" class="row mb-3">
+      <hr />
+      <span class="form-label col-sm-3">{{
+        __('Similar category learning entries')
+      }}</span>
+      <div class="col-sm-9">
+        <ul id="similar-learning-list" class="list-unstyled">
+          <li
+            v-for="learning in similarLearnings"
+            :key="learning.id"
+            class="mt-2"
+          >
+            <a href="#" @click.prevent="onSelectLearning(learning)">
+              {{ learning.item_description }}
+              <span class="text-muted"
+                >({{
+                  learning.category?.full_name || learning.category?.name
+                }})</span
+              >
+              <span v-if="!learning.active" class="text-warning">
+                - {{ __('inactive, click to activate') }}</span
+              >
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </FormModal>
 </template>
 
 <script>
@@ -129,17 +87,12 @@
   initializeSelect2(window.YAFFA.userSettings.language);
 
   import Form from 'vform';
-  import {
-    Button,
-    AlertErrors,
-    AlertSuccess,
-  } from 'vform/src/components/bootstrap5';
+
+  import FormModal from '@/shared/ui/FormModal.vue';
 
   export default {
     components: {
-      Button,
-      AlertErrors,
-      AlertSuccess,
+      FormModal,
     },
 
     props: {
@@ -153,6 +106,8 @@
         default: null,
       },
     },
+
+    emits: ['learning-selected'],
 
     data() {
       return {
@@ -195,7 +150,6 @@
 
     mounted() {
       this.initializeCategorySelect();
-      this.modal = new coreui.Modal(document.getElementById(this.id));
     },
 
     beforeUnmount() {
@@ -217,9 +171,14 @@
           if (learning.category) {
             this.setSelectValue(this.categorySelect, learning.category);
           }
+
+          // The freshly-loaded values are the "clean" baseline for the
+          // dirty check in FormModal, not the blank values the Form was
+          // constructed with.
+          this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
         }
 
-        this.modal.show();
+        this.$refs.formModal.show();
       },
 
       initializeCategorySelect() {
@@ -371,11 +330,17 @@
 
       hideAndReset() {
         this.resetForm();
-        this.modal.hide();
+
+        // The blank reset state is the "clean" baseline for the next time this modal
+        // opens as "new" - without this, FormModal's dirty check would compare
+        // against whatever entry was last edited.
+        this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
+
+        this.$refs.formModal.hide();
       },
 
       async onSubmit() {
-        let response = null;
+        let response;
 
         if (this.action === 'new') {
           response = await this.form.post(

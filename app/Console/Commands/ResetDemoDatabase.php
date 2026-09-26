@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Casts\MoneyCast;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -9,32 +10,20 @@ use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\SandboxDemoDataExporter;
-use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
+#[Signature('app:sandbox:reset-database {--skip-date-adjustment : Skip adjusting dates in the database} {--force-sandbox : Allow running this command even if sandbox mode is not enabled}')]
+#[Description('Reset the demo (sandbox) database to an initial state to remove visitor modifications')]
 class ResetDemoDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:sandbox:reset-database
-        {--skip-date-adjustment : Skip adjusting dates in the database}
-        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Reset the demo (sandbox) database to an initial state to remove visitor modifications';
-
     /**
      * Execute the console command.
      */
@@ -63,7 +52,6 @@ class ResetDemoDatabase extends Command
         Artisan::call('migrate:fresh', ['--force' => true]);
 
         // Create the demo user without using factory, which is not autoloaded in production
-        // The generated user ID is expected to be 1
         $this->info('Creating demo user...');
         $demoUser = User::create([
             'id' => 1,
@@ -72,6 +60,8 @@ class ResetDemoDatabase extends Command
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
+            'start_date' => Carbon::now()->subYears(1)->startOfYear(),
+            'end_date' => Carbon::now()->addYears(30)->endOfYear(),
             'auto_merge_standard_transaction_items' => true,
         ]);
         $demoUser->markEmailAsVerified();
@@ -325,7 +315,7 @@ class ResetDemoDatabase extends Command
             return;
         }
 
-        $amount = (float) $transaction->transactionItems->sum('amount');
+        $amount = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
         if ($amount <= 0) {
             $this->warn('Skipping AI document duplicate scenario - transaction amount is not positive');
             return;

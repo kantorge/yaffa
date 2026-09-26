@@ -1,63 +1,26 @@
 <template>
-  <div class="card mb-3">
-    <div class="card-header">
-      <div
-        class="card-title collapse-control"
-        data-coreui-toggle="collapse"
-        data-coreui-target="#cardOverview"
-      >
-        <i class="fa fa-angle-down"></i>
-        {{ __('Overview') }}
-      </div>
-    </div>
-    <div class="collapse card-body show" aria-expanded="true" id="cardOverview">
-      <dl class="row mb-0">
-        <dt class="col-6">{{ __('From') }}</dt>
-        <dd class="col-6">{{ from.name }}</dd>
-        <dt class="col-6">{{ __('To') }}</dt>
-        <dd class="col-6">{{ to.name }}</dd>
-        <dt class="col-6">{{ __('Number of records') }}</dt>
-        <dd class="col-6">{{ currencyRates.length }}</dd>
-        <dt class="col-6">{{ __('First available data') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
-          {{ formatDate(currencyRates[0].date) }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-        <dt class="col-6">{{ __('Last available data') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
-          {{ formatDate(currencyRates[currencyRates.length - 1].date) }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-        <dt class="col-6">{{ __('Last known rate') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
-          {{ toFormattedCurrency(1, locale, from, 'detailed') }}
-          =
-          {{
-            toFormattedCurrency(
-              currencyRates[currencyRates.length - 1].rate,
-              locale,
-              to,
-              'detailed',
-            )
-          }}
-        </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
-          {{ __('No data') }}
-        </dd>
-      </dl>
-    </div>
-  </div>
+  <record-overview-card
+    :header-rows="headerRows"
+    :records="currencyRates"
+    :last-value-label="__('Last known rate')"
+  >
+    <template #last-value="{ record }">
+      {{ toFormattedCurrency(1, locale, from, 'detailed') }}
+      =
+      {{ toFormattedCurrency(record.rate, locale, to, 'detailed') }}
+    </template>
+  </record-overview-card>
 </template>
 
 <script>
-  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import RecordOverviewCard from '@/shared/ui/RecordOverviewCard.vue';
+  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
 
   export default {
     name: 'CurrencyRateOverview',
+    components: {
+      RecordOverviewCard,
+    },
     props: {
       from: {
         type: Object,
@@ -77,10 +40,15 @@
         locale: window.YAFFA.userSettings.locale,
       };
     },
-    methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
+    computed: {
+      headerRows() {
+        return [
+          { label: this.__('From'), value: this.from.name },
+          { label: this.__('To'), value: this.to.name },
+        ];
       },
+    },
+    methods: {
       toFormattedCurrency,
       __,
     },

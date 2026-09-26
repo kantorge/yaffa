@@ -32,6 +32,7 @@ class AiUserSettingsResolverTest extends TestCase
             'asset_similarity_threshold' => 0.777,
             'prompt_chat_history_enabled' => false,
             'category_matching_mode' => 'parent_only',
+            'document_retention_days' => 45,
         ]);
 
         $resolved = $this->resolver->resolveForUser($user);
@@ -41,6 +42,7 @@ class AiUserSettingsResolverTest extends TestCase
         $this->assertSame(0.777, $resolved['asset_similarity_threshold']);
         $this->assertFalse($resolved['prompt_chat_history_enabled']);
         $this->assertSame('parent_only', $resolved['category_matching_mode']);
+        $this->assertSame(45, $resolved['document_retention_days']);
     }
 
     public function test_it_uses_hardcoded_defaults_when_creating_missing_settings(): void
@@ -72,6 +74,7 @@ class AiUserSettingsResolverTest extends TestCase
         $this->assertSame(3, $resolved['duplicate_date_window_days']);
         $this->assertSame(10.0, $resolved['duplicate_amount_tolerance_percent']);
         $this->assertSame(0.5, $resolved['duplicate_similarity_threshold']);
+        $this->assertNull($resolved['document_retention_days']);
         $this->assertSame([], $resolved['warnings']);
     }
 

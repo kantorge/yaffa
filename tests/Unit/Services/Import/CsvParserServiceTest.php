@@ -2,10 +2,8 @@
 
 namespace Tests\Unit\Services\Import;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
-use App\Models\Payee;
 use App\Models\User;
 use App\Services\Import\CsvParserService;
 use App\Services\Import\SystemFileImportProfileRegistry;
@@ -23,15 +21,9 @@ class CsvParserServiceTest extends TestCase
     public function test_parse_valid_csv_with_system_profile_rules_and_mapping(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account', 'active' => true]);
+        $account = AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account', 'active' => true]);
 
-        $payee = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'payee', 'active' => true, 'name' => 'Coffee Shop']);
+        $payee = AccountEntity::factory()->asPayee($user)->create(['config_type' => 'payee', 'active' => true, 'name' => 'Coffee Shop']);
 
         $profile = $this->createSystemProfile();
 
@@ -58,10 +50,7 @@ CSV;
     public function test_parse_handles_windows1252_encoding_and_multiline_values(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account', 'active' => true]);
+        $account = AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account', 'active' => true]);
 
         $profile = $this->createSystemProfile();
 
@@ -84,10 +73,7 @@ CSV;
     public function test_parse_collects_unmatched_rows_and_does_not_abort_import(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account', 'active' => true]);
+        $account = AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account', 'active' => true]);
 
         $profile = $this->createSystemProfile();
 
@@ -112,17 +98,11 @@ CSV;
     public function test_resolve_payee_by_name_or_alias_makes_single_db_query_for_multi_row_csv(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'account', 'active' => true]);
+        $account = AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account', 'active' => true]);
 
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'payee', 'name' => 'Vendor A']);
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'payee', 'name' => 'Vendor B']);
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')
-            ->create(['config_type' => 'payee', 'name' => 'Vendor C']);
+        AccountEntity::factory()->asPayee($user)->create(['config_type' => 'payee', 'name' => 'Vendor A']);
+        AccountEntity::factory()->asPayee($user)->create(['config_type' => 'payee', 'name' => 'Vendor B']);
+        AccountEntity::factory()->asPayee($user)->create(['config_type' => 'payee', 'name' => 'Vendor C']);
 
         $profile = $this->createSystemProfile();
 

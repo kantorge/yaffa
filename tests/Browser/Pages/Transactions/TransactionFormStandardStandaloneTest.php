@@ -5,7 +5,6 @@ namespace Tests\Browser\Pages\Transactions;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
@@ -50,9 +49,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Wait for the form to load
             ->waitFor(self::MAIN_FORM_SELECTOR)
             // Select account from, random from dropdown
-            ->select2('#account_from', null, 10)
+            ->select2('#account_from', null, 20)
             // Select payeee, random from dropdown
-            ->select2('#account_to', null, 10)
+            ->select2('#account_to', null, 20)
             // Add amount
             ->type('#transaction_amount_from', '100')
             // Allocate the same amount to a random category by adding one new item
@@ -127,7 +126,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Switch transaction type to transfer to verify the "return to target account" button
             $browser->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 ->with('@action-after-save-desktop-button-group', function ($buttonGroup) {
                     // After save option "return to selected account" should be always visible
                     $buttonGroup->assertPresent('button[value="returnToPrimaryAccount"]')
@@ -181,7 +181,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_from', 'Investment account EUR', 10)
                 ->click('@transaction-type-deposit')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // No currency should be visible
                 ->assertNotPresent('@label-amountFrom-currency')
@@ -198,7 +199,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_to', 'Investment account EUR', 10)
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // Account in select2 should remain, but no currency symbol should be visible
                 ->assertSeeIn('#account_to + .select2', 'Investment account EUR')
@@ -229,7 +231,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -246,7 +248,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-deposit')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account to, random from dropdown
                 ->select2('#account_to', null, 10)
                 // Select payeee, random from dropdown
@@ -260,7 +263,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Set the first amount to the same amount as the transaction
                 ->type(self::TRANSACTION_ITEM_ROW_SELECTOR . ' input.transaction_item_amount', '100')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -277,7 +280,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account from, with USD currency
                 ->select2ExactSearch('#account_from', 'Cash account USD', 10)
                 // Select account to, with USD currency
@@ -287,7 +291,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Validate that the amount to field is not visible
                 ->assertMissing('#transaction_amount_to')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
         });
@@ -304,7 +308,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Select account from, with USD currency
                 ->select2ExactSearch('#account_from', 'Cash account USD', 10)
                 // Select account to, with EUR currency
@@ -323,36 +328,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#transactionFormStandard')
                 ->waitForTextIn('@label-transaction-exchange-rate', '1.0000')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 // A success message should be available in a Vue component
                 ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
-        });
-    }
-
-    public function test_automatic_recording_is_enabled_only_for_scheduled_transactions(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user);
-            $browser
-                // Open vanilla form (withdrawal, no preselected account)
-                ->visitRoute('transaction.create', ['type' => 'standard'])
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-
-                // The schedule card should not be visible
-                ->assertMissing('@card-transaction-schedule')
-                // Select budget checkbox
-                ->click('@checkbox-transaction-budget')
-                // The schedule card should be visible, but the automatic recording checkbox should not be visible
-                ->assertVisible('@card-transaction-schedule')
-                ->assertMissing('@checkbox-schedule-automatic-recording')
-                // Select schedule checkbox
-                ->click('@checkbox-transaction-schedule')
-                // The automatic recording checkbox should be visible
-                ->assertVisible('@checkbox-schedule-automatic-recording')
-                // Unselect the budget checkbox
-                ->click('@checkbox-transaction-budget')
-                // The automatic recording checkbox should still be visible
-                ->assertVisible('@checkbox-schedule-automatic-recording');
         });
     }
 
@@ -368,7 +346,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="create"]')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 ->assertRouteIs('transaction.create', ['type' => 'standard']);
         });
     }
@@ -379,7 +357,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="clone"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -401,7 +379,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="show"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
@@ -423,7 +401,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="returnToPrimaryAccount"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -453,7 +431,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Switch to transfer
                 ->click('@transaction-type-transfer')
                 // Confirm alert
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
 
                 // Add minimum necessary fields
                 ->select2ExactSearch('#account_to', $account->name, 60)
@@ -468,7 +447,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Submit form
                 ->click('button[value="returnToSecondaryAccount"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             $browser->assertRouteIs(
                 'account-entity.show',
@@ -483,7 +462,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user);
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="returnToDashboard"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 ->assertRouteIs('home');
         });
     }
@@ -495,7 +474,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->visitRoute('tags.index');
             $this->fillStandardWithdrawalForm($browser)
                 ->click('button[value="back"]')
-                ->clickAndWaitForReload('#transactionFormStandard-Save')
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30)
                 ->assertRouteIs('tags.index');
         });
     }
@@ -559,7 +538,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('button[value="show"]')
 
                 // Submit the form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')
@@ -577,12 +556,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
     public function test_user_can_reactivate_a_payee_through_the_new_payee_modal(): void
     {
         // Create an inactive payee
-        $payee = AccountEntity::factory()
-            ->for($this->user)
-            ->for(Payee::factory()->withUser($this->user), 'config')
-            ->create([
-                'active' => false,
-            ]);
+        $payee = AccountEntity::factory()->asPayee($this->user)->create([
+            'active' => false,
+        ]);
 
         $this->browse(function (Browser $browser) use ($payee) {
             $browser->loginAs($this->user)
@@ -603,10 +579,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Select the payee from the list
                 ->click('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"] a')
 
-                // There is a 1 second delay between clicking the payee and the modal closing
-                ->pause(1000)
-
-                // Verify that the modal is closed
+                // There is a delay between clicking the payee and the modal closing - wait it out
                 ->waitUntilMissing('#newPayeeModal.show', 10)
 
                 // Verify that the payee is added to the transaction
@@ -631,13 +604,15 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Switch to deposit and confirm dialog
                 ->click('@transaction-type-deposit')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible next to the account from dropdown
                 ->assertVisible('#account_from_container > button[data-coreui-target="#newPayeeModal"]')
 
                 // Switch to transfer and confirm dialog
                 ->click('@transaction-type-transfer')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the add new payee button is not visible
                 ->assertMissing('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
                 ->assertMissing('#account_from_container > button[data-coreui-target="#newPayeeModal"]');
@@ -658,14 +633,16 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('@button-add-transaction-item')
                 // Switch to transfer and confirm dialog
                 ->click('@transaction-type-transfer')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the "add transaction item" button is disabled
                 ->assertDisabled('@button-add-transaction-item')
                 // Verify that the previously added transaction item is not visible
                 ->assertMissing('#transaction_item_container .transaction_item_row')
                 // Switch back to withdrawal and confirm dialog
                 ->click('@transaction-type-withdrawal')
-                ->acceptDialog()
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Verify that the "add transaction item" button is enabled
                 ->assertEnabled('@button-add-transaction-item')
                 // Verify that the previously added transaction item is not visible
@@ -711,92 +688,29 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                // Open vanilla form (withdrawal, no preselected account)
-                ->visitRoute('transaction.create', ['type' => 'standard'])
-                // Wait for the form to load
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-
-                // Validate that the account is empty, by checking if the select2 has no options
-                ->assertPresent('#account_from')
-                ->assertMissing('#account_from > option')
-                // Validate that the payee is empty, by checking if the select2 has no options
-                ->assertPresent('#account_to')
-                ->assertMissing('#account_to > option')
-                // Add amount
-                ->type('#transaction_amount_from', '100')
-                // Select budget checkbox
-                ->click('@checkbox-transaction-budget')
-
-                // Wait for the schedule card to be visible
-                ->waitFor('@card-transaction-schedule')
-                // Select start date by clicking the input, which opens up the date picker
-                ->click('#schedule_start_current')
-                // Wait for the date picker to open
-                ->waitFor('.vc-pane-container', 10)
-                // Click the current date which is highlighted
-                ->click('.vc-pane-container .vc-day.is-today')
-                // Scroll to the bottom of the page to make the save button visible, including the callback buttons
-                ->scrollIntoView('#transactionFormStandard-Save')
-                // Select the "show transaction" callback
-                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
-                    $buttonBar->click('button[value="show"]');
-                }, 10)
-                // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
-
-            // Get the latest transaction from the database
-            $transaction = Transaction::orderByDesc('id')->first();
-
-            // Check that the view is the transaction show
-            $browser->assertRouteIs(
-                'transaction.open',
-                [
-                    'action' => 'show',
-                    'transaction' => $transaction->id,
-                ]
-            );
-
-            // Wait for the show transaction page to load
-            $browser->waitFor('#transactionShowStandard')
-                // Assert that the transaction is a budget
-                ->assertPresent('@label-budget > i.fa-check')
-                // Assert that the account is 'Not set'
-                ->assertSeeIn('@label-account-from-name', 'Not set')
-                // Assert that the payee is 'Not set'
-                ->assertSeeIn('@label-account-to-name', 'Not set');
-        });
-    }
-
     public function test_user_can_change_the_date_on_the_standard_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
 
-            $this->fillStandardWithdrawalForm($browser)
-                // Click the date input to open the date picker
-                ->click('#standard-date')
-                // Wait for the calendar to be visible
-                ->waitFor('.vc-pane-container', 10)
-                // Click the first day of the previous month, which is in the first column
-                // (This is to avoid clicking the current day on the 1st of the month, which would remove the date)
-                ->click('.vc-pane-container .vc-pane.column-1 .vc-day.in-month')
-                // Wait for the date picker to close
-                ->waitUntilMissing('.vc-pane-container', 10)
+            $this->fillStandardWithdrawalForm($browser);
+
+            // Set the date to the first day of the previous month
+            $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
+            $this->setDateInput($browser, '#standard-date', $previousMonthStart);
+
+            $browser
                 // Select callback to show transaction
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
                 // Submit form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $transaction = Transaction::orderByDesc('id')->first();
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
+                $previousMonthStart,
                 $transaction->date->format('Y-m-d')
             );
         });
@@ -899,7 +813,12 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->scrollIntoView('@action-after-save-desktop-button-group')
                 // Ensure the button is visible and clickable
                 ->waitFor('@action-after-save-desktop-button-group button[value="show"]')
-                // Pause to ensure any animations are complete
+                // TODO: replace with a real wait condition. This waits out the native smooth-scroll
+                // triggered by scrollIntoView() above; the project's test-env CSS reset
+                // (`* { transition: none; animation: none; }` in master.blade.php) does not cover
+                // `scroll-behavior: smooth`, and there is no reliable DOM-observable signal for
+                // "scroll animation finished" to poll on with waitUsing() without querying element
+                // position directly through a raw selector (fragile with @dusk-prefixed selectors).
                 ->pause(1000)
                 // Select the "show transaction" callback
                 ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
@@ -908,7 +827,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Make sure that the schedule end date is empty, by clearing the input
                 ->clear('#schedule_end_current')
                 // The default settings are otherwise fine, so we can submit the form
-                ->clickAndWaitForReload('#transactionFormStandard-Save');
+                ->clickAndWaitForReload('#transactionFormStandard-Save', 30);
 
             // Get the latest transaction from the database
             $newTransaction = Transaction::orderByDesc('id')->with('transactionSchedule')->first();

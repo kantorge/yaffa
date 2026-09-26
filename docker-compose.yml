@@ -28,6 +28,12 @@ services:
       - selenium
   mysql:
     image: 'mysql:8.0'
+    # Local dev/test only, never production: skip the per-commit fsync/binlog-sync durability
+    # guarantees MySQL defaults to, since this container's data is disposable (migrate+seed
+    # recreates it). Cuts write-heavy migrations/seeding/tests noticeably; on a host crash the
+    # worst case is losing the last few seconds of writes to this container's own volume, which
+    # is an acceptable trade here only because nothing here is real data.
+    command: --innodb-flush-log-at-trx-commit=0 --sync-binlog=0
     ports:
       - '${FORWARD_DB_PORT:-3306}:3306'
     environment:

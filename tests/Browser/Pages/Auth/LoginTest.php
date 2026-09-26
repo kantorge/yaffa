@@ -3,7 +3,6 @@
 namespace Tests\Browser\Pages\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -11,7 +10,21 @@ use Tests\DuskTestCase;
 #[Group('extended')]
 class LoginTest extends DuskTestCase
 {
-    use DatabaseMigrations;
+    protected static bool $migrationRun = false;
+
+    /**
+     * Migrate only once for this file - these tests only need factory-created
+     * users, not the seeded demo data, so db:seed is skipped.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!static::$migrationRun) {
+            $this->artisan('migrate:fresh');
+            static::$migrationRun = true;
+        }
+    }
 
     public function test_login_page_loads(): void
     {

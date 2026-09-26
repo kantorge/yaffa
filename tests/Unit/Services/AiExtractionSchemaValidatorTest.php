@@ -60,7 +60,7 @@ class AiExtractionSchemaValidatorTest extends TestCase
         $validator = new AiExtractionSchemaValidator();
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('missing required keys in root: transaction_type');
+        $this->expectExceptionMessageIsOrContains('missing required keys in root: transaction_type');
 
         $validator->validate(['account' => 'Main Account']);
     }
@@ -70,7 +70,7 @@ class AiExtractionSchemaValidatorTest extends TestCase
         $validator = new AiExtractionSchemaValidator();
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage("invalid value for 'transaction_type'");
+        $this->expectExceptionMessageIsOrContains("invalid value for 'transaction_type'");
 
         $validator->validate([
             'transaction_type' => 'refund',
@@ -90,7 +90,7 @@ class AiExtractionSchemaValidatorTest extends TestCase
         $validator = new AiExtractionSchemaValidator();
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage('contains unexpected keys in root: investment');
+        $this->expectExceptionMessageIsOrContains('contains unexpected keys in root: investment');
 
         $validator->validate([
             'transaction_type' => 'deposit',
@@ -111,7 +111,7 @@ class AiExtractionSchemaValidatorTest extends TestCase
         $validator = new AiExtractionSchemaValidator();
 
         $this->expectException(InvalidAiResponseSchemaException::class);
-        $this->expectExceptionMessage("invalid value for 'date': must match YYYY-MM-DD");
+        $this->expectExceptionMessageIsOrContains("invalid value for 'date': must match YYYY-MM-DD");
 
         $validator->validate([
             'transaction_type' => 'withdrawal',

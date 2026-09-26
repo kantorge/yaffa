@@ -1,173 +1,128 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form
-          accept-charset="UTF-8"
-          @submit.prevent="onSubmit"
-          autocomplete="off"
-        >
-          <div class="modal-header">
-            <h5 class="modal-title" v-if="action == 'new'">
-              {{ __('Add new payee') }}
-            </h5>
-            <h5 class="modal-title" v-if="action == 'edit'">
-              {{ __('Edit payee') }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-coreui-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <AlertErrors
-              :form="form"
-              :message="__('There were some problems with your input.')"
-            />
-            <AlertSuccess
-              :form="form"
-              :message="__('Your changes have been saved!')"
-            />
-
-            <div class="row mb-3">
-              <label :for="nameInputId" class="form-label col-sm-3">
-                {{ __('Name') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="nameInputId"
-                  maxlength="255"
-                  type="text"
-                  v-model="form.name"
-                  @keyup="onNameChange"
-                />
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <label :for="activeInputId" class="form-label col-sm-3">
-                {{ __('Active') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  :id="activeInputId"
-                  class="checkbox-inline"
-                  type="checkbox"
-                  value="1"
-                  v-model="form.active"
-                />
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <label :for="categorySelectId" class="form-label col-sm-3">
-                {{ __('Default category') }}
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="categorySelectId"
-                  class="form-select category"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
-
-            <template v-if="!simplified">
-              <div class="row mb-3">
-                <label :for="aliasInputId" class="form-label col-sm-3">
-                  {{ __('Import alias') }}
-                </label>
-                <div class="col-sm-9">
-                  <textarea
-                    :id="aliasInputId"
-                    class="form-control"
-                    rows="3"
-                    v-model="form.alias"
-                  ></textarea>
-                </div>
-              </div>
-
-              <div class="row mb-3">
-                <label
-                  :for="preferredCategoriesSelectId"
-                  class="form-label col-sm-3"
-                >
-                  {{ __('Preferred categories') }}
-                </label>
-                <div class="col-sm-9">
-                  <select
-                    :id="preferredCategoriesSelectId"
-                    class="form-select preferred"
-                    style="width: 100%"
-                    multiple="multiple"
-                    :data-other-select="`#${notPreferredCategoriesSelectId}`"
-                  ></select>
-                </div>
-              </div>
-
-              <div class="row mb-3">
-                <label
-                  :for="notPreferredCategoriesSelectId"
-                  class="form-label col-sm-3"
-                >
-                  {{ __('Excluded categories') }}
-                </label>
-                <div class="col-sm-9">
-                  <select
-                    :id="notPreferredCategoriesSelectId"
-                    class="form-select not-preferred"
-                    style="width: 100%"
-                    multiple="multiple"
-                    :data-other-select="`#${preferredCategoriesSelectId}`"
-                  ></select>
-                </div>
-              </div>
-            </template>
-
-            <div class="row mb-3" v-show="similarPayees.length > 0">
-              <hr />
-              <span class="form-label col-sm-3">
-                {{ __('Are you looking for any of these payees?') }}
-              </span>
-              <div class="col-sm-9">
-                <ul class="list-unstyled" id="similar-payee-list">
-                  <li
-                    class="mt-2"
-                    v-for="payee in similarPayees"
-                    :key="payee.id"
-                    :data-id="payee.id"
-                  >
-                    <a href="#" @click.prevent="onSelectPayee(payee)">
-                      {{ payee.name }}
-                      <span v-if="!payee.active">({{ __('inactive') }})</span>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-default"
-              data-coreui-dismiss="modal"
-            >
-              {{ __('Close') }}
-            </button>
-            <Button
-              class="btn btn-primary"
-              :disabled="form.busy"
-              :form="form"
-              >{{ __('Save') }}</Button
-            >
-          </div>
-        </form>
+  <FormModal
+    :id="id"
+    ref="formModal"
+    :action="action"
+    :new-title="__('Add new payee')"
+    :edit-title="__('Edit payee')"
+    :form="form"
+    @submit="onSubmit"
+  >
+    <div class="row mb-3">
+      <label :for="nameInputId" class="form-label col-sm-3">
+        {{ __('Name') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="nameInputId"
+          v-model="form.name"
+          class="form-control"
+          maxlength="255"
+          type="text"
+          @keyup="onNameChange"
+        />
       </div>
     </div>
-  </div>
+
+    <div class="row mb-3">
+      <label :for="activeInputId" class="form-label col-sm-3">
+        {{ __('Active') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="activeInputId"
+          v-model="form.active"
+          class="checkbox-inline"
+          type="checkbox"
+          value="1"
+        />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <label :for="categorySelectId" class="form-label col-sm-3">
+        {{ __('Default category') }}
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="categorySelectId"
+          class="form-select category"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
+
+    <template v-if="!simplified">
+      <div class="row mb-3">
+        <label :for="aliasInputId" class="form-label col-sm-3">
+          {{ __('Import alias') }}
+        </label>
+        <div class="col-sm-9">
+          <textarea
+            :id="aliasInputId"
+            v-model="form.alias"
+            class="form-control"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <label :for="preferredCategoriesSelectId" class="form-label col-sm-3">
+          {{ __('Preferred categories') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="preferredCategoriesSelectId"
+            class="form-select preferred"
+            style="width: 100%"
+            multiple="multiple"
+            :data-other-select="`#${notPreferredCategoriesSelectId}`"
+          ></select>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <label
+          :for="notPreferredCategoriesSelectId"
+          class="form-label col-sm-3"
+        >
+          {{ __('Excluded categories') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="notPreferredCategoriesSelectId"
+            class="form-select not-preferred"
+            style="width: 100%"
+            multiple="multiple"
+            :data-other-select="`#${preferredCategoriesSelectId}`"
+          ></select>
+        </div>
+      </div>
+    </template>
+
+    <div v-show="similarPayees.length > 0" class="row mb-3">
+      <hr />
+      <span class="form-label col-sm-3">
+        {{ __('Are you looking for any of these payees?') }}
+      </span>
+      <div class="col-sm-9">
+        <ul id="similar-payee-list" class="list-unstyled">
+          <li
+            v-for="similarPayee in similarPayees"
+            :key="similarPayee.id"
+            class="mt-2"
+            :data-id="similarPayee.id"
+          >
+            <a href="#" @click.prevent="onSelectPayee(similarPayee)">
+              {{ similarPayee.name }}
+              <span v-if="!similarPayee.active">({{ __('inactive') }})</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </FormModal>
 </template>
 
 <script>
@@ -175,19 +130,13 @@
   initializeSelect2(window.YAFFA.userSettings.language);
 
   import Form from 'vform';
-  import {
-    Button,
-    AlertErrors,
-    AlertSuccess,
-  } from 'vform/src/components/bootstrap5';
 
+  import FormModal from '@/shared/ui/FormModal.vue';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
     components: {
-      Button,
-      AlertErrors,
-      AlertSuccess,
+      FormModal,
     },
 
     props: {
@@ -206,6 +155,8 @@
         default: false,
       },
     },
+
+    emits: ['payeeSelected'],
 
     data() {
       let data = {};
@@ -274,9 +225,6 @@
       if (!this.simplified) {
         this.initializeCategoryPreferenceSelects();
       }
-
-      // Initialize modal
-      this.modal = new coreui.Modal(document.getElementById(this.id));
     },
 
     beforeUnmount() {
@@ -294,7 +242,7 @@
           this.loadPayeeData(payeeId);
         }
 
-        this.modal.show();
+        this.$refs.formModal.show();
       },
 
       initializeCategorySelect() {
@@ -485,6 +433,13 @@
                 data.deferred_categories || [],
               );
             }
+
+            // The freshly-loaded values are the "clean" baseline for the
+            // dirty check in FormModal, not the blank values the Form was
+            // constructed with.
+            this.form.originalData = JSON.parse(
+              JSON.stringify(this.form.data()),
+            );
           })
           .catch((error) => {
             console.error('Error loading payee:', error);
@@ -498,6 +453,7 @@
         this.form.reset();
         this.form.errors.clear();
 
+        this.form.name = '';
         this.form.active = true;
         this.form.alias = '';
         this.form.config.category_id = null;
@@ -516,6 +472,10 @@
             this.notPreferredSelect.empty().trigger('change');
           }
         }
+
+        // These blank values are the "clean" baseline for a new payee - without this,
+        // FormModal's dirty check would compare against whatever payee was last edited.
+        this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
 
         // Reset payee ID
         this.payeeId = null;
@@ -599,7 +559,7 @@
 
       hideAndReset() {
         this.resetForm();
-        this.modal.hide();
+        this.$refs.formModal.hide();
       },
 
       onSubmit() {

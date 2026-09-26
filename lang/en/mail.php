@@ -22,6 +22,12 @@ return [
         "settings_hint" => "If this keeps failing, verify your AI provider model and credentials.",
         "subject" => "Document Processing Failed"
     ],
+    "ai_documents_awaiting_action" => [
+        "button_review_documents" => "Review Unprocessed Documents",
+        "intro" => "You have :count AI document(s) older than :days days that have not been processed yet.",
+        "next_action_text" => "Old documents are removed automatically once they are finalized, but unprocessed ones are always kept. Review each of them, or delete the ones you no longer need. You will get this reminder daily until then.",
+        "subject" => "Old AI documents are waiting for you"
+    ],
     "common" => [
         "greeting" => "Dear :name,",
         "na" => "N/A",

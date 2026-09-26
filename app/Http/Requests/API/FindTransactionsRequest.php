@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\API;
 
+use App\Enums\TransactionType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FindTransactionsRequest extends FormRequest
 {
@@ -13,7 +15,7 @@ class FindTransactionsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        foreach (['accounts', 'payees', 'categories', 'tags'] as $field) {
+        foreach (['accounts', 'payees', 'categories', 'tags', 'types', 'investments'] as $field) {
             if ($this->has($field) && is_array($this->input($field)) && empty($this->input($field))) {
                 $this->request->remove($field);
                 $this->query->remove($field);
@@ -39,6 +41,10 @@ class FindTransactionsRequest extends FormRequest
             'categories.*' => ['integer'],
             'tags'         => ['nullable', 'array'],
             'tags.*'       => ['integer'],
+            'types'        => ['nullable', 'array'],
+            'types.*'      => ['string', Rule::enum(TransactionType::class)],
+            'investments'  => ['nullable', 'array'],
+            'investments.*' => ['integer'],
             'only_count'   => ['nullable', 'boolean'],
         ];
     }

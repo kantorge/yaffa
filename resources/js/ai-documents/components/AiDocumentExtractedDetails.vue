@@ -11,7 +11,9 @@
           <dt class="col-6">{{ __('Date') }}</dt>
           <dd
             class="col-6"
-            :class="{ 'text-muted': isUnidentified(draftData.date) }"
+            :class="{
+              'text-muted': isUnidentified(draftData.date),
+            }"
           >
             {{ formatRawValue(draftData.date) }}
           </dd>
@@ -20,7 +22,9 @@
             <dt class="col-6">{{ __('Account') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.account) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.account),
+              }"
             >
               <template v-if="matchedEntities.account?.matched">
                 <a
@@ -44,7 +48,9 @@
             <dt class="col-6">{{ __('Investment') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.investment) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.investment),
+              }"
             >
               <template v-if="matchedEntities.investment?.matched">
                 <a
@@ -70,7 +76,9 @@
             <dt class="col-6">{{ __('Account from') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.account_from) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.account_from),
+              }"
             >
               <template v-if="matchedEntities.account_from?.matched">
                 <a
@@ -94,7 +102,9 @@
             <dt class="col-6">{{ __('Account to') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.account_to) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.account_to),
+              }"
             >
               <template v-if="matchedEntities.account_to?.matched">
                 <a
@@ -120,7 +130,9 @@
             <dt class="col-6">{{ __('Account') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.account) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.account),
+              }"
             >
               <template v-if="matchedEntities.account?.matched">
                 <a
@@ -168,7 +180,9 @@
           <dt class="col-6">{{ __('Amount') }}</dt>
           <dd
             class="col-6"
-            :class="{ 'text-muted': isUnidentified(rawData.amount) }"
+            :class="{
+              'text-muted': isUnidentified(rawData.amount),
+            }"
           >
             {{ formatRawValue(rawData.amount) }}
           </dd>
@@ -177,7 +191,9 @@
             <dt class="col-6">{{ __('Quantity') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.quantity) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.quantity),
+              }"
             >
               {{ formatRawValue(rawData.quantity) }}
             </dd>
@@ -185,7 +201,9 @@
             <dt class="col-6">{{ __('Price') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.price) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.price),
+              }"
             >
               {{ formatRawValue(rawData.price) }}
             </dd>
@@ -193,7 +211,9 @@
             <dt class="col-6">{{ __('Commission') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.commission) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.commission),
+              }"
             >
               {{ formatRawValue(rawData.commission) }}
             </dd>
@@ -201,7 +221,9 @@
             <dt class="col-6">{{ __('Tax') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.tax) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.tax),
+              }"
             >
               {{ formatRawValue(rawData.tax) }}
             </dd>
@@ -209,7 +231,9 @@
             <dt class="col-6">{{ __('Dividend') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted': isUnidentified(rawData.dividend) }"
+              :class="{
+                'text-muted': isUnidentified(rawData.dividend),
+              }"
             >
               {{ formatRawValue(rawData.dividend) }}
             </dd>
@@ -218,7 +242,9 @@
           <dt class="col-6">{{ __('Currency') }}</dt>
           <dd
             class="col-6"
-            :class="{ 'text-muted': isUnidentified(rawData.currency) }"
+            :class="{
+              'text-muted': isUnidentified(rawData.currency),
+            }"
           >
             {{ formatRawValue(rawData.currency) }}
           </dd>
@@ -241,7 +267,9 @@
                 <th>
                   {{ __('Category') }}
                 </th>
-                <th class="text-center">{{ __('Confidence') }}</th>
+                <th class="text-center">
+                  {{ __('Confidence') }}
+                </th>
               </tr>
             </thead>
             <tbody>

@@ -9,7 +9,6 @@ use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +27,6 @@ class CategoryController extends Controller implements HasMiddleware
             new Middleware('can:viewAny,' . Category::class, only: ['index']),
             new Middleware('can:create,' . Category::class, only: ['create', 'store']),
             new Middleware('can:update,category', only: ['edit', 'update']),
-            new Middleware('can:delete,category', only: ['destroy']),
         ];
     }
 
@@ -49,33 +47,28 @@ class CategoryController extends Controller implements HasMiddleware
             ->withCount([
                 'transaction as transactions_count_regular' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                        ->where('transactions.schedule', false);
                 },
                 'transaction as transactions_count_with_schedule' => function (Builder $query): void {
                     $query->selectRaw('COUNT(DISTINCT transactions.id)')
-                        ->where(function (Builder $query): void {
-                            $query->where('transactions.schedule', true)
-                                ->orWhere('transactions.budget', true);
-                        });
+                        ->where('transactions.schedule', true);
                 },
             ])
             ->withCount('children')
             ->withMin([
                 'transaction as transactions_min_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withMax([
                 'transaction as transactions_max_date' => function (Builder $query): void {
-                    $query->where('transactions.schedule', false)
-                        ->where('transactions.budget', false);
+                    $query->where('transactions.schedule', false);
                 },
             ], 'date')
             ->withCount('payeesNotPreferring')
             ->withCount('payeesPreferring')
             ->withCount('payeesDefaulting')
+            ->withCount('budgets')
             ->get();
 
         // Pass data for DataTables
@@ -151,35 +144,9 @@ class CategoryController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category): RedirectResponse
-    {
-        /**
-         * @delete("/categories/{category}")
-         * @name("categories.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        try {
-            $category->delete();
-            self::addSimpleSuccessMessage(__('Category deleted'));
-
-            return to_route('categories.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleErrorMessage(__('Category is in use, cannot be deleted'));
-            } else {
-                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
-        }
-    }
-
-    /**
      * Display a form to merge two categories.
      */
-    public function mergeCategoriesForm(?Category $categorySource): View
+    public function mergeCategoriesForm(?Category $categorySource = null): View
     {
         /**
          * @get("/categories/merge/{categorySource?}")

@@ -2,11 +2,11 @@
   <div class="card mb-3">
     <div class="card-body no-datatable-search">
       <table
-        class="table table-striped table-bordered table-hover"
         id="ai-document-table"
+        ref="tableElement"
+        class="table table-striped table-bordered table-hover"
         role="grid"
         aria-label="List of AI documents"
-        ref="tableElement"
       ></table>
     </div>
   </div>
@@ -18,9 +18,15 @@
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
+  import {
+    __,
+    getDataTablesLanguageOptions,
+    toFormattedDate,
+    toFormattedDateTime,
+  } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmDelete } from '@/shared/lib/confirm';
 
   const props = defineProps({
     documents: {
@@ -130,7 +136,12 @@
       return __('Not available');
     }
 
-    return toFormattedDate(isoDate, window.YAFFA.userSettings.locale, isoDate, true);
+    return toFormattedDate(
+      isoDate,
+      window.YAFFA.userSettings.locale,
+      isoDate,
+      true,
+    );
   };
 
   const getDraftData = (document) => document?.processed_transaction_data || {};
@@ -349,7 +360,7 @@
       buttonsStyling: false,
       customClass: {
         confirmButton: 'btn btn-warning',
-        cancelButton: 'btn btn-outline-secondary ms-3',
+        cancelButton: 'btn btn-secondary ms-3',
       },
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -395,17 +406,8 @@
 
     ajaxIsBusy.value = true;
 
-    Swal.fire({
-      text: __('Are you sure you want to delete this document?'),
-      icon: 'warning',
-      showCancelButton: true,
-      cancelButtonText: __('Cancel'),
+    confirmDelete(__('Are you sure you want to delete this document?'), {
       confirmButtonText: __('Delete'),
-      buttonsStyling: false,
-      customClass: {
-        confirmButton: 'btn btn-danger',
-        cancelButton: 'btn btn-outline-secondary ms-3',
-      },
     }).then((result) => {
       if (!result.isConfirmed) {
         ajaxIsBusy.value = false;
@@ -413,7 +415,11 @@
       }
 
       window.axios
-        .delete(route('api.v1.documents.destroy', { aiDocument: documentId }))
+        .delete(
+          route('api.v1.documents.destroy', {
+            aiDocument: documentId,
+          }),
+        )
         .then(() => {
           row.remove().draw();
           toastHelpers.showSuccessToast(__('Document deleted'));
@@ -467,7 +473,7 @@
   };
 
   const detectedDateRangeFilterFn = (settings, _searchData, dataIndex) => {
-    if (!tableElement.value || settings.nTable !== tableElement.value) {
+    if (!tableElement.value || settings.table !== tableElement.value) {
       return true;
     }
 
@@ -511,15 +517,9 @@
               return value;
             }
 
-            return `
-              <div class="d-flex justify-content-start align-items-center">
-                <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
-                <span class="ai-document-title-wrapper">
-                  <a href="${route('ai-documents.show', {
-                    aiDocument: row.id,
-                  })}" title="${escapeHtml(value)}" class="ai-document-title-link">${escapeHtml(value)}</a>
-                </span>
-              </div>`;
+            return `<a href="${route('ai-documents.show', {
+              aiDocument: row.id,
+            })}" title="${escapeHtml(value)}" class="ai-document-title-link">${escapeHtml(value)}</a>`;
           },
           type: 'html',
         },
@@ -550,8 +550,11 @@
           data: 'created_at',
           title: __('Received at'),
           render: (value, type) => {
-            if (type === 'display' && value && value.toLocaleString) {
-              return value.toLocaleString(window.YAFFA.userSettings.locale);
+            if (type === 'display' && value) {
+              return toFormattedDateTime(
+                value,
+                window.YAFFA.userSettings.locale,
+              );
             }
 
             return value;
@@ -604,6 +607,20 @@
             );
           },
           className: 'dt-nowrap',
+          orderable: false,
+          searchable: false,
+        },
+        {
+          title: __('Actions'),
+          defaultContent: '',
+          render: () => {
+            return (
+              '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+              __('Actions') +
+              '"></i>'
+            );
+          },
+          className: 'text-center',
           orderable: false,
           searchable: false,
         },
@@ -728,6 +745,22 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
+  // 'unprocessed' is a pseudo status matching every status except finalized
+  const statusFilterPattern = (status) => {
+    if (!status) {
+      return '';
+    }
+
+    const labels =
+      status === 'unprocessed'
+        ? Object.entries(props.statusLabels)
+            .filter(([key]) => key !== 'finalized')
+            .map(([, label]) => label)
+        : [props.statusLabels[status] || status];
+
+    return `^(${labels.map(escapeRegex).join('|')})$`;
+  };
+
   const applyFilters = ({
     status,
     source,
@@ -739,12 +772,11 @@
       return;
     }
 
-    const statusValue = status ? props.statusLabels[status] || status : '';
     const sourceValue = source ? props.sourceLabels[source] || source : '';
 
     // Use exact match with regex for status and source filters
     table.value.column(COLUMN_INDEX.status).search(
-      statusValue ? `^${escapeRegex(statusValue)}$` : '',
+      statusFilterPattern(status),
       true, // regex
       false, // smart
       true, // case insensitive
@@ -803,11 +835,6 @@
 </script>
 
 <style scoped>
-  .ai-document-title-wrapper {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
   .ai-document-title-link {
     display: inline-block;
     max-width: 100%;

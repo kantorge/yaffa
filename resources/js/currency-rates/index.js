@@ -8,7 +8,6 @@ app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
 import CurrencyRateManager from './components/CurrencyRateManager.vue';
-app.component('currency-rate-manager', CurrencyRateManager);
+app.component('CurrencyRateManager', CurrencyRateManager);
 
 app.mount('#currencyRateApp');
-

@@ -5,7 +5,6 @@ namespace Tests\Unit\Services\Import;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\AiUserSettings;
-use App\Models\Payee;
 use App\Models\User;
 use App\Services\Import\ImportNormalizationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -314,27 +313,21 @@ class ImportNormalizationServiceTest extends TestCase
             'asset_max_suggestions' => 10,
         ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Orlen',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Orlen',
+            'alias' => null,
+        ]);
 
         // A short, unrelated payee that should not win purely because the noisy
         // string is uniformly dissimilar to every stored payee name.
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => '444',
-                'alias' => 'Magyar Jeti',
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => '444',
+            'alias' => 'Magyar Jeti',
+        ]);
 
         $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
             'payee' => '4003220005087393 20260508 04000304 Orlen HU Budaors 22.515,00 HUF Vásárlás',
@@ -350,15 +343,12 @@ class ImportNormalizationServiceTest extends TestCase
         $service = new ImportNormalizationService();
         $user = User::factory()->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Orlen',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Orlen',
+            'alias' => null,
+        ]);
 
         $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
             'payee' => '20260508  Orlen  04000304',
@@ -374,15 +364,12 @@ class ImportNormalizationServiceTest extends TestCase
         $service = new ImportNormalizationService();
         $user = User::factory()->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => true,
-                'name' => 'Orlen',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => true,
+            'name' => 'Orlen',
+            'alias' => null,
+        ]);
 
         $drafts = $service->enrichDraftsWithPayeeMatches($user, [
             ['payee' => '123456789012'],
@@ -398,15 +385,12 @@ class ImportNormalizationServiceTest extends TestCase
         $service = new ImportNormalizationService();
         $user = User::factory()->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'payee',
-                'active' => false,
-                'name' => 'Orlen',
-                'alias' => null,
-            ]);
+        AccountEntity::factory()->asPayee($user)->create([
+            'config_type' => 'payee',
+            'active' => false,
+            'name' => 'Orlen',
+            'alias' => null,
+        ]);
 
         $drafts = $service->enrichDraftsWithPayeeMatches($user, [[
             'payee' => 'Orlen',

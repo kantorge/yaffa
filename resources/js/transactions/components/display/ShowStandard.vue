@@ -1,5 +1,5 @@
 <template>
-  <div id="transactionShowStandard" v-if="transaction.id">
+  <div v-if="transaction.id" id="transactionShowStandard">
     <div class="row">
       <div class="col-md-4">
         <div class="card mb-3">
@@ -118,18 +118,6 @@
               </dd>
 
               <dt class="col-6">
-                {{ __('Budget') }}
-              </dt>
-              <dd class="col-6" dusk="label-budget">
-                <i
-                  v-if="transaction.budget"
-                  class="fa fa-check text-success"
-                  :title="__('Yes')"
-                ></i>
-                <i v-else class="fa fa-ban text-danger" :title="__('No')"></i>
-              </dd>
-
-              <dt class="col-6">
                 {{ __('Reconciled') }}
               </dt>
               <dd class="col-6">
@@ -165,17 +153,17 @@
                 }}
               </dd>
 
-              <dt class="col-6" v-if="exchangeRatePresent">
+              <dt v-if="exchangeRatePresent" class="col-6">
                 {{ __('Exchange rate') }}
               </dt>
-              <dd class="col-6" v-if="exchangeRatePresent">
+              <dd v-if="exchangeRatePresent" class="col-6">
                 {{ exchangeRate }}
               </dd>
 
-              <dt class="col-6" v-if="exchangeRatePresent">
+              <dt v-if="exchangeRatePresent" class="col-6">
                 {{ __('Amount to') }}
               </dt>
-              <dd class="col-6" v-if="exchangeRatePresent">
+              <dd v-if="exchangeRatePresent" class="col-6">
                 {{
                   toFormattedCurrency(
                     transaction.config.amount_to,
@@ -185,10 +173,10 @@
                 }}
               </dd>
 
-              <dt class="col-6" v-if="!transactionTypeIsTransfer">
+              <dt v-if="!transactionTypeIsTransfer" class="col-6">
                 {{ __('Total allocated') }}
               </dt>
-              <dd class="col-6" v-if="!transactionTypeIsTransfer">
+              <dd v-if="!transactionTypeIsTransfer" class="col-6">
                 {{
                   toFormattedCurrency(
                     allocatedAmount,
@@ -198,10 +186,10 @@
                 }}
               </dd>
 
-              <dt class="col-6" v-if="!transactionTypeIsTransfer">
+              <dt v-if="!transactionTypeIsTransfer" class="col-6">
                 {{ __('Not allocated') }}
               </dt>
-              <dd class="col-6" v-if="!transactionTypeIsTransfer">
+              <dd v-if="!transactionTypeIsTransfer" class="col-6">
                 {{
                   toFormattedCurrency(
                     remainingAmountNotAllocated,
@@ -215,16 +203,15 @@
         </div>
 
         <transaction-schedule
-          :isVisible="transaction.schedule || transaction.budget"
-          :isSchedule="transaction.schedule"
-          :isBudget="transaction.budget"
+          :is-visible="transaction.schedule"
+          :is-schedule="transaction.schedule"
           :schedule="transaction.transaction_schedule || {}"
         ></transaction-schedule>
       </div>
 
       <div class="col-md-8">
         <transaction-item-container
-          :transactionItems="transaction.transaction_items"
+          :transaction-items="transaction.transaction_items"
           :currency="ammountFromCurrency"
           :enabled="!transactionTypeIsTransfer"
         ></transaction-item-container>
@@ -247,7 +234,7 @@
     props: {
       transaction: {
         type: Object,
-        default: {},
+        default: () => ({}),
       },
       locale: {
         type: String,

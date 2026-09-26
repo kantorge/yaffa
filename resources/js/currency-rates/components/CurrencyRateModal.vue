@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="currencyRateModal" tabindex="-1">
+  <div id="currencyRateModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -20,14 +20,14 @@
             <div class="mb-3">
               <label for="rateDate" class="form-label">{{ __('Date') }}</label>
               <input
-                type="date"
-                class="form-control"
                 id="rateDate"
                 v-model="formData.date"
+                type="date"
+                class="form-control"
                 :class="{ 'is-invalid': errors.date }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.date">
+              <div v-if="errors.date" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.date)">
                   <div v-for="error in errors.date" :key="error">
                     {{ error }}
@@ -45,16 +45,16 @@
                 >
               </label>
               <input
+                id="rateValue"
+                v-model.number="formData.rate"
                 type="number"
                 step="0.0001"
                 min="0.0000000001"
                 class="form-control"
-                id="rateValue"
-                v-model.number="formData.rate"
                 :class="{ 'is-invalid': errors.rate }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.rate">
+              <div v-if="errors.rate" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.rate)">
                   <div v-for="error in errors.rate" :key="error">
                     {{ error }}
@@ -76,13 +76,10 @@
           <button
             type="button"
             class="btn btn-primary"
-            @click="submitForm"
             :disabled="isSubmitting"
+            @click="submitForm"
           >
-            <span
-              v-if="isSubmitting"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
+            <i v-if="isSubmitting" class="fa fa-spinner fa-spin me-1"></i>
             {{ isEditMode ? __('Update') : __('Add') }}
           </button>
         </div>
@@ -93,6 +90,8 @@
 
 <script>
   import { __ } from '@/shared/lib/i18n';
+  import { confirmAction } from '@/shared/lib/confirm';
+  import * as toastHelpers from '@/shared/lib/toast';
 
   export default {
     name: 'CurrencyRateModal',
@@ -117,9 +116,16 @@
           date: '',
           rate: null,
         },
+        // Snapshot of formData (JSON string) taken whenever the form is in
+        // a "clean" state (opened for edit, reset for a new rate) - the
+        // dirty check compares the current formData against this.
+        originalFormData: null,
         errors: {},
         isSubmitting: false,
         modal: null,
+        // Set right before a programmatic hide() so the hide.coreui.modal
+        // listener lets it through once without re-running the dirty check.
+        forceCloseModal: false,
       };
     },
     computed: {
@@ -137,18 +143,15 @@
           } else {
             this.resetForm();
           }
+
+          this.originalFormData = JSON.stringify(this.formData);
         },
       },
     },
     mounted() {
       const modalElement = document.getElementById('currencyRateModal');
 
-      // Use CoreUI Modal instead of Bootstrap Modal
-      if (window.coreui && window.coreui.Modal) {
-        this.modal = new window.coreui.Modal(modalElement);
-      } else {
-        this.modal = new window.bootstrap.Modal(modalElement);
-      }
+      this.modal = new window.coreui.Modal(modalElement);
 
       modalElement.addEventListener('hidden.bs.modal', () => {
         this.resetForm();
@@ -160,12 +163,38 @@
         this.resetForm();
         this.$emit('close');
       });
+
+      // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+      // programmatic hide() alike) - ask for confirmation if there are
+      // unsaved changes.
+      modalElement.addEventListener('hide.coreui.modal', (event) => {
+        if (this.forceCloseModal) {
+          this.forceCloseModal = false;
+          return;
+        }
+
+        if (JSON.stringify(this.formData) === this.originalFormData) {
+          return;
+        }
+
+        event.preventDefault();
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          confirmButtonText: __('Discard changes'),
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.hide();
+          }
+        });
+      });
     },
     methods: {
       show() {
         this.modal.show();
       },
       hide() {
+        this.forceCloseModal = true;
         this.modal.hide();
       },
       resetForm() {

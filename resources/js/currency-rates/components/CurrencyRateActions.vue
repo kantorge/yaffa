@@ -11,24 +11,24 @@
       </div>
     </div>
     <ul
+      id="cardActions"
       class="list-group list-group-flush collapse show"
       aria-expanded="true"
-      id="cardActions"
     >
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         <button
           class="btn btn-link text-decoration-none p-0 add-currency-rate-button"
-          @click="addNewRate"
           :title="__('Add new rate')"
+          @click="addNewRate"
         >
           {{ __('Add new rate') }}
         </button>
         <button
           class="btn btn-xs btn-primary add-currency-rate-button"
-          @click="addNewRate"
           :title="__('Add new rate')"
+          @click="addNewRate"
         >
           <span class="fa fa-fw fa-plus"></span>
         </button>
@@ -38,17 +38,17 @@
       >
         <button
           class="btn btn-link text-decoration-none p-0"
-          @click="loadMissingRates"
           :title="__('Load missing rates')"
           :disabled="isLoadingMissing"
+          @click="loadMissingRates"
         >
           {{ __('Load missing rates') }}
         </button>
         <button
           class="btn btn-xs btn-success"
-          @click="loadMissingRates"
           :title="__('Load missing rates')"
           :disabled="isLoadingMissing"
+          @click="loadMissingRates"
         >
           <span
             v-if="isLoadingMissing"

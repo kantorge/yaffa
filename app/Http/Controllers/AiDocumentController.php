@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Gate;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\AccountEntity;
@@ -245,7 +246,7 @@ class AiDocumentController extends Controller implements HasMiddleware
          * @name("ai-documents.files.show")
          * @middlewares("web", "auth", "verified")
          */
-        $this->authorize('view', $aiDocument);
+        Gate::authorize('view', $aiDocument);
         if ($aiDocumentFile->ai_document_id !== $aiDocument->id) {
             abort(Response::HTTP_NOT_FOUND);
         }

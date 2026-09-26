@@ -14,6 +14,13 @@ class EmailHtmlSanitizerService
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
         $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
+
+        $cachePath = storage_path('app/htmlpurifier');
+        if (! is_dir($cachePath)) {
+            mkdir($cachePath, 0775, true);
+        }
+        $config->set('Cache.SerializerPath', $cachePath);
+
         // Received emails are rendered inside the app UI, not as a standalone
         // document: no scripts, forms, embeds, or external frames.
         $config->set('HTML.Allowed', implode(',', [

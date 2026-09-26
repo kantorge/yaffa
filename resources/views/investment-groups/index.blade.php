@@ -9,11 +9,6 @@
 @section('content')
 <div class="row">
     <div class="col-12 col-lg-3">
-        <div id="onboarding-card">
-            <onboarding-card card-title="{{ __('Guided tour') }}"
-                completed-message="{{ __('You can dismiss this widget to hide it forever.') }}"
-                topic="InvestmentGroups"></onboarding-card>
-        </div>
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-title collapse-control" data-coreui-toggle="collapse"
@@ -41,6 +36,12 @@
                     </a>
                 </li>
             </ul>
+        </div>
+
+        <div id="onboarding-card">
+            <onboarding-card card-title="{{ __('Guided tour') }}"
+                completed-message="{{ __('You can dismiss this widget to hide it forever.') }}"
+                topic="InvestmentGroups"></onboarding-card>
         </div>
 
         <div class="card mb-3">

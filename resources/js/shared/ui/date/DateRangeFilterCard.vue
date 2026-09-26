@@ -12,68 +12,38 @@
       </div>
     </div>
     <div
+      :id="cardBodyId"
       class="card-body collapse"
       :class="{ show: isExpanded }"
-      :id="cardBodyId"
     >
       <div class="row">
         <div class="col-6">
           <label class="form-label">{{ __('Date from') }}</label>
-          <DatePicker
-            v-model.string="dateFromBinding"
-            mode="date"
-            :max-date="constraintDateTo"
-            :is-dark="isDarkMode"
-            :locale="locale"
-            :first-day-of-week="2"
-            :masks="{ L: 'YYYY-MM-DD', modelValue: 'YYYY-MM-DD' }"
-            :popover="{ visibility: 'click', showDelay: 0, hideDelay: 0 }"
-          >
-            <template #default="{ inputValue, inputEvents }">
-              <input
-                type="text"
-                class="form-control"
-                :id="componentId + '_from'"
-                :value="inputValue"
-                v-on="inputEvents"
-                :placeholder="__('Select date')"
-                autocomplete="off"
-              />
-            </template>
-          </DatePicker>
+          <input
+            :id="componentId + '_from'"
+            v-model="dateFromBinding"
+            type="date"
+            class="form-control"
+            :max="dateTo"
+          />
         </div>
         <div class="col-6">
           <label class="form-label">{{ __('Date to') }}</label>
-          <DatePicker
-            v-model.string="dateToBinding"
-            mode="date"
-            :min-date="constraintDateFrom"
-            :is-dark="isDarkMode"
-            :locale="locale"
-            :first-day-of-week="2"
-            :masks="{ L: 'YYYY-MM-DD', modelValue: 'YYYY-MM-DD' }"
-            :popover="{ visibility: 'click', showDelay: 0, hideDelay: 0 }"
-          >
-            <template #default="{ inputValue, inputEvents }">
-              <input
-                type="text"
-                class="form-control"
-                :id="componentId + '_to'"
-                :value="inputValue"
-                v-on="inputEvents"
-                :placeholder="__('Select date')"
-                autocomplete="off"
-              />
-            </template>
-          </DatePicker>
+          <input
+            :id="componentId + '_to'"
+            v-model="dateToBinding"
+            type="date"
+            class="form-control"
+            :min="dateFrom"
+          />
         </div>
       </div>
       <div class="row mt-2">
         <div class="col-12">
           <select
-            class="form-select"
             :id="componentId + 'Presets'"
             v-model="selectedPreset"
+            class="form-select"
             @change="onPresetChange"
           >
             <option value="none">{{ __('Select preset') }}</option>
@@ -96,17 +66,17 @@
     </div>
     <div class="card-footer text-end">
       <button
-        class="btn btn-sm btn-outline-dark"
         :id="componentId + 'Clear'"
+        class="btn btn-sm btn-secondary"
         @click="clearDates"
       >
         {{ __('Clear selection') }}
       </button>
       <button
         v-if="showUpdateButton"
+        :id="componentId + 'Update'"
         type="button"
         class="btn btn-sm btn-primary ms-2"
-        :id="componentId + 'Update'"
         @click="emitDates"
       >
         {{ __('Update') }}
@@ -116,16 +86,8 @@
 </template>
 
 <script>
-  import { DatePicker } from 'v-calendar';
   import { __ } from '@/shared/lib/i18n';
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
   import presetCalculators from '@/shared/lib/date/presetDates';
-
-  function parseDate(str) {
-    if (!str) return null;
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
 
   function formatDate(date) {
     if (!date) return null;
@@ -138,9 +100,6 @@
 
   export default {
     name: 'DateRangeFilterCard',
-    components: { DatePicker },
-    mixins: [colorModeMixin],
-    emits: ['update'],
     props: {
       expanded: {
         type: Boolean,
@@ -179,6 +138,7 @@
         default: () => window.YAFFA?.config?.datePresets || [],
       },
     },
+    emits: ['update'],
     data() {
       const preset =
         this.initialPreset && this.initialPreset !== 'none'
@@ -207,18 +167,6 @@
       cardBodyId() {
         return `card${this.componentId}`;
       },
-      locale() {
-        return window.YAFFA?.userSettings?.language || 'en';
-      },
-      // Fresh Date objects derived from strings for v-calendar min/max constraints.
-      // Returned from a computed getter (not stored in reactive data) so Vue does
-      // not deep-proxy them — native Date methods remain intact in v-calendar.
-      constraintDateFrom() {
-        return parseDate(this.dateFrom);
-      },
-      constraintDateTo() {
-        return parseDate(this.dateTo);
-      },
       // Computed setter for the start date.
       // The setter fires only on user interaction (calendar click or typed input),
       // not on programmatic changes from preset selection, clear, or initial load.
@@ -228,9 +176,7 @@
         },
         set(val) {
           const normalized = val || null;
-          // v-calendar echoes update:modelValue when its :modelValue prop changes
-          // programmatically (e.g. from onPresetChange). Skip if the value is
-          // unchanged so we don't accidentally clear selectedPreset.
+          // Skip no-op writes so a re-render doesn't accidentally clear selectedPreset.
           if (normalized === this.dateFrom) return;
           this.dateFrom = normalized;
           // New start is after the current end: clear end (start is authoritative)

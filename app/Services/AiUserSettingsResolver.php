@@ -94,6 +94,8 @@ class AiUserSettingsResolver
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue($settings->duplicate_amount_tolerance_percent, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue($settings->duplicate_similarity_threshold, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
             'category_matching_mode' => $categoryMatchingMode,
+            // null = finalized documents are kept forever
+            'document_retention_days' => $this->resolveSettingValue($settings->document_retention_days, null),
             'warnings' => $this->resolveCategoryWarnings($user, $categoryMatchingMode),
         ];
     }
@@ -171,6 +173,7 @@ class AiUserSettingsResolver
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
             'category_matching_mode' => (string) $this->resolveSettingValue(null, self::DEFAULT_CATEGORY_MATCHING_MODE),
+            'document_retention_days' => $this->resolveSettingValue(null, null),
         ];
     }
 

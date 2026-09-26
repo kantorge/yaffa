@@ -1,10 +1,10 @@
 <template>
-  <div class="card" id="aiProviderConfigForm">
+  <div id="aiProviderConfigForm" class="card">
     <form
       accept-charset="UTF-8"
+      autocomplete="off"
       @submit.prevent="onSubmit"
       @keydown="form.onKeydown($event)"
-      autocomplete="off"
     >
       <div class="card-header d-flex justify-content-between">
         <div class="card-title">
@@ -34,9 +34,11 @@
           ></span>
         </div>
       </div>
-      <div class="card-body" v-if="!sandbox_mode">
+      <div v-if="!sandbox_mode" class="card-body">
         <div v-if="!hasConfig && !showForm" class="text-center py-2">
-          <p class="mb-3">{{ __('No AI provider configured yet.') }}</p>
+          <p class="mb-3">
+            {{ __('No AI provider configured yet.') }}
+          </p>
           <button
             type="button"
             class="btn btn-primary"
@@ -56,13 +58,15 @@
             <div class="col-sm-9">
               <div class="input-group">
                 <select
-                  class="form-select"
                   id="provider"
-                  name="provider"
                   v-model="form.provider"
+                  class="form-select"
+                  name="provider"
                   @change="onProviderChange"
                 >
-                  <option value="">{{ __('Select provider...') }}</option>
+                  <option value="">
+                    {{ __('Select provider...') }}
+                  </option>
                   <option
                     v-for="providerOption in providerOptions"
                     :key="providerOption.key"
@@ -85,20 +89,22 @@
             </div>
           </div>
 
-          <div class="row mb-3" v-if="form.provider">
+          <div v-if="form.provider" class="row mb-3">
             <label for="model" class="col-form-label col-sm-3">
               {{ __('Model') }}
             </label>
             <div class="col-sm-9">
               <div class="input-group">
                 <select
-                  class="form-select"
                   id="model"
-                  name="model"
                   v-model="form.model"
+                  class="form-select"
+                  name="model"
                   @change="onModelChange"
                 >
-                  <option value="">{{ __('Select model...') }}</option>
+                  <option value="">
+                    {{ __('Select model...') }}
+                  </option>
                   <option
                     v-for="model in availableModels"
                     :key="model.name"
@@ -134,18 +140,18 @@
             </div>
           </div>
 
-          <div class="row mb-3" v-if="modelSupportsVision">
+          <div v-if="modelSupportsVision" class="row mb-3">
             <label for="vision_enabled" class="col-form-label col-sm-3">
               {{ __('Vision AI') }}
             </label>
             <div class="col-sm-9">
               <div class="form-check">
                 <input
+                  id="vision_enabled"
+                  v-model="form.vision_enabled"
                   class="form-check-input"
                   type="checkbox"
-                  id="vision_enabled"
                   name="vision_enabled"
-                  v-model="form.vision_enabled"
                 />
                 <label class="form-check-label" for="vision_enabled">
                   {{ __('Enable Vision AI for images') }}
@@ -161,20 +167,20 @@
             </div>
           </div>
 
-          <div class="row mb-3" v-if="form.provider">
+          <div v-if="form.provider" class="row mb-3">
             <label for="api_key" class="col-form-label col-sm-3">
               {{ __('API Key') }}
             </label>
             <div class="col-sm-9">
               <div class="input-group">
                 <input
+                  id="api_key"
+                  v-model="form.api_key"
                   type="password"
                   class="form-control"
-                  id="api_key"
                   name="api_key"
-                  v-model="form.api_key"
                   :placeholder="
-                    hasConfig
+                    hasConfig && !providerChanged
                       ? __('Leave blank to keep existing key')
                       : __('Enter your API key')
                   "
@@ -194,8 +200,8 @@
               </div>
               <HasError field="api_key" :form="form" />
               <small
+                v-if="hasConfig && !providerChanged"
                 class="form-text text-muted"
-                v-if="hasConfig"
                 dusk="api-key-hint"
               >
                 {{
@@ -228,7 +234,7 @@
           </div>
         </div>
       </div>
-      <div class="card-body" v-else>
+      <div v-else class="card-body">
         <div class="alert alert-warning">
           {{
             __(
@@ -238,43 +244,43 @@
         </div>
       </div>
 
-      <div class="card-footer" v-if="!sandbox_mode && (hasConfig || showForm)">
+      <div v-if="!sandbox_mode && (hasConfig || showForm)" class="card-footer">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <Button
+            <SubmitButton
               class="btn btn-primary me-2"
               :form="form"
               dusk="button-save-ai-config"
             >
-              <i class="fa fa-save"></i>
-              {{ hasConfig ? __('Update') : __('Save') }}
-            </Button>
+              <i v-show="!form.busy" class="fa me-1 fa-save"></i
+              >{{ hasConfig ? __('Update') : __('Save') }}
+            </SubmitButton>
 
             <button
               type="button"
               class="btn btn-secondary me-2"
-              @click="testConnection"
               :disabled="!canTest || testingConnection"
               dusk="button-test-connection"
+              @click="testConnection"
             >
               <i
                 :class="[
                   'fa',
+                  'me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>
-              {{ __('Test Connection') }}
+              ></i
+              >{{ __('Test Connection') }}
             </button>
 
             <button
               v-if="!hasConfig && showForm"
               type="button"
-              class="btn btn-outline-secondary"
-              @click="cancelAdd"
+              class="btn btn-secondary"
               dusk="button-cancel-add-ai-provider"
+              @click="cancelAdd"
             >
-              <i class="fa fa-times"></i>
-              {{ __('Cancel') }}
+              <i class="fa me-1 fa-times"></i>{{ __('Cancel') }}
             </button>
           </div>
 
@@ -282,11 +288,10 @@
             v-if="hasConfig"
             type="button"
             class="btn btn-danger"
-            @click="deleteConfig"
             dusk="button-delete-ai-config"
+            @click="deleteConfig"
           >
-            <i class="fa fa-trash"></i>
-            {{ __('Delete Configuration') }}
+            <i class="fa me-1 fa-trash"></i>{{ __('Delete Configuration') }}
           </button>
         </div>
       </div>
@@ -295,7 +300,7 @@
 </template>
 
 <script setup>
-  const props = defineProps({
+  defineProps({
     providers: {
       type: Object,
       default: () => window.aiProviders || {},
@@ -312,13 +317,16 @@
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
-  import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    HasError,
+  } from 'vform/src/components/bootstrap5';
   import Swal from 'sweetalert2';
 
   export default {
     name: 'AiProviderSettings',
     components: {
-      Button,
+      SubmitButton,
       HasError,
     },
     data: () => ({
@@ -329,6 +337,7 @@
         vision_enabled: false,
       }),
       configId: null,
+      originalProvider: null,
       hasConfig: false,
       showForm: false,
       testResult: null,
@@ -444,7 +453,17 @@
         return (
           this.form.provider &&
           this.form.model &&
-          (this.form.api_key || this.hasConfig)
+          (this.form.api_key || (this.hasConfig && !this.providerChanged))
+        );
+      },
+      // A different provider cannot be expected to accept the key stored for the
+      // previous one, so once the provider selection changes, a fresh key is required
+      // rather than silently reusing the existing one.
+      providerChanged() {
+        return (
+          this.hasConfig &&
+          this.originalProvider !== null &&
+          this.form.provider !== this.originalProvider
         );
       },
     },
@@ -479,6 +498,7 @@
           .then((response) => {
             if (response.data && response.data.id) {
               this.configId = response.data.id;
+              this.originalProvider = response.data.provider;
               this.form.provider = response.data.provider;
               this.form.model = response.data.model;
               this.form.vision_enabled = Boolean(response.data.vision_enabled);
@@ -537,6 +557,7 @@
               );
 
               this.configId = response.data.id;
+              this.originalProvider = this.form.provider;
               this.hasConfig = true;
               this.showForm = true;
               this.form.api_key = ''; // Clear API key field after save
@@ -562,10 +583,14 @@
         this.testingConnection = true;
         this.testResult = null;
 
+        // A new provider cannot be expected to accept the key stored for the previous
+        // one, so only fall back to the existing key when the provider hasn't changed.
+        const useExistingKey = this.hasConfig && !this.providerChanged;
+
         const testData = {
           provider: this.form.provider,
           model: this.form.model,
-          api_key: this.form.api_key || '__existing__', // Use placeholder if using existing key
+          api_key: this.form.api_key || (useExistingKey ? '__existing__' : ''),
         };
 
         axios
@@ -600,7 +625,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (result.isConfirmed) {
@@ -612,6 +637,7 @@
               )
               .then(() => {
                 this.configId = null;
+                this.originalProvider = null;
                 this.hasConfig = false;
                 this.showForm = false;
                 this.form.reset();

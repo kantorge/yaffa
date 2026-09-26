@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
+use Brick\Money\Money;
 use Carbon\Carbon;
 use Database\Factories\AccountFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\Unguarded;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection as IlluminateCollection;
@@ -19,7 +25,8 @@ use Illuminate\Support\Facades\DB;
  * App\Models\Account
  *
  * @property int $id
- * @property float $opening_balance
+ * @property-read Money $opening_balance
+ * @property-write Money|string|int|float $opening_balance
  * @property int $account_group_id
  * @property int $currency_id
  * @property string|null $default_date_range
@@ -56,37 +63,18 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder<static>|Account whereDefaultDateRange($value)
  * @mixin \Eloquent
  */
+#[Table(key: 'id')]
+#[WithoutTimestamps]
+#[Unguarded]
+#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range')]
 class Account extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
-
-    public $timestamps = false;
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'opening_balance',
-        'account_group_id',
-        'currency_id',
-        'default_date_range',
-    ];
-
     protected function casts(): array
     {
         return [
-            'opening_balance' => 'float',
+            'opening_balance' => MoneyCast::class . ':10,resolveOpeningBalanceCurrency',
         ];
     }
 
@@ -105,6 +93,11 @@ class Account extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function resolveOpeningBalanceCurrency(): Currency
+    {
+        return $this->loadMissing('currency')->currency;
+    }
+
     public function openingBalance(): object
     {
         return (object) [
@@ -119,7 +112,7 @@ class Account extends Model
             'account_from_name' => null,
             'account_to_name' => null,
             'amount_from' => 0,
-            'amount_to' => $this->opening_balance,
+            'amount_to' => MoneyCast::toFloat($this->opening_balance),
             'tags' => [],
             'categories' => [],
             'reconciled' => 0,

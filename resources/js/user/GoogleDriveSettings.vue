@@ -108,7 +108,9 @@
                   id="service_account_json"
                   v-model="form.service_account_json"
                   class="form-control"
-                  :class="{ 'password-masked': !showServiceAccountJson }"
+                  :class="{
+                    'password-masked': !showServiceAccountJson,
+                  }"
                   name="service_account_json"
                   :placeholder="
                     hasConfig
@@ -433,7 +435,9 @@
                       v-model="form.processed_folder_id"
                       type="text"
                       class="form-control"
-                      :class="{ 'is-invalid': processedFolderIdError }"
+                      :class="{
+                        'is-invalid': processedFolderIdError,
+                      }"
                       :placeholder="
                         __(
                           'user.googleDriveSettings.fields.processedFolderId.placeholder',
@@ -667,18 +671,18 @@
       <div v-if="!sandbox_mode && (hasConfig || showForm)" class="card-footer">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <Button
+            <SubmitButton
               class="btn btn-primary me-2"
               :form="form"
               dusk="button-save-google-drive"
             >
-              <i v-show="!form.busy" class="fa fa-save me-1"></i>
-              {{
+              <i v-show="!form.busy" class="fa me-1 fa-save"></i
+              >{{
                 hasConfig
                   ? __('user.googleDriveSettings.buttons.update')
                   : __('user.googleDriveSettings.buttons.save')
               }}
-            </Button>
+            </SubmitButton>
 
             <button
               type="button"
@@ -692,8 +696,8 @@
                   'fa me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.testConnection') }}
+              ></i
+              >{{ __('user.googleDriveSettings.buttons.testConnection') }}
             </button>
 
             <button
@@ -705,20 +709,24 @@
               @click="triggerSync"
             >
               <i
-                :class="['fa', syncing ? 'fa-spinner fa-spin' : 'fa-sync']"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.manualSync') }}
+                :class="[
+                  'fa',
+                  'me-1',
+                  syncing ? 'fa-spinner fa-spin' : 'fa-sync',
+                ]"
+              ></i
+              >{{ __('user.googleDriveSettings.buttons.manualSync') }}
             </button>
 
             <button
               v-if="!hasConfig && showForm"
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               dusk="button-cancel-add-google-drive"
               @click="cancelAdd"
             >
-              <i class="fa fa-times me-1"></i>
-              {{ __('user.googleDriveSettings.buttons.cancel') }}
+              <i class="fa me-1 fa-times"></i
+              >{{ __('user.googleDriveSettings.buttons.cancel') }}
             </button>
           </div>
 
@@ -729,8 +737,8 @@
             dusk="button-delete-google-drive"
             @click="deleteConfig"
           >
-            <i class="fa fa-trash"></i>
-            {{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
+            <i class="fa me-1 fa-trash"></i
+            >{{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
           </button>
         </div>
       </div>
@@ -816,7 +824,9 @@
                   :key="folder.id"
                   type="button"
                   class="list-group-item list-group-item-action d-flex align-items-center"
-                  :class="{ active: folderBrowserSelectedId === folder.id }"
+                  :class="{
+                    active: folderBrowserSelectedId === folder.id,
+                  }"
                   dusk="folder-browser-item"
                   @click="selectBrowserFolder(folder)"
                 >
@@ -838,7 +848,7 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               data-coreui-dismiss="modal"
               dusk="button-folder-browser-cancel"
             >
@@ -861,11 +871,14 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
-  import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    HasError,
+  } from 'vform/src/components/bootstrap5';
   import Swal from 'sweetalert2';
 
   const DISPOSITION_ACTIONS = [
@@ -896,7 +909,7 @@
   export default {
     name: 'GoogleDriveSettings',
     components: {
-      Button,
+      SubmitButton,
       HasError,
     },
     props: {
@@ -969,7 +982,7 @@
           if (Number.isNaN(date.getTime())) {
             return this.lastSyncAt;
           }
-          return date.toLocaleString();
+          return toFormattedDateTime(date, window.YAFFA.userSettings.locale);
         } catch {
           return this.lastSyncAt;
         }
@@ -1013,11 +1026,7 @@
       this.$nextTick(() => {
         const el = this.$refs.folderBrowserModalEl;
         if (el) {
-          if (window.coreui && window.coreui.Modal) {
-            this.folderBrowserModal = new window.coreui.Modal(el);
-          } else if (window.bootstrap && window.bootstrap.Modal) {
-            this.folderBrowserModal = new window.bootstrap.Modal(el);
-          }
+          this.folderBrowserModal = new window.coreui.Modal(el);
         }
       });
     },
@@ -1231,7 +1240,7 @@
               buttonsStyling: false,
               customClass: {
                 confirmButton: 'btn btn-primary',
-                cancelButton: 'btn btn-outline-secondary ms-3',
+                cancelButton: 'btn btn-secondary ms-3',
               },
             });
 
@@ -1436,7 +1445,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (result.isConfirmed) {

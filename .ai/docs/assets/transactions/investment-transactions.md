@@ -182,16 +182,18 @@ Optional properties:
 
 ## Cashflow vs Quantity Logic
 
-| Type           | Cashflow                         | Quantity |
-| -------------- | -------------------------------- | -------- |
-| Buy            | negative                         | positive |
-| Sell           | positive                         | negative |
-| Add shares     | neutral or not directly monetary | positive |
-| Remove shares  | neutral or not directly monetary | negative |
-| Dividend       | positive                         | none     |
-| Interest yield | positive                         | none     |
+| Type           | Cashflow                                             | Quantity |
+| -------------- | ----------------------------------------------------- | -------- |
+| Buy            | negative                                               | positive |
+| Sell           | positive                                               | negative |
+| Add shares     | none, unless commission/tax is set (then negative)     | positive |
+| Remove shares  | none, unless commission/tax is set (then negative)     | negative |
+| Dividend       | positive                                               | none     |
+| Interest yield | positive                                               | none     |
 
 This distinction is important because YAFFA uses investment transactions to describe both account-level money movement and position-level holding changes.
+
+Add shares/remove shares have no trade price, so the quantity change itself is never a cash flow - but an optional commission/tax recorded against one still is (`TransactionService::getInvestmentConfigCashFlow()`), and reduces the account's cashflow_value the same way it would on a buy or sell.
 
 ## Inputs
 
@@ -216,7 +218,7 @@ This distinction is important because YAFFA uses investment transactions to desc
 - Buy and sell require both price and quantity.
 - Add shares and remove shares require quantity but not a normal trade price.
 - Dividend and interest yield require a positive income amount.
-- Investment transactions support scheduling, but budgeting is not the primary mode exposed for them.
+- Investment transactions support scheduling, which contributes to account-balance/investment-value forecasting, but never to category budgeting — investment transactions have no category-based items, and the standalone [Budget](../budget/budget.md) entity is restricted to standard withdrawal/deposit directions.
 - Reconciled status is not compatible with scheduled investment entries.
 
 ## User Flow

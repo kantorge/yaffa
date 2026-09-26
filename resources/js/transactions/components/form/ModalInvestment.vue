@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="modal-transaction-form-investment">
+  <div id="modal-transaction-form-investment" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-xxl">
       <div class="modal-content">
         <div class="modal-header">
@@ -15,10 +15,11 @@
         </div>
         <div class="modal-body">
           <transaction-form-investment
+            ref="form"
             :action="action"
             :transaction="transactionData"
             :simplified="true"
-            :fromModal="true"
+            :from-modal="true"
             :ai-document-id="aiDocumentId"
             :dropdown-parent-selector="'#modal-transaction-form-investment'"
             @cancel="onCancel"
@@ -34,6 +35,7 @@
   import TransactionFormInvestment from './TransactionFormInvestment.vue';
   import * as helpers from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   export default {
     name: 'CreateInvestmentTransactionModal',
@@ -43,11 +45,10 @@
     props: {
       transaction: {
         type: Object,
-        default: {
+        default: () => ({
           transaction_type: 'buy',
           date: new Date(),
           schedule: false,
-          budget: false,
           reconciled: false,
           comment: null,
           config: {
@@ -59,7 +60,7 @@
             commission: null,
             tax: null,
           },
-        },
+        }),
       },
       aiDocumentId: {
         type: Number,
@@ -69,13 +70,95 @@
     data() {
       let data = {
         action: 'create',
+        // Set right before a programmatic hide() so the hide.coreui.modal listener
+        // lets it through once without re-running the dirty check.
+        forceClose: false,
       };
       data.transactionData = Object.assign({}, this.transaction);
       return data;
     },
+    computed: {
+      modalTitle() {
+        const titles = new Map([
+          ['create', __('Add new transaction')],
+          ['edit', __('Modify existing transaction')],
+          ['clone', __('Clone existing transaction')],
+          ['enter', __('Enter scheduled transaction instance')],
+          ['replace', __('Clone scheduled transaction and close base item')],
+          ['finalize', __('Finalize transaction draft')],
+        ]);
+
+        return titles.get(this.action);
+      },
+    },
+    mounted() {
+      // Set up event listener for global scope about new schedule instance to be opened in modal editor
+      window.addEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+
+      // Set up event listener for global scope about new transaction draft to be opened in modal editor
+      window.addEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
+      );
+
+      // Initialize modal
+      this.modal = new coreui.Modal(
+        document.getElementById('modal-transaction-form-investment'),
+      );
+      document
+        .getElementById('modal-transaction-form-investment')
+        .addEventListener('hide.coreui.modal', this.onHide);
+    },
+    beforeUnmount() {
+      // Clean up event listeners when component is destroyed
+      window.removeEventListener(
+        'initiateEnterInstance',
+        this.handleInitiateEnterInstance,
+      );
+      window.removeEventListener(
+        'initiateCreateFromDraft',
+        this.handleInitiateCreateFromDraft,
+      );
+      document
+        .getElementById('modal-transaction-form-investment')
+        .removeEventListener('hide.coreui.modal', this.onHide);
+    },
     methods: {
-      onCancel() {
+      hide() {
+        this.forceClose = true;
         this.modal.hide();
+      },
+      onCancel() {
+        this.hide();
+      },
+      // Cancelable pre-dismiss hook (backdrop click, Esc, close button) - ask for
+      // confirmation only if the form has unsaved changes. The in-form Cancel button
+      // already runs its own dirty check before emitting 'cancel', which routes
+      // through hide() and is let through here via forceClose.
+      onHide(event) {
+        if (this.forceClose) {
+          this.forceClose = false;
+          return;
+        }
+
+        if (!this.$refs.form?.isDirty()) {
+          return;
+        }
+
+        event.preventDefault();
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          confirmButtonText: __('Discard changes'),
+          target: '#modal-transaction-form-investment',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.hide();
+          }
+        });
       },
       onSuccess(transaction, options) {
         toastHelpers.showToast(
@@ -115,7 +198,7 @@
         window.dispatchEvent(transactionEvent);
 
         // Hide the modal
-        this.modal.hide();
+        this.hide();
       },
       onInitiateEnterInstance(transaction) {
         this.action = 'enter';
@@ -144,49 +227,6 @@
         }
 
         this.onInitiateCreateDraft(event.detail.transaction);
-      },
-    },
-    mounted() {
-      // Set up event listener for global scope about new schedule instance to be opened in modal editor
-      window.addEventListener(
-        'initiateEnterInstance',
-        this.handleInitiateEnterInstance,
-      );
-
-      // Set up event listener for global scope about new transaction draft to be opened in modal editor
-      window.addEventListener(
-        'initiateCreateFromDraft',
-        this.handleInitiateCreateFromDraft,
-      );
-
-      // Initialize modal
-      this.modal = new coreui.Modal(
-        document.getElementById('modal-transaction-form-investment'),
-      );
-    },
-    beforeUnmount() {
-      // Clean up event listeners when component is destroyed
-      window.removeEventListener(
-        'initiateEnterInstance',
-        this.handleInitiateEnterInstance,
-      );
-      window.removeEventListener(
-        'initiateCreateFromDraft',
-        this.handleInitiateCreateFromDraft,
-      );
-    },
-    computed: {
-      modalTitle() {
-        const titles = new Map([
-          ['create', __('Add new transaction')],
-          ['edit', __('Modify existing transaction')],
-          ['clone', __('Clone existing transaction')],
-          ['enter', __('Enter scheduled transaction instance')],
-          ['replace', __('Clone scheduled transaction and close base item')],
-          ['finalize', __('Finalize transaction draft')],
-        ]);
-
-        return titles.get(this.action);
       },
     },
   };

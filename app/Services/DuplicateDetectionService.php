@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Casts\MoneyCast;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -241,7 +242,7 @@ class DuplicateDetectionService
     private function getTransactionAmount(Transaction $transaction): float
     {
         if ($transaction->isStandard()) {
-            return (float) $transaction->transactionItems->sum('amount');
+            return $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
         }
 
         return 0;

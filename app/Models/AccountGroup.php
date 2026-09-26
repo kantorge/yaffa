@@ -4,9 +4,10 @@ namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
@@ -33,19 +34,11 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property-read int|null $account_entities_count
  * @mixin \Eloquent
  */
+#[Fillable('name')]
 class AccountGroup extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-    ];
 
     public function user(): BelongsTo
     {

@@ -53,9 +53,7 @@ The Transaction record is the top-level container. It is shaped by three major d
 
 3. Time mode
    - historical one-time record
-   - scheduled recurring template
-   - budget entry
-   - scheduled budget-like planning combination for forecasting use cases
+   - scheduled recurring template — a standard withdrawal/deposit schedule's categorized items also count automatically toward category budget comparison, with no separate flag
 
 Standard transactions may contain multiple transaction items for split categorization. Investment transactions use a dedicated detail model centered on quantity, price, commission, tax, and income fields.
 
@@ -73,8 +71,7 @@ Standard transactions may contain multiple transaction items for split categoriz
 ## Outputs
 
 - Saved historical transaction record
-- Planned scheduled transaction template
-- Budget-oriented forecast input
+- Planned scheduled transaction template, which also feeds category budget-vs-actual comparison when it's a standard withdrawal/deposit with items
 - Itemized category allocation for reporting
 - Data used in balance summaries, forecasts, and investment history
 
@@ -89,17 +86,17 @@ Standard transactions may contain multiple transaction items for split categoriz
 - Transaction Schedule
 - AI Document
 
-These concepts should be referenced from their own documentation rather than re-explained here in full.
+These concepts should be referenced from their own documentation rather than re-explained here in full. A category-level spending/income target with no linked transaction is a separate, sibling concept — [Budget](../budget/budget.md) — not a mode of Transaction.
 
 ## Core Logic / Rules
 
 - Transaction is an umbrella domain concept, not merely a CRUD object.
 - Every transaction belongs to either the standard or investment family.
 - The subtype determines which fields are meaningful and required.
-- Scheduled and budget behavior are modes of a transaction, not separate root concepts.
+- `schedule` is the only planning-mode flag on a transaction; there is no separate flag for budget participation.
 - Standard deposit and withdrawal records can be split into multiple categorized items.
 - Transfer is still a standard transaction, but behaves differently from payee-linked inflow or outflow.
-- Reconciled status is intended for historical records and is not allowed for scheduled or budget records.
+- Reconciled status is intended for historical records and is not allowed for scheduled records.
 - Planned transactions influence projections and summaries even when they are not yet historical facts.
 
 ## User Flow
@@ -107,8 +104,8 @@ These concepts should be referenced from their own documentation rather than re-
 1. The user decides to record or plan a financial event.
 2. They choose whether the transaction is standard or investment-oriented.
 3. They select the subtype and provide the relevant fields.
-4. If needed, they add split items, scheduling, or budget information.
-5. YAFFA saves the transaction as a historical record, a planning template, or both, depending on the chosen mode.
+4. If needed, they add split items or scheduling information.
+5. YAFFA saves the transaction as a historical record or a scheduled planning template, depending on the chosen mode.
 6. The transaction then contributes to balances, forecasting, and analysis.
 
 ## Documentation Map
@@ -119,12 +116,14 @@ This concept is documented through the following supporting files in this folder
 - standard-transactions.md — everyday cashflow transactions
 - investment-transactions.md — investment-specific transactions
 - transaction-items.md — split lines and categorization behavior
-- schedules-and-budgets.md — historical vs planned transaction modes
+- schedules.md — historical vs scheduled transaction modes
+
+The standalone category-level target concept, [Budget](../budget/budget.md), lives outside this folder as a sibling asset alongside category and account, since it has no linked transaction.
 
 ## Edge Cases / Constraints
 
 - Not every investment subtype uses the same combination of amount, price, and quantity.
-- Budget behavior is focused on standard cashflow planning, not transfer or investment entry.
+- Category budget comparison only applies to standard withdrawal/deposit transactions with items — transfers have no items, and investment transactions have no category-based items.
 - Scheduled transactions can generate future instances without immediately becoming historical facts.
 - Some transactions originate as AI drafts and become final only after user review.
 
@@ -146,7 +145,7 @@ This concept is documented through the following supporting files in this folder
 ## Frontend Interaction
 
 - Users interact with transaction forms that adapt to the chosen subtype.
-- Standard forms expose split items and optional budgeting controls.
+- Standard forms expose split items and optional scheduling controls.
 - Investment forms expose quantity, price, tax, and commission fields.
 - Schedule controls appear when the transaction is planned rather than purely historical.
 
@@ -157,9 +156,7 @@ This concept is documented through the following supporting files in this folder
 - Historical transaction:
   a concrete event that already occurred and is stored with an actual date.
 - Scheduled transaction:
-  a recurring template that can produce future instances over time.
-- Budget transaction:
-  a planning-oriented transaction used to project expected cashflow.
+  a recurring template that can produce future instances over time, and — for a standard withdrawal/deposit with items — automatically counts toward category budget comparison.
 - Transaction item:
   a sub-line within a standard transaction used for category-level allocation.
 
@@ -177,4 +174,4 @@ High
 
 - Users create and edit transactions through transaction forms that adapt to the selected type.
 - Standard transactions may expose split items for granular categorization.
-- Scheduled and budget transactions appear as planning-oriented forms rather than simple one-time records.
+- Scheduled transactions appear as planning-oriented forms rather than simple one-time records.

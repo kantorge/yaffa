@@ -22,6 +22,12 @@ return [
         "settings_hint" => "Jeśli problem się powtarza, sprawdź model AI i dane uwierzytelniające dostawcy.",
         "subject" => "Przetwarzanie dokumentu nie powiodło się"
     ],
+    "ai_documents_awaiting_action" => [
+        "button_review_documents" => "Przejrzyj nieprzetworzone dokumenty",
+        "intro" => "Masz :count dokument(ów) AI starszych niż :days dni, które nie zostały jeszcze przetworzone.",
+        "next_action_text" => "Stare dokumenty są usuwane automatycznie po sfinalizowaniu, ale nieprzetworzone są zawsze zachowywane. Przejrzyj je lub usuń te, których już nie potrzebujesz. Do tego czasu będziesz codziennie otrzymywać to przypomnienie.",
+        "subject" => "Stare dokumenty AI czekają na Ciebie"
+    ],
     "common" => [
         "greeting" => "Witaj :name,",
         "na" => "brak",
