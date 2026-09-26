@@ -86,7 +86,7 @@
                         id="opening_balance"
                         name="config[opening_balance]"
                         type="text"
-                        value="{{ old('config.opening_balance', $account['config']['opening_balance'] ?? '' ) }}"
+                        value="{{ old('config.opening_balance', ($account ?? null)?->config?->opening_balance?->getAmount()->stripTrailingZeros() ?? '' ) }}"
                     >
                 </div>
             </div>

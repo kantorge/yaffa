@@ -201,6 +201,11 @@ class AccountTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('accounts.form');
+        // Plain decimal only; Money's string form ("HUF 0.00") would fail validation on save
+        $response->assertSee(
+            'value="' . $account->config->opening_balance->getAmount()->stripTrailingZeros() . '"',
+            false
+        );
     }
 
     public function test_user_cannot_update_an_account_with_missing_data(): void
