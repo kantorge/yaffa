@@ -120,20 +120,20 @@
 
     <div class="col-12 col-lg-9" id="accountMainContent">
         <div class="left-control-panel-toggle-shell mb-3">
-            <button
-                type="button"
-                id="toggleAccountLeftControlPanelButton"
-                class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
-                title="{{ __('Collapse left control panel') }}"
-                aria-label="{{ __('Collapse left control panel') }}"
-                aria-expanded="true"
-                aria-controls="accountLeftControlPanel accountMainContent"
-            >
-                <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
-            </button>
             <div class="card left-control-panel-toggle-card">
-                <div class="card-header d-flex justify-content-between left-control-panel-toggle-header">
-                    <div class="card-title">
+                <div class="card-header d-flex align-items-center gap-2 left-control-panel-toggle-header">
+                    <button
+                        type="button"
+                        id="toggleAccountLeftControlPanelButton"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="{{ __('Collapse left control panel') }}"
+                        aria-label="{{ __('Collapse left control panel') }}"
+                        aria-expanded="true"
+                        aria-controls="accountLeftControlPanel accountMainContent"
+                    >
+                        <i class="fas fa-angles-left" data-left-control-panel-toggle-icon></i>
+                    </button>
+                    <div class="card-title me-auto">
                         {{ __('Transaction history') }}
                     </div>
                     <div class="d-lg-none">
