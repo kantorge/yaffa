@@ -1,5 +1,42 @@
 # Changelog
 
+## [4.0.0](https://github.com/kantorge/yaffa/compare/v3.6.2...v4.0.0) (2026-09-26)
+
+
+### 🛠️ Chores
+
+* composer update ([3f6526a](https://github.com/kantorge/yaffa/commit/3f6526a3c4f850c5a4da43421518484efecbe7c1))
+* deployment and versioning improvements ([da9a2cc](https://github.com/kantorge/yaffa/commit/da9a2cca7a3ee4401930961692f98d1c266424b0))
+* ESLint cleanup and 2-space JS/Vue formatting ([#551](https://github.com/kantorge/yaffa/issues/551)) ([496de2b](https://github.com/kantorge/yaffa/commit/496de2bf060eda1e9942630d11347d06a6a46ccc))
+* release 4.0.0 ([0102b05](https://github.com/kantorge/yaffa/commit/0102b05a9f31dd2dd0aae5ded98189e8f1fe8704))
+
+
+### 📚 Documentation
+
+* fix outdated docs ([11e925e](https://github.com/kantorge/yaffa/commit/11e925e36497f7d8b9d328ad070a3c796709d9ce))
+* fixes and clarifications for the upgrade guide ([e8f44e0](https://github.com/kantorge/yaffa/commit/e8f44e061df7e937e4a926d073361bd7027498f8))
+
+
+### ✨ Features
+
+* add AI document cleanup and retention policy ([#547](https://github.com/kantorge/yaffa/issues/547)) ([e0ee75f](https://github.com/kantorge/yaffa/commit/e0ee75fdfffa6e1de8572ff3583616db3e4adb30))
+* enhance recurrence with RRULE & month-end patterns ([#548](https://github.com/kantorge/yaffa/issues/548)) ([38b3915](https://github.com/kantorge/yaffa/commit/38b391505c2aa05519a24591c23fb8689abe8830))
+
+
+### 🐛 Bug Fixes
+
+* account opening balance form behavior ([050a49d](https://github.com/kantorge/yaffa/commit/050a49d4b4667b7dc24bbbe933fd0ced4a00539a))
+* account view toggle button placement ([f4ac9f5](https://github.com/kantorge/yaffa/commit/f4ac9f5c66b9a819f808414460d7263945ee2f84))
+* datatables footer layout ([72798fa](https://github.com/kantorge/yaffa/commit/72798fabfc7b1741742a699f97ba15e040c1c2e9))
+* demo data transformation ([342653f](https://github.com/kantorge/yaffa/commit/342653f074600a812c66ebd815bcc204ddf5d5a6))
+* drop leftover plain index after re-adding the unique key it replaces ([54364bc](https://github.com/kantorge/yaffa/commit/54364bcfd6336cec1392ba795431c689bcdeb372))
+* html sanitizer cache usage ([e99e222](https://github.com/kantorge/yaffa/commit/e99e2223186fef92e7c234081dc9a6e39091deef))
+* migration operations ([e4154c5](https://github.com/kantorge/yaffa/commit/e4154c532df4c356717e989239eef2df6deb4e60))
+* render notification and toast text as plain text to prevent XSS ([#552](https://github.com/kantorge/yaffa/issues/552)) ([fbd17a3](https://github.com/kantorge/yaffa/commit/fbd17a3ce506aa21393490a2b99f9070d57af352))
+* various fixes and improvements based on testing ([8ad5211](https://github.com/kantorge/yaffa/commit/8ad5211d7326a31b03b3faf198fd2bb3493f2409))
+* various fixes and improvements based on testing ([c3d35da](https://github.com/kantorge/yaffa/commit/c3d35daeb90a54967fc84e43c1e21018704f4fdf))
+* various fixes and improvements based on testing and review ([661d914](https://github.com/kantorge/yaffa/commit/661d914b28c43169ef9957def8a4ceb80740d1fa))
+
 ## [3.6.2](https://github.com/kantorge/yaffa/compare/v3.6.1...v3.6.2) (2026-09-13)
 
 
