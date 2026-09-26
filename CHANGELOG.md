@@ -1,5 +1,97 @@
 # Changelog
 
+## [4.0.0](https://github.com/kantorge/yaffa/compare/v3.6.2...v4.0.0) (2026-09-26)
+
+<<<<<<< Updated upstream
+
+### 🛠️ Chores
+
+* composer update ([3f6526a](https://github.com/kantorge/yaffa/commit/3f6526a3c4f850c5a4da43421518484efecbe7c1))
+* deployment and versioning improvements ([da9a2cc](https://github.com/kantorge/yaffa/commit/da9a2cca7a3ee4401930961692f98d1c266424b0))
+* ESLint cleanup and 2-space JS/Vue formatting ([#551](https://github.com/kantorge/yaffa/issues/551)) ([496de2b](https://github.com/kantorge/yaffa/commit/496de2bf060eda1e9942630d11347d06a6a46ccc))
+* release 4.0.0 ([0102b05](https://github.com/kantorge/yaffa/commit/0102b05a9f31dd2dd0aae5ded98189e8f1fe8704))
+
+
+### 📚 Documentation
+
+* fix outdated docs ([11e925e](https://github.com/kantorge/yaffa/commit/11e925e36497f7d8b9d328ad070a3c796709d9ce))
+* fixes and clarifications for the upgrade guide ([e8f44e0](https://github.com/kantorge/yaffa/commit/e8f44e061df7e937e4a926d073361bd7027498f8))
+=======
+Major release: standalone budgets, a new recurrence engine, exact decimal arithmetic, API tokens with two-factor authentication, and Laravel 13.
+
+**Before upgrading, read the [3.x to 4.x upgrade guide](https://github.com/kantorge/yaffa/blob/main/UPGRADE.md#upgrade-from-yaffa-3x-to-4x).** Update to the latest 3.x release first, run `php artisan app:check:budget-migration`, and back up your database. The data migrations cannot be undone with `migrate:rollback`.
+
+
+### ⚠ BREAKING CHANGES
+
+* **budgets:** the `transactions.budget` flag is removed and replaced by a standalone `Budget` entity. Budget-only transactions are converted to `Budget` rows (one per category) and deleted from `transactions`. The "Budget" checkbox on the transaction form is removed; budgets are managed from Reports → Schedules and Budgets ([#525](https://github.com/kantorge/yaffa/issues/525), [#528](https://github.com/kantorge/yaffa/issues/528))
+* **schedules:** schedule and budget recurrence is stored in a single RFC 5545 `rrule` column, and the `frequency`/`interval`/`count`/`end_date` columns are dropped. The recurrence fields in the UI and API are unchanged ([#548](https://github.com/kantorge/yaffa/issues/548))
+* **api:** money and quantity fields in `/api/v1/*` responses are decimal strings instead of JSON numbers. Report endpoints are unaffected ([#522](https://github.com/kantorge/yaffa/issues/522))
+* **api:** `GET /api/v1/transactions/scheduled-items` no longer accepts `type=budget|budget_only|both|any`. The budget-vs-actual chart response adds `budgetBreakdown` and `scheduleBreakdown` arrays ([#525](https://github.com/kantorge/yaffa/issues/525))
+* **auth:** reCAPTCHA is removed from login, registration and password reset. `RECAPTCHA_*` variables are no longer read ([8530275](https://github.com/kantorge/yaffa/commit/8530275e))
+* **platform:** requires Laravel 13 and the `ext-bcmath` PHP extension. Laravel 13 changes the default `CACHE_PREFIX`, `REDIS_PREFIX` and `SESSION_COOKIE` values, so pin them in `.env` to keep existing cache and sessions ([8530275](https://github.com/kantorge/yaffa/commit/8530275e), [#522](https://github.com/kantorge/yaffa/issues/522))
+* **docker:** the Caddy reverse proxy is now the `https` Compose profile instead of a commented-out block. Re-apply any manual Caddy edits and start it with `docker compose --profile https up -d` ([#531](https://github.com/kantorge/yaffa/issues/531))
+* **ai documents:** deleting an AI document no longer deletes the transaction created from it ([#547](https://github.com/kantorge/yaffa/issues/547))
+>>>>>>> Stashed changes
+
+
+### ✨ Features
+
+<<<<<<< Updated upstream
+* add AI document cleanup and retention policy ([#547](https://github.com/kantorge/yaffa/issues/547)) ([e0ee75f](https://github.com/kantorge/yaffa/commit/e0ee75fdfffa6e1de8572ff3583616db3e4adb30))
+* enhance recurrence with RRULE & month-end patterns ([#548](https://github.com/kantorge/yaffa/issues/548)) ([38b3915](https://github.com/kantorge/yaffa/commit/38b391505c2aa05519a24591c23fb8689abe8830))
+=======
+* **budgets:** standalone budgets with a combined Schedules and Budgets report, budget-vs-actual chart drill-down, inflation-adjusted forecasting and dashboard widgets ([#525](https://github.com/kantorge/yaffa/issues/525), [#528](https://github.com/kantorge/yaffa/issues/528))
+* **schedules:** ordinal weekday patterns such as "first Wednesday of every month" or "last Friday of November" ([#518](https://github.com/kantorge/yaffa/issues/518))
+* **schedules:** "N days before month end" and "last business day of month" patterns for schedules and budgets ([#548](https://github.com/kantorge/yaffa/issues/548))
+* **schedules:** "skip to nearest future occurrence" when entering a scheduled transaction, step buttons and pattern validation for the next occurrence date, and a new dashboard calendar ([#518](https://github.com/kantorge/yaffa/issues/518))
+* **security:** personal API access tokens with `read`/`write`/`settings` scopes, and optional TOTP two-factor authentication with recovery codes, both managed from user settings ([#512](https://github.com/kantorge/yaffa/issues/512))
+* **precision:** exact decimal arithmetic for money and quantities, which removes rounding drift in split totals, investment values and monthly summaries ([#522](https://github.com/kantorge/yaffa/issues/522))
+* **reports:** Find Transactions adds transaction type and investment filters, a category waterfall chart and item-level breakdown filtering. The dashboard waterfall widget now links into the report ([#520](https://github.com/kantorge/yaffa/issues/520))
+* **ai documents:** opt-in, per-user retention policy that deletes old finalized documents, and sends reminder emails for old documents that are not finalized ([#547](https://github.com/kantorge/yaffa/issues/547))
+* **accounts:** account history uses virtual scrolling for large histories, and tables across the app use a single contextual action menu per row ([#543](https://github.com/kantorge/yaffa/issues/543))
+* **docker:** the container generates and keeps its `APP_KEY` on first boot, so `docker compose up -d` works without editing `.env` ([#527](https://github.com/kantorge/yaffa/issues/527))
+* **docker:** HTTPS through Caddy as a Compose profile, with a configurable `APP_PORT` ([#531](https://github.com/kantorge/yaffa/issues/531))
+>>>>>>> Stashed changes
+
+
+### 🐛 Bug Fixes
+
+<<<<<<< Updated upstream
+* account opening balance form behavior ([050a49d](https://github.com/kantorge/yaffa/commit/050a49d4b4667b7dc24bbbe933fd0ced4a00539a))
+* account view toggle button placement ([f4ac9f5](https://github.com/kantorge/yaffa/commit/f4ac9f5c66b9a819f808414460d7263945ee2f84))
+* datatables footer layout ([72798fa](https://github.com/kantorge/yaffa/commit/72798fabfc7b1741742a699f97ba15e040c1c2e9))
+* demo data transformation ([342653f](https://github.com/kantorge/yaffa/commit/342653f074600a812c66ebd815bcc204ddf5d5a6))
+* drop leftover plain index after re-adding the unique key it replaces ([54364bc](https://github.com/kantorge/yaffa/commit/54364bcfd6336cec1392ba795431c689bcdeb372))
+* html sanitizer cache usage ([e99e222](https://github.com/kantorge/yaffa/commit/e99e2223186fef92e7c234081dc9a6e39091deef))
+* migration operations ([e4154c5](https://github.com/kantorge/yaffa/commit/e4154c532df4c356717e989239eef2df6deb4e60))
+* render notification and toast text as plain text to prevent XSS ([#552](https://github.com/kantorge/yaffa/issues/552)) ([fbd17a3](https://github.com/kantorge/yaffa/commit/fbd17a3ce506aa21393490a2b99f9070d57af352))
+* various fixes and improvements based on testing ([8ad5211](https://github.com/kantorge/yaffa/commit/8ad5211d7326a31b03b3faf198fd2bb3493f2409))
+* various fixes and improvements based on testing ([c3d35da](https://github.com/kantorge/yaffa/commit/c3d35daeb90a54967fc84e43c1e21018704f4fdf))
+* various fixes and improvements based on testing and review ([661d914](https://github.com/kantorge/yaffa/commit/661d914b28c43169ef9957def8a4ceb80740d1fa))
+=======
+* render notification and toast text as plain text to prevent XSS ([#552](https://github.com/kantorge/yaffa/issues/552))
+* "first Wednesday" style schedules no longer fall back to a fixed day of the month ([#525](https://github.com/kantorge/yaffa/issues/525))
+* over-precise money input is rejected instead of silently rounded, and amounts display with their stored precision ([#542](https://github.com/kantorge/yaffa/issues/542), [4753265](https://github.com/kantorge/yaffa/commit/47532656))
+* forms in modals ask for confirmation before discarding unsaved input, and deleting currencies, tags, categories and groups works without a page reload ([#535](https://github.com/kantorge/yaffa/issues/535))
+* investment price web scraping no longer depends on the unmaintained roach-php package ([#537](https://github.com/kantorge/yaffa/issues/537))
+* AI documents created from pasted text stored an invalid file path. A migration repairs existing ones ([#547](https://github.com/kantorge/yaffa/issues/547))
+* many smaller fixes to schedules, budgets, forms, tables and migrations found during 4.0 testing and review
+
+
+### 🚀 Performance Improvements
+
+* redundant indexes removed, and primary/unique keys added to pivot tables. Duplicate pivot rows are cleaned up during migration ([#526](https://github.com/kantorge/yaffa/issues/526))
+* number and date formatters are cached, which speeds up large tables ([#543](https://github.com/kantorge/yaffa/issues/543))
+
+
+### 🛠️ Chores
+
+* upgrade to Laravel 13 and PHPUnit 13 ([8530275](https://github.com/kantorge/yaffa/commit/8530275e), [#538](https://github.com/kantorge/yaffa/issues/538), [#539](https://github.com/kantorge/yaffa/issues/539))
+* ESLint cleanup and 2-space JS/Vue formatting ([#551](https://github.com/kantorge/yaffa/issues/551))
+* Docker image versioning and deployment improvements ([2387ec1](https://github.com/kantorge/yaffa/commit/2387ec17), [da9a2cc](https://github.com/kantorge/yaffa/commit/da9a2cca))
+>>>>>>> Stashed changes
+
 ## [3.6.2](https://github.com/kantorge/yaffa/compare/v3.6.1...v3.6.2) (2026-09-13)
 
 
