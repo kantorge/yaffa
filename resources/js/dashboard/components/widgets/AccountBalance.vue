@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-4" id="widgetAccountBalance">
+  <div id="widgetAccountBalance" class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <div class="card-title">
         {{ __('widget.accountBalance.cardTitle') }}
@@ -8,39 +8,39 @@
         {{ toFormattedCurrency(totalValue, locale, baseCurrency) }}
       </div>
     </div>
-    <ul class="list-group list-group-flush" v-if="state === 'loading'">
+    <ul v-if="state === 'loading'" class="list-group list-group-flush">
       <li
+        v-for="i in 5"
+        :key="i"
         aria-hidden="true"
         class="list-group-item placeholder-glow"
-        v-for="i in 5"
-        v-bind:key="i"
       >
         <span class="placeholder col-12"></span>
       </li>
     </ul>
     <ul
-      class="list-group list-group-flush"
       v-if="state === 'data-not-available'"
+      class="list-group list-group-flush"
     >
       <li class="list-group-item list-group-item-warning">
         {{ errorMessage }}
       </li>
     </ul>
-    <ul class="list-group list-group-flush" v-if="state === 'error'">
+    <ul v-if="state === 'error'" class="list-group list-group-flush">
       <li class="list-group-item list-group-item-danger">
         {{ __('widget.accountBalance.loadErrorPrefix') }}
         {{ errorMessage }}
       </li>
     </ul>
     <ul
-      class="list-group list-group-flush"
-      id="accordionAccountBalance"
       v-if="state === 'data-available'"
+      id="accordionAccountBalance"
+      class="list-group list-group-flush"
     >
       <li
-        class="list-group-item"
         v-for="(accountGroup, accountGroupId) in accountBalanceDataByGroups"
-        v-bind:key="accountGroupId"
+        :key="accountGroupId"
+        class="list-group-item"
       >
         <div class="d-flex justify-content-between">
           <span
@@ -65,10 +65,10 @@
           aria-expanded="false"
         >
           <a
+            v-for="(account, index) in accountGroup.accounts"
+            :key="index"
             class="list-group-item d-flex justify-content-between list-group-item-action"
             :href="getRoute(account)"
-            v-for="(account, index) in accountGroup.accounts"
-            v-bind:key="index"
           >
             <span>
               {{ account.name }}
@@ -142,10 +142,6 @@
       };
     },
 
-    created() {
-      this.getAccountBalanceData();
-    },
-
     computed: {
       accountBalanceDataByGroups() {
         let groups = {};
@@ -165,7 +161,7 @@
             return;
           }
 
-          if (!groups.hasOwnProperty(account.account_group_id)) {
+          if (!Object.hasOwn(groups, account.account_group_id)) {
             groups[account.account_group_id] = {
               name: account.account_group_name,
               accounts: [],
@@ -188,6 +184,17 @@
       },
     },
 
+    created() {
+      this.getAccountBalanceData();
+    },
+
+    beforeUnmount() {
+      // Cancel any pending retry when the component is destroyed
+      if (this.cancelPoll) {
+        this.cancelPoll();
+      }
+    },
+
     methods: {
       getAccountBalanceData: function () {
         // Verify if base currency is set. Without this, the widget cannot be displayed.
@@ -202,7 +209,10 @@
         this.state = 'loading';
 
         this.cancelPoll = pollUntilReady(
-          () => axios.get(this.route('api.v1.accounts.balance')).then((response) => response.data),
+          () =>
+            axios
+              .get(this.route('api.v1.accounts.balance'))
+              .then((response) => response.data),
           {
             onBusy: (message) => {
               this.state = 'data-not-available';
@@ -218,7 +228,7 @@
 
               toastHelpers.showErrorToast(error.message);
             },
-          }
+          },
         );
       },
 
@@ -233,13 +243,6 @@
       },
       toFormattedCurrency,
       __,
-    },
-
-    beforeDestroy() {
-      // Cancel any pending retry when the component is destroyed
-      if (this.cancelPoll) {
-        this.cancelPoll();
-      }
     },
   };
 </script>

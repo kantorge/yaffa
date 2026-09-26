@@ -1,28 +1,31 @@
 <template>
-  <div class="card" id="twoFactorSettings">
+  <div id="twoFactorSettings" class="card">
     <div class="card-header">
       <div class="card-title">{{ __('Two-Factor Authentication') }}</div>
     </div>
-    <div class="card-body" v-if="sandbox_mode">
+    <div v-if="sandbox_mode" class="card-body">
       <div class="alert alert-warning mb-0">
-        {{ __('You are in sandbox mode. You cannot enable two-factor authentication.') }}
+        {{
+          __(
+            'You are in sandbox mode. You cannot enable two-factor authentication.',
+          )
+        }}
       </div>
     </div>
-    <div class="card-body" v-else>
+    <div v-else class="card-body">
       <div v-if="loading" class="text-muted">
         {{ __('Loading two-factor authentication status...') }}
       </div>
 
-      <div
-        v-else-if="loadError"
-        class="alert alert-danger mb-0"
-        role="alert"
-      >
+      <div v-else-if="loadError" class="alert alert-danger mb-0" role="alert">
         {{ __('Unable to load two-factor authentication status.') }}
       </div>
 
       <template v-else>
-        <div v-if="enabled" class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div
+          v-if="enabled"
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
           <div>
             <span class="badge text-bg-success me-2">
               <i class="fa fa-check-circle"></i>
@@ -91,7 +94,11 @@
               dusk="recovery-codes-value"
               :value="revealedRecoveryCodes.join('\n')"
             ></textarea>
-            <button type="button" class="btn btn-outline-secondary" @click="copyRecoveryCodes">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              @click="copyRecoveryCodes"
+            >
               <i class="fa me-1 fa-copy"></i>{{ __('Copy') }}
             </button>
           </div>
@@ -148,7 +155,11 @@
 
             <div v-else-if="enrollment">
               <p>
-                {{ __('Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy).') }}
+                {{
+                  __(
+                    'Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy).',
+                  )
+                }}
               </p>
               <div class="text-center mb-3" v-html="enrollment.qr_svg"></div>
               <p class="text-muted small">
@@ -191,7 +202,9 @@
               :disabled="confirming || !confirmCode"
               @click="confirmEnrollment"
             >
-              <i :class="['fa', confirming ? 'fa-spinner fa-spin' : 'fa-check']"></i>
+              <i
+                :class="['fa', confirming ? 'fa-spinner fa-spin' : 'fa-check']"
+              ></i>
               {{ __('Confirm') }}
             </button>
           </div>
@@ -243,12 +256,16 @@
         this.loadError = false;
 
         try {
-          const response = await axios.get(this.route('api.v1.users.me.two-factor.show'));
+          const response = await axios.get(
+            this.route('api.v1.users.me.two-factor.show'),
+          );
           this.enabled = Boolean(response.data?.enabled);
         } catch (error) {
           console.error(error);
           this.loadError = true;
-          toastHelpers.showErrorToast(__('Unable to load two-factor authentication status.'));
+          toastHelpers.showErrorToast(
+            __('Unable to load two-factor authentication status.'),
+          );
         } finally {
           this.loading = false;
         }
@@ -262,11 +279,15 @@
         this.enrollment = null;
 
         try {
-          const response = await axios.post(this.route('api.v1.users.me.two-factor.enroll'));
+          const response = await axios.post(
+            this.route('api.v1.users.me.two-factor.enroll'),
+          );
           this.enrollment = response.data;
         } catch (error) {
           console.error(error);
-          toastHelpers.showErrorToast(__('Unable to start two-factor enrollment.'));
+          toastHelpers.showErrorToast(
+            __('Unable to start two-factor enrollment.'),
+          );
           if (this.enrollModal) {
             this.enrollModal.hide();
           }
@@ -289,9 +310,12 @@
         this.confirmError = null;
 
         try {
-          const response = await axios.post(this.route('api.v1.users.me.two-factor.confirm'), {
-            code: this.confirmCode,
-          });
+          const response = await axios.post(
+            this.route('api.v1.users.me.two-factor.confirm'),
+            {
+              code: this.confirmCode,
+            },
+          );
 
           this.enabled = true;
           this.revealedRecoveryCodes = response.data.recovery_codes || [];
@@ -301,7 +325,9 @@
             this.enrollModal.hide();
           }
           this.resetEnrollment();
-          toastHelpers.showSuccessToast(__('Two-factor authentication enabled.'));
+          toastHelpers.showSuccessToast(
+            __('Two-factor authentication enabled.'),
+          );
         } catch (error) {
           if (error.response?.status === 422) {
             this.confirmError =
@@ -310,7 +336,9 @@
               __('The provided code is invalid.');
           } else {
             console.error(error);
-            toastHelpers.showErrorToast(__('Unable to confirm two-factor authentication.'));
+            toastHelpers.showErrorToast(
+              __('Unable to confirm two-factor authentication.'),
+            );
           }
         } finally {
           this.confirming = false;
@@ -322,11 +350,19 @@
         }
 
         try {
-          await navigator.clipboard.writeText(this.revealedRecoveryCodes.join('\n'));
-          toastHelpers.showSuccessToast(__('Recovery codes copied to clipboard.'));
+          await navigator.clipboard.writeText(
+            this.revealedRecoveryCodes.join('\n'),
+          );
+          toastHelpers.showSuccessToast(
+            __('Recovery codes copied to clipboard.'),
+          );
         } catch (error) {
           console.error(error);
-          toastHelpers.showErrorToast(__('Unable to copy the recovery codes automatically. Please copy them manually.'));
+          toastHelpers.showErrorToast(
+            __(
+              'Unable to copy the recovery codes automatically. Please copy them manually.',
+            ),
+          );
         }
       },
       dismissRecoveryCodes() {
@@ -348,7 +384,8 @@
             confirmButton: 'btn btn-danger',
             cancelButton: 'btn btn-secondary ms-3',
           },
-          inputValidator: (value) => (!value ? __('Password is required.') : undefined),
+          inputValidator: (value) =>
+            !value ? __('Password is required.') : undefined,
         });
 
         return isConfirmed ? password : null;
@@ -366,9 +403,13 @@
         this.busy = true;
 
         try {
-          await axios.post(this.route('api.v1.users.me.two-factor.disable'), { password });
+          await axios.post(this.route('api.v1.users.me.two-factor.disable'), {
+            password,
+          });
           this.enabled = false;
-          toastHelpers.showSuccessToast(__('Two-factor authentication disabled.'));
+          toastHelpers.showSuccessToast(
+            __('Two-factor authentication disabled.'),
+          );
         } catch (error) {
           if (error.response?.status === 422) {
             toastHelpers.showErrorToast(
@@ -377,7 +418,9 @@
             );
           } else {
             console.error(error);
-            toastHelpers.showErrorToast(__('Unable to disable two-factor authentication.'));
+            toastHelpers.showErrorToast(
+              __('Unable to disable two-factor authentication.'),
+            );
           }
         } finally {
           this.busy = false;
@@ -410,7 +453,9 @@
             );
           } else {
             console.error(error);
-            toastHelpers.showErrorToast(__('Unable to regenerate recovery codes.'));
+            toastHelpers.showErrorToast(
+              __('Unable to regenerate recovery codes.'),
+            );
           }
         } finally {
           this.busy = false;

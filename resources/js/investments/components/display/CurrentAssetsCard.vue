@@ -8,7 +8,9 @@
     <div class="card-body">
       <dl class="row mb-0">
         <dt class="col-8">{{ __('Owned quantity') }}</dt>
-        <dd class="col-4">{{ formatQuantity(investment.current_quantity) }}</dd>
+        <dd class="col-4">
+          {{ formatQuantity(investment.current_quantity) }}
+        </dd>
         <dt class="col-8">{{ __('Latest price') }}</dt>
         <dd class="col-4">
           {{
@@ -36,7 +38,11 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedNumber,
+  } from '@/shared/lib/i18n';
 
   export default {
     name: 'CurrentAssetsCard',

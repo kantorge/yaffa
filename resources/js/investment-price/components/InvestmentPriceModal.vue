@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="investmentPriceModal" tabindex="-1">
+  <div id="investmentPriceModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -22,14 +22,14 @@
             <div class="mb-3">
               <label for="priceDate" class="form-label">{{ __('Date') }}</label>
               <input
-                type="date"
-                class="form-control"
                 id="priceDate"
                 v-model="formData.date"
+                type="date"
+                class="form-control"
                 :class="{ 'is-invalid': errors.date }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.date">
+              <div v-if="errors.date" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.date)">
                   <div v-for="error in errors.date" :key="error">
                     {{ error }}
@@ -41,21 +41,21 @@
             <div class="mb-3">
               <label for="priceValue" class="form-label">
                 {{ __('Investment price') }}
-                <small class="text-muted" v-if="investment.currency"
+                <small v-if="investment.currency" class="text-muted"
                   >({{ investment.currency.iso_code }})</small
                 >
               </label>
               <input
+                id="priceValue"
+                v-model.number="formData.price"
                 type="number"
                 step="0.0001"
                 min="0.0000000001"
                 class="form-control"
-                id="priceValue"
-                v-model.number="formData.price"
                 :class="{ 'is-invalid': errors.price }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.price">
+              <div v-if="errors.price" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.price)">
                   <div v-for="error in errors.price" :key="error">
                     {{ error }}
@@ -73,23 +73,17 @@
             data-coreui-dismiss="modal"
             :disabled="isSubmitting"
           >
-            <i
-              v-if="isSubmitting"
-              class="fa fa-spinner fa-spin me-1"
-            ></i>
+            <i v-if="isSubmitting" class="fa fa-spinner fa-spin me-1"></i>
             {{ __('Cancel') }}
           </button>
           <button
+            id="priceSubmit"
             type="button"
             class="btn btn-primary"
-            id="priceSubmit"
-            @click="submitForm"
             :disabled="isSubmitting"
+            @click="submitForm"
           >
-            <i
-              v-if="isSubmitting"
-              class="fa fa-spinner fa-spin me-1"
-            ></i>
+            <i v-if="isSubmitting" class="fa fa-spinner fa-spin me-1"></i>
             {{ isEditMode ? __('Update') : __('Add') }}
           </button>
         </div>
@@ -229,7 +223,9 @@
         if (this.modalTransitioning) {
           document
             .getElementById('investmentPriceModal')
-            .addEventListener('shown.coreui.modal', () => this.modal.hide(), { once: true });
+            .addEventListener('shown.coreui.modal', () => this.modal.hide(), {
+              once: true,
+            });
           return;
         }
 

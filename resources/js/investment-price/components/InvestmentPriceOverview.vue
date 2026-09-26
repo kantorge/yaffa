@@ -6,7 +6,12 @@
   >
     <template #last-value="{ record }">
       {{
-        toFormattedCurrency(record.price, locale, investment.currency, 'detailed')
+        toFormattedCurrency(
+          record.price,
+          locale,
+          investment.currency,
+          'detailed',
+        )
       }}
     </template>
   </record-overview-card>
@@ -39,7 +44,12 @@
     },
     computed: {
       headerRows() {
-        return [{ label: this.__('Investment'), value: this.investment.name }];
+        return [
+          {
+            label: this.__('Investment'),
+            value: this.investment.name,
+          },
+        ];
       },
     },
     methods: {

@@ -26,7 +26,7 @@
       action: String,
       transaction: {
         type: Object,
-        default: {
+        default: () => ({
           transaction_type: 'buy',
           date: new Date(),
           schedule: false,
@@ -41,21 +41,13 @@
             commission: null,
             tax: null,
           },
-        },
+        }),
       },
       aiDocumentId: {
         type: Number,
         default: null,
       },
     },
-
-    computed: {
-      isSimplified() {
-        return this.action === 'enter';
-      },
-    },
-
-    created() {},
 
     data() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -92,6 +84,14 @@
 
       return data;
     },
+
+    computed: {
+      isSimplified() {
+        return this.action === 'enter';
+      },
+    },
+
+    created() {},
 
     methods: {
       // Decide how to proceed on success
@@ -189,7 +189,9 @@
         } else {
           storeNotification(
             'success',
-            __('Transaction updated (#:id)', { id: transaction.id }),
+            __('Transaction updated (#:id)', {
+              id: transaction.id,
+            }),
             {
               dismissible: true,
             },

@@ -1,5 +1,5 @@
 <template>
-  <div class="waterfall-chart" ref="chartdiv"></div>
+  <div ref="chartdiv" class="waterfall-chart"></div>
 </template>
 
 <script>
@@ -8,12 +8,14 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
   import { buildWaterfallChartData } from '@/shared/lib/charts/waterfall';
 
   export default {
     name: 'WaterfallChart',
-    emits: ['column-click'],
     props: {
       rawData: {
         type: Array,
@@ -50,21 +52,13 @@
         default: false,
       },
     },
+    emits: ['column-click'],
     computed: {
       chartData() {
         return buildWaterfallChartData(this.rawData, {
           resultLabel: this.resultLabel,
         });
       },
-    },
-    mounted() {
-      this.createChart();
-      this._colorModeHandler = () => {
-        if (this.chart) this.chart.dispose();
-        this.createChart();
-        this.toggleNoDataMessage();
-      };
-      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     watch: {
       chartData() {
@@ -79,6 +73,15 @@
       noDataMessage() {
         this.toggleNoDataMessage();
       },
+    },
+    mounted() {
+      this.createChart();
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        this.toggleNoDataMessage();
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
     },
     beforeUnmount() {
       document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);

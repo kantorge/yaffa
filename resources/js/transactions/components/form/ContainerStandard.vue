@@ -29,7 +29,7 @@
       },
       transaction: {
         type: Object,
-        default: {
+        default: () => ({
           transaction_type: 'withdrawal',
           date: new Date(),
           schedule: false,
@@ -41,21 +41,13 @@
             amount_from: null,
             amount_to: null,
           },
-        },
+        }),
       },
       aiDocumentId: {
         type: Number,
         default: null,
       },
     },
-
-    computed: {
-      isSimplified() {
-        return this.action === 'enter';
-      },
-    },
-
-    created() {},
 
     data() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -101,6 +93,14 @@
 
       return data;
     },
+
+    computed: {
+      isSimplified() {
+        return this.action === 'enter';
+      },
+    },
+
+    created() {},
 
     methods: {
       // Determine, which account to use as a callback, if user wants to return to selected account
@@ -213,7 +213,9 @@
         } else {
           storeNotification(
             'success',
-            __('Transaction updated (#:id)', { id: transaction.id }),
+            __('Transaction updated (#:id)', {
+              id: transaction.id,
+            }),
             {
               dismissible: true,
             },

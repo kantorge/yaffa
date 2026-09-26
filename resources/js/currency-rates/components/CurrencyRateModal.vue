@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="currencyRateModal" tabindex="-1">
+  <div id="currencyRateModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -20,14 +20,14 @@
             <div class="mb-3">
               <label for="rateDate" class="form-label">{{ __('Date') }}</label>
               <input
-                type="date"
-                class="form-control"
                 id="rateDate"
                 v-model="formData.date"
+                type="date"
+                class="form-control"
                 :class="{ 'is-invalid': errors.date }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.date">
+              <div v-if="errors.date" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.date)">
                   <div v-for="error in errors.date" :key="error">
                     {{ error }}
@@ -45,16 +45,16 @@
                 >
               </label>
               <input
+                id="rateValue"
+                v-model.number="formData.rate"
                 type="number"
                 step="0.0001"
                 min="0.0000000001"
                 class="form-control"
-                id="rateValue"
-                v-model.number="formData.rate"
                 :class="{ 'is-invalid': errors.rate }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.rate">
+              <div v-if="errors.rate" class="invalid-feedback">
                 <div v-if="Array.isArray(errors.rate)">
                   <div v-for="error in errors.rate" :key="error">
                     {{ error }}
@@ -76,13 +76,10 @@
           <button
             type="button"
             class="btn btn-primary"
-            @click="submitForm"
             :disabled="isSubmitting"
+            @click="submitForm"
           >
-            <i
-              v-if="isSubmitting"
-              class="fa fa-spinner fa-spin me-1"
-            ></i>
+            <i v-if="isSubmitting" class="fa fa-spinner fa-spin me-1"></i>
             {{ isEditMode ? __('Update') : __('Add') }}
           </button>
         </div>
@@ -94,6 +91,7 @@
 <script>
   import { __ } from '@/shared/lib/i18n';
   import { confirmAction } from '@/shared/lib/confirm';
+  import * as toastHelpers from '@/shared/lib/toast';
 
   export default {
     name: 'CurrencyRateModal',

@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="submitUpload" class="row g-3 align-items-end">
+  <form class="row g-3 align-items-end" @submit.prevent="submitUpload">
     <div class="col-12 col-lg-5">
       <label class="form-label" for="import-file">
         {{ __('File') }}
@@ -7,8 +7,12 @@
           >(
           {{
             sourceType === 'qif'
-              ? __('Accepted formats: :format', { format: '.qif, .txt' })
-              : __('Accepted formats: :format', { format: '.csv' })
+              ? __('Accepted formats: :format', {
+                  format: '.qif, .txt',
+                })
+              : __('Accepted formats: :format', {
+                  format: '.csv',
+                })
           }}
           )
         </span>
@@ -78,8 +82,13 @@
           :disabled="loading || loadingQifProfiles"
           @change="onQifProfileChange($event.target.value)"
         >
-          <option value="">{{ __('— Standard QIF mapping (default) —') }}</option>
-          <optgroup v-if="qifSystemProfiles.length" :label="__('System profiles')">
+          <option value="">
+            {{ __('— Standard QIF mapping (default) —') }}
+          </option>
+          <optgroup
+            v-if="qifSystemProfiles.length"
+            :label="__('System profiles')"
+          >
             <option
               v-for="profile in qifSystemProfiles"
               :key="profile.id"
@@ -190,7 +199,11 @@
         default: null,
       },
     },
-    emits: ['submit', 'update:selectedProfileId', 'update:selectedQifProfileId'],
+    emits: [
+      'submit',
+      'update:selectedProfileId',
+      'update:selectedQifProfileId',
+    ],
     data() {
       return {
         selectedFile: null,

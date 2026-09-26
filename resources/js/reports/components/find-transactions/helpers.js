@@ -25,7 +25,10 @@ export function buildFilterCacheKey(filters) {
     tags: (filters.tags || []).slice().sort(),
     types: (filters.types || []).slice().sort(),
     investments: (filters.investments || []).slice().sort(),
-    locale: filters.locale || (window.YAFFA && window.YAFFA.userSettings.locale) || null,
+    locale:
+      filters.locale ||
+      (window.YAFFA && window.YAFFA.userSettings.locale) ||
+      null,
   });
 }
 
@@ -73,7 +76,12 @@ export function round2(num) {
  */
 export function getTransactionTypeFlags(transaction) {
   if (!transaction || !transaction.transaction_type) {
-    return { isDeposit: false, isWithdrawal: false, isTransfer: false, isInvestment: false };
+    return {
+      isDeposit: false,
+      isWithdrawal: false,
+      isTransfer: false,
+      isInvestment: false,
+    };
   }
 
   return {
@@ -102,7 +110,10 @@ export function getTransactionTypeFlags(transaction) {
  * @param {string[]} [filters.tagIds] - Selected tag ids
  * @returns {boolean}
  */
-export function itemMatchesActiveFilters(item, { categoryIds = [], tagIds = [] } = {}) {
+export function itemMatchesActiveFilters(
+  item,
+  { categoryIds = [], tagIds = [] } = {},
+) {
   if (categoryIds.length === 0 && tagIds.length === 0) {
     return true;
   }
@@ -171,7 +182,10 @@ export function aggregateTransactionsByCategory(transactions, options = {}) {
       }
 
       // Category ID is mandatory on a database level, but we add an untranslated fallback name for safety in case of data issues
-      const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
+      const categoryName =
+        item.category.full_name ||
+        item.category.name ||
+        'Error: no category assigned';
       const categoryId = item.category.id;
 
       let amount = Number(item.amount_in_base || 0);
@@ -241,7 +255,12 @@ export function aggregateTransactionsByCategory(transactions, options = {}) {
  * @param {number} monthCount - Total number of months (for average calculation)
  * @returns {{rows: Array<{name, displayName, values, total, avg, nonZeroAvg, nonZeroCount, categoryIds, isIncome}>, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}}
  */
-export function processCategoryGroup(categoryNames, catData, months, monthCount) {
+export function processCategoryGroup(
+  categoryNames,
+  catData,
+  months,
+  monthCount,
+) {
   const rows = categoryNames.map((catName) => {
     const entry = catData[catName];
     const values = entry.values;
@@ -369,7 +388,10 @@ export function buildSectionHierarchy(
       groups[parentName].reduce(
         (sum, c) =>
           sum +
-          months.reduce((sum, month) => sum + (categoryData[c].values[month] || 0), 0),
+          months.reduce(
+            (sum, month) => sum + (categoryData[c].values[month] || 0),
+            0,
+          ),
         0,
       ),
     ]),
@@ -400,11 +422,18 @@ export function buildSectionHierarchy(
 
   // Add "Other" section for parentless categories
   if (noParent.length > 0) {
-    const group = processCategoryGroup(noParent, categoryData, months, monthCount);
+    const group = processCategoryGroup(
+      noParent,
+      categoryData,
+      months,
+      monthCount,
+    );
     const isIncome = noParent.every(
       (c) => categoryData[c].depositTotal > categoryData[c].withdrawalTotal,
     );
-    const otherTitle = isIncome ? translateFn('Other income') : translateFn('Other expenses');
+    const otherTitle = isIncome
+      ? translateFn('Other income')
+      : translateFn('Other expenses');
     sections.push({
       title: otherTitle,
       cssClass: 's-other',
@@ -495,17 +524,21 @@ export function aggregateTransactionsForWaterfall(
         const topCategory = item.category.parent || item.category;
         const label = topCategory.name;
         const amount = Number(item.amount_in_base || 0);
-        const signed = transaction.transaction_type === 'withdrawal' ? -amount : amount;
+        const signed =
+          transaction.transaction_type === 'withdrawal' ? -amount : amount;
 
         dataByCategory[label] =
           (dataByCategory[label] || 0) + (isFinite(signed) ? signed : 0);
       });
     } else if (transaction.config_type === 'investment') {
-      if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type)) return;
+      if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type))
+        return;
 
       const rate = transaction.currencyRateToBase ?? 1;
       const amount = Number(transaction.cashflow_value || 0) * rate;
-      const label = translateFn(amount < 0 ? 'Investment payment' : 'Investment income');
+      const label = translateFn(
+        amount < 0 ? 'Investment payment' : 'Investment income',
+      );
 
       dataByCategory[label] =
         (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);

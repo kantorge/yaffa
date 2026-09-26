@@ -99,7 +99,9 @@
         </div>
         <div class="mb-2 mt-4 fw-bold">
           {{
-            __('Preview (first :count data rows):', { count: previewRowCount })
+            __('Preview (first :count data rows):', {
+              count: previewRowCount,
+            })
           }}
         </div>
         <CsvPreviewTable :headers="displayHeaders" :data-rows="previewRows" />
@@ -153,10 +155,7 @@
                 :disabled="aiSuggesting"
                 @click="requestAiSuggestion"
               >
-                <i
-                  v-if="aiSuggesting"
-                  class="fa fa-spinner fa-spin me-1"
-                ></i>
+                <i v-if="aiSuggesting" class="fa fa-spinner fa-spin me-1"></i>
                 {{
                   aiSuggesting
                     ? __('Requesting suggestion…')
@@ -496,13 +495,27 @@
                   :class="col.canonical !== 'ignore' ? 'border-success' : ''"
                   @change="updateMapping(i, $event.target.value)"
                 >
-                  <option value="ignore">{{ __('— Ignore —') }}</option>
-                  <option value="date">{{ __('date') }}</option>
-                  <option value="amount">{{ __('amount') }}</option>
-                  <option value="payee">{{ __('payee') }}</option>
-                  <option value="comment">{{ __('comment') }}</option>
-                  <option value="reference">{{ __('reference') }}</option>
-                  <option value="category">{{ __('category') }}</option>
+                  <option value="ignore">
+                    {{ __('— Ignore —') }}
+                  </option>
+                  <option value="date">
+                    {{ __('date') }}
+                  </option>
+                  <option value="amount">
+                    {{ __('amount') }}
+                  </option>
+                  <option value="payee">
+                    {{ __('payee') }}
+                  </option>
+                  <option value="comment">
+                    {{ __('comment') }}
+                  </option>
+                  <option value="reference">
+                    {{ __('reference') }}
+                  </option>
+                  <option value="category">
+                    {{ __('category') }}
+                  </option>
                 </select>
 
                 <div
@@ -595,31 +608,43 @@
         <dl class="row mb-0">
           <dt class="col-5 col-md-3 text-muted">{{ __('Name') }}</dt>
           <dd class="col-7 col-md-9">{{ profileName }}</dd>
-          <dt class="col-5 col-md-3 text-muted">{{ __('Delimiter') }}</dt>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Delimiter') }}
+          </dt>
           <dd class="col-7 col-md-9 font-monospace">
             {{ delimiterLabel(effectiveDelimiter) }}
           </dd>
-          <dt class="col-5 col-md-3 text-muted">{{ __('Header row') }}</dt>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Header row') }}
+          </dt>
           <dd class="col-7 col-md-9">
             {{ hasHeaderRow ? __('Yes') : __('No') }}
           </dd>
-          <dt class="col-5 col-md-3 text-muted">{{ __('Date format') }}</dt>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Date format') }}
+          </dt>
           <dd class="col-7 col-md-9 font-monospace">
             {{ primaryDateFormat || __('Not set') }}
           </dd>
           <dt class="col-5 col-md-3 text-muted">
             {{ __('Decimal separator') }}
           </dt>
-          <dd class="col-7 col-md-9 font-monospace">{{ decimalSeparator }}</dd>
+          <dd class="col-7 col-md-9 font-monospace">
+            {{ decimalSeparator }}
+          </dd>
           <dt class="col-5 col-md-3 text-muted">
             {{ __('Thousand separator') }}
           </dt>
           <dd class="col-7 col-md-9 font-monospace">
             {{ thousandSeparator || __('None') }}
           </dd>
-          <dt class="col-5 col-md-3 text-muted">{{ __('Sign handling') }}</dt>
+          <dt class="col-5 col-md-3 text-muted">
+            {{ __('Sign handling') }}
+          </dt>
           <dd class="col-7 col-md-9">{{ signHandling }}</dd>
-          <dt class="col-12 text-muted mb-1">{{ __('Column mappings') }}</dt>
+          <dt class="col-12 text-muted mb-1">
+            {{ __('Column mappings') }}
+          </dt>
           <dd class="col-12 mb-0">
             <div class="d-flex flex-wrap gap-1">
               <span
@@ -652,7 +677,9 @@
 
       <!-- Save errors from API -->
       <div v-if="saveErrors" class="alert alert-danger small mb-3">
-        <div v-if="typeof saveErrors === 'string'">{{ saveErrors }}</div>
+        <div v-if="typeof saveErrors === 'string'">
+          {{ saveErrors }}
+        </div>
         <ul v-else class="mb-0 ps-3">
           <li v-for="(msgs, field) in saveErrors" :key="field">
             <strong>{{ field }}:</strong>
@@ -691,10 +718,7 @@
         :disabled="saving"
         @click="save"
       >
-        <i
-          v-if="saving"
-          class="fa fa-spinner fa-spin me-1"
-        ></i>
+        <i v-if="saving" class="fa fa-spinner fa-spin me-1"></i>
         {{ __('Save profile') }}
       </button>
 
@@ -941,13 +965,6 @@
       };
     },
 
-    created() {
-      if (this.initialProfile && this.editProfileId) {
-        this.initFromProfile(this.initialProfile);
-        this.currentStep = 2;
-      }
-    },
-
     computed: {
       isEditMode() {
         return !!this.editProfileId;
@@ -1060,6 +1077,13 @@
         }
         return false;
       },
+    },
+
+    created() {
+      if (this.initialProfile && this.editProfileId) {
+        this.initFromProfile(this.initialProfile);
+        this.currentStep = 2;
+      }
     },
 
     methods: {
@@ -1196,17 +1220,17 @@
                 encoding = 'utf-16be';
               } else {
                 // Probe the first 4 KB; if UTF-8 produces replacement chars, use windows-1252.
-                const probe = new TextDecoder('utf-8', { fatal: false }).decode(
-                  buffer.slice(0, 4096),
-                );
+                const probe = new TextDecoder('utf-8', {
+                  fatal: false,
+                }).decode(buffer.slice(0, 4096));
                 if (probe.includes('�')) {
                   encoding = 'windows-1252';
                 }
               }
 
-              const text = new TextDecoder(encoding, { fatal: false }).decode(
-                buffer,
-              );
+              const text = new TextDecoder(encoding, {
+                fatal: false,
+              }).decode(buffer);
 
               // Trim to first maxLines non-empty lines for efficiency.
               const lines = text.split(/\r?\n/);
@@ -1381,7 +1405,7 @@
         }
 
         const mappingJson = {};
-        this.columnMappings.forEach((col, i) => {
+        this.columnMappings.forEach((col) => {
           if (col.canonical && col.canonical !== 'ignore') {
             mappingJson[col.header] = col.canonical;
           }

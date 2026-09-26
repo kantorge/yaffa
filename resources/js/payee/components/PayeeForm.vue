@@ -1,130 +1,127 @@
 <template>
   <FormModal
-    ref="formModal"
     :id="id"
+    ref="formModal"
     :action="action"
     :new-title="__('Add new payee')"
     :edit-title="__('Edit payee')"
     :form="form"
     @submit="onSubmit"
   >
-            <div class="row mb-3">
-              <label :for="nameInputId" class="form-label col-sm-3">
-                {{ __('Name') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="nameInputId"
-                  maxlength="255"
-                  type="text"
-                  v-model="form.name"
-                  @keyup="onNameChange"
-                />
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="nameInputId" class="form-label col-sm-3">
+        {{ __('Name') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="nameInputId"
+          v-model="form.name"
+          class="form-control"
+          maxlength="255"
+          type="text"
+          @keyup="onNameChange"
+        />
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="activeInputId" class="form-label col-sm-3">
-                {{ __('Active') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  :id="activeInputId"
-                  class="checkbox-inline"
-                  type="checkbox"
-                  value="1"
-                  v-model="form.active"
-                />
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="activeInputId" class="form-label col-sm-3">
+        {{ __('Active') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="activeInputId"
+          v-model="form.active"
+          class="checkbox-inline"
+          type="checkbox"
+          value="1"
+        />
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="categorySelectId" class="form-label col-sm-3">
-                {{ __('Default category') }}
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="categorySelectId"
-                  class="form-select category"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="categorySelectId" class="form-label col-sm-3">
+        {{ __('Default category') }}
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="categorySelectId"
+          class="form-select category"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
 
-            <template v-if="!simplified">
-              <div class="row mb-3">
-                <label :for="aliasInputId" class="form-label col-sm-3">
-                  {{ __('Import alias') }}
-                </label>
-                <div class="col-sm-9">
-                  <textarea
-                    :id="aliasInputId"
-                    class="form-control"
-                    rows="3"
-                    v-model="form.alias"
-                  ></textarea>
-                </div>
-              </div>
+    <template v-if="!simplified">
+      <div class="row mb-3">
+        <label :for="aliasInputId" class="form-label col-sm-3">
+          {{ __('Import alias') }}
+        </label>
+        <div class="col-sm-9">
+          <textarea
+            :id="aliasInputId"
+            v-model="form.alias"
+            class="form-control"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
 
-              <div class="row mb-3">
-                <label
-                  :for="preferredCategoriesSelectId"
-                  class="form-label col-sm-3"
-                >
-                  {{ __('Preferred categories') }}
-                </label>
-                <div class="col-sm-9">
-                  <select
-                    :id="preferredCategoriesSelectId"
-                    class="form-select preferred"
-                    style="width: 100%"
-                    multiple="multiple"
-                    :data-other-select="`#${notPreferredCategoriesSelectId}`"
-                  ></select>
-                </div>
-              </div>
+      <div class="row mb-3">
+        <label :for="preferredCategoriesSelectId" class="form-label col-sm-3">
+          {{ __('Preferred categories') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="preferredCategoriesSelectId"
+            class="form-select preferred"
+            style="width: 100%"
+            multiple="multiple"
+            :data-other-select="`#${notPreferredCategoriesSelectId}`"
+          ></select>
+        </div>
+      </div>
 
-              <div class="row mb-3">
-                <label
-                  :for="notPreferredCategoriesSelectId"
-                  class="form-label col-sm-3"
-                >
-                  {{ __('Excluded categories') }}
-                </label>
-                <div class="col-sm-9">
-                  <select
-                    :id="notPreferredCategoriesSelectId"
-                    class="form-select not-preferred"
-                    style="width: 100%"
-                    multiple="multiple"
-                    :data-other-select="`#${preferredCategoriesSelectId}`"
-                  ></select>
-                </div>
-              </div>
-            </template>
+      <div class="row mb-3">
+        <label
+          :for="notPreferredCategoriesSelectId"
+          class="form-label col-sm-3"
+        >
+          {{ __('Excluded categories') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="notPreferredCategoriesSelectId"
+            class="form-select not-preferred"
+            style="width: 100%"
+            multiple="multiple"
+            :data-other-select="`#${preferredCategoriesSelectId}`"
+          ></select>
+        </div>
+      </div>
+    </template>
 
-            <div class="row mb-3" v-show="similarPayees.length > 0">
-              <hr />
-              <span class="form-label col-sm-3">
-                {{ __('Are you looking for any of these payees?') }}
-              </span>
-              <div class="col-sm-9">
-                <ul class="list-unstyled" id="similar-payee-list">
-                  <li
-                    class="mt-2"
-                    v-for="payee in similarPayees"
-                    :key="payee.id"
-                    :data-id="payee.id"
-                  >
-                    <a href="#" @click.prevent="onSelectPayee(payee)">
-                      {{ payee.name }}
-                      <span v-if="!payee.active">({{ __('inactive') }})</span>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+    <div v-show="similarPayees.length > 0" class="row mb-3">
+      <hr />
+      <span class="form-label col-sm-3">
+        {{ __('Are you looking for any of these payees?') }}
+      </span>
+      <div class="col-sm-9">
+        <ul id="similar-payee-list" class="list-unstyled">
+          <li
+            v-for="similarPayee in similarPayees"
+            :key="similarPayee.id"
+            class="mt-2"
+            :data-id="similarPayee.id"
+          >
+            <a href="#" @click.prevent="onSelectPayee(similarPayee)">
+              {{ similarPayee.name }}
+              <span v-if="!similarPayee.active">({{ __('inactive') }})</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
   </FormModal>
 </template>
 
@@ -158,6 +155,8 @@
         default: false,
       },
     },
+
+    emits: ['payeeSelected'],
 
     data() {
       let data = {};

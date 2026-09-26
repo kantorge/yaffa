@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-3" id="findTransactionsTypeCard">
+  <div id="findTransactionsTypeCard" class="card mb-3">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('Transaction type') }}
@@ -17,7 +17,7 @@
       ></span>
     </div>
     <div class="card-body">
-      <div ref="tree" id="find-transactions-type-tree-container"></div>
+      <div id="find-transactions-type-tree-container" ref="tree"></div>
     </div>
   </div>
 </template>
@@ -40,7 +40,6 @@
 
   export default {
     name: 'TransactionTypeFilterCard',
-    emits: ['update', 'preset-ready'],
     props: {
       // Type values (e.g. 'deposit', 'withdrawal') preselected from the URL.
       // An empty array means no explicit selection was provided, so all types are selected by default.
@@ -49,6 +48,7 @@
         default: () => [],
       },
     },
+    emits: ['update', 'preset-ready'],
     data() {
       return {
         allTypeValues: Object.keys(window.YAFFA.config.transactionTypes || {}),

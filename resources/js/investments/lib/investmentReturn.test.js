@@ -95,7 +95,12 @@ test('4 & 5. sale during the period, with commission/tax (worked example)', () =
   const dateTo = day(31);
   const transactions = [
     tx('buy', new Date('2025-01-01'), { price: 10, quantity: 1000 }),
-    tx('sell', day(15), { price: 14, quantity: 400, commission: 60, tax: 40 }),
+    tx('sell', day(15), {
+      price: 14,
+      quantity: 400,
+      commission: 60,
+      tax: 40,
+    }),
   ];
   const prices = [
     { date: dateFrom, price: 10 },

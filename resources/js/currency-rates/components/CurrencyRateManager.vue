@@ -104,11 +104,6 @@
         isUpdatingFromChart: false,
       };
     },
-    async mounted() {
-      if (this.initialRates.length === 0) {
-        await this.reloadData();
-      }
-    },
     watch: {
       dateFrom() {
         this.updateDisplayRates();
@@ -116,6 +111,11 @@
       dateTo() {
         this.updateDisplayRates();
       },
+    },
+    async mounted() {
+      if (this.initialRates.length === 0) {
+        await this.reloadData();
+      }
     },
     methods: {
       onDateChange({ dateFrom, dateTo }) {
@@ -131,9 +131,15 @@
       },
       updateDisplayRates() {
         // No range selected: show all rates (null is the Table's "show everything" sentinel).
-        this.displayRates = (!this.dateFrom && !this.dateTo)
-          ? null
-          : filterByDateRange(this.allRates, 'date', this.dateFrom, this.dateTo);
+        this.displayRates =
+          !this.dateFrom && !this.dateTo
+            ? null
+            : filterByDateRange(
+                this.allRates,
+                'date',
+                this.dateFrom,
+                this.dateTo,
+              );
       },
       openAddModal() {
         this.editingRate = null;
@@ -152,9 +158,7 @@
         toastHelpers.showSuccessToast(message);
 
         // Update or add the rate in allRates
-        const existingIndex = this.allRates.findIndex(
-          (r) => r.id === rate.id,
-        );
+        const existingIndex = this.allRates.findIndex((r) => r.id === rate.id);
         if (existingIndex !== -1) {
           // Update existing rate
           this.allRates.splice(existingIndex, 1, rate);

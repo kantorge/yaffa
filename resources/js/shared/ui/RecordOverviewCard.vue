@@ -45,44 +45,44 @@
 </template>
 
 <script>
-import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
 
-// Shared skeleton behind CurrencyRateOverview.vue and InvestmentPriceOverview.vue (see T-14
-// in .ai/docs/specifications/frontend-review/tasks.md): a collapsible "Overview" card
-// showing record count, first/last available dates, and a last-known-value row. The leading
-// identifying rows (e.g. From/To vs. Investment) and the last-value formatting are the real
-// per-feature differences, so they're passed in as `headerRows` and the `last-value` slot;
-// everything else is identical between the two originals and lives here once.
-export default {
-  name: 'RecordOverviewCard',
-  props: {
-    headerRows: {
-      type: Array,
-      default: () => [],
+  // Shared skeleton behind CurrencyRateOverview.vue and InvestmentPriceOverview.vue (see T-14
+  // in .ai/docs/specifications/frontend-review/tasks.md): a collapsible "Overview" card
+  // showing record count, first/last available dates, and a last-known-value row. The leading
+  // identifying rows (e.g. From/To vs. Investment) and the last-value formatting are the real
+  // per-feature differences, so they're passed in as `headerRows` and the `last-value` slot;
+  // everything else is identical between the two originals and lives here once.
+  export default {
+    name: 'RecordOverviewCard',
+    props: {
+      headerRows: {
+        type: Array,
+        default: () => [],
+      },
+      records: {
+        type: Array,
+        required: true,
+      },
+      dateField: {
+        type: String,
+        default: 'date',
+      },
+      lastValueLabel: {
+        type: String,
+        required: true,
+      },
     },
-    records: {
-      type: Array,
-      required: true,
+    data() {
+      return {
+        locale: window.YAFFA.userSettings.locale,
+      };
     },
-    dateField: {
-      type: String,
-      default: 'date',
+    methods: {
+      formatDate(date) {
+        return toFormattedDate(date, this.locale, '');
+      },
+      __,
     },
-    lastValueLabel: {
-      type: String,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      locale: window.YAFFA.userSettings.locale,
-    };
-  },
-  methods: {
-    formatDate(date) {
-      return toFormattedDate(date, this.locale, '');
-    },
-    __,
-  },
-};
+  };
 </script>

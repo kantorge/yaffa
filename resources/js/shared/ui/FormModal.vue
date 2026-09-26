@@ -1,20 +1,23 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
+  <div :id="id" class="modal" tabindex="-1">
     <div class="modal-dialog" :class="dialogSizeClass">
       <div class="modal-content">
         <form
           accept-charset="UTF-8"
-          @submit.prevent="$emit('submit')"
           autocomplete="off"
+          @submit.prevent="$emit('submit')"
         >
           <div class="modal-header">
-            <h5 class="modal-title" v-if="action === 'new'">
+            <h5 v-if="action === 'new'" class="modal-title">
               {{ newTitle }}
             </h5>
-            <h5 class="modal-title" v-else-if="action === 'replace' && replaceTitle">
+            <h5
+              v-else-if="action === 'replace' && replaceTitle"
+              class="modal-title"
+            >
               {{ replaceTitle }}
             </h5>
-            <h5 class="modal-title" v-else>
+            <h5 v-else class="modal-title">
               {{ editTitle }}
             </h5>
             <button
@@ -43,9 +46,13 @@
             >
               {{ __('Cancel') }}
             </button>
-            <Button class="btn btn-primary" :disabled="form.busy" :form="form">
+            <SubmitButton
+              class="btn btn-primary"
+              :disabled="form.busy"
+              :form="form"
+            >
               {{ __('Save') }}
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       </div>
@@ -55,7 +62,7 @@
 
 <script>
   import {
-    Button,
+    Button as SubmitButton,
     AlertErrors,
     AlertSuccess,
   } from 'vform/src/components/bootstrap5';
@@ -78,7 +85,7 @@
     name: 'FormModal',
 
     components: {
-      Button,
+      SubmitButton,
       AlertErrors,
       AlertSuccess,
     },

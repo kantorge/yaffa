@@ -1,16 +1,16 @@
 <template>
   <div>
-    <ul class="list-group list-group-flush" v-if="busy">
+    <ul v-if="busy" class="list-group list-group-flush">
       <li
+        v-for="i in 5"
+        :key="i"
         aria-hidden="true"
         class="list-group-item placeholder-glow"
-        v-for="i in 5"
-        v-bind:key="i"
       >
         <span class="placeholder placeholder-lg col-12"></span>
       </li>
     </ul>
-    <div class="chartContainer" ref="chartContainer" v-show="!busy"></div>
+    <div v-show="!busy" ref="chartContainer" class="chartContainer"></div>
   </div>
 </template>
 
@@ -20,7 +20,10 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
 
   am4core.useTheme(am4themes_animated);
 
@@ -57,11 +60,30 @@
         immediate: true,
       },
     },
+    mounted() {
+      this.createChart();
+      this.chart.data = this.chartData;
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        if (this.chart) this.chart.data = this.chartData;
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+    },
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+      if (this.chart) {
+        this.chart.dispose();
+      }
+    },
     methods: {
       createChart() {
         applyAmChartsColorTheme(am4core);
 
-        let chart = am4core.create(this.$refs.chartContainer, am4charts.XYChart);
+        let chart = am4core.create(
+          this.$refs.chartContainer,
+          am4charts.XYChart,
+        );
         applyAmChartsLocalization(
           chart,
           this.locale,
@@ -172,12 +194,13 @@
               };
             }
 
-            const monthlyValue = new Decimal(transaction.cashflow_value || 0).times(
-              transaction.currencyRateToBase || 0,
-            );
+            const monthlyValue = new Decimal(
+              transaction.cashflow_value || 0,
+            ).times(transaction.currencyRateToBase || 0);
 
             if (transaction.transaction_type === 'deposit') {
-              months[month].deposits = months[month].deposits.plus(monthlyValue);
+              months[month].deposits =
+                months[month].deposits.plus(monthlyValue);
             } else if (transaction.transaction_type === 'withdrawal') {
               months[month].withdrawals =
                 months[month].withdrawals.plus(monthlyValue);
@@ -209,30 +232,6 @@
           .map((item) => item.category.parent_id)
           .filter((value, index, self) => self.indexOf(value) === index);
       },
-
-      getDistinctParentIds() {
-        return this.filteredTransactions
-          .flatMap((transaction) => transaction.transaction_items)
-          .filter((item) => item.category)
-          .map((item) => item.category.parent_id)
-          .filter((value, index, self) => self.indexOf(value) === index);
-      },
-    },
-    mounted() {
-      this.createChart();
-      this.chart.data = this.chartData;
-      this._colorModeHandler = () => {
-        if (this.chart) this.chart.dispose();
-        this.createChart();
-        if (this.chart) this.chart.data = this.chartData;
-      };
-      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-    },
-    beforeUnmount() {
-      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-      if (this.chart) {
-        this.chart.dispose();
-      }
     },
   };
 </script>

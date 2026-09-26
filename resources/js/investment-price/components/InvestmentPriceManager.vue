@@ -134,9 +134,15 @@
       },
       updateDisplayPrices() {
         // No range selected: show all prices (null is the Table's "show everything" sentinel).
-        this.displayPrices = (!this.dateFrom && !this.dateTo)
-          ? null
-          : filterByDateRange(this.allPrices, 'date', this.dateFrom, this.dateTo);
+        this.displayPrices =
+          !this.dateFrom && !this.dateTo
+            ? null
+            : filterByDateRange(
+                this.allPrices,
+                'date',
+                this.dateFrom,
+                this.dateTo,
+              );
       },
       openAddModal() {
         this.editingPrice = null;

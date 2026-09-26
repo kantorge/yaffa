@@ -12,28 +12,28 @@
       </div>
     </div>
     <div
+      :id="cardBodyId"
       class="card-body collapse"
       :class="{ show: isExpanded }"
-      :id="cardBodyId"
     >
       <div class="row">
         <div class="col-6">
           <label class="form-label">{{ __('Date from') }}</label>
           <input
-            type="date"
-            class="form-control"
             :id="componentId + '_from'"
             v-model="dateFromBinding"
+            type="date"
+            class="form-control"
             :max="dateTo"
           />
         </div>
         <div class="col-6">
           <label class="form-label">{{ __('Date to') }}</label>
           <input
-            type="date"
-            class="form-control"
             :id="componentId + '_to'"
             v-model="dateToBinding"
+            type="date"
+            class="form-control"
             :min="dateFrom"
           />
         </div>
@@ -41,9 +41,9 @@
       <div class="row mt-2">
         <div class="col-12">
           <select
-            class="form-select"
             :id="componentId + 'Presets'"
             v-model="selectedPreset"
+            class="form-select"
             @change="onPresetChange"
           >
             <option value="none">{{ __('Select preset') }}</option>
@@ -66,17 +66,17 @@
     </div>
     <div class="card-footer text-end">
       <button
-        class="btn btn-sm btn-secondary"
         :id="componentId + 'Clear'"
+        class="btn btn-sm btn-secondary"
         @click="clearDates"
       >
         {{ __('Clear selection') }}
       </button>
       <button
         v-if="showUpdateButton"
+        :id="componentId + 'Update'"
         type="button"
         class="btn btn-sm btn-primary ms-2"
-        :id="componentId + 'Update'"
         @click="emitDates"
       >
         {{ __('Update') }}
@@ -100,7 +100,6 @@
 
   export default {
     name: 'DateRangeFilterCard',
-    emits: ['update'],
     props: {
       expanded: {
         type: Boolean,
@@ -139,6 +138,7 @@
         default: () => window.YAFFA?.config?.datePresets || [],
       },
     },
+    emits: ['update'],
     data() {
       const preset =
         this.initialPreset && this.initialPreset !== 'none'

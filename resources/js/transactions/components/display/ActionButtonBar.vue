@@ -1,40 +1,40 @@
 <template>
   <div class="d-flex justify-content-end w-auto" dusk="action-bar">
     <button
-      class="btn btn-warning ms-2"
-      :disabled="skipInstanceButtonBusy"
-      dusk="button-action-bar-skip"
-      :title="__('Skip schedule instance')"
       v-if="
         controls.skip &&
         transaction.schedule &&
         transaction.transaction_schedule.next_date
       "
+      class="btn btn-warning ms-2"
+      :disabled="skipInstanceButtonBusy"
+      dusk="button-action-bar-skip"
+      :title="__('Skip schedule instance')"
       @click="skipInstance"
     >
       <i class="fa me-1 fa-fast-forward"></i>{{ __('Skip instance') }}
     </button>
 
     <a
-      class="btn btn-success enter ms-2"
-      dusk="button-action-bar-enter-instance"
-      :href="getRoute('enter')"
-      :title="__('Enter schedule instance')"
       v-if="
         controls.enter &&
         transaction.schedule &&
         transaction.transaction_schedule.next_date
       "
+      class="btn btn-success enter ms-2"
+      dusk="button-action-bar-enter-instance"
+      :href="getRoute('enter')"
+      :title="__('Enter schedule instance')"
     >
       <i class="fa me-1 fa-pencil"></i>{{ __('Enter instance') }}
     </a>
 
     <a
+      v-if="isModal && controls.show"
       class="btn btn-success ms-2"
       dusk="button-action-bar-open"
       :href="getRoute('show')"
       :title="__('View details')"
-      v-if="isModal && controls.show"
     >
       <i class="fa me-1 fa-search"></i>{{ __('Open') }}
     </a>
@@ -57,12 +57,12 @@
     </a>
 
     <button
+      v-if="isModal"
       class="btn btn-secondary ms-2"
       data-coreui-dismiss="modal"
       data-coreui-target="#modal-quickview"
       dusk="button-action-bar-close"
       type="button"
-      v-if="isModal"
     >
       {{ __('Close') }}
     </button>
@@ -78,14 +78,14 @@
     props: {
       controls: {
         type: Object,
-        default: {
+        default: () => ({
           show: true,
           edit: true,
           clone: true,
           skip: true,
           enter: true,
           delete: true,
-        },
+        }),
       },
       isModal: {
         type: Boolean,
@@ -93,15 +93,15 @@
       },
       transaction: {
         type: Object,
-        default: {},
+        default: () => ({}),
       },
     },
+    emits: ['transactionUpdated'],
     data() {
       return {
         skipInstanceButtonBusy: false,
       };
     },
-    emits: ['transactionUpdated'],
     methods: {
       __,
       getRoute(action, additionalParams = {}) {
@@ -128,7 +128,10 @@
             // here, at the single emit site, so every consumer (page container, quick-view
             // modal, any future one) gets decimal-string wire-format fields already
             // converted back to JS numbers.
-            this.$emit('transactionUpdated', processTransaction(response.data.transaction));
+            this.$emit(
+              'transactionUpdated',
+              processTransaction(response.data.transaction),
+            );
           })
           .catch((error) => {
             console.error(error);

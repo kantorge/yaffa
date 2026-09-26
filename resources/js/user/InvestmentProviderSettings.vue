@@ -22,11 +22,13 @@
             role="presentation"
           >
             <button
+              :id="`nav-provider-tab-${provider.key}`"
               type="button"
               class="nav-link d-flex align-items-center gap-2"
-              :class="{ active: activeProviderKey === provider.key }"
+              :class="{
+                active: activeProviderKey === provider.key,
+              }"
               role="tab"
-              :id="`nav-provider-tab-${provider.key}`"
               :aria-selected="activeProviderKey === provider.key"
               :aria-controls="`provider-tab-panel-${provider.key}`"
               @click="activeProviderKey = provider.key"
@@ -54,13 +56,13 @@
         <div class="tab-content">
           <div
             v-for="provider in providers"
+            :id="`provider-tab-panel-${provider.key}`"
             :key="provider.key"
             class="tab-pane fade"
             :class="{
               show: activeProviderKey === provider.key,
               active: activeProviderKey === provider.key,
             }"
-            :id="`provider-tab-panel-${provider.key}`"
             role="tabpanel"
             :aria-labelledby="`nav-provider-tab-${provider.key}`"
             tabindex="0"
@@ -70,7 +72,9 @@
             >
               <div>
                 <h3 class="mb-1">{{ provider.displayName }}</h3>
-                <p class="text-muted mb-2">{{ provider.description }}</p>
+                <p class="text-muted mb-2">
+                  {{ provider.description }}
+                </p>
               </div>
               <span
                 class="badge align-self-start"
@@ -112,7 +116,7 @@
                     class="form-control"
                     :placeholder="credentialPlaceholder(provider, field.key)"
                   />
-                  <div class="form-text mt-2" v-if="field.schema.helpText">
+                  <div v-if="field.schema.helpText" class="form-text mt-2">
                     {{ field.schema.helpText }}
                   </div>
                 </div>
@@ -387,7 +391,7 @@
           ? 'password'
           : 'text';
       },
-      credentialPlaceholder(provider, fieldKey) {
+      credentialPlaceholder(provider, _fieldKey) {
         if (provider.currentConfig?.has_credentials) {
           return __('Leave blank to keep current value');
         }
@@ -563,7 +567,9 @@
         }
       },
       formatDate(value) {
-        return value ? toFormattedDateTime(value, window.YAFFA.userSettings.locale) : __('Never');
+        return value
+          ? toFormattedDateTime(value, window.YAFFA.userSettings.locale)
+          : __('Never');
       },
       humanize(value) {
         return value

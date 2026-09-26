@@ -8,7 +8,9 @@
         <div class="text-center text-muted">{{ __('Loading...') }}</div>
       </div>
       <div v-else>
-        <div class="text-center text-muted">{{ __('No data available') }}</div>
+        <div class="text-center text-muted">
+          {{ __('No data available') }}
+        </div>
       </div>
     </div>
   </div>
@@ -20,7 +22,10 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { __, getCachedNumberFormatter } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     name: 'CurrencyRateChart',
@@ -120,9 +125,6 @@
         valueAxis.numberFormatter.numberFormat = '#,###.####';
 
         // Override the format method to use Intl formatting
-        const originalFormat = valueAxis.numberFormatter.format.bind(
-          valueAxis.numberFormatter,
-        );
         valueAxis.numberFormatter.format = function (value) {
           return intlFormatter.format(value);
         };

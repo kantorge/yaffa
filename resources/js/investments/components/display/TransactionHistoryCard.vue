@@ -37,7 +37,11 @@
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '@/shared/lib/datatable';
-  import { __, getDataTablesLanguageOptions, toFormattedNumber } from '@/shared/lib/i18n';
+  import {
+    __,
+    getDataTablesLanguageOptions,
+    toFormattedNumber,
+  } from '@/shared/lib/i18n';
   import { toIsoDateString } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -56,119 +60,6 @@
       },
     },
     emits: ['set-date-range', 'delete-transaction'],
-    methods: {
-      toIsoDateString,
-      __,
-      confirmDeleteTransaction(id) {
-        Swal.fire({
-          animation: false,
-          text: this.__('Are you sure to want to delete this item?'),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: this.__('Cancel'),
-          confirmButtonText: this.__('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            return;
-          }
-
-          toastHelpers.showLoaderToast(
-            this.__('Deleting transaction #:transactionId', {
-              transactionId: id,
-            }),
-            `toast-transaction-${id}`,
-          );
-
-          window.axios
-            .delete(
-              this.route('api.v1.transactions.destroy', { transaction: id }),
-            )
-            .then(() => {
-              toastHelpers.showSuccessToast(
-                this.__('Transaction deleted (#:transactionId)', {
-                  transactionId: id,
-                }),
-              );
-
-              // Remove from UI
-              this.$emit('delete-transaction', id);
-            })
-            .catch((error) => {
-              toastHelpers.showErrorToast(
-                this.__(
-                  'Error deleting transaction (#:transactionId): :error',
-                  { transactionId: id, error: error },
-                ),
-              );
-            })
-            .finally(() => {
-              toastHelpers.hideToast(`.toast-transaction-${id}`);
-            });
-        });
-      },
-      confirmSkipScheduledInstance(id) {
-        Swal.fire({
-          animation: false,
-          text: this.__(
-            'Are you sure you want to skip this scheduled instance?',
-          ),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: this.__('Cancel'),
-          confirmButtonText: this.__('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-warning',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            return;
-          }
-
-          // Show skipping toast
-          toastHelpers.showLoaderToast(
-            this.__('Skipping scheduled instance #:transactionId', {
-              transactionId: id,
-            }),
-            `toast-transaction-${id}`,
-          );
-
-          window.axios
-            .patch(
-              this.route('api.v1.transactions.skip', {
-                transaction: id,
-              }),
-            )
-            .then(() => {
-              toastHelpers.showSuccessToast(
-                this.__('Scheduled instance skipped (#:transactionId)', {
-                  transactionId: id,
-                }),
-              );
-
-              // Remove from UI
-              this.$emit('delete-transaction', id);
-            })
-            .catch((error) => {
-              toastHelpers.showErrorToast(
-                this.__(
-                  'Error skipping scheduled instance (#:transactionId): :error',
-                  { transactionId: id, error: error },
-                ),
-              );
-            })
-            .finally(() => {
-              toastHelpers.hideToast(`.toast-transaction-${id}`);
-            });
-        });
-      },
-    },
     computed: {
       newTransactionUrl() {
         if (!this.route) {
@@ -182,14 +73,17 @@
       tableOptions() {
         return {
           language: getDataTablesLanguageOptions() || undefined,
-          createdRow: (row, data) => {
+          createdRow: (row, _data) => {
             // Set date range buttons
             row.querySelectorAll('.set-date').forEach((btn) => {
               btn.onclick = (event) => {
                 const type = btn.getAttribute('data-type');
                 const date = btn.getAttribute('data-date');
                 if (type && date) {
-                  this.$emit('set-date-range', { type, date });
+                  this.$emit('set-date-range', {
+                    type,
+                    date,
+                  });
                 }
                 event.stopPropagation();
               };
@@ -369,6 +263,121 @@
             searchable: false,
           },
         ];
+      },
+    },
+    methods: {
+      toIsoDateString,
+      __,
+      confirmDeleteTransaction(id) {
+        Swal.fire({
+          animation: false,
+          text: this.__('Are you sure to want to delete this item?'),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: this.__('Cancel'),
+          confirmButtonText: this.__('Confirm'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return;
+          }
+
+          toastHelpers.showLoaderToast(
+            this.__('Deleting transaction #:transactionId', {
+              transactionId: id,
+            }),
+            `toast-transaction-${id}`,
+          );
+
+          window.axios
+            .delete(
+              this.route('api.v1.transactions.destroy', {
+                transaction: id,
+              }),
+            )
+            .then(() => {
+              toastHelpers.showSuccessToast(
+                this.__('Transaction deleted (#:transactionId)', {
+                  transactionId: id,
+                }),
+              );
+
+              // Remove from UI
+              this.$emit('delete-transaction', id);
+            })
+            .catch((error) => {
+              toastHelpers.showErrorToast(
+                this.__(
+                  'Error deleting transaction (#:transactionId): :error',
+                  { transactionId: id, error: error },
+                ),
+              );
+            })
+            .finally(() => {
+              toastHelpers.hideToast(`.toast-transaction-${id}`);
+            });
+        });
+      },
+      confirmSkipScheduledInstance(id) {
+        Swal.fire({
+          animation: false,
+          text: this.__(
+            'Are you sure you want to skip this scheduled instance?',
+          ),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: this.__('Cancel'),
+          confirmButtonText: this.__('Confirm'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-warning',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return;
+          }
+
+          // Show skipping toast
+          toastHelpers.showLoaderToast(
+            this.__('Skipping scheduled instance #:transactionId', {
+              transactionId: id,
+            }),
+            `toast-transaction-${id}`,
+          );
+
+          window.axios
+            .patch(
+              this.route('api.v1.transactions.skip', {
+                transaction: id,
+              }),
+            )
+            .then(() => {
+              toastHelpers.showSuccessToast(
+                this.__('Scheduled instance skipped (#:transactionId)', {
+                  transactionId: id,
+                }),
+              );
+
+              // Remove from UI
+              this.$emit('delete-transaction', id);
+            })
+            .catch((error) => {
+              toastHelpers.showErrorToast(
+                this.__(
+                  'Error skipping scheduled instance (#:transactionId): :error',
+                  { transactionId: id, error: error },
+                ),
+              );
+            })
+            .finally(() => {
+              toastHelpers.hideToast(`.toast-transaction-${id}`);
+            });
+        });
       },
     },
   };

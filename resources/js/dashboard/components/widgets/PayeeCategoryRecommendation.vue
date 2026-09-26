@@ -1,8 +1,8 @@
 <template>
   <div
+    v-if="payeeSuggestion"
     id="widgetPayeeCategoryRecommendation"
     class="card mb-4"
-    v-if="payeeSuggestion"
   >
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
@@ -13,8 +13,8 @@
           type="button"
           class="btn-close"
           aria-label="Close"
-          @click="hide"
           :disabled="busy"
+          @click="hide"
         ></button>
       </div>
     </div>
@@ -25,8 +25,8 @@
           type="button"
           class="btn btn-success me-2"
           :title="__('widget.payeeCategoryRecommendation.acceptTitle')"
-          @click="accept"
           :disabled="busy"
+          @click="accept"
         >
           {{ __('widget.payeeCategoryRecommendation.acceptButton') }}
         </button>
@@ -34,8 +34,8 @@
           type="button"
           class="btn btn-primary me-2"
           :title="__('widget.payeeCategoryRecommendation.maybeLaterTitle')"
-          @click="hide"
           :disabled="busy"
+          @click="hide"
         >
           {{ __('widget.payeeCategoryRecommendation.maybeLaterButton') }}
         </button>
@@ -43,18 +43,18 @@
           type="button"
           class="btn btn-outline-dark me-2"
           :title="__('widget.payeeCategoryRecommendation.dismissTitle')"
-          @click="dismiss"
           :disabled="busy"
+          @click="dismiss"
         >
           {{ __('widget.payeeCategoryRecommendation.dismissButton') }}
         </button>
       </div>
     </div>
-    <div class="card-footer" v-if="error || success">
-      <span class="text-danger" v-if="error">{{
+    <div v-if="error || success" class="card-footer">
+      <span v-if="error" class="text-danger">{{
         __('widget.payeeCategoryRecommendation.error')
       }}</span>
-      <span class="text-success" v-if="success">{{
+      <span v-if="success" class="text-success">{{
         __('widget.payeeCategoryRecommendation.success')
       }}</span>
     </div>
@@ -72,6 +72,36 @@
         busy: false,
         success: false,
       };
+    },
+
+    computed: {
+      editlink() {
+        return this.route('account-entity.edit', {
+          type: 'payee',
+          account_entity: this.payeeSuggestion.payee_id,
+        });
+      },
+
+      paragraph() {
+        if (!this.payeeSuggestion) {
+          return '';
+        }
+
+        return __('widget.payeeCategoryRecommendation.paragraph', {
+          payeeLink: this.payeeLink,
+          categoryText: this.categoryText,
+          maxCount: this.payeeSuggestion.max,
+          totalCount: this.payeeSuggestion.sum,
+        });
+      },
+
+      payeeLink() {
+        return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
+      },
+
+      categoryText() {
+        return `<strong>${this.escapeHtml(this.payeeSuggestion.category)}</strong>`;
+      },
     },
 
     created() {
@@ -135,36 +165,6 @@
         return textNode.innerHTML;
       },
       __,
-    },
-
-    computed: {
-      editlink() {
-        return this.route('account-entity.edit', {
-          type: 'payee',
-          account_entity: this.payeeSuggestion.payee_id,
-        });
-      },
-
-      paragraph() {
-        if (!this.payeeSuggestion) {
-          return '';
-        }
-
-        return __('widget.payeeCategoryRecommendation.paragraph', {
-          payeeLink: this.payeeLink,
-          categoryText: this.categoryText,
-          maxCount: this.payeeSuggestion.max,
-          totalCount: this.payeeSuggestion.sum,
-        });
-      },
-
-      payeeLink() {
-        return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
-      },
-
-      categoryText() {
-        return `<strong>${this.escapeHtml(this.payeeSuggestion.category)}</strong>`;
-      },
     },
   };
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <div class="loader" v-show="busy"></div>
-    <div class="chartContainer" ref="chartContainer" v-show="!busy"></div>
+    <div v-show="busy" class="loader"></div>
+    <div v-show="!busy" ref="chartContainer" class="chartContainer"></div>
   </div>
 </template>
 
@@ -11,7 +11,10 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { toFormattedCurrency } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
   import { itemMatchesActiveFilters } from '../find-transactions/helpers';
 
   am4core.useTheme(am4themes_animated);
@@ -68,6 +71,22 @@
       tagIds() {
         this.updateChartData(this.transactions);
       },
+    },
+    mounted() {
+      this.createChart();
+      this.updateChartData(this.transactions);
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        this.updateChartData(this.transactions);
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+    },
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+      if (this.chart) {
+        this.chart.dispose();
+      }
     },
     methods: {
       /**
@@ -220,7 +239,10 @@
       createChart() {
         applyAmChartsColorTheme(am4core);
 
-        let chart = am4core.create(this.$refs.chartContainer, am4charts.PieChart);
+        let chart = am4core.create(
+          this.$refs.chartContainer,
+          am4charts.PieChart,
+        );
         applyAmChartsLocalization(
           chart,
           window.YAFFA.userSettings.locale,
@@ -251,22 +273,6 @@
 
         this.chart = chart;
       },
-    },
-    mounted() {
-      this.createChart();
-      this.updateChartData(this.transactions);
-      this._colorModeHandler = () => {
-        if (this.chart) this.chart.dispose();
-        this.createChart();
-        this.updateChartData(this.transactions);
-      };
-      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-    },
-    beforeUnmount() {
-      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-      if (this.chart) {
-        this.chart.dispose();
-      }
     },
   };
 </script>

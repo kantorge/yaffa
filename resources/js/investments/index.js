@@ -3,351 +3,411 @@ import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
-import { __, getDataTablesLanguageOptions, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
+import {
+  __,
+  getDataTablesLanguageOptions,
+  toFormattedCurrency,
+  toFormattedNumber,
+} from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
 
 let ajaxIsBusy = false;
 
 let table = $('#investmentSummary').DataTable({
-    language: getDataTablesLanguageOptions() || undefined,
-    data: window.investments,
-    columns: [
-        {
-            data: "name",
-            title: __("Name"),
-            render: function (data, type, row) {
-                if (type !== 'display') {
-                    return data;
-                }
-
-                return `<a href="${window.route('investments.show', row.id)}" title="${__('View investment details')}">${data}</a>`;
-            },
-            type: "html",
-        },
-        {
-            data: "active",
-            title: __("Active"),
-            render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
-            },
-            className: "text-center activeIcon",
-        },
-        {
-            data: "investment_group.name",
-            title: __("Group"),
-            type: "string"
-        },
-        {
-            data: "symbol",
-            title: __("Symbol"),
-        },
-        {
-            data: "isin",
-            title: __("ISIN number"),
-        },
-        {
-            data: "quantity",
-            title: __("Quantity"),
-            render: function (data, type) {
-                if (type === 'display') {
-                    return toFormattedNumber(data, window.YAFFA.userSettings.locale, {maximumFractionDigits: 2, useGrouping: true});
-                }
-                return data;
-            },
-            type: "num",
-            className: 'dt-nowrap',
-        },
-        {
-            data: "price",
-            title: __("Latest price"),
-            render: function (data, type, row) {
-                if (type === 'display' && !isNaN(data) && typeof data === "number") {
-                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.currency, 'detailed');
-                }
-
-                return data;
-            },
-            type: "num",
-            className: 'dt-nowrap',
-        },
-        {
-            defaultContent: "",
-            title: __("Value"),
-            render: function (_data, type, row) {
-                const value = row.quantity * row.price;
-
-                if (type === 'display') {
-                    return toFormattedCurrency(value, window.YAFFA.userSettings.locale, row.currency);
-                }
-
-                return value;
-            },
-            type: "num",
-            className: 'dt-nowrap',
-        },
-        {
-            title: __("Actions"),
-            defaultContent: '',
-            render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
-            },
-            className: "text-center",
-            orderable: false,
-            searchable: false,
+  language: getDataTablesLanguageOptions() || undefined,
+  data: window.investments,
+  columns: [
+    {
+      data: 'name',
+      title: __('Name'),
+      render: function (data, type, row) {
+        if (type !== 'display') {
+          return data;
         }
-    ],
-    order: [
-        [0, 'asc']
-    ],
-    initComplete: function (settings) {
-        $(settings.table).on("click", "td.activeIcon > i:not(.inProgress)", function () {
-            var row = $(settings.table).DataTable().row($(this).parents('tr'));
+
+        return `<a href="${window.route('investments.show', row.id)}" title="${__('View investment details')}">${data}</a>`;
+      },
+      type: 'html',
+    },
+    {
+      data: 'active',
+      title: __('Active'),
+      render: function (data, type) {
+        return dataTableHelpers.booleanToTableIcon(data, type);
+      },
+      className: 'text-center activeIcon',
+    },
+    {
+      data: 'investment_group.name',
+      title: __('Group'),
+      type: 'string',
+    },
+    {
+      data: 'symbol',
+      title: __('Symbol'),
+    },
+    {
+      data: 'isin',
+      title: __('ISIN number'),
+    },
+    {
+      data: 'quantity',
+      title: __('Quantity'),
+      render: function (data, type) {
+        if (type === 'display') {
+          return toFormattedNumber(data, window.YAFFA.userSettings.locale, {
+            maximumFractionDigits: 2,
+            useGrouping: true,
+          });
+        }
+        return data;
+      },
+      type: 'num',
+      className: 'dt-nowrap',
+    },
+    {
+      data: 'price',
+      title: __('Latest price'),
+      render: function (data, type, row) {
+        if (type === 'display' && !isNaN(data) && typeof data === 'number') {
+          return toFormattedCurrency(
+            data,
+            window.YAFFA.userSettings.locale,
+            row.currency,
+            'detailed',
+          );
+        }
+
+        return data;
+      },
+      type: 'num',
+      className: 'dt-nowrap',
+    },
+    {
+      defaultContent: '',
+      title: __('Value'),
+      render: function (_data, type, row) {
+        const value = row.quantity * row.price;
+
+        if (type === 'display') {
+          return toFormattedCurrency(
+            value,
+            window.YAFFA.userSettings.locale,
+            row.currency,
+          );
+        }
+
+        return value;
+      },
+      type: 'num',
+      className: 'dt-nowrap',
+    },
+    {
+      title: __('Actions'),
+      defaultContent: '',
+      render: function (_data, _type, _row) {
+        return (
+          '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+          __('Actions') +
+          '"></i>'
+        );
+      },
+      className: 'text-center',
+      orderable: false,
+      searchable: false,
+    },
+  ],
+  order: [[0, 'asc']],
+  initComplete: function (settings) {
+    $(settings.table).on(
+      'click',
+      'td.activeIcon > i:not(.inProgress)',
+      function () {
+        var row = $(settings.table).DataTable().row($(this).parents('tr'));
+
+        // Change icon to spinner
+        $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
+
+        // Send request to change investment active state
+        $.ajax({
+          type: 'PATCH',
+          url: window.route('api.v1.investments.patch-active', row.data().id),
+          data: JSON.stringify({
+            _token: csrfToken,
+            active: !row.data().active,
+          }),
+          contentType: 'application/json',
+          context: this,
+          success: function (data) {
+            // Update row in table data source
+            window.investments.filter(
+              (investment) => investment.id === data.id,
+            )[0].active = data.active;
+          },
+          error: function (_data) {
+            alert(__('Error changing investment active state'));
+          },
+          complete: function (_data) {
+            // Re-render row
+            row.invalidate().draw(false);
+          },
+        });
+      },
+    );
+
+    // Listener for delete button
+    $(settings.table).on(
+      'click',
+      'td > button.deleteIcon:not(.busy)',
+      function () {
+        const button = this;
+
+        // Confirm the action with the user
+        confirmDelete(__('Are you sure to want to delete this item?')).then(
+          (result) => {
+            if (!result.isConfirmed) {
+              return;
+            }
+
+            let row = $(settings.table)
+              .DataTable()
+              .row($(button).parents('tr'));
 
             // Change icon to spinner
-            $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
+            let element = $(button);
+            element.addClass('busy');
 
             // Send request to change investment active state
             $.ajax({
-                type: 'PATCH',
-                url: window.route('api.v1.investments.patch-active', row.data().id),
-                data: JSON.stringify({
-                    "_token": csrfToken,
-                    "active": !row.data().active,
-                }),
-                contentType: 'application/json',
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.investments.filter(investment => investment.id === data.id)[0].active = data.active;
-                },
-                error: function (_data) {
-                    alert(__('Error changing investment active state'));
-                },
-                complete: function (_data) {
-                    // Re-render row
-                    row.invalidate().draw(false);
-                }
+              type: 'DELETE',
+              url: window.route('api.v1.investments.destroy', row.data().id),
+              data: {
+                _token: csrfToken,
+              },
+              dataType: 'json',
+              context: button,
+              success: function (data) {
+                // Update row in table data source
+                window.investments = window.investments.filter(
+                  (investment) => investment.id !== data.investment.id,
+                );
+
+                // Remove row from table
+                $(settings.table)
+                  .DataTable()
+                  .row($(button).parents('tr'))
+                  .remove()
+                  .draw();
+
+                toastHelpers.showSuccessToast(__('Investment deleted'));
+              },
+              error: function (_data) {
+                toastHelpers.showErrorToast(
+                  __('Error while trying to delete investment'),
+                );
+              },
+              complete: function (_data) {
+                // Restore button icon
+                element.removeClass('busy');
+              },
             });
-        });
-
-        // Listener for delete button
-        $(settings.table).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            const button = this;
-
-            // Confirm the action with the user
-            confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
-                if (!result.isConfirmed) {
-                    return;
-                }
-
-                let row = $(settings.table).DataTable().row($(button).parents('tr'));
-
-                // Change icon to spinner
-                let element = $(button);
-                element.addClass('busy');
-
-                // Send request to change investment active state
-                $.ajax({
-                    type: 'DELETE',
-                    url: window.route('api.v1.investments.destroy', row.data().id),
-                    data: {
-                        "_token": csrfToken,
-                    },
-                    dataType: "json",
-                    context: button,
-                    success: function (data) {
-                        // Update row in table data source
-                        window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
-
-                        // Remove row from table
-                        $(settings.table).DataTable().row($(button).parents('tr')).remove().draw();
-
-                        toastHelpers.showSuccessToast(__('Investment deleted'));
-                    },
-                    error: function (_data) {
-                        toastHelpers.showErrorToast(__('Error while trying to delete investment'));
-                    },
-                    complete: function (_data) {
-                        // Restore button icon
-                        element.removeClass('busy');
-                    }
-                });
-            });
-        });
-    },
-    select: {
-        select: true,
-        info: false,
-        style: 'os'
-    },
-    deferRender: true,
-    scrollY: '500px',
-    scrollCollapse: true,
-    stateSave: false,
-    processing: true,
-    paging: false,
+          },
+        );
+      },
+    );
+  },
+  select: {
+    select: true,
+    info: false,
+    style: 'os',
+  },
+  deferRender: true,
+  scrollY: '500px',
+  scrollCollapse: true,
+  stateSave: false,
+  processing: true,
+  paging: false,
 });
 
 // Initialize the contextual actions for the table
 table.contextualActions({
-    contextMenuClasses: ['text-primary'],
-    deselectAfterAction: true,
-    contextMenu: {
-        enabled: true,
-        isMulti: false,
-        headerRenderer: function(selectedRows) {
-            return selectedRows[0].name;
-        },
-        triggerButtonSelector: '.hover-icon',
+  contextMenuClasses: ['text-primary'],
+  deselectAfterAction: true,
+  contextMenu: {
+    enabled: true,
+    isMulti: false,
+    headerRenderer: function (selectedRows) {
+      return selectedRows[0].name;
     },
-    buttonList: {
-        enabled: false
+    triggerButtonSelector: '.hover-icon',
+  },
+  buttonList: {
+    enabled: false,
+  },
+  items: [
+    {
+      type: 'option',
+      title: __('View investment details'),
+      iconClass: 'fa fa-fw fa-search',
+      contextMenuClasses: ['text-success'],
+      action: function (selectedRows) {
+        window.location.href = window.route('investments.show', {
+          investment: selectedRows[0].id,
+        });
+      },
     },
-    items: [
-        {
-            type: 'option',
-            title: __('View investment details'),
-            iconClass: 'fa fa-fw fa-search',
-            contextMenuClasses: ['text-success'],
-            action: function(selectedRows) {
-                window.location.href = window.route('investments.show', {
-                    investment: selectedRows[0].id
-                });
-            }
-        },
-        {
-            type: 'option',
-            title: __('View investment price list'),
-            iconClass: 'fa fa-fw fa-dollar',
-            contextMenuClasses: ['text-info'],
-            action: function(selectedRows) {
-                window.location.href = window.route('investment-price.list', {
-                    investment: selectedRows[0].id
-                });
-            }
-        },
-        {
-            type: 'divider'
-        },
-        {
-            type: 'option',
-            title: __('New transaction for investment'),
-            iconClass: 'fa fa-fw fa-plus',
-            contextMenuClasses: ['text-info'],
-            action: function(selectedRows) {
-                window.location.href = window.route('transaction.create', {
-                    type: 'investment',
-                    investment: selectedRows[0].id
-                });
-            }
-        },
-        {
-            type: 'divider'
-        },
-        {
-            type: 'option',
-            title: __('Edit investment'),
-            iconClass: 'fa fa-fw fa-edit',
-            contextMenuClasses: ['text-primary'],
-            action: function(selectedRows) {
-                window.location.href = window.route('investments.edit', {
-                    investment: selectedRows[0].id
-                });
-            }
-        },
-        {
-            type: 'divider',
-        },
-        {
-            type: 'option',
-            title: __('Delete investment'),
-            iconClass: 'fa fa-trash',
-            contextMenuClasses: ['text-danger'],
-            isHidden: function(row) {
-                return row.transactions_count > 0;
-            },
-            isDisabled: function() {
-                return ajaxIsBusy;
-            },
-            action: function(selectedRows) {
-                const id = selectedRows[0].id;
-                const name = selectedRows[0].name;
+    {
+      type: 'option',
+      title: __('View investment price list'),
+      iconClass: 'fa fa-fw fa-dollar',
+      contextMenuClasses: ['text-info'],
+      action: function (selectedRows) {
+        window.location.href = window.route('investment-price.list', {
+          investment: selectedRows[0].id,
+        });
+      },
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'option',
+      title: __('New transaction for investment'),
+      iconClass: 'fa fa-fw fa-plus',
+      contextMenuClasses: ['text-info'],
+      action: function (selectedRows) {
+        window.location.href = window.route('transaction.create', {
+          type: 'investment',
+          investment: selectedRows[0].id,
+        });
+      },
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'option',
+      title: __('Edit investment'),
+      iconClass: 'fa fa-fw fa-edit',
+      contextMenuClasses: ['text-primary'],
+      action: function (selectedRows) {
+        window.location.href = window.route('investments.edit', {
+          investment: selectedRows[0].id,
+        });
+      },
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'option',
+      title: __('Delete investment'),
+      iconClass: 'fa fa-trash',
+      contextMenuClasses: ['text-danger'],
+      isHidden: function (row) {
+        return row.transactions_count > 0;
+      },
+      isDisabled: function () {
+        return ajaxIsBusy;
+      },
+      action: function (selectedRows) {
+        const id = selectedRows[0].id;
+        const name = selectedRows[0].name;
 
-                ajaxIsBusy = true;
+        ajaxIsBusy = true;
 
-                // Get confirmation from user
-                confirmDelete(__('Are you sure you want to delete this investment?'), {
-                    confirmButtonText: __('Delete'),
-                }).then((result) => {
-                    if (!result.isConfirmed) {
-                        ajaxIsBusy = false;
-                        return;
-                    }
+        // Get confirmation from user
+        confirmDelete(__('Are you sure you want to delete this investment?'), {
+          confirmButtonText: __('Delete'),
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            ajaxIsBusy = false;
+            return;
+          }
 
-                    // Emit a custom event to global scope to indicate that an investment delete is in progress
-                    toastHelpers.showLoaderToast(
-                        __('Deleting investment: :investmentName', {investmentName: name}),
-                        `toast-investment-${id}`
-                    );
+          // Emit a custom event to global scope to indicate that an investment delete is in progress
+          toastHelpers.showLoaderToast(
+            __('Deleting investment: :investmentName', {
+              investmentName: name,
+            }),
+            `toast-investment-${id}`,
+          );
 
-                    window.axios.delete(window.route('api.v1.investments.destroy', {investment: id}))
-                        .then(response => {
-                            // Remove investment from data source
-                            window.investments = window.investments.filter(investment => investment.id !== response.data.investment.id);
+          window.axios
+            .delete(
+              window.route('api.v1.investments.destroy', {
+                investment: id,
+              }),
+            )
+            .then((response) => {
+              // Remove investment from data source
+              window.investments = window.investments.filter(
+                (investment) => investment.id !== response.data.investment.id,
+              );
 
-                            // Remove row from table
-                            table.row(function (idx, data, node) {
-                                return data.id === id;
-                            }).remove().draw();
+              // Remove row from table
+              table
+                .row(function (idx, data, _node) {
+                  return data.id === id;
+                })
+                .remove()
+                .draw();
 
-                            // Emit success toast
-                            toastHelpers.showSuccessToast(__('Investment deleted'));
-                        })
-                        .catch(error => {
-                            toastHelpers.showErrorToast(
-                                __('Error while trying to delete investment: :errorMessage', {errorMessage: error.response.data.message || error.message})
-                            );
-                        })
-                        .finally(() => {
-                            ajaxIsBusy = false;
+              // Emit success toast
+              toastHelpers.showSuccessToast(__('Investment deleted'));
+            })
+            .catch((error) => {
+              toastHelpers.showErrorToast(
+                __('Error while trying to delete investment: :errorMessage', {
+                  errorMessage: error.response.data.message || error.message,
+                }),
+              );
+            })
+            .finally(() => {
+              ajaxIsBusy = false;
 
-                            // Close the toast with a small delay
-                            toastHelpers.hideToast(`.toast-investment-${id}`);
-                        });
-                });
-            }
-        },
-        {
-            type: 'option',
-            title: __('Cannot be deleted, already in use'),
-            iconClass: 'fa fa-fw fa-info-circle',
-            contextMenuClasses: ['text-muted'],
-            isHidden: function(row) {
-                return row.transactions_count === 0;
-            },
-            action: function(_selectedRows) {
-                // No action
-            }
-        }
-    ]
+              // Close the toast with a small delay
+              toastHelpers.hideToast(`.toast-investment-${id}`);
+            });
+        });
+      },
+    },
+    {
+      type: 'option',
+      title: __('Cannot be deleted, already in use'),
+      iconClass: 'fa fa-fw fa-info-circle',
+      contextMenuClasses: ['text-muted'],
+      isHidden: function (row) {
+        return row.transactions_count === 0;
+      },
+      action: function (_selectedRows) {
+        // No action
+      },
+    },
+  ],
 });
 
 // Initialize the "tree" for the investment group filter list
 const selectorTreeContainer = '#investment-group-tree-container';
 dataTableHelpers.investmentGroupTree(
-    selectorTreeContainer,
-    window.investmentGroups,
-    filterInvestmentGroup
+  selectorTreeContainer,
+  window.investmentGroups,
+  filterInvestmentGroup,
 );
 
 // Listeners for filters
 dataTableHelpers.initializeFilterToggle(table, 1, 'table_filter_active');
 dataTableHelpers.initializeStandardExternalSearch(table);
 function filterInvestmentGroup() {
-    const selectedNodes = $(selectorTreeContainer).jstree().get_checked(true);
-    const selectedInvestmentGroupNames = selectedNodes.map(node => '^' + node.text + '$');
-    table.column(2).search(selectedInvestmentGroupNames.join('|'), true, false).draw();
+  const selectedNodes = $(selectorTreeContainer).jstree().get_checked(true);
+  const selectedInvestmentGroupNames = selectedNodes.map(
+    (node) => '^' + node.text + '$',
+  );
+  table
+    .column(2)
+    .search(selectedInvestmentGroupNames.join('|'), true, false)
+    .draw();
 }
 
 // Set the active toggle to active by default
@@ -355,48 +415,60 @@ document.getElementById('table_filter_active_yes').click();
 
 // Define the steps for the onboarding widget
 window.onboardingTourSteps = [
-    {
-        element: '#investmentSummary',
-        popover: {
-            title: __('Investments'),
-            description: __('Investments represent your holdings in various financial instruments such as stocks, bonds, or mutual funds.'),
-        }
+  {
+    element: '#investmentSummary',
+    popover: {
+      title: __('Investments'),
+      description: __(
+        'Investments represent your holdings in various financial instruments such as stocks, bonds, or mutual funds.',
+      ),
     },
-    {
-        element: '#investmentSummary',
-        popover: {
-            title: __('Manage investments'),
-            description: __('Use the action menu (three vertical dots) next to each investment to view details, edit, or delete the investment. You can also initiate new transactions directly from this menu.'),
-        }
+  },
+  {
+    element: '#investmentSummary',
+    popover: {
+      title: __('Manage investments'),
+      description: __(
+        'Use the action menu (three vertical dots) next to each investment to view details, edit, or delete the investment. You can also initiate new transactions directly from this menu.',
+      ),
     },
-    {
-        element: '#investmentSummary',
-        popover: {
-            title: __('Manage investments'),
-            description: __('You can also right-click on any investment row to access the contextual actions menu for the available operations.'),
-        }
+  },
+  {
+    element: '#investmentSummary',
+    popover: {
+      title: __('Manage investments'),
+      description: __(
+        'You can also right-click on any investment row to access the contextual actions menu for the available operations.',
+      ),
     },
-    {
-        element: '#cardActions',
-        popover: {
-            title: __('New investment'),
-            description: __('You can create new investments to capture details of your portfolio.'),
-        }
+  },
+  {
+    element: '#cardActions',
+    popover: {
+      title: __('New investment'),
+      description: __(
+        'You can create new investments to capture details of your portfolio.',
+      ),
     },
-    {
-        element: '#button-manage-investment-groups',
-        popover: {
-            title: __('Investment Groups'),
-            description: __('Investments are organized into groups to help you categorize and manage them effectively. You can create, edit, or delete investment groups as needed.'),
-        }
+  },
+  {
+    element: '#button-manage-investment-groups',
+    popover: {
+      title: __('Investment Groups'),
+      description: __(
+        'Investments are organized into groups to help you categorize and manage them effectively. You can create, edit, or delete investment groups as needed.',
+      ),
     },
-    {
-        element: '#table_filter_search_text',
-        popover: {
-            title: __('Search investments'),
-            description: __('Use this search box to quickly find investments by any table filed, like name, symbol, or ISIN number.'),
-        }
-    }
+  },
+  {
+    element: '#table_filter_search_text',
+    popover: {
+      title: __('Search investments'),
+      description: __(
+        'Use this search box to quickly find investments by any table filed, like name, symbol, or ISIN number.',
+      ),
+    },
+  },
 ];
 
 // Initialize the onboarding widget
@@ -405,5 +477,5 @@ import { createApp } from 'vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 const app = createApp({});
 installRouteGlobal(app);
-app.component('onboarding-card', OnboardingCard);
+app.component('OnboardingCard', OnboardingCard);
 app.mount('#onboarding-card');

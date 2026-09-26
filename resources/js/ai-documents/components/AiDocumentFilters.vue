@@ -11,9 +11,9 @@
       </div>
     </div>
     <ul
+      id="cardFilters"
       class="list-group list-group-flush collapse show"
       aria-expanded="true"
-      id="cardFilters"
     >
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
@@ -23,8 +23,8 @@
         </label>
         <select
           id="table_filter_status"
-          class="form-select"
           v-model="filters.status"
+          class="form-select"
           @change="emitFilters"
         >
           <option value="">{{ __('Any') }}</option>
@@ -44,8 +44,8 @@
         </label>
         <select
           id="table_filter_source"
-          class="form-select"
           v-model="filters.source"
+          class="form-select"
           @change="emitFilters"
         >
           <option value="">{{ __('Any') }}</option>
@@ -62,17 +62,17 @@
         </label>
         <div class="input-group">
           <input
+            id="table_filter_search_text"
+            v-model="filters.search"
             autocomplete="off"
             class="form-control"
-            id="table_filter_search_text"
             type="text"
-            v-model="filters.search"
             @input="emitFilters"
           />
           <button
+            id="table_filter_search_text_clear"
             class="btn btn-outline-secondary"
             type="button"
-            id="table_filter_search_text_clear"
             :title="__('Clear search')"
             @click="clearSearch"
           >

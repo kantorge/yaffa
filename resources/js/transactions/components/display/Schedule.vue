@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-3" v-show="isVisible">
+  <div v-show="isVisible" class="card mb-3">
     <div class="card-header">
       <div class="card-title">
         {{ __('Schedule') }}
@@ -8,7 +8,9 @@
     <div class="card-body">
       <div class="schedule-groups">
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Pattern') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Pattern') }}
+          </h6>
           <dl class="field-grid mb-0">
             <div>
               <dt class="mb-1">{{ __('Repeats every') }}</dt>
@@ -22,11 +24,15 @@
         </div>
 
         <div class="p-3 rounded border">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Range') }}</h6>
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Range') }}
+          </h6>
           <dl class="field-grid field-grid-2col mb-0">
             <div>
               <dt class="mb-1">{{ __('Start date') }}</dt>
-              <dd class="mb-0">{{ formattedDate(schedule.start_date) }}</dd>
+              <dd class="mb-0">
+                {{ formattedDate(schedule.start_date) }}
+              </dd>
             </div>
             <div v-if="isSchedule">
               <dt class="mb-1">{{ __('Next date') }}</dt>
@@ -69,11 +75,15 @@
           </dl>
         </div>
 
-        <div class="p-3 rounded border" v-if="isSchedule">
-          <h6 class="text-muted text-uppercase small mb-2">{{ __('Behavior') }}</h6>
+        <div v-if="isSchedule" class="p-3 rounded border">
+          <h6 class="text-muted text-uppercase small mb-2">
+            {{ __('Behavior') }}
+          </h6>
           <dl class="field-grid mb-0">
             <div>
-              <dt class="mb-1">{{ __('Automatic recording') }}</dt>
+              <dt class="mb-1">
+                {{ __('Automatic recording') }}
+              </dt>
               <dd class="mb-0">
                 <span v-if="schedule.automatic_recording">
                   <i class="fa fa-check text-success" :title="__('Yes')"></i>
@@ -148,7 +158,9 @@
 
     computed: {
       frequencyLabel() {
-        return frequencyLabels[this.schedule.frequency] ?? this.schedule.frequency;
+        return (
+          frequencyLabels[this.schedule.frequency] ?? this.schedule.frequency
+        );
       },
 
       // The pattern row only means anything for MONTHLY/YEARLY (by_day can
@@ -170,7 +182,10 @@
                   count: this.schedule.days_before_month_end,
                 });
 
-          if (this.schedule.by_month && this.monthLabels[this.schedule.by_month]) {
+          if (
+            this.schedule.by_month &&
+            this.monthLabels[this.schedule.by_month]
+          ) {
             return __(':pattern of :month', {
               pattern: label,
               month: this.monthLabels[this.schedule.by_month],
@@ -181,17 +196,24 @@
         }
 
         if (this.schedule.last_business_day_of_month) {
-          return this.schedule.by_month && this.monthLabels[this.schedule.by_month]
-            ? __('The last business day of :month', { month: this.monthLabels[this.schedule.by_month] })
+          return this.schedule.by_month &&
+            this.monthLabels[this.schedule.by_month]
+            ? __('The last business day of :month', {
+                month: this.monthLabels[this.schedule.by_month],
+              })
             : __('The last business day of the month');
         }
 
         if (!this.schedule.by_day) {
-          const { day, month } = scheduleStartDateParts(this.schedule.start_date) ?? {};
+          const { day, month } =
+            scheduleStartDateParts(this.schedule.start_date) ?? {};
 
           if (this.schedule.frequency === 'YEARLY') {
             return day && month && this.monthLabels[month]
-              ? __('On :month :day each year', { month: this.monthLabels[month], day })
+              ? __('On :month :day each year', {
+                  month: this.monthLabels[month],
+                  day,
+                })
               : __('On the same month and day each year');
           }
 
@@ -206,7 +228,10 @@
         const ordinalLabel = this.ordinalLabels[ordinal] ?? ordinal;
         const weekdayLabel = this.weekdayLabels[weekday] ?? weekday;
 
-        if (this.schedule.by_month && this.monthLabels[this.schedule.by_month]) {
+        if (
+          this.schedule.by_month &&
+          this.monthLabels[this.schedule.by_month]
+        ) {
           return __(':ordinal :weekday of :month', {
             ordinal: ordinalLabel,
             weekday: weekdayLabel,

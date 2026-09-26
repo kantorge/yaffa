@@ -45,9 +45,13 @@
               }}
             </dd>
             <dt class="col-6">{{ __('Added quantity') }}</dt>
-            <dd class="col-6">{{ formatQuantity(summary.Added) }}</dd>
+            <dd class="col-6">
+              {{ formatQuantity(summary.Added) }}
+            </dd>
             <dt class="col-6">{{ __('Removed quantity') }}</dt>
-            <dd class="col-6">{{ formatQuantity(summary.Removed) }}</dd>
+            <dd class="col-6">
+              {{ formatQuantity(summary.Removed) }}
+            </dd>
             <dt class="col-6">{{ __('Selling revenue') }}</dt>
             <dd class="col-6">
               {{
@@ -85,7 +89,9 @@
               }}
             </dd>
             <dt class="col-6">{{ __('Quantity') }}</dt>
-            <dd class="col-6">{{ formatQuantity(summary.Quantity) }}</dd>
+            <dd class="col-6">
+              {{ formatQuantity(summary.Quantity) }}
+            </dd>
             <dt class="col-6">{{ __('Value') }}</dt>
             <dd class="col-6">
               {{

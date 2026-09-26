@@ -87,7 +87,9 @@
       __,
       documentUrl(aiDocumentId) {
         if (!aiDocumentId || !window.route) return '#';
-        return window.route('ai-documents.show', { aiDocument: aiDocumentId });
+        return window.route('ai-documents.show', {
+          aiDocument: aiDocumentId,
+        });
       },
       formatDate(dateString) {
         return toFormattedDate(

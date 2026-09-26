@@ -5,7 +5,7 @@
       :message="__('There were some problems with your input.')"
     />
 
-    <form accept-charset="UTF-8" @submit.prevent="onSubmit" autocomplete="off">
+    <form accept-charset="UTF-8" autocomplete="off" @submit.prevent="onSubmit">
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
@@ -33,8 +33,8 @@
                     </label>
                     <select
                       id="transaction_type"
-                      class="form-select"
                       v-model="form.transaction_type"
+                      class="form-select"
                       :disabled="!isBaseSettingsEditsAllowed"
                       @change="transactionTypeChanged($event)"
                     >
@@ -49,17 +49,17 @@
                   </div>
                 </div>
                 <div
-                  class="col col-xl-4 d-flex justify-content-center"
                   v-if="!simplified"
+                  class="col col-xl-4 d-flex justify-content-center"
                 >
                   <input
+                    id="checkbox-investment-transaction-schedule"
+                    v-model="form.schedule"
                     class="btn-check"
                     :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
-                    id="checkbox-investment-transaction-schedule"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.schedule"
                   />
                   <label
                     class="btn btn-outline-secondary w-100"
@@ -96,13 +96,13 @@
                   class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
+                    id="checkbox-investment-transaction-reconciled"
+                    v-model="form.reconciled"
                     class="btn-check"
                     :disabled="form.schedule"
-                    id="checkbox-investment-transaction-reconciled"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.reconciled"
                   />
                   <label
                     class="btn btn-outline-success"
@@ -118,32 +118,34 @@
                       ? 'col-8 col-sm-2 col-md-4 col-lg-2'
                       : 'col-8 col-sm-4 col-md-8 col-lg-4',
                     'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
-                    { 'has-error': form.errors.has('date') },
+                    {
+                      'has-error': form.errors.has('date'),
+                    },
                   ]"
                 >
                   <label class="form-label" for="investment-date">
                     {{ __('Date') }}
                   </label>
                   <input
+                    id="investment-date"
+                    v-model="dateInput"
                     type="date"
                     class="form-control"
                     :disabled="form.schedule"
-                    id="investment-date"
-                    v-model="dateInput"
                   />
                 </div>
                 <div
-                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                   v-if="action === 'enter'"
+                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                 >
                   <div class="form-check">
                     <input
+                      id="checkbox-investment-catch-up-schedule"
+                      v-model="form.catch_up_schedule"
                       class="form-check-input"
                       dusk="checkbox-investment-catch-up-schedule"
-                      id="checkbox-investment-catch-up-schedule"
                       type="checkbox"
                       value="1"
-                      v-model="form.catch_up_schedule"
                     />
                     <label
                       class="form-check-label"
@@ -161,6 +163,7 @@
                         "
                       ></i>
                       <i
+                        v-if="catchUpMayCloseSchedule"
                         class="fa fa-triangle-exclamation text-warning ms-1"
                         data-bs-toggle="tooltip"
                         data-bs-placement="top"
@@ -169,7 +172,6 @@
                             'May close this schedule if no occurrences remain.',
                           )
                         "
-                        v-if="catchUpMayCloseSchedule"
                       ></i>
                     </label>
                   </div>
@@ -182,11 +184,11 @@
                     {{ __('Comment') }}
                   </label>
                   <input
-                    class="form-control"
                     id="investment-comment"
+                    v-model="form.comment"
+                    class="form-control"
                     maxlength="255"
                     type="text"
-                    v-model="form.comment"
                   />
                 </div>
               </div>
@@ -220,9 +222,9 @@
                       {{ __('Account') }}
                     </label>
                     <select
-                      class="form-select"
                       id="account"
                       v-model="form.config.account_id"
+                      class="form-select"
                       style="width: 100% !important"
                     ></select>
                   </div>
@@ -233,9 +235,9 @@
                       {{ __('Investment') }}
                     </label>
                     <select
-                      class="form-control"
                       id="investment"
                       v-model="form.config.investment_id"
+                      class="form-control"
                       style="width: 100% !important"
                     ></select>
                   </div>
@@ -259,9 +261,9 @@
                       {{ __('Quantity') }}
                     </label>
                     <MathInput
-                      class="form-control"
                       id="transaction_quantity"
                       v-model="form.config.quantity"
+                      class="form-control"
                       :disabled="!transactionTypeSettings.quantity"
                     ></MathInput>
                   </div>
@@ -272,19 +274,19 @@
                       {{ __('Price') }}
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
+                      <span v-if="currency" class="input-group-text">
                         {{ getCurrencySymbol(locale, currency.iso_code) }}
                       </span>
                       <MathInput
-                        class="form-control"
                         id="transaction_price"
                         v-model="form.config.price"
+                        class="form-control"
                         :disabled="!transactionTypeSettings.price"
                         @input="onPriceChange"
                       ></MathInput>
                       <span
-                        class="input-group-text existing-price-label"
                         v-if="existingPriceForDate !== null"
+                        class="input-group-text existing-price-label"
                         :title="
                           __('Existing price for this date. Click to apply.')
                         "
@@ -301,19 +303,25 @@
                       >
                       <!-- Toggle checkbox as button addon -->
                       <input
-                        class="btn-check"
-                        type="checkbox"
-                        id="store_price_checkbox"
-                        autocomplete="off"
-                        v-model="storePriceEnabled"
                         v-if="
                           shouldShowStorePriceCheckbox &&
                           existingPriceForDate === null
                         "
+                        id="store_price_checkbox"
+                        v-model="storePriceEnabled"
+                        class="btn-check"
+                        type="checkbox"
+                        autocomplete="off"
                       />
                       <label
+                        v-if="
+                          shouldShowStorePriceCheckbox &&
+                          existingPriceForDate === null
+                        "
                         class="btn btn-secondary"
-                        :class="{ active: storePriceEnabled }"
+                        :class="{
+                          active: storePriceEnabled,
+                        }"
                         for="store_price_checkbox"
                         :title="
                           __(
@@ -322,10 +330,6 @@
                         "
                         data-bs-toggle="tooltip"
                         data-bs-placement="top"
-                        v-if="
-                          shouldShowStorePriceCheckbox &&
-                          existingPriceForDate === null
-                        "
                       >
                         {{ __('Store price') }}
                       </label>
@@ -338,13 +342,13 @@
                       {{ __('Dividend') }}
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
+                      <span v-if="currency" class="input-group-text">
                         {{ getCurrencySymbol(locale, currency.iso_code) }}
                       </span>
                       <MathInput
-                        class="form-control"
                         id="transaction_dividend"
                         v-model="form.config.dividend"
+                        class="form-control"
                         :disabled="!transactionTypeSettings.dividend"
                       ></MathInput>
                     </div>
@@ -358,13 +362,13 @@
                       {{ __('Commission') }}
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
+                      <span v-if="currency" class="input-group-text">
                         {{ getCurrencySymbol(locale, currency.iso_code) }}
                       </span>
                       <MathInput
-                        class="form-control"
                         id="transaction_commission"
                         v-model="form.config.commission"
+                        class="form-control"
                       ></MathInput>
                     </div>
                   </div>
@@ -375,13 +379,13 @@
                       {{ __('Tax') }}
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
+                      <span v-if="currency" class="input-group-text">
                         {{ getCurrencySymbol(locale, currency.iso_code) }}
                       </span>
                       <MathInput
-                        class="form-control"
                         id="transaction_tax"
                         v-model="form.config.tax"
+                        class="form-control"
                       ></MathInput>
                     </div>
                   </div>
@@ -393,11 +397,11 @@
                     </dt>
                     <dd class="col-12">
                       <span
-                        class="me-1"
                         v-if="currency"
+                        class="me-1"
                         dusk="transaction-total-value"
                       >
-                        {{ toFormattedCurrency(total, this.locale, currency) }}
+                        {{ toFormattedCurrency(total, locale, currency) }}
                       </span>
                       <span v-else>
                         {{ total }}
@@ -413,18 +417,18 @@
 
       <transaction-schedule
         v-if="form.schedule"
-        :isSchedule="form.schedule"
+        :is-schedule="form.schedule"
         :schedule="form.schedule_config"
         :form="form"
       ></transaction-schedule>
 
       <transaction-schedule
         v-if="form.schedule && action === 'replace'"
-        :withCheckbox="true"
-        :title="__('Update base schedule')"
-        :allowCustomization="false"
         ref="scheduleOriginal"
-        :isSchedule="form.schedule"
+        :with-checkbox="true"
+        :title="__('Update base schedule')"
+        :allow-customization="false"
+        :is-schedule="form.schedule"
         :schedule="form.original_schedule_config"
         :form="form"
         field-prefix="original_schedule_config"
@@ -434,8 +438,8 @@
         <div class="card-body">
           <div class="row justify-content-end">
             <div
-              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               v-if="!fromModal"
+              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               dusk="action-after-save-desktop-button-group"
             >
               <span class="form-label block-label">
@@ -460,8 +464,8 @@
               </div>
             </div>
             <div
-              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
               v-if="!fromModal"
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
             >
               <label
                 class="form-label"
@@ -470,9 +474,9 @@
                 {{ __('Action after saving') }}
               </label>
               <select
-                class="form-control"
-                v-model="callback"
                 id="callback-selector-mobile-investment"
+                v-model="callback"
+                class="form-control"
               >
                 <option
                   v-for="item in activeCallbackOptions"
@@ -488,20 +492,20 @@
             >
               <button
                 class="btn btn btn-secondary"
-                @click="onCancel"
                 type="button"
+                @click="onCancel"
               >
                 {{ __('Cancel') }}
               </button>
-              <Button
+              <SubmitButton
+                id="transactionFormInvestment-Save"
                 class="btn btn-primary ms-2"
                 :disabled="form.busy"
                 :form="form"
-                id="transactionFormInvestment-Save"
               >
-                <span class="fa fa-save me-1" v-show="!form.busy"></span>
+                <span v-show="!form.busy" class="fa fa-save me-1"></span>
                 {{ __('Save') }}
-              </Button>
+              </SubmitButton>
             </div>
           </div>
         </div>
@@ -514,11 +518,13 @@
   import { RRule } from 'rrule';
   import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
-  import * as toastHelpers from '@/shared/lib/toast';
   import { confirmAction } from '@/shared/lib/confirm';
 
   import Form from 'vform';
-  import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    AlertErrors,
+  } from 'vform/src/components/bootstrap5';
 
   import TransactionSchedule from './TransactionSchedule.vue';
 
@@ -543,7 +549,7 @@
     components: {
       TransactionSchedule,
       MathInput,
-      Button,
+      SubmitButton,
       AlertErrors,
     },
 
@@ -578,6 +584,8 @@
         default: 'body',
       },
     },
+
+    emits: ['cancel', 'success'],
 
     data() {
       let data = {};
@@ -766,6 +774,70 @@
           // At the moment, overwriting is not supported
           !this.existingPriceForDate
         );
+      },
+    },
+
+    watch: {
+      // On change of new schedule start date, adjust original schedule end date to previous day
+      'form.schedule_config.start_date': function (newDate) {
+        this.syncScheduleStartDate(newDate);
+      },
+
+      // The catch-up warning icon is only rendered when this is true (v-if), so a
+      // newly-mounted icon needs its own tooltip initialization - the one in
+      // mounted() only covers icons already in the DOM at that point.
+      catchUpMayCloseSchedule() {
+        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
+      },
+
+      // Check for existing price when date changes
+      'form.date': function () {
+        this.checkExistingPrice();
+      },
+
+      // Check for existing price when investment changes
+      'form.config.investment_id': function () {
+        this.checkExistingPrice();
+      },
+
+      transaction(transaction) {
+        // TODO: consider using form.update()
+        this.form.reset();
+
+        // Copy values of existing transaction into component form data
+        this.initializeTransaction();
+
+        // Load default value for accounts
+        const accountReady = this.getDefaultAccountDetails(
+          transaction.config.account_id,
+        );
+
+        // Load default value for investment, or clear if not set
+        let investmentReady;
+        if (transaction.config.investment_id) {
+          investmentReady = this.getDefaultInvestmentDetails(
+            transaction.config.investment_id,
+          );
+        } else {
+          this.clearInvestmentDropdown();
+        }
+
+        // Snapshot the settled post-load state as the isDirty() baseline - see
+        // markFormClean(). The async select2 population above resets config.account_id/
+        // investment_id via a native <select>'s 'change' event, which coerces the value
+        // to a string, so this must wait for both to settle rather than snapshotting
+        // right after initializeTransaction().
+        Promise.all([accountReady, investmentReady]).then(() => {
+          this.$nextTick(() => this.markFormClean());
+        });
+      },
+
+      existingPriceForDate(value) {
+        if (value !== null) {
+          this.$nextTick(() => {
+            initializeBootstrapTooltips();
+          });
+        }
       },
     },
 
@@ -1015,7 +1087,9 @@
         // form field sync it triggers via a dispatched 'change' event) to
         // settle before treating the form as loaded.
         return $.ajax({
-          url: route('api.v1.investments.show', { investment: investment_id }),
+          url: route('api.v1.investments.show', {
+            investment: investment_id,
+          }),
           data: {
             _token: this.csrfToken,
           },
@@ -1077,16 +1151,19 @@
               this.transaction.transaction_schedule.by_month;
 
             this.form.schedule_config.start_date =
-              toDateInputValue(this.transaction.transaction_schedule.start_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.start_date,
+              ) || null;
             this.form.schedule_config.next_date =
-              toDateInputValue(this.transaction.transaction_schedule.next_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.next_date,
+              ) || null;
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
             this.form.schedule_config.end_date =
-              toDateInputValue(this.transaction.transaction_schedule.end_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.end_date,
+              ) || null;
 
             this.form.schedule_config.inflation =
               this.transaction.transaction_schedule.inflation;
@@ -1402,70 +1479,6 @@
       },
       getCurrencySymbol,
       toFormattedCurrency,
-    },
-
-    watch: {
-      // On change of new schedule start date, adjust original schedule end date to previous day
-      'form.schedule_config.start_date': function (newDate) {
-        this.syncScheduleStartDate(newDate);
-      },
-
-      // The catch-up warning icon is only rendered when this is true (v-if), so a
-      // newly-mounted icon needs its own tooltip initialization - the one in
-      // mounted() only covers icons already in the DOM at that point.
-      catchUpMayCloseSchedule() {
-        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
-      },
-
-      // Check for existing price when date changes
-      'form.date': function () {
-        this.checkExistingPrice();
-      },
-
-      // Check for existing price when investment changes
-      'form.config.investment_id': function () {
-        this.checkExistingPrice();
-      },
-
-      transaction(transaction) {
-        // TODO: consider using form.update()
-        this.form.reset();
-
-        // Copy values of existing transaction into component form data
-        this.initializeTransaction();
-
-        // Load default value for accounts
-        const accountReady = this.getDefaultAccountDetails(
-          transaction.config.account_id,
-        );
-
-        // Load default value for investment, or clear if not set
-        let investmentReady;
-        if (transaction.config.investment_id) {
-          investmentReady = this.getDefaultInvestmentDetails(
-            transaction.config.investment_id,
-          );
-        } else {
-          this.clearInvestmentDropdown();
-        }
-
-        // Snapshot the settled post-load state as the isDirty() baseline - see
-        // markFormClean(). The async select2 population above resets config.account_id/
-        // investment_id via a native <select>'s 'change' event, which coerces the value
-        // to a string, so this must wait for both to settle rather than snapshotting
-        // right after initializeTransaction().
-        Promise.all([accountReady, investmentReady]).then(() => {
-          this.$nextTick(() => this.markFormClean());
-        });
-      },
-
-      existingPriceForDate(value) {
-        if (value !== null) {
-          this.$nextTick(() => {
-            initializeBootstrapTooltips();
-          });
-        }
-      },
     },
   };
 </script>

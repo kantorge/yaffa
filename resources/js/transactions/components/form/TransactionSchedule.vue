@@ -1,17 +1,17 @@
 <template>
   <div
+    :id="'transaction_schedule_' + $.vnode.key"
     :class="bare ? null : 'card mb-3'"
     dusk="card-transaction-schedule"
-    :id="'transaction_schedule_' + this.$.vnode.key"
   >
-    <div class="card-header d-flex justify-content-between" v-if="!bare">
+    <div v-if="!bare" class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ title }}
       </div>
       <div v-if="withCheckbox">
         <div class="checkbox">
           <label>
-            <input type="checkbox" value="1" v-model="allowCustomizationData" />
+            <input v-model="allowCustomizationData" type="checkbox" value="1" />
             {{ __('Customize') }}
           </label>
         </div>
@@ -29,24 +29,32 @@
             </label>
             <div class="d-flex gap-2">
               <input
+                :id="'schedule_interval_' + $.vnode.key"
+                v-model="intervalInput"
                 type="number"
                 :disabled="!allowCustomizationData"
                 class="form-control schedule-interval-input"
-                :id="'schedule_interval_' + this.$.vnode.key"
-                v-model="intervalInput"
                 min="1"
                 step="1"
               />
               <select
-                class="form-select"
-                :id="'schedule_frequency_' + this.$.vnode.key"
+                :id="'schedule_frequency_' + $.vnode.key"
                 v-model="schedule.frequency"
+                class="form-select"
                 :disabled="!allowCustomizationData"
               >
-                <option value="DAILY">{{ __('schedule.daily') }}</option>
-                <option value="WEEKLY">{{ __('schedule.weekly') }}</option>
-                <option value="MONTHLY">{{ __('schedule.monthly') }}</option>
-                <option value="YEARLY">{{ __('schedule.yearly') }}</option>
+                <option value="DAILY">
+                  {{ __('schedule.daily') }}
+                </option>
+                <option value="WEEKLY">
+                  {{ __('schedule.weekly') }}
+                </option>
+                <option value="MONTHLY">
+                  {{ __('schedule.monthly') }}
+                </option>
+                <option value="YEARLY">
+                  {{ __('schedule.yearly') }}
+                </option>
               </select>
             </div>
           </div>
@@ -67,11 +75,11 @@
           >
             <div class="form-check mb-1">
               <input
+                :id="'schedule_pattern_day_of_month_' + $.vnode.key"
+                v-model="patternMode"
                 class="form-check-input"
                 type="radio"
                 value="dayOfMonth"
-                v-model="patternMode"
-                :id="'schedule_pattern_day_of_month_' + this.$.vnode.key"
                 :disabled="!allowCustomizationData || !showPatternPicker"
                 :title="
                   !showPatternPicker
@@ -81,7 +89,7 @@
               />
               <label
                 class="form-check-label"
-                :for="'schedule_pattern_day_of_month_' + this.$.vnode.key"
+                :for="'schedule_pattern_day_of_month_' + $.vnode.key"
               >
                 {{ dayOfMonthPatternLabel }}
               </label>
@@ -89,12 +97,12 @@
             <div class="d-flex flex-wrap align-items-center gap-2">
               <div class="form-check mb-0">
                 <input
+                  :id="'schedule_pattern_weekday_' + $.vnode.key"
+                  v-model="patternMode"
                   class="form-check-input"
                   type="radio"
                   value="weekday"
-                  v-model="patternMode"
                   dusk="radio-schedule-pattern-weekday"
-                  :id="'schedule_pattern_weekday_' + this.$.vnode.key"
                   :disabled="!allowCustomizationData || !showPatternPicker"
                   :title="
                     !showPatternPicker
@@ -104,17 +112,17 @@
                 />
                 <label
                   class="form-check-label"
-                  :for="'schedule_pattern_weekday_' + this.$.vnode.key"
+                  :for="'schedule_pattern_weekday_' + $.vnode.key"
                 >
                   {{ weekdayPatternLabel }}
                 </label>
               </div>
               <template v-if="patternMode === 'weekday' && showPatternPicker">
                 <select
+                  :id="'schedule_by_day_ordinal_' + $.vnode.key"
+                  v-model="byDayOrdinal"
                   class="form-select schedule-ordinal-select"
                   dusk="select-schedule-by-day-ordinal"
-                  :id="'schedule_by_day_ordinal_' + this.$.vnode.key"
-                  v-model="byDayOrdinal"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -126,10 +134,10 @@
                   </option>
                 </select>
                 <select
+                  :id="'schedule_by_day_weekday_' + $.vnode.key"
+                  v-model="byDayWeekday"
                   class="form-select schedule-weekday-select"
                   dusk="select-schedule-by-day-weekday"
-                  :id="'schedule_by_day_weekday_' + this.$.vnode.key"
-                  v-model="byDayWeekday"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -144,10 +152,10 @@
               <template v-if="patternMode === 'weekday' && showMonthPicker">
                 <span class="text-muted">{{ __('of') }}</span>
                 <select
+                  :id="'schedule_by_month_' + $.vnode.key"
+                  v-model.number="schedule.by_month"
                   class="form-select schedule-month-select"
                   dusk="select-schedule-by-month"
-                  :id="'schedule_by_month_' + this.$.vnode.key"
-                  v-model.number="schedule.by_month"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -163,12 +171,12 @@
 
             <div class="form-check mb-1 mt-1">
               <input
+                :id="'schedule_pattern_days_before_month_end_' + $.vnode.key"
+                v-model="patternMode"
                 class="form-check-input"
                 type="radio"
                 value="daysBeforeMonthEnd"
-                v-model="patternMode"
                 dusk="radio-schedule-pattern-days-before-month-end"
-                :id="'schedule_pattern_days_before_month_end_' + this.$.vnode.key"
                 :disabled="!allowCustomizationData || !showPatternPicker"
                 :title="
                   !showPatternPicker
@@ -178,21 +186,21 @@
               />
               <label
                 class="form-check-label"
-                :for="'schedule_pattern_days_before_month_end_' + this.$.vnode.key"
+                :for="'schedule_pattern_days_before_month_end_' + $.vnode.key"
               >
                 {{ __('A number of days before the end of the month') }}
               </label>
             </div>
             <div
-              class="d-flex flex-wrap align-items-center gap-2 mb-1"
               v-if="patternMode === 'daysBeforeMonthEnd' && showPatternPicker"
+              class="d-flex flex-wrap align-items-center gap-2 mb-1"
             >
               <input
+                :id="'schedule_days_before_month_end_' + $.vnode.key"
+                v-model="daysBeforeMonthEndInput"
                 type="number"
                 class="form-control schedule-days-before-month-end-input"
                 dusk="input-schedule-days-before-month-end"
-                :id="'schedule_days_before_month_end_' + this.$.vnode.key"
-                v-model="daysBeforeMonthEndInput"
                 :disabled="!allowCustomizationData"
                 min="0"
                 max="27"
@@ -201,9 +209,9 @@
               <template v-if="showMonthPicker">
                 <span class="text-muted">{{ __('of') }}</span>
                 <select
-                  class="form-select schedule-month-select"
-                  :id="'schedule_days_before_month_end_by_month_' + this.$.vnode.key"
+                  :id="'schedule_days_before_month_end_by_month_' + $.vnode.key"
                   v-model.number="schedule.by_month"
+                  class="form-select schedule-month-select"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -219,12 +227,12 @@
 
             <div class="form-check mb-0">
               <input
+                :id="'schedule_pattern_last_business_day_' + $.vnode.key"
+                v-model="patternMode"
                 class="form-check-input"
                 type="radio"
                 value="lastBusinessDayOfMonth"
-                v-model="patternMode"
                 dusk="radio-schedule-pattern-last-business-day"
-                :id="'schedule_pattern_last_business_day_' + this.$.vnode.key"
                 :disabled="!allowCustomizationData || !showPatternPicker"
                 :title="
                   !showPatternPicker
@@ -234,20 +242,24 @@
               />
               <label
                 class="form-check-label"
-                :for="'schedule_pattern_last_business_day_' + this.$.vnode.key"
+                :for="'schedule_pattern_last_business_day_' + $.vnode.key"
               >
                 {{ __('The last business day of the month') }}
               </label>
             </div>
             <div
+              v-if="
+                patternMode === 'lastBusinessDayOfMonth' &&
+                showPatternPicker &&
+                showMonthPicker
+              "
               class="d-flex flex-wrap align-items-center gap-2"
-              v-if="patternMode === 'lastBusinessDayOfMonth' && showPatternPicker && showMonthPicker"
             >
               <span class="text-muted">{{ __('of') }}</span>
               <select
-                class="form-select schedule-month-select"
-                :id="'schedule_last_business_day_by_month_' + this.$.vnode.key"
+                :id="'schedule_last_business_day_by_month_' + $.vnode.key"
                 v-model.number="schedule.by_month"
+                class="form-select schedule-month-select"
                 :disabled="!allowCustomizationData"
               >
                 <option
@@ -268,23 +280,22 @@
           </h6>
           <div class="field-grid field-grid-2col">
             <div
-              :class="{ 'has-error': hasError('start_date') || tooManyPeriods }"
+              :class="{
+                'has-error': hasError('start_date') || tooManyPeriods,
+              }"
             >
-              <label
-                :for="'schedule_start_' + this.$.vnode.key"
-                class="form-label"
-              >
+              <label :for="'schedule_start_' + $.vnode.key" class="form-label">
                 {{ __('Start date') }}
               </label>
               <input
+                :id="'schedule_start_' + $.vnode.key"
+                v-model="startDateInput"
                 type="date"
                 class="form-control"
-                :id="'schedule_start_' + this.$.vnode.key"
-                v-model="startDateInput"
                 :disabled="!allowCustomizationData"
                 required
               />
-              <div class="form-text text-danger" v-if="tooManyPeriods">
+              <div v-if="tooManyPeriods" class="form-text text-danger">
                 {{
                   __(
                     'This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.',
@@ -294,15 +305,12 @@
               </div>
             </div>
             <div
+              v-if="isSchedule"
               :class="{
                 'has-error': hasError('next_date') || nextDateMismatch,
               }"
-              v-if="isSchedule"
             >
-              <label
-                :for="'schedule_next_' + this.$.vnode.key"
-                class="form-label"
-              >
+              <label :for="'schedule_next_' + $.vnode.key" class="form-label">
                 {{ __('Next date') }}
                 <span
                   class="fa"
@@ -329,10 +337,10 @@
                   <i class="fa fa-chevron-left"></i>
                 </button>
                 <input
+                  :id="'schedule_next_' + $.vnode.key"
+                  v-model="nextDateInput"
                   type="date"
                   class="form-control"
-                  :id="'schedule_next_' + this.$.vnode.key"
-                  v-model="nextDateInput"
                   :disabled="!allowCustomizationData"
                 />
                 <button
@@ -354,7 +362,7 @@
                   <i class="fa fa-times"></i>
                 </button>
               </div>
-              <div class="form-text text-danger" v-if="nextDateMismatch">
+              <div v-if="nextDateMismatch" class="form-text text-danger">
                 {{ __('This date does not match the configured pattern') }}
               </div>
             </div>
@@ -367,17 +375,14 @@
               of truth, this is a UI aid only.
             -->
             <div :class="{ 'has-error': hasError('count') }">
-              <label
-                :for="'schedule_count_' + this.$.vnode.key"
-                class="form-label"
-              >
+              <label :for="'schedule_count_' + $.vnode.key" class="form-label">
                 {{ __('Count') }}
               </label>
               <input
+                :id="'schedule_count_' + $.vnode.key"
+                v-model="countInput"
                 type="number"
                 class="form-control"
-                :id="'schedule_count_' + this.$.vnode.key"
-                v-model="countInput"
                 :disabled="!allowCustomizationData"
                 :placeholder="
                   schedule.end_date ? __('Cleared (end date set)') : ''
@@ -387,23 +392,20 @@
               />
             </div>
             <div :class="{ 'has-error': hasError('end_date') }">
-              <label
-                :for="'schedule_end_' + this.$.vnode.key"
-                class="form-label"
-              >
+              <label :for="'schedule_end_' + $.vnode.key" class="form-label">
                 {{ __('End date') }}
                 <i
-                  class="fa fa-info-circle text-info"
                   v-if="schedule.count"
+                  class="fa fa-info-circle text-info"
                   :title="__('Cleared (count set)')"
                 ></i>
               </label>
               <div class="input-group">
                 <input
+                  :id="'schedule_end_' + $.vnode.key"
+                  v-model="endDateInput"
                   type="date"
                   class="form-control"
-                  :id="'schedule_end_' + this.$.vnode.key"
-                  v-model="endDateInput"
                   :disabled="!allowCustomizationData"
                 />
                 <button
@@ -420,28 +422,30 @@
           </div>
         </div>
 
-        <div class="p-3 rounded border" v-if="isSchedule || isBudget">
+        <div v-if="isSchedule || isBudget" class="p-3 rounded border">
           <h6 class="text-muted text-uppercase small mb-2">
             {{ __('Behavior') }}
           </h6>
           <div class="field-grid">
             <div
-              :class="{ 'has-error': hasError('automatic_recording') }"
               v-if="isSchedule"
+              :class="{
+                'has-error': hasError('automatic_recording'),
+              }"
             >
               <div class="form-check">
                 <input
+                  :id="'schedule_automatic_recording_' + $.vnode.key"
+                  v-model="schedule.automatic_recording"
                   class="form-check-input"
                   dusk="checkbox-schedule-automatic-recording"
                   type="checkbox"
                   value="1"
-                  v-model="schedule.automatic_recording"
-                  :id="'schedule_automatic_recording_' + this.$.vnode.key"
                   :disabled="!allowCustomizationData"
                 />
                 <label
                   class="form-check-label"
-                  :for="'schedule_automatic_recording_' + this.$.vnode.key"
+                  :for="'schedule_automatic_recording_' + $.vnode.key"
                 >
                   {{ __('Automatic recording') }}
                   <i
@@ -457,16 +461,16 @@
             </div>
             <div :class="{ 'has-error': hasError('inflation') }">
               <label
-                :for="'schedule_inflation_' + this.$.vnode.key"
+                :for="'schedule_inflation_' + $.vnode.key"
                 class="form-label"
               >
                 {{ __('Yearly inflation') }}
               </label>
               <div class="input-group">
                 <input
-                  class="form-control"
-                  :id="'schedule_inflation_' + this.$.vnode.key"
+                  :id="'schedule_inflation_' + $.vnode.key"
                   v-model="schedule.inflation"
+                  class="form-control"
                   type="number"
                   step=".01"
                   :disabled="!allowCustomizationData"
@@ -505,7 +509,9 @@
   // RecurrenceRuleService::estimatePeriodsBetween() on the backend - a whole month/year only
   // counts once the day-of-month has been reached, unlike a fixed 30/365-day average.
   function monthsBetween(start, end) {
-    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    let months =
+      (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth());
     if (end.getDate() < start.getDate()) {
       months -= 1;
     }
@@ -514,7 +520,10 @@
 
   function yearsBetween(start, end) {
     let years = end.getFullYear() - start.getFullYear();
-    if (end.getMonth() < start.getMonth() || (end.getMonth() === start.getMonth() && end.getDate() < start.getDate())) {
+    if (
+      end.getMonth() < start.getMonth() ||
+      (end.getMonth() === start.getMonth() && end.getDate() < start.getDate())
+    ) {
       years -= 1;
     }
     return Math.max(years, 0);
@@ -575,7 +584,9 @@
       showMonthPicker() {
         return (
           this.schedule.frequency === 'YEARLY' &&
-          ['weekday', 'daysBeforeMonthEnd', 'lastBusinessDayOfMonth'].includes(this.patternMode)
+          ['weekday', 'daysBeforeMonthEnd', 'lastBusinessDayOfMonth'].includes(
+            this.patternMode,
+          )
         );
       },
 
@@ -600,7 +611,9 @@
         }
 
         return this.startDateDayOfMonth
-          ? __('On day :day of the month', { day: this.startDateDayOfMonth })
+          ? __('On day :day of the month', {
+              day: this.startDateDayOfMonth,
+            })
           : __('On the same day each month');
       },
 
@@ -633,8 +646,10 @@
       patternMode: {
         get() {
           if (this.schedule.by_day) return 'weekday';
-          if (this.schedule.days_before_month_end != null) return 'daysBeforeMonthEnd';
-          if (this.schedule.last_business_day_of_month) return 'lastBusinessDayOfMonth';
+          if (this.schedule.days_before_month_end != null)
+            return 'daysBeforeMonthEnd';
+          if (this.schedule.last_business_day_of_month)
+            return 'lastBusinessDayOfMonth';
           return 'dayOfMonth';
         },
         set(value) {
@@ -668,7 +683,8 @@
           return this.schedule.days_before_month_end ?? '';
         },
         set(value) {
-          this.schedule.days_before_month_end = value === '' ? null : Number(value);
+          this.schedule.days_before_month_end =
+            value === '' ? null : Number(value);
         },
       },
 
@@ -773,7 +789,9 @@
         if (this.schedule.days_before_month_end != null) {
           ruleOptions.bymonthday = -(this.schedule.days_before_month_end + 1);
         } else if (this.schedule.last_business_day_of_month) {
-          ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+          ruleOptions.byweekday = businessDayWeekdays.map(
+            (code) => RRule[code],
+          );
           ruleOptions.bysetpos = -1;
         } else if (this.schedule.by_day) {
           ruleOptions.byweekday = byDayToRRuleWeekday(this.schedule.by_day);

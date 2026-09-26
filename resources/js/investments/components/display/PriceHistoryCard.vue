@@ -20,7 +20,9 @@
         <div ref="chartPrice" style="width: 100%; height: 300px"></div>
       </div>
       <div v-else>
-        <div class="text-center text-muted">{{ __('No data available') }}</div>
+        <div class="text-center text-muted">
+          {{ __('No data available') }}
+        </div>
       </div>
     </div>
   </div>
@@ -32,7 +34,10 @@
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { __ } from '@/shared/lib/i18n';
   import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
 
   export default {
     name: 'PriceHistoryCard',

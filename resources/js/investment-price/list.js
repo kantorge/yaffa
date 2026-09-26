@@ -10,4 +10,3 @@ const app = createApp({
 
 installRouteGlobal(app);
 app.mount('#investmentPriceApp');
-

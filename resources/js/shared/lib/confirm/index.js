@@ -15,21 +15,21 @@ import Swal from 'sweetalert2';
  * @returns {Promise} The SweetAlert2 result promise.
  */
 export function confirmDelete(text, options = {}) {
-    return Swal.fire({
-        animation: false,
-        icon: 'warning',
-        text: text,
-        title: options.title,
-        showCancelButton: true,
-        buttonsStyling: false,
-        customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-        },
-        cancelButtonText: __('Cancel'),
-        confirmButtonText: options.confirmButtonText || __('Confirm'),
-        ...(options.target ? { target: options.target } : {}),
-    });
+  return Swal.fire({
+    animation: false,
+    icon: 'warning',
+    text: text,
+    title: options.title,
+    showCancelButton: true,
+    buttonsStyling: false,
+    customClass: {
+      confirmButton: 'btn btn-danger',
+      cancelButton: 'btn btn-secondary ms-3',
+    },
+    cancelButtonText: __('Cancel'),
+    confirmButtonText: options.confirmButtonText || __('Confirm'),
+    ...(options.target ? { target: options.target } : {}),
+  });
 }
 
 /**
@@ -48,19 +48,19 @@ export function confirmDelete(text, options = {}) {
  * @returns {Promise} The SweetAlert2 result promise.
  */
 export function confirmAction(text, options = {}) {
-    return Swal.fire({
-        animation: false,
-        icon: options.icon || 'question',
-        text: text,
-        title: options.title,
-        showCancelButton: true,
-        buttonsStyling: false,
-        customClass: {
-            confirmButton: 'btn btn-primary',
-            cancelButton: 'btn btn-secondary ms-3',
-        },
-        cancelButtonText: __('Cancel'),
-        confirmButtonText: options.confirmButtonText || __('Confirm'),
-        ...(options.target ? { target: options.target } : {}),
-    });
+  return Swal.fire({
+    animation: false,
+    icon: options.icon || 'question',
+    text: text,
+    title: options.title,
+    showCancelButton: true,
+    buttonsStyling: false,
+    customClass: {
+      confirmButton: 'btn btn-primary',
+      cancelButton: 'btn btn-secondary ms-3',
+    },
+    cancelButtonText: __('Cancel'),
+    confirmButtonText: options.confirmButtonText || __('Confirm'),
+    ...(options.target ? { target: options.target } : {}),
+  });
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="modal-quickview">
+  <div id="modal-quickview" class="modal fade">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
@@ -27,12 +27,12 @@
             :transaction="transaction"
           ></transaction-show-investment>
         </div>
-        <div class="modal-footer" v-if="transaction.id">
+        <div v-if="transaction.id" class="modal-footer">
           <action-button-bar
             :transaction="transaction"
             :controls="controls"
             :is-modal="true"
-            @transactionUpdated="transactionUpdated"
+            @transaction-updated="transactionUpdated"
           ></action-button-bar>
         </div>
       </div>
@@ -56,23 +56,41 @@
     props: {
       initialControls: {
         type: Object,
-        default: {
+        default: () => ({
           show: true,
           edit: true,
           clone: true,
           skip: false,
           enter: false,
           delete: false,
-        },
+        }),
       },
       originalTransaction: Object,
     },
+    emits: ['close'],
     data() {
       return {
         transaction: Object.assign({}, this.originalTransaction),
         controls: this.initialControls,
         modal: undefined,
       };
+    },
+    mounted() {
+      // Set up global event listener for displaying a transaction in the modal
+      window.addEventListener(
+        'showTransactionQuickViewModal',
+        this.handleQuickView,
+      );
+
+      // Initialize modal
+      this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
+    },
+    beforeUnmount() {
+      // Clean up event listener when component is destroyed
+      window.removeEventListener(
+        'showTransactionQuickViewModal',
+        this.handleQuickView,
+      );
     },
     methods: {
       close() {
@@ -92,23 +110,6 @@
         this.showTransaction(event.detail.transaction, event.detail.controls);
       },
       __,
-    },
-    mounted() {
-      // Set up global event listener for displaying a transaction in the modal
-      window.addEventListener(
-        'showTransactionQuickViewModal',
-        this.handleQuickView,
-      );
-
-      // Initialize modal
-      this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
-    },
-    beforeUnmount() {
-      // Clean up event listener when component is destroyed
-      window.removeEventListener(
-        'showTransactionQuickViewModal',
-        this.handleQuickView,
-      );
     },
   };
 </script>

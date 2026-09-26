@@ -1,10 +1,10 @@
 <template>
-  <div class="card" id="userSettingsForm">
+  <div id="userSettingsForm" class="card">
     <form
       accept-charset="UTF-8"
+      autocomplete="off"
       @submit.prevent="onSubmit"
       @keydown="form.onKeydown($event)"
-      autocomplete="off"
     >
       <div class="card-header">
         <div class="card-title">
@@ -19,10 +19,10 @@
           <div class="col-sm-9">
             <div class="input-group">
               <select
-                class="form-select"
                 id="language"
-                name="language"
                 v-model="form.language"
+                class="form-select"
+                name="language"
               >
                 <option
                   v-for="(language, code) in languages"
@@ -51,10 +51,10 @@
           <div class="col-sm-9">
             <div class="input-group">
               <select
-                class="form-select"
                 id="locale"
-                name="locale"
                 v-model="form.locale"
+                class="form-select"
+                name="locale"
               >
                 <option
                   v-for="(locale, code) in locales"
@@ -85,10 +85,10 @@
           <div class="col-sm-9">
             <div class="input-group">
               <input
-                type="date"
-                class="form-control"
                 id="start_date"
                 v-model="startDateInput"
+                type="date"
+                class="form-control"
                 required
               />
               <span
@@ -114,10 +114,10 @@
           <div class="col-sm-9">
             <div class="input-group">
               <input
-                type="date"
-                class="form-control"
                 id="end_date"
                 v-model="endDateInput"
+                type="date"
+                class="form-control"
                 required
               />
               <span
@@ -144,16 +144,24 @@
           <div class="col-sm-9">
             <div class="input-group">
               <select
-                class="form-select"
                 id="account_details_date_range"
-                name="account_details_date_range"
                 v-model="form.account_details_date_range"
+                class="form-select"
+                name="account_details_date_range"
               >
                 <option value="none">
                   {{ __("Don't load data by default") }}
                 </option>
-                <optgroup v-for="group in datePresets" :label="__(group.label)">
-                  <option v-for="option in group.options" :value="option.value">
+                <optgroup
+                  v-for="group in datePresets"
+                  :key="group.label"
+                  :label="__(group.label)"
+                >
+                  <option
+                    v-for="option in group.options"
+                    :key="option.value"
+                    :value="option.value"
+                  >
                     {{ __(option.label) }}
                   </option>
                 </optgroup>
@@ -185,11 +193,11 @@
             <div class="input-group">
               <div class="input-group-text">
                 <input
+                  id="auto_merge_standard_transaction_items"
+                  v-model="form.auto_merge_standard_transaction_items"
                   class="form-check-input mt-0"
                   type="checkbox"
-                  id="auto_merge_standard_transaction_items"
                   name="auto_merge_standard_transaction_items"
-                  v-model="form.auto_merge_standard_transaction_items"
                 />
               </div>
               <span
@@ -213,19 +221,19 @@
         </div>
       </div>
       <div class="card-footer">
-        <Button
+        <SubmitButton
           class="btn btn-primary"
           :form="form"
           dusk="button-update-settings"
         >
           {{ __('Save') }}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   </div>
 </template>
 <script setup>
-  const props = defineProps({
+  defineProps({
     languages: {
       type: Object,
       default: window.languages,
@@ -242,15 +250,21 @@
 </script>
 <script>
   import { __ } from '@/shared/lib/i18n';
-  import { initializeBootstrapTooltips, toDateInputValue } from '@/shared/lib/helpers';
+  import {
+    initializeBootstrapTooltips,
+    toDateInputValue,
+  } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
-  import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    HasError,
+  } from 'vform/src/components/bootstrap5';
 
   export default {
     name: 'UserSettings',
     components: {
-      Button,
+      SubmitButton,
       HasError,
     },
     data: () => ({
