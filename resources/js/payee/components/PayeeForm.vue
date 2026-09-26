@@ -112,14 +112,17 @@
             <div class="col-sm-9">
                 <ul id="similar-payee-list" class="list-unstyled">
                     <li
-                        v-for="payee in similarPayees"
-                        :key="payee.id"
+                        v-for="similarPayee in similarPayees"
+                        :key="similarPayee.id"
                         class="mt-2"
-                        :data-id="payee.id"
+                        :data-id="similarPayee.id"
                     >
-                        <a href="#" @click.prevent="onSelectPayee(payee)">
-                            {{ payee.name }}
-                            <span v-if="!payee.active"
+                        <a
+                            href="#"
+                            @click.prevent="onSelectPayee(similarPayee)"
+                        >
+                            {{ similarPayee.name }}
+                            <span v-if="!similarPayee.active"
                                 >({{ __('inactive') }})</span
                             >
                         </a>
@@ -160,6 +163,8 @@
                 default: false,
             },
         },
+
+        emits: ['payeeSelected'],
 
         data() {
             let data = {};

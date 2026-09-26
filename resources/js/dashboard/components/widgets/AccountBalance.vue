@@ -177,7 +177,7 @@
                         return;
                     }
 
-                    if (!groups.hasOwnProperty(account.account_group_id)) {
+                    if (!Object.hasOwn(groups, account.account_group_id)) {
                         groups[account.account_group_id] = {
                             name: account.account_group_name,
                             accounts: [],

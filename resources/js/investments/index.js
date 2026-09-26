@@ -371,7 +371,7 @@ table.contextualActions({
 
                             // Remove row from table
                             table
-                                .row(function (idx, data, node) {
+                                .row(function (idx, data, _node) {
                                     return data.id === id;
                                 })
                                 .remove()

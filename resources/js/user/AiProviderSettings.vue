@@ -266,14 +266,14 @@
             >
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <Button
+                        <SubmitButton
                             class="btn btn-primary me-2"
                             :form="form"
                             dusk="button-save-ai-config"
                         >
                             <i v-show="!form.busy" class="fa me-1 fa-save"></i
                             >{{ hasConfig ? __('Update') : __('Save') }}
-                        </Button>
+                        </SubmitButton>
 
                         <button
                             type="button"
@@ -322,7 +322,7 @@
 </template>
 
 <script setup>
-    const props = defineProps({
+    defineProps({
         providers: {
             type: Object,
             default: () => window.aiProviders || {},
@@ -339,13 +339,16 @@
     import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
     import * as toastHelpers from '@/shared/lib/toast';
     import Form from 'vform';
-    import { Button, HasError } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        HasError,
+    } from 'vform/src/components/bootstrap5';
     import Swal from 'sweetalert2';
 
     export default {
         name: 'AiProviderSettings',
         components: {
-            Button,
+            SubmitButton,
             HasError,
         },
         data: () => ({

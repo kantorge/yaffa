@@ -133,9 +133,6 @@
                 valueAxis.numberFormatter.numberFormat = '#,###.####';
 
                 // Override the format method to use Intl formatting
-                const originalFormat = valueAxis.numberFormatter.format.bind(
-                    valueAxis.numberFormatter,
-                );
                 valueAxis.numberFormatter.format = function (value) {
                     return intlFormatter.format(value);
                 };

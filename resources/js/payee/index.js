@@ -738,7 +738,7 @@ window.table.contextualActions({
             title: __('Delete'),
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
-            isDisabled: function (row) {
+            isDisabled: function (_row) {
                 return ajaxIsBusy;
             },
             isHidden: function (row) {

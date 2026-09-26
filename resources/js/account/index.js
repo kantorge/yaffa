@@ -15,7 +15,6 @@ import { confirmDelete } from '@/shared/lib/confirm';
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 
 const dataTableSelector = '#table';
-let ajaxIsBusy = false;
 
 window.table = $(dataTableSelector).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
@@ -236,14 +235,12 @@ table.contextualActions({
             },
             action: function (row) {
                 const account = row[0];
-                ajaxIsBusy = true;
 
                 // Get confirmation from the user
                 confirmDelete(
                     __('Are you sure to want to delete this item?'),
                 ).then((result) => {
                     if (!result.isConfirmed) {
-                        ajaxIsBusy = false;
                         return;
                     }
 
@@ -277,9 +274,6 @@ table.contextualActions({
                             toastHelpers.showErrorToast(
                                 __('Error while trying to delete account'),
                             );
-                        })
-                        .finally(() => {
-                            ajaxIsBusy = false;
                         });
                 });
             },

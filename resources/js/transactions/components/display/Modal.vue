@@ -67,6 +67,7 @@
             },
             originalTransaction: Object,
         },
+        emits: ['close'],
         data() {
             return {
                 transaction: Object.assign({}, this.originalTransaction),

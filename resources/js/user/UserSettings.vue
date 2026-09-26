@@ -160,10 +160,12 @@
                                 </option>
                                 <optgroup
                                     v-for="group in datePresets"
+                                    :key="group.label"
                                     :label="__(group.label)"
                                 >
                                     <option
                                         v-for="option in group.options"
+                                        :key="option.value"
                                         :value="option.value"
                                     >
                                         {{ __(option.label) }}
@@ -230,19 +232,19 @@
                 </div>
             </div>
             <div class="card-footer">
-                <Button
+                <SubmitButton
                     class="btn btn-primary"
                     :form="form"
                     dusk="button-update-settings"
                 >
                     {{ __('Save') }}
-                </Button>
+                </SubmitButton>
             </div>
         </form>
     </div>
 </template>
 <script setup>
-    const props = defineProps({
+    defineProps({
         languages: {
             type: Object,
             default: window.languages,
@@ -265,12 +267,15 @@
     } from '@/shared/lib/helpers';
     import * as toastHelpers from '@/shared/lib/toast';
     import Form from 'vform';
-    import { Button, HasError } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        HasError,
+    } from 'vform/src/components/bootstrap5';
 
     export default {
         name: 'UserSettings',
         components: {
-            Button,
+            SubmitButton,
             HasError,
         },
         data: () => ({

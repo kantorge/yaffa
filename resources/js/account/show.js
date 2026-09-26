@@ -595,7 +595,7 @@ let getAccountBalance = function () {
                     window.YAFFA.userSettings.baseCurrency,
                 );
 
-                if (balance.hasOwnProperty('cash_foreign')) {
+                if (Object.hasOwn(balance, 'cash_foreign')) {
                     elementCurrentCash.innerText +=
                         ' / ' +
                         toFormattedCurrency(
@@ -611,7 +611,7 @@ let getAccountBalance = function () {
                     window.YAFFA.userSettings.baseCurrency,
                 );
 
-                if (balance.hasOwnProperty('sum_foreign')) {
+                if (Object.hasOwn(balance, 'sum_foreign')) {
                     elementCurrentBalance.innerText +=
                         ' / ' +
                         toFormattedCurrency(

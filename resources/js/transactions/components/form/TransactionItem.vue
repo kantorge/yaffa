@@ -251,6 +251,7 @@
             'update:tags',
             'removeItem',
             'update:learnRecommendation',
+            'updateItemAmount',
         ],
 
         data() {

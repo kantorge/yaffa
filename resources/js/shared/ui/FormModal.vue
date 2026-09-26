@@ -46,13 +46,13 @@
                         >
                             {{ __('Cancel') }}
                         </button>
-                        <Button
+                        <SubmitButton
                             class="btn btn-primary"
                             :disabled="form.busy"
                             :form="form"
                         >
                             {{ __('Save') }}
-                        </Button>
+                        </SubmitButton>
                     </div>
                 </form>
             </div>
@@ -62,7 +62,7 @@
 
 <script>
     import {
-        Button,
+        Button as SubmitButton,
         AlertErrors,
         AlertSuccess,
     } from 'vform/src/components/bootstrap5';
@@ -85,7 +85,7 @@
         name: 'FormModal',
 
         components: {
-            Button,
+            SubmitButton,
             AlertErrors,
             AlertSuccess,
         },

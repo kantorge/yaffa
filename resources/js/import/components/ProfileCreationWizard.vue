@@ -1536,7 +1536,7 @@
                 }
 
                 const mappingJson = {};
-                this.columnMappings.forEach((col, i) => {
+                this.columnMappings.forEach((col) => {
                     if (col.canonical && col.canonical !== 'ignore') {
                         mappingJson[col.header] = col.canonical;
                     }

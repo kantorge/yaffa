@@ -76,44 +76,45 @@
             </div>
         </div>
         <div id="transaction_item_container" class="card-body">
-            <div
-                v-for="(item, index) in transactionItems"
-                v-if="enabled"
-                :key="item.id"
-                class="list-group"
-            >
-                <transaction-item
-                    :id="item.id"
-                    :amount="item.amount"
-                    :category_id="
-                        item.category_id ? Number(item.category_id) : null
-                    "
-                    :category_full_name="item.category_full_name || null"
-                    :recommended_category_id="
-                        item.recommended_category_id || null
-                    "
-                    :recommended_category_full_name="
-                        item.recommended_category_full_name || null
-                    "
-                    :description="item.description || null"
-                    :match_type="item.match_type || null"
-                    :confidence_score="item.confidence_score || null"
-                    :tags="item.tags || []"
-                    :comment="item.comment"
-                    :currency-symbol="currencySymbol"
-                    :remaining-amount="remainingAmount"
-                    :payee="payee"
-                    @remove-item="removeItem(index)"
-                    :dropdown-parent-selector="dropdownParentSelector"
-                    @update:amount="updateItemAmount(index, $event)"
-                    @update:category_id="updateItemCategory(index, $event)"
-                    @update:tags="updateItemTag(index, $event)"
-                    @update:comment="updateItemComment(index, $event)"
-                    @update:learn-recommendation="
-                        updateItemLearnRecommendation(index, $event)
-                    "
-                ></transaction-item>
-            </div>
+            <template v-if="enabled">
+                <div
+                    v-for="(item, index) in transactionItems"
+                    :key="item.id"
+                    class="list-group"
+                >
+                    <transaction-item
+                        :id="item.id"
+                        :amount="item.amount"
+                        :category_id="
+                            item.category_id ? Number(item.category_id) : null
+                        "
+                        :category_full_name="item.category_full_name || null"
+                        :recommended_category_id="
+                            item.recommended_category_id || null
+                        "
+                        :recommended_category_full_name="
+                            item.recommended_category_full_name || null
+                        "
+                        :description="item.description || null"
+                        :match_type="item.match_type || null"
+                        :confidence_score="item.confidence_score || null"
+                        :tags="item.tags || []"
+                        :comment="item.comment"
+                        :currency-symbol="currencySymbol"
+                        :remaining-amount="remainingAmount"
+                        :payee="payee"
+                        :dropdown-parent-selector="dropdownParentSelector"
+                        @remove-item="removeItem(index)"
+                        @update:amount="updateItemAmount(index, $event)"
+                        @update:category_id="updateItemCategory(index, $event)"
+                        @update:tags="updateItemTag(index, $event)"
+                        @update:comment="updateItemComment(index, $event)"
+                        @update:learn-recommendation="
+                            updateItemLearnRecommendation(index, $event)
+                        "
+                    ></transaction-item>
+                </div>
+            </template>
             <div v-if="!enabled">
                 {{
                     __(

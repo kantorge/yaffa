@@ -612,7 +612,7 @@
                             >
                                 {{ __('Cancel') }}
                             </button>
-                            <Button
+                            <SubmitButton
                                 id="transactionFormInvestment-Save"
                                 class="btn btn-primary ms-2"
                                 :disabled="form.busy"
@@ -623,7 +623,7 @@
                                     class="fa fa-save me-1"
                                 ></span>
                                 {{ __('Save') }}
-                            </Button>
+                            </SubmitButton>
                         </div>
                     </div>
                 </div>
@@ -636,11 +636,13 @@
     import { RRule } from 'rrule';
     import Decimal from 'decimal.js';
     import MathInput from '@/shared/ui/form/MathInput.vue';
-    import * as toastHelpers from '@/shared/lib/toast';
     import { confirmAction } from '@/shared/lib/confirm';
 
     import Form from 'vform';
-    import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        AlertErrors,
+    } from 'vform/src/components/bootstrap5';
 
     import TransactionSchedule from './TransactionSchedule.vue';
 
@@ -665,7 +667,7 @@
         components: {
             TransactionSchedule,
             MathInput,
-            Button,
+            SubmitButton,
             AlertErrors,
         },
 
@@ -700,6 +702,8 @@
                 default: 'body',
             },
         },
+
+        emits: ['cancel', 'success'],
 
         data() {
             let data = {};

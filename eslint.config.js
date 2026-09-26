@@ -56,4 +56,30 @@ module.exports = defineConfig([
             ],
         },
     },
+    {
+        // Single-word names are the established convention for these
+        // components: they're registered as top-level page mounts
+        // (Dashboard) or are unambiguous within their own feature folder
+        // (transactions/components/display/{Item,Schedule}.vue). Renaming
+        // would ripple into every import/registration for no real benefit.
+        files: [
+            'resources/js/dashboard/components/Dashboard.vue',
+            'resources/js/dashboard/index.js',
+            'resources/js/transactions/components/display/Item.vue',
+            'resources/js/transactions/components/display/Schedule.vue',
+        ],
+        rules: {
+            'vue/multi-word-component-names': 'off',
+        },
+    },
+    {
+        // Page-entry scripts intentionally mount more than one small Vue
+        // island per page in this multi-page app (see resources/js/CLAUDE.md
+        // - "Vue components are mounted as self-contained islands"). Splitting
+        // these into one-component-per-file wouldn't change behavior.
+        files: ['resources/js/account/show.js', 'resources/js/import/index.js'],
+        rules: {
+            'vue/one-component-per-file': 'off',
+        },
+    },
 ]);

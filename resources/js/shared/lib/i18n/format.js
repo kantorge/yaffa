@@ -243,7 +243,7 @@ export function getCurrencySymbol(locale, iso_code) {
             currency: iso_code,
             currencyDisplay: 'narrowSymbol',
         });
-    } catch (e) {
+    } catch (_error) {
         return '';
     }
 

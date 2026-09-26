@@ -80,13 +80,13 @@
                 </div>
             </div>
             <div v-if="!sandbox_mode" class="card-footer">
-                <Button
+                <SubmitButton
                     class="btn btn-primary"
                     :form="form"
                     dusk="button-change-password"
                 >
                     {{ __('Change Password') }}
-                </Button>
+                </SubmitButton>
             </div>
         </form>
     </div>
@@ -95,13 +95,16 @@
 <script>
     import { __ } from '@/shared/lib/i18n';
     import Form from 'vform';
-    import { Button, HasError } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        HasError,
+    } from 'vform/src/components/bootstrap5';
     import * as toastHelpers from '@/shared/lib/toast';
 
     export default {
         name: 'ChangePassword',
         components: {
-            Button,
+            SubmitButton,
             HasError,
         },
         data: () => ({

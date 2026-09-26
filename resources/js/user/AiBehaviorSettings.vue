@@ -776,14 +776,14 @@
             </div>
 
             <div v-if="!loading && !sandbox_mode" class="card-footer">
-                <Button
+                <SubmitButton
                     class="btn btn-primary"
                     :form="form"
                     dusk="button-save-ai-behavior-settings"
                 >
                     <i v-show="!form.busy" class="fa me-1 fa-save"></i
                     >{{ __('Save') }}
-                </Button>
+                </SubmitButton>
             </div>
         </form>
     </div>
@@ -795,12 +795,15 @@
     import * as toastHelpers from '@/shared/lib/toast';
     import Form from 'vform';
     import Swal from 'sweetalert2';
-    import { Button, HasError } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        HasError,
+    } from 'vform/src/components/bootstrap5';
 
     export default {
         name: 'AiBehaviorSettings',
         components: {
-            Button,
+            SubmitButton,
             HasError,
         },
         props: {

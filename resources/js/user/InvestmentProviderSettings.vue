@@ -437,7 +437,7 @@
                     ? 'password'
                     : 'text';
             },
-            credentialPlaceholder(provider, fieldKey) {
+            credentialPlaceholder(provider, _fieldKey) {
                 if (provider.currentConfig?.has_credentials) {
                     return __('Leave blank to keep current value');
                 }

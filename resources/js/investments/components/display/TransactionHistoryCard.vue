@@ -75,7 +75,7 @@
             tableOptions() {
                 return {
                     language: getDataTablesLanguageOptions() || undefined,
-                    createdRow: (row, data) => {
+                    createdRow: (row, _data) => {
                         // Set date range buttons
                         row.querySelectorAll('.set-date').forEach((btn) => {
                             btn.onclick = (event) => {

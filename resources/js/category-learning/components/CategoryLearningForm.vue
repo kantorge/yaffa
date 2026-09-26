@@ -108,6 +108,8 @@
             },
         },
 
+        emits: ['learning-selected'],
+
         data() {
             return {
                 form: new Form({
@@ -353,7 +355,7 @@
             },
 
             async onSubmit() {
-                let response = null;
+                let response;
 
                 if (this.action === 'new') {
                     response = await this.form.post(

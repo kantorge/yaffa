@@ -637,7 +637,7 @@
                             >
                                 {{ __('Cancel') }}
                             </button>
-                            <Button
+                            <SubmitButton
                                 id="transactionFormStandard-Save"
                                 class="btn btn-primary ms-2"
                                 :disabled="form.busy"
@@ -648,7 +648,7 @@
                                     class="fa fa-save me-1"
                                 ></span>
                                 {{ __('Save') }}
-                            </Button>
+                            </SubmitButton>
                         </div>
                     </div>
                 </div>
@@ -682,7 +682,10 @@
     import MathInput from '@/shared/ui/form/MathInput.vue';
 
     import Form from 'vform';
-    import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
+    import {
+        Button as SubmitButton,
+        AlertErrors,
+    } from 'vform/src/components/bootstrap5';
 
     import TransactionItemContainer from './TransactionItemContainer.vue';
     import TransactionSchedule from './TransactionSchedule.vue';
@@ -694,7 +697,7 @@
             TransactionItemContainer,
             TransactionSchedule,
             PayeeForm,
-            Button,
+            SubmitButton,
             AlertErrors,
             MathInput,
         },
@@ -732,6 +735,8 @@
                 default: 'body',
             },
         },
+
+        emits: ['cancel', 'success'],
 
         data() {
             let data = {};

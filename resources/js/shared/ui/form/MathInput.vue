@@ -79,7 +79,7 @@
 
                         amount = roundedAmount.toNumber();
                     }
-                } catch (e) {
+                } catch (_error) {
                     // On error, leave the input value and the amount as is
                     amount = this.modelValue;
 
