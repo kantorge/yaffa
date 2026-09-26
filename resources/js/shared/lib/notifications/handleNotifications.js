@@ -7,31 +7,31 @@
  * @returns {void}
  */
 export function storeNotification(type, message, options = {}) {
-    let pendingNotifications;
-    try {
-        pendingNotifications =
-            JSON.parse(
-                localStorage.getItem('pendingBootstrapNotifications') || '[]',
-            ) || [];
-    } catch (e) {
-        console.error(
-            'Failed to parse pending notifications from localStorage:',
-            e,
-        );
-        pendingNotifications = [];
-    }
-
-    pendingNotifications.push({
-        type: type,
-        message: message,
-        title: options.title || '',
-        icon: options.icon || '',
-        dismissible: options.dismissible || false,
-        timeout: options.timeout || 0,
-    });
-
-    localStorage.setItem(
-        'pendingBootstrapNotifications',
-        JSON.stringify(pendingNotifications),
+  let pendingNotifications;
+  try {
+    pendingNotifications =
+      JSON.parse(
+        localStorage.getItem('pendingBootstrapNotifications') || '[]',
+      ) || [];
+  } catch (e) {
+    console.error(
+      'Failed to parse pending notifications from localStorage:',
+      e,
     );
+    pendingNotifications = [];
+  }
+
+  pendingNotifications.push({
+    type: type,
+    message: message,
+    title: options.title || '',
+    icon: options.icon || '',
+    dismissible: options.dismissible || false,
+    timeout: options.timeout || 0,
+  });
+
+  localStorage.setItem(
+    'pendingBootstrapNotifications',
+    JSON.stringify(pendingNotifications),
+  );
 }

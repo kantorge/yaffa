@@ -13,8 +13,8 @@ import CreateInvestmentTransactionModal from '@/transactions/components/form/Mod
 app.component('Dashboard', Dashboard);
 app.component('TransactionCreateStandardModal', CreateStandardTransactionModal);
 app.component(
-    'TransactionCreateInvestmentModal',
-    CreateInvestmentTransactionModal,
+  'TransactionCreateInvestmentModal',
+  CreateInvestmentTransactionModal,
 );
 
 app.mount('#app');

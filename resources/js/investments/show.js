@@ -1,7 +1,7 @@
 window.calculateYears = function (from, to) {
-    const diffMs = to - from;
-    const diffDate = new Date(diffMs); // milliseconds from epoch
-    return Math.abs(diffDate.getUTCFullYear() - 1970);
+  const diffMs = to - from;
+  const diffDate = new Date(diffMs); // milliseconds from epoch
+  return Math.abs(diffDate.getUTCFullYear() - 1970);
 };
 
 // Initialize the Vue component for the content display

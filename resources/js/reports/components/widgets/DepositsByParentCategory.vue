@@ -1,309 +1,291 @@
 <template>
-    <div class="container">
-        <div v-show="busy" class="loader"></div>
-        <div v-show="!busy" ref="chartContainer" class="chartContainer"></div>
-    </div>
+  <div class="container">
+    <div v-show="busy" class="loader"></div>
+    <div v-show="!busy" ref="chartContainer" class="chartContainer"></div>
+  </div>
 </template>
 
 <script>
-    import * as am4core from '@amcharts/amcharts4/core';
-    import * as am4charts from '@amcharts/amcharts4/charts';
-    import am4themes_animated from '@amcharts/amcharts4/themes/animated';
-    import { toFormattedCurrency } from '@/shared/lib/i18n';
-    import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-    import {
-        applyAmChartsColorTheme,
-        COLOR_MODE_EVENT,
-    } from '@/shared/lib/ui/amchartsColorTheme';
-    import { itemMatchesActiveFilters } from '../find-transactions/helpers';
+  import * as am4core from '@amcharts/amcharts4/core';
+  import * as am4charts from '@amcharts/amcharts4/charts';
+  import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+  import { toFormattedCurrency } from '@/shared/lib/i18n';
+  import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
+  import { itemMatchesActiveFilters } from '../find-transactions/helpers';
 
-    am4core.useTheme(am4themes_animated);
+  am4core.useTheme(am4themes_animated);
 
-    export default {
-        name: 'DepositsByParentCategory',
-        props: {
-            transactions: {
-                type: Array,
-                required: false,
-                default: () => [],
-            },
-            title: {
-                type: String,
-                default: 'Deposits by category',
-            },
-            busy: {
-                type: Boolean,
-                required: true,
-            },
-            matchingItemsOnly: {
-                type: Boolean,
-                default: false,
-            },
-            categoryIds: {
-                type: Array,
-                default: () => [],
-            },
-            tagIds: {
-                type: Array,
-                default: () => [],
-            },
+  export default {
+    name: 'DepositsByParentCategory',
+    props: {
+      transactions: {
+        type: Array,
+        required: false,
+        default: () => [],
+      },
+      title: {
+        type: String,
+        default: 'Deposits by category',
+      },
+      busy: {
+        type: Boolean,
+        required: true,
+      },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
+    },
+    data() {
+      return {
+        filteredTransactions: [],
+        chartData: {},
+        selectedParentId: undefined,
+      };
+    },
+    watch: {
+      transactions: {
+        handler(newTransactions) {
+          this.updateChartData(newTransactions);
         },
-        data() {
-            return {
-                filteredTransactions: [],
-                chartData: {},
-                selectedParentId: undefined,
-            };
-        },
-        watch: {
-            transactions: {
-                handler(newTransactions) {
-                    this.updateChartData(newTransactions);
-                },
-                immediate: true,
-            },
-            matchingItemsOnly() {
-                this.updateChartData(this.transactions);
-            },
-            categoryIds() {
-                this.updateChartData(this.transactions);
-            },
-            tagIds() {
-                this.updateChartData(this.transactions);
-            },
-        },
-        mounted() {
-            this.createChart();
-            this.updateChartData(this.transactions);
-            this._colorModeHandler = () => {
-                if (this.chart) this.chart.dispose();
-                this.createChart();
-                this.updateChartData(this.transactions);
-            };
-            document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-        },
-        beforeUnmount() {
-            document.removeEventListener(
-                COLOR_MODE_EVENT,
-                this._colorModeHandler,
-            );
-            if (this.chart) {
-                this.chart.dispose();
-            }
-        },
-        methods: {
+        immediate: true,
+      },
+      matchingItemsOnly() {
+        this.updateChartData(this.transactions);
+      },
+      categoryIds() {
+        this.updateChartData(this.transactions);
+      },
+      tagIds() {
+        this.updateChartData(this.transactions);
+      },
+    },
+    mounted() {
+      this.createChart();
+      this.updateChartData(this.transactions);
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        this.updateChartData(this.transactions);
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+    },
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+      if (this.chart) {
+        this.chart.dispose();
+      }
+    },
+    methods: {
+      /**
+       * Update the chart data based on the current set of transactions.
+       *
+       * @param {Array} transactions
+       * @property {String} transactions.transaction_type
+       * @returns {void}
+       */
+      updateChartData(transactions) {
+        const filteredTransactions = [];
+        transactions.forEach((transaction) => {
+          if (transaction.transaction_type === 'deposit') {
+            filteredTransactions.push(transaction);
+          }
+        });
+
+        if (!filteredTransactions.length) {
+          this.filteredTransactions = [];
+          this.chartData = this.getNoDataPoint();
+        } else {
+          // Process the actual transactions
+          this.filteredTransactions = filteredTransactions;
+
+          const categorySummary = [];
+
+          filteredTransactions
+            // Flatten the transaction items to a single array
+            .flatMap((transaction) => transaction.transaction_items)
+            // Optionally narrow down to items matching the active category/tag filters
+            .filter(
+              (item) =>
+                !this.matchingItemsOnly ||
+                itemMatchesActiveFilters(item, {
+                  categoryIds: this.categoryIds,
+                  tagIds: this.tagIds,
+                }),
+            )
             /**
-             * Update the chart data based on the current set of transactions.
+             * Process each transaction item and group them by parent category,
+             * where the parent category is determined based on the selectedParentId.
              *
-             * @param {Array} transactions
-             * @property {String} transactions.transaction_type
-             * @returns {void}
+             * @param {Object} item
+             * @property {Object} item.category
+             * @property {Number} item.amount_in_base
              */
-            updateChartData(transactions) {
-                const filteredTransactions = [];
-                transactions.forEach((transaction) => {
-                    if (transaction.transaction_type === 'deposit') {
-                        filteredTransactions.push(transaction);
-                    }
-                });
+            .forEach((item) => {
+              if (!item.category) {
+                return;
+              }
 
-                if (!filteredTransactions.length) {
-                    this.filteredTransactions = [];
-                    this.chartData = this.getNoDataPoint();
-                } else {
-                    // Process the actual transactions
-                    this.filteredTransactions = filteredTransactions;
-
-                    const categorySummary = [];
-
-                    filteredTransactions
-                        // Flatten the transaction items to a single array
-                        .flatMap((transaction) => transaction.transaction_items)
-                        // Optionally narrow down to items matching the active category/tag filters
-                        .filter(
-                            (item) =>
-                                !this.matchingItemsOnly ||
-                                itemMatchesActiveFilters(item, {
-                                    categoryIds: this.categoryIds,
-                                    tagIds: this.tagIds,
-                                }),
-                        )
-                        /**
-                         * Process each transaction item and group them by parent category,
-                         * where the parent category is determined based on the selectedParentId.
-                         *
-                         * @param {Object} item
-                         * @property {Object} item.category
-                         * @property {Number} item.amount_in_base
-                         */
-                        .forEach((item) => {
-                            if (!item.category) {
-                                return;
-                            }
-
-                            // Create a map of parent categories with their color codes assigned from amCharts
-                            const colorCodesPerParent = {};
-                            this.getDistinctParentIds().forEach((id, index) => {
-                                if (this.chart) {
-                                    colorCodesPerParent[id] =
-                                        this.chart.colors.getIndex(index);
-                                } else {
-                                    colorCodesPerParent[id] =
-                                        am4core.color('#000000');
-                                }
-                            });
-
-                            let parentCategory;
-                            if (this.selectedParentId) {
-                                if (
-                                    item.category.parent_id ===
-                                    this.selectedParentId
-                                ) {
-                                    parentCategory = item.category;
-                                } else {
-                                    parentCategory = item.category.parent_id
-                                        ? item.category.parent
-                                        : item.category;
-                                }
-                            } else {
-                                parentCategory = item.category.parent_id
-                                    ? item.category.parent
-                                    : item.category;
-                            }
-
-                            let categoryIndex = categorySummary.findIndex(
-                                (category) => category.id === parentCategory.id,
-                            );
-
-                            if (categoryIndex === -1) {
-                                categorySummary.push({
-                                    amount: 0,
-                                    id: parentCategory.id,
-                                    parent_id: parentCategory.parent_id,
-                                    parent_name: parentCategory.parent_id
-                                        ? parentCategory.parent.name
-                                        : parentCategory.name,
-                                    name:
-                                        parentCategory.parent_id ===
-                                        this.selectedParentId
-                                            ? parentCategory.full_name
-                                            : parentCategory.name,
-                                    selected:
-                                        parentCategory.parent_id ===
-                                        this.selectedParentId,
-                                    color:
-                                        colorCodesPerParent[
-                                            parentCategory.id
-                                        ] ||
-                                        colorCodesPerParent[
-                                            parentCategory.parent_id
-                                        ],
-                                });
-
-                                categoryIndex = categorySummary.length - 1;
-                            }
-
-                            categorySummary[categoryIndex].amount +=
-                                item.amount_in_base;
-                        });
-                    if (!categorySummary.length) {
-                        // All items were excluded by the active category/tag filters
-                        this.chartData = this.getNoDataPoint();
-                    } else {
-                        // Sort the categories array by the true parent category name
-                        categorySummary.sort((a, b) =>
-                            a.parent_name.localeCompare(b.parent_name),
-                        );
-
-                        // Transform parentCategories to an array of objects by converting amounts to formatted currency
-                        this.chartData = categorySummary.map((category) => {
-                            return {
-                                ...category,
-                                tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency)}`,
-                            };
-                        });
-                    }
-                }
-
+              // Create a map of parent categories with their color codes assigned from amCharts
+              const colorCodesPerParent = {};
+              this.getDistinctParentIds().forEach((id, index) => {
                 if (this.chart) {
-                    this.chart.data = this.chartData;
+                  colorCodesPerParent[id] = this.chart.colors.getIndex(index);
+                } else {
+                  colorCodesPerParent[id] = am4core.color('#000000');
                 }
-            },
-            // Dummy data point used to display a "no data" message on the pie chart
-            getNoDataPoint() {
-                return [
-                    {
-                        amount: 1,
-                        id: 0,
-                        parent_id: 0,
-                        parent_name: 'No data',
-                        name: 'No data',
-                        selected: false,
-                        disabled: true,
-                        color: am4core.color('#dadada'),
-                        tooltip: 'No data',
-                    },
-                ];
-            },
-            getDistinctParentIds() {
-                return this.filteredTransactions
-                    .flatMap((transaction) => transaction.transaction_items)
-                    .filter((item) => item.category)
-                    .map((item) => item.category.parent_id)
-                    .filter(
-                        (value, index, self) => self.indexOf(value) === index,
-                    );
-            },
-            createChart() {
-                applyAmChartsColorTheme(am4core);
+              });
 
-                let chart = am4core.create(
-                    this.$refs.chartContainer,
-                    am4charts.PieChart,
-                );
-                applyAmChartsLocalization(
-                    chart,
-                    window.YAFFA.userSettings.locale,
-                    window.YAFFA.userSettings.language,
-                );
-                chart.data = null;
+              let parentCategory;
+              if (this.selectedParentId) {
+                if (item.category.parent_id === this.selectedParentId) {
+                  parentCategory = item.category;
+                } else {
+                  parentCategory = item.category.parent_id
+                    ? item.category.parent
+                    : item.category;
+                }
+              } else {
+                parentCategory = item.category.parent_id
+                  ? item.category.parent
+                  : item.category;
+              }
 
-                let pieSeries = chart.series.push(new am4charts.PieSeries());
-                pieSeries.dataFields.value = 'amount';
-                pieSeries.dataFields.category = 'name';
-                pieSeries.slices.template.propertyFields.fill = 'color';
-                pieSeries.slices.template.propertyFields.isActive = 'selected';
-                pieSeries.labels.template.propertyFields.disabled = 'disabled';
-                pieSeries.ticks.template.propertyFields.disabled = 'disabled';
+              let categoryIndex = categorySummary.findIndex(
+                (category) => category.id === parentCategory.id,
+              );
 
-                pieSeries.slices.template.tooltipText = '{tooltip}';
-
-                pieSeries.slices.template.events.on('hit', (event) => {
-                    const data = event.target.dataItem.dataContext;
-                    this.selectedParentId = data.id;
-                    this.updateChartData(this.transactions);
+              if (categoryIndex === -1) {
+                categorySummary.push({
+                  amount: 0,
+                  id: parentCategory.id,
+                  parent_id: parentCategory.parent_id,
+                  parent_name: parentCategory.parent_id
+                    ? parentCategory.parent.name
+                    : parentCategory.name,
+                  name:
+                    parentCategory.parent_id === this.selectedParentId
+                      ? parentCategory.full_name
+                      : parentCategory.name,
+                  selected: parentCategory.parent_id === this.selectedParentId,
+                  color:
+                    colorCodesPerParent[parentCategory.id] ||
+                    colorCodesPerParent[parentCategory.parent_id],
                 });
 
-                let title = chart.titles.create();
-                title.text = this.title;
-                title.fontSize = 20;
-                title.marginBottom = 20;
+                categoryIndex = categorySummary.length - 1;
+              }
 
-                this.chart = chart;
-            },
-        },
-    };
+              categorySummary[categoryIndex].amount += item.amount_in_base;
+            });
+          if (!categorySummary.length) {
+            // All items were excluded by the active category/tag filters
+            this.chartData = this.getNoDataPoint();
+          } else {
+            // Sort the categories array by the true parent category name
+            categorySummary.sort((a, b) =>
+              a.parent_name.localeCompare(b.parent_name),
+            );
+
+            // Transform parentCategories to an array of objects by converting amounts to formatted currency
+            this.chartData = categorySummary.map((category) => {
+              return {
+                ...category,
+                tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency)}`,
+              };
+            });
+          }
+        }
+
+        if (this.chart) {
+          this.chart.data = this.chartData;
+        }
+      },
+      // Dummy data point used to display a "no data" message on the pie chart
+      getNoDataPoint() {
+        return [
+          {
+            amount: 1,
+            id: 0,
+            parent_id: 0,
+            parent_name: 'No data',
+            name: 'No data',
+            selected: false,
+            disabled: true,
+            color: am4core.color('#dadada'),
+            tooltip: 'No data',
+          },
+        ];
+      },
+      getDistinctParentIds() {
+        return this.filteredTransactions
+          .flatMap((transaction) => transaction.transaction_items)
+          .filter((item) => item.category)
+          .map((item) => item.category.parent_id)
+          .filter((value, index, self) => self.indexOf(value) === index);
+      },
+      createChart() {
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(
+          this.$refs.chartContainer,
+          am4charts.PieChart,
+        );
+        applyAmChartsLocalization(
+          chart,
+          window.YAFFA.userSettings.locale,
+          window.YAFFA.userSettings.language,
+        );
+        chart.data = null;
+
+        let pieSeries = chart.series.push(new am4charts.PieSeries());
+        pieSeries.dataFields.value = 'amount';
+        pieSeries.dataFields.category = 'name';
+        pieSeries.slices.template.propertyFields.fill = 'color';
+        pieSeries.slices.template.propertyFields.isActive = 'selected';
+        pieSeries.labels.template.propertyFields.disabled = 'disabled';
+        pieSeries.ticks.template.propertyFields.disabled = 'disabled';
+
+        pieSeries.slices.template.tooltipText = '{tooltip}';
+
+        pieSeries.slices.template.events.on('hit', (event) => {
+          const data = event.target.dataItem.dataContext;
+          this.selectedParentId = data.id;
+          this.updateChartData(this.transactions);
+        });
+
+        let title = chart.titles.create();
+        title.text = this.title;
+        title.fontSize = 20;
+        title.marginBottom = 20;
+
+        this.chart = chart;
+      },
+    },
+  };
 </script>
 
 <style scoped>
-    @import './PieChartLoader.css';
-    .container {
-        display: flex;
-        justify-content: center;
-    }
+  @import './PieChartLoader.css';
+  .container {
+    display: flex;
+    justify-content: center;
+  }
 
-    .chartContainer {
-        width: 100%;
-        height: 400px;
-    }
+  .chartContainer {
+    width: 100%;
+    height: 400px;
+  }
 </style>

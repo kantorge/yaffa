@@ -1,51 +1,49 @@
 <template>
-    <div class="row">
-        <div class="col-md-5">
-            <onboarding-card
-                :card-title="__('Welcome to YAFFA!')"
-                :card-body="
-                    __(
-                        'We recommend completing the following steps to have a great experience with YAFFA.',
-                    )
-                "
-                :completed-message="
-                    __(
-                        'Congratulations! Keep using YAFFA. You can dismiss this widget.',
-                    )
-                "
-                topic="dashboard"
-            ></onboarding-card>
-            <account-balance></account-balance>
-            <payee-category-recommendation></payee-category-recommendation>
-            <ai-document-summary></ai-document-summary>
-        </div>
-        <!-- /.col -->
-
-        <div class="col-md-7">
-            <category-waterfall></category-waterfall>
-            <schedule-calendar></schedule-calendar>
-        </div>
-        <!-- /.col -->
+  <div class="row">
+    <div class="col-md-5">
+      <onboarding-card
+        :card-title="__('Welcome to YAFFA!')"
+        :card-body="
+          __(
+            'We recommend completing the following steps to have a great experience with YAFFA.',
+          )
+        "
+        :completed-message="
+          __('Congratulations! Keep using YAFFA. You can dismiss this widget.')
+        "
+        topic="dashboard"
+      ></onboarding-card>
+      <account-balance></account-balance>
+      <payee-category-recommendation></payee-category-recommendation>
+      <ai-document-summary></ai-document-summary>
     </div>
-    <!-- /.row -->
+    <!-- /.col -->
+
+    <div class="col-md-7">
+      <category-waterfall></category-waterfall>
+      <schedule-calendar></schedule-calendar>
+    </div>
+    <!-- /.col -->
+  </div>
+  <!-- /.row -->
 </template>
 
 <script>
-    import AccountBalance from './widgets/AccountBalance.vue';
-    import CategoryWaterfall from './widgets/CategoryWaterfall.vue';
-    import ScheduleCalendar from './widgets/ScheduleCalendar.vue';
-    import PayeeCategoryRecommendation from './widgets/PayeeCategoryRecommendation.vue';
-    import OnboardingCard from './widgets/OnboardingCard.vue';
-    import AiDocumentSummary from './widgets/AiDocumentSummary.vue';
+  import AccountBalance from './widgets/AccountBalance.vue';
+  import CategoryWaterfall from './widgets/CategoryWaterfall.vue';
+  import ScheduleCalendar from './widgets/ScheduleCalendar.vue';
+  import PayeeCategoryRecommendation from './widgets/PayeeCategoryRecommendation.vue';
+  import OnboardingCard from './widgets/OnboardingCard.vue';
+  import AiDocumentSummary from './widgets/AiDocumentSummary.vue';
 
-    export default {
-        components: {
-            'account-balance': AccountBalance,
-            'category-waterfall': CategoryWaterfall,
-            'schedule-calendar': ScheduleCalendar,
-            'payee-category-recommendation': PayeeCategoryRecommendation,
-            'onboarding-card': OnboardingCard,
-            'ai-document-summary': AiDocumentSummary,
-        },
-    };
+  export default {
+    components: {
+      'account-balance': AccountBalance,
+      'category-waterfall': CategoryWaterfall,
+      'schedule-calendar': ScheduleCalendar,
+      'payee-category-recommendation': PayeeCategoryRecommendation,
+      'onboarding-card': OnboardingCard,
+      'ai-document-summary': AiDocumentSummary,
+    },
+  };
 </script>

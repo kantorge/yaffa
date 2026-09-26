@@ -1,133 +1,133 @@
 <template>
-    <div class="card mb-3">
-        <div class="card-header">
-            <div
-                class="card-title collapse-control"
-                data-coreui-toggle="collapse"
-                data-coreui-target="#cardActions"
-            >
-                <i class="fa fa-angle-down"></i>
-                {{ __('Actions') }}
-            </div>
-        </div>
-        <ul
-            id="cardActions"
-            class="list-group list-group-flush collapse show"
-            aria-expanded="true"
-        >
-            <li
-                class="list-group-item d-flex justify-content-between align-items-center"
-            >
-                <button
-                    class="btn btn-link text-decoration-none p-0 add-currency-rate-button"
-                    :title="__('Add new rate')"
-                    @click="addNewRate"
-                >
-                    {{ __('Add new rate') }}
-                </button>
-                <button
-                    class="btn btn-xs btn-primary add-currency-rate-button"
-                    :title="__('Add new rate')"
-                    @click="addNewRate"
-                >
-                    <span class="fa fa-fw fa-plus"></span>
-                </button>
-            </li>
-            <li
-                class="list-group-item d-flex justify-content-between align-items-center"
-            >
-                <button
-                    class="btn btn-link text-decoration-none p-0"
-                    :title="__('Load missing rates')"
-                    :disabled="isLoadingMissing"
-                    @click="loadMissingRates"
-                >
-                    {{ __('Load missing rates') }}
-                </button>
-                <button
-                    class="btn btn-xs btn-success"
-                    :title="__('Load missing rates')"
-                    :disabled="isLoadingMissing"
-                    @click="loadMissingRates"
-                >
-                    <span
-                        v-if="isLoadingMissing"
-                        class="fa fa-fw fa-spinner fa-spin"
-                    ></span>
-                    <span v-else class="fa fa-fw fa-cloud-download"></span>
-                </button>
-            </li>
-        </ul>
+  <div class="card mb-3">
+    <div class="card-header">
+      <div
+        class="card-title collapse-control"
+        data-coreui-toggle="collapse"
+        data-coreui-target="#cardActions"
+      >
+        <i class="fa fa-angle-down"></i>
+        {{ __('Actions') }}
+      </div>
     </div>
+    <ul
+      id="cardActions"
+      class="list-group list-group-flush collapse show"
+      aria-expanded="true"
+    >
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <button
+          class="btn btn-link text-decoration-none p-0 add-currency-rate-button"
+          :title="__('Add new rate')"
+          @click="addNewRate"
+        >
+          {{ __('Add new rate') }}
+        </button>
+        <button
+          class="btn btn-xs btn-primary add-currency-rate-button"
+          :title="__('Add new rate')"
+          @click="addNewRate"
+        >
+          <span class="fa fa-fw fa-plus"></span>
+        </button>
+      </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <button
+          class="btn btn-link text-decoration-none p-0"
+          :title="__('Load missing rates')"
+          :disabled="isLoadingMissing"
+          @click="loadMissingRates"
+        >
+          {{ __('Load missing rates') }}
+        </button>
+        <button
+          class="btn btn-xs btn-success"
+          :title="__('Load missing rates')"
+          :disabled="isLoadingMissing"
+          @click="loadMissingRates"
+        >
+          <span
+            v-if="isLoadingMissing"
+            class="fa fa-fw fa-spinner fa-spin"
+          ></span>
+          <span v-else class="fa fa-fw fa-cloud-download"></span>
+        </button>
+      </li>
+    </ul>
+  </div>
 </template>
 
 <script>
-    import { __ } from '@/shared/lib/i18n';
-    import * as toastHelpers from '@/shared/lib/toast';
+  import { __ } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
 
-    export default {
-        name: 'CurrencyRateActions',
-        props: {
-            fromCurrency: {
-                type: Object,
-                required: true,
-            },
-            dateFrom: {
-                type: String,
-                default: null,
-            },
-            dateTo: {
-                type: String,
-                default: null,
-            },
-        },
-        emits: ['add-rate', 'rates-loaded'],
-        data() {
-            return {
-                isLoadingMissing: false,
-            };
-        },
-        methods: {
-            addNewRate() {
-                this.$emit('add-rate');
-            },
-            async loadMissingRates() {
-                if (this.isLoadingMissing) {
-                    return;
-                }
+  export default {
+    name: 'CurrencyRateActions',
+    props: {
+      fromCurrency: {
+        type: Object,
+        required: true,
+      },
+      dateFrom: {
+        type: String,
+        default: null,
+      },
+      dateTo: {
+        type: String,
+        default: null,
+      },
+    },
+    emits: ['add-rate', 'rates-loaded'],
+    data() {
+      return {
+        isLoadingMissing: false,
+      };
+    },
+    methods: {
+      addNewRate() {
+        this.$emit('add-rate');
+      },
+      async loadMissingRates() {
+        if (this.isLoadingMissing) {
+          return;
+        }
 
-                this.isLoadingMissing = true;
+        this.isLoadingMissing = true;
 
-                toastHelpers.showLoaderToast(
-                    this.__('Loading missing rates...'),
-                    'toast-loading-missing-rates',
-                );
+        toastHelpers.showLoaderToast(
+          this.__('Loading missing rates...'),
+          'toast-loading-missing-rates',
+        );
 
-                try {
-                    // Call the existing endpoint to retrieve missing rates
-                    await window.axios.post(
-                        this.route('api.v1.currency-rates.retrieve-missing', {
-                            currency: this.fromCurrency.id,
-                        }),
-                    );
+        try {
+          // Call the existing endpoint to retrieve missing rates
+          await window.axios.post(
+            this.route('api.v1.currency-rates.retrieve-missing', {
+              currency: this.fromCurrency.id,
+            }),
+          );
 
-                    toastHelpers.showSuccessToast(
-                        this.__('Missing rates loaded successfully'),
-                    );
+          toastHelpers.showSuccessToast(
+            this.__('Missing rates loaded successfully'),
+          );
 
-                    // Emit event to parent to reload data
-                    this.$emit('rates-loaded');
-                } catch (error) {
-                    toastHelpers.showErrorToast(
-                        error.response?.data?.message ||
-                            this.__('Failed to load missing rates'),
-                    );
-                } finally {
-                    this.isLoadingMissing = false;
-                    toastHelpers.hideToast('.toast-loading-missing-rates');
-                }
-            },
-            __,
-        },
-    };
+          // Emit event to parent to reload data
+          this.$emit('rates-loaded');
+        } catch (error) {
+          toastHelpers.showErrorToast(
+            error.response?.data?.message ||
+              this.__('Failed to load missing rates'),
+          );
+        } finally {
+          this.isLoadingMissing = false;
+          toastHelpers.hideToast('.toast-loading-missing-rates');
+        }
+      },
+      __,
+    },
+  };
 </script>

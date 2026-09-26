@@ -3,5 +3,13 @@
   "useTabs": false,
   "semi": true,
   "singleQuote": true,
-  "vueIndentScriptAndStyle": true
+  "vueIndentScriptAndStyle": true,
+  "overrides": [
+    {
+      "files": ["*.js", "*.vue"],
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
 }

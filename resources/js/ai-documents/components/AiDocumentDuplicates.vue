@@ -1,196 +1,192 @@
 <template>
-    <div
-        v-if="canFinalize && duplicates.length > 0"
-        ref="duplicatesCard"
-        class="card mb-3"
-    >
-        <div class="card-header d-flex justify-content-between">
-            <div
-                class="card-title collapse-control"
-                data-coreui-toggle="collapse"
-                data-coreui-target="#cardDuplicates"
-            >
-                <i class="fa fa-angle-down"></i>
-                {{ __('Potential duplicates') }}
-            </div>
-            <span
-                class="fa fa-warning text-warning"
-                data-bs-toggle="tooltip"
-                data-bs-placement="right"
-                :title="
-                    __(
-                        'The following transactions might be duplicates. Please review before finalizing.',
-                    )
-                "
-            ></span>
-        </div>
-        <div
-            id="cardDuplicates"
-            class="collapse card-body show"
-            aria-expanded="true"
-        >
-            <div class="list-group">
-                <button
-                    v-for="duplicate in duplicates"
-                    :key="duplicate.id"
-                    type="button"
-                    class="list-group-item list-group-item-action"
-                    @click="openTransactionModal(duplicate.id)"
-                >
-                    <div
-                        class="d-flex justify-content-between align-items-start"
-                    >
-                        <div>
-                            <div class="fw-bold">
-                                {{ formatDate(duplicate.date) }}
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <div>{{ duplicate.amount }}</div>
-                            <div class="badge bg-warning text-dark">
-                                {{ Math.round(duplicate.similarity * 100) }}%
-                                {{ __('match') }}
-                            </div>
-                        </div>
-                    </div>
-                </button>
-            </div>
-        </div>
+  <div
+    v-if="canFinalize && duplicates.length > 0"
+    ref="duplicatesCard"
+    class="card mb-3"
+  >
+    <div class="card-header d-flex justify-content-between">
+      <div
+        class="card-title collapse-control"
+        data-coreui-toggle="collapse"
+        data-coreui-target="#cardDuplicates"
+      >
+        <i class="fa fa-angle-down"></i>
+        {{ __('Potential duplicates') }}
+      </div>
+      <span
+        class="fa fa-warning text-warning"
+        data-bs-toggle="tooltip"
+        data-bs-placement="right"
+        :title="
+          __(
+            'The following transactions might be duplicates. Please review before finalizing.',
+          )
+        "
+      ></span>
     </div>
+    <div
+      id="cardDuplicates"
+      class="collapse card-body show"
+      aria-expanded="true"
+    >
+      <div class="list-group">
+        <button
+          v-for="duplicate in duplicates"
+          :key="duplicate.id"
+          type="button"
+          class="list-group-item list-group-item-action"
+          @click="openTransactionModal(duplicate.id)"
+        >
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-bold">
+                {{ formatDate(duplicate.date) }}
+              </div>
+            </div>
+            <div class="text-end">
+              <div>{{ duplicate.amount }}</div>
+              <div class="badge bg-warning text-dark">
+                {{ Math.round(duplicate.similarity * 100) }}%
+                {{ __('match') }}
+              </div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-    import { nextTick, onMounted, ref, watch } from 'vue';
-    import {
-        initializeBootstrapTooltips,
-        parseIsoDate,
-    } from '@/shared/lib/helpers';
-    import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import { nextTick, onMounted, ref, watch } from 'vue';
+  import {
+    initializeBootstrapTooltips,
+    parseIsoDate,
+  } from '@/shared/lib/helpers';
+  import { __, toFormattedDate } from '@/shared/lib/i18n';
 
-    const props = defineProps({
-        aiDocumentId: {
-            type: Number,
-            required: true,
+  const props = defineProps({
+    aiDocumentId: {
+      type: Number,
+      required: true,
+    },
+    canFinalize: {
+      type: Boolean,
+      required: true,
+    },
+  });
+
+  const duplicates = ref([]);
+  const duplicatesLoading = ref(false);
+  const duplicatesCard = ref(null);
+  const route = window.route;
+  const locale = window.YAFFA?.userSettings?.locale || 'en';
+
+  const initializeTooltips = async () => {
+    await nextTick();
+    initializeBootstrapTooltips(duplicatesCard.value || document);
+  };
+
+  const loadDuplicates = () => {
+    if (!props.canFinalize || duplicatesLoading.value) {
+      return;
+    }
+
+    duplicatesLoading.value = true;
+
+    window.axios
+      .post(
+        route('api.v1.documents.checkDuplicates', {
+          aiDocument: props.aiDocumentId,
+        }),
+      )
+      .then((response) => {
+        duplicates.value = response.data.duplicates || [];
+      })
+      .catch((error) => {
+        console.error('Failed to load duplicates:', error);
+        duplicates.value = [];
+      })
+      .finally(() => {
+        duplicatesLoading.value = false;
+        initializeTooltips();
+      });
+  };
+
+  const formatDate = (value) => {
+    if (!value) {
+      return __('Not set');
+    }
+
+    return toFormattedDate(value, locale, value, true);
+  };
+
+  const openTransactionModal = async (transactionId) => {
+    if (!transactionId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v1/transactions/${transactionId}`);
+      const data = await response.json();
+      const transaction = data.transaction;
+
+      if (transaction?.date) {
+        transaction.date = parseIsoDate(transaction.date);
+      }
+      if (transaction?.transaction_schedule) {
+        if (transaction.transaction_schedule.start_date) {
+          transaction.transaction_schedule.start_date = parseIsoDate(
+            transaction.transaction_schedule.start_date,
+          );
+        }
+        if (transaction.transaction_schedule.end_date) {
+          transaction.transaction_schedule.end_date = parseIsoDate(
+            transaction.transaction_schedule.end_date,
+          );
+        }
+        if (transaction.transaction_schedule.next_date) {
+          transaction.transaction_schedule.next_date = parseIsoDate(
+            transaction.transaction_schedule.next_date,
+          );
+        }
+      }
+
+      const event = new CustomEvent('showTransactionQuickViewModal', {
+        detail: {
+          transaction,
+          controls: {
+            show: true,
+            edit: true,
+            clone: true,
+            skip: true,
+            enter: true,
+            delete: true,
+          },
         },
-        canFinalize: {
-            type: Boolean,
-            required: true,
-        },
-    });
+      });
 
-    const duplicates = ref([]);
-    const duplicatesLoading = ref(false);
-    const duplicatesCard = ref(null);
-    const route = window.route;
-    const locale = window.YAFFA?.userSettings?.locale || 'en';
+      window.dispatchEvent(event);
+    } catch (error) {
+      console.error('Failed to load transaction details:', error);
+    }
+  };
 
-    const initializeTooltips = async () => {
-        await nextTick();
-        initializeBootstrapTooltips(duplicatesCard.value || document);
-    };
+  onMounted(() => {
+    loadDuplicates();
+    initializeTooltips();
+  });
 
-    const loadDuplicates = () => {
-        if (!props.canFinalize || duplicatesLoading.value) {
-            return;
-        }
-
-        duplicatesLoading.value = true;
-
-        window.axios
-            .post(
-                route('api.v1.documents.checkDuplicates', {
-                    aiDocument: props.aiDocumentId,
-                }),
-            )
-            .then((response) => {
-                duplicates.value = response.data.duplicates || [];
-            })
-            .catch((error) => {
-                console.error('Failed to load duplicates:', error);
-                duplicates.value = [];
-            })
-            .finally(() => {
-                duplicatesLoading.value = false;
-                initializeTooltips();
-            });
-    };
-
-    const formatDate = (value) => {
-        if (!value) {
-            return __('Not set');
-        }
-
-        return toFormattedDate(value, locale, value, true);
-    };
-
-    const openTransactionModal = async (transactionId) => {
-        if (!transactionId) {
-            return;
-        }
-
-        try {
-            const response = await fetch(
-                `/api/v1/transactions/${transactionId}`,
-            );
-            const data = await response.json();
-            const transaction = data.transaction;
-
-            if (transaction?.date) {
-                transaction.date = parseIsoDate(transaction.date);
-            }
-            if (transaction?.transaction_schedule) {
-                if (transaction.transaction_schedule.start_date) {
-                    transaction.transaction_schedule.start_date = parseIsoDate(
-                        transaction.transaction_schedule.start_date,
-                    );
-                }
-                if (transaction.transaction_schedule.end_date) {
-                    transaction.transaction_schedule.end_date = parseIsoDate(
-                        transaction.transaction_schedule.end_date,
-                    );
-                }
-                if (transaction.transaction_schedule.next_date) {
-                    transaction.transaction_schedule.next_date = parseIsoDate(
-                        transaction.transaction_schedule.next_date,
-                    );
-                }
-            }
-
-            const event = new CustomEvent('showTransactionQuickViewModal', {
-                detail: {
-                    transaction,
-                    controls: {
-                        show: true,
-                        edit: true,
-                        clone: true,
-                        skip: true,
-                        enter: true,
-                        delete: true,
-                    },
-                },
-            });
-
-            window.dispatchEvent(event);
-        } catch (error) {
-            console.error('Failed to load transaction details:', error);
-        }
-    };
-
-    onMounted(() => {
+  watch(
+    () => props.canFinalize,
+    (value) => {
+      if (value) {
         loadDuplicates();
-        initializeTooltips();
-    });
+      }
+    },
+  );
 
-    watch(
-        () => props.canFinalize,
-        (value) => {
-            if (value) {
-                loadDuplicates();
-            }
-        },
-    );
-
-    watch(duplicates, () => {
-        initializeTooltips();
-    });
+  watch(duplicates, () => {
+    initializeTooltips();
+  });
 </script>

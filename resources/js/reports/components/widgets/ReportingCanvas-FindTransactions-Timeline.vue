@@ -1,38 +1,38 @@
 <template>
-    <div class="row mb-3">
-        <div class="col-12">
-            <monthly-timeline
-                :transactions="transactions"
-                :busy="busy"
-            ></monthly-timeline>
-        </div>
+  <div class="row mb-3">
+    <div class="col-12">
+      <monthly-timeline
+        :transactions="transactions"
+        :busy="busy"
+      ></monthly-timeline>
     </div>
+  </div>
 </template>
 
 <script>
-    import { __ } from '@/shared/lib/i18n';
+  import { __ } from '@/shared/lib/i18n';
 
-    // Import all required reporting widgets
-    import MonthlyTimeline from './MonthlyTimeline.vue';
-    export default {
-        name: 'ReportingCanvasFindTransactionsTimeline',
-        components: {
-            'monthly-timeline': MonthlyTimeline,
-        },
-        props: {
-            transactions: {
-                type: Array,
-                required: false,
-                default: () => [],
-            },
-            busy: {
-                type: Boolean,
-                required: true,
-            },
-        },
-        mounted() {},
-        methods: {
-            __,
-        },
-    };
+  // Import all required reporting widgets
+  import MonthlyTimeline from './MonthlyTimeline.vue';
+  export default {
+    name: 'ReportingCanvasFindTransactionsTimeline',
+    components: {
+      'monthly-timeline': MonthlyTimeline,
+    },
+    props: {
+      transactions: {
+        type: Array,
+        required: false,
+        default: () => [],
+      },
+      busy: {
+        type: Boolean,
+        required: true,
+      },
+    },
+    mounted() {},
+    methods: {
+      __,
+    },
+  };
 </script>

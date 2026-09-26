@@ -14,40 +14,40 @@
  * @returns {Function} cancel - stops any pending retry.
  */
 export function pollUntilReady(
-    fetcher,
-    { onBusy, onReady, onError },
-    initialInterval = 5000,
+  fetcher,
+  { onBusy, onReady, onError },
+  initialInterval = 5000,
 ) {
-    let interval = initialInterval;
-    let timeoutId = null;
+  let interval = initialInterval;
+  let timeoutId = null;
 
-    function attempt() {
-        fetcher()
-            .then((data) => {
-                if (data.result === 'busy') {
-                    onBusy(data.message);
+  function attempt() {
+    fetcher()
+      .then((data) => {
+        if (data.result === 'busy') {
+          onBusy(data.message);
 
-                    timeoutId = setTimeout(attempt, interval);
-                    interval *= 2;
+          timeoutId = setTimeout(attempt, interval);
+          interval *= 2;
 
-                    return;
-                }
-
-                onReady(data);
-            })
-            .catch((error) => {
-                if (onError) {
-                    onError(error);
-                }
-            });
-    }
-
-    attempt();
-
-    return function cancel() {
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
+          return;
         }
-    };
+
+        onReady(data);
+      })
+      .catch((error) => {
+        if (onError) {
+          onError(error);
+        }
+      });
+  }
+
+  attempt();
+
+  return function cancel() {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
 }

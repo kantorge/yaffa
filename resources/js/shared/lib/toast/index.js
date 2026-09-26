@@ -9,20 +9,20 @@
  * @returns {void}
  */
 export function showToast(header, body, toastClass, otherProperties) {
-    otherProperties = otherProperties || {};
+  otherProperties = otherProperties || {};
 
-    // Emit a custom event to global scope to display the Toast
-    let notificationEvent = new CustomEvent('toast', {
-        detail: {
-            ...otherProperties,
-            ...{
-                header: header,
-                body: body,
-                toastClass: toastClass,
-            },
-        },
-    });
-    window.dispatchEvent(notificationEvent);
+  // Emit a custom event to global scope to display the Toast
+  let notificationEvent = new CustomEvent('toast', {
+    detail: {
+      ...otherProperties,
+      ...{
+        header: header,
+        body: body,
+        toastClass: toastClass,
+      },
+    },
+  });
+  window.dispatchEvent(notificationEvent);
 }
 
 /**
@@ -33,7 +33,7 @@ export function showToast(header, body, toastClass, otherProperties) {
  * @returns {void}
  */
 export function showInfoToast(body) {
-    showToast(__('Info'), body, 'bg-info');
+  showToast(__('Info'), body, 'bg-info');
 }
 
 /**
@@ -44,7 +44,7 @@ export function showInfoToast(body) {
  * @returns {void}
  */
 export function showSuccessToast(body) {
-    showToast(__('Success'), body, 'bg-success');
+  showToast(__('Success'), body, 'bg-success');
 }
 
 /**
@@ -55,7 +55,7 @@ export function showSuccessToast(body) {
  * @returns {void}
  */
 export function showErrorToast(body) {
-    showToast(__('Error'), body, 'bg-danger');
+  showToast(__('Error'), body, 'bg-danger');
 }
 
 /*
@@ -67,9 +67,9 @@ export function showErrorToast(body) {
  * @returns {void}
  */
 export function showLoaderToast(body, toastClass) {
-    showToast(__('Loading'), body, toastClass + ' bg-info', {
-        delay: Infinity,
-    });
+  showToast(__('Loading'), body, toastClass + ' bg-info', {
+    delay: Infinity,
+  });
 }
 
 /**
@@ -80,7 +80,7 @@ export function showLoaderToast(body, toastClass) {
  * @returns {void}
  */
 export function showWarningToast(body) {
-    showToast(__('Warning'), body, 'bg-warning');
+  showToast(__('Warning'), body, 'bg-warning');
 }
 
 /**
@@ -92,23 +92,23 @@ export function showWarningToast(body) {
  * @returns {void}
  */
 export function hideToast(selector, delay = 250) {
-    const toastElements = document.querySelectorAll(selector);
+  const toastElements = document.querySelectorAll(selector);
 
-    if (toastElements.length === 0) {
-        return;
-    }
+  if (toastElements.length === 0) {
+    return;
+  }
 
-    toastElements.forEach((toastElement) => {
-        const toastInstance = new window.bootstrap.Toast(toastElement);
-        setTimeout(() => {
-            try {
-                toastInstance.dispose();
-            } catch (e) {
-                // Ignore errors, the toast might have been already disposed
-                if (import.meta.env.DEV) {
-                    console.error('Error disposing toast:', e);
-                }
-            }
-        }, delay);
-    });
+  toastElements.forEach((toastElement) => {
+    const toastInstance = new window.bootstrap.Toast(toastElement);
+    setTimeout(() => {
+      try {
+        toastInstance.dispose();
+      } catch (e) {
+        // Ignore errors, the toast might have been already disposed
+        if (import.meta.env.DEV) {
+          console.error('Error disposing toast:', e);
+        }
+      }
+    }, delay);
+  });
 }

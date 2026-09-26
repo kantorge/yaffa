@@ -10,16 +10,16 @@
  * @returns {string[]}
  */
 export function getArrayParamFromUrl(searchParams, name) {
-    const repeated = searchParams.getAll(`${name}[]`);
-    if (repeated.length > 0) {
-        return repeated;
-    }
+  const repeated = searchParams.getAll(`${name}[]`);
+  if (repeated.length > 0) {
+    return repeated;
+  }
 
-    const indexedPattern = new RegExp(`^${name}\\[\\d+\\]$`);
+  const indexedPattern = new RegExp(`^${name}\\[\\d+\\]$`);
 
-    return Array.from(searchParams.entries())
-        .filter(([key]) => indexedPattern.test(key))
-        .map(([, value]) => value);
+  return Array.from(searchParams.entries())
+    .filter(([key]) => indexedPattern.test(key))
+    .map(([, value]) => value);
 }
 
 /**
@@ -28,16 +28,16 @@ export function getArrayParamFromUrl(searchParams, name) {
  * @returns {object} Transaction type configuration with category, label, multipliers, etc.
  */
 export function getTransactionTypeConfig(transactionTypeValue) {
-    const transactionTypes = window.YAFFA.config.transactionTypes || {};
-    return (
-        transactionTypes[transactionTypeValue] || {
-            value: transactionTypeValue,
-            label: transactionTypeValue,
-            category: 'unknown',
-            amount_multiplier: null,
-            quantity_multiplier: null,
-        }
-    );
+  const transactionTypes = window.YAFFA.config.transactionTypes || {};
+  return (
+    transactionTypes[transactionTypeValue] || {
+      value: transactionTypeValue,
+      label: transactionTypeValue,
+      category: 'unknown',
+      amount_multiplier: null,
+      quantity_multiplier: null,
+    }
+  );
 }
 
 /**
@@ -47,16 +47,16 @@ export function getTransactionTypeConfig(transactionTypeValue) {
  * @returns {string}
  */
 export function escapeHtml(value) {
-    if (value === null || value === undefined) {
-        return '';
-    }
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -66,7 +66,7 @@ export function escapeHtml(value) {
  * @returns {string}
  */
 export function escapeHtmlWithLineBreaks(value) {
-    return escapeHtml(value).replace(/\r?\n/g, '<br>');
+  return escapeHtml(value).replace(/\r?\n/g, '<br>');
 }
 
 /**
@@ -81,26 +81,26 @@ export function escapeHtmlWithLineBreaks(value) {
  * @returns {Date|null}
  */
 export function parseIsoDate(dateString) {
-    if (!dateString) return null;
-    if (dateString instanceof Date) return dateString;
-    const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!match) return null;
-    const y = Number(match[1]);
-    const m = Number(match[2]);
-    const d = Number(match[3]);
-    if (m < 1 || m > 12) return null;
-    return new Date(y, m - 1, d);
+  if (!dateString) return null;
+  if (dateString instanceof Date) return dateString;
+  const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  if (m < 1 || m > 12) return null;
+  return new Date(y, m - 1, d);
 }
 
 // Return the ISO "YYYY-MM-DD" representation of a Date in local time.
 export function toIsoDateString(date) {
-    if (!(date instanceof Date)) {
-        date = new Date();
-    }
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  if (!(date instanceof Date)) {
+    date = new Date();
+  }
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 // Normalizes a Date object, an ISO 'YYYY-MM-DD' string, a full ISO datetime
@@ -109,10 +109,10 @@ export function toIsoDateString(date) {
 // `<input type="date">` elements require for their value/v-model binding -
 // anything else silently renders blank per the HTML date-input spec.
 export function toDateInputValue(value) {
-    if (!value) return '';
-    if (value instanceof Date) return toIsoDateString(value);
-    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
-    return match ? match[1] : '';
+  if (!value) return '';
+  if (value instanceof Date) return toIsoDateString(value);
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
 }
 
 // RRule reads a Date's UTC getters, not its local ones, so a local-midnight
@@ -120,23 +120,23 @@ export function toDateInputValue(value) {
 // fields before use - otherwise occurrences can land a day off for anyone
 // outside UTC. Accepts either a Date or a 'YYYY-MM-DD' string.
 export function toRRuleDate(value) {
-    if (!value) {
-        return null;
-    }
+  if (!value) {
+    return null;
+  }
 
-    if (value instanceof Date) {
-        return new Date(
-            Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
-        );
-    }
+  if (value instanceof Date) {
+    return new Date(
+      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
+    );
+  }
 
-    const parts = String(value).split('-').map(Number);
-    if (parts.length !== 3) {
-        return null;
-    }
+  const parts = String(value).split('-').map(Number);
+  if (parts.length !== 3) {
+    return null;
+  }
 
-    const [year, month, day] = parts;
-    return new Date(Date.UTC(year, month - 1, day));
+  const [year, month, day] = parts;
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 // Reverses toRRuleDate(): converts an rrule.js occurrence (UTC-anchored
@@ -144,14 +144,14 @@ export function toRRuleDate(value) {
 // getters - using local getters here would reintroduce the exact
 // off-by-one-day class of bug toRRuleDate exists to avoid.
 export function fromRRuleDate(date) {
-    if (!date) {
-        return null;
-    }
+  if (!date) {
+    return null;
+  }
 
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Money/quantity model attributes are cast on the backend to Brick\Money/BigDecimal
@@ -162,7 +162,7 @@ export function fromRRuleDate(date) {
 // string-concatenate instead of add wherever a consumer doesn't defensively wrap
 // a read in Number() itself.
 function toNumberOrNull(value) {
-    return value === null || value === undefined ? value : Number(value);
+  return value === null || value === undefined ? value : Number(value);
 }
 
 /**
@@ -174,99 +174,94 @@ function toNumberOrNull(value) {
  * @returns {Object}
  */
 export function processTransaction(transaction) {
-    // Convert ISO date strings to local-timezone Date objects.
-    if (transaction.date) {
-        transaction.date = parseIsoDate(transaction.date);
-    }
+  // Convert ISO date strings to local-timezone Date objects.
+  if (transaction.date) {
+    transaction.date = parseIsoDate(transaction.date);
+  }
 
-    transaction.cashflow_value = toNumberOrNull(transaction.cashflow_value);
+  transaction.cashflow_value = toNumberOrNull(transaction.cashflow_value);
 
-    if (transaction.transaction_items) {
-        transaction.transaction_items.forEach((item) => {
-            item.amount = toNumberOrNull(item.amount);
-            item.amount_in_base = toNumberOrNull(item.amount_in_base);
-        });
-    }
+  if (transaction.transaction_items) {
+    transaction.transaction_items.forEach((item) => {
+      item.amount = toNumberOrNull(item.amount);
+      item.amount_in_base = toNumberOrNull(item.amount_in_base);
+    });
+  }
 
-    if (transaction.config) {
-        if (transaction.config_type === 'standard') {
-            transaction.config.amount_from = toNumberOrNull(
-                transaction.config.amount_from,
-            );
-            transaction.config.amount_to = toNumberOrNull(
-                transaction.config.amount_to,
-            );
-        } else if (transaction.config_type === 'investment') {
-            transaction.config.price = toNumberOrNull(transaction.config.price);
-            transaction.config.quantity = toNumberOrNull(
-                transaction.config.quantity,
-            );
-            transaction.config.commission = toNumberOrNull(
-                transaction.config.commission,
-            );
-            transaction.config.tax = toNumberOrNull(transaction.config.tax);
-            transaction.config.dividend = toNumberOrNull(
-                transaction.config.dividend,
-            );
-        }
-    }
-
-    // toIsoDateString uses local date components, so year_month is always correct.
-    transaction.year_month = transaction.date
-        ? toIsoDateString(transaction.date).slice(0, 7)
-        : null;
-
-    if (transaction.transaction_schedule?.start_date) {
-        transaction.transaction_schedule.start_date = parseIsoDate(
-            transaction.transaction_schedule.start_date,
-        );
-    }
-
-    if (transaction.transaction_schedule?.end_date) {
-        transaction.transaction_schedule.end_date = parseIsoDate(
-            transaction.transaction_schedule.end_date,
-        );
-    }
-
-    if (transaction.transaction_schedule?.next_date) {
-        transaction.transaction_schedule.next_date = parseIsoDate(
-            transaction.transaction_schedule.next_date,
-        );
-    }
-
-    // We need an array of categories for standard transactions, extracted from the item array
+  if (transaction.config) {
     if (transaction.config_type === 'standard') {
-        // We only need each category once, so we need to remove duplicates by their IDs
-        transaction.categories = transaction.transaction_items
-            .map((item) => item.category)
-            // Exclude null categories
-            .filter((category) => category)
-            .filter(
-                (category, index, self) =>
-                    self.findIndex((c) => c.id === category.id) === index,
-            );
-    } else {
-        transaction.categories = [];
+      transaction.config.amount_from = toNumberOrNull(
+        transaction.config.amount_from,
+      );
+      transaction.config.amount_to = toNumberOrNull(
+        transaction.config.amount_to,
+      );
+    } else if (transaction.config_type === 'investment') {
+      transaction.config.price = toNumberOrNull(transaction.config.price);
+      transaction.config.quantity = toNumberOrNull(transaction.config.quantity);
+      transaction.config.commission = toNumberOrNull(
+        transaction.config.commission,
+      );
+      transaction.config.tax = toNumberOrNull(transaction.config.tax);
+      transaction.config.dividend = toNumberOrNull(transaction.config.dividend);
     }
+  }
 
-    // We need an array of tags for standard transactions, extracted from the item array
-    if (transaction.config_type === 'standard') {
-        // We only need each tag once, so we need to remove duplicates by their IDs
-        transaction.tags = transaction.transaction_items
-            .map((item) => item.tags)
-            // Flatten the array of arrays
-            .flat()
-            // Exclude null tags
-            .filter((tag) => tag)
-            .filter(
-                (tag, index, self) =>
-                    self.findIndex((t) => t.id === tag.id) === index,
-            );
-    } else {
-        transaction.tags = [];
-    }
+  // toIsoDateString uses local date components, so year_month is always correct.
+  transaction.year_month = transaction.date
+    ? toIsoDateString(transaction.date).slice(0, 7)
+    : null;
 
-    return transaction;
+  if (transaction.transaction_schedule?.start_date) {
+    transaction.transaction_schedule.start_date = parseIsoDate(
+      transaction.transaction_schedule.start_date,
+    );
+  }
+
+  if (transaction.transaction_schedule?.end_date) {
+    transaction.transaction_schedule.end_date = parseIsoDate(
+      transaction.transaction_schedule.end_date,
+    );
+  }
+
+  if (transaction.transaction_schedule?.next_date) {
+    transaction.transaction_schedule.next_date = parseIsoDate(
+      transaction.transaction_schedule.next_date,
+    );
+  }
+
+  // We need an array of categories for standard transactions, extracted from the item array
+  if (transaction.config_type === 'standard') {
+    // We only need each category once, so we need to remove duplicates by their IDs
+    transaction.categories = transaction.transaction_items
+      .map((item) => item.category)
+      // Exclude null categories
+      .filter((category) => category)
+      .filter(
+        (category, index, self) =>
+          self.findIndex((c) => c.id === category.id) === index,
+      );
+  } else {
+    transaction.categories = [];
+  }
+
+  // We need an array of tags for standard transactions, extracted from the item array
+  if (transaction.config_type === 'standard') {
+    // We only need each tag once, so we need to remove duplicates by their IDs
+    transaction.tags = transaction.transaction_items
+      .map((item) => item.tags)
+      // Flatten the array of arrays
+      .flat()
+      // Exclude null tags
+      .filter((tag) => tag)
+      .filter(
+        (tag, index, self) => self.findIndex((t) => t.id === tag.id) === index,
+      );
+  } else {
+    transaction.tags = [];
+  }
+
+  return transaction;
 }
 
 import { RRule } from 'rrule';
@@ -279,10 +274,10 @@ import { RRule } from 'rrule';
  * @returns {object}
  */
 export function byDayToRRuleWeekday(token) {
-    const weekdayCode = token.slice(-2);
-    const ordinal = parseInt(token.slice(0, -2), 10);
+  const weekdayCode = token.slice(-2);
+  const ordinal = parseInt(token.slice(0, -2), 10);
 
-    return RRule[weekdayCode].nth(ordinal);
+  return RRule[weekdayCode].nth(ordinal);
 }
 
 // Imported from the leaf translate module (not the '@/shared/lib/i18n' barrel)
@@ -294,11 +289,11 @@ import { __ } from '@/shared/lib/i18n/translate';
 // fields, shared by the schedule edit form (TransactionSchedule.vue) and its
 // read-only display (Schedule.vue) so both read the same values the same way.
 export const ordinalLabels = {
-    1: __('First'),
-    2: __('Second'),
-    3: __('Third'),
-    4: __('Fourth'),
-    '-1': __('Last'),
+  1: __('First'),
+  2: __('Second'),
+  3: __('Third'),
+  4: __('Fourth'),
+  '-1': __('Last'),
 };
 
 // Weekday/month names are derived from Intl rather than translated in lang/*.json: they are a
@@ -306,46 +301,44 @@ export const ordinalLabels = {
 // grammatically-correct lowercase form for some locales (e.g. French, Hungarian, Polish), so the
 // first letter is capitalized to read correctly as a standalone label (e.g. dropdown option).
 function capitalize(value) {
-    return value.charAt(0).toUpperCase() + value.slice(1);
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 const locale = window.YAFFA?.userSettings?.locale || window.YAFFA?.locale;
 
 export const weekdayLabels = Object.fromEntries(
-    ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
-        // 2024-01-07 is a Sunday, so index 0..6 walks Sunday through Saturday.
-        const date = new Date(2024, 0, 7 + index);
-        return [
-            code,
-            capitalize(
-                new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
-                    date,
-                ),
-            ),
-        ];
-    }),
+  ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
+    // 2024-01-07 is a Sunday, so index 0..6 walks Sunday through Saturday.
+    const date = new Date(2024, 0, 7 + index);
+    return [
+      code,
+      capitalize(
+        new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date),
+      ),
+    ];
+  }),
 );
 
 export const monthLabels = Object.fromEntries(
-    Array.from({ length: 12 }, (_, index) => {
-        const date = new Date(2024, index, 1);
-        return [
-            index + 1,
-            capitalize(
-                new Intl.DateTimeFormat(locale, { month: 'long' }).format(date),
-            ),
-        ];
-    }),
+  Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(2024, index, 1);
+    return [
+      index + 1,
+      capitalize(
+        new Intl.DateTimeFormat(locale, { month: 'long' }).format(date),
+      ),
+    ];
+  }),
 );
 
 export const ordinalOptions = Object.entries(ordinalLabels).map(
-    ([value, label]) => ({ value, label }),
+  ([value, label]) => ({ value, label }),
 );
 export const weekdayOptions = Object.entries(weekdayLabels).map(
-    ([value, label]) => ({ value, label }),
+  ([value, label]) => ({ value, label }),
 );
 export const monthOptions = Object.entries(monthLabels).map(
-    ([value, label]) => ({ value: Number(value), label }),
+  ([value, label]) => ({ value: Number(value), label }),
 );
 
 // schedule.start_date may be either a Date object (as processTransaction() leaves it
@@ -357,20 +350,20 @@ export const monthOptions = Object.entries(monthLabels).map(
 // and its read-only display Schedule.vue so both derive the day-of-month pattern the
 // same way.
 export function scheduleStartDateParts(value) {
-    if (!value) {
-        return null;
-    }
+  if (!value) {
+    return null;
+  }
 
-    if (value instanceof Date) {
-        return { day: value.getDate(), month: value.getMonth() + 1 };
-    }
+  if (value instanceof Date) {
+    return { day: value.getDate(), month: value.getMonth() + 1 };
+  }
 
-    const parts = String(value).split('-');
-    if (parts.length !== 3) {
-        return null;
-    }
+  const parts = String(value).split('-');
+  if (parts.length !== 3) {
+    return null;
+  }
 
-    return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
+  return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
 }
 
 // The 5 weekdays used by the "last business day of month" pattern - shared so the rrule.js
@@ -378,44 +371,42 @@ export function scheduleStartDateParts(value) {
 export const businessDayWeekdays = ['MO', 'TU', 'WE', 'TH', 'FR'];
 
 export function processScheduledTransaction(transaction) {
-    if (transaction.transaction_schedule) {
-        const schedule = transaction.transaction_schedule;
-        // by_month pairs with whichever month-scoped pattern (ordinal by_day, days-before-
-        // month-end, last-business-day) is active on a YEARLY rule - mirrors the backend's
-        // HasRecurrenceRule::effectiveRrule().
-        const hasMonthScopedPattern = Boolean(
-            schedule.by_day ||
-            schedule.days_before_month_end != null ||
-            schedule.last_business_day_of_month,
-        );
-        const byMonth =
-            hasMonthScopedPattern && schedule.frequency === 'YEARLY'
-                ? schedule.by_month || null
-                : null;
+  if (transaction.transaction_schedule) {
+    const schedule = transaction.transaction_schedule;
+    // by_month pairs with whichever month-scoped pattern (ordinal by_day, days-before-
+    // month-end, last-business-day) is active on a YEARLY rule - mirrors the backend's
+    // HasRecurrenceRule::effectiveRrule().
+    const hasMonthScopedPattern = Boolean(
+      schedule.by_day ||
+      schedule.days_before_month_end != null ||
+      schedule.last_business_day_of_month,
+    );
+    const byMonth =
+      hasMonthScopedPattern && schedule.frequency === 'YEARLY'
+        ? schedule.by_month || null
+        : null;
 
-        const ruleOptions = {
-            dtstart: toRRuleDate(schedule.start_date),
-            freq: RRule[schedule.frequency],
-            interval: schedule.interval,
-            until: toRRuleDate(schedule.end_date),
-            bymonth: byMonth,
-        };
+    const ruleOptions = {
+      dtstart: toRRuleDate(schedule.start_date),
+      freq: RRule[schedule.frequency],
+      interval: schedule.interval,
+      until: toRRuleDate(schedule.end_date),
+      bymonth: byMonth,
+    };
 
-        if (schedule.days_before_month_end != null) {
-            ruleOptions.bymonthday = -(schedule.days_before_month_end + 1);
-        } else if (schedule.last_business_day_of_month) {
-            ruleOptions.byweekday = businessDayWeekdays.map(
-                (code) => RRule[code],
-            );
-            ruleOptions.bysetpos = -1;
-        } else if (schedule.by_day) {
-            ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
-        }
-
-        transaction.transaction_schedule.rule = new RRule(ruleOptions);
+    if (schedule.days_before_month_end != null) {
+      ruleOptions.bymonthday = -(schedule.days_before_month_end + 1);
+    } else if (schedule.last_business_day_of_month) {
+      ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+      ruleOptions.bysetpos = -1;
+    } else if (schedule.by_day) {
+      ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
     }
 
-    return transaction;
+    transaction.transaction_schedule.rule = new RRule(ruleOptions);
+  }
+
+  return transaction;
 }
 
 // Human-readable cadence text (e.g. "every month") for a Budget or TransactionSchedule-shaped
@@ -423,28 +414,28 @@ export function processScheduledTransaction(transaction) {
 // parseIsoDate). Shared so the budget chart's breakdown tables and the budget quick-view modal
 // build the same rrule.js text the same way, translated into the current YAFFA user language.
 export function scheduleCadenceText(schedule) {
-    if (
-        !schedule ||
-        !schedule.start_date ||
-        !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)
-    ) {
-        return '';
-    }
+  if (
+    !schedule ||
+    !schedule.start_date ||
+    !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)
+  ) {
+    return '';
+  }
 
-    const { rule } = processScheduledTransaction({
-        transaction_schedule: {
-            start_date: parseIsoDate(schedule.start_date),
-            frequency: schedule.frequency,
-            interval: schedule.interval,
-            end_date: parseIsoDate(schedule.end_date),
-            by_day: schedule.by_day,
-            by_month: schedule.by_month,
-            days_before_month_end: schedule.days_before_month_end,
-            last_business_day_of_month: schedule.last_business_day_of_month,
-        },
-    }).transaction_schedule;
+  const { rule } = processScheduledTransaction({
+    transaction_schedule: {
+      start_date: parseIsoDate(schedule.start_date),
+      frequency: schedule.frequency,
+      interval: schedule.interval,
+      end_date: parseIsoDate(schedule.end_date),
+      by_day: schedule.by_day,
+      by_month: schedule.by_month,
+      days_before_month_end: schedule.days_before_month_end,
+      last_business_day_of_month: schedule.last_business_day_of_month,
+    },
+  }).transaction_schedule;
 
-    return rule.toText();
+  return rule.toText();
 }
 
 /**
@@ -455,12 +446,12 @@ export function scheduleCadenceText(schedule) {
  * @returns {string}
  */
 export function transactionLink(id, text) {
-    const url = window.route('transaction.open', {
-        action: 'show',
-        transaction: id,
-    });
+  const url = window.route('transaction.open', {
+    action: 'show',
+    transaction: id,
+  });
 
-    return `<a href="${url}">${text}</a>`;
+  return `<a href="${url}">${text}</a>`;
 }
 
 /**
@@ -471,14 +462,14 @@ export function transactionLink(id, text) {
  * @param {Document|Element} parent - The parent element to search within.
  */
 export function initializeBootstrapTooltips(parent = document) {
-    const tooltipTriggerList = parent.querySelectorAll(
-        '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
-    );
-    tooltipTriggerList.forEach((tooltipTriggerEl) => {
-        const existing = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
-        if (existing) {
-            existing.dispose();
-        }
-        new window.bootstrap.Tooltip(tooltipTriggerEl);
-    });
+  const tooltipTriggerList = parent.querySelectorAll(
+    '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
+  );
+  tooltipTriggerList.forEach((tooltipTriggerEl) => {
+    const existing = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+    if (existing) {
+      existing.dispose();
+    }
+    new window.bootstrap.Tooltip(tooltipTriggerEl);
+  });
 }

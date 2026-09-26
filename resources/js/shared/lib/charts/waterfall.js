@@ -15,52 +15,49 @@ import * as am4core from '@amcharts/amcharts4/core';
  * @returns {Array<Object>} Chart-ready rows, each extended with open/stepValue/barValue/color/isResult
  */
 export function buildWaterfallChartData(rawData, options = {}) {
-    const { resultLabel = null } = options;
-    let openHistory = 0;
+  const { resultLabel = null } = options;
+  let openHistory = 0;
 
-    const data = (rawData || [])
-        .slice()
-        .sort((a, b) => {
-            let x = a.value;
-            let y = b.value;
+  const data = (rawData || [])
+    .slice()
+    .sort((a, b) => {
+      let x = a.value;
+      let y = b.value;
 
-            // Sort negative values by their absolute magnitude, same as positive ones
-            if (x < 0 && y < 0) {
-                x *= -1;
-                y *= -1;
-            }
+      // Sort negative values by their absolute magnitude, same as positive ones
+      if (x < 0 && y < 0) {
+        x *= -1;
+        y *= -1;
+      }
 
-            return x > y ? -1 : x < y ? 1 : 0;
-        })
-        .map((row) => {
-            const category = { ...row };
-            category.open = openHistory;
-            category.stepValue = openHistory + category.value;
-            category.barValue = openHistory + category.value;
+      return x > y ? -1 : x < y ? 1 : 0;
+    })
+    .map((row) => {
+      const category = { ...row };
+      category.open = openHistory;
+      category.stepValue = openHistory + category.value;
+      category.barValue = openHistory + category.value;
 
-            openHistory = category.barValue;
+      openHistory = category.barValue;
 
-            category.color =
-                category.value > 0
-                    ? am4core.color('green')
-                    : am4core.color('red');
-            category.isResult = false;
+      category.color =
+        category.value > 0 ? am4core.color('green') : am4core.color('red');
+      category.isResult = false;
 
-            return category;
-        });
+      return category;
+    });
 
-    if (resultLabel && data.length > 1) {
-        data.push({
-            category: resultLabel,
-            open: 0,
-            stepValue: 0,
-            barValue: openHistory,
-            value: openHistory,
-            color:
-                openHistory > 0 ? am4core.color('green') : am4core.color('red'),
-            isResult: true,
-        });
-    }
+  if (resultLabel && data.length > 1) {
+    data.push({
+      category: resultLabel,
+      open: 0,
+      stepValue: 0,
+      barValue: openHistory,
+      value: openHistory,
+      color: openHistory > 0 ? am4core.color('green') : am4core.color('red'),
+      isResult: true,
+    });
+  }
 
-    return data;
+  return data;
 }

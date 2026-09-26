@@ -1,552 +1,516 @@
 <template>
-    <div :id="modalId" ref="modalElement" class="modal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form autocomplete="off" @submit.prevent="onSubmit">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ __('Upload document') }}</h5>
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-coreui-dismiss="modal"
-                            aria-label="Close"
-                        ></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Error Alert -->
-                        <div
-                            v-if="errors.length > 0"
-                            class="alert alert-danger alert-dismissible fade show"
-                            role="alert"
-                        >
-                            <strong>{{ __('Error!') }}</strong>
-                            <ul class="mb-0 mt-2">
-                                <li v-for="error in errors" :key="error">
-                                    {{ error }}
-                                </li>
-                            </ul>
-                            <button
-                                type="button"
-                                class="btn-close"
-                                @click="errors = []"
-                            ></button>
-                        </div>
-
-                        <!-- Warning Alert -->
-                        <div
-                            v-if="!warningDismissed"
-                            class="alert alert-warning alert-dismissible fade show"
-                            role="alert"
-                        >
-                            <i class="fa fa-exclamation-triangle me-2"></i>
-                            <strong>{{ __('Important:') }}</strong>
-                            {{
-                                __(
-                                    'Once saved, this document cannot be modified and will be automatically processed. Please review your documents and custom instructions before submitting.',
-                                )
-                            }}
-                            <button
-                                type="button"
-                                class="btn-close"
-                                aria-label="Close"
-                                @click="dismissWarning"
-                            ></button>
-                        </div>
-
-                        <!-- File Upload Section -->
-                        <div class="mb-4">
-                            <label class="form-label">{{ __('Files') }}</label>
-                            <div
-                                class="border-2 border-dashed rounded p-4 text-center cursor-pointer file-drop-zone"
-                                :class="{ 'bg-light': isDraggingOver }"
-                                @dragover.prevent="isDraggingOver = true"
-                                @dragleave.prevent="isDraggingOver = false"
-                                @drop.prevent="handleFileDrop"
-                            >
-                                <input
-                                    ref="fileInput"
-                                    type="file"
-                                    multiple
-                                    class="d-none"
-                                    :accept="allowedMimeTypes"
-                                    @change="handleFileSelection"
-                                />
-                                <div
-                                    v-if="selectedFiles.length === 0"
-                                    class="pointer-events-none"
-                                >
-                                    <i
-                                        class="fa fa-cloud-upload fa-3x text-muted mb-2 d-block"
-                                    ></i>
-                                    <p class="text-muted mb-1">
-                                        {{
-                                            __(
-                                                'Drag and drop files here, or click to select',
-                                            )
-                                        }}
-                                    </p>
-                                    <p class="text-muted small">
-                                        {{
-                                            __(
-                                                'Supported formats: PDF, JPG, PNG, TXT (max :maxFilesPerSubmission files, :maxFileSize MB each)',
-                                                {
-                                                    maxFilesPerSubmission:
-                                                        maxFilesPerSubmission,
-                                                    maxFileSize: maxFileSize,
-                                                },
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                                <div v-else class="pointer-events-none">
-                                    <p class="text-success mb-2">
-                                        <i class="fa fa-check-circle"></i>
-                                        {{ selectedFiles.length }}
-                                        {{
-                                            selectedFiles.length === 1
-                                                ? __('file')
-                                                : __('files')
-                                        }}
-                                        {{ __('selected') }}
-                                    </p>
-                                    <ul class="list-unstyled small mb-2">
-                                        <li
-                                            v-for="file in selectedFiles"
-                                            :key="file.name"
-                                        >
-                                            <span
-                                                class="badge bg-info me-2"
-                                                style="cursor: pointer"
-                                                :title="__('Click to remove')"
-                                                @click="removeFile(file.name)"
-                                            >
-                                                <i class="fa fa-times"></i>
-                                                {{ file.name }}
-                                            </span>
-                                        </li>
-                                    </ul>
-                                    <small class="text-muted">
-                                        {{
-                                            __(
-                                                'Click the area to add more files, or click badges to remove',
-                                            )
-                                        }}
-                                    </small>
-                                </div>
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-outline-secondary mt-3"
-                                    @click="$refs.fileInput.click()"
-                                >
-                                    <i class="fa fa-plus"></i>
-                                    {{
-                                        selectedFiles.length > 0
-                                            ? __('Add more files')
-                                            : __('Select files')
-                                    }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Custom Prompt Section -->
-                        <div class="mb-3">
-                            <label for="customPrompt" class="form-label">
-                                {{ __('Custom Processing Instructions') }}
-                                <span class="text-muted"
-                                    >({{ __('optional') }})</span
-                                >
-                            </label>
-                            <textarea
-                                id="customPrompt"
-                                v-model="form.customPrompt"
-                                class="form-control"
-                                :placeholder="
-                                    __(
-                                        'e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.',
-                                    )
-                                "
-                                rows="4"
-                                maxlength="5000"
-                            ></textarea>
-                            <small class="form-text text-muted">
-                                {{ form.customPrompt.length }}/5000
-                            </small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-coreui-dismiss="modal"
-                            :disabled="isSubmitting"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                            :disabled="
-                                selectedFiles.length === 0 || isSubmitting
-                            "
-                        >
-                            <span v-if="isSubmitting">
-                                <i
-                                    class="fa fa-spinner fa-spin me-2"
-                                    role="status"
-                                    aria-hidden="true"
-                                ></i>
-                                {{ __('Uploading...') }}
-                            </span>
-                            <span v-else>
-                                <i class="fa fa-upload me-2"></i>
-                                {{ __('Upload and Process') }}
-                            </span>
-                        </button>
-                    </div>
-                </form>
+  <div :id="modalId" ref="modalElement" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form autocomplete="off" @submit.prevent="onSubmit">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ __('Upload document') }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-coreui-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Error Alert -->
+            <div
+              v-if="errors.length > 0"
+              class="alert alert-danger alert-dismissible fade show"
+              role="alert"
+            >
+              <strong>{{ __('Error!') }}</strong>
+              <ul class="mb-0 mt-2">
+                <li v-for="error in errors" :key="error">
+                  {{ error }}
+                </li>
+              </ul>
+              <button
+                type="button"
+                class="btn-close"
+                @click="errors = []"
+              ></button>
             </div>
-        </div>
+
+            <!-- Warning Alert -->
+            <div
+              v-if="!warningDismissed"
+              class="alert alert-warning alert-dismissible fade show"
+              role="alert"
+            >
+              <i class="fa fa-exclamation-triangle me-2"></i>
+              <strong>{{ __('Important:') }}</strong>
+              {{
+                __(
+                  'Once saved, this document cannot be modified and will be automatically processed. Please review your documents and custom instructions before submitting.',
+                )
+              }}
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Close"
+                @click="dismissWarning"
+              ></button>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="mb-4">
+              <label class="form-label">{{ __('Files') }}</label>
+              <div
+                class="border-2 border-dashed rounded p-4 text-center cursor-pointer file-drop-zone"
+                :class="{ 'bg-light': isDraggingOver }"
+                @dragover.prevent="isDraggingOver = true"
+                @dragleave.prevent="isDraggingOver = false"
+                @drop.prevent="handleFileDrop"
+              >
+                <input
+                  ref="fileInput"
+                  type="file"
+                  multiple
+                  class="d-none"
+                  :accept="allowedMimeTypes"
+                  @change="handleFileSelection"
+                />
+                <div
+                  v-if="selectedFiles.length === 0"
+                  class="pointer-events-none"
+                >
+                  <i
+                    class="fa fa-cloud-upload fa-3x text-muted mb-2 d-block"
+                  ></i>
+                  <p class="text-muted mb-1">
+                    {{ __('Drag and drop files here, or click to select') }}
+                  </p>
+                  <p class="text-muted small">
+                    {{
+                      __(
+                        'Supported formats: PDF, JPG, PNG, TXT (max :maxFilesPerSubmission files, :maxFileSize MB each)',
+                        {
+                          maxFilesPerSubmission: maxFilesPerSubmission,
+                          maxFileSize: maxFileSize,
+                        },
+                      )
+                    }}
+                  </p>
+                </div>
+                <div v-else class="pointer-events-none">
+                  <p class="text-success mb-2">
+                    <i class="fa fa-check-circle"></i>
+                    {{ selectedFiles.length }}
+                    {{ selectedFiles.length === 1 ? __('file') : __('files') }}
+                    {{ __('selected') }}
+                  </p>
+                  <ul class="list-unstyled small mb-2">
+                    <li v-for="file in selectedFiles" :key="file.name">
+                      <span
+                        class="badge bg-info me-2"
+                        style="cursor: pointer"
+                        :title="__('Click to remove')"
+                        @click="removeFile(file.name)"
+                      >
+                        <i class="fa fa-times"></i>
+                        {{ file.name }}
+                      </span>
+                    </li>
+                  </ul>
+                  <small class="text-muted">
+                    {{
+                      __(
+                        'Click the area to add more files, or click badges to remove',
+                      )
+                    }}
+                  </small>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary mt-3"
+                  @click="$refs.fileInput.click()"
+                >
+                  <i class="fa fa-plus"></i>
+                  {{
+                    selectedFiles.length > 0
+                      ? __('Add more files')
+                      : __('Select files')
+                  }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Custom Prompt Section -->
+            <div class="mb-3">
+              <label for="customPrompt" class="form-label">
+                {{ __('Custom Processing Instructions') }}
+                <span class="text-muted">({{ __('optional') }})</span>
+              </label>
+              <textarea
+                id="customPrompt"
+                v-model="form.customPrompt"
+                class="form-control"
+                :placeholder="
+                  __(
+                    'e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.',
+                  )
+                "
+                rows="4"
+                maxlength="5000"
+              ></textarea>
+              <small class="form-text text-muted">
+                {{ form.customPrompt.length }}/5000
+              </small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-coreui-dismiss="modal"
+              :disabled="isSubmitting"
+            >
+              {{ __('Cancel') }}
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="selectedFiles.length === 0 || isSubmitting"
+            >
+              <span v-if="isSubmitting">
+                <i
+                  class="fa fa-spinner fa-spin me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></i>
+                {{ __('Uploading...') }}
+              </span>
+              <span v-else>
+                <i class="fa fa-upload me-2"></i>
+                {{ __('Upload and Process') }}
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-    import { __ } from '@/shared/lib/i18n';
-    import * as toastHelpers from '@/shared/lib/toast';
-    import { confirmAction } from '@/shared/lib/confirm';
+  import { __ } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
-    const maxFilesPerSubmission =
-        window.aiDocumentConfig?.maxFilesPerSubmission || 5;
-    const maxFileSize = window.aiDocumentConfig?.maxFileSize || 20;
-    // Restrictive default for security reasons.
-    const allowedTypes = window.aiDocumentConfig?.allowedTypes || ['txt'];
+  const maxFilesPerSubmission =
+    window.aiDocumentConfig?.maxFilesPerSubmission || 5;
+  const maxFileSize = window.aiDocumentConfig?.maxFileSize || 20;
+  // Restrictive default for security reasons.
+  const allowedTypes = window.aiDocumentConfig?.allowedTypes || ['txt'];
 
-    export default {
-        name: 'AiDocumentUploadForm',
+  export default {
+    name: 'AiDocumentUploadForm',
 
-        props: {
-            modalId: {
-                type: String,
-                default: 'aiDocumentUploadModal',
-            },
+    props: {
+      modalId: {
+        type: String,
+        default: 'aiDocumentUploadModal',
+      },
+    },
+
+    emits: ['document-created'],
+
+    data() {
+      return {
+        modal: null,
+        selectedFiles: [],
+        isDraggingOver: false,
+        isSubmitting: false,
+        errors: [],
+        warningDismissed: false,
+        form: {
+          customPrompt: '',
         },
+        maxFilesPerSubmission,
+        maxFileSize,
+        // Set right before a programmatic close so the hide.coreui.modal
+        // listener lets it through once without re-running the dirty check.
+        forceCloseModal: false,
+      };
+    },
 
-        emits: ['document-created'],
+    computed: {
+      allowedMimeTypes() {
+        const mimeMap = {
+          pdf: 'application/pdf',
+          jpg: 'image/jpeg',
+          jpeg: 'image/jpeg',
+          png: 'image/png',
+          txt: 'text/plain',
+        };
+        return allowedTypes.map((type) => mimeMap[type] || '').join(',');
+      },
+      isDirty() {
+        return (
+          this.selectedFiles.length > 0 || this.form.customPrompt.trim() !== ''
+        );
+      },
+    },
 
-        data() {
-            return {
-                modal: null,
-                selectedFiles: [],
-                isDraggingOver: false,
-                isSubmitting: false,
-                errors: [],
-                warningDismissed: false,
-                form: {
-                    customPrompt: '',
-                },
-                maxFilesPerSubmission,
-                maxFileSize,
-                // Set right before a programmatic close so the hide.coreui.modal
-                // listener lets it through once without re-running the dirty check.
-                forceCloseModal: false,
-            };
-        },
+    mounted() {
+      if (this.$refs.modalElement) {
+        this.modal = new coreui.Modal(this.$refs.modalElement);
 
-        computed: {
-            allowedMimeTypes() {
-                const mimeMap = {
-                    pdf: 'application/pdf',
-                    jpg: 'image/jpeg',
-                    jpeg: 'image/jpeg',
-                    png: 'image/png',
-                    txt: 'text/plain',
-                };
-                return allowedTypes
-                    .map((type) => mimeMap[type] || '')
-                    .join(',');
-            },
-            isDirty() {
-                return (
-                    this.selectedFiles.length > 0 ||
-                    this.form.customPrompt.trim() !== ''
-                );
-            },
-        },
-
-        mounted() {
-            if (this.$refs.modalElement) {
-                this.modal = new coreui.Modal(this.$refs.modalElement);
-
-                // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
-                // programmatic close alike) - ask for confirmation if there are
-                // unsaved changes.
-                this.$refs.modalElement.addEventListener(
-                    'hide.coreui.modal',
-                    (event) => {
-                        if (this.forceCloseModal) {
-                            this.forceCloseModal = false;
-                            return;
-                        }
-
-                        if (!this.isDirty) {
-                            return;
-                        }
-
-                        event.preventDefault();
-
-                        confirmAction(
-                            __('Are you sure you want to discard any changes?'),
-                            {
-                                icon: 'warning',
-                                confirmButtonText: __('Discard changes'),
-                            },
-                        ).then((result) => {
-                            if (result.isConfirmed) {
-                                this.selectedFiles = [];
-                                this.form.customPrompt = '';
-                                this.closeModal();
-                            }
-                        });
-                    },
-                );
+        // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+        // programmatic close alike) - ask for confirmation if there are
+        // unsaved changes.
+        this.$refs.modalElement.addEventListener(
+          'hide.coreui.modal',
+          (event) => {
+            if (this.forceCloseModal) {
+              this.forceCloseModal = false;
+              return;
             }
 
-            // Fetch warning dismissal state
-            fetch(
-                route('api.v1.users.me.preferences.get', {
-                    key: 'dismissAiDocumentUploadWarning',
-                }),
-            )
-                .then((response) => response.json())
-                .then((data) => {
-                    this.warningDismissed = data.value;
-                })
-                .catch((error) => {
-                    console.error(
-                        'Failed to fetch warning dismissal state:',
-                        error,
-                    );
-                });
-        },
+            if (!this.isDirty) {
+              return;
+            }
 
-        methods: {
-            __,
-            closeModal() {
-                this.forceCloseModal = true;
-                this.modal?.hide();
-            },
-            handleFileSelection(event) {
-                const files = Array.from(event.target.files || []);
-                this.addFiles(files);
-            },
-            handleFileDrop(event) {
-                this.isDraggingOver = false;
-                const files = Array.from(event.dataTransfer.files || []);
-                this.addFiles(files);
-            },
-            addFiles(files) {
-                this.errors = [];
+            event.preventDefault();
 
-                // Validate total file count
-                if (
-                    this.selectedFiles.length + files.length >
-                    this.maxFilesPerSubmission
-                ) {
-                    this.errors.push(
-                        __(
-                            `You can upload a maximum of ${this.maxFilesPerSubmission} files per submission. You currently have ${this.selectedFiles.length} files selected.`,
-                        ),
-                    );
-                    return;
-                }
-
-                const validFiles = [];
-                for (const file of files) {
-                    // Check file type
-                    const extension = file.name.split('.').pop().toLowerCase();
-                    if (!allowedTypes.includes(extension)) {
-                        this.errors.push(
-                            __(
-                                `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ')}`,
-                            ),
-                        );
-                        continue;
-                    }
-
-                    // Check file size
-                    if (file.size > this.maxFileSize * 1024 * 1024) {
-                        this.errors.push(
-                            __(
-                                `File "${file.name}" exceeds the maximum size of ${this.maxFileSize}MB`,
-                            ),
-                        );
-                        continue;
-                    }
-
-                    // Check for duplicates
-                    if (this.selectedFiles.some((f) => f.name === file.name)) {
-                        this.errors.push(
-                            __(`File "${file.name}" is already selected`),
-                        );
-                        continue;
-                    }
-
-                    validFiles.push(file);
-                }
-
-                this.selectedFiles.push(...validFiles);
-
-                // Reset file input
-                if (this.$refs.fileInput) {
-                    this.$refs.fileInput.value = '';
-                }
-            },
-            removeFile(fileName) {
-                this.selectedFiles = this.selectedFiles.filter(
-                    (f) => f.name !== fileName,
-                );
-            },
-            async onSubmit() {
-                if (this.selectedFiles.length === 0) {
-                    this.errors = [__('Please select at least one file')];
-                    return;
-                }
-
-                this.isSubmitting = true;
-                this.errors = [];
-
-                try {
-                    const formData = new FormData();
-
-                    // Add files
-                    for (const file of this.selectedFiles) {
-                        formData.append('files[]', file);
-                    }
-
-                    // Add custom prompt if provided
-                    if (this.form.customPrompt.trim()) {
-                        formData.append(
-                            'custom_prompt',
-                            this.form.customPrompt,
-                        );
-                    }
-
-                    const response = await fetch(
-                        route('api.v1.documents.store'),
-                        {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector(
-                                    'meta[name="csrf-token"]',
-                                ).content,
-                            },
-                            body: formData,
-                        },
-                    );
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        const successMessage = __(
-                            'Document uploaded successfully and queued for processing. You will receive a notification when processing is complete.',
-                        );
-                        toastHelpers.showSuccessToast(successMessage);
-
-                        // Reset form
-                        this.selectedFiles = [];
-                        this.form.customPrompt = '';
-
-                        // Emit event for parent to refresh the list
-                        this.$emit('document-created', data);
-
-                        this.closeModal();
-                    } else {
-                        const data = await response.json();
-
-                        // Handle validation errors
-                        if (data.errors) {
-                            Object.keys(data.errors).forEach((key) => {
-                                this.errors.push(
-                                    Array.isArray(data.errors[key])
-                                        ? data.errors[key].join('; ')
-                                        : data.errors[key],
-                                );
-                            });
-                        } else if (data.message) {
-                            this.errors.push(data.message);
-                        } else {
-                            this.errors.push(
-                                __(
-                                    'An error occurred while uploading the document',
-                                ),
-                            );
-                        }
-                    }
-                } catch (error) {
-                    this.errors.push(__('Network error: ' + error.message));
-                } finally {
-                    this.isSubmitting = false;
-                }
-            },
-            async dismissWarning() {
-                try {
-                    const response = await fetch(
-                        route('api.v1.users.me.preferences.set', {
-                            key: 'dismissAiDocumentUploadWarning',
-                        }),
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector(
-                                    'meta[name="csrf-token"]',
-                                ).content,
-                                'Content-Type': 'application/json',
-                            },
-                        },
-                    );
-
-                    if (response.ok) {
-                        this.warningDismissed = true;
-                    }
-                } catch (error) {
-                    console.error('Failed to dismiss warning:', error);
-                }
-            },
-            show() {
-                this.modal?.show();
-            },
-            hide() {
+            confirmAction(__('Are you sure you want to discard any changes?'), {
+              icon: 'warning',
+              confirmButtonText: __('Discard changes'),
+            }).then((result) => {
+              if (result.isConfirmed) {
+                this.selectedFiles = [];
+                this.form.customPrompt = '';
                 this.closeModal();
+              }
+            });
+          },
+        );
+      }
+
+      // Fetch warning dismissal state
+      fetch(
+        route('api.v1.users.me.preferences.get', {
+          key: 'dismissAiDocumentUploadWarning',
+        }),
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          this.warningDismissed = data.value;
+        })
+        .catch((error) => {
+          console.error('Failed to fetch warning dismissal state:', error);
+        });
+    },
+
+    methods: {
+      __,
+      closeModal() {
+        this.forceCloseModal = true;
+        this.modal?.hide();
+      },
+      handleFileSelection(event) {
+        const files = Array.from(event.target.files || []);
+        this.addFiles(files);
+      },
+      handleFileDrop(event) {
+        this.isDraggingOver = false;
+        const files = Array.from(event.dataTransfer.files || []);
+        this.addFiles(files);
+      },
+      addFiles(files) {
+        this.errors = [];
+
+        // Validate total file count
+        if (
+          this.selectedFiles.length + files.length >
+          this.maxFilesPerSubmission
+        ) {
+          this.errors.push(
+            __(
+              `You can upload a maximum of ${this.maxFilesPerSubmission} files per submission. You currently have ${this.selectedFiles.length} files selected.`,
+            ),
+          );
+          return;
+        }
+
+        const validFiles = [];
+        for (const file of files) {
+          // Check file type
+          const extension = file.name.split('.').pop().toLowerCase();
+          if (!allowedTypes.includes(extension)) {
+            this.errors.push(
+              __(
+                `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ')}`,
+              ),
+            );
+            continue;
+          }
+
+          // Check file size
+          if (file.size > this.maxFileSize * 1024 * 1024) {
+            this.errors.push(
+              __(
+                `File "${file.name}" exceeds the maximum size of ${this.maxFileSize}MB`,
+              ),
+            );
+            continue;
+          }
+
+          // Check for duplicates
+          if (this.selectedFiles.some((f) => f.name === file.name)) {
+            this.errors.push(__(`File "${file.name}" is already selected`));
+            continue;
+          }
+
+          validFiles.push(file);
+        }
+
+        this.selectedFiles.push(...validFiles);
+
+        // Reset file input
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
+        }
+      },
+      removeFile(fileName) {
+        this.selectedFiles = this.selectedFiles.filter(
+          (f) => f.name !== fileName,
+        );
+      },
+      async onSubmit() {
+        if (this.selectedFiles.length === 0) {
+          this.errors = [__('Please select at least one file')];
+          return;
+        }
+
+        this.isSubmitting = true;
+        this.errors = [];
+
+        try {
+          const formData = new FormData();
+
+          // Add files
+          for (const file of this.selectedFiles) {
+            formData.append('files[]', file);
+          }
+
+          // Add custom prompt if provided
+          if (this.form.customPrompt.trim()) {
+            formData.append('custom_prompt', this.form.customPrompt);
+          }
+
+          const response = await fetch(route('api.v1.documents.store'), {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                .content,
             },
-        },
-    };
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const successMessage = __(
+              'Document uploaded successfully and queued for processing. You will receive a notification when processing is complete.',
+            );
+            toastHelpers.showSuccessToast(successMessage);
+
+            // Reset form
+            this.selectedFiles = [];
+            this.form.customPrompt = '';
+
+            // Emit event for parent to refresh the list
+            this.$emit('document-created', data);
+
+            this.closeModal();
+          } else {
+            const data = await response.json();
+
+            // Handle validation errors
+            if (data.errors) {
+              Object.keys(data.errors).forEach((key) => {
+                this.errors.push(
+                  Array.isArray(data.errors[key])
+                    ? data.errors[key].join('; ')
+                    : data.errors[key],
+                );
+              });
+            } else if (data.message) {
+              this.errors.push(data.message);
+            } else {
+              this.errors.push(
+                __('An error occurred while uploading the document'),
+              );
+            }
+          }
+        } catch (error) {
+          this.errors.push(__('Network error: ' + error.message));
+        } finally {
+          this.isSubmitting = false;
+        }
+      },
+      async dismissWarning() {
+        try {
+          const response = await fetch(
+            route('api.v1.users.me.preferences.set', {
+              key: 'dismissAiDocumentUploadWarning',
+            }),
+            {
+              method: 'PUT',
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector(
+                  'meta[name="csrf-token"]',
+                ).content,
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+
+          if (response.ok) {
+            this.warningDismissed = true;
+          }
+        } catch (error) {
+          console.error('Failed to dismiss warning:', error);
+        }
+      },
+      show() {
+        this.modal?.show();
+      },
+      hide() {
+        this.closeModal();
+      },
+    },
+  };
 </script>
 
 <style scoped>
-    .file-drop-zone {
-        transition: background-color 0.2s;
-        cursor: pointer;
-        border-width: 2px;
-        border-style: dashed;
-    }
+  .file-drop-zone {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    border-width: 2px;
+    border-style: dashed;
+  }
 
-    .file-drop-zone:hover {
-        background-color: #f0f0f0;
-    }
+  .file-drop-zone:hover {
+    background-color: #f0f0f0;
+  }
 
-    .file-drop-zone.bg-light {
-        background-color: #e7f3ff !important;
-        border-color: #0d6efd;
-    }
+  .file-drop-zone.bg-light {
+    background-color: #e7f3ff !important;
+    border-color: #0d6efd;
+  }
 
-    .pointer-events-none {
-        pointer-events: none;
-    }
+  .pointer-events-none {
+    pointer-events: none;
+  }
 
-    :global([data-coreui-theme='dark'] .file-drop-zone:hover) {
-        background-color: var(--cui-tertiary-bg);
-    }
+  :global([data-coreui-theme='dark'] .file-drop-zone:hover) {
+    background-color: var(--cui-tertiary-bg);
+  }
 
-    :global([data-coreui-theme='dark'] .file-drop-zone.bg-light) {
-        background-color: var(--cui-secondary-bg) !important;
-        border-color: var(--cui-primary);
-    }
+  :global([data-coreui-theme='dark'] .file-drop-zone.bg-light) {
+    background-color: var(--cui-secondary-bg) !important;
+    border-color: var(--cui-primary);
+  }
 </style>

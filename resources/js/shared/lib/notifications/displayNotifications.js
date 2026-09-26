@@ -5,7 +5,7 @@ import BootstrapNotificationContainer from '@/shared/ui/notifications/BootstrapN
 const appNotification = createApp({});
 installRouteGlobal(appNotification);
 appNotification.component(
-    'BootstrapNotificationContainer',
-    BootstrapNotificationContainer,
+  'BootstrapNotificationContainer',
+  BootstrapNotificationContainer,
 );
 appNotification.mount('#BootstrapNotificationContainer');
