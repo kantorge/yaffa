@@ -9,9 +9,9 @@
     <div>
       <h4 v-if="title || icon" class="alert-heading">
         <span v-if="icon" :class="['me-1 icon fa', 'fa-' + icon]"></span>
-        <span class="align-text-bottom" v-html="title"></span>
+        <span class="align-text-bottom">{{ title }}</span>
       </h4>
-      <span v-html="message"></span>
+      <span>{{ message }}</span>
       <button
         v-if="dismissible"
         type="button"

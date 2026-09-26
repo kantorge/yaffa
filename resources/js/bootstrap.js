@@ -40,6 +40,13 @@ window.__ = __;
     return template.content.firstChild;
   }
 
+  // Toast text may contain user input or echoed server errors; never render it as HTML
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
   function Toast(props) {
     // see https://getbootstrap.com/docs/5.2/components/toasts/
     this.props = {
@@ -67,8 +74,8 @@ window.__ = __;
     const showHeader = this.props.header || this.props.headerSmall;
     if (showHeader) {
       toastHeader = `<div class="toast-header">
-                            <strong class="me-auto">${this.props.header}</strong>
-                            ${this.props.headerSmall ? `<small>${this.props.headerSmall}</small>` : ''}
+                            <strong class="me-auto">${escapeHtml(this.props.header)}</strong>
+                            ${this.props.headerSmall ? `<small>${escapeHtml(this.props.headerSmall)}</small>` : ''}
                             ${this.props.closeButton ? `<button type="button" class="btn-close ${this.props.closeButtonClass}" data-bs-dismiss="toast" aria-label="${this.props.closeButtonLabel}"></button>` : ''}
                           </div>`;
     }
@@ -76,7 +83,7 @@ window.__ = __;
               ${toastHeader}
               <div class="d-flex">
                   <div class="toast-body">
-                    ${this.props.body}
+                    ${escapeHtml(this.props.body)}
                   </div>
                   ${!showHeader && this.props.closeButton ? `<button type="button" class="btn-close me-2 mx-auto ${this.props.closeButtonClass}" style="margin-top: 0.69rem" data-bs-dismiss="toast" aria-label="${this.props.closeButtonLabel}"></button>` : ''}
               </div>
