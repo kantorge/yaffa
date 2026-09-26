@@ -13,9 +13,9 @@
           </div>
         </div>
         <div
+          id="cardOverview"
           class="collapse card-body show"
           aria-expanded="true"
-          id="cardOverview"
         >
           <dl class="row mb-0">
             <dt class="col-7">{{ __('Created at') }}</dt>
@@ -38,7 +38,9 @@
               {{ processedAtLabel }}
             </dd>
             <dt class="col-7">{{ __('Files') }}</dt>
-            <dd class="col-5">{{ aiDocument.files?.length || 0 }}</dd>
+            <dd class="col-5">
+              {{ aiDocument.files?.length || 0 }}
+            </dd>
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
@@ -54,7 +56,7 @@
         </div>
       </div>
 
-      <div class="card mb-3" v-if="showExtractedDetails">
+      <div v-if="showExtractedDetails" class="card mb-3">
         <div
           class="card-header d-flex justify-content-between align-items-center"
         >
@@ -67,24 +69,26 @@
             {{ __('Extracted data') }}
           </div>
           <button
+            v-if="showExtractedDetails"
             class="btn btn-sm btn-outline-primary"
             type="button"
             @click="showExtractedDetailsTab"
-            v-if="showExtractedDetails"
           >
             <i class="fa fa-fw fa-info-circle" :title="__('More details')"></i>
           </button>
         </div>
         <div
+          id="cardExtractedData"
           class="collapse card-body show"
           aria-expanded="true"
-          id="cardExtractedData"
         >
           <dl class="row mb-0">
             <dt class="col-6">{{ __('Transaction type') }}</dt>
             <dd
               class="col-6"
-              :class="{ 'text-muted text-italic': !draftTypeLabel }"
+              :class="{
+                'text-muted text-italic': !draftTypeLabel,
+              }"
             >
               {{ draftTypeLabel || unidentifiedLabel }}
             </dd>
@@ -349,35 +353,35 @@
           </div>
         </div>
         <ul
+          id="cardActions"
           class="list-group list-group-flush collapse show"
           aria-expanded="true"
-          id="cardActions"
         >
           <li
-            class="list-group-item d-flex justify-content-between align-items-center"
             v-if="canFinalize"
+            class="list-group-item d-flex justify-content-between align-items-center"
           >
             {{ __('Finalize transaction') }}
             <button
               class="btn btn-xs btn-primary"
               type="button"
-              @click="finalizeDocument"
               :title="__('Finalize transaction')"
+              @click="finalizeDocument"
             >
               <i class="fa fa-fw fa-edit"></i>
             </button>
           </li>
           <li
-            class="list-group-item d-flex justify-content-between align-items-center"
             v-if="canReprocess"
+            class="list-group-item d-flex justify-content-between align-items-center"
           >
             {{ __('Reprocess document') }}
             <button
               class="btn btn-xs btn-warning"
               type="button"
-              @click="reprocessDocument"
               :disabled="isBusy"
               :title="__('Reprocess document')"
+              @click="reprocessDocument"
             >
               <i class="fa fa-fw fa-repeat" :class="{ 'fa-spin': isBusy }"></i>
             </button>
@@ -389,9 +393,9 @@
             <button
               class="btn btn-xs btn-danger"
               type="button"
-              @click="deleteDocument"
               :disabled="isBusy"
               :title="__('Delete')"
+              @click="deleteDocument"
             >
               <i class="fa fa-fw fa-trash"></i>
             </button>
@@ -406,8 +410,8 @@
           <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
               <button
-                class="nav-link active"
                 id="nav-document-tab-files"
+                class="nav-link active"
                 data-coreui-toggle="tab"
                 data-coreui-target="#document-tab-files"
                 type="button"
@@ -418,10 +422,10 @@
                 {{ __('Files') }}
               </button>
             </li>
-            <li class="nav-item" v-if="aiDocument.received_mail">
+            <li v-if="aiDocument.received_mail" class="nav-item">
               <button
-                class="nav-link"
                 id="nav-document-tab-email"
+                class="nav-link"
                 data-coreui-toggle="tab"
                 data-coreui-target="#document-tab-email"
                 type="button"
@@ -432,10 +436,10 @@
                 {{ __('Email content') }}
               </button>
             </li>
-            <li class="nav-item" v-if="aiDocument.custom_prompt">
+            <li v-if="aiDocument.custom_prompt" class="nav-item">
               <button
-                class="nav-link"
                 id="nav-document-tab-prompt"
+                class="nav-link"
                 data-coreui-toggle="tab"
                 data-coreui-target="#document-tab-prompt"
                 type="button"
@@ -446,10 +450,10 @@
                 {{ __('Custom prompt') }}
               </button>
             </li>
-            <li class="nav-item" v-if="showExtractedDetails">
+            <li v-if="showExtractedDetails" class="nav-item">
               <button
-                class="nav-link"
                 id="nav-document-tab-extracted"
+                class="nav-link"
                 data-coreui-toggle="tab"
                 data-coreui-target="#document-tab-extracted"
                 type="button"
@@ -460,10 +464,10 @@
                 {{ __('Extracted details') }}
               </button>
             </li>
-            <li class="nav-item" v-if="hasProcessingHistory">
+            <li v-if="hasProcessingHistory" class="nav-item">
               <button
-                class="nav-link"
                 id="nav-document-tab-history"
+                class="nav-link"
                 data-coreui-toggle="tab"
                 data-coreui-target="#document-tab-history"
                 type="button"
@@ -477,10 +481,10 @@
           </ul>
         </div>
         <div class="card-body">
-          <div class="tab-content" id="document-tab-content">
+          <div id="document-tab-content" class="tab-content">
             <div
-              class="tab-pane fade show active"
               id="document-tab-files"
+              class="tab-pane fade show active"
               role="tabpanel"
               aria-labelledby="nav-document-tab-files"
               tabindex="0"
@@ -498,8 +502,8 @@
 
             <div
               v-if="aiDocument.custom_prompt"
-              class="tab-pane fade"
               id="document-tab-prompt"
+              class="tab-pane fade"
               role="tabpanel"
               aria-labelledby="nav-document-tab-prompt"
               tabindex="0"
@@ -509,8 +513,8 @@
 
             <div
               v-if="showExtractedDetails"
-              class="tab-pane fade"
               id="document-tab-extracted"
+              class="tab-pane fade"
               role="tabpanel"
               aria-labelledby="nav-document-tab-extracted"
               tabindex="0"
@@ -523,8 +527,8 @@
 
             <div
               v-if="hasProcessingHistory"
-              class="tab-pane fade"
               id="document-tab-history"
+              class="tab-pane fade"
               role="tabpanel"
               aria-labelledby="nav-document-tab-history"
               tabindex="0"

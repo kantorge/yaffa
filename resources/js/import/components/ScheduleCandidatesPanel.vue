@@ -34,7 +34,9 @@
         <div class="text-muted small mb-1">
           <i class="fa fa-calendar me-1"></i>
           {{
-            __('Next: :date', { date: formatDate(candidate.summary.next_date) })
+            __('Next: :date', {
+              date: formatDate(candidate.summary.next_date),
+            })
           }}
           <span
             v-if="candidate.summary.frequency"

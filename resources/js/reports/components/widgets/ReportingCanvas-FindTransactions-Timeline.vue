@@ -30,9 +30,9 @@
         required: true,
       },
     },
+    mounted() {},
     methods: {
       __,
     },
-    mounted() {},
   };
 </script>

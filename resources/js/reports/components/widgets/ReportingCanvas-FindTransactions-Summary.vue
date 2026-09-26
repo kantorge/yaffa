@@ -1,17 +1,17 @@
 <template>
   <div>
     <h2>{{ __('Summary of the filtered transactions') }}</h2>
-    <ul class="list-group list-group-flush" v-if="busy">
+    <ul v-if="busy" class="list-group list-group-flush">
       <li
+        v-for="i in 5"
+        :key="i"
         aria-hidden="true"
         class="list-group-item placeholder-glow"
-        v-for="i in 5"
-        v-bind:key="i"
       >
         <span class="placeholder col-12"></span>
       </li>
     </ul>
-    <div class="row" v-else>
+    <div v-else class="row">
       <div class="col-12">
         <p
           v-html="
@@ -57,25 +57,15 @@
               </td>
               <td>{{ summary.count }}</td>
               <td>
-                {{
-                  toFormattedCurrency(
-                    summary.sum,
-                    this.locale,
-                    summary.currency,
-                  )
-                }}
+                {{ toFormattedCurrency(summary.sum, locale, summary.currency) }}
                 <span
                   v-if="
                     summary.currency_id !== 0 &&
-                    summary.currency_id !== this.baseCurrency.id
+                    summary.currency_id !== baseCurrency.id
                   "
                 >
                   ({{
-                    toFormattedCurrency(
-                      summary.sum_base,
-                      this.locale,
-                      this.baseCurrency,
-                    )
+                    toFormattedCurrency(summary.sum_base, locale, baseCurrency)
                   }})
                 </span>
               </td>
@@ -95,25 +85,15 @@
               </td>
               <td>{{ summary.count }}</td>
               <td>
-                {{
-                  toFormattedCurrency(
-                    summary.sum,
-                    this.locale,
-                    summary.currency,
-                  )
-                }}
+                {{ toFormattedCurrency(summary.sum, locale, summary.currency) }}
                 <span
                   v-if="
                     summary.currency_id !== 0 &&
-                    summary.currency_id !== this.baseCurrency.id
+                    summary.currency_id !== baseCurrency.id
                   "
                 >
                   ({{
-                    toFormattedCurrency(
-                      summary.sum_base,
-                      this.locale,
-                      this.baseCurrency,
-                    )
+                    toFormattedCurrency(summary.sum_base, locale, baseCurrency)
                   }})
                 </span>
               </td>
@@ -125,7 +105,9 @@
               <td></td>
             </tr>
             <tr class="table-info">
-              <td colspan="2">{{ __('Investment transactions') }}</td>
+              <td colspan="2">
+                {{ __('Investment transactions') }}
+              </td>
               <td>{{ countInvestments }}</td>
               <td></td>
             </tr>
@@ -283,7 +265,11 @@
           : null;
       },
       minDateFormatted() {
-        return toFormattedDate(this.minDate, window.YAFFA.userSettings.locale, null);
+        return toFormattedDate(
+          this.minDate,
+          window.YAFFA.userSettings.locale,
+          null,
+        );
       },
       maxDate() {
         return this.transactions.length
@@ -293,13 +279,17 @@
           : null;
       },
       maxDateFormatted() {
-        return toFormattedDate(this.maxDate, window.YAFFA.userSettings.locale, null);
+        return toFormattedDate(
+          this.maxDate,
+          window.YAFFA.userSettings.locale,
+          null,
+        );
       },
     },
+    mounted() {},
     methods: {
       __,
       toFormattedCurrency,
     },
-    mounted() {},
   };
 </script>

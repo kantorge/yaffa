@@ -1,5 +1,5 @@
 <template>
-  <div id="transactionShowInvestment" v-if="transaction.id">
+  <div v-if="transaction.id" id="transactionShowInvestment">
     <div class="row">
       <div class="col-md-4">
         <div class="card mb-3">
@@ -130,7 +130,7 @@
               <dt class="col-6">
                 {{ __('Commission') }}
               </dt>
-              <dd class="col-6" v-if="transaction.config.commission">
+              <dd v-if="transaction.config.commission" class="col-6">
                 {{
                   toFormattedCurrency(
                     transaction.config.commission,
@@ -139,14 +139,14 @@
                   )
                 }}
               </dd>
-              <dd class="col-6" v-else>
+              <dd v-else class="col-6">
                 <span class="text-muted text-italic">{{ __('Not set') }}</span>
               </dd>
 
               <dt class="col-6">
                 {{ __('Tax') }}
               </dt>
-              <dd class="col-6" v-if="transaction.config.tax">
+              <dd v-if="transaction.config.tax" class="col-6">
                 {{
                   toFormattedCurrency(
                     transaction.config.tax,
@@ -155,7 +155,7 @@
                   )
                 }}
               </dd>
-              <dd class="col-6" v-else>
+              <dd v-else class="col-6">
                 <span class="text-muted text-italic">{{ __('Not set') }}</span>
               </dd>
 
@@ -163,8 +163,8 @@
                 {{ __('Dividend') }}
               </dt>
               <dd
-                class="col-6"
                 v-if="transaction.config.dividend"
+                class="col-6"
                 dusk="label-dividend"
               >
                 {{
@@ -175,7 +175,7 @@
                   )
                 }}
               </dd>
-              <dd class="col-6" v-else dusk="label-dividend">
+              <dd v-else class="col-6" dusk="label-dividend">
                 <span class="text-muted text-italic">{{ __('Not set') }}</span>
               </dd>
             </dl>
@@ -184,8 +184,8 @@
       </div>
       <div class="col-md-4">
         <transaction-schedule
-          :isVisible="transaction.schedule"
-          :isSchedule="transaction.schedule"
+          :is-visible="transaction.schedule"
+          :is-schedule="transaction.schedule"
           :schedule="transaction.transaction_schedule || {}"
         ></transaction-schedule>
       </div>
@@ -195,7 +195,12 @@
 
 <script>
   import TransactionSchedule from './Schedule.vue';
-  import { __, toFormattedCurrency, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedDate,
+    toFormattedNumber,
+  } from '@/shared/lib/i18n';
 
   export default {
     components: {
@@ -205,7 +210,7 @@
     props: {
       transaction: {
         type: Object,
-        default: {},
+        default: () => ({}),
       },
       locale: {
         type: String,
@@ -235,10 +240,14 @@
           return __('Not set');
         }
 
-        return toFormattedNumber(this.transaction.config.quantity, this.locale, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 4,
-        });
+        return toFormattedNumber(
+          this.transaction.config.quantity,
+          this.locale,
+          {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 4,
+          },
+        );
       },
     },
     methods: {

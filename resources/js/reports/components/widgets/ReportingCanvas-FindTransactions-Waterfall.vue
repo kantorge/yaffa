@@ -2,12 +2,12 @@
   <div>
     <h2>{{ __('Category waterfall') }}</h2>
 
-    <ul class="list-group list-group-flush" v-if="busy">
+    <ul v-if="busy" class="list-group list-group-flush">
       <li
-        aria-hidden="true"
-        class="list-group-item placeholder-glow"
         v-for="i in 5"
         :key="i"
+        aria-hidden="true"
+        class="list-group-item placeholder-glow"
       >
         <span class="placeholder col-12"></span>
       </li>

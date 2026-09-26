@@ -1,85 +1,84 @@
 <template>
   <FormModal
-    ref="formModal"
     :id="id"
+    ref="formModal"
     :action="action"
     :new-title="__('Add new category learning entry')"
     :edit-title="__('Edit category learning entry')"
     :form="form"
     @submit="onSubmit"
   >
-            <div class="row mb-3">
-              <label :for="descriptionInputId" class="form-label col-sm-3">
-                {{ __('Description') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="descriptionInputId"
-                  maxlength="255"
-                  type="text"
-                  v-model="form.item_description"
-                  @keyup="onDescriptionChange"
-                />
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="descriptionInputId" class="form-label col-sm-3">
+        {{ __('Description') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="descriptionInputId"
+          v-model="form.item_description"
+          class="form-control"
+          maxlength="255"
+          type="text"
+          @keyup="onDescriptionChange"
+        />
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="activeInputId" class="form-label col-sm-3">
-                {{ __('Active') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  :id="activeInputId"
-                  class="checkbox-inline"
-                  type="checkbox"
-                  value="1"
-                  v-model="form.active"
-                />
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="activeInputId" class="form-label col-sm-3">
+        {{ __('Active') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="activeInputId"
+          v-model="form.active"
+          class="checkbox-inline"
+          type="checkbox"
+          value="1"
+        />
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="categorySelectId" class="form-label col-sm-3">
-                {{ __('Category') }}
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="categorySelectId"
-                  class="form-select category"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="categorySelectId" class="form-label col-sm-3">
+        {{ __('Category') }}
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="categorySelectId"
+          class="form-select category"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
 
-            <div class="row mb-3" v-show="similarLearnings.length > 0">
-              <hr />
-              <span class="form-label col-sm-3">{{
-                __('Similar category learning entries')
-              }}</span>
-              <div class="col-sm-9">
-                <ul class="list-unstyled" id="similar-learning-list">
-                  <li
-                    class="mt-2"
-                    v-for="learning in similarLearnings"
-                    :key="learning.id"
-                  >
-                    <a href="#" @click.prevent="onSelectLearning(learning)">
-                      {{ learning.item_description }}
-                      <span class="text-muted"
-                        >({{
-                          learning.category?.full_name ||
-                          learning.category?.name
-                        }})</span
-                      >
-                      <span v-if="!learning.active" class="text-warning">
-                        - {{ __('inactive, click to activate') }}</span
-                      >
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+    <div v-show="similarLearnings.length > 0" class="row mb-3">
+      <hr />
+      <span class="form-label col-sm-3">{{
+        __('Similar category learning entries')
+      }}</span>
+      <div class="col-sm-9">
+        <ul id="similar-learning-list" class="list-unstyled">
+          <li
+            v-for="learning in similarLearnings"
+            :key="learning.id"
+            class="mt-2"
+          >
+            <a href="#" @click.prevent="onSelectLearning(learning)">
+              {{ learning.item_description }}
+              <span class="text-muted"
+                >({{
+                  learning.category?.full_name || learning.category?.name
+                }})</span
+              >
+              <span v-if="!learning.active" class="text-warning">
+                - {{ __('inactive, click to activate') }}</span
+              >
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
   </FormModal>
 </template>
 
@@ -107,6 +106,8 @@
         default: null,
       },
     },
+
+    emits: ['learning-selected'],
 
     data() {
       return {
@@ -339,7 +340,7 @@
       },
 
       async onSubmit() {
-        let response = null;
+        let response;
 
         if (this.action === 'new') {
           response = await this.form.post(

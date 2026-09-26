@@ -16,7 +16,7 @@
             <action-button-bar
               :transaction="transaction"
               :is-modal="false"
-              @transactionUpdated="transactionUpdated"
+              @transaction-updated="transactionUpdated"
             ></action-button-bar>
           </div>
         </div>
@@ -44,7 +44,9 @@
       // Money/BigDecimal fields are decimal strings, never normalized the way an axios
       // response is. Route it through the same processTransaction() every other consumer uses.
       return {
-        transaction: processTransaction(JSON.parse(JSON.stringify(window.transaction))),
+        transaction: processTransaction(
+          JSON.parse(JSON.stringify(window.transaction)),
+        ),
       };
     },
 

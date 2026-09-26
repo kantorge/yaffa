@@ -13,7 +13,7 @@
               :selected-account-id="selectedAccountId"
               :loading-accounts="loadingAccounts"
               :disabled="loading"
-              @update:selectedAccountId="onAccountChange"
+              @update:selected-account-id="onAccountChange"
             />
             <hr class="my-3" />
             <ImportUploadCard
@@ -30,8 +30,8 @@
               :progress="uploadProgress"
               :error="uploadError"
               @submit="onSubmit"
-              @update:selectedProfileId="onProfileChange"
-              @update:selectedQifProfileId="onQifProfileChange"
+              @update:selected-profile-id="onProfileChange"
+              @update:selected-qif-profile-id="onQifProfileChange"
             />
           </div>
         </div>
@@ -51,7 +51,9 @@
             :aria-label="__('Close')"
             @click="parseWarnings = []"
           ></button>
-          <div class="fw-semibold mb-1">{{ __('Parser warnings') }}</div>
+          <div class="fw-semibold mb-1">
+            {{ __('Parser warnings') }}
+          </div>
           <ul class="mb-0 ps-3">
             <li
               v-for="(warning, index) in parseWarnings"
@@ -409,7 +411,10 @@
           (d) => d.draft_index === draftIndex,
         );
         if (index !== -1) {
-          this.drafts[index] = { ...this.drafts[index], status: 'ignored' };
+          this.drafts[index] = {
+            ...this.drafts[index],
+            status: 'ignored',
+          };
         }
       },
       onFinalizeDraft(draftIndex) {

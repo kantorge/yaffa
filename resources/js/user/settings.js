@@ -1,13 +1,13 @@
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
-const app = createApp({})
+const app = createApp({});
 installRouteGlobal(app);
 
 import MyProfile from './MyProfile.vue';
 import AiSettings from './AiSettings.vue';
 import InvestmentProviderSettings from './InvestmentProviderSettings.vue';
-app.component('my-profile', MyProfile)
-app.component('ai-settings', AiSettings)
-app.component('investment-provider-settings', InvestmentProviderSettings)
+app.component('MyProfile', MyProfile);
+app.component('AiSettings', AiSettings);
+app.component('InvestmentProviderSettings', InvestmentProviderSettings);
 
-app.mount('#app')
+app.mount('#app');

@@ -1,5 +1,5 @@
 <template>
-  <div class="card" id="import-draft-table-card">
+  <div id="import-draft-table-card" class="card">
     <div
       class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"
     >
@@ -112,9 +112,11 @@
           />
           <label class="form-check-label small" for="filter-has-ai-document">
             {{ __('Has AI document match') }}
-            <span v-if="hasAiDocumentCount" class="badge bg-info text-dark ms-1">{{
-              hasAiDocumentCount
-            }}</span>
+            <span
+              v-if="hasAiDocumentCount"
+              class="badge bg-info text-dark ms-1"
+              >{{ hasAiDocumentCount }}</span
+            >
           </label>
         </div>
       </div>
@@ -143,7 +145,9 @@
               <th class="text-nowrap">{{ __('Amount') }}</th>
               <th>{{ __('Payee') }}</th>
               <th class="text-nowrap">{{ __('Status') }}</th>
-              <th class="text-center text-nowrap">{{ __('Insights') }}</th>
+              <th class="text-center text-nowrap">
+                {{ __('Insights') }}
+              </th>
               <th class="text-nowrap">{{ __('Actions') }}</th>
             </tr>
           </thead>
@@ -169,8 +173,12 @@
                   ></i>
                 </td>
                 <td>#{{ draft.draft_index + 1 }}</td>
-                <td class="text-nowrap">{{ formatDate(draft.date) }}</td>
-                <td class="text-nowrap">{{ formatAmount(draft.amount) }}</td>
+                <td class="text-nowrap">
+                  {{ formatDate(draft.date) }}
+                </td>
+                <td class="text-nowrap">
+                  {{ formatAmount(draft.amount) }}
+                </td>
                 <td>
                   <template v-if="draft.matched_payee">
                     {{ draft.matched_payee.name }}
@@ -228,7 +236,8 @@
                     class="badge bg-warning text-dark me-1"
                     :title="__('Warnings')"
                   >
-                    <i class="fa fa-warning"></i> {{ draft.warnings.length }}
+                    <i class="fa fa-warning"></i>
+                    {{ draft.warnings.length }}
                   </span>
                   <span
                     v-if="visibleDuplicates(draft).length"
@@ -293,7 +302,9 @@
                   <div class="row g-3">
                     <!-- Left column: structured raw entry + warnings -->
                     <div class="col-12 col-lg-5">
-                      <div class="fw-semibold mb-1">{{ __('Raw entry') }}</div>
+                      <div class="fw-semibold mb-1">
+                        {{ __('Raw entry') }}
+                      </div>
                       <!-- CSV: key-value table -->
                       <table
                         v-if="
@@ -344,7 +355,9 @@
                             >
                               {{ field.label }}
                             </td>
-                            <td>{{ field.value || '—' }}</td>
+                            <td>
+                              {{ field.value || '—' }}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -358,7 +371,9 @@
                         v-if="draft.warnings && draft.warnings.length"
                         class="mt-3"
                       >
-                        <div class="fw-semibold mb-1">{{ __('Warnings') }}</div>
+                        <div class="fw-semibold mb-1">
+                          {{ __('Warnings') }}
+                        </div>
                         <ul class="mb-0 ps-3 small">
                           <li
                             v-for="(warning, warningIndex) in draft.warnings"
@@ -377,7 +392,13 @@
                           :candidates="visibleDuplicates(draft)"
                           :draft-amount="draft.amount"
                           :account-currency="accountCurrency"
-                          @dismiss="dismissCandidate('duplicate', draft.draft_index, $event)"
+                          @dismiss="
+                            dismissCandidate(
+                              'duplicate',
+                              draft.draft_index,
+                              $event,
+                            )
+                          "
                         />
                       </div>
                       <div v-if="visibleSchedules(draft).length">
@@ -385,15 +406,29 @@
                           :candidates="visibleSchedules(draft)"
                           :draft-amount="draft.amount"
                           :account-currency="accountCurrency"
-                          @enter-schedule="$emit('enter-schedule-draft', draft.draft_index)"
-                          @dismiss="dismissCandidate('schedule', draft.draft_index, $event)"
+                          @enter-schedule="
+                            $emit('enter-schedule-draft', draft.draft_index)
+                          "
+                          @dismiss="
+                            dismissCandidate(
+                              'schedule',
+                              draft.draft_index,
+                              $event,
+                            )
+                          "
                         />
                       </div>
                       <div v-if="visibleAiDocuments(draft).length">
                         <RelatedAiDocumentsPanel
                           :candidates="visibleAiDocuments(draft)"
                           :account-currency="accountCurrency"
-                          @dismiss="dismissCandidate('aiDocument', draft.draft_index, $event)"
+                          @dismiss="
+                            dismissCandidate(
+                              'aiDocument',
+                              draft.draft_index,
+                              $event,
+                            )
+                          "
                         />
                       </div>
                     </div>
@@ -461,19 +496,6 @@
         stickyTop: 0,
       };
     },
-    watch: {
-      drafts() {
-        this.expandedRows = new Set();
-        this.dismissedKeys = new Set();
-      },
-    },
-    mounted() {
-      this.updateStickyOffset();
-      window.addEventListener('resize', this.updateStickyOffset);
-    },
-    beforeUnmount() {
-      window.removeEventListener('resize', this.updateStickyOffset);
-    },
     computed: {
       anyMatchFilterActive() {
         return (
@@ -524,19 +546,36 @@
         return this.drafts.filter((d) => this.matchFlags(d).hasNone).length;
       },
       hasDuplicateCount() {
-        return this.drafts.filter((d) => this.matchFlags(d).hasDuplicate).length;
+        return this.drafts.filter((d) => this.matchFlags(d).hasDuplicate)
+          .length;
       },
       hasScheduleCount() {
         return this.drafts.filter((d) => this.matchFlags(d).hasSchedule).length;
       },
       hasAiDocumentCount() {
-        return this.drafts.filter((d) => this.matchFlags(d).hasAiDocument).length;
+        return this.drafts.filter((d) => this.matchFlags(d).hasAiDocument)
+          .length;
       },
+    },
+    watch: {
+      drafts() {
+        this.expandedRows = new Set();
+        this.dismissedKeys = new Set();
+      },
+    },
+    mounted() {
+      this.updateStickyOffset();
+      window.addEventListener('resize', this.updateStickyOffset);
+    },
+    beforeUnmount() {
+      window.removeEventListener('resize', this.updateStickyOffset);
     },
     methods: {
       updateStickyOffset() {
         const header = document.querySelector('.header.header-sticky');
-        this.stickyTop = header ? Math.ceil(header.getBoundingClientRect().height) : 0;
+        this.stickyTop = header
+          ? Math.ceil(header.getBoundingClientRect().height)
+          : 0;
       },
       matchFlags(draft) {
         const hasDuplicate = (draft.duplicate_candidates || []).length > 0;
@@ -591,7 +630,9 @@
         return `${type}:${draftIndex}:${candidateId}`;
       },
       dismissCandidate(type, draftIndex, candidateId) {
-        this.dismissedKeys.add(this.candidateKey(type, draftIndex, candidateId));
+        this.dismissedKeys.add(
+          this.candidateKey(type, draftIndex, candidateId),
+        );
         // Trigger reactivity for the Set mutation
         this.dismissedKeys = new Set(this.dismissedKeys);
       },
@@ -599,7 +640,11 @@
         return (draft.duplicate_candidates || []).filter(
           (candidate) =>
             !this.dismissedKeys.has(
-              this.candidateKey('duplicate', draft.draft_index, candidate.transaction_id),
+              this.candidateKey(
+                'duplicate',
+                draft.draft_index,
+                candidate.transaction_id,
+              ),
             ),
         );
       },
@@ -607,7 +652,11 @@
         return (draft.schedule_candidates || []).filter(
           (candidate) =>
             !this.dismissedKeys.has(
-              this.candidateKey('schedule', draft.draft_index, candidate.transaction_id),
+              this.candidateKey(
+                'schedule',
+                draft.draft_index,
+                candidate.transaction_id,
+              ),
             ),
         );
       },
@@ -615,7 +664,11 @@
         return (draft.related_ai_documents || []).filter(
           (candidate) =>
             !this.dismissedKeys.has(
-              this.candidateKey('aiDocument', draft.draft_index, candidate.ai_document_id),
+              this.candidateKey(
+                'aiDocument',
+                draft.draft_index,
+                candidate.ai_document_id,
+              ),
             ),
         );
       },

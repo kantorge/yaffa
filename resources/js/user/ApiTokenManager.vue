@@ -1,5 +1,5 @@
 <template>
-  <div class="card" id="apiTokenManager">
+  <div id="apiTokenManager" class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
       <div class="card-title">{{ __('API Tokens') }}</div>
       <button
@@ -24,11 +24,7 @@
         {{ __('Loading tokens...') }}
       </div>
 
-      <div
-        v-else-if="loadError"
-        class="alert alert-danger mb-0"
-        role="alert"
-      >
+      <div v-else-if="loadError" class="alert alert-danger mb-0" role="alert">
         {{ __('Unable to load API tokens.') }}
       </div>
 
@@ -77,9 +73,12 @@
                     :class="[
                       'fa',
                       'me-1',
-                      revokingId === token.id ? 'fa-spinner fa-spin' : 'fa-trash',
+                      revokingId === token.id
+                        ? 'fa-spinner fa-spin'
+                        : 'fa-trash',
                     ]"
-                  ></i>{{ __('Revoke') }}
+                  ></i
+                  >{{ __('Revoke') }}
                 </button>
               </td>
             </tr>
@@ -326,7 +325,9 @@
         }
       },
       formatDate(value) {
-        return value ? toFormattedDateTime(value, window.YAFFA.userSettings.locale) : __('Never');
+        return value
+          ? toFormattedDateTime(value, window.YAFFA.userSettings.locale)
+          : __('Never');
       },
       openCreateModal() {
         this.resetForm();
@@ -336,7 +337,12 @@
         }
       },
       resetForm() {
-        this.form = { name: '', write: false, settings: false, expires_at: '' };
+        this.form = {
+          name: '',
+          write: false,
+          settings: false,
+          expires_at: '',
+        };
         this.errors = {};
         this.createdToken = null;
         this.acknowledged = false;
@@ -403,7 +409,11 @@
           toastHelpers.showSuccessToast(__('Token copied to clipboard.'));
         } catch (error) {
           console.error(error);
-          toastHelpers.showErrorToast(__('Unable to copy the token automatically. Please copy it manually.'));
+          toastHelpers.showErrorToast(
+            __(
+              'Unable to copy the token automatically. Please copy it manually.',
+            ),
+          );
         }
       },
       async revokeToken(token) {
@@ -431,7 +441,9 @@
 
         try {
           await axios.delete(
-            this.route('api.v1.users.me.tokens.destroy', { id: token.id }),
+            this.route('api.v1.users.me.tokens.destroy', {
+              id: token.id,
+            }),
           );
           toastHelpers.showSuccessToast(__('Token revoked.'));
           await this.loadTokens();

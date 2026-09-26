@@ -4,7 +4,12 @@
       <!-- Column header label -->
       <div
         class="small fw-medium text-nowrap pt-1"
-        style="min-width: 140px; max-width: 200px; overflow: hidden; text-overflow: ellipsis"
+        style="
+          min-width: 140px;
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        "
         :title="header"
       >
         {{ header }}

@@ -6,9 +6,7 @@ import path from 'path';
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/js/app.js',
-            ],
+            input: ['resources/js/app.js'],
             refresh: true,
         }),
         vue({
@@ -27,10 +25,34 @@ export default defineConfig({
             // Define aliases for easier imports
             { find: '@', replacement: path.resolve(__dirname, 'resources/js') },
             // Prevent bundling optional amCharts PDF/XLSX export dependencies (unused - no export menu in this app)
-            { find: /^pdfmake\/build\/pdfmake\.js$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
-            { find: /^(\.\.\/)+pdfmake\/vfs_fonts(\.js)?$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
-            { find: /^(\.\.\/)+bundled\/xlsx$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
-            { find: /^(\.\.\/)+canvg\/index\.js$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
+            {
+                find: /^pdfmake\/build\/pdfmake\.js$/,
+                replacement: path.resolve(
+                    __dirname,
+                    'resources/js/shims/noop-module.js',
+                ),
+            },
+            {
+                find: /^(\.\.\/)+pdfmake\/vfs_fonts(\.js)?$/,
+                replacement: path.resolve(
+                    __dirname,
+                    'resources/js/shims/noop-module.js',
+                ),
+            },
+            {
+                find: /^(\.\.\/)+bundled\/xlsx$/,
+                replacement: path.resolve(
+                    __dirname,
+                    'resources/js/shims/noop-module.js',
+                ),
+            },
+            {
+                find: /^(\.\.\/)+canvg\/index\.js$/,
+                replacement: path.resolve(
+                    __dirname,
+                    'resources/js/shims/noop-module.js',
+                ),
+            },
         ],
     },
     optimizeDeps: {

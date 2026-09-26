@@ -11,9 +11,9 @@
       </div>
     </div>
     <ul
+      id="cardActions"
       class="list-group list-group-flush collapse show"
       aria-expanded="true"
-      id="cardActions"
     >
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
@@ -21,8 +21,8 @@
         {{ __('Upload document') }}
         <button
           class="btn btn-sm btn-outline-success"
-          @click="$emit('open-upload-form')"
           :title="__('Upload a new document')"
+          @click="$emit('open-upload-form')"
         >
           <i class="fa fa-fw fa-upload"></i>
         </button>

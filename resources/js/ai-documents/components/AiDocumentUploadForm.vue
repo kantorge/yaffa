@@ -1,8 +1,8 @@
 <template>
-  <div class="modal" tabindex="-1" :id="modalId" ref="modalElement">
+  <div :id="modalId" ref="modalElement" class="modal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form @submit.prevent="onSubmit" autocomplete="off">
+        <form autocomplete="off" @submit.prevent="onSubmit">
           <div class="modal-header">
             <h5 class="modal-title">{{ __('Upload document') }}</h5>
             <button
@@ -21,7 +21,9 @@
             >
               <strong>{{ __('Error!') }}</strong>
               <ul class="mb-0 mt-2">
-                <li v-for="error in errors" :key="error">{{ error }}</li>
+                <li v-for="error in errors" :key="error">
+                  {{ error }}
+                </li>
               </ul>
               <button
                 type="button"
@@ -46,8 +48,8 @@
               <button
                 type="button"
                 class="btn-close"
-                @click="dismissWarning"
                 aria-label="Close"
+                @click="dismissWarning"
               ></button>
             </div>
 
@@ -56,18 +58,18 @@
               <label class="form-label">{{ __('Files') }}</label>
               <div
                 class="border-2 border-dashed rounded p-4 text-center cursor-pointer file-drop-zone"
+                :class="{ 'bg-light': isDraggingOver }"
                 @dragover.prevent="isDraggingOver = true"
                 @dragleave.prevent="isDraggingOver = false"
                 @drop.prevent="handleFileDrop"
-                :class="{ 'bg-light': isDraggingOver }"
               >
                 <input
                   ref="fileInput"
                   type="file"
                   multiple
                   class="d-none"
-                  @change="handleFileSelection"
                   :accept="allowedMimeTypes"
+                  @change="handleFileSelection"
                 />
                 <div
                   v-if="selectedFiles.length === 0"
@@ -102,9 +104,9 @@
                     <li v-for="file in selectedFiles" :key="file.name">
                       <span
                         class="badge bg-info me-2"
-                        @click="removeFile(file.name)"
                         style="cursor: pointer"
                         :title="__('Click to remove')"
+                        @click="removeFile(file.name)"
                       >
                         <i class="fa fa-times"></i>
                         {{ file.name }}
@@ -142,8 +144,8 @@
               </label>
               <textarea
                 id="customPrompt"
-                class="form-control"
                 v-model="form.customPrompt"
+                class="form-control"
                 :placeholder="
                   __(
                     'e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.',
@@ -272,13 +274,10 @@
 
             event.preventDefault();
 
-            confirmAction(
-              __('Are you sure you want to discard any changes?'),
-              {
-                icon: 'warning',
-                confirmButtonText: __('Discard changes'),
-              },
-            ).then((result) => {
+            confirmAction(__('Are you sure you want to discard any changes?'), {
+              icon: 'warning',
+              confirmButtonText: __('Discard changes'),
+            }).then((result) => {
               if (result.isConfirmed) {
                 this.selectedFiles = [];
                 this.form.customPrompt = '';
@@ -404,9 +403,8 @@
           const response = await fetch(route('api.v1.documents.store'), {
             method: 'POST',
             headers: {
-              'X-CSRF-TOKEN': document.querySelector(
-                'meta[name="csrf-token"]',
-              ).content,
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                .content,
             },
             body: formData,
           });
@@ -507,11 +505,11 @@
     pointer-events: none;
   }
 
-  :global([data-coreui-theme="dark"] .file-drop-zone:hover) {
+  :global([data-coreui-theme='dark'] .file-drop-zone:hover) {
     background-color: var(--cui-tertiary-bg);
   }
 
-  :global([data-coreui-theme="dark"] .file-drop-zone.bg-light) {
+  :global([data-coreui-theme='dark'] .file-drop-zone.bg-light) {
     background-color: var(--cui-secondary-bg) !important;
     border-color: var(--cui-primary);
   }

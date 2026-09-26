@@ -3,42 +3,42 @@ initializeSelect2(window.YAFFA.userSettings.language);
 
 // Common config for preference selects
 const config = {
-    multiple: true,
-    ajax: {
-        url: '/api/v1/categories',
-        dataType: 'json',
-        delay: 150,
-        data: function (params) {
-            return {
-                q: params.term,
-                withInactive: true,
-            };
-        },
-        processResults: function (data) {
-            // Filter results that are selected in the other select
-            const thisSelect = $(this.$element[0]);
-            const otherSelect = $(thisSelect.data('other-select'));
-            const otherItems = otherSelect.select2('val');
-
-            return {
-                results: data
-                    .filter(function(item) {
-                        return !otherItems.includes(item.id.toString());
-                    })
-                    .map(function (item) {
-                        return {
-                            id: item.id,
-                            text: item.full_name,
-                        };
-                    }),
-            };
-        },
-        cache: true
+  multiple: true,
+  ajax: {
+    url: '/api/v1/categories',
+    dataType: 'json',
+    delay: 150,
+    data: function (params) {
+      return {
+        q: params.term,
+        withInactive: true,
+      };
     },
-    selectOnClose: true,
-    placeholder: __('Select category'),
-    allowClear: true,
-    width: '100%',
+    processResults: function (data) {
+      // Filter results that are selected in the other select
+      const thisSelect = $(this.$element[0]);
+      const otherSelect = $(thisSelect.data('other-select'));
+      const otherItems = otherSelect.select2('val');
+
+      return {
+        results: data
+          .filter(function (item) {
+            return !otherItems.includes(item.id.toString());
+          })
+          .map(function (item) {
+            return {
+              id: item.id,
+              text: item.full_name,
+            };
+          }),
+      };
+    },
+    cache: true,
+  },
+  selectOnClose: true,
+  placeholder: __('Select category'),
+  allowClear: true,
+  width: '100%',
 };
 
 // Initialize the selects
@@ -47,35 +47,35 @@ $('#not_preferred').select2(config);
 
 // Load default values for the selects
 categoryPreferences
-.filter(category => category.preferred)
-.forEach(category => {
+  .filter((category) => category.preferred)
+  .forEach((category) => {
     $('#preferred')
-    .append(new Option(category.full_name, category.id, true, true))
-    .trigger('change')
-    .trigger({
+      .append(new Option(category.full_name, category.id, true, true))
+      .trigger('change')
+      .trigger({
         type: 'select2:select',
         params: {
-            data: {
-                id: category.id,
-                name: category.full_name,
-            }
-        }
-    });
-});
+          data: {
+            id: category.id,
+            name: category.full_name,
+          },
+        },
+      });
+  });
 
 categoryPreferences
-.filter(category => !category.preferred)
-.forEach(category => {
+  .filter((category) => !category.preferred)
+  .forEach((category) => {
     $('#not_preferred')
-    .append(new Option(category.full_name, category.id, true, true))
-    .trigger('change')
-    .trigger({
+      .append(new Option(category.full_name, category.id, true, true))
+      .trigger('change')
+      .trigger({
         type: 'select2:select',
         params: {
-            data: {
-                id: category.id,
-                name: category.full_name,
-            }
-        }
-    });
-});
+          data: {
+            id: category.id,
+            name: category.full_name,
+          },
+        },
+      });
+  });

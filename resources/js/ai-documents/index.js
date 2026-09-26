@@ -7,7 +7,7 @@ const app = createApp({});
 
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
-app.component('ai-document-manager', AiDocumentManager);
+app.component('AiDocumentManager', AiDocumentManager);
 app.mount('#app');
 
 window.onboardingTourSteps = [

@@ -10,7 +10,7 @@
         {{ __('Overview') }}
       </div>
     </div>
-    <div class="collapse card-body show" aria-expanded="true" id="cardOverview">
+    <div id="cardOverview" class="collapse card-body show" aria-expanded="true">
       <dl class="row mb-0">
         <dt class="col-6">{{ __('From') }}</dt>
         <dd class="col-6">{{ from.name }}</dd>
@@ -19,21 +19,21 @@
         <dt class="col-6">{{ __('Number of records') }}</dt>
         <dd class="col-6">{{ currencyRates.length }}</dd>
         <dt class="col-6">{{ __('First available data') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
+        <dd v-if="currencyRates.length > 0" class="col-6">
           {{ formatDate(currencyRates[0].date) }}
         </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
+        <dd v-else class="col-6 text-italic text-muted">
           {{ __('No data') }}
         </dd>
         <dt class="col-6">{{ __('Last available data') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
+        <dd v-if="currencyRates.length > 0" class="col-6">
           {{ formatDate(currencyRates[currencyRates.length - 1].date) }}
         </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
+        <dd v-else class="col-6 text-italic text-muted">
           {{ __('No data') }}
         </dd>
         <dt class="col-6">{{ __('Last known rate') }}</dt>
-        <dd class="col-6" v-if="currencyRates.length > 0">
+        <dd v-if="currencyRates.length > 0" class="col-6">
           {{ toFormattedCurrency(1, locale, from, 'detailed') }}
           =
           {{
@@ -45,7 +45,7 @@
             )
           }}
         </dd>
-        <dd class="col-6 text-italic text-muted" v-else>
+        <dd v-else class="col-6 text-italic text-muted">
           {{ __('No data') }}
         </dd>
       </dl>

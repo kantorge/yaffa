@@ -38,7 +38,7 @@
           {{ __('Tags') }}
         </dt>
         <dd v-if="tags.length > 0">
-          <span class="badge text-bg-info" v-for="tag in tags" :key="tag.id">
+          <span v-for="tag in tags" :key="tag.id" class="badge text-bg-info">
             {{ tag.name }}
           </span>
         </dd>

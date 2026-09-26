@@ -1,10 +1,10 @@
 <template>
-  <div class="card" id="aiBehaviorSettingsForm">
+  <div id="aiBehaviorSettingsForm" class="card">
     <form
       accept-charset="UTF-8"
+      autocomplete="off"
       @submit.prevent="onSubmit"
       @keydown="form.onKeydown($event)"
-      autocomplete="off"
     >
       <div class="card-header d-flex justify-content-between">
         <div class="card-title">
@@ -23,7 +23,7 @@
           ></span>
         </div>
       </div>
-      <div class="card-body" v-if="!sandbox_mode">
+      <div v-if="!sandbox_mode" class="card-body">
         <div v-if="loading" class="text-center py-3">
           <i class="fa fa-spinner fa-spin"></i>
           {{ __('Loading settings...') }}
@@ -40,10 +40,10 @@
             <div class="col-sm-8">
               <div class="form-check form-switch">
                 <input
-                  class="form-check-input"
-                  type="checkbox"
                   id="ai_enabled"
                   v-model="form.ai_enabled"
+                  class="form-check-input"
+                  type="checkbox"
                 />
                 <label class="form-check-label" for="ai_enabled">
                   {{ __('Enable AI document processing') }}
@@ -66,10 +66,10 @@
             <div class="col-sm-8">
               <div class="form-check form-switch">
                 <input
-                  class="form-check-input"
-                  type="checkbox"
                   id="prompt_chat_history_enabled"
                   v-model="form.prompt_chat_history_enabled"
+                  class="form-check-input"
+                  type="checkbox"
                 />
                 <label
                   class="form-check-label"
@@ -98,11 +98,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="generic_document_language"
+                  v-model="form.generic_document_language"
                   type="text"
                   class="form-control"
-                  id="generic_document_language"
                   name="generic_document_language"
-                  v-model="form.generic_document_language"
                   maxlength="128"
                   :placeholder="__('English')"
                 />
@@ -133,7 +133,9 @@
           <hr class="my-3" />
 
           <!-- Document retention -->
-          <h6 class="text-muted mb-3">{{ __('Document Retention') }}</h6>
+          <h6 class="text-muted mb-3">
+            {{ __('Document Retention') }}
+          </h6>
 
           <div class="row mb-3">
             <label
@@ -145,11 +147,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="document_retention_days"
+                  v-model.number="form.document_retention_days"
                   type="number"
                   class="form-control"
-                  id="document_retention_days"
                   name="document_retention_days"
-                  v-model.number="form.document_retention_days"
                   min="1"
                   max="3650"
                   :placeholder="__('Keep forever')"
@@ -181,7 +183,9 @@
           <hr class="my-3" />
 
           <!-- Category matching -->
-          <h6 class="text-muted mb-3">{{ __('Category Matching') }}</h6>
+          <h6 class="text-muted mb-3">
+            {{ __('Category Matching') }}
+          </h6>
 
           <div
             v-if="categoryWarning"
@@ -199,20 +203,26 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <select
-                  class="form-select"
                   id="category_matching_mode"
-                  name="category_matching_mode"
                   v-model="form.category_matching_mode"
+                  class="form-select"
+                  name="category_matching_mode"
                 >
-                  <option value="best_match">{{ __('Best match') }}</option>
-                  <option value="parent_only">{{ __('Parent only') }}</option>
+                  <option value="best_match">
+                    {{ __('Best match') }}
+                  </option>
+                  <option value="parent_only">
+                    {{ __('Parent only') }}
+                  </option>
                   <option value="parent_preferred">
                     {{ __('Parent preferred') }}
                   </option>
                   <option value="child_preferred">
                     {{ __('Child preferred') }}
                   </option>
-                  <option value="child_only">{{ __('Child only') }}</option>
+                  <option value="child_only">
+                    {{ __('Child only') }}
+                  </option>
                 </select>
                 <span
                   class="input-group-text btn btn-outline-input-info"
@@ -246,11 +256,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="asset_similarity_threshold"
+                  v-model.number="form.asset_similarity_threshold"
                   type="number"
                   class="form-control"
-                  id="asset_similarity_threshold"
                   name="asset_similarity_threshold"
-                  v-model.number="form.asset_similarity_threshold"
                   step="0.01"
                   min="0"
                   max="1"
@@ -279,11 +289,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="asset_max_suggestions"
+                  v-model.number="form.asset_max_suggestions"
                   type="number"
                   class="form-control"
-                  id="asset_max_suggestions"
                   name="asset_max_suggestions"
-                  v-model.number="form.asset_max_suggestions"
                   min="1"
                   max="255"
                 />
@@ -314,11 +324,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="match_auto_accept_threshold"
+                  v-model.number="form.match_auto_accept_threshold"
                   type="number"
                   class="form-control"
-                  id="match_auto_accept_threshold"
                   name="match_auto_accept_threshold"
-                  v-model.number="form.match_auto_accept_threshold"
                   step="0.01"
                   min="0"
                   max="1"
@@ -357,11 +367,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="duplicate_date_window_days"
+                  v-model.number="form.duplicate_date_window_days"
                   type="number"
                   class="form-control"
-                  id="duplicate_date_window_days"
                   name="duplicate_date_window_days"
-                  v-model.number="form.duplicate_date_window_days"
                   min="1"
                   max="255"
                 />
@@ -392,11 +402,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="duplicate_amount_tolerance_percent"
+                  v-model.number="form.duplicate_amount_tolerance_percent"
                   type="number"
                   class="form-control"
-                  id="duplicate_amount_tolerance_percent"
                   name="duplicate_amount_tolerance_percent"
-                  v-model.number="form.duplicate_amount_tolerance_percent"
                   step="0.01"
                   min="0"
                   max="100"
@@ -431,11 +441,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="duplicate_similarity_threshold"
+                  v-model.number="form.duplicate_similarity_threshold"
                   type="number"
                   class="form-control"
-                  id="duplicate_similarity_threshold"
                   name="duplicate_similarity_threshold"
-                  v-model.number="form.duplicate_similarity_threshold"
                   step="0.01"
                   min="0"
                   max="1"
@@ -460,7 +470,9 @@
           <hr class="my-3" />
 
           <!-- OCR & Vision -->
-          <h6 class="text-muted mb-3">{{ __('OCR & Image Processing') }}</h6>
+          <h6 class="text-muted mb-3">
+            {{ __('OCR & Image Processing') }}
+          </h6>
 
           <div v-if="!tesseractAvailable" class="alert alert-info mb-3">
             <i class="fa fa-circle-info me-1"></i>
@@ -471,18 +483,18 @@
             }}
           </div>
 
-          <div class="row mb-3" v-if="tesseractAvailable">
+          <div v-if="tesseractAvailable" class="row mb-3">
             <label for="ocr_language" class="col-form-label col-sm-4">
               {{ __('OCR Language') }}
             </label>
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="ocr_language"
+                  v-model="form.ocr_language"
                   type="text"
                   class="form-control"
-                  id="ocr_language"
                   name="ocr_language"
-                  v-model="form.ocr_language"
                   maxlength="64"
                   placeholder="eng"
                 />
@@ -510,11 +522,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="image_max_width_vision"
+                  v-model="form.image_max_width_vision"
                   type="number"
                   class="form-control"
-                  id="image_max_width_vision"
                   name="image_max_width_vision"
-                  v-model="form.image_max_width_vision"
                   min="1"
                   max="65535"
                   :placeholder="__('No limit')"
@@ -546,11 +558,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="image_max_height_vision"
+                  v-model="form.image_max_height_vision"
                   type="number"
                   class="form-control"
-                  id="image_max_height_vision"
                   name="image_max_height_vision"
-                  v-model="form.image_max_height_vision"
                   min="1"
                   max="65535"
                   :placeholder="__('No limit')"
@@ -579,11 +591,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="image_quality_vision"
+                  v-model.number="form.image_quality_vision"
                   type="number"
                   class="form-control"
-                  id="image_quality_vision"
                   name="image_quality_vision"
-                  v-model.number="form.image_quality_vision"
                   min="1"
                   max="100"
                 />
@@ -604,7 +616,7 @@
             </div>
           </div>
 
-          <div class="row mb-3" v-if="tesseractAvailable">
+          <div v-if="tesseractAvailable" class="row mb-3">
             <label
               for="image_max_width_tesseract"
               class="col-form-label col-sm-4"
@@ -614,11 +626,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="image_max_width_tesseract"
+                  v-model="form.image_max_width_tesseract"
                   type="number"
                   class="form-control"
-                  id="image_max_width_tesseract"
                   name="image_max_width_tesseract"
-                  v-model="form.image_max_width_tesseract"
                   min="1"
                   max="65535"
                   :placeholder="__('No limit')"
@@ -640,7 +652,7 @@
             </div>
           </div>
 
-          <div class="row mb-0" v-if="tesseractAvailable">
+          <div v-if="tesseractAvailable" class="row mb-0">
             <label
               for="image_max_height_tesseract"
               class="col-form-label col-sm-4"
@@ -650,11 +662,11 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <input
+                  id="image_max_height_tesseract"
+                  v-model="form.image_max_height_tesseract"
                   type="number"
                   class="form-control"
-                  id="image_max_height_tesseract"
                   name="image_max_height_tesseract"
-                  v-model="form.image_max_height_tesseract"
                   min="1"
                   max="65535"
                   :placeholder="__('No limit')"
@@ -677,7 +689,7 @@
           </div>
         </template>
       </div>
-      <div class="card-body" v-else>
+      <div v-else class="card-body">
         <div class="alert alert-warning">
           {{
             __('You are in sandbox mode. You cannot change the AI settings.')
@@ -685,17 +697,14 @@
         </div>
       </div>
 
-      <div class="card-footer" v-if="!loading && !sandbox_mode">
-        <Button
+      <div v-if="!loading && !sandbox_mode" class="card-footer">
+        <SubmitButton
           class="btn btn-primary"
           :form="form"
           dusk="button-save-ai-behavior-settings"
         >
-          <i
-            class="fa me-1 fa-save"
-            v-show="!form.busy"
-          ></i>{{ __('Save') }}
-        </Button>
+          <i v-show="!form.busy" class="fa me-1 fa-save"></i>{{ __('Save') }}
+        </SubmitButton>
       </div>
     </form>
   </div>
@@ -707,10 +716,17 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
   import Swal from 'sweetalert2';
-  import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    HasError,
+  } from 'vform/src/components/bootstrap5';
 
   export default {
     name: 'AiBehaviorSettings',
+    components: {
+      SubmitButton,
+      HasError,
+    },
     props: {
       tesseractAvailable: {
         type: Boolean,
@@ -718,10 +734,6 @@
       },
     },
     emits: ['ai-processing-changed'],
-    components: {
-      Button,
-      HasError,
-    },
     data: () => ({
       form: new Form({
         ai_enabled: false,
@@ -822,7 +834,9 @@
           payload.document_retention_days = null;
         }
 
-        if (!(await this.confirmRetentionChange(payload.document_retention_days))) {
+        if (
+          !(await this.confirmRetentionChange(payload.document_retention_days))
+        ) {
           return;
         }
 

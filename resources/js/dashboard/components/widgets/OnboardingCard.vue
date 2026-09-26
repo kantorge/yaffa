@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-3" id="onboardingCardContainer" v-show="ready">
+  <div v-show="ready" id="onboardingCardContainer" class="card mb-3">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ cardTitle }}
@@ -14,14 +14,14 @@
         ></button>
       </div>
     </div>
-    <div class="card-body" v-if="cardBody">
+    <div v-if="cardBody" class="card-body">
       {{ cardBody }}
     </div>
     <ul class="list-group list-group-flush">
       <li
-        class="list-group-item"
         v-for="(step, index) in onboardingSteps"
-        v-bind:key="index"
+        :key="index"
+        class="list-group-item"
       >
         <div class="d-flex justify-content-between">
           <span>
@@ -104,6 +104,24 @@
       };
     },
 
+    computed: {
+      onboardingComplete() {
+        return (
+          this.onboardingSteps
+            /**
+             * @param {Object} step
+             * @property {Boolean} step.complete
+             */
+            .filter((step) => !step.complete)
+            /**
+             * @param {Object} step
+             * @property {Boolean} step.excluded
+             */
+            .filter((step) => !step.excluded).length === 0
+        );
+      },
+    },
+
     created() {
       this.busy = true;
       let vue = this;
@@ -171,24 +189,6 @@
           .then(() => this.hide());
       },
       __,
-    },
-
-    computed: {
-      onboardingComplete() {
-        return (
-          this.onboardingSteps
-            /**
-             * @param {Object} step
-             * @property {Boolean} step.complete
-             */
-            .filter((step) => !step.complete)
-            /**
-             * @param {Object} step
-             * @property {Boolean} step.excluded
-             */
-            .filter((step) => !step.excluded).length === 0
-        );
-      },
     },
   };
 </script>

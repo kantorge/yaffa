@@ -6,15 +6,15 @@
     />
 
     <payee-form
+      v-if="!fromModal"
+      id="newPayeeModal"
       action="new"
       :payee="{}"
       :simplified="true"
-      id="newPayeeModal"
       @payee-selected="setPayee"
-      v-if="!fromModal"
     ></payee-form>
 
-    <form accept-charset="UTF-8" @submit.prevent="onSubmit" autocomplete="off">
+    <form accept-charset="UTF-8" autocomplete="off" @submit.prevent="onSubmit">
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
@@ -74,17 +74,17 @@
                   </button>
                 </div>
                 <div
-                  class="col-3 d-flex justify-content-between gap-2 mb-0"
                   v-if="!simplified"
+                  class="col-3 d-flex justify-content-between gap-2 mb-0"
                 >
                   <input
+                    id="checkbox-standard-transaction-schedule"
+                    v-model="form.schedule"
                     class="btn-check"
                     :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
-                    id="checkbox-standard-transaction-schedule"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.schedule"
                   />
                   <label
                     class="btn btn-outline-secondary w-100"
@@ -120,13 +120,13 @@
                   class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
+                    id="checkbox-standard-transaction-reconciled"
+                    v-model="form.reconciled"
                     class="btn-check"
                     :disabled="form.schedule"
-                    id="checkbox-standard-transaction-reconciled"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.reconciled"
                   />
                   <label
                     class="btn btn-outline-success"
@@ -142,32 +142,34 @@
                       ? 'col-8 col-sm-2 col-md-4 col-lg-2'
                       : 'col-8 col-sm-4 col-md-8 col-lg-4',
                     'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
-                    { 'has-error': form.errors.has('date') },
+                    {
+                      'has-error': form.errors.has('date'),
+                    },
                   ]"
                 >
                   <label class="form-label" for="standard-date">
                     {{ __('Date') }}
                   </label>
                   <input
+                    id="standard-date"
+                    v-model="dateInput"
                     type="date"
                     class="form-control"
                     :disabled="form.schedule"
-                    id="standard-date"
-                    v-model="dateInput"
                   />
                 </div>
                 <div
-                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                   v-if="action === 'enter'"
+                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                 >
                   <div class="form-check">
                     <input
+                      id="checkbox-standard-catch-up-schedule"
+                      v-model="form.catch_up_schedule"
                       class="form-check-input"
                       dusk="checkbox-standard-catch-up-schedule"
-                      id="checkbox-standard-catch-up-schedule"
                       type="checkbox"
                       value="1"
-                      v-model="form.catch_up_schedule"
                     />
                     <label
                       class="form-check-label"
@@ -185,6 +187,7 @@
                         "
                       ></i>
                       <i
+                        v-if="catchUpMayCloseSchedule"
                         class="fa fa-triangle-exclamation text-warning ms-1"
                         data-bs-toggle="tooltip"
                         data-bs-placement="top"
@@ -193,7 +196,6 @@
                             'May close this schedule if no occurrences remain.',
                           )
                         "
-                        v-if="catchUpMayCloseSchedule"
                       ></i>
                     </label>
                   </div>
@@ -206,11 +208,11 @@
                     {{ __('Comment') }}
                   </label>
                   <input
-                    class="form-control"
                     id="standard-comment"
+                    v-model="form.comment"
+                    class="form-control"
                     maxlength="255"
                     type="text"
-                    v-model="form.comment"
                   />
                 </div>
               </div>
@@ -222,24 +224,24 @@
         <div class="col-12">
           <transaction-schedule
             v-if="form.schedule"
-            :isSchedule="form.schedule"
+            key="current"
+            :is-schedule="form.schedule"
             :schedule="form.schedule_config"
             :form="form"
-            key="current"
           ></transaction-schedule>
         </div>
         <div class="col-12">
           <transaction-schedule
             v-if="form.schedule && action === 'replace'"
-            :withCheckbox="true"
+            ref="scheduleOriginal"
+            key="original"
+            :with-checkbox="true"
             :title="__('Update base schedule')"
-            :allowCustomization="false"
-            :isSchedule="form.schedule"
+            :allow-customization="false"
+            :is-schedule="form.schedule"
             :schedule="form.original_schedule_config"
             :form="form"
             field-prefix="original_schedule_config"
-            ref="scheduleOriginal"
-            key="original"
           ></transaction-schedule>
         </div>
       </div>
@@ -262,20 +264,20 @@
                   <span class="form-label block-label">
                     {{ accountFromFieldLabel }}
                   </span>
-                  <div class="input-group" id="account_from_container">
+                  <div id="account_from_container" class="input-group">
                     <select
-                      class="form-select"
                       id="account_from"
                       v-model="form.config.account_from_id"
+                      class="form-select"
                     ></select>
                     <button
+                      v-if="form.transaction_type === 'deposit' && !fromModal"
                       class="btn btn-success"
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
                       data-coreui-toggle="modal"
                       data-coreui-target="#newPayeeModal"
-                      v-if="form.transaction_type === 'deposit' && !fromModal"
                     >
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
@@ -290,22 +292,22 @@
                   <span class="form-label block-label">
                     {{ accountToFieldLabel }}
                   </span>
-                  <div class="input-group" id="account_to_container">
+                  <div id="account_to_container" class="input-group">
                     <select
-                      class="form-select"
                       id="account_to"
                       v-model="form.config.account_to_id"
+                      class="form-select"
                     ></select>
                     <button
+                      v-if="
+                        form.transaction_type === 'withdrawal' && !fromModal
+                      "
                       class="btn btn-success"
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
                       data-coreui-toggle="modal"
                       data-coreui-target="#newPayeeModal"
-                      v-if="
-                        form.transaction_type === 'withdrawal' && !fromModal
-                      "
                     >
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
@@ -329,9 +331,9 @@
                     </span>
                   </label>
                   <MathInput
-                    class="form-control"
                     id="transaction_amount_from"
                     v-model="form.config.amount_from"
+                    class="form-control"
                   ></MathInput>
                 </div>
                 <div
@@ -363,13 +365,13 @@
                     </span>
                   </label>
                   <MathInput
-                    class="form-control"
                     id="transaction_amount_to"
                     v-model="form.config.amount_to"
+                    class="form-control"
                   ></MathInput>
                 </div>
               </div>
-              <dl class="row" v-if="!transactionTypeIsTransfer">
+              <dl v-if="!transactionTypeIsTransfer" class="row">
                 <dt class="col-8">
                   {{ __('Total amount') }}
                 </dt>
@@ -378,8 +380,8 @@
                     {{
                       toFormattedCurrency(
                         form.config.amount_from || 0,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -395,8 +397,8 @@
                     {{
                       toFormattedCurrency(
                         allocatedAmount,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -404,17 +406,17 @@
                     {{ allocatedAmount }}
                   </span>
                 </dd>
-                <dt class="col-8" v-show="payeeCategory.id">
+                <dt v-show="payeeCategory.id" class="col-8">
                   {{ __('Remaining amount to') }}
                   <span class="notbold"><br />{{ payeeCategory.text }}</span>
                 </dt>
-                <dd class="col-4" v-show="payeeCategory.id">
+                <dd v-show="payeeCategory.id" class="col-4">
                   <span v-if="ammountFromCurrencyLabel">
                     {{
                       toFormattedCurrency(
                         remainingAmountToPayeeDefault,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -422,16 +424,16 @@
                     {{ remainingAmountToPayeeDefault }}
                   </span>
                 </dd>
-                <dt class="col-8" v-show="!payeeCategory.id">
+                <dt v-show="!payeeCategory.id" class="col-8">
                   {{ __('Not allocated') }}:
                 </dt>
-                <dd class="col-4" v-show="!payeeCategory.id">
+                <dd v-show="!payeeCategory.id" class="col-4">
                   <span v-if="ammountFromCurrencyLabel">
                     {{
                       toFormattedCurrency(
                         remainingAmountNotAllocated,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -468,17 +470,17 @@
           </div>
 
           <transaction-item-container
-            @addTransactionItem="addTransactionItem"
-            :transactionItems="form.items"
-            :currencySymbol="ammountFromCurrencyLabel"
+            :transaction-items="form.items"
+            :currency-symbol="ammountFromCurrencyLabel"
             :payee="payeeId"
-            :transactionType="form.transaction_type"
-            :amountFrom="form.config.amount_from"
-            :remainingAmount="
+            :transaction-type="form.transaction_type"
+            :amount-from="form.config.amount_from"
+            :remaining-amount="
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
             :dropdown-parent-selector="dropdownParentSelector"
+            @add-transaction-item="addTransactionItem"
           ></transaction-item-container>
         </div>
       </div>
@@ -487,8 +489,8 @@
         <div class="card-body">
           <div class="row justify-content-end">
             <div
-              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               v-if="!fromModal"
+              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               dusk="action-after-save-desktop-button-group"
             >
               <span class="form-label block-label">
@@ -513,16 +515,16 @@
               </div>
             </div>
             <div
-              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
               v-if="!fromModal"
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
             >
               <label class="form-label" for="callback-selector-mobile-standard">
                 {{ __('Action after saving') }}
               </label>
               <select
-                class="form-control"
-                v-model="callback"
                 id="callback-selector-mobile-standard"
+                v-model="callback"
+                class="form-control"
               >
                 <option
                   v-for="item in activeCallbackOptions"
@@ -538,20 +540,20 @@
             >
               <button
                 class="btn btn btn-secondary"
-                @click="onCancel"
                 type="button"
+                @click="onCancel"
               >
                 {{ __('Cancel') }}
               </button>
-              <Button
+              <SubmitButton
+                id="transactionFormStandard-Save"
                 class="btn btn-primary ms-2"
                 :disabled="form.busy"
                 :form="form"
-                id="transactionFormStandard-Save"
               >
-                <span class="fa fa-save me-1" v-show="!form.busy"></span>
+                <span v-show="!form.busy" class="fa fa-save me-1"></span>
                 {{ __('Save') }}
-              </Button>
+              </SubmitButton>
             </div>
           </div>
         </div>
@@ -585,7 +587,10 @@
   import MathInput from '@/shared/ui/form/MathInput.vue';
 
   import Form from 'vform';
-  import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
+  import {
+    Button as SubmitButton,
+    AlertErrors,
+  } from 'vform/src/components/bootstrap5';
 
   import TransactionItemContainer from './TransactionItemContainer.vue';
   import TransactionSchedule from './TransactionSchedule.vue';
@@ -597,7 +602,7 @@
       TransactionItemContainer,
       TransactionSchedule,
       PayeeForm,
-      Button,
+      SubmitButton,
       AlertErrors,
       MathInput,
     },
@@ -635,6 +640,8 @@
         default: 'body',
       },
     },
+
+    emits: ['cancel', 'success'],
 
     data() {
       let data = {};
@@ -936,6 +943,72 @@
       },
     },
 
+    watch: {
+      remainingAmountToPayeeDefault(newAmount) {
+        this.form.remaining_payee_default_amount = newAmount;
+      },
+
+      payeeDefaultCategory(newId) {
+        this.form.remaining_payee_default_category_id = newId;
+      },
+
+      // On change of new schedule start date, adjust original schedule end date to previous day
+      'form.schedule_config.start_date': function (newDate) {
+        this.syncScheduleStartDate(newDate);
+      },
+
+      // The catch-up warning icon is only rendered when this is true (v-if), so a
+      // newly-mounted icon needs its own tooltip initialization - the one in
+      // mounted() only covers icons already in the DOM at that point.
+      catchUpMayCloseSchedule() {
+        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
+      },
+
+      transaction(transaction) {
+        // TODO: consider using form.update()
+        this.form.reset();
+
+        // Copy values of existing transaction into component form data
+        this.initializeTransaction();
+
+        // Ensure that new transaction type is set
+        // Transaction type is now directly the enum value string
+        this.onChangeTransactionType(transaction.transaction_type, true);
+
+        // Load default value for accounts
+        const accountFromReady = this.getDefaultAccountDetails(
+          transaction.config.account_from_id,
+          'from',
+        );
+        const accountToReady = this.getDefaultAccountDetails(
+          transaction.config.account_to_id,
+          'to',
+        );
+
+        // Snapshot the settled post-load state as the isDirty() baseline - see
+        // markFormClean(). onChangeTransactionType(..., true) above force-resets
+        // config.account_from_id/account_to_id before the calls above
+        // asynchronously repopulate them, so this must wait for both to settle
+        // rather than snapshotting right after initializeTransaction().
+        Promise.all([accountFromReady, accountToReady]).then(() => {
+          this.$nextTick(() => this.markFormClean());
+        });
+      },
+
+      // Remove the form date value when schedule is enabled, and restore it when disabled
+      'form.schedule': function (newState) {
+        if (this.initializingTransaction) {
+          return;
+        }
+
+        if (newState) {
+          this.form.date = null;
+        } else {
+          this.form.date = toIsoDateString();
+        }
+      },
+    },
+
     created() {
       // Copy values of existing transaction into component form data
       this.initializeTransaction();
@@ -1121,16 +1194,19 @@
               this.transaction.transaction_schedule.by_month;
 
             this.form.schedule_config.start_date =
-              toDateInputValue(this.transaction.transaction_schedule.start_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.start_date,
+              ) || null;
             this.form.schedule_config.next_date =
-              toDateInputValue(this.transaction.transaction_schedule.next_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.next_date,
+              ) || null;
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
             this.form.schedule_config.end_date =
-              toDateInputValue(this.transaction.transaction_schedule.end_date) ||
-              null;
+              toDateInputValue(
+                this.transaction.transaction_schedule.end_date,
+              ) || null;
 
             this.form.schedule_config.inflation =
               this.transaction.transaction_schedule.inflation;
@@ -1591,72 +1667,6 @@
         }
 
         return 'btn-outline-primary';
-      },
-    },
-
-    watch: {
-      remainingAmountToPayeeDefault(newAmount) {
-        this.form.remaining_payee_default_amount = newAmount;
-      },
-
-      payeeDefaultCategory(newId) {
-        this.form.remaining_payee_default_category_id = newId;
-      },
-
-      // On change of new schedule start date, adjust original schedule end date to previous day
-      'form.schedule_config.start_date': function (newDate) {
-        this.syncScheduleStartDate(newDate);
-      },
-
-      // The catch-up warning icon is only rendered when this is true (v-if), so a
-      // newly-mounted icon needs its own tooltip initialization - the one in
-      // mounted() only covers icons already in the DOM at that point.
-      catchUpMayCloseSchedule() {
-        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
-      },
-
-      transaction(transaction) {
-        // TODO: consider using form.update()
-        this.form.reset();
-
-        // Copy values of existing transaction into component form data
-        this.initializeTransaction();
-
-        // Ensure that new transaction type is set
-        // Transaction type is now directly the enum value string
-        this.onChangeTransactionType(transaction.transaction_type, true);
-
-        // Load default value for accounts
-        const accountFromReady = this.getDefaultAccountDetails(
-          transaction.config.account_from_id,
-          'from',
-        );
-        const accountToReady = this.getDefaultAccountDetails(
-          transaction.config.account_to_id,
-          'to',
-        );
-
-        // Snapshot the settled post-load state as the isDirty() baseline - see
-        // markFormClean(). onChangeTransactionType(..., true) above force-resets
-        // config.account_from_id/account_to_id before the calls above
-        // asynchronously repopulate them, so this must wait for both to settle
-        // rather than snapshotting right after initializeTransaction().
-        Promise.all([accountFromReady, accountToReady]).then(() => {
-          this.$nextTick(() => this.markFormClean());
-        });
-      },
-
-      // Remove the form date value when schedule is enabled, and restore it when disabled
-      'form.schedule': function (newState) {
-        if (this.initializingTransaction) {
-          return;
-        }
-
-        if (newState) {
-          this.form.date = null;
-        } else {
-          this.form.date = toIsoDateString();
-        }
       },
     },
   };

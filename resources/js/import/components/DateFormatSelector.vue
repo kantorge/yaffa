@@ -1,5 +1,9 @@
 <template>
-  <div :class="bordered ? 'mt-1 ms-2 ps-2 border-start border-2 border-primary' : ''">
+  <div
+    :class="
+      bordered ? 'mt-1 ms-2 ps-2 border-start border-2 border-primary' : ''
+    "
+  >
     <!-- Sample values with parsed result (suppressed when shown inline in the mapping table) -->
     <div v-if="showSamples && previewSamples.length" class="mb-2">
       <div class="small text-muted mb-1">{{ __('Sample values:') }}</div>
@@ -37,9 +41,12 @@
         <label
           :for="`df-${uid}-${cand.format.replace(/[^a-z0-9]/gi, '_')}`"
           class="form-check-label font-monospace small"
-          :title="cand.example ? cand.format + ' → ' + cand.example : cand.format"
+          :title="
+            cand.example ? cand.format + ' → ' + cand.example : cand.format
+          "
         >
-          {{ cand.format }}<span v-if="cand.detected" class="text-success ms-1">✓</span>
+          {{ cand.format
+          }}<span v-if="cand.detected" class="text-success ms-1">✓</span>
         </label>
       </div>
     </div>
@@ -62,7 +69,8 @@
         rel="noopener"
         class="small text-info"
         :title="__('PHP date format reference')"
-      >?</a>
+        >?</a
+      >
     </div>
   </div>
 </template>
@@ -73,20 +81,20 @@
 
   // Locale prefix → ordered list of locally common PHP date formats
   const LOCALE_FORMAT_MAP = {
-    hu:      ['Y.m.d.', 'Y-m-d'],
-    de:      ['d.m.Y',  'Y-m-d'],
-    at:      ['d.m.Y',  'Y-m-d'],
-    pl:      ['d.m.Y',  'Y-m-d'],
-    cs:      ['d.m.Y',  'Y-m-d'],
-    sk:      ['d.m.Y',  'Y-m-d'],
-    'en-us': ['m/d/Y',  'Y-m-d'],
-    'en-gb': ['d/m/Y',  'Y-m-d'],
-    en:      ['d/m/Y',  'Y-m-d'],
-    fr:      ['d/m/Y',  'Y-m-d'],
-    es:      ['d/m/Y',  'Y-m-d'],
-    it:      ['d/m/Y',  'Y-m-d'],
-    pt:      ['d/m/Y',  'Y-m-d'],
-    nl:      ['d-m-Y',  'Y-m-d'],
+    hu: ['Y.m.d.', 'Y-m-d'],
+    de: ['d.m.Y', 'Y-m-d'],
+    at: ['d.m.Y', 'Y-m-d'],
+    pl: ['d.m.Y', 'Y-m-d'],
+    cs: ['d.m.Y', 'Y-m-d'],
+    sk: ['d.m.Y', 'Y-m-d'],
+    'en-us': ['m/d/Y', 'Y-m-d'],
+    'en-gb': ['d/m/Y', 'Y-m-d'],
+    en: ['d/m/Y', 'Y-m-d'],
+    fr: ['d/m/Y', 'Y-m-d'],
+    es: ['d/m/Y', 'Y-m-d'],
+    it: ['d/m/Y', 'Y-m-d'],
+    pt: ['d/m/Y', 'Y-m-d'],
+    nl: ['d-m-Y', 'Y-m-d'],
   };
 
   // Always-visible generic options (filled in after locale and detected ones)
@@ -94,16 +102,16 @@
 
   // Tooltip example outputs per format string
   const FORMAT_EXAMPLES = {
-    'Y-m-d':  '2026-03-27',
+    'Y-m-d': '2026-03-27',
     'Y.m.d.': '2026.03.27.',
-    'Y/m/d':  '2026/03/27',
-    'd.m.Y':  '27.03.2026',
-    'd/m/Y':  '27/03/2026',
-    'm/d/Y':  '03/27/2026',
-    'd-m-Y':  '27-03-2026',
-    'd.m.y':  '27.03.26',
-    'd/m/y':  '27/03/26',
-    'm/d/y':  '03/27/26',
+    'Y/m/d': '2026/03/27',
+    'd.m.Y': '27.03.2026',
+    'd/m/Y': '27/03/2026',
+    'm/d/Y': '03/27/2026',
+    'd-m-Y': '27-03-2026',
+    'd.m.y': '27.03.26',
+    'd/m/y': '27/03/26',
+    'm/d/y': '03/27/26',
   };
 
   function getLocaleFormats() {
@@ -155,7 +163,9 @@
         const result = [];
         for (const p of DATE_PATTERNS) {
           if (seen.has(p.format)) continue;
-          const anyMatch = this.sampleValues.some((v) => v && p.regex.test(String(v).trim()));
+          const anyMatch = this.sampleValues.some(
+            (v) => v && p.regex.test(String(v).trim()),
+          );
           if (anyMatch) {
             result.push(p.format);
             seen.add(p.format);
@@ -170,14 +180,22 @@
 
         // 1. Auto-detected from sample values (marked ✓)
         for (const f of this.detectedFormats) {
-          result.push({ format: f, detected: true, example: FORMAT_EXAMPLES[f] || null });
+          result.push({
+            format: f,
+            detected: true,
+            example: FORMAT_EXAMPLES[f] || null,
+          });
           seen.add(f);
         }
 
         // 2. Locale-specific suggestions not already listed
         for (const f of getLocaleFormats()) {
           if (!seen.has(f)) {
-            result.push({ format: f, detected: false, example: FORMAT_EXAMPLES[f] || null });
+            result.push({
+              format: f,
+              detected: false,
+              example: FORMAT_EXAMPLES[f] || null,
+            });
             seen.add(f);
           }
         }
@@ -185,7 +203,11 @@
         // 3. Generic base formats to ensure at least a few options are always visible
         for (const f of BASE_FORMATS) {
           if (!seen.has(f)) {
-            result.push({ format: f, detected: false, example: FORMAT_EXAMPLES[f] || null });
+            result.push({
+              format: f,
+              detected: false,
+              example: FORMAT_EXAMPLES[f] || null,
+            });
             seen.add(f);
           }
         }
@@ -199,7 +221,9 @@
       },
 
       customInputTitle() {
-        return __('PHP date format string. Trailing text after the date (e.g. a weekday name) is ignored. Examples: Y.m.d. → 2026.03.27.  |  d/m/Y → 27/03/2026  |  Y-m-d → 2026-03-27');
+        return __(
+          'PHP date format string. Trailing text after the date (e.g. a weekday name) is ignored. Examples: Y.m.d. → 2026.03.27.  |  d/m/Y → 27/03/2026  |  Y-m-d → 2026-03-27',
+        );
       },
     },
 

@@ -24,10 +24,17 @@
       <p v-else-if="transactions.length === 0" class="text-muted mb-0">
         {{ __('No data available') }}
       </p>
-      <FullCalendar v-else ref="calendar" class="custom-calendar" :options="calendarOptions">
+      <FullCalendar
+        v-else
+        ref="calendar"
+        class="custom-calendar"
+        :options="calendarOptions"
+      >
         <template #eventContent="arg">
           <i
-            :class="getTransactionIconClasses(arg.event.extendedProps.transaction)"
+            :class="
+              getTransactionIconClasses(arg.event.extendedProps.transaction)
+            "
           ></i>
         </template>
       </FullCalendar>
@@ -42,7 +49,11 @@
     getTransactionTypeConfig,
     parseIsoDate,
   } from '@/shared/lib/helpers';
-  import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedNumber,
+  } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import FullCalendar from '@fullcalendar/vue3';
   import dayGridPlugin from '@fullcalendar/daygrid';
@@ -417,7 +428,10 @@
           return;
         }
 
-        info.el.setAttribute('aria-label', this.getTransactionLabel(transaction));
+        info.el.setAttribute(
+          'aria-label',
+          this.getTransactionLabel(transaction),
+        );
         info.el.setAttribute('tabindex', '0');
         info.el.addEventListener('keydown', (event) => {
           if (event.key !== 'Enter' && event.key !== ' ') {
@@ -730,7 +744,7 @@
     cursor: default;
   }
 
-  [data-coreui-theme="dark"] .custom-calendar .fc-col-header-cell {
+  [data-coreui-theme='dark'] .custom-calendar .fc-col-header-cell {
     background-color: var(--cui-secondary-bg);
     border-color: var(--cui-border-color);
   }
@@ -739,7 +753,7 @@
     border-color: #b8c2cc;
   }
 
-  [data-coreui-theme="dark"] .custom-calendar .fc-daygrid-day {
+  [data-coreui-theme='dark'] .custom-calendar .fc-daygrid-day {
     border-color: var(--cui-border-color);
   }
 
@@ -749,7 +763,7 @@
     background-color: white;
   }
 
-  [data-coreui-theme="dark"] .custom-calendar .fc-daygrid-day-frame {
+  [data-coreui-theme='dark'] .custom-calendar .fc-daygrid-day-frame {
     background-color: var(--cui-body-bg);
   }
 
@@ -805,7 +819,7 @@
   }
 
   /* Dark mode: flipped to light background for contrast against the dark page */
-  [data-coreui-theme="dark"] .schedule-calendar-popover {
+  [data-coreui-theme='dark'] .schedule-calendar-popover {
     --schedule-popover-bg: #f8fafc;
     --schedule-popover-color: #1e293b;
     --schedule-popover-border: rgba(0, 0, 0, 0.15);
@@ -828,7 +842,7 @@
 
   /* In dark mode the close button uses btn-close-white (invert filter) — neutralise
      it so the icon appears dark against the light popover background. */
-  [data-coreui-theme="dark"] .schedule-calendar-popover .btn-close-white {
+  [data-coreui-theme='dark'] .schedule-calendar-popover .btn-close-white {
     filter: none;
   }
 

@@ -1,8 +1,8 @@
 <template>
   <div
-    class="card mb-3"
     v-if="canFinalize && duplicates.length > 0"
     ref="duplicatesCard"
+    class="card mb-3"
   >
     <div class="card-header d-flex justify-content-between">
       <div
@@ -25,9 +25,9 @@
       ></span>
     </div>
     <div
+      id="cardDuplicates"
       class="collapse card-body show"
       aria-expanded="true"
-      id="cardDuplicates"
     >
       <div class="list-group">
         <button
@@ -39,7 +39,9 @@
         >
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="fw-bold">{{ formatDate(duplicate.date) }}</div>
+              <div class="fw-bold">
+                {{ formatDate(duplicate.date) }}
+              </div>
             </div>
             <div class="text-end">
               <div>{{ duplicate.amount }}</div>
@@ -57,7 +59,10 @@
 
 <script setup>
   import { nextTick, onMounted, ref, watch } from 'vue';
-  import { initializeBootstrapTooltips, parseIsoDate } from '@/shared/lib/helpers';
+  import {
+    initializeBootstrapTooltips,
+    parseIsoDate,
+  } from '@/shared/lib/helpers';
   import { __, toFormattedDate } from '@/shared/lib/i18n';
 
   const props = defineProps({

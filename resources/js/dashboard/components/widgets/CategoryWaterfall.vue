@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-4" v-if="available">
+  <div v-if="available" class="card mb-4">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('widget.categoryWaterfall.cardTitle') }}
@@ -16,8 +16,8 @@
         <button
           class="btn btn-sm btn-outline-info me-2"
           type="button"
-          @click="previousMonth"
           :title="__('widget.categoryWaterfall.previousMonthTitle')"
+          @click="previousMonth"
         >
           <span class="fa fa-fw fa-caret-left"></span>
         </button>
@@ -25,15 +25,15 @@
         <button
           class="btn btn-sm btn-outline-info ms-2"
           type="button"
-          @click="nextMonth"
           :title="__('widget.categoryWaterfall.nextMonthTitle')"
+          @click="nextMonth"
         >
           <span class="fa fa-fw fa-caret-right"></span>
         </button>
       </div>
     </div>
     <div class="card-body">
-      <p aria-hidden="true" v-if="!ready" class="placeholder-glow">
+      <p v-if="!ready" aria-hidden="true" class="placeholder-glow">
         <span class="placeholder col-12"></span>
       </p>
       <waterfall-chart
@@ -55,15 +55,15 @@
         aria-label="Transaction type selector for category waterfall chart"
       >
         <input
+          id="waterfallTransactionCategory_All"
+          v-model="transactionTypeData"
           type="radio"
           class="btn-check"
           name="waterfallTransactionCategory"
-          id="waterfallTransactionCategory_All"
           value="all"
           autocomplete="off"
-          v-model="transactionTypeData"
-          @change="refreshData"
           :disabled="busy"
+          @change="refreshData"
         />
         <label
           class="btn btn-sm btn-outline-primary"
@@ -73,15 +73,15 @@
         >
 
         <input
+          id="waterfallTransactionCategory_Standard"
+          v-model="transactionTypeData"
           type="radio"
           class="btn-check"
           name="waterfallTransactionCategory"
-          id="waterfallTransactionCategory_Standard"
           value="standard"
           autocomplete="off"
-          v-model="transactionTypeData"
-          @change="refreshData"
           :disabled="busy"
+          @change="refreshData"
         />
         <label
           class="btn btn-sm btn-outline-primary"
@@ -91,15 +91,15 @@
         </label>
 
         <input
+          id="waterfallTransactionCategory_Investment"
+          v-model="transactionTypeData"
           type="radio"
           class="btn-check"
           name="waterfallTransactionCategory"
-          id="waterfallTransactionCategory_Investment"
           value="investment"
           autocomplete="off"
-          v-model="transactionTypeData"
-          @change="refreshData"
           :disabled="busy"
+          @change="refreshData"
         />
         <label
           class="btn btn-sm btn-outline-primary"
@@ -154,6 +154,34 @@
         ready: false,
       };
     },
+    computed: {
+      missingRatesTooltip() {
+        const currencyList = this.missingRateCurrencies
+          .map((currency) => `${currency.name} (${currency.iso_code})`)
+          .join(', ');
+
+        return (
+          __('widget.categoryWaterfall.missingRatesTooltipPrefix') +
+          currencyList +
+          '. ' +
+          __('widget.categoryWaterfall.missingRatesTooltipSuffix')
+        );
+      },
+
+      dateLabel() {
+        const date = new Date(this.year, this.month - 1, 1);
+        return toFormattedDate(
+          date,
+          window.YAFFA.userSettings.locale,
+          '',
+          false,
+          {
+            year: 'numeric',
+            month: 'long',
+          },
+        );
+      },
+    },
     created() {
       // Verify if base currency is set. Without this, the widget cannot be displayed.
       if (!this.baseCurrency) {
@@ -162,6 +190,9 @@
 
       this.available = true;
       this.refreshData();
+    },
+    updated() {
+      initializeBootstrapTooltips(this.$el);
     },
     methods: {
       previousMonth: function () {
@@ -245,31 +276,6 @@
       },
 
       __,
-    },
-    computed: {
-      missingRatesTooltip() {
-        const currencyList = this.missingRateCurrencies
-          .map((currency) => `${currency.name} (${currency.iso_code})`)
-          .join(', ');
-
-        return (
-          __('widget.categoryWaterfall.missingRatesTooltipPrefix') +
-          currencyList +
-          '. ' +
-          __('widget.categoryWaterfall.missingRatesTooltipSuffix')
-        );
-      },
-
-      dateLabel() {
-        const date = new Date(this.year, this.month - 1, 1);
-        return toFormattedDate(date, window.YAFFA.userSettings.locale, '', false, {
-          year: 'numeric',
-          month: 'long',
-        });
-      },
-    },
-    updated() {
-      initializeBootstrapTooltips(this.$el);
     },
   };
 </script>

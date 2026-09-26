@@ -1,26 +1,26 @@
 <template>
-  <div class="card mb-4" id="widgetAiDocumentSummary" v-if="state !== 'hidden'">
+  <div v-if="state !== 'hidden'" id="widgetAiDocumentSummary" class="card mb-4">
     <div class="card-header">
       <div class="card-title">
         {{ __('widget.aiDocumentSummary.cardTitle') }}
       </div>
     </div>
-    <ul class="list-group list-group-flush" v-if="state === 'loading'">
+    <ul v-if="state === 'loading'" class="list-group list-group-flush">
       <li
-        aria-hidden="true"
-        class="list-group-item placeholder-glow"
         v-for="i in 4"
         :key="i"
+        aria-hidden="true"
+        class="list-group-item placeholder-glow"
       >
         <span class="placeholder col-12"></span>
       </li>
     </ul>
-    <ul class="list-group list-group-flush" v-if="state === 'error'">
+    <ul v-if="state === 'error'" class="list-group list-group-flush">
       <li class="list-group-item list-group-item-danger">
         {{ __('widget.aiDocumentSummary.loadError') }}
       </li>
     </ul>
-    <ul class="list-group list-group-flush" v-if="state === 'data-available'">
+    <ul v-if="state === 'data-available'" class="list-group list-group-flush">
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
@@ -62,8 +62,8 @@
         </span>
       </li>
       <li
-        class="list-group-item d-flex justify-content-between align-items-center"
         v-if="summary.oldest_created_at"
+        class="list-group-item d-flex justify-content-between align-items-center"
       >
         <a
           :href="indexUrl('ready_for_review', oldestDateString)"
@@ -77,7 +77,7 @@
         </span>
       </li>
     </ul>
-    <div class="card-footer text-end" v-if="state === 'data-available'">
+    <div v-if="state === 'data-available'" class="card-footer text-end">
       <a :href="indexUrl()" class="btn btn-sm btn-outline-primary">
         {{ __('widget.aiDocumentSummary.viewDocuments') }}
       </a>
@@ -119,7 +119,11 @@
         if (!this.summary.oldest_created_at) {
           return null;
         }
-        return toFormattedDate(new Date(this.summary.oldest_created_at), this.locale, null);
+        return toFormattedDate(
+          new Date(this.summary.oldest_created_at),
+          this.locale,
+          null,
+        );
       },
     },
 

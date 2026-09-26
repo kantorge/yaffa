@@ -2,11 +2,11 @@
   <div class="card mb-3">
     <div class="card-body no-datatable-search">
       <table
-        class="table table-striped table-bordered table-hover"
         id="ai-document-table"
+        ref="tableElement"
+        class="table table-striped table-bordered table-hover"
         role="grid"
         aria-label="List of AI documents"
-        ref="tableElement"
       ></table>
     </div>
   </div>
@@ -18,7 +18,12 @@
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { __, getDataTablesLanguageOptions, toFormattedDate, toFormattedDateTime } from '@/shared/lib/i18n';
+  import {
+    __,
+    getDataTablesLanguageOptions,
+    toFormattedDate,
+    toFormattedDateTime,
+  } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
   import { confirmDelete } from '@/shared/lib/confirm';
@@ -131,7 +136,12 @@
       return __('Not available');
     }
 
-    return toFormattedDate(isoDate, window.YAFFA.userSettings.locale, isoDate, true);
+    return toFormattedDate(
+      isoDate,
+      window.YAFFA.userSettings.locale,
+      isoDate,
+      true,
+    );
   };
 
   const getDraftData = (document) => document?.processed_transaction_data || {};
@@ -405,7 +415,11 @@
       }
 
       window.axios
-        .delete(route('api.v1.documents.destroy', { aiDocument: documentId }))
+        .delete(
+          route('api.v1.documents.destroy', {
+            aiDocument: documentId,
+          }),
+        )
         .then(() => {
           row.remove().draw();
           toastHelpers.showSuccessToast(__('Document deleted'));
@@ -537,7 +551,10 @@
           title: __('Received at'),
           render: (value, type) => {
             if (type === 'display' && value) {
-              return toFormattedDateTime(value, window.YAFFA.userSettings.locale);
+              return toFormattedDateTime(
+                value,
+                window.YAFFA.userSettings.locale,
+              );
             }
 
             return value;
@@ -597,7 +614,11 @@
           title: __('Actions'),
           defaultContent: '',
           render: () => {
-            return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            return (
+              '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+              __('Actions') +
+              '"></i>'
+            );
           },
           className: 'text-center',
           orderable: false,

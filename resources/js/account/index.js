@@ -2,264 +2,283 @@ import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
-import { __, getDataTablesLanguageOptions, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
+import {
+  __,
+  getDataTablesLanguageOptions,
+  toFormattedCurrency,
+  toFormattedNumber,
+} from '@/shared/lib/i18n';
 import { escapeHtml, transactionLink } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
 
-import {
-    booleanToTableIcon,
-} from '@/shared/lib/datatable';
-
+import { booleanToTableIcon } from '@/shared/lib/datatable';
 
 const dataTableSelector = '#table';
-let ajaxIsBusy = false;
 
 window.table = $(dataTableSelector).DataTable({
-    language: getDataTablesLanguageOptions() || undefined,
-    data: window.accounts,
-    columns: [
-        {
-            data: "name",
-            title: __('Name'),
-            render: function (data, type, row) {
-                // Return name with link for display
-                if (type === 'display') {
-                    return `<a href="${window.route('account-entity.show', {account_entity: row.id})}" title="${__('Show details')}">${data}</a>`;
-                }
+  language: getDataTablesLanguageOptions() || undefined,
+  data: window.accounts,
+  columns: [
+    {
+      data: 'name',
+      title: __('Name'),
+      render: function (data, type, row) {
+        // Return name with link for display
+        if (type === 'display') {
+          return `<a href="${window.route('account-entity.show', { account_entity: row.id })}" title="${__('Show details')}">${data}</a>`;
+        }
 
-                // Raw value is returned otherwise
-                return data;
-            },
-        },
-        {
-            data: "active",
-            title: __('Active'),
-            render: function (data, type) {
-                return booleanToTableIcon(data, type);
-            },
-            className: "text-center activeIcon",
-        },
-        {
-            data: "config.currency.name",
-            title: __("Currency")
-        },
-        {
-            data: "config.opening_balance",
-            title: __("Opening balance"),
-            render: function (data, type, row) {
-                if (type === 'display') {
-                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.config.currency);
-                }
-                return data;
-            },
-            className: "dt-nowrap",
-            searchable: false,
-            type: 'num',
-        },
-        {
-            data: "transactions_count",
-            title: __("Transactions"),
-            render: function (data, type, row) {
-                if (type === 'display') {
-                    if (data > 0) {
-                        return `<a href="${window.route('reports.transactions', {accounts: [row.id]})}"
-                        title="${__('Show transactions')}"
-                        >${toFormattedNumber(data, window.YAFFA.userSettings.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
-                    }
-                    return data;
-                }
-                return data;
-            },
-            type: "num",
-        },
-        {
-            data: "config.account_group.name",
-            title: __("Account group"),
-        },
-        {
-            data: 'alias',
-            title: __('Import alias'),
-            render: function(data, type) {
-                if (type === 'display') {
-                    return (data ? data.replace('\n', '<br>') : __('Not set'));
-                }
-                return data;
-            }
-        },
-        {
-            title: __("Actions"),
-            defaultContent: '',
-            render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
-            },
-            className: "text-center",
-            orderable: false,
-            searchable: false,
-        }
-    ],
-    createdRow: function(row, data) {
-        if (!data.alias) {
-            $('td:eq(6)', row).addClass("text-muted text-italic");
-        }
+        // Raw value is returned otherwise
+        return data;
+      },
     },
-    order: [
-        [ 0, 'asc' ]
-    ],
-    deferRender: true,
-    scrollY: '500px',
-    scrollCollapse: true,
-    stateSave: false,
-    processing: true,
-    paging: false,
-    initComplete : function(settings) {
-        $(settings.table).on("click", "td.activeIcon > i", function() {
-            let row = $(settings.table).DataTable().row( $(this).parents('tr') );
-
-            // Do not request change if previous request is still in progress
-            if ($(this).hasClass("fa-spinner")) {
-                return false;
-            }
-
-            // Change icon to spinner
-            $(this).removeClass().addClass('fa fa-spinner fa-spin');
-
-            // Send request to change account active state
-            $.ajax ({
-                type: 'PATCH',
-                url: window.route('api.v1.account-entities.patch-active', {accountEntity: row.data().id}),
-                data: JSON.stringify({
-                    "_token": csrfToken,
-                    "active": !row.data().active,
-                }),
-                contentType: 'application/json',
-                success: function (data) {
-                    // Update row in table data source
-                    window.accounts.filter(account => account.id === data.id)[0].active = data.active;
-                },
-                error: function (_data) {
-                    toastHelpers.showToast(
-                        __('Error'),
-                        __('Error while changing account active state.'),
-                        'bg-danger',
-                        {
-                            headerSmall: transactionLink(row.data().id, __('Go to transaction')),
-                        }
-                    );
-                },
-                complete: function(_data) {
-                    // Re-render row
-                    row.invalidate().draw(false);
-                }
-            });
-        });
+    {
+      data: 'active',
+      title: __('Active'),
+      render: function (data, type) {
+        return booleanToTableIcon(data, type);
+      },
+      className: 'text-center activeIcon',
+    },
+    {
+      data: 'config.currency.name',
+      title: __('Currency'),
+    },
+    {
+      data: 'config.opening_balance',
+      title: __('Opening balance'),
+      render: function (data, type, row) {
+        if (type === 'display') {
+          return toFormattedCurrency(
+            data,
+            window.YAFFA.userSettings.locale,
+            row.config.currency,
+          );
+        }
+        return data;
+      },
+      className: 'dt-nowrap',
+      searchable: false,
+      type: 'num',
+    },
+    {
+      data: 'transactions_count',
+      title: __('Transactions'),
+      render: function (data, type, row) {
+        if (type === 'display') {
+          if (data > 0) {
+            return `<a href="${window.route('reports.transactions', { accounts: [row.id] })}"
+                        title="${__('Show transactions')}"
+                        >${toFormattedNumber(data, window.YAFFA.userSettings.locale, { maximumFractionDigits: 0, useGrouping: true })}</a>`;
+          }
+          return data;
+        }
+        return data;
+      },
+      type: 'num',
+    },
+    {
+      data: 'config.account_group.name',
+      title: __('Account group'),
+    },
+    {
+      data: 'alias',
+      title: __('Import alias'),
+      render: function (data, type) {
+        if (type === 'display') {
+          return data ? data.replace('\n', '<br>') : __('Not set');
+        }
+        return data;
+      },
+    },
+    {
+      title: __('Actions'),
+      defaultContent: '',
+      render: function (_data, _type, _row) {
+        return (
+          '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+          __('Actions') +
+          '"></i>'
+        );
+      },
+      className: 'text-center',
+      orderable: false,
+      searchable: false,
+    },
+  ],
+  createdRow: function (row, data) {
+    if (!data.alias) {
+      $('td:eq(6)', row).addClass('text-muted text-italic');
     }
+  },
+  order: [[0, 'asc']],
+  deferRender: true,
+  scrollY: '500px',
+  scrollCollapse: true,
+  stateSave: false,
+  processing: true,
+  paging: false,
+  initComplete: function (settings) {
+    $(settings.table).on('click', 'td.activeIcon > i', function () {
+      let row = $(settings.table).DataTable().row($(this).parents('tr'));
+
+      // Do not request change if previous request is still in progress
+      if ($(this).hasClass('fa-spinner')) {
+        return false;
+      }
+
+      // Change icon to spinner
+      $(this).removeClass().addClass('fa fa-spinner fa-spin');
+
+      // Send request to change account active state
+      $.ajax({
+        type: 'PATCH',
+        url: window.route('api.v1.account-entities.patch-active', {
+          accountEntity: row.data().id,
+        }),
+        data: JSON.stringify({
+          _token: csrfToken,
+          active: !row.data().active,
+        }),
+        contentType: 'application/json',
+        success: function (data) {
+          // Update row in table data source
+          window.accounts.filter(
+            (account) => account.id === data.id,
+          )[0].active = data.active;
+        },
+        error: function (_data) {
+          toastHelpers.showToast(
+            __('Error'),
+            __('Error while changing account active state.'),
+            'bg-danger',
+            {
+              headerSmall: transactionLink(
+                row.data().id,
+                __('Go to transaction'),
+              ),
+            },
+          );
+        },
+        complete: function (_data) {
+          // Re-render row
+          row.invalidate().draw(false);
+        },
+      });
+    });
+  },
 });
 
 // Initialize the contextual actions plugin
 table.contextualActions({
-    contextMenuClasses: ['text-primary'],
-    deselectAfterAction: true,
-    contextMenu: {
-        enabled: true,
-        isMulti: false,
-        headerRenderer: function (selectedRows) {
-            const rowData = selectedRows[0];
-            return escapeHtml(rowData.name);
-        },
-        triggerButtonSelector: '.hover-icon',
+  contextMenuClasses: ['text-primary'],
+  deselectAfterAction: true,
+  contextMenu: {
+    enabled: true,
+    isMulti: false,
+    headerRenderer: function (selectedRows) {
+      const rowData = selectedRows[0];
+      return escapeHtml(rowData.name);
     },
-    buttonList: {
-        enabled: false
+    triggerButtonSelector: '.hover-icon',
+  },
+  buttonList: {
+    enabled: false,
+  },
+  items: [
+    {
+      type: 'option',
+      title: __('Show details'),
+      iconClass: 'fa fa-magnifying-glass',
+      contextMenuClasses: ['text-success'],
+      action: function (row) {
+        window.location.href = window.route('account-entity.show', {
+          account_entity: row[0].id,
+        });
+      },
     },
-    items: [
-        {
-            type: 'option',
-            title: __('Show details'),
-            iconClass: 'fa fa-magnifying-glass',
-            contextMenuClasses: ['text-success'],
-            action: function (row) {
-                window
-                    .location
-                    .href = window.route('account-entity.show', {account_entity: row[0].id});
+    {
+      type: 'option',
+      title: __('Edit'),
+      iconClass: 'fa fa-edit',
+      contextMenuClasses: ['text-primary'],
+      action: function (row) {
+        window.location.href = window.route('account-entity.edit', {
+          type: 'account',
+          account_entity: row[0].id,
+        });
+      },
+    },
+    {
+      type: 'option',
+      title: __('Show transactions'),
+      iconClass: 'fa fa-list',
+      contextMenuClasses: ['text-info'],
+      action: function (row) {
+        window.location.href = window.route('reports.transactions', {
+          accounts: [row[0].id],
+        });
+      },
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'option',
+      title: __('Delete'),
+      iconClass: 'fa fa-trash',
+      contextMenuClasses: ['text-danger'],
+      isDisabled: function (row) {
+        // Check if the account can be deleted
+        return row.transactions_count > 0;
+      },
+      action: function (row) {
+        const account = row[0];
+
+        // Get confirmation from the user
+        confirmDelete(__('Are you sure to want to delete this item?')).then(
+          (result) => {
+            if (!result.isConfirmed) {
+              return;
             }
-        },
-        {
-            type: 'option',
-            title: __('Edit'),
-            iconClass: 'fa fa-edit',
-            contextMenuClasses: ['text-primary'],
-            action: function (row) {
-                window
-                    .location
-                    .href = window.route('account-entity.edit', {type: 'account', account_entity: row[0].id});
-            }
-        },
-        {
-            type: 'option',
-            title: __('Show transactions'),
-            iconClass: 'fa fa-list',
-            contextMenuClasses: ['text-info'],
-            action: function (row) {
-                window
-                    .location
-                    .href = window.route('reports.transactions', {accounts: [row[0].id]});
-            }
-        },
-        {
-            type: 'divider'
-        },
-        {
-            type: 'option',
-            title: __('Delete'),
-            iconClass: 'fa fa-trash',
-            contextMenuClasses: ['text-danger'],
-            isDisabled: function (row) {
-                // Check if the account can be deleted
-                return row.transactions_count > 0;
-            },
-            action: function (row) {
-                const account = row[0];
-                ajaxIsBusy = true;
 
-                // Get confirmation from the user
-                confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
-                    if (!result.isConfirmed) {
-                        ajaxIsBusy = false;
-                        return;
-                    }
+            // Send request to delete account
+            axios
+              .delete(
+                window.route('api.v1.account-entities.destroy', account.id),
+              )
+              .then((response) => {
+                const deletedAccountId = response.data.accountEntity.id;
 
-                    // Send request to delete account
-                    axios.delete(window.route('api.v1.account-entities.destroy', account.id))
-                    .then((response) => {
-                        const deletedAccountId = response.data.accountEntity.id;
+                // Update row in table data source
+                window.accounts = window.accounts.filter(
+                  (account) => account.id !== deletedAccountId,
+                );
 
-                        // Update row in table data source
-                        window.accounts = window.accounts.filter(account => account.id !== deletedAccountId);
+                table
+                  .row((_, data) => data.id === deletedAccountId)
+                  .remove()
+                  .draw();
 
-                        table
-                            .row((_, data) => data.id === deletedAccountId)
-                            .remove()
-                            .draw();
-
-                        toastHelpers.showSuccessToast(__('Account deleted'));
-                    })
-                    .catch((_) => {
-                        toastHelpers.showErrorToast(__('Error while trying to delete account'));
-                    })
-                    .finally(() => {
-                        ajaxIsBusy = false;
-                    });
-                });
-            }
-        }
-    ]
+                toastHelpers.showSuccessToast(__('Account deleted'));
+              })
+              .catch((_) => {
+                toastHelpers.showErrorToast(
+                  __('Error while trying to delete account'),
+                );
+              });
+          },
+        );
+      },
+    },
+  ],
 });
 
 // Listeners for filters
-$('input[name=table_filter_active]').on("change", function() {
-    table.column(1).search(this.value).draw();
+$('input[name=table_filter_active]').on('change', function () {
+  table.column(1).search(this.value).draw();
 });
-$('#table_filter_search_text').keyup(function(){
-    table.search($(this).val()).draw() ;
-})
+$('#table_filter_search_text').keyup(function () {
+  table.search($(this).val()).draw();
+});

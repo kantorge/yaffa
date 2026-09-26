@@ -1,7 +1,7 @@
 <template>
   <div
-    class="list-group-item mb-2 transaction_item_row"
     :id="'transaction_item_' + id"
+    class="list-group-item mb-2 transaction_item_row"
   >
     <!-- Item description banner for AI recommendations -->
     <div
@@ -15,10 +15,10 @@
         <div class="d-inline-flex align-items-center">
           <input
             :id="learnRecommendationToggleId"
+            v-model="learnRecommendation"
             type="checkbox"
             class="btn-check"
             :disabled="!categoryIdData"
-            v-model="learnRecommendation"
             :title="learnRecommendationTooltip"
             :aria-label="learnRecommendationTooltip"
             autocomplete="off"
@@ -93,8 +93,8 @@
           type="button"
           class="btn btn-sm btn-outline-warning"
           :title="__('Remove suggestion (will not learn)')"
-          @click="removeSuggestion"
           style="white-space: nowrap"
+          @click="removeSuggestion"
         >
           <i class="fa fa-trash me-1"></i>{{ __('Remove') }}
         </button>
@@ -105,8 +105,8 @@
           type="button"
           class="btn btn-sm btn-outline-success"
           :title="__('Accept suggestion')"
-          @click="acceptSuggestion"
           style="white-space: nowrap"
+          @click="acceptSuggestion"
         >
           <i class="fa fa-check me-1"></i>{{ __('Add') }}
         </button>
@@ -119,8 +119,8 @@
           {{ __('Category') }}
         </span>
         <select
-          class="form-select category"
           v-model.number="categoryIdData"
+          class="form-select category"
         ></select>
       </div>
       <div class="col-12 col-sm-2 form-group">
@@ -130,8 +130,8 @@
         </span>
         <div class="input-group">
           <MathInput
-            class="form-control transaction_item_amount"
             v-model="amountData"
+            class="form-control transaction_item_amount"
           ></MathInput>
 
           <button
@@ -151,10 +151,10 @@
           {{ __('Tags') }}
         </span>
         <select
+          v-model="tagsData"
           class="form-select tag"
           multiple="multiple"
           data-width="100%"
-          v-model="tagsData"
         ></select>
       </div>
       <div
@@ -165,11 +165,11 @@
           {{ __('Comment') }}
         </span>
         <input
-          class="form-control transaction_item_comment"
           v-model="commentData"
-          @blur="$emit('update:comment', $event.target.value)"
+          class="form-control transaction_item_comment"
           type="text"
           :placeholder="__('Add comment')"
+          @blur="$emit('update:comment', $event.target.value)"
         />
       </div>
       <div class="col-12 col-sm-1 justify-content-end d-flex align-items-start">
@@ -184,9 +184,9 @@
         <button
           type="button"
           class="btn btn-sm btn-danger"
-          @click="removeItem"
           style="margin-left: 10px"
           :title="__('Remove transaction item')"
+          @click="removeItem"
         >
           <span class="fa fa-minus"></span>
         </button>
@@ -245,6 +245,7 @@
       'update:tags',
       'removeItem',
       'update:learnRecommendation',
+      'updateItemAmount',
     ],
 
     data() {
@@ -359,6 +360,12 @@
           (this.match_type === 'exact' || this.match_type === 'ai') &&
           !this.isRecommendationAccepted
         );
+      },
+    },
+
+    watch: {
+      amountData(newAmount) {
+        this.$emit('update:amount', newAmount);
       },
     },
 
@@ -671,12 +678,6 @@
           itemId: this.id,
           learnRecommendation: this.learnRecommendation,
         });
-      },
-    },
-
-    watch: {
-      amountData(newAmount) {
-        this.$emit('update:amount', newAmount);
       },
     },
   };

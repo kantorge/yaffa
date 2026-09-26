@@ -80,6 +80,12 @@
         isRefreshing: false,
       };
     },
+    watch: {
+      processedTransactions() {
+        // Recalculate quantities when transactions change (e.g., when a transaction is deleted)
+        this.recalculateQuantities();
+      },
+    },
     created() {
       // Convert date strings to Date objects once
       this.processedTransactions = this.transactions.map((tx) => ({
@@ -117,12 +123,6 @@
           ),
         });
       }
-    },
-    watch: {
-      processedTransactions() {
-        // Recalculate quantities when transactions change (e.g., when a transaction is deleted)
-        this.recalculateQuantities();
-      },
     },
     methods: {
       onSetDateRange({ type, date }) {

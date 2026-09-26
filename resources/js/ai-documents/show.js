@@ -6,5 +6,5 @@ const app = createApp({});
 
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
-app.component('ai-document-viewer', AiDocumentViewer);
+app.component('AiDocumentViewer', AiDocumentViewer);
 app.mount('#app');

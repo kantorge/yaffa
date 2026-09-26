@@ -1,13 +1,13 @@
 <template>
   <bootstrap-notification
+    v-for="(item, index) in notifications"
+    :key="index"
     :dismissible="item.dismissible"
     :type="item.type"
     :title="item.title"
     :message="item.message"
     :icon="item.icon"
     :timeout="item.timeout"
-    v-for="(item, index) in notifications"
-    :key="index"
   ></bootstrap-notification>
 </template>
 

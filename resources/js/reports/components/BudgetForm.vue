@@ -1,7 +1,7 @@
 <template>
   <FormModal
-    ref="formModal"
     :id="id"
+    ref="formModal"
     size="lg"
     :action="action"
     :new-title="__('Add new budget')"
@@ -11,135 +11,135 @@
     :show-success-alert="false"
     @submit="onSubmit"
   >
-            <div class="row mb-3">
-              <label :for="categorySelectId" class="form-label col-sm-3">
-                {{ __('Category') }}
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="categorySelectId"
-                  class="form-select category"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="categorySelectId" class="form-label col-sm-3">
+        {{ __('Category') }}
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="categorySelectId"
+          class="form-select category"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="accountSelectId" class="form-label col-sm-3">
-                {{ __('Account') }}
-                <i
-                  class="fa fa-info-circle text-info"
-                  :title="
-                    __(
-                      'Optional. Leave empty for an account-agnostic budget, calculated in your base currency.',
-                    )
-                  "
-                  data-bs-toggle="tooltip"
-                ></i>
-              </label>
-              <div class="col-sm-9">
-                <select
-                  :id="accountSelectId"
-                  class="form-select account"
-                  style="width: 100%"
-                ></select>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="accountSelectId" class="form-label col-sm-3">
+        {{ __('Account') }}
+        <i
+          class="fa fa-info-circle text-info"
+          :title="
+            __(
+              'Optional. Leave empty for an account-agnostic budget, calculated in your base currency.',
+            )
+          "
+          data-bs-toggle="tooltip"
+        ></i>
+      </label>
+      <div class="col-sm-9">
+        <select
+          :id="accountSelectId"
+          class="form-select account"
+          style="width: 100%"
+        ></select>
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label class="form-label col-sm-3">
-                {{ __('Transaction type') }}
-              </label>
-              <div
-                class="col-sm-9 btn-group"
-                role="group"
-                :class="{ 'has-error': form.errors.has('transaction_type') }"
-              >
-                <input
-                  class="btn-check"
-                  type="radio"
-                  autocomplete="off"
-                  value="withdrawal"
-                  :id="withdrawalRadioId"
-                  v-model="form.transaction_type"
-                />
-                <label class="btn btn-outline-primary" :for="withdrawalRadioId">
-                  <span class="fa fa-circle-minus text-danger"></span><br />
-                  {{ __('Withdrawal') }}
-                </label>
-                <input
-                  class="btn-check"
-                  type="radio"
-                  autocomplete="off"
-                  value="deposit"
-                  :id="depositRadioId"
-                  v-model="form.transaction_type"
-                />
-                <label class="btn btn-outline-primary" :for="depositRadioId">
-                  <span class="fa fa-circle-plus text-success"></span><br />
-                  {{ __('Deposit') }}
-                </label>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label class="form-label col-sm-3">
+        {{ __('Transaction type') }}
+      </label>
+      <div
+        class="col-sm-9 btn-group"
+        role="group"
+        :class="{ 'has-error': form.errors.has('transaction_type') }"
+      >
+        <input
+          :id="withdrawalRadioId"
+          v-model="form.transaction_type"
+          class="btn-check"
+          type="radio"
+          autocomplete="off"
+          value="withdrawal"
+        />
+        <label class="btn btn-outline-primary" :for="withdrawalRadioId">
+          <span class="fa fa-circle-minus text-danger"></span><br />
+          {{ __('Withdrawal') }}
+        </label>
+        <input
+          :id="depositRadioId"
+          v-model="form.transaction_type"
+          class="btn-check"
+          type="radio"
+          autocomplete="off"
+          value="deposit"
+        />
+        <label class="btn btn-outline-primary" :for="depositRadioId">
+          <span class="fa fa-circle-plus text-success"></span><br />
+          {{ __('Deposit') }}
+        </label>
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="amountInputId" class="form-label col-sm-3">
-                {{ __('Amount') }}
-              </label>
-              <div class="col-sm-9">
-                <div class="input-group">
-                  <input
-                    class="form-control"
-                    :id="amountInputId"
-                    type="number"
-                    step="any"
-                    min="0"
-                    v-model="form.amount"
-                    :class="{ 'has-error': form.errors.has('amount') }"
-                  />
-                  <span class="input-group-text">{{ currencyCode }}</span>
-                </div>
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="amountInputId" class="form-label col-sm-3">
+        {{ __('Amount') }}
+      </label>
+      <div class="col-sm-9">
+        <div class="input-group">
+          <input
+            :id="amountInputId"
+            v-model="form.amount"
+            class="form-control"
+            type="number"
+            step="any"
+            min="0"
+            :class="{ 'has-error': form.errors.has('amount') }"
+          />
+          <span class="input-group-text">{{ currencyCode }}</span>
+        </div>
+      </div>
+    </div>
 
-            <div class="row mb-3">
-              <label :for="commentInputId" class="form-label col-sm-3">
-                {{ __('Comment') }}
-              </label>
-              <div class="col-sm-9">
-                <input
-                  class="form-control"
-                  :id="commentInputId"
-                  maxlength="255"
-                  type="text"
-                  v-model="form.comment"
-                />
-              </div>
-            </div>
+    <div class="row mb-3">
+      <label :for="commentInputId" class="form-label col-sm-3">
+        {{ __('Comment') }}
+      </label>
+      <div class="col-sm-9">
+        <input
+          :id="commentInputId"
+          v-model="form.comment"
+          class="form-control"
+          maxlength="255"
+          type="text"
+        />
+      </div>
+    </div>
 
-            <transaction-schedule
-              :isSchedule="false"
-              :isBudget="true"
-              :schedule="form"
-              :form="form"
-              fieldPrefix=""
-              bare
-              key="budget-period"
-            ></transaction-schedule>
+    <transaction-schedule
+      key="budget-period"
+      :is-schedule="false"
+      :is-budget="true"
+      :schedule="form"
+      :form="form"
+      field-prefix=""
+      bare
+    ></transaction-schedule>
 
-            <transaction-schedule
-              v-if="action === 'replace' && form.original_schedule_config"
-              :isSchedule="false"
-              :isBudget="true"
-              :withCheckbox="true"
-              :title="__('Update base period')"
-              :allowCustomization="false"
-              :schedule="form.original_schedule_config"
-              :form="form"
-              fieldPrefix="original_schedule_config"
-              ref="scheduleOriginal"
-              key="budget-period-original"
-            ></transaction-schedule>
+    <transaction-schedule
+      v-if="action === 'replace' && form.original_schedule_config"
+      ref="scheduleOriginal"
+      key="budget-period-original"
+      :is-schedule="false"
+      :is-budget="true"
+      :with-checkbox="true"
+      :title="__('Update base period')"
+      :allow-customization="false"
+      :schedule="form.original_schedule_config"
+      :form="form"
+      field-prefix="original_schedule_config"
+    ></transaction-schedule>
   </FormModal>
 </template>
 
@@ -219,7 +219,10 @@
           return '';
         }
 
-        return this.accountCurrencyCode || window.YAFFA.userSettings.baseCurrency?.iso_code;
+        return (
+          this.accountCurrencyCode ||
+          window.YAFFA.userSettings.baseCurrency?.iso_code
+        );
       },
       categorySelectId() {
         return `${this.formInstanceId}-category_id`;
@@ -244,7 +247,9 @@
           return null;
         }
 
-        return route('api.v1.budgets.update', { budget: this.budgetId });
+        return route('api.v1.budgets.update', {
+          budget: this.budgetId,
+        });
       },
     },
 
@@ -352,9 +357,7 @@
               cache: true,
             },
             selectOnClose: false,
-            placeholder: __(
-              'No account (base currency, account-agnostic)',
-            ),
+            placeholder: __('No account (base currency, account-agnostic)'),
             allowClear: true,
             dropdownParent: $('#' + this.id),
           })
@@ -428,7 +431,8 @@
             // it down to the currency's own generic precision so the amount field doesn't show
             // e.g. "100000,0000" for a currency (HUF) that has no fractional unit at all.
             const currency =
-              data.account?.config?.currency || window.YAFFA.userSettings.baseCurrency;
+              data.account?.config?.currency ||
+              window.YAFFA.userSettings.baseCurrency;
             const precision = currency?.generic_decimal_precision ?? 0;
             this.form.amount =
               data.amount !== null && data.amount !== undefined
@@ -440,7 +444,8 @@
             this.form.by_day = data.by_day;
             this.form.by_month = data.by_month;
             this.form.days_before_month_end = data.days_before_month_end;
-            this.form.last_business_day_of_month = data.last_business_day_of_month;
+            this.form.last_business_day_of_month =
+              data.last_business_day_of_month;
             this.form.start_date = data.start_date;
             this.form.end_date = data.end_date;
             this.form.count = data.count;
@@ -448,7 +453,11 @@
 
             this.categorySelect.empty();
             if (data.category) {
-              this.setSelectValue(this.categorySelect, data.category, 'full_name');
+              this.setSelectValue(
+                this.categorySelect,
+                data.category,
+                'full_name',
+              );
             }
 
             this.accountSelect.empty();
@@ -456,7 +465,8 @@
               this.setSelectValue(this.accountSelect, data.account, 'name');
             }
 
-            this.accountCurrencyCode = data.account?.config?.currency?.iso_code ?? null;
+            this.accountCurrencyCode =
+              data.account?.config?.currency?.iso_code ?? null;
             this.accountCurrencyPending = false;
 
             // 'replace' (mirroring TransactionFormStandard's schedule-clone flow): this
@@ -472,7 +482,8 @@
                 by_day: this.form.by_day,
                 by_month: this.form.by_month,
                 days_before_month_end: this.form.days_before_month_end,
-                last_business_day_of_month: this.form.last_business_day_of_month,
+                last_business_day_of_month:
+                  this.form.last_business_day_of_month,
                 count: this.form.count,
                 inflation: this.form.inflation,
                 start_date: this.form.start_date,
