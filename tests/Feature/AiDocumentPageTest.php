@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Casts\MoneyCast;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\Transaction;
@@ -86,7 +87,7 @@ class AiDocumentPageTest extends TestCase
             ->create();
 
         $transaction->load(['config', 'transactionItems']);
-        $amount = (float) $transaction->transactionItems->sum('amount');
+        $amount = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
 
         $rawData = [
             'date' => $transaction->date?->format('Y-m-d'),

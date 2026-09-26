@@ -53,7 +53,7 @@
     @endenv
 </head>
 
-<body @yield('classes_body')>
+<body class="pre-render @yield('classes_body')">
     {{-- The GTM noscript code is ignored even in sandbox mode, and this should not cause any issues --}}
 
     {{-- Body Content --}}

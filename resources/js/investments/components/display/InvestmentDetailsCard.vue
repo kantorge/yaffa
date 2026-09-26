@@ -1,6 +1,6 @@
 <template>
   <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between">
+    <div class="card-header d-flex justify-content-between align-items-center">
       <div class="card-title">
         {{ __('Investment details') }}
       </div>
@@ -55,7 +55,9 @@
         </dd>
         <template v-if="investment.auto_update">
           <dt class="col-4">{{ __('Price provider') }}</dt>
-          <dd class="col-8">{{ investment.investment_price_provider_name }}</dd>
+          <dd class="col-8">
+            {{ investment.investment_price_provider_name }}
+          </dd>
         </template>
       </dl>
     </div>

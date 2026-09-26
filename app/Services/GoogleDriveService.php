@@ -75,8 +75,6 @@ class GoogleDriveService
      * List files in the Google Drive folder, by default since last_sync_at.
      * Files whose name starts with "processed_" or equals "yaffa.txt" are silently excluded.
      *
-     * @param GoogleDriveConfig $config
-     * @param bool $sinceLastSync
      * @return array<int, array{id: string, name: string, mimeType: string, modifiedTime: string}>
      */
     public function listNewFiles(GoogleDriveConfig $config, bool $sinceLastSync = true): array

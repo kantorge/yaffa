@@ -1,6 +1,4 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
-import Swal from 'sweetalert2';
 
 import { createApp } from 'vue';
 import CategoryLearningForm from './components/CategoryLearningForm.vue';
@@ -11,6 +9,7 @@ import { escapeHtml } from '@/shared/lib/helpers';
 import { initializeSelect2 } from '@/shared/lib/select2';
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 initializeSelect2(window.YAFFA.userSettings.language);
 
@@ -30,7 +29,8 @@ const normalizeLearning = (learning) => {
     active,
     status,
     category_id: toNumericId(learning.category?.id),
-    category_name: learning.category?.full_name || learning.category?.name || __('Not set'),
+    category_name:
+      learning.category?.full_name || learning.category?.name || __('Not set'),
     active_filter: active ? __('Yes') : __('No'),
   };
 };
@@ -52,7 +52,9 @@ const vueApp = createApp({
       if (existingIndex !== -1) {
         window.categoryLearnings[existingIndex] = normalizedLearning;
 
-        const row = window.table.row((_, data) => toNumericId(data.id) === normalizedId);
+        const row = window.table.row(
+          (_, data) => toNumericId(data.id) === normalizedId,
+        );
         if (row.any()) {
           row.data(normalizedLearning).draw(false);
         }
@@ -82,35 +84,45 @@ window.onboardingTourSteps = [
     element: '#table',
     popover: {
       title: __('Category learning'),
-      description: __('Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.'),
+      description: __(
+        'Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.',
+      ),
     },
   },
   {
     element: '#cardActions',
     popover: {
       title: __('Category learning actions'),
-      description: __('Create a new category learning entry or merge two entries when they represent the same meaning.'),
+      description: __(
+        'Create a new category learning entry or merge two entries when they represent the same meaning.',
+      ),
     },
   },
   {
     element: '#cardFilters',
     popover: {
       title: __('Filters'),
-      description: __('Use active, category, and search filters to quickly find the entries you want to review.'),
+      description: __(
+        'Use active, category, and search filters to quickly find the entries you want to review.',
+      ),
     },
   },
   {
     element: '#table_filter_active_yes',
     popover: {
       title: __('Active filter'),
-      description: __('Inactive category learning entries stay available for review and can be reactivated later.'),
+      description: __(
+        'Inactive category learning entries stay available for review and can be reactivated later.',
+      ),
     },
   },
   {
     element: '#table_filter_search_text',
     popover: {
       title: __('Search category learning'),
-      description: __('Search across description, category, and usage to locate specific category learning entries.'),
+      description: __(
+        'Search across description, category, and usage to locate specific category learning entries.',
+      ),
     },
   },
 ];
@@ -140,7 +152,8 @@ const initializeMergeSelect = (selector, otherSelector) => {
       },
       processResults: function (data) {
         const selectedOther = $(otherSelector).select2('data');
-        const selectedOtherId = selectedOther.length > 0 ? Number(selectedOther[0].id) : null;
+        const selectedOtherId =
+          selectedOther.length > 0 ? Number(selectedOther[0].id) : null;
         const rows = Array.isArray(data) ? data : [];
 
         return {
@@ -249,9 +262,8 @@ const buildTable = (rows) => {
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     initComplete: function (settings) {
-      const tableElement = $(settings.nTable);
+      const tableElement = $(settings.table);
 
       tableElement.on('click', '.button-edit-learning', function () {
         const id = Number($(this).data('id'));
@@ -303,35 +315,37 @@ const buildTable = (rows) => {
       tableElement.on('click', '.button-delete-learning', function () {
         const id = Number($(this).data('id'));
 
-        Swal.fire({
-          animation: false,
-          text: __('Are you sure to want to delete this item?'),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: __('Cancel'),
-          confirmButtonText: __('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
-          },
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            return;
-          }
+        confirmDelete(__('Are you sure to want to delete this item?')).then(
+          (result) => {
+            if (!result.isConfirmed) {
+              return;
+            }
 
-          window.axios
-            .delete(route('api.v1.category-learning.destroy', { categoryLearning: id }))
-            .then(() => {
-              window.categoryLearnings = window.categoryLearnings.filter((item) => Number(item.id) !== id);
-              window.table
-                .row((_, data) => Number(data.id) === id)
-                .remove()
-                .draw(false);
-              toastHelpers.showSuccessToast(__('Category learning entry deleted'));
-            })
-            .catch(() => toastHelpers.showErrorToast(__('Error while deleting category learning entry')));
-        });
+            window.axios
+              .delete(
+                route('api.v1.category-learning.destroy', {
+                  categoryLearning: id,
+                }),
+              )
+              .then(() => {
+                window.categoryLearnings = window.categoryLearnings.filter(
+                  (item) => Number(item.id) !== id,
+                );
+                window.table
+                  .row((_, data) => Number(data.id) === id)
+                  .remove()
+                  .draw(false);
+                toastHelpers.showSuccessToast(
+                  __('Category learning entry deleted'),
+                );
+              })
+              .catch(() =>
+                toastHelpers.showErrorToast(
+                  __('Error while deleting category learning entry'),
+                ),
+              );
+          },
+        );
       });
     },
   });
@@ -409,7 +423,9 @@ window.axios
     buildTable(rows);
   })
   .catch(() => {
-    toastHelpers.showErrorToast(__('Error while loading category learning entries'));
+    toastHelpers.showErrorToast(
+      __('Error while loading category learning entries'),
+    );
     buildTable([]);
   });
 
@@ -418,12 +434,16 @@ $('#button-submit-merge-learning').on('click', function () {
   const target = $(mergeTargetSelector).select2('data');
 
   if (source.length === 0 || target.length === 0) {
-    toastHelpers.showErrorToast(__('Please select both source and target category learning entries'));
+    toastHelpers.showErrorToast(
+      __('Please select both source and target category learning entries'),
+    );
     return;
   }
 
   if (String(source[0].id) === String(target[0].id)) {
-    toastHelpers.showErrorToast(__('Please select different category learning entries'));
+    toastHelpers.showErrorToast(
+      __('Please select different category learning entries'),
+    );
     return;
   }
 
@@ -437,12 +457,16 @@ $('#button-submit-merge-learning').on('click', function () {
       const mergedId = Number(merged.id);
       const sourceId = Number(source[0].id);
 
-      window.categoryLearnings = window.categoryLearnings
-        .filter((item) => Number(item.id) !== sourceId && Number(item.id) !== mergedId);
+      window.categoryLearnings = window.categoryLearnings.filter(
+        (item) => Number(item.id) !== sourceId && Number(item.id) !== mergedId,
+      );
       window.categoryLearnings.push(merged);
 
       window.table
-        .rows((_, data) => Number(data.id) === sourceId || Number(data.id) === mergedId)
+        .rows(
+          (_, data) =>
+            Number(data.id) === sourceId || Number(data.id) === mergedId,
+        )
         .remove();
       window.table.row.add(merged).draw(false);
 
@@ -450,7 +474,9 @@ $('#button-submit-merge-learning').on('click', function () {
       toastHelpers.showSuccessToast(__('Category learning entries merged'));
     })
     .catch((error) => {
-      const message = error.response?.data?.message || __('Error while merging category learning entries');
+      const message =
+        error.response?.data?.message ||
+        __('Error while merging category learning entries');
       toastHelpers.showErrorToast(message);
     });
 });

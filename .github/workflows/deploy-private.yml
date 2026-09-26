@@ -61,6 +61,26 @@ jobs:
               StrictHostKeyChecking no
           END
 
+      - name: Prevent downgrading an automated release deploy
+        if: github.event_name == 'release'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          TARGET_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          TARGET_VERSION="${TARGET_TAG#v}"
+          DEPLOYED_VERSION=$(ssh host_name "cat $DEPLOY_PATH/current/composer.json" 2>/dev/null | grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '[0-9][^"]*')
+          if [ -z "$DEPLOYED_VERSION" ]; then
+            echo "No currently deployed version found (first deploy?) - skipping check."
+            exit 0
+          fi
+          HIGHER=$(printf '%s\n%s\n' "$DEPLOYED_VERSION" "$TARGET_VERSION" | sort -V | tail -n1)
+          if [ "$HIGHER" != "$TARGET_VERSION" ] && [ "$DEPLOYED_VERSION" != "$TARGET_VERSION" ]; then
+            echo "::error::Refusing to deploy $TARGET_VERSION: currently deployed version is $DEPLOYED_VERSION (this would downgrade). Use workflow_dispatch to deploy intentionally."
+            exit 1
+          fi
+          echo "OK: deploying $TARGET_VERSION (currently deployed: $DEPLOYED_VERSION)"
+
       - name: Deploy Yaffa to ${{ matrix.environment }}
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}

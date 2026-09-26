@@ -73,6 +73,7 @@ It is especially useful when the user wants to:
 - Selected categories
 - Selected payees
 - Selected tags
+- Selected transaction types (withdrawal, deposit, transfer)
 - Optional tab or return context from the URL
 
 ## Outputs
@@ -82,6 +83,7 @@ It is especially useful when the user wants to:
 - Timeline visualization
 - Category-focused visual summaries
 - Monthly breakdown with drill-down into the list view
+- Waterfall chart showing how parent categories build up total withdrawals/deposits
 - Transaction detail modal for record inspection
 
 ## Core Logic / Rules
@@ -98,7 +100,7 @@ It is especially useful when the user wants to:
 1. User opens the Find Transactions report.
 2. User selects a date range and optional filters such as category, payee, account, or tag.
 3. User updates the report and YAFFA loads matching transactions.
-4. User moves between tabs such as Summary, List of Transactions, Timeline Charts, Category Charts, and Monthly Breakdown.
+4. User moves between tabs such as Summary, List of Transactions, Timeline Charts, Category Charts, Monthly Breakdown, and Waterfall.
 5. If a monthly pattern needs investigation, the user drills down to the list view and inspects the underlying transactions.
 
 ## Edge Cases / Constraints

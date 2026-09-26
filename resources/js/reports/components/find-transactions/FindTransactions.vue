@@ -1,270 +1,365 @@
 <template>
-  <div class="row">
-    <div :class="leftControlPanelCollapsed ? 'd-none' : 'col-sm-3'">
-      <div class="card mb-3" id="findTransactionsActionsCard">
-        <div class="card-header">
-          <div class="card-title">
-            {{ __('Actions') }}
-          </div>
-        </div>
-        <ul class="list-group list-group-flush">
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <span>
-              {{ __('Update') }}
-            </span>
-            <button
-              name="reload"
-              type="button"
-              class="btn btn-sm btn-primary"
-              :disabled="busy || !ready"
-              @click="getTransactions"
-            >
-              <i class="fas fa-sync-alt"></i>
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <date-range-filter-card
-        :initial-date-from="dateFrom"
-        :initial-date-to="dateTo"
-        :initial-preset="selectedPreset"
-        @update="onUpdateDateRange"
-      ></date-range-filter-card>
-
-      <find-transaction-select-card
-        property="category"
-        title="Category"
-        placeholder="Select category"
-        search-api-path="/api/v1/categories"
-        search_label_field="full_name"
-        details-api-path="/api/v1/categories/#id#"
-        details-label-field="full_name"
-        :preset-item-ids="selectedCategories"
-        @update="onUpdateCategory($event)"
-        @preset-ready="setReadyFlag($event)"
-      ></find-transaction-select-card>
-
-      <find-transaction-select-card
-        search-api-path="/api/v1/payees"
-        property="payee"
-        title="Payee"
-        placeholder="Select payee"
-        details-api-path="/api/v1/payees/#id#"
-        :preset-item-ids="selectedPayees"
-        @update="onUpdatePayee($event)"
-        @preset-ready="setReadyFlag($event)"
-      ></find-transaction-select-card>
-
-      <find-transaction-select-card
-        search-api-path="/api/v1/accounts"
-        property="account"
-        title="Account"
-        placeholder="Select account"
-        details-api-path="/api/v1/accounts/#id#"
-        :preset-item-ids="selectedAccounts"
-        @update="onUpdateAccount($event)"
-        @preset-ready="setReadyFlag($event)"
-      ></find-transaction-select-card>
-
-      <find-transaction-select-card
-        search-api-path="/api/v1/tags"
-        search_label_field="text"
-        property="tag"
-        title="Tag"
-        placeholder="Select tag"
-        details-api-path="/api/v1/tags/#id#"
-        :preset-item-ids="selectedTags"
-        @update="onUpdateTag($event)"
-        @preset-ready="setReadyFlag($event)"
-      ></find-transaction-select-card>
+  <div>
+    <div
+      v-if="filterConflictWarning"
+      class="alert alert-warning d-flex align-items-center"
+      role="alert"
+    >
+      <i class="fa fa-triangle-exclamation me-2"></i>
+      <span>{{ filterConflictWarning }}</span>
     </div>
-    <div :class="leftControlPanelCollapsed ? 'col-sm-12' : 'col-sm-9'">
-      <div class="left-control-panel-toggle-shell">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary left-control-panel-toggle-handle"
-          @click="toggleLeftControlPanel"
-          :title="leftControlPanelToggleState.title"
-          :aria-label="leftControlPanelToggleState.title"
-          :aria-expanded="leftControlPanelToggleState.ariaExpanded"
-        >
-          <i
-            :class="`fas ${leftControlPanelToggleState.iconClass}`"
-            data-left-control-panel-toggle-icon
-          ></i>
-        </button>
-        <div class="card left-control-panel-toggle-card">
-          <div
-            class="card-header d-flex align-items-center left-control-panel-toggle-header"
-          >
-            <ul class="nav nav-tabs card-header-tabs">
-              <li class="nav-item">
-                <button
-                  class="nav-link active"
-                  id="nav-summary"
-                  data-coreui-toggle="tab"
-                  data-coreui-target="#tab-summary"
-                  type="button"
-                  role="tab"
-                  aria-controls="tab-summary"
-                  aria-selected="true"
-                >
-                  {{ __('Summary') }}
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link"
-                  id="nav-transaction-list"
-                  data-coreui-toggle="tab"
-                  data-coreui-target="#tab-transaction-list"
-                  type="button"
-                  role="tab"
-                  aria-controls="tab-transaction-list"
-                  aria-selected="false"
-                >
-                  {{ __('List of transactions') }}
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link"
-                  id="nav-timeline-charts"
-                  data-coreui-toggle="tab"
-                  data-coreui-target="#tab-timeline-charts"
-                  type="button"
-                  role="tab"
-                  aria-controls="tab-timeline-charts"
-                  aria-selected="false"
-                >
-                  {{ __('Timeline charts') }}
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link"
-                  id="nav-category-charts"
-                  data-coreui-toggle="tab"
-                  data-coreui-target="#tab-category-charts"
-                  type="button"
-                  role="tab"
-                  aria-controls="tab-category-charts"
-                  aria-selected="false"
-                >
-                  {{ __('Category charts') }}
-                </button>
-              </li>
-              <li class="nav-item">
-                <button
-                  class="nav-link"
-                  id="nav-monthly-breakdown"
-                  data-coreui-toggle="tab"
-                  data-coreui-target="#tab-monthly-breakdown"
-                  type="button"
-                  role="tab"
-                  aria-controls="tab-monthly-breakdown"
-                  aria-selected="false"
-                >
-                  {{ __('Monthly breakdown') }}
-                </button>
-              </li>
-            </ul>
-          </div>
 
-          <div class="card-body">
-            <div class="tab-content">
-              <div
-                class="tab-pane fade show active"
-                id="tab-summary"
-                role="tabpanel"
-                aria-labelledby="nav-summary"
-                tabindex="0"
+    <div class="row">
+      <div :class="leftControlPanelCollapsed ? 'd-none' : 'col-sm-3'">
+        <div id="findTransactionsActionsCard" class="card mb-3">
+          <div class="card-header">
+            <div class="card-title">
+              {{ __('Actions') }}
+            </div>
+          </div>
+          <ul class="list-group list-group-flush">
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span>
+                {{ __('Update') }}
+              </span>
+              <button
+                name="reload"
+                type="button"
+                class="btn btn-sm btn-primary"
+                :disabled="busy || !ready"
+                @click="getTransactions"
               >
-                <reporting-canvas-summary
-                  :transactions="transactions"
-                  :busy="busy"
-                ></reporting-canvas-summary>
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </li>
+            <li
+              v-if="selectedCategories.length > 0 || selectedTags.length > 0"
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span>
+                {{ __('Only count matching items in breakdowns') }}
+                <i
+                  class="fa fa-info-circle text-info ms-1"
+                  data-bs-toggle="tooltip"
+                  :title="
+                    __(
+                      'When on, the monthly breakdown, category waterfall, and category charts only count the transaction items that match the active category/tag filters, instead of every item of a matching transaction.',
+                    )
+                  "
+                ></i>
+              </span>
+              <div class="form-check form-switch mb-0">
+                <input
+                  id="matchingItemsOnlySwitch"
+                  v-model="matchingItemsOnly"
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                />
               </div>
-              <div
-                class="tab-pane fade"
-                id="tab-transaction-list"
-                role="tabpanel"
-                aria-labelledby="nav-transaction-list"
-                tabindex="1"
+            </li>
+          </ul>
+        </div>
+
+        <date-range-filter-card
+          :initial-date-from="dateFrom"
+          :initial-date-to="dateTo"
+          :initial-preset="selectedPreset"
+          @update="onUpdateDateRange"
+        ></date-range-filter-card>
+
+        <transaction-type-filter-card
+          :preset-type-values="selectedTypes"
+          @update="onUpdateType($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></transaction-type-filter-card>
+
+        <find-transaction-select-card
+          property="category"
+          title="Category"
+          placeholder="Select category"
+          search-api-path="/api/v1/categories"
+          search_label_field="full_name"
+          details-api-path="/api/v1/categories/#id#"
+          details-label-field="full_name"
+          :preset-item-ids="selectedCategories"
+          @update="onUpdateCategory($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></find-transaction-select-card>
+
+        <find-transaction-select-card
+          search-api-path="/api/v1/payees"
+          property="payee"
+          title="Payee"
+          placeholder="Select payee"
+          details-api-path="/api/v1/payees/#id#"
+          :preset-item-ids="selectedPayees"
+          @update="onUpdatePayee($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></find-transaction-select-card>
+
+        <find-transaction-select-card
+          search-api-path="/api/v1/accounts"
+          property="account"
+          title="Account"
+          placeholder="Select account"
+          details-api-path="/api/v1/accounts/#id#"
+          :preset-item-ids="selectedAccounts"
+          @update="onUpdateAccount($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></find-transaction-select-card>
+
+        <find-transaction-select-card
+          search-api-path="/api/v1/tags"
+          search_label_field="text"
+          property="tag"
+          title="Tag"
+          placeholder="Select tag"
+          details-api-path="/api/v1/tags/#id#"
+          :preset-item-ids="selectedTags"
+          @update="onUpdateTag($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></find-transaction-select-card>
+
+        <find-transaction-select-card
+          search-api-path="/api/v1/investments"
+          property="investment"
+          title="Investment"
+          placeholder="Select investment"
+          details-api-path="/api/v1/investments/#id#"
+          :preset-item-ids="selectedInvestments"
+          @update="onUpdateInvestment($event)"
+          @preset-ready="setReadyFlag($event)"
+        ></find-transaction-select-card>
+      </div>
+      <div :class="leftControlPanelCollapsed ? 'col-sm-12' : 'col-sm-9'">
+        <div class="left-control-panel-toggle-shell">
+          <div class="card left-control-panel-toggle-card">
+            <div
+              class="card-header d-flex align-items-center gap-2 left-control-panel-toggle-header"
+            >
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary me-2"
+                :title="leftControlPanelToggleState.title"
+                :aria-label="leftControlPanelToggleState.title"
+                :aria-expanded="leftControlPanelToggleState.ariaExpanded"
+                @click="toggleLeftControlPanel"
               >
-                <reporting-canvas-transaction-list
-                  :transactions="transactions"
-                  :busy="busy"
-                  :drill-down-filter="drillDownFilter"
-                  :is-active="activeTab === 'transaction-list'"
-                  @return-to-monthly-breakdown="returnToMonthlyBreakdown"
-                  @clear-drill-down-filter="clearDrillDownFilter"
-                  @transaction-deleted="onTransactionDeleted"
-                ></reporting-canvas-transaction-list>
-              </div>
-              <div
-                class="tab-pane fade"
-                id="tab-timeline-charts"
-                role="tabpanel"
-                aria-labelledby="nav-timeline-charts"
-                tabindex="3"
-              >
-                <reporting-canvas-timeline
-                  :transactions="transactions"
-                  :busy="busy"
-                ></reporting-canvas-timeline>
-              </div>
-              <div
-                class="tab-pane fade"
-                id="tab-category-charts"
-                role="tabpanel"
-                aria-labelledby="nav-category-charts"
-                tabindex="4"
-              >
-                <reporting-canvas-categories
-                  :transactions="transactions"
-                  :busy="busy"
-                ></reporting-canvas-categories>
-              </div>
-              <div
-                class="tab-pane fade"
-                id="tab-monthly-breakdown"
-                role="tabpanel"
-                aria-labelledby="nav-monthly-breakdown"
-                tabindex="5"
-              >
-                <reporting-canvas-monthly-breakdown
-                  :transactions="transactions"
-                  :busy="busy"
-                  :is-drill-down="!!drillDownFilter"
-                  @drill-down="onMonthlyBreakdownDrillDown"
-                ></reporting-canvas-monthly-breakdown>
+                <i
+                  :class="`fas ${leftControlPanelToggleState.iconClass}`"
+                  data-left-control-panel-toggle-icon
+                ></i>
+              </button>
+              <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                  <button
+                    id="nav-summary"
+                    class="nav-link active"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-summary"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-summary"
+                    aria-selected="true"
+                  >
+                    {{ __('Summary') }}
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    id="nav-transaction-list"
+                    class="nav-link"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-transaction-list"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-transaction-list"
+                    aria-selected="false"
+                  >
+                    {{ __('List of transactions') }}
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    id="nav-timeline-charts"
+                    class="nav-link"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-timeline-charts"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-timeline-charts"
+                    aria-selected="false"
+                  >
+                    {{ __('Timeline charts') }}
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    id="nav-category-charts"
+                    class="nav-link"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-category-charts"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-category-charts"
+                    aria-selected="false"
+                  >
+                    {{ __('Category charts') }}
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    id="nav-monthly-breakdown"
+                    class="nav-link"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-monthly-breakdown"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-monthly-breakdown"
+                    aria-selected="false"
+                  >
+                    {{ __('Monthly breakdown') }}
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    id="nav-waterfall"
+                    class="nav-link"
+                    data-coreui-toggle="tab"
+                    data-coreui-target="#tab-waterfall"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-waterfall"
+                    aria-selected="false"
+                  >
+                    {{ __('Category waterfall') }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-body">
+              <div class="tab-content">
+                <div
+                  id="tab-summary"
+                  class="tab-pane fade show active"
+                  role="tabpanel"
+                  aria-labelledby="nav-summary"
+                  tabindex="0"
+                >
+                  <reporting-canvas-summary
+                    :transactions="transactions"
+                    :busy="busy"
+                  ></reporting-canvas-summary>
+                </div>
+                <div
+                  id="tab-transaction-list"
+                  class="tab-pane fade"
+                  role="tabpanel"
+                  aria-labelledby="nav-transaction-list"
+                  tabindex="1"
+                >
+                  <reporting-canvas-transaction-list
+                    :transactions="transactions"
+                    :busy="busy"
+                    :drill-down-filter="drillDownFilter"
+                    :is-active="activeTab === 'transaction-list'"
+                    @return-to-monthly-breakdown="returnToMonthlyBreakdown"
+                    @clear-drill-down-filter="clearDrillDownFilter"
+                    @transaction-deleted="onTransactionDeleted"
+                  ></reporting-canvas-transaction-list>
+                </div>
+                <div
+                  id="tab-timeline-charts"
+                  class="tab-pane fade"
+                  role="tabpanel"
+                  aria-labelledby="nav-timeline-charts"
+                  tabindex="3"
+                >
+                  <reporting-canvas-timeline
+                    :transactions="transactions"
+                    :busy="busy"
+                  ></reporting-canvas-timeline>
+                </div>
+                <div
+                  id="tab-category-charts"
+                  class="tab-pane fade"
+                  role="tabpanel"
+                  aria-labelledby="nav-category-charts"
+                  tabindex="4"
+                >
+                  <reporting-canvas-categories
+                    :transactions="transactions"
+                    :busy="busy"
+                    :matching-items-only="matchingItemsOnly"
+                    :category-ids="selectedCategories"
+                    :tag-ids="selectedTags"
+                  ></reporting-canvas-categories>
+                </div>
+                <div
+                  id="tab-monthly-breakdown"
+                  class="tab-pane fade"
+                  role="tabpanel"
+                  aria-labelledby="nav-monthly-breakdown"
+                  tabindex="5"
+                >
+                  <reporting-canvas-monthly-breakdown
+                    :transactions="transactions"
+                    :busy="busy"
+                    :is-drill-down="!!drillDownFilter"
+                    :matching-items-only="matchingItemsOnly"
+                    :category-ids="selectedCategories"
+                    :tag-ids="selectedTags"
+                    @drill-down="onMonthlyBreakdownDrillDown"
+                  ></reporting-canvas-monthly-breakdown>
+                </div>
+                <div
+                  id="tab-waterfall"
+                  class="tab-pane fade"
+                  role="tabpanel"
+                  aria-labelledby="nav-waterfall"
+                  tabindex="6"
+                >
+                  <reporting-canvas-waterfall
+                    :transactions="transactions"
+                    :busy="busy"
+                    :matching-items-only="matchingItemsOnly"
+                    :category-ids="selectedCategories"
+                    :tag-ids="selectedTags"
+                  ></reporting-canvas-waterfall>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <transaction-show-modal></transaction-show-modal>
+      <transaction-show-modal></transaction-show-modal>
+    </div>
   </div>
 </template>
 
 <script>
   import { __ } from '@/shared/lib/i18n';
-  import { processTransaction } from '@/shared/lib/helpers';
+  import {
+    processTransaction,
+    initializeBootstrapTooltips,
+    getArrayParamFromUrl,
+  } from '@/shared/lib/helpers';
   import { buildFilterCacheKey, buildBreakdownCacheKey } from './helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
+  import TransactionTypeFilterCard from './TransactionTypeFilterCard.vue';
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import ReportingCanvasFindTransactionsCategoryDetails from '../widgets/ReportingCanvas-FindTransactions-CategoryDetails.vue';
   import ReportingCanvasFindTransactionsSummary from '../widgets/ReportingCanvas-FindTransactions-Summary.vue';
   import ReportingCanvasFindTransactionsTimeline from '../widgets/ReportingCanvas-FindTransactions-Timeline.vue';
   import ReportingCanvasFindTransactionsMonthlyBreakdown from '../widgets/ReportingCanvas-FindTransactions-MonthlyBreakdown.vue';
   import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
+  import ReportingCanvasFindTransactionsWaterfall from '../widgets/ReportingCanvas-FindTransactions-Waterfall.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
   import presetCalculators from '@/shared/lib/date/presetDates';
@@ -285,6 +380,7 @@
     name: 'FindTransactions',
     components: {
       'find-transaction-select-card': FindTransactionSelectCard,
+      'transaction-type-filter-card': TransactionTypeFilterCard,
       'transaction-show-modal': TransactionShowModal,
       'date-range-filter-card': DateRangeFilterCard,
       'reporting-canvas-categories':
@@ -295,6 +391,7 @@
         ReportingCanvasFindTransactionsMonthlyBreakdown,
       'reporting-canvas-transaction-list':
         ReportingCanvasFindTransactionsTransactionList,
+      'reporting-canvas-waterfall': ReportingCanvasFindTransactionsWaterfall,
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -318,11 +415,31 @@
         activeTab: 'summary',
         dateFrom,
         dateTo,
-        selectedPreset: urlParams.get('date_from') || urlParams.get('date_to') ? null : datePreset,
+        selectedPreset:
+          urlParams.get('date_from') || urlParams.get('date_to')
+            ? null
+            : datePreset,
+        allTypeValues: Object.keys(window.YAFFA.config.transactionTypes || {}),
+        standardTypeValues: Object.values(
+          window.YAFFA.config.transactionTypes || {},
+        )
+          .filter((type) => type.category === 'standard')
+          .map((type) => type.value),
+        investmentTypeValues: Object.values(
+          window.YAFFA.config.transactionTypes || {},
+        )
+          .filter((type) => type.category === 'investment')
+          .map((type) => type.value),
+        selectedTypes: this.getUrlParams('types'),
         selectedAccounts: this.getUrlParams('accounts'),
         selectedCategories: this.getUrlParams('categories'),
         selectedPayees: this.getUrlParams('payees'),
         selectedTags: this.getUrlParams('tags'),
+        selectedInvestments: this.getUrlParams('investments'),
+        // Only relevant while a category/tag filter narrows the result set; scopes the
+        // category-based aggregate views (breakdown, waterfall, category charts) to the
+        // items that actually matched, instead of every item of a matching transaction.
+        matchingItemsOnly: false,
         returnTo: this.sanitizeReturnTo(urlParams.get('return_to')),
         initialTab: urlParams.get('tab') || null,
         skippedTransactionLoad: false,
@@ -332,6 +449,8 @@
           payee: false,
           account: false,
           tag: false,
+          investment: false,
+          types: false,
         },
         transactions: [],
       };
@@ -340,6 +459,130 @@
       leftControlPanelToggleState() {
         return getLeftControlPanelToggleState(this.leftControlPanelCollapsed);
       },
+      // Only treated as an active filter when it's a real subset; the full set is
+      // equivalent to "no restriction" and is therefore omitted from requests/URLs.
+      typesFilterParam() {
+        return this.selectedTypes.length !== this.allTypeValues.length
+          ? this.selectedTypes
+          : [];
+      },
+      // Warns about type/other-filter combinations that are guaranteed to return
+      // nothing: category/payee/tag only ever apply to standard transactions, and the
+      // investment filter only ever applies to investment transactions.
+      filterConflictWarning() {
+        const hasStandardOnlyFilter =
+          this.selectedCategories.length > 0 ||
+          this.selectedPayees.length > 0 ||
+          this.selectedTags.length > 0;
+        const hasInvestmentFilter = this.selectedInvestments.length > 0;
+
+        // An empty selection means "all types" (see TransactionTypeFilterCard)
+        const effectiveTypes =
+          this.selectedTypes.length === 0
+            ? this.allTypeValues
+            : this.selectedTypes;
+        const hasStandardTypeSelected = effectiveTypes.some((type) =>
+          this.standardTypeValues.includes(type),
+        );
+        const hasInvestmentTypeSelected = effectiveTypes.some((type) =>
+          this.investmentTypeValues.includes(type),
+        );
+
+        if (hasStandardOnlyFilter && !hasStandardTypeSelected) {
+          return __(
+            'Category, payee, and tag filters only apply to standard transactions, but no standard transaction type is selected. This combination will not return any results.',
+          );
+        }
+
+        if (hasInvestmentFilter && !hasInvestmentTypeSelected) {
+          return __(
+            'The investment filter only applies to investment transactions, but no investment transaction type is selected. This combination will not return any results.',
+          );
+        }
+
+        return null;
+      },
+    },
+
+    watch: {
+      // When all preselected filters are ready, get the transactions
+      ready: function (newReady) {
+        if (newReady) {
+          // When returning to monthly-breakdown, check if the breakdown component
+          // has its own lightweight cache — skip heavy transaction cache parsing
+          if (
+            this.initialTab === 'monthly-breakdown' &&
+            this.hasBreakdownCache()
+          ) {
+            this.skippedTransactionLoad = true;
+            return;
+          }
+          if (this.initialTab && this.loadFromCache()) {
+            return;
+          }
+          this.getTransactions();
+        }
+      },
+    },
+
+    mounted() {
+      // Handle tab switching to keep tab state in sync with URL and loading behavior
+      this._allTabs = Array.from(
+        this.$el.querySelectorAll('[data-coreui-toggle="tab"]'),
+      );
+      this._onTabShown = (event) => {
+        const tabId = (event.target.getAttribute('id') || '').replace(
+          /^nav-/,
+          '',
+        );
+        this.activeTab = tabId || 'summary';
+        const targetId = event.target.getAttribute('data-coreui-target');
+
+        // Keep tab selection reflected in URL
+        this.rebuildUrl(tabId || null, this.returnTo);
+
+        // Lazily load all transactions if they were skipped for the breakdown tab
+        if (targetId !== '#tab-monthly-breakdown') {
+          if (this.skippedTransactionLoad && this.transactions.length === 0) {
+            this.skippedTransactionLoad = false;
+            this.getTransactions();
+          }
+        } else if (this.drillDownFilter) {
+          this.drillDownFilter = null;
+          this.rebuildUrl('monthly-breakdown');
+        }
+      };
+      this._allTabs.forEach((tab) =>
+        tab.addEventListener('shown.coreui.tab', this._onTabShown),
+      );
+
+      // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
+      if (this.initialTab) {
+        this.$nextTick(() => {
+          const tabButton = this.$el.querySelector('#nav-' + this.initialTab);
+          if (tabButton) {
+            tabButton.click();
+          }
+        });
+      } else {
+        this.activeTab = 'summary';
+      }
+
+      this.ready = true;
+
+      initializeBootstrapTooltips(this.$el);
+    },
+
+    updated() {
+      initializeBootstrapTooltips(this.$el);
+    },
+
+    beforeUnmount() {
+      if (this._allTabs) {
+        this._allTabs.forEach((tab) =>
+          tab.removeEventListener('shown.coreui.tab', this._onTabShown),
+        );
+      }
     },
     methods: {
       toggleLeftControlPanel() {
@@ -356,6 +599,11 @@
         this.dateFrom = event.dateFrom;
         this.dateTo = event.dateTo;
         this.selectedPreset = event.preset || null;
+        this.rebuildUrl();
+      },
+      onUpdateType(event) {
+        this.drillDownFilter = null;
+        this.selectedTypes = event;
         this.rebuildUrl();
       },
       onUpdateCategory(event) {
@@ -376,6 +624,11 @@
       onUpdateTag(event) {
         this.drillDownFilter = null;
         this.selectedTags = event;
+        this.rebuildUrl();
+      },
+      onUpdateInvestment(event) {
+        this.drillDownFilter = null;
+        this.selectedInvestments = event;
         this.rebuildUrl();
       },
       onMonthlyBreakdownDrillDown(event) {
@@ -431,6 +684,13 @@
           }
         }
 
+        // Transaction types: only encode when a real subset is selected, since the
+        // default (no URL parameter) already means "search all types"
+        const types = this.typesFilterParam.map(
+          (item) => 'types[]=' + encodeURIComponent(item),
+        );
+        params.push(...types);
+
         // Accounts
         const accounts = this.selectedAccounts.map(
           (item) => 'accounts[]=' + item,
@@ -450,6 +710,12 @@
         // Tags
         const tags = this.selectedTags.map((item) => 'tags[]=' + item);
         params.push(...tags);
+
+        // Investments
+        const investments = this.selectedInvestments.map(
+          (item) => 'investments[]=' + item,
+        );
+        params.push(...investments);
 
         if (tab) {
           params.push('tab=' + encodeURIComponent(tab));
@@ -477,6 +743,8 @@
           categories: this.selectedCategories,
           payees: this.selectedPayees,
           tags: this.selectedTags,
+          types: this.typesFilterParam,
+          investments: this.selectedInvestments,
         });
       },
 
@@ -583,6 +851,8 @@
               categories: this.selectedCategories,
               payees: this.selectedPayees,
               tags: this.selectedTags,
+              types: this.typesFilterParam,
+              investments: this.selectedInvestments,
             },
           })
           .then((response) => {
@@ -619,95 +889,12 @@
        * @returns {string[]} Array of URL parameters
        */
       getUrlParams(paramName) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const regex = new RegExp(`^${paramName}\\[(\\d)?\\]$`);
-
-        let params = [];
-
-        urlParams.forEach((value, key) => {
-          if (regex.test(key)) {
-            params.push(value);
-          }
-        });
-
-        return params;
+        return getArrayParamFromUrl(
+          new URLSearchParams(window.location.search),
+          paramName,
+        );
       },
       __,
-    },
-
-    watch: {
-      // When all preselected filters are ready, get the transactions
-      ready: function (newReady) {
-        if (newReady) {
-          // When returning to monthly-breakdown, check if the breakdown component
-          // has its own lightweight cache — skip heavy transaction cache parsing
-          if (
-            this.initialTab === 'monthly-breakdown' &&
-            this.hasBreakdownCache()
-          ) {
-            this.skippedTransactionLoad = true;
-            return;
-          }
-          if (this.initialTab && this.loadFromCache()) {
-            return;
-          }
-          this.getTransactions();
-        }
-      },
-    },
-
-    mounted() {
-      // Handle tab switching to keep tab state in sync with URL and loading behavior
-      this._allTabs = Array.from(
-        this.$el.querySelectorAll('[data-coreui-toggle="tab"]'),
-      );
-      this._onTabShown = (event) => {
-        const tabId = (event.target.getAttribute('id') || '').replace(
-          /^nav-/,
-          '',
-        );
-        this.activeTab = tabId || 'summary';
-        const targetId = event.target.getAttribute('data-coreui-target');
-
-        // Keep tab selection reflected in URL
-        this.rebuildUrl(tabId || null, this.returnTo);
-
-        // Lazily load all transactions if they were skipped for the breakdown tab
-        if (targetId !== '#tab-monthly-breakdown') {
-          if (this.skippedTransactionLoad && this.transactions.length === 0) {
-            this.skippedTransactionLoad = false;
-            this.getTransactions();
-          }
-        } else if (this.drillDownFilter) {
-          this.drillDownFilter = null;
-          this.rebuildUrl('monthly-breakdown');
-        }
-      };
-      this._allTabs.forEach((tab) =>
-        tab.addEventListener('shown.coreui.tab', this._onTabShown),
-      );
-
-      // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
-      if (this.initialTab) {
-        this.$nextTick(() => {
-          const tabButton = this.$el.querySelector('#nav-' + this.initialTab);
-          if (tabButton) {
-            tabButton.click();
-          }
-        });
-      } else {
-        this.activeTab = 'summary';
-      }
-
-      this.ready = true;
-    },
-
-    beforeUnmount() {
-      if (this._allTabs) {
-        this._allTabs.forEach((tab) =>
-          tab.removeEventListener('shown.coreui.tab', this._onTabShown),
-        );
-      }
     },
   };
 </script>

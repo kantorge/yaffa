@@ -1,17 +1,43 @@
 /**
+ * Read all values for a bracketed array query parameter, accepting both the `name[]=` (repeated
+ * key) and `name[0]=`/`name[1]=` (indexed) forms - both are valid array query-string conventions
+ * or accessible via a PHP request equally, but URLSearchParams.getAll() only matches the exact
+ * key it's given, so a link built with one form silently loses every value if the reader only
+ * checks the other (e.g. a `?categories[0]=87` deep link doing nothing on page load).
+ *
+ * @param {URLSearchParams} searchParams
+ * @param {string} name
+ * @returns {string[]}
+ */
+export function getArrayParamFromUrl(searchParams, name) {
+  const repeated = searchParams.getAll(`${name}[]`);
+  if (repeated.length > 0) {
+    return repeated;
+  }
+
+  const indexedPattern = new RegExp(`^${name}\\[\\d+\\]$`);
+
+  return Array.from(searchParams.entries())
+    .filter(([key]) => indexedPattern.test(key))
+    .map(([, value]) => value);
+}
+
+/**
  * Helper function to get transaction type configuration from window.YAFFA.config.transactionTypes
  * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
  * @returns {object} Transaction type configuration with category, label, multipliers, etc.
  */
 export function getTransactionTypeConfig(transactionTypeValue) {
-    const transactionTypes = window.YAFFA.config.transactionTypes || {};
-    return transactionTypes[transactionTypeValue] || {
-        value: transactionTypeValue,
-        label: transactionTypeValue,
-        category: 'unknown',
-        amount_multiplier: null,
-        quantity_multiplier: null,
-    };
+  const transactionTypes = window.YAFFA.config.transactionTypes || {};
+  return (
+    transactionTypes[transactionTypeValue] || {
+      value: transactionTypeValue,
+      label: transactionTypeValue,
+      category: 'unknown',
+      amount_multiplier: null,
+      quantity_multiplier: null,
+    }
+  );
 }
 
 /**
@@ -21,16 +47,16 @@ export function getTransactionTypeConfig(transactionTypeValue) {
  * @returns {string}
  */
 export function escapeHtml(value) {
-    if (value === null || value === undefined) {
-        return '';
-    }
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -40,7 +66,7 @@ export function escapeHtml(value) {
  * @returns {string}
  */
 export function escapeHtmlWithLineBreaks(value) {
-    return escapeHtml(value).replace(/\r?\n/g, '<br>');
+  return escapeHtml(value).replace(/\r?\n/g, '<br>');
 }
 
 /**
@@ -55,32 +81,88 @@ export function escapeHtmlWithLineBreaks(value) {
  * @returns {Date|null}
  */
 export function parseIsoDate(dateString) {
-    if (!dateString) return null;
-    if (dateString instanceof Date) return dateString;
-    const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!match) return null;
-    const y = Number(match[1]);
-    const m = Number(match[2]);
-    const d = Number(match[3]);
-    if (m < 1 || m > 12) return null;
-    return new Date(y, m - 1, d);
+  if (!dateString) return null;
+  if (dateString instanceof Date) return dateString;
+  const match = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  if (m < 1 || m > 12) return null;
+  return new Date(y, m - 1, d);
 }
 
 // Return the ISO "YYYY-MM-DD" representation of a Date in local time.
 export function toIsoDateString(date) {
-    if (!(date instanceof Date)) {
-        date = new Date();
-    }
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  if (!(date instanceof Date)) {
+    date = new Date();
+  }
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
-// Function to create a new date in UTC
-export function todayInUTC() {
-    let date = new Date();
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+// Normalizes a Date object, an ISO 'YYYY-MM-DD' string, a full ISO datetime
+// string (e.g. a Carbon 'datetime'-cast attribute like "2026-06-26T00:00:00.000000Z"),
+// or a null/undefined value into the plain 'YYYY-MM-DD' string native
+// `<input type="date">` elements require for their value/v-model binding -
+// anything else silently renders blank per the HTML date-input spec.
+export function toDateInputValue(value) {
+  if (!value) return '';
+  if (value instanceof Date) return toIsoDateString(value);
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
+// RRule reads a Date's UTC getters, not its local ones, so a local-midnight
+// Date (e.g. from parseIsoDate) has to be re-expressed with matching UTC
+// fields before use - otherwise occurrences can land a day off for anyone
+// outside UTC. Accepts either a Date or a 'YYYY-MM-DD' string.
+export function toRRuleDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return new Date(
+      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
+    );
+  }
+
+  const parts = String(value).split('-').map(Number);
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const [year, month, day] = parts;
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+// Reverses toRRuleDate(): converts an rrule.js occurrence (UTC-anchored
+// Date) back into the schedule's stored 'YYYY-MM-DD' string using UTC
+// getters - using local getters here would reintroduce the exact
+// off-by-one-day class of bug toRRuleDate exists to avoid.
+export function fromRRuleDate(date) {
+  if (!date) {
+    return null;
+  }
+
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Money/quantity model attributes are cast on the backend to Brick\Money/BigDecimal
+// (MoneyCast/DecimalCast) and serialize as decimal strings, not JSON numbers, so
+// precision survives JSON.parse. processTransaction() is the shared point every
+// transaction API response is funneled through before use, so it converts them
+// back to plain JS numbers here - otherwise native `+` on two such fields would
+// string-concatenate instead of add wherever a consumer doesn't defensively wrap
+// a read in Number() itself.
+function toNumberOrNull(value) {
+  return value === null || value === undefined ? value : Number(value);
 }
 
 /**
@@ -92,68 +174,268 @@ export function todayInUTC() {
  * @returns {Object}
  */
 export function processTransaction(transaction) {
-    // Convert ISO date strings to local-timezone Date objects.
-    if (transaction.date) {
-        transaction.date = parseIsoDate(transaction.date);
-    }
+  // Convert ISO date strings to local-timezone Date objects.
+  if (transaction.date) {
+    transaction.date = parseIsoDate(transaction.date);
+  }
 
-    // toIsoDateString uses local date components, so year_month is always correct.
-    transaction.year_month = transaction.date ? toIsoDateString(transaction.date).slice(0, 7) : null;
+  transaction.cashflow_value = toNumberOrNull(transaction.cashflow_value);
 
-    if (transaction.transaction_schedule?.start_date) {
-        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
-    }
+  if (transaction.transaction_items) {
+    transaction.transaction_items.forEach((item) => {
+      item.amount = toNumberOrNull(item.amount);
+      item.amount_in_base = toNumberOrNull(item.amount_in_base);
+    });
+  }
 
-    if (transaction.transaction_schedule?.end_date) {
-        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
-    }
-
-    if (transaction.transaction_schedule?.next_date) {
-        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
-    }
-
-    // We need an array of categories for standard transactions, extracted from the item array
+  if (transaction.config) {
     if (transaction.config_type === 'standard') {
-        // We only need each category once, so we need to remove duplicates by their IDs
-        transaction.categories = transaction.transaction_items
-            .map(item => item.category)
-            // Exclude null categories
-            .filter(category => category)
-            .filter((category, index, self) => self.findIndex(c => c.id === category.id) === index);
-    } else {
-        transaction.categories = [];
+      transaction.config.amount_from = toNumberOrNull(
+        transaction.config.amount_from,
+      );
+      transaction.config.amount_to = toNumberOrNull(
+        transaction.config.amount_to,
+      );
+    } else if (transaction.config_type === 'investment') {
+      transaction.config.price = toNumberOrNull(transaction.config.price);
+      transaction.config.quantity = toNumberOrNull(transaction.config.quantity);
+      transaction.config.commission = toNumberOrNull(
+        transaction.config.commission,
+      );
+      transaction.config.tax = toNumberOrNull(transaction.config.tax);
+      transaction.config.dividend = toNumberOrNull(transaction.config.dividend);
     }
+  }
 
-    // We need an array of tags for standard transactions, extracted from the item array
-    if (transaction.config_type === 'standard') {
-        // We only need each tag once, so we need to remove duplicates by their IDs
-        transaction.tags = transaction.transaction_items
-            .map(item => item.tags)
-            // Flatten the array of arrays
-            .flat()
-            // Exclude null tags
-            .filter(tag => tag)
-            .filter((tag, index, self) => self.findIndex(t => t.id === tag.id) === index);
-    } else {
-        transaction.tags = [];
-    }
+  // toIsoDateString uses local date components, so year_month is always correct.
+  transaction.year_month = transaction.date
+    ? toIsoDateString(transaction.date).slice(0, 7)
+    : null;
 
-    return transaction;
+  if (transaction.transaction_schedule?.start_date) {
+    transaction.transaction_schedule.start_date = parseIsoDate(
+      transaction.transaction_schedule.start_date,
+    );
+  }
+
+  if (transaction.transaction_schedule?.end_date) {
+    transaction.transaction_schedule.end_date = parseIsoDate(
+      transaction.transaction_schedule.end_date,
+    );
+  }
+
+  if (transaction.transaction_schedule?.next_date) {
+    transaction.transaction_schedule.next_date = parseIsoDate(
+      transaction.transaction_schedule.next_date,
+    );
+  }
+
+  // We need an array of categories for standard transactions, extracted from the item array
+  if (transaction.config_type === 'standard') {
+    // We only need each category once, so we need to remove duplicates by their IDs
+    transaction.categories = transaction.transaction_items
+      .map((item) => item.category)
+      // Exclude null categories
+      .filter((category) => category)
+      .filter(
+        (category, index, self) =>
+          self.findIndex((c) => c.id === category.id) === index,
+      );
+  } else {
+    transaction.categories = [];
+  }
+
+  // We need an array of tags for standard transactions, extracted from the item array
+  if (transaction.config_type === 'standard') {
+    // We only need each tag once, so we need to remove duplicates by their IDs
+    transaction.tags = transaction.transaction_items
+      .map((item) => item.tags)
+      // Flatten the array of arrays
+      .flat()
+      // Exclude null tags
+      .filter((tag) => tag)
+      .filter(
+        (tag, index, self) => self.findIndex((t) => t.id === tag.id) === index,
+      );
+  } else {
+    transaction.tags = [];
+  }
+
+  return transaction;
 }
 
 import { RRule } from 'rrule';
 
+/**
+ * Converts a stored RFC5545 ordinal BYDAY token (e.g. "1WE", "-1FR") into
+ * the rrule.js Weekday instance used for RRule's byweekday option.
+ *
+ * @param {string} token
+ * @returns {object}
+ */
+export function byDayToRRuleWeekday(token) {
+  const weekdayCode = token.slice(-2);
+  const ordinal = parseInt(token.slice(0, -2), 10);
+
+  return RRule[weekdayCode].nth(ordinal);
+}
+
+// Imported from the leaf translate module (not the '@/shared/lib/i18n' barrel)
+// to avoid a circular import: that barrel re-exports format.js, which itself
+// imports parseIsoDate from this file.
+import { __ } from '@/shared/lib/i18n/translate';
+
+// Ordinal/weekday/month labels for a schedule's by_day/by_month RFC5545
+// fields, shared by the schedule edit form (TransactionSchedule.vue) and its
+// read-only display (Schedule.vue) so both read the same values the same way.
+export const ordinalLabels = {
+  1: __('First'),
+  2: __('Second'),
+  3: __('Third'),
+  4: __('Fourth'),
+  '-1': __('Last'),
+};
+
+// Weekday/month names are derived from Intl rather than translated in lang/*.json: they are a
+// fixed, unambiguous set, and the browser's locale data already knows them. Intl returns the
+// grammatically-correct lowercase form for some locales (e.g. French, Hungarian, Polish), so the
+// first letter is capitalized to read correctly as a standalone label (e.g. dropdown option).
+function capitalize(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+const locale = window.YAFFA?.userSettings?.locale || window.YAFFA?.locale;
+
+export const weekdayLabels = Object.fromEntries(
+  ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
+    // 2024-01-07 is a Sunday, so index 0..6 walks Sunday through Saturday.
+    const date = new Date(2024, 0, 7 + index);
+    return [
+      code,
+      capitalize(
+        new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date),
+      ),
+    ];
+  }),
+);
+
+export const monthLabels = Object.fromEntries(
+  Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(2024, index, 1);
+    return [
+      index + 1,
+      capitalize(
+        new Intl.DateTimeFormat(locale, { month: 'long' }).format(date),
+      ),
+    ];
+  }),
+);
+
+export const ordinalOptions = Object.entries(ordinalLabels).map(
+  ([value, label]) => ({ value, label }),
+);
+export const weekdayOptions = Object.entries(weekdayLabels).map(
+  ([value, label]) => ({ value, label }),
+);
+export const monthOptions = Object.entries(monthLabels).map(
+  ([value, label]) => ({ value: Number(value), label }),
+);
+
+// schedule.start_date may be either a Date object (as processTransaction() leaves it
+// on a read-only display transaction) or a 'YYYY-MM-DD' string (the form's own
+// schedule_config, and a date input's computed setter, always use strings - see
+// TransactionFormStandard.vue/TransactionFormInvestment.vue). Date objects here are
+// always local-midnight, so local getters are safe; strings are parsed directly to
+// sidestep new Date(string) being UTC-interpreted. Shared by TransactionSchedule.vue
+// and its read-only display Schedule.vue so both derive the day-of-month pattern the
+// same way.
+export function scheduleStartDateParts(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return { day: value.getDate(), month: value.getMonth() + 1 };
+  }
+
+  const parts = String(value).split('-');
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  return { day: parseInt(parts[2], 10), month: parseInt(parts[1], 10) };
+}
+
+// The 5 weekdays used by the "last business day of month" pattern - shared so the rrule.js
+// builder below and TransactionSchedule.vue's pattern picker agree on the exact set.
+export const businessDayWeekdays = ['MO', 'TU', 'WE', 'TH', 'FR'];
+
 export function processScheduledTransaction(transaction) {
-    if (transaction.transaction_schedule) {
-        transaction.transaction_schedule.rule = new RRule({
-            dtstart: transaction.transaction_schedule.start_date,
-            freq: RRule[transaction.transaction_schedule.frequency],
-            interval: transaction.transaction_schedule.interval,
-            until: transaction.transaction_schedule.end_date,
-        });
+  if (transaction.transaction_schedule) {
+    const schedule = transaction.transaction_schedule;
+    // by_month pairs with whichever month-scoped pattern (ordinal by_day, days-before-
+    // month-end, last-business-day) is active on a YEARLY rule - mirrors the backend's
+    // HasRecurrenceRule::effectiveRrule().
+    const hasMonthScopedPattern = Boolean(
+      schedule.by_day ||
+      schedule.days_before_month_end != null ||
+      schedule.last_business_day_of_month,
+    );
+    const byMonth =
+      hasMonthScopedPattern && schedule.frequency === 'YEARLY'
+        ? schedule.by_month || null
+        : null;
+
+    const ruleOptions = {
+      dtstart: toRRuleDate(schedule.start_date),
+      freq: RRule[schedule.frequency],
+      interval: schedule.interval,
+      until: toRRuleDate(schedule.end_date),
+      bymonth: byMonth,
+    };
+
+    if (schedule.days_before_month_end != null) {
+      ruleOptions.bymonthday = -(schedule.days_before_month_end + 1);
+    } else if (schedule.last_business_day_of_month) {
+      ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+      ruleOptions.bysetpos = -1;
+    } else if (schedule.by_day) {
+      ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
     }
 
-    return transaction;
+    transaction.transaction_schedule.rule = new RRule(ruleOptions);
+  }
+
+  return transaction;
+}
+
+// Human-readable cadence text (e.g. "every month") for a Budget or TransactionSchedule-shaped
+// object, as returned raw by the API (start_date/end_date as ISO datetime strings - see
+// parseIsoDate). Shared so the budget chart's breakdown tables and the budget quick-view modal
+// build the same rrule.js text the same way, translated into the current YAFFA user language.
+export function scheduleCadenceText(schedule) {
+  if (
+    !schedule ||
+    !schedule.start_date ||
+    !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)
+  ) {
+    return '';
+  }
+
+  const { rule } = processScheduledTransaction({
+    transaction_schedule: {
+      start_date: parseIsoDate(schedule.start_date),
+      frequency: schedule.frequency,
+      interval: schedule.interval,
+      end_date: parseIsoDate(schedule.end_date),
+      by_day: schedule.by_day,
+      by_month: schedule.by_month,
+      days_before_month_end: schedule.days_before_month_end,
+      last_business_day_of_month: schedule.last_business_day_of_month,
+    },
+  }).transaction_schedule;
+
+  return rule.toText();
 }
 
 /**
@@ -164,15 +446,12 @@ export function processScheduledTransaction(transaction) {
  * @returns {string}
  */
 export function transactionLink(id, text) {
-    const url = window.route(
-        'transaction.open',
-        {
-            action: 'show',
-            transaction: id,
-        }
-    );
+  const url = window.route('transaction.open', {
+    action: 'show',
+    transaction: id,
+  });
 
-    return `<a href="${url}">${text}</a>`;
+  return `<a href="${url}">${text}</a>`;
 }
 
 /**
@@ -183,14 +462,14 @@ export function transactionLink(id, text) {
  * @param {Document|Element} parent - The parent element to search within.
  */
 export function initializeBootstrapTooltips(parent = document) {
-    const tooltipTriggerList = parent.querySelectorAll(
-        '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
-    );
-    tooltipTriggerList.forEach((tooltipTriggerEl) => {
-        const existing = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
-        if (existing) {
-            existing.dispose();
-        }
-        new window.bootstrap.Tooltip(tooltipTriggerEl);
-    });
+  const tooltipTriggerList = parent.querySelectorAll(
+    '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
+  );
+  tooltipTriggerList.forEach((tooltipTriggerEl) => {
+    const existing = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+    if (existing) {
+      existing.dispose();
+    }
+    new window.bootstrap.Tooltip(tooltipTriggerEl);
+  });
 }

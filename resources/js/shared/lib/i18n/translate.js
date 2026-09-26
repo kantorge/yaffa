@@ -8,18 +8,18 @@
  * @returns {string}
  */
 export function __(key, replace = {}) {
-    let translation = window.YAFFA.config.translations[key] || key;
+  let translation = window.YAFFA.config.translations[key] || key;
 
-    // If the replace object is empty, return the translation as is
-    if (Object.keys(replace).length === 0) {
-        return translation;
-    }
-
-    for (const [replaceKey, value] of Object.entries(replace)) {
-        translation = translation.replace(':' + replaceKey, String(value));
-    }
-
+  // If the replace object is empty, return the translation as is
+  if (Object.keys(replace).length === 0) {
     return translation;
+  }
+
+  for (const [replaceKey, value] of Object.entries(replace)) {
+    translation = translation.replace(':' + replaceKey, String(value));
+  }
+
+  return translation;
 }
 
 export const translate = __;

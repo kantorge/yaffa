@@ -78,7 +78,7 @@ class TextExtractionServiceTest extends TestCase
 
         try {
             $this->expectException(OcrUnavailableException::class);
-            $this->expectExceptionMessage('OCR');
+            $this->expectExceptionMessageIsOrContains('OCR');
 
             // Note: vision config is null, and tesseract is disabled
             $this->service->extractFromDocument($document, null);
@@ -157,7 +157,7 @@ class TextExtractionServiceTest extends TestCase
 
         try {
             $this->expectException(Exception::class);
-            $this->expectExceptionMessage('Unsupported file type');
+            $this->expectExceptionMessageIsOrContains('Unsupported file type');
 
             $this->service->extractFromFile($relativePath, 'exe');
         } finally {

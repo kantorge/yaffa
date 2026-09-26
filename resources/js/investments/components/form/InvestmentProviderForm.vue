@@ -13,7 +13,9 @@
             class="form-select"
             @change="ensureSelectedProviderState"
           >
-            <option value="">{{ __(' < No price provider > ') }}</option>
+            <option value="">
+              {{ __(' < No price provider > ') }}
+            </option>
             <option
               v-for="provider in providerList"
               :key="provider.key"
@@ -41,7 +43,9 @@
       <div class="col-sm-9">
         <div class="border rounded p-3 bg-body-secondary">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="fw-semibold">{{ __('Provider settings') }}</div>
+            <div class="fw-semibold">
+              {{ __('Provider settings') }}
+            </div>
             <div>
               <button
                 class="btn btn-sm btn-outline-secondary"

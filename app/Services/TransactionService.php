@@ -10,7 +10,10 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionSchedule;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class TransactionService
@@ -19,7 +22,7 @@ class TransactionService
      * Create a new standalone transaction from a scheduled transaction
      * - clone all the related models
      * - use the next scheduled date as the transaction date
-     * - remove the schedule and budget flags from the transaction
+     * - remove the schedule flag from the transaction
      * - adjust the next date of the original transaction
      */
     public function enterScheduleInstance(Transaction $transaction): void
@@ -52,9 +55,8 @@ class TransactionService
             // Set the date to the next scheduled date
             $newTransaction->date = $schedule->next_date;
 
-            // Remove the schedule and budget flags
+            // Remove the schedule flag
             $newTransaction->schedule = false;
-            $newTransaction->budget = false;
 
             // Save the new transaction
             $newTransaction->save();
@@ -131,9 +133,11 @@ class TransactionService
     }
 
     /**
-     * Get the monetary value associated with the cash flow of the transaction
+     * Get the monetary value associated with the cash flow of the transaction, computed
+     * exactly end-to-end (Money) all the way through to Transaction::cashflow_value's
+     * write path - see FR-7.
      */
-    public function getTransactionCashFlow(Transaction $transaction): ?float
+    public function getTransactionCashFlow(Transaction $transaction): ?Money
     {
         if ($transaction->isStandard()) {
             return $this->getStandardConfigCashFlow($transaction);
@@ -144,7 +148,7 @@ class TransactionService
         return null;
     }
 
-    private function getStandardConfigCashFlow(Transaction $transaction): ?float
+    private function getStandardConfigCashFlow(Transaction $transaction): ?Money
     {
         $transaction->loadMissing([
             'config',
@@ -161,13 +165,13 @@ class TransactionService
             return $config->amount_from;
         }
         if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
-            return $config->amount_from * -1;
+            return $config->amount_from->negated();
         }
 
         return null;
     }
 
-    private function getInvestmentConfigCashFlow(Transaction $transaction): ?float
+    private function getInvestmentConfigCashFlow(Transaction $transaction): ?Money
     {
         $transaction->loadMissing([
             'config',
@@ -180,16 +184,60 @@ class TransactionService
             return null;
         }
 
-        if ($transaction->transaction_type->amountMultiplier() !== null) {
-            return $transaction->transaction_type->amountMultiplier()
-                * $config->price
-                * $config->quantity
-                + $config->dividend
-                - $config->tax
-                - $config->commission;
+        $multiplier = $transaction->transaction_type->amountMultiplier();
+
+        // Build the cash flow from whichever terms are present, exactly (Money/BigDecimal),
+        // treating a missing (nullable) field as no contribution - same as the previous
+        // float expression, where a null operand was implicitly treated as 0.
+        //
+        // $multiplier is null for ADD_SHARES/REMOVE_SHARES (they have no price/quantity-driven
+        // cash amount - the quantity change itself isn't a cash flow), but a fee can still be
+        // recorded against them (see investment-transactions.md's "Optional properties:
+        // commission, tax" for both). Only the price*quantity term needs a multiplier; a
+        // commission/tax term below still applies without one, so a fee on one of these two
+        // types isn't silently dropped from the account's cash flow.
+        $terms = [];
+
+        if ($multiplier !== null && $config->price !== null && $config->quantity !== null) {
+            $terms[] = $config->price->multipliedBy($config->quantity, RoundingMode::HalfUp)->multipliedBy($multiplier);
+        }
+        if ($config->dividend !== null) {
+            $terms[] = $config->dividend;
+        }
+        if ($config->tax !== null) {
+            $terms[] = $config->tax->negated();
+        }
+        if ($config->commission !== null) {
+            $terms[] = $config->commission->negated();
         }
 
-        return null;
+        if ($terms === []) {
+            return null;
+        }
+
+        // Legacy data: an investment transaction whose account currency no longer matches
+        // its investment's currency (one of the two was changed after this transaction was
+        // recorded - TransactionRequest::accountInvestmentCurrencyMatchRule() blocks this
+        // for new transactions, but can't fix rows that already existed). Money::plus()
+        // would throw MoneyMismatchException combining them - treat this the same as
+        // "cannot compute" (same as a missing operand above) instead of letting the
+        // exception escape.
+        $firstCurrency = $terms[0]->getCurrency();
+        foreach ($terms as $term) {
+            if (! $term->getCurrency()->isEqualTo($firstCurrency)) {
+                Log::warning('Investment transaction cash flow spans mismatched currencies (legacy data)', [
+                    'transaction_id' => $transaction->id,
+                ]);
+
+                return null;
+            }
+        }
+
+        return array_reduce(
+            array_slice($terms, 1),
+            fn (Money $carry, Money $term) => $carry->plus($term),
+            $terms[0]
+        );
     }
 
     /**
@@ -208,7 +256,7 @@ class TransactionService
 
     /**
      * This function will initiate the recalculation of the monthly summaries for standard transactions,
-     * based on the properties of the given transaction. (transaction type, schedule, budget)
+     * based on the properties of the given transaction. (transaction type, schedule)
      */
     private function recalculateSummaryStandard(Transaction $transaction): void
     {
@@ -231,8 +279,8 @@ class TransactionService
         /** @var AccountEntity|null $accountTo */
         $accountTo = $config->accountTo;
 
-        if (!$transaction->schedule && !$transaction->budget) {
-            // This is a simple transaction with no schedule or budget attached
+        if (!$transaction->schedule) {
+            // This is a simple transaction with no schedule attached
             // We need to recalculate only the given month for one or both accounts
             if ($accountFrom?->isAccount()) {
                 $job = new CalculateAccountMonthlySummary(
@@ -263,64 +311,15 @@ class TransactionService
             return;
         }
 
-        if ($transaction->schedule) {
-            // This is a scheduled transaction, optionally with a budget attached
-            // We need to recalculate the entire forecast for one or both accounts
-            if ($accountFrom?->isAccount()) {
-                $job = new CalculateAccountMonthlySummary(
-                    $transaction->user,
-                    'account_balance-forecast',
-                    $accountFrom
-                );
-
-                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-                dispatch($job);
-            }
-
-            if ($accountTo?->isAccount()) {
-                $job = new CalculateAccountMonthlySummary(
-                    $transaction->user,
-                    'account_balance-forecast',
-                    $accountTo
-                );
-
-                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-                dispatch($job);
-            }
-
-            return;
+        // This is a scheduled transaction
+        // We need to recalculate the entire forecast for one or both accounts
+        // We don't know how long the schedule will be, so we need to dispatch the job to the queue
+        if ($accountFrom?->isAccount()) {
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $accountFrom);
         }
 
-        // This is a budget-only transaction
-        // We need to recalculate the entire budget for one of the accounts or none
-        // As a budget cannot be transfer, we'll never have both accounts
-        if ($accountFrom?->isAccount()) {
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-budget',
-                $accountFrom
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
-        } elseif ($accountTo?->isAccount()) {
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-budget',
-                $accountTo
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
-        } else {
-            // No account to assign the budget to
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-budget'
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
+        if ($accountTo?->isAccount()) {
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $accountTo);
         }
     }
 
@@ -345,43 +344,25 @@ class TransactionService
             // This is a simple transaction with no schedule attached
             // As the investment summaries store the cummulated value, we need to recalculate all months
             // Theoretically, an investment transaction always has an account
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'investment_value-fact',
-                $account
-            );
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'investment_value-fact', $account);
 
             // As the change probably affects the balance of the account, we also need to recalculate the standard summaries for the account
-            $job = new CalculateAccountMonthlySummary(
+            CalculateAccountMonthlySummary::dispatchNamed(
                 $transaction->user,
                 'account_balance-fact',
                 $account,
                 $transaction->date->clone()->startOfMonth(),
                 $transaction->date->clone()->endOfMonth()
             );
-            dispatch($job);
         }
 
         if ($transaction->schedule) {
             // This is a scheduled transaction, we need to recalculate the entire forecast for the account, as the baseline changes
-            $job = new CalculateAccountMonthlySummary(
-                $transaction->user,
-                'account_balance-forecast',
-                $account
-            );
-
-            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
-            dispatch($job);
+            CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'account_balance-forecast', $account);
         }
 
         // We always need to recalculate the entire forecast for the account, as the baseline changes
-        $job = new CalculateAccountMonthlySummary(
-            $transaction->user,
-            'investment_value-forecast',
-            $account
-        );
-        dispatch($job);
+        CalculateAccountMonthlySummary::dispatchNamed($transaction->user, 'investment_value-forecast', $account);
     }
 
     private function getStandardConfig(Transaction $transaction): ?TransactionDetailStandard

@@ -13,10 +13,22 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
-class CurrencyRateApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'destroy', 'retrieveMissingCurrencyRateToBase',
+])]
+#[Middleware('abilities:settings', only: [
+    'clearCache',
+])]
+class CurrencyRateApiController extends Controller
 {
     use CurrencyTrait;
     public function __construct(
@@ -24,22 +36,17 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     ) {
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * Get currency rates, optionally filtered by date range.
+     * List currency rates
+     *
+     * Returns currency rates between two currencies, optionally filtered by
+     * date range.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'from')]
     public function index(Request $request, Currency $from, Currency $to): JsonResponse
     {
-        Gate::authorize('view', $from);
         Gate::authorize('view', $to);
 
         $dateFrom = $request->query('date_from');
@@ -62,7 +69,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Store a new currency rate.
+     * Create a currency rate
      *
      * @throws AuthorizationException
      */
@@ -85,7 +92,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing currency rate.
+     * Update a currency rate
      *
      * @throws AuthorizationException
      */
@@ -105,7 +112,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Delete a currency rate.
+     * Delete a currency rate
      *
      * @throws AuthorizationException
      */
@@ -122,13 +129,14 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Retrieve missing currency rate to base
+     *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'currency')]
     public function retrieveMissingCurrencyRateToBase(Currency $currency): JsonResponse
     {
         // Authorize user access to requested currency
-        Gate::authorize('view', $currency);
-
         try {
             $currency->retrieveMissingCurrencyRateToBase();
         } catch (CurrencyRateConversionException $e) {
@@ -147,8 +155,10 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Clear all currency-related caches for the current user.
-     * This includes the monthly average rates and individual currency lists.
+     * Clear currency cache
+     *
+     * Clears all currency-related caches for the current user. This includes
+     * the monthly average rates and individual currency lists.
      */
     public function clearCache(Request $request): JsonResponse
     {

@@ -6,6 +6,7 @@ use AleBatistella\DuskApiConf\Traits\UsesDuskApiConfig;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Tests\Browser\DuskMacros;
@@ -42,6 +43,26 @@ abstract class DuskTestCase extends BaseTestCase
         $this->browse(function ($browser) {
             $browser->resize(1920, 1080);
         });
+    }
+
+    /**
+     * alebatistella/duskapiconf persists setConfig()/getConfig() overrides to a temp file
+     * (storage/app/duskapiconf_tmp.txt by default) that its service provider re-applies to
+     * config() on every non-production boot - not just during Dusk runs, but for any artisan
+     * command afterward - until the file is removed. The package only removes it via an
+     * explicit resetConfig() call, so a test that calls setConfig() and then fails/times out
+     * before its own cleanup lines run leaves the override stuck indefinitely, silently
+     * corrupting config for the whole dev environment (e.g. yaffa.sandbox_mode stuck `true`).
+     * Deleting the file unconditionally here - rather than relying on each test's own
+     * try/finally discipline - guarantees it never survives a test, since tearDown() still
+     * runs after an assertion failure or exception.
+     */
+    protected function tearDown(): void
+    {
+        Storage::disk(config('duskapiconf.storage.disk', 'local'))
+            ->delete(config('duskapiconf.storage.file', 'duskapiconf_tmp.txt'));
+
+        parent::tearDown();
     }
 
     /**
@@ -159,5 +180,26 @@ abstract class DuskTestCase extends BaseTestCase
     protected function assertSelect2HasNoSelection(Browser $browser, string $selectSelector): void
     {
         $this->assertSame([], $this->getSelect2Values($browser, $selectSelector));
+    }
+
+    /**
+     * Setting a native <input type="date"> via ->type() sends keys to the browser's
+     * segmented date widget, which is unreliable across locales and can produce
+     * garbled values (e.g. typed digits landing in the wrong segment). Setting the
+     * value directly and dispatching an 'input' event - which is what Vue's v-model
+     * listens for on this input type - is the reliable equivalent.
+     *
+     * @param Browser $browser
+     * @param string $selector
+     * @param string $value Date string in 'Y-m-d' format
+     */
+    protected function setDateInput(Browser $browser, string $selector, string $value): void
+    {
+        $browser->script(
+            'const el = document.querySelector(' . json_encode($selector) . ');'
+            . 'el.value = ' . json_encode($value) . ';'
+            . "el.dispatchEvent(new Event('input', { bubbles: true }));"
+            . "el.dispatchEvent(new Event('change', { bubbles: true }));"
+        );
     }
 }

@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Currency;
 use App\Models\User;
+use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class CurrencyTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -20,33 +23,14 @@ class CurrencyTest extends TestCase
         $this->setBaseModel(Currency::class);
     }
 
-    public function test_guest_cannot_access_resource(): void
+    /**
+     * Delete moved to CurrencyApiController (api.v1.currencies.destroy) - the web destroy
+     * route/action was removed as dead code (T-02, frontend unification). See
+     * CurrencyApiControllerTest for delete behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        /** @var Currency $currency */
-        $currency = Currency::factory()->for($user)->create();
-
-        $this->get(route("{$this->base_route}.edit", $currency))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $currency))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $currency))->assertRedirectToRoute('login');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        /** @var User $user1 */
-        $user1 = User::factory()->create();
-        $currency = $this->createForUser($user1, $this->base_model);
-
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
+        return false;
     }
 
     public function test_user_can_view_list_of_currencies(): void
@@ -161,10 +145,28 @@ class CurrencyTest extends TestCase
         $this->assertTrue($successNotificationExists);
     }
 
-    public function test_user_can_delete_an_existing_currency(): void
+    public function test_factory_deduplicates_for_authenticated_user_with_explicit_null_user_id(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
+        $this->actingAs($user);
+
+        $taken = CurrencyData::getCurrencies()[0];
+
+        Currency::factory()->for($user)->create([
+            'name' => $taken['name'],
+            'iso_code' => $taken['iso_code'],
+        ]);
+
+        // user_id is explicitly null, not omitted - the factory must still resolve
+        // the authenticated user as the owner for its collision check, since the
+        // model's creating hook will fill user_id from auth() on save anyway.
+        $currency = Currency::factory()->make([
+            'name' => $taken['name'],
+            'iso_code' => $taken['iso_code'],
+            'user_id' => null,
+        ]);
+
+        $this->assertNotSame($taken['iso_code'], $currency->iso_code);
     }
 }

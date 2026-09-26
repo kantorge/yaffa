@@ -5,12 +5,17 @@
       <template v-if="rawValue">
         <span class="font-monospace text-secondary">{{ rawValue }}</span>
         <span class="text-muted">→</span>
-        <span v-if="parsedValue !== null" class="font-monospace text-success fw-medium">
+        <span
+          v-if="parsedValue !== null"
+          class="font-monospace text-success fw-medium"
+        >
           {{ parsedValue }}
         </span>
         <span v-else class="text-danger">{{ __('Cannot parse') }}</span>
       </template>
-      <span v-else class="text-muted fst-italic">{{ __('No sample value') }}</span>
+      <span v-else class="text-muted fst-italic">{{
+        __('No sample value')
+      }}</span>
     </div>
   </div>
 </template>
@@ -40,7 +45,10 @@
           return null;
         }
         // Strip trailing 3-letter uppercase currency code (e.g. "HUF", "EUR") — mirrors backend logic
-        let cleaned = this.rawValue.trim().replace(/\s*[A-Z]{3}$/, '').trimEnd();
+        let cleaned = this.rawValue
+          .trim()
+          .replace(/\s*[A-Z]{3}$/, '')
+          .trimEnd();
 
         if (this.thousandSeparator) {
           cleaned = cleaned.split(this.thousandSeparator).join('');

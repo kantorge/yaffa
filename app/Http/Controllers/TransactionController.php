@@ -2,33 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Investment;
-use App\Models\TransactionDetailInvestment;
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class TransactionController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class TransactionController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
-
     public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
@@ -75,6 +69,7 @@ class TransactionController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'transaction')]
     public function openTransaction(Transaction $transaction, string $action): View
     {
         /**
@@ -84,8 +79,6 @@ class TransactionController extends Controller implements HasMiddleware
          */
 
         // Authorize user for transaction
-        Gate::authorize('view', $transaction);
-
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
         if (!in_array($action, $availableActions)) {
@@ -106,9 +99,8 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Adjust date and schedule settings, if entering a recurring item
         if ($action === 'enter') {
-            // Reset schedule and budget flags
+            // Reset schedule flag
             $transaction->schedule = false;
-            $transaction->budget = false;
 
             // Date is next schedule date
             $transaction->date = $transaction->transactionSchedule->next_date;
@@ -126,31 +118,7 @@ class TransactionController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @throws AuthorizationException
-     */
-    public function destroy(Transaction $transaction): RedirectResponse
-    {
-        /**
-         * @delete("/transactions/{transaction}")
-         * @name("transactions.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-
-        // Authorize user for transaction
-        Gate::authorize('forceDelete', $transaction);
-
-        // Remove the transaction and its config
-        $transaction->delete();
-        $transaction->config()->delete();
-
-        self::addMessage('Transaction #' . $transaction->id . ' deleted', 'success', '', '', true);
-
-        return redirect()->back();
-    }
-
+    #[Authorize('update', 'transaction')]
     public function skipScheduleInstance(Transaction $transaction): RedirectResponse
     {
         /**
@@ -158,8 +126,6 @@ class TransactionController extends Controller implements HasMiddleware
          * @name("transactions.skipScheduleInstance")
          * @middlewares("web", "auth", "verified")
          */
-        Gate::authorize('update', $transaction);
-
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
 
@@ -191,22 +157,36 @@ class TransactionController extends Controller implements HasMiddleware
             $transaction->setRelation('config', new TransactionDetailInvestment($transactionData['config']));
         } else {
             $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
+            // Inverse relation, so TransactionDetailStandard::resolveStandardCurrency()'s
+            // fallback (when neither account side resolves) can reach the owning
+            // transaction's currency instead of lazily querying for a non-existent row.
+            $transaction->config->setRelation('transaction', $transaction);
 
-            $transaction->setRelation(
-                'transactionItems',
-                $this->buildDraftTransactionItems($transactionData, $request->user()->id)
-            );
+            $draftTransactionItems = $this->buildDraftTransactionItems($transactionData, $request->user()->id);
 
-            // Try to add relation for account and payee, if they exist
+            // These items are manually attached rather than eager-loaded, so chaperone()
+            // never fires - set the inverse relation by hand so TransactionItem::amount
+            // (MoneyCast) can resolve its currency via the parent transaction instead of
+            // issuing a lazy lookup for a transaction_id that doesn't exist yet (draft/unsaved).
+            $draftTransactionItems->each(fn (TransactionItem $item) => $item->setRelation('transaction', $transaction));
+
+            $transaction->setRelation('transactionItems', $draftTransactionItems);
+
+            // Try to add relation for account and payee, if they exist.
+            // Use the real (camelCase) relation names, matching TransactionDetailStandard::
+            // accountFrom()/accountTo() - not just so Eloquent's snake-casing still produces
+            // the same "account_from"/"account_to" JSON keys, but so relationLoaded() sees
+            // these as already resolved. Otherwise resolveAmountFromCurrency() (MoneyCast)
+            // would lazy-load them again with no user scope at all, undoing this scoping.
             if (($transactionData['config']['account_from_id'] ?? null) !== null) {
                 $transaction->config->setRelation(
-                    'account_from',
+                    'accountFrom',
                     AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_from_id'])
                 );
             }
             if (($transactionData['config']['account_to_id'] ?? null) !== null) {
                 $transaction->config->setRelation(
-                    'account_to',
+                    'accountTo',
                     AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_to_id'])
                 );
             }
@@ -214,7 +194,6 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Ensure that the transaction is basic
         $transaction->schedule = false;
-        $transaction->budget = false;
         $transaction->reconciled = false;
 
         $aiDocumentId = $request->input('ai_document_id');

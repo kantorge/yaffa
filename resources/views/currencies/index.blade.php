@@ -20,6 +20,4 @@
             <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
         </div>
     </div>
-
-@include('template.components.model-delete-form')
 @stop

@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -28,7 +26,6 @@ class CurrencyController extends Controller implements HasMiddleware
             'verified',
             new Middleware('can:create,' . Currency::class, only: ['create', 'store']),
             new Middleware('can:update,currency', only: ['edit', 'update', 'setDefault']),
-            new Middleware('can:delete,currency', only: ['destroy']),
         ];
     }
 
@@ -136,43 +133,9 @@ class CurrencyController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @return Response|RedirectResponse
-     */
-    public function destroy(Currency $currency): Response|RedirectResponse
-    {
-        /**
-         * @delete("/currencies/{currency}")
-         * @name("currencies.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        // Base currency cannot be deleted
-        if ($currency->base) {
-            self::addSimpleErrorMessage(__('Base currency cannot be deleted'));
-
-            return redirect()->back();
-        }
-
-        try {
-            $currency->delete();
-            self::addSimpleSuccessMessage(__('Currency deleted'));
-
-            return to_route('currencies.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));
-            } else {
-                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
-        }
-    }
-
-    /**
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'currency')]
     public function setDefault(Currency $currency): RedirectResponse
     {
         /**
@@ -181,8 +144,6 @@ class CurrencyController extends Controller implements HasMiddleware
          * @middlewares("web", "auth", "verified")
          */
         // Authenticate the user against the currency using CurrencyPolicy
-        Gate::authorize('update', $currency);
-
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));
 

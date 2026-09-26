@@ -2,13 +2,13 @@
   <div class="row">
     <div class="col-md-5">
       <onboarding-card
-        :cardTitle="__('Welcome to YAFFA!')"
-        :cardBody="
+        :card-title="__('Welcome to YAFFA!')"
+        :card-body="
           __(
             'We recommend completing the following steps to have a great experience with YAFFA.',
           )
         "
-        :completedMessage="
+        :completed-message="
           __('Congratulations! Keep using YAFFA. You can dismiss this widget.')
         "
         topic="dashboard"

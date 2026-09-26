@@ -11,24 +11,24 @@
       </div>
     </div>
     <ul
+      id="cardActions"
       class="list-group list-group-flush collapse show"
       aria-expanded="true"
-      id="cardActions"
     >
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         <button
           class="btn btn-link text-decoration-none p-0 add-investment-price-button"
-          @click="addNewPrice"
           :title="__('Add new investment price')"
+          @click="addNewPrice"
         >
           {{ __('Add new investment price') }}
         </button>
         <button
           class="btn btn-xs btn-primary add-investment-price-button"
-          @click="addNewPrice"
           :title="__('Add new investment price')"
+          @click="addNewPrice"
         >
           <span class="fa fa-fw fa-plus"></span>
         </button>
@@ -38,25 +38,25 @@
       >
         <button
           class="btn btn-link text-decoration-none p-0"
-          @click="loadMissingPrices"
           :title="
             !canLoadPrices
               ? __('No price provider configured for this investment')
               : __('Load missing prices')
           "
           :disabled="!canLoadPrices || isLoadingMissing"
+          @click="loadMissingPrices"
         >
           {{ __('Load missing investment prices') }}
         </button>
         <button
           class="btn btn-xs btn-success"
-          @click="loadMissingPrices"
           :title="
             !canLoadPrices
               ? __('No price provider configured for this investment')
               : __('Load missing investment prices')
           "
           :disabled="!canLoadPrices || isLoadingMissing"
+          @click="loadMissingPrices"
         >
           <span
             v-if="isLoadingMissing"

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -11,29 +9,26 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
-class AccountEntityApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:write', only: [
+    'patchActive', 'destroy', 'recalculateAccountMonthlySummaries',
+])]
+class AccountEntityApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * V1: PATCH /api/v1/account-entities/{accountEntity}
-     * Accepts { active: true|false } in request body.
+     * Update account entity active status
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function patchActive(Request $request, AccountEntity $accountEntity): JsonResponse
     {
-        Gate::authorize('update', $accountEntity);
-
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $accountEntity->active = $validated['active'];
@@ -43,7 +38,12 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Recalculate monthly summaries for all accounts of the current user.
+     * Recalculate account monthly summaries
+     *
+     * Queues a background job to recalculate the cached monthly summaries for all
+     * accounts belonging to the current user. Stale/stuck batches from a previous run are
+     * cancelled by the command itself (CalculateAccountMonthlySummaries) before it dispatches
+     * fresh ones, so every caller of that command gets the same guard.
      */
     public function recalculateAccountMonthlySummaries(Request $request): JsonResponse
     {
@@ -57,19 +57,13 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified account entity.
+     * Delete an account entity
      *
      * @throws AuthorizationException
      */
+    #[Authorize('forceDelete', 'accountEntity')]
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @delete("/api/v1/account-entities/{accountEntity}")
-         * @name("api.v1.account-entities.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        Gate::authorize('forceDelete', $accountEntity);
-
         try {
             $accountEntity->delete();
             $accountEntity->config->delete();

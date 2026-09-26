@@ -43,7 +43,7 @@ class InvestmentPriceProviderRegistryTest extends TestCase
         $registry = new InvestmentPriceProviderRegistry();
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Unknown price provider: nonexistent');
+        $this->expectExceptionMessageIsOrContains('Unknown price provider: nonexistent');
 
         $registry->get('nonexistent');
     }
@@ -84,7 +84,7 @@ class InvestmentPriceProviderRegistryTest extends TestCase
         $registry = new InvestmentPriceProviderRegistry();
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Unknown price provider: nonexistent');
+        $this->expectExceptionMessageIsOrContains('Unknown price provider: nonexistent');
 
         $registry->getMetadata('nonexistent');
     }

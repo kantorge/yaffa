@@ -2,46 +2,44 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\AccountMonthlySummary;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class AccountApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
+])]
+#[Middleware('abilities:write', only: [
+    'recalculateMonthlySummary',
+])]
+class AccountApiController extends Controller
 {
     use CurrencyTrait;
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * Get a list of accounts with optional search and filters.
+     * List accounts
+     *
+     * Returns accounts matching an optional search term, transaction-type/direction filter,
+     * and currency filter. Falls back to the user's active accounts when no filters match.
      */
     public function getList(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts")
-         * @name("api.v1.accounts.index")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $parameters = [
             'user' => $request->user(),
             'query' => $request->query('q'),
@@ -167,15 +165,10 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get a list of accounts for investment transactions.
+     * List accounts for investment transactions
      */
     public function getAccountListForInvestments(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/investment")
-         * @name("api.v1.accounts.investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $user = $request->user();
 
         if ($request->query('q')) {
@@ -243,18 +236,13 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the account entity for the given id.
+     * Get an account
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'accountEntity')]
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/{accountEntity}")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('view', $accountEntity);
-
         $accountEntity->load(['config', 'config.currency']);
 
         return response()
@@ -265,20 +253,15 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get the current balance of a selected account or all accounts
+     * Get account balance
      *
+     * Returns the current balance of a selected account, or all accounts when none is given.
      * The balance is calculated using AccountMonthlySummary, which is regularly updated.
      *
      * @throws AuthorizationException
      */
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
-        /**
-         * @get("/api/v1/accounts/balance/{accountEntity?}")
-         * @get("/api/v1/accounts/balance")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         $user = $request->user();
 
         // Validate the account entity and the user
@@ -286,16 +269,9 @@ class AccountApiController extends Controller implements HasMiddleware
             throw new AuthorizationException('You do not have permission to access this account entity.');
         }
 
-        // Before proceeding with any calculation, check if any batch jobs are running for this user for fact data
-        $batchJobsCount = DB::table('job_batches')
-            ->whereIn('name', [
-                'CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id,
-                'CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id,
-            ])
-            ->where('finished_at', null)
-            ->count();
-
-        if ($batchJobsCount > 0) {
+        // Before proceeding with any calculation, check if the fact data this endpoint reads is
+        // still being (re)calculated for this user.
+        if (AccountMonthlySummary::isCalculationInProgress($user->id, ['account_balance-fact', 'investment_value-fact'])) {
             return response()
                 ->json(
                     [
@@ -432,18 +408,15 @@ class AccountApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Trigger the related job to update the monthly summary for the given account entity.
+     * Recalculate an account's monthly summary
+     *
+     * Triggers the background job that updates the monthly summary for the given account entity.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'accountEntity')]
     public function recalculateMonthlySummary(AccountEntity $accountEntity): JsonResponse
     {
-        /**
-         * @post("/api/v1/accounts/{accountEntity}/monthly-summary")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $accountEntity);
-
         // Check if the account entity is an account
         if ($accountEntity->config_type !== 'account') {
             return response()

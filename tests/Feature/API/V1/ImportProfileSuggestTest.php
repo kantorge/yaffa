@@ -3,7 +3,6 @@
 namespace Tests\Feature\API\V1;
 
 use App\Exceptions\AiProviderFailureException;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AiProviderConfig;
 use App\Models\User;
@@ -11,6 +10,7 @@ use App\Services\Import\AiImportProfileSuggestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
+use Laravel\Sanctum\Sanctum;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -31,7 +31,9 @@ class ImportProfileSuggestTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('sample.csv', self::SAMPLE_CSV),
             ])
@@ -67,7 +69,9 @@ class ImportProfileSuggestTest extends TestCase
             ->once()
             ->andReturn($suggestion);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $response = $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('sample.csv', self::SAMPLE_CSV),
             ]);
@@ -103,7 +107,9 @@ class ImportProfileSuggestTest extends TestCase
                 'confidence_notes' => [],
             ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('sample.csv', self::SAMPLE_CSV),
             ])
@@ -121,7 +127,9 @@ class ImportProfileSuggestTest extends TestCase
             ->andThrow(new RuntimeException('The uploaded file could not be parsed as a CSV file.'));
 
         // Non-empty content that passes the controller's empty-file guard but fails in the service
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('bad.csv', 'not-csv-content'),
             ])
@@ -145,7 +153,9 @@ class ImportProfileSuggestTest extends TestCase
                 message: 'AI provider error: connection refused',
             ));
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('sample.csv', self::SAMPLE_CSV),
             ])
@@ -174,7 +184,9 @@ class ImportProfileSuggestTest extends TestCase
                 'confidence_notes' => [],
             ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [
                 'file' => UploadedFile::fake()->createWithContent('sample.csv', self::SAMPLE_CSV),
                 'account_id' => $account->id,
@@ -187,7 +199,9 @@ class ImportProfileSuggestTest extends TestCase
         $user = User::factory()->create();
         AiProviderConfig::factory()->for($user)->create();
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+        $this
             ->postJson(route('api.v1.imports.file-profiles.suggest'), [])
             ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonValidationErrors(['file']);
@@ -195,12 +209,9 @@ class ImportProfileSuggestTest extends TestCase
 
     private function createAccountEntity(User $user): AccountEntity
     {
-        return AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create([
-                'config_type' => 'account',
-                'active' => true,
-            ]);
+        return AccountEntity::factory()->asAccount($user)->create([
+            'config_type' => 'account',
+            'active' => true,
+        ]);
     }
 }

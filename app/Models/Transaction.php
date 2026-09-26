@@ -2,14 +2,22 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
-use App\Support\ScheduleInstance;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
+use App\Services\InflationCalculator;
+use App\Services\RecurrenceRuleService;
+use App\Support\ScheduleInstance;
 use Bkwld\Cloner\Cloneable;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Carbon\Carbon;
 use Database\Factories\TransactionFactory;
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Appends;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,10 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Recurr\Rule;
-use Recurr\Transformer\ArrayTransformer;
-use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\BetweenConstraint;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * App\Models\Transaction
@@ -32,7 +37,6 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property TransactionTypeEnum $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
- * @property bool $budget
  * @property string|null $comment
  * @property string|null $config_type
  * @property int|null $config_id
@@ -43,13 +47,12 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @method static Builder|Transaction byScheduleType($type)
+ * @method static Builder|Transaction isSchedule()
  * @method static Builder|Transaction byType($type)
  * @method static TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
  * @method static Builder|Transaction newQuery()
  * @method static Builder|Transaction query()
- * @method static Builder|Transaction whereBudget($value)
  * @method static Builder|Transaction whereComment($value)
  * @method static Builder|Transaction whereConfigId($value)
  * @method static Builder|Transaction whereConfigType($value)
@@ -62,9 +65,10 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
  * @property int|null $ai_document_id
- * @property float|null $cashflow_value
+ * @property-read Money|null $cashflow_value
+ * @property-write Money|string|int|float|null $cashflow_value
  * @property float|null $currencyRateToBase
- * @property float|null $sum
+ * @property BigDecimal|null $sum
  * @property int|null $originalId
  * @property string|null $transactionGroup
  * @property int|null $transactionOperator
@@ -87,37 +91,14 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
+#[Fillable('ai_document_id', 'date', 'transaction_type', 'reconciled', 'schedule', 'comment', 'config_type', 'config_id')]
+#[Hidden('config_id')]
+#[Appends('transaction_currency')]
 class Transaction extends Model
 {
     use Cloneable;
     use CurrencyTrait;
     use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'ai_document_id',
-        'date',
-        'transaction_type',
-        'reconciled',
-        'schedule',
-        'budget',
-        'comment',
-        'config_type',
-        'config_id',
-        'user_id',
-    ];
-
-    protected $hidden = [
-        'config_id',
-    ];
-
-    protected $appends = [
-        'transaction_currency',
-    ];
 
     protected $cloneable_relations = [
         'config',
@@ -136,9 +117,18 @@ class Transaction extends Model
             'transaction_type' => TransactionTypeEnum::class,
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
-            'budget' => 'boolean',
-            'cashflow_value' => 'float',
+            'cashflow_value' => MoneyCast::class . ':4,resolveCashflowCurrency',
         ];
+    }
+
+    /**
+     * cashflow_value is always denominated in the transaction's own currency
+     * (transaction_currency's fallback-to-base-currency logic already handles the
+     * common case where currency_id hasn't been resolved yet).
+     */
+    public function resolveCashflowCurrency(): Currency
+    {
+        return $this->transaction_currency;
     }
 
     public function config(): MorphTo
@@ -153,7 +143,11 @@ class Transaction extends Model
 
     public function transactionItems(): HasMany
     {
-        return $this->hasMany(TransactionItem::class);
+        // chaperone() sets each loaded item's "transaction" inverse relation to this same
+        // parent instance, so TransactionItem::resolveAmountCurrency() (MoneyCast) never
+        // needs a fresh lazy lookup - notably including after the parent has been deleted
+        // but is still being serialized in-memory (e.g. TransactionApiController::destroy()).
+        return $this->hasMany(TransactionItem::class)->chaperone();
     }
 
     public function transactionSchedule(): HasOne
@@ -198,24 +192,14 @@ class Transaction extends Model
     }
 
     /**
-     * Create a dynamic scope to filter transactions by schedule and/or budget flag
+     * Scope to filter transactions that are real schedules (schedule = true).
+     * The schedule = false case is expressed inline (where('schedule', false)) at the few call
+     * sites that need it, rather than kept as a named scope.
      */
     #[Scope]
-    protected function byScheduleType(Builder $query, string $type): Builder
+    protected function isSchedule(Builder $query): Builder
     {
-        return match ($type) {
-            'schedule' => $query->where('schedule', true),
-            'schedule_only' => $query->where('schedule', true)->where('budget', false),
-            'budget' => $query->where('budget', true),
-            'budget_only' => $query->where('budget', true)->where('schedule', false),
-            'both' => $query->where('schedule', true)->where('budget', true),
-            'any' => $query->where(function (Builder $query): void {
-                $query->where('schedule', true)
-                    ->orWhere('budget', true);
-            }),
-            'none' => $query->where('schedule', false)->where('budget', false),
-            default => $query,
-        };
+        return $query->where('schedule', true);
     }
 
     /**
@@ -234,7 +218,7 @@ class Transaction extends Model
     /**
      * Scope to filter transactions that are eligible for item merging.
      *
-     * A transaction qualifies when it is a standard non-schedule, non-budget
+     * A transaction qualifies when it is a standard non-schedule
      * transaction AND has at least two transaction items that share the same
      * category_id and have an empty (null or blank) comment — i.e. there is
      * actual merge work to be done.
@@ -245,7 +229,6 @@ class Transaction extends Model
         return $query
             ->where('config_type', 'standard')
             ->where('schedule', false)
-            ->where('budget', false)
             ->whereExists(function ($subquery): void {
                 $subquery->selectRaw('1')
                     ->from('transaction_items')
@@ -365,33 +348,16 @@ class Transaction extends Model
         }
 
         if ($constraintStart === null) {
+            if ($this->transactionSchedule->next_date === null) {
+                // No next_date means the schedule is exhausted (e.g. a count-limited
+                // rule whose occurrences are all in the past) - there is nothing left
+                // to generate, so don't fall back to "now" as a fresh start date.
+                return $scheduleInstances;
+            }
+
             $constraintStart = new Carbon($this->transactionSchedule->next_date);
         }
         $constraintStart->startOfDay();
-
-        $rule = new Rule();
-        $rule->setStartDate(new Carbon($this->transactionSchedule->start_date));
-
-        if ($this->transactionSchedule->end_date) {
-            $rule->setUntil(new Carbon($this->transactionSchedule->end_date));
-        }
-
-        $rule->setFreq($this->transactionSchedule->frequency);
-
-        if ($this->transactionSchedule->count) {
-            $rule->setCount($this->transactionSchedule->count);
-        }
-
-        if ($this->transactionSchedule->interval) {
-            $rule->setInterval($this->transactionSchedule->interval);
-        }
-
-        $transformer = new ArrayTransformer();
-
-        $transformerConfig = new ArrayTransformerConfig();
-        $transformerConfig->setVirtualLimit($virtualLimit);
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformer->setConfig($transformerConfig);
 
         if ($this->transactionSchedule->end_date === null) {
             $endDate = $maxLookAhead;
@@ -400,7 +366,32 @@ class Transaction extends Model
         }
         $endDate->startOfDay();
 
-        $constraint = new BetweenConstraint($constraintStart, $endDate, true);
+        // Keyed on both the schedule's own updated_at and this transaction row's updated_at:
+        // only the date list is cached below (not $baseAttributes/$baseRelations, which are
+        // rebuilt fresh per call from $this), but keying on both is the safe choice for anyone
+        // who extends this cache to also cover per-occurrence attributes later.
+        $cacheKey = "schedule-occurrences:{$this->transactionSchedule->id}:"
+            . "{$this->transactionSchedule->updated_at?->timestamp}:{$this->updated_at?->timestamp}:"
+            . "{$constraintStart->toDateString()}:{$endDate->toDateString()}:{$virtualLimit}";
+
+        $dateStrings = Cache::remember($cacheKey, now()->addHour(), function () use (
+            $constraintStart,
+            $endDate,
+            $virtualLimit,
+        ) {
+            $recurrence = (new RecurrenceRuleService())->getRecurrenceBetween(
+                $this->transactionSchedule->start_date,
+                $this->transactionSchedule->effectiveRrule(),
+                \Illuminate\Support\Carbon::instance($constraintStart),
+                \Illuminate\Support\Carbon::instance($endDate),
+                $virtualLimit,
+            );
+
+            return collect($recurrence)
+                ->map(fn ($occurrence) => Carbon::instance($occurrence->getStart())->toDateString())
+                ->values()
+                ->all();
+        });
 
         // Every virtual occurrence shares the same attributes/relations as $this - only the
         // date and "is this the first instance" flag differ per occurrence. Resolving the
@@ -417,7 +408,6 @@ class Transaction extends Model
         $baseAttributes['transaction_type'] = $this->transaction_type;
         $baseAttributes['reconciled'] = $this->reconciled;
         $baseAttributes['schedule'] = $this->schedule;
-        $baseAttributes['budget'] = $this->budget;
         $baseAttributes['cashflow_value'] = $this->cashflow_value;
         $baseAttributes['transaction_currency'] = $this->transaction_currency;
         $baseAttributes['originalId'] = $this->id;
@@ -428,10 +418,21 @@ class Transaction extends Model
         // Some features need to know which is the first instance
         $first = true;
 
-        foreach ($transformer->transform($rule, $constraint) as $instance) {
+        $inflationCalculator = new InflationCalculator();
+        $scheduleStartDate = new \Illuminate\Support\Carbon($this->transactionSchedule->start_date);
+        $inflationRate = $this->transactionSchedule->inflation;
+
+        foreach ($dateStrings as $dateString) {
             $attributes = $baseAttributes;
-            $attributes['date'] = \Illuminate\Support\Carbon::instance($instance->getStart());
+            $instanceDate = \Illuminate\Support\Carbon::parse($dateString);
+            $attributes['date'] = $instanceDate;
             $attributes['schedule_first_instance'] = $first;
+            $attributes['inflationMultiplier'] = (string) $inflationCalculator->applyAnnualRate(
+                1.0,
+                $inflationRate,
+                $scheduleStartDate,
+                $instanceDate,
+            );
 
             $scheduleInstances->push(new ScheduleInstance($attributes, $baseRelations));
 

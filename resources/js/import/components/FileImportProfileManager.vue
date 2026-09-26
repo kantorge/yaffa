@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <div class="collapse card-body show" :id="collapseId">
+    <div :id="collapseId" class="collapse card-body show">
       <!-- New profile button (shown when not editing or showing wizard) -->
       <div v-if="!editingProfile && !showWizard" class="mb-3">
         <button
@@ -57,7 +57,10 @@
       </div>
 
       <!-- Create / Edit form (QIF always; CSV edit handled by wizard above) -->
-      <div v-if="editingProfile && fileType !== 'csv'" class="border rounded p-3 mb-3 bg-body-secondary">
+      <div
+        v-if="editingProfile && fileType !== 'csv'"
+        class="border rounded p-3 mb-3 bg-body-secondary"
+      >
         <div class="fw-semibold mb-3">
           {{ editingProfile.id ? __('Edit profile') : __('New profile') }}
         </div>
@@ -148,9 +151,13 @@
               v-model="editingProfile.sign_handling"
               class="form-select form-select-sm"
             >
-              <option :value="null">{{ __('— Default (as-is) —') }}</option>
+              <option :value="null">
+                {{ __('— Default (as-is) —') }}
+              </option>
               <option value="as_is">{{ __('As-is') }}</option>
-              <option value="inverted">{{ __('Inverted') }}</option>
+              <option value="inverted">
+                {{ __('Inverted') }}
+              </option>
             </select>
           </div>
 
@@ -230,10 +237,7 @@
                   :disabled="!editAiFile || aiSuggesting"
                   @click="requestEditAiSuggestion"
                 >
-                  <span
-                    v-if="aiSuggesting"
-                    class="spinner-border spinner-border-sm me-1"
-                  ></span>
+                  <i v-if="aiSuggesting" class="fa fa-spinner fa-spin me-1"></i>
                   {{
                     aiSuggesting
                       ? __('Requesting suggestion…')
@@ -242,7 +246,7 @@
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-secondary"
+                  class="btn btn-sm btn-secondary"
                   :disabled="aiSuggesting"
                   @click="showEditAiPanel = false"
                 >
@@ -321,8 +325,12 @@
               v-model="editingProfile.amount_sign"
               class="form-select form-select-sm"
             >
-              <option value="normal">{{ __('Normal (as-is)') }}</option>
-              <option value="inverted">{{ __('Inverted') }}</option>
+              <option value="normal">
+                {{ __('Normal (as-is)') }}
+              </option>
+              <option value="inverted">
+                {{ __('Inverted') }}
+              </option>
             </select>
           </div>
         </template>
@@ -334,15 +342,12 @@
             :disabled="saving || (fileType === 'csv' && !!mappingJsonError)"
             @click="saveProfile"
           >
-            <span
-              v-if="saving"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
+            <i v-if="saving" class="fa fa-spinner fa-spin me-1"></i>
             {{ __('Save') }}
           </button>
           <button
             type="button"
-            class="btn btn-sm btn-outline-secondary"
+            class="btn btn-sm btn-secondary"
             :disabled="saving"
             @click="cancelEdit"
           >
@@ -399,8 +404,12 @@
           >
             <template v-if="fileType === 'csv'">
               <td>{{ profile.name }}</td>
-              <td class="font-monospace">{{ profile.delimiter || ',' }}</td>
-              <td class="text-muted">{{ profile.date_format || '—' }}</td>
+              <td class="font-monospace">
+                {{ profile.delimiter || ',' }}
+              </td>
+              <td class="text-muted">
+                {{ profile.date_format || '—' }}
+              </td>
             </template>
             <template v-else>
               <td>{{ profile.name }}</td>
@@ -413,12 +422,12 @@
             </template>
             <td class="text-end text-nowrap">
               <button
+                v-if="false"
                 type="button"
                 class="btn btn-sm btn-outline-secondary me-1"
                 :disabled="!!editingProfile"
                 :title="__('Export as JSON')"
                 @click="exportProfile(profile)"
-                v-if="false"
               >
                 <i class="fa fa-download"></i>
               </button>
@@ -438,11 +447,7 @@
                   data-bs-placement="left"
                   :title="deleteDisabledTooltip(profile)"
                 >
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    disabled
-                  >
+                  <button type="button" class="btn btn-sm btn-danger" disabled>
                     <i class="fa fa-trash"></i>
                   </button>
                 </span>
@@ -450,15 +455,17 @@
               <template v-else>
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-danger"
+                  class="btn btn-sm btn-danger"
                   :disabled="!!editingProfile || deletingId === profile.id"
                   @click="deleteProfile(profile)"
                 >
-                  <span
-                    v-if="deletingId === profile.id"
-                    class="spinner-border spinner-border-sm"
-                  ></span>
-                  <i v-else class="fa fa-trash"></i>
+                  <i
+                    :class="
+                      deletingId === profile.id
+                        ? 'fa fa-spinner fa-spin'
+                        : 'fa fa-trash'
+                    "
+                  ></i>
                 </button>
               </template>
             </td>
@@ -579,7 +586,9 @@
         const names = (profile.account_entities || [])
           .map((a) => a.name)
           .join(', ');
-        return __('Used as default profile by: :accounts', { accounts: names });
+        return __('Used as default profile by: :accounts', {
+          accounts: names,
+        });
       },
       startCreate() {
         this.mappingJsonError = null;
@@ -731,7 +740,10 @@
             `<p class="small mt-2">` +
             __(
               'This profile is set as the default for :count account(s): :accounts. Deleting it will require manual profile selection for these accounts on future imports.',
-              { count: affectedAccounts.length, accounts: accountList },
+              {
+                count: affectedAccounts.length,
+                accounts: accountList,
+              },
             ) +
             `</p>`;
         }
@@ -745,7 +757,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         });
 

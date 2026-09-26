@@ -6,7 +6,6 @@ use App\Contracts\InvestmentPriceProvider;
 use App\Events\InvestmentPricesUpdated;
 use App\Exceptions\PriceProviderException;
 use App\Jobs\CalculateAccountMonthlySummary;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -17,6 +16,7 @@ use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviderContextResolver;
 use App\Services\InvestmentProviderRateLimitPolicyResolver;
 use App\Services\InvestmentService;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Bus\PendingBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,10 +48,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user)->create(), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         TransactionDetailInvestment::factory()
             ->for($investment)
@@ -174,7 +171,7 @@ class InvestmentServicePriceTest extends TestCase
         $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('unknown provider');
+        $this->expectExceptionMessageIsOrContains('unknown provider');
 
         $service->fetchAndSavePrices($investment);
     }
@@ -190,7 +187,7 @@ class InvestmentServicePriceTest extends TestCase
         $service = $this->createService($registry);
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('no price provider configured');
+        $this->expectExceptionMessageIsOrContains('no price provider configured');
 
         $service->fetchAndSavePrices($investment);
     }
@@ -199,7 +196,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create transactions
         Transaction::factory()
@@ -230,8 +227,8 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account1 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
-        $account2 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account1 = AccountEntity::factory()->asAccount($user)->create();
+        $account2 = AccountEntity::factory()->asAccount($user)->create();
 
         // Create transactions in different accounts
         Transaction::factory()
@@ -285,7 +282,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         Transaction::factory()
             ->for($user)
@@ -308,7 +305,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create stored price (newer)
         InvestmentPrice::factory()->for($investment)->create([
@@ -338,7 +335,7 @@ class InvestmentServicePriceTest extends TestCase
     {
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Create stored price (older)
         InvestmentPrice::factory()->for($investment)->create([
@@ -408,7 +405,7 @@ class InvestmentServicePriceTest extends TestCase
     public function test_get_latest_prices_batch_matches_single_lookups_across_multiple_investments(): void
     {
         $user = User::factory()->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // Investment A: stored price wins over an older transaction price
         $investmentA = Investment::factory()->for($user)->withUser($user)->create();
@@ -486,14 +483,77 @@ class InvestmentServicePriceTest extends TestCase
         $this->assertSame([], $service->getLatestPricesBatch(collect()));
     }
 
+    /**
+     * getLatestPriceExact()/getLatestPricesBatchExact() (precision-improvements FR-7
+     * follow-up) must resolve the same value as their float-collapsing counterparts,
+     * just as a BigDecimal instead of a float.
+     */
+    public function test_get_latest_price_exact_matches_float_variant(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        InvestmentPrice::factory()->for($investment)->create([
+            'date' => '2024-01-15',
+            'price' => 150.25,
+        ]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $exact = $service->getLatestPriceExact($investment, 'combined');
+
+        $this->assertInstanceOf(BigDecimal::class, $exact);
+        $this->assertSame($service->getLatestPrice($investment, 'combined'), $exact->toFloat());
+    }
+
+    public function test_get_latest_price_exact_returns_null_when_no_price_exists(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $this->assertNull($service->getLatestPriceExact($investment));
+    }
+
+    public function test_get_latest_prices_batch_exact_matches_float_variant(): void
+    {
+        $user = User::factory()->create();
+        $investmentA = Investment::factory()->for($user)->withUser($user)->create();
+        $investmentB = Investment::factory()->for($user)->withUser($user)->create();
+
+        InvestmentPrice::factory()->for($investmentA)->create(['date' => '2024-01-16', 'price' => 151.00]);
+        InvestmentPrice::factory()->for($investmentB)->create(['date' => '2024-01-14', 'price' => 149.00]);
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = $this->createService($registry);
+
+        $requests = collect([
+            ['investment' => $investmentA, 'date' => null],
+            ['investment' => $investmentB, 'date' => null],
+        ]);
+
+        $exactResults = $service->getLatestPricesBatchExact($requests);
+        $floatResults = $service->getLatestPricesBatch($requests);
+
+        $this->assertCount(2, $floatResults);
+
+        foreach ($floatResults as $key => $floatValue) {
+            $this->assertInstanceOf(BigDecimal::class, $exactResults[$key]);
+            $this->assertSame($floatValue, $exactResults[$key]->toFloat());
+        }
+    }
+
     public function test_recalculate_related_accounts_dispatches_batch_jobs_for_each_account(): void
     {
         Bus::fake();
 
         $user = User::factory()->create();
         $investment = Investment::factory()->for($user)->withUser($user)->create();
-        $account1 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
-        $account2 = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account1 = AccountEntity::factory()->asAccount($user)->create();
+        $account2 = AccountEntity::factory()->asAccount($user)->create();
 
         TransactionDetailInvestment::factory()->for($investment)->for($account1, 'account')->create();
         TransactionDetailInvestment::factory()->for($investment)->for($account2, 'account')->create();
@@ -503,10 +563,15 @@ class InvestmentServicePriceTest extends TestCase
 
         $service->recalculateRelatedAccounts($investment);
 
-        Bus::assertBatchCount(2);
-        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->jobs->count() === 2
-                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary
-                && $batch->jobs->last() instanceof CalculateAccountMonthlySummary);
+        // One named batch per (account, task) pair - fact and forecast are dispatched separately
+        // so each is individually visible to AccountMonthlySummary::isCalculationInProgress().
+        Bus::assertBatchCount(4);
+        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->name === CalculateAccountMonthlySummary::batchName($user->id, 'investment_value-fact')
+                && $batch->jobs->count() === 1
+                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary);
+        Bus::assertBatched(fn (PendingBatch $batch): bool => $batch->name === CalculateAccountMonthlySummary::batchName($user->id, 'investment_value-forecast')
+                && $batch->jobs->count() === 1
+                && $batch->jobs->first() instanceof CalculateAccountMonthlySummary);
     }
 
     public function test_recalculate_related_accounts_does_not_include_accounts_holding_other_investments(): void
@@ -516,7 +581,7 @@ class InvestmentServicePriceTest extends TestCase
         $user = User::factory()->create();
         $investmentA = Investment::factory()->for($user)->withUser($user)->create();
         $investmentB = Investment::factory()->for($user)->withUser($user)->create();
-        $account = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user)->create(), 'config')->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         // account holds investmentB only
         TransactionDetailInvestment::factory()->for($investmentB)->for($account, 'account')->create();

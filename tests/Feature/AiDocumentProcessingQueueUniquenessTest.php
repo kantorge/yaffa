@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentProcessingQueueUniquenessTest extends TestCase
 {
@@ -21,7 +22,10 @@ class AiDocumentProcessingQueueUniquenessTest extends TestCase
         $user = User::factory()->create();
         AiUserSettings::factory()->enabled()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.documents.store'), [
                 'text_input' => 'Coffee 4.50 USD',
             ])
@@ -47,7 +51,10 @@ class AiDocumentProcessingQueueUniquenessTest extends TestCase
             'status' => 'ready_for_review',
         ]);
 
-        $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $this
             ->postJson(route('api.v1.documents.reprocess', ['aiDocument' => $document]))
             ->assertOk();
 

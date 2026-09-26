@@ -21,7 +21,6 @@ class TagController extends Controller implements HasMiddleware
             new Middleware('can:viewAny,' . Tag::class, only: ['index']),
             new Middleware('can:create,' . Tag::class, only: ['create', 'store']),
             new Middleware('can:update,tag', only: ['edit', 'update']),
-            new Middleware('can:delete,tag', only: ['destroy']),
         ];
     }
 
@@ -102,23 +101,6 @@ class TagController extends Controller implements HasMiddleware
             ->save();
 
         self::addSimpleSuccessMessage(__('Tag updated'));
-
-        return to_route('tags.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Tag $tag): RedirectResponse
-    {
-        /**
-         * @delete("/tags/{tag}")
-         * @name("tags.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        $tag->delete();
-
-        self::addSimpleSuccessMessage(__('Tag deleted'));
 
         return to_route('tags.index');
     }

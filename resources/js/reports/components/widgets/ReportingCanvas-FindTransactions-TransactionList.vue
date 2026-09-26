@@ -31,8 +31,8 @@
     </div>
 
     <table
-      class="table table-bordered table-hover no-footer"
       ref="dataTable"
+      class="table table-bordered table-hover no-footer"
     ></table>
   </div>
 </template>
@@ -47,11 +47,6 @@
 
   export default {
     name: 'ReportingCanvasFindTransactionsTransactionList',
-    emits: [
-      'return-to-monthly-breakdown',
-      'clear-drill-down-filter',
-      'transaction-deleted',
-    ],
     props: {
       transactions: {
         type: Array,
@@ -72,6 +67,11 @@
         required: true,
       },
     },
+    emits: [
+      'return-to-monthly-breakdown',
+      'clear-drill-down-filter',
+      'transaction-deleted',
+    ],
     data() {
       return {
         dataTable: null,
@@ -104,11 +104,8 @@
       },
     },
     watch: {
-      listTransactions: {
-        handler() {
-          this.redrawDataTable();
-        },
-        deep: true,
+      listTransactions() {
+        this.redrawDataTable();
       },
       busy(newBusy) {
         if (this.dataTable) {
@@ -120,6 +117,23 @@
           this.refreshLayout();
         }
       },
+    },
+    mounted() {
+      this.initializeDataTable();
+      dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
+
+      this._onDeleteClick = (event) => this.handleDeleteClick(event);
+      this.$refs.dataTable.addEventListener('click', this._onDeleteClick);
+    },
+    beforeUnmount() {
+      if (this.$refs.dataTable && this._onDeleteClick) {
+        this.$refs.dataTable.removeEventListener('click', this._onDeleteClick);
+      }
+
+      if (this.dataTable) {
+        this.dataTable.destroy();
+        this.dataTable = null;
+      }
     },
     methods: {
       initializeDataTable() {
@@ -219,7 +233,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (!result.isConfirmed) {
@@ -262,23 +276,6 @@
       },
 
       __,
-    },
-    mounted() {
-      this.initializeDataTable();
-      dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
-
-      this._onDeleteClick = (event) => this.handleDeleteClick(event);
-      this.$refs.dataTable.addEventListener('click', this._onDeleteClick);
-    },
-    beforeUnmount() {
-      if (this.$refs.dataTable && this._onDeleteClick) {
-        this.$refs.dataTable.removeEventListener('click', this._onDeleteClick);
-      }
-
-      if (this.dataTable) {
-        this.dataTable.destroy();
-        this.dataTable = null;
-      }
     },
   };
 </script>

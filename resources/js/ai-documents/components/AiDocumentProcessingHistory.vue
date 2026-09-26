@@ -23,7 +23,9 @@
         </summary>
         <div class="card-body">
           <details class="history-section" open>
-            <summary class="fw-semibold">{{ __('Prompt') }}</summary>
+            <summary class="fw-semibold">
+              {{ __('Prompt') }}
+            </summary>
             <div class="history-section-body">
               <ai-document-json-tree-node
                 v-if="entry.promptContent.isJson"
@@ -36,7 +38,9 @@
           </details>
 
           <details class="history-section mt-3" open>
-            <summary class="fw-semibold">{{ __('Raw response') }}</summary>
+            <summary class="fw-semibold">
+              {{ __('Raw response') }}
+            </summary>
             <div class="history-section-body">
               <ai-document-json-tree-node
                 v-if="entry.responseContent.isJson"
@@ -55,7 +59,7 @@
 
 <script setup>
   import { computed } from 'vue';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import AiDocumentJsonTreeNode from './AiDocumentJsonTreeNode.vue';
 
   const props = defineProps({
@@ -125,7 +129,8 @@
       return __('Unknown time');
     }
 
-    return new Date(timestamp).toLocaleString(
+    return toFormattedDateTime(
+      timestamp,
       window.YAFFA.userSettings.locale || 'en',
     );
   };

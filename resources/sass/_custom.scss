@@ -2,8 +2,18 @@ td.dt-nowrap {
     white-space: nowrap;
 }
 
+// Shrinks a column to its content's width (e.g. a single action icon) instead of sharing
+// in DataTables' autoWidth distribution, which otherwise gives it as much room as any other
+// column and leaves less for columns that actually need to wrap.
+td.dt-shrink, th.dt-shrink {
+    width: 1%;
+    white-space: nowrap;
+}
+
+// !important is required: this is toggled via classList alongside Bootstrap utility classes
+// (e.g. d-flex) that are themselves !important, so a plain `display: none` here would lose.
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .notbold {
@@ -18,17 +28,29 @@ td.dt-nowrap {
     cursor: pointer;
 }
 
+// jstree's default theme sets .jstree-anchor to white-space: nowrap, so a long category name
+// (e.g. a deeply nested subcategory) overflows the sidebar card to the right instead of wrapping.
+#categoryTree .jstree-anchor {
+    white-space: normal;
+    height: auto;
+    min-height: 24px;
+}
+
 // Hide the DataTables search box
 .no-datatable-search .dt-search {
     display: none;
 }
 
-// Show/hide dataTables actions icon based on the row hover state
+// Dim/highlight dataTables actions icon based on the row hover state. Left dimmed rather than
+// fully hidden (opacity: 0) so it stays visible and tappable on touch devices, which have no
+// :hover state to reveal it from.
 table.dataTable tr .hover-icon {
-    opacity: 0;
+    opacity: 0.4;
     transition: opacity .2s ease-out;
     cursor: pointer;
     transition-delay: .2s;
+    // Widen the tap/click target beyond the glyph itself - three thin dots are an easy miss.
+    padding: 0.5rem;
 }
 
 table.dataTable tr:hover .hover-icon {
@@ -106,13 +128,26 @@ table.dataTable tr.table-warning {
     --cui-table-border-color: rgba(255, 255, 255, 0.15);
 }
 
+// Native <input type="date"> renders its calendar popup and spinner icon using the
+// OS/browser color scheme, which YAFFA's manual dark-mode toggle doesn't drive on its
+// own — force it to follow the app's own theme attribute instead.
+[data-coreui-theme="dark"] input[type="date"] {
+    color-scheme: dark;
+}
+
+[data-coreui-theme="light"] input[type="date"] {
+    color-scheme: light;
+}
+
 // DataTables detects dark mode via [data-bs-theme="dark"], not CoreUI's [data-coreui-theme="dark"].
-// This means --dt-row-stripe stays at its default "0, 0, 0" (black) in dark mode — a black
-// overlay on a dark background is invisible. Fix: set white rgb values and override the
+// This means --dt-row_background-stripe stays at its default "0, 0, 0" (black) in dark mode — a
+// black overlay on a dark background is invisible. Fix: set white rgb values and override the
 // hardcoded 0.05 box-shadow opacity to something visible.
+// Variable names match DataTables 3's dataTables.bootstrap5.css (renamed from --dt-row-stripe /
+// --dt-row-hover / --dt-row-selected* in DataTables 2).
 [data-coreui-theme="dark"] {
-    --dt-row-stripe: 255, 255, 255;
-    --dt-row-hover: 255, 255, 255;
+    --dt-row_background-stripe: 255, 255, 255;
+    --dt-row_background-hover: 255, 255, 255;
 
     table.table.dataTable.table-striped > tbody > tr:nth-of-type(2n+1) > * {
         box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.07);
@@ -120,9 +155,9 @@ table.dataTable tr.table-warning {
 }
 
 :root {
-    --dt-row-selected: 235, 237, 239;
-    --dt-row-selected-text: 0, 0, 0;
-    --dt-row-selected-link: var(--cui-link-color-rgb);
+    --dt-row_background-selected: 235, 237, 239;
+    --dt-row-text_color-selected: 0, 0, 0;
+    --dt-row-link_color-selected: var(--cui-link-color-rgb);
 }
 
 // Sidebar form settings
@@ -465,30 +500,6 @@ button[type="submit"] .spinner-border {
 }
 
 .left-control-panel-toggle-shell {
-    position: relative;
-}
-
-.left-control-panel-toggle-card {
-    position: relative;
-    z-index: 2;
-}
-
-.left-control-panel-toggle-header {
-    position: relative;
-}
-
-.left-control-panel-toggle-handle {
-    position: absolute;
-    left: var(--left-control-panel-toggle-left, 4px);
-    top: var(--left-control-panel-toggle-top, -20px);
-    transform: translateY(var(--left-control-panel-toggle-resting-offset, 10px));
-    opacity: var(--left-control-panel-toggle-resting-opacity, 0.35);
-    transition: transform 0.18s ease, opacity 0.18s ease;
-    z-index: 1;
-}
-
-.left-control-panel-toggle-handle:hover,
-.left-control-panel-toggle-handle:focus-visible {
-    transform: translateY(var(--left-control-panel-toggle-hover-offset, -6px));
-    opacity: var(--left-control-panel-toggle-hover-opacity, 1);
+    display: flex;
+    flex-direction: column;
 }

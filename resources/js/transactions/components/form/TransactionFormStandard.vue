@@ -6,15 +6,15 @@
     />
 
     <payee-form
+      v-if="!fromModal"
+      id="newPayeeModal"
       action="new"
       :payee="{}"
       :simplified="true"
-      id="newPayeeModal"
       @payee-selected="setPayee"
-      v-if="!fromModal"
     ></payee-form>
 
-    <form accept-charset="UTF-8" @submit.prevent="onSubmit" autocomplete="off">
+    <form accept-charset="UTF-8" autocomplete="off" @submit.prevent="onSubmit">
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
@@ -23,7 +23,7 @@
                 {{ __('Settings') }}
               </div>
               <span
-                class="fa fa-info-circle text-primary"
+                class="fa fa-info-circle text-info"
                 data-bs-toggle="tooltip"
                 data-bs-placement="right"
                 :title="
@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col btn-group mb-3 mb-xl-0">
+                <div class="col-9 btn-group mb-3 mb-xl-0">
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
@@ -63,7 +63,7 @@
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('transfer')"
-                    :disabled="form.budget || !isBaseSettingsEditsAllowed"
+                    :disabled="!isBaseSettingsEditsAllowed"
                     dusk="transaction-type-transfer"
                     type="button"
                     value="transfer"
@@ -74,20 +74,20 @@
                   </button>
                 </div>
                 <div
-                  class="col d-flex justify-content-between gap-2 mb-0"
                   v-if="!simplified"
+                  class="col-3 d-flex justify-content-between gap-2 mb-0"
                 >
                   <input
+                    id="checkbox-standard-transaction-schedule"
+                    v-model="form.schedule"
                     class="btn-check"
                     :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
-                    id="checkbox-standard-transaction-schedule"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.schedule"
                   />
                   <label
-                    class="btn btn-outline-dark w-100"
+                    class="btn btn-outline-secondary w-100"
                     dusk="checkbox-transaction-schedule"
                     for="checkbox-standard-transaction-schedule"
                     :title="
@@ -101,35 +101,6 @@
                   >
                     <span class="fa-solid fa-arrows-rotate"></span><br />
                     {{ __('Scheduled') }}
-                  </label>
-                  <input
-                    class="btn-check"
-                    :disabled="
-                      form.reconciled ||
-                      form.transaction_type == 'transfer' ||
-                      !isBaseSettingsEditsAllowed
-                    "
-                    id="checkbox-standard-transaction-budget"
-                    type="checkbox"
-                    autocomplete="off"
-                    value="1"
-                    v-model="form.budget"
-                  />
-                  <label
-                    class="btn btn-outline-dark w-100"
-                    dusk="checkbox-transaction-budget"
-                    for="checkbox-standard-transaction-budget"
-                    :title="
-                      action === 'replace'
-                        ? __(
-                            'You cannot change schedule settings for this type of action',
-                          )
-                        : ''
-                    "
-                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
-                  >
-                    <span class="fa-solid fa-hourglass-half"></span><br />
-                    {{ __('Budget') }}
                   </label>
                 </div>
               </div>
@@ -149,13 +120,13 @@
                   class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
-                    class="btn-check"
-                    :disabled="form.schedule || form.budget"
                     id="checkbox-standard-transaction-reconciled"
+                    v-model="form.reconciled"
+                    class="btn-check"
+                    :disabled="form.schedule"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
-                    v-model="form.reconciled"
                   />
                   <label
                     class="btn btn-outline-success"
@@ -166,39 +137,68 @@
                   </label>
                 </div>
                 <div
-                  class="col-8 col-sm-4 col-md-8 col-lg-4 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
-                  :class="{ 'has-error': form.errors.has('date') }"
+                  :class="[
+                    action === 'enter'
+                      ? 'col-8 col-sm-2 col-md-4 col-lg-2'
+                      : 'col-8 col-sm-4 col-md-8 col-lg-4',
+                    'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
+                    {
+                      'has-error': form.errors.has('date'),
+                    },
+                  ]"
                 >
                   <label class="form-label" for="standard-date">
                     {{ __('Date') }}
                   </label>
-                  <DatePicker
-                    :columns="2"
-                    :initial-page="datePickerInitialPage"
-                    :is-dark="isDarkMode"
-                    :is-required="false"
-                    :masks="{
-                      L: 'YYYY-MM-DD',
-                      modelValue: 'YYYY-MM-DD',
-                    }"
-                    mode="date"
-                    :popover="{
-                      visibility: 'click',
-                      showDelay: 0,
-                      hideDelay: 0,
-                    }"
-                    v-model.string="form.date"
-                  >
-                    <template #default="{ inputValue, inputEvents }">
-                      <input
-                        class="form-control"
-                        :disabled="form.schedule || form.budget"
-                        id="standard-date"
-                        :value="inputValue"
-                        v-on="inputEvents"
-                      />
-                    </template>
-                  </DatePicker>
+                  <input
+                    id="standard-date"
+                    v-model="dateInput"
+                    type="date"
+                    class="form-control"
+                    :disabled="form.schedule"
+                  />
+                </div>
+                <div
+                  v-if="action === 'enter'"
+                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
+                >
+                  <div class="form-check">
+                    <input
+                      id="checkbox-standard-catch-up-schedule"
+                      v-model="form.catch_up_schedule"
+                      class="form-check-input"
+                      dusk="checkbox-standard-catch-up-schedule"
+                      type="checkbox"
+                      value="1"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="checkbox-standard-catch-up-schedule"
+                    >
+                      {{ __('Skip to nearest future occurrence') }}
+                      <i
+                        class="fa fa-info-circle text-info"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        :title="
+                          __(
+                            'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
+                          )
+                        "
+                      ></i>
+                      <i
+                        v-if="catchUpMayCloseSchedule"
+                        class="fa fa-triangle-exclamation text-warning ms-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        :title="
+                          __(
+                            'May close this schedule if no occurrences remain.',
+                          )
+                        "
+                      ></i>
+                    </label>
+                  </div>
                 </div>
                 <div
                   class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
@@ -208,11 +208,11 @@
                     {{ __('Comment') }}
                   </label>
                   <input
-                    class="form-control"
                     id="standard-comment"
+                    v-model="form.comment"
+                    class="form-control"
                     maxlength="255"
                     type="text"
-                    v-model="form.comment"
                   />
                 </div>
               </div>
@@ -223,26 +223,25 @@
       <div class="row">
         <div class="col-12">
           <transaction-schedule
-            v-if="form.schedule || form.budget"
-            :isSchedule="form.schedule"
-            :isBudget="form.budget"
+            v-if="form.schedule"
+            key="current"
+            :is-schedule="form.schedule"
             :schedule="form.schedule_config"
             :form="form"
-            key="current"
           ></transaction-schedule>
         </div>
         <div class="col-12">
           <transaction-schedule
-            v-if="(form.schedule || form.budget) && action === 'replace'"
-            :withCheckbox="true"
-            :title="__('Update base schedule')"
-            :allowCustomization="false"
-            :isSchedule="form.schedule"
-            :isBudget="form.budget"
-            :schedule="form.original_schedule_config"
-            :form="form"
+            v-if="form.schedule && action === 'replace'"
             ref="scheduleOriginal"
             key="original"
+            :with-checkbox="true"
+            :title="__('Update base schedule')"
+            :allow-customization="false"
+            :is-schedule="form.schedule"
+            :schedule="form.original_schedule_config"
+            :form="form"
+            field-prefix="original_schedule_config"
           ></transaction-schedule>
         </div>
       </div>
@@ -265,20 +264,20 @@
                   <span class="form-label block-label">
                     {{ accountFromFieldLabel }}
                   </span>
-                  <div class="input-group" id="account_from_container">
+                  <div id="account_from_container" class="input-group">
                     <select
-                      class="form-select"
                       id="account_from"
                       v-model="form.config.account_from_id"
+                      class="form-select"
                     ></select>
                     <button
+                      v-if="form.transaction_type === 'deposit' && !fromModal"
                       class="btn btn-success"
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
                       data-coreui-toggle="modal"
                       data-coreui-target="#newPayeeModal"
-                      v-if="form.transaction_type === 'deposit' && !fromModal"
                     >
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
@@ -293,22 +292,22 @@
                   <span class="form-label block-label">
                     {{ accountToFieldLabel }}
                   </span>
-                  <div class="input-group" id="account_to_container">
+                  <div id="account_to_container" class="input-group">
                     <select
-                      class="form-select"
                       id="account_to"
                       v-model="form.config.account_to_id"
+                      class="form-select"
                     ></select>
                     <button
+                      v-if="
+                        form.transaction_type === 'withdrawal' && !fromModal
+                      "
                       class="btn btn-success"
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
                       data-coreui-toggle="modal"
                       data-coreui-target="#newPayeeModal"
-                      v-if="
-                        form.transaction_type === 'withdrawal' && !fromModal
-                      "
                     >
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
@@ -330,23 +329,11 @@
                     >
                       ({{ ammountFromCurrencyLabel }})
                     </span>
-                    <span v-if="form.budget && !ammountFromCurrencyLabel">
-                      ({{ getCurrencySymbol(locale, baseCurrency.iso_code) }})
-                      <span
-                        class="fa fa-info-circle text-primary"
-                        :title="
-                          __(
-                            'Budget is calculated using your base currency, unless you define an account with an other currency.',
-                          )
-                        "
-                        data-bs-toggle="tooltip"
-                      ></span>
-                    </span>
                   </label>
                   <MathInput
-                    class="form-control"
                     id="transaction_amount_from"
                     v-model="form.config.amount_from"
+                    class="form-control"
                   ></MathInput>
                 </div>
                 <div
@@ -378,13 +365,13 @@
                     </span>
                   </label>
                   <MathInput
-                    class="form-control"
                     id="transaction_amount_to"
                     v-model="form.config.amount_to"
+                    class="form-control"
                   ></MathInput>
                 </div>
               </div>
-              <dl class="row" v-if="!transactionTypeIsTransfer">
+              <dl v-if="!transactionTypeIsTransfer" class="row">
                 <dt class="col-8">
                   {{ __('Total amount') }}
                 </dt>
@@ -393,8 +380,8 @@
                     {{
                       toFormattedCurrency(
                         form.config.amount_from || 0,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -410,8 +397,8 @@
                     {{
                       toFormattedCurrency(
                         allocatedAmount,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -419,17 +406,17 @@
                     {{ allocatedAmount }}
                   </span>
                 </dd>
-                <dt class="col-8" v-show="payeeCategory.id">
+                <dt v-show="payeeCategory.id" class="col-8">
                   {{ __('Remaining amount to') }}
                   <span class="notbold"><br />{{ payeeCategory.text }}</span>
                 </dt>
-                <dd class="col-4" v-show="payeeCategory.id">
+                <dd v-show="payeeCategory.id" class="col-4">
                   <span v-if="ammountFromCurrencyLabel">
                     {{
                       toFormattedCurrency(
                         remainingAmountToPayeeDefault,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -437,16 +424,16 @@
                     {{ remainingAmountToPayeeDefault }}
                   </span>
                 </dd>
-                <dt class="col-8" v-show="!payeeCategory.id">
+                <dt v-show="!payeeCategory.id" class="col-8">
                   {{ __('Not allocated') }}:
                 </dt>
-                <dd class="col-4" v-show="!payeeCategory.id">
+                <dd v-show="!payeeCategory.id" class="col-4">
                   <span v-if="ammountFromCurrencyLabel">
                     {{
                       toFormattedCurrency(
                         remainingAmountNotAllocated,
-                        this.locale,
-                        this.from.account_currency,
+                        locale,
+                        from.account_currency,
                       )
                     }}
                   </span>
@@ -483,17 +470,17 @@
           </div>
 
           <transaction-item-container
-            @addTransactionItem="addTransactionItem"
-            :transactionItems="form.items"
-            :currencySymbol="ammountFromCurrencyLabel"
+            :transaction-items="form.items"
+            :currency-symbol="ammountFromCurrencyLabel"
             :payee="payeeId"
-            :transactionType="form.transaction_type"
-            :amountFrom="form.config.amount_from"
-            :remainingAmount="
+            :transaction-type="form.transaction_type"
+            :amount-from="form.config.amount_from"
+            :remaining-amount="
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
             :dropdown-parent-selector="dropdownParentSelector"
+            @add-transaction-item="addTransactionItem"
           ></transaction-item-container>
         </div>
       </div>
@@ -502,8 +489,8 @@
         <div class="card-body">
           <div class="row justify-content-end">
             <div
-              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               v-if="!fromModal"
+              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               dusk="action-after-save-desktop-button-group"
             >
               <span class="form-label block-label">
@@ -517,7 +504,7 @@
                 <button
                   v-for="item in activeCallbackOptions"
                   :key="item.id"
-                  class="btn btn-outline-dark"
+                  class="btn btn-outline-secondary"
                   :class="{ active: callback === item.value }"
                   type="button"
                   :value="item.value"
@@ -528,16 +515,16 @@
               </div>
             </div>
             <div
-              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
               v-if="!fromModal"
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
             >
               <label class="form-label" for="callback-selector-mobile-standard">
                 {{ __('Action after saving') }}
               </label>
               <select
-                class="form-control"
-                v-model="callback"
                 id="callback-selector-mobile-standard"
+                v-model="callback"
+                class="form-control"
               >
                 <option
                   v-for="item in activeCallbackOptions"
@@ -552,21 +539,21 @@
               class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
             >
               <button
-                class="btn btn-sm btn-outline-dark align-bottom"
-                @click="onCancel"
+                class="btn btn btn-secondary"
                 type="button"
+                @click="onCancel"
               >
                 {{ __('Cancel') }}
               </button>
-              <Button
-                class="btn btn-lg btn-primary ms-3 mt-2"
+              <SubmitButton
+                id="transactionFormStandard-Save"
+                class="btn btn-primary ms-2"
                 :disabled="form.busy"
                 :form="form"
-                id="transactionFormStandard-Save"
               >
-                <span class="fa fa-floppy-disk me-1" v-show="!form.busy"></span>
+                <span v-show="!form.busy" class="fa fa-save me-1"></span>
                 {{ __('Save') }}
-              </Button>
+              </SubmitButton>
             </div>
           </div>
         </div>
@@ -576,11 +563,15 @@
 </template>
 
 <script>
+  import { RRule } from 'rrule';
   import {
-    todayInUTC,
     processTransaction,
     initializeBootstrapTooltips,
     parseIsoDate,
+    byDayToRRuleWeekday,
+    toDateInputValue,
+    toIsoDateString,
+    toRRuleDate,
   } from '@/shared/lib/helpers';
   import {
     __,
@@ -590,28 +581,28 @@
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
 
+  import { confirmAction } from '@/shared/lib/confirm';
+
+  import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
 
   import Form from 'vform';
-  import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
-
-  import { DatePicker } from 'v-calendar';
+  import {
+    Button as SubmitButton,
+    AlertErrors,
+  } from 'vform/src/components/bootstrap5';
 
   import TransactionItemContainer from './TransactionItemContainer.vue';
   import TransactionSchedule from './TransactionSchedule.vue';
 
   import PayeeForm from '@/payee/components/PayeeForm.vue';
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
-    mixins: [colorModeMixin],
-
     components: {
       TransactionItemContainer,
       TransactionSchedule,
       PayeeForm,
-      DatePicker,
-      Button,
+      SubmitButton,
       AlertErrors,
       MathInput,
     },
@@ -624,7 +615,7 @@
       },
       transaction: Object,
       simplified: {
-        // If true, no schedule or budget option is shown
+        // If true, no schedule option is shown
         type: Boolean,
         default: false,
       },
@@ -649,6 +640,8 @@
         default: 'body',
       },
     },
+
+    emits: ['cancel', 'success'],
 
     data() {
       let data = {};
@@ -675,11 +668,11 @@
       data.form = new Form({
         transaction_type: 'withdrawal',
         config_type: 'standard',
-        date: todayInUTC(),
+        date: toIsoDateString(),
         comment: null,
         schedule: false,
-        budget: false,
         reconciled: false,
+        catch_up_schedule: false,
         config: {},
         items: [],
         schedule_config: {
@@ -799,11 +792,15 @@
         return '';
       },
 
-      // Calculate the summary of all existing items and their values
+      // Calculate the summary of all existing items and their values, using
+      // exact decimal arithmetic to avoid float drift accumulating across items.
       allocatedAmount() {
         return this.form.items
-          .map((item) => Number(item.amount) || 0)
-          .reduce((amount, currentValue) => amount + currentValue, 0);
+          .reduce(
+            (amount, item) => amount.plus(new Decimal(item.amount || 0)),
+            new Decimal(0),
+          )
+          .toNumber();
       },
 
       // Provide the base currency from the global scope for the template
@@ -813,14 +810,18 @@
 
       remainingAmountToPayeeDefault() {
         if (this.payeeCategory.id && !isNaN(this.form.config.amount_from)) {
-          return this.form.config.amount_from - this.allocatedAmount;
+          return new Decimal(this.form.config.amount_from || 0)
+            .minus(this.allocatedAmount)
+            .toNumber();
         }
         return 0;
       },
 
       remainingAmountNotAllocated() {
         if (!this.payeeCategory.id && !isNaN(this.form.config.amount_from)) {
-          return this.form.config.amount_from - this.allocatedAmount;
+          return new Decimal(this.form.config.amount_from || 0)
+            .minus(this.allocatedAmount)
+            .toNumber();
         }
 
         return 0;
@@ -876,12 +877,56 @@
         return this.form.transaction_type === 'transfer';
       },
 
-      datePickerInitialPage() {
-        const date = parseIsoDate(this.form.date) || new Date();
-        return {
-          year: date.getFullYear(),
-          month: date.getMonth(),
-        };
+      // Native <input type="date"> needs a 'YYYY-MM-DD' string, while
+      // form.date may hold a Date object (see toRRuleDate above) - this
+      // bridges the two without changing the stored type.
+      dateInput: {
+        get() {
+          return toDateInputValue(this.form.date);
+        },
+        set(value) {
+          this.form.date = value || null;
+        },
+      },
+
+      // Predicts whether catching up to today would close this schedule, by checking
+      // whether the rule (anchored at start_date, same as the backend's
+      // TransactionSchedule::catchUpToDate()) has any occurrence left on or after
+      // today. next_date doesn't need to be considered separately: it's always one of
+      // the rule's own occurrences, so "no occurrence on/after today anywhere in the
+      // rule" and "no occurrence on/after today reachable from next_date" agree.
+      catchUpMayCloseSchedule() {
+        if (this.action !== 'enter') {
+          return false;
+        }
+
+        const schedule = this.form.schedule_config;
+        if (!schedule?.frequency || !schedule?.start_date) {
+          return false;
+        }
+
+        const start = toRRuleDate(schedule.start_date);
+        if (!start) {
+          return false;
+        }
+
+        try {
+          const rule = new RRule({
+            freq: RRule[schedule.frequency],
+            interval: schedule.interval || 1,
+            dtstart: start,
+            until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
+            count: schedule.count || null,
+            byweekday: schedule.by_day
+              ? byDayToRRuleWeekday(schedule.by_day)
+              : null,
+            bymonth: schedule.by_month || null,
+          });
+
+          return rule.after(toRRuleDate(new Date()), true) === null;
+        } catch {
+          return false;
+        }
       },
 
       // Do we allow the user to edit the base settings?
@@ -895,6 +940,72 @@
           (item) =>
             item.recommended_category_id || item.description || item.match_type,
         );
+      },
+    },
+
+    watch: {
+      remainingAmountToPayeeDefault(newAmount) {
+        this.form.remaining_payee_default_amount = newAmount;
+      },
+
+      payeeDefaultCategory(newId) {
+        this.form.remaining_payee_default_category_id = newId;
+      },
+
+      // On change of new schedule start date, adjust original schedule end date to previous day
+      'form.schedule_config.start_date': function (newDate) {
+        this.syncScheduleStartDate(newDate);
+      },
+
+      // The catch-up warning icon is only rendered when this is true (v-if), so a
+      // newly-mounted icon needs its own tooltip initialization - the one in
+      // mounted() only covers icons already in the DOM at that point.
+      catchUpMayCloseSchedule() {
+        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
+      },
+
+      transaction(transaction) {
+        // TODO: consider using form.update()
+        this.form.reset();
+
+        // Copy values of existing transaction into component form data
+        this.initializeTransaction();
+
+        // Ensure that new transaction type is set
+        // Transaction type is now directly the enum value string
+        this.onChangeTransactionType(transaction.transaction_type, true);
+
+        // Load default value for accounts
+        const accountFromReady = this.getDefaultAccountDetails(
+          transaction.config.account_from_id,
+          'from',
+        );
+        const accountToReady = this.getDefaultAccountDetails(
+          transaction.config.account_to_id,
+          'to',
+        );
+
+        // Snapshot the settled post-load state as the isDirty() baseline - see
+        // markFormClean(). onChangeTransactionType(..., true) above force-resets
+        // config.account_from_id/account_to_id before the calls above
+        // asynchronously repopulate them, so this must wait for both to settle
+        // rather than snapshotting right after initializeTransaction().
+        Promise.all([accountFromReady, accountToReady]).then(() => {
+          this.$nextTick(() => this.markFormClean());
+        });
+      },
+
+      // Remove the form date value when schedule is enabled, and restore it when disabled
+      'form.schedule': function (newState) {
+        if (this.initializingTransaction) {
+          return;
+        }
+
+        if (newState) {
+          this.form.date = null;
+        } else {
+          this.form.date = toIsoDateString();
+        }
       },
     },
 
@@ -945,7 +1056,7 @@
         });
 
       // Load default value for account FROM, based on transaction type
-      this.getDefaultAccountDetails(
+      const accountFromReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_from_id,
         'from',
       );
@@ -991,7 +1102,7 @@
         });
 
       // Load default value for account TO
-      this.getDefaultAccountDetails(
+      const accountToReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_to_id,
         'to',
       );
@@ -1001,6 +1112,12 @@
 
       // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
+
+      // Snapshot the settled post-load state (both account details loaded and
+      // synced into form.config) as the isDirty() baseline.
+      Promise.all([accountFromReady, accountToReady]).then(() => {
+        this.$nextTick(() => this.markFormClean());
+      });
     },
 
     beforeUnmount() {
@@ -1020,12 +1137,13 @@
           // Transaction type is now directly the enum value string
           this.form.transaction_type = this.transaction.transaction_type;
 
-          // Populate date from source transaction, and ensure that it's a Date object
-          this.form.date = parseIsoDate(this.transaction.date);
+          // Populate date from source transaction as a plain 'YYYY-MM-DD' string - a Date
+          // object here would be re-expressed in UTC by JSON.stringify() on submit, shifting
+          // the calendar day for anyone east of UTC unless the field happens to get touched.
+          this.form.date = toDateInputValue(this.transaction.date) || null;
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
-          this.form.budget = this.transaction.budget ?? false;
           this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration
@@ -1046,14 +1164,23 @@
           // Note: AI-specific properties (description, match_type, confidence_score) are used during
           // finalization but NOT persisted to the database. Only the user-selected category_id and
           // optional comment are saved. The 'description' field is preserved for category learning.
+          //
+          // form.reset() (called by the transaction watcher before this runs) restores items from
+          // the last markFormClean() snapshot, not an empty array - so this must be cleared explicitly
+          // or items from a previously opened transaction leak into this one.
+          this.form.items = [];
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
               .map((item) => this.normalizeTransactionItem(item))
               .forEach((item) => this.form.items.push(item));
           }
 
-          // Copy schedule config
-          // TODO: date conversion should take place here, or elsewehere?
+          // Copy schedule config. Dates are kept as plain 'YYYY-MM-DD' strings, never
+          // Date objects - a Date survives fine in the UI (toDateInputValue reads it with
+          // local getters), but JSON.stringify() on submit serializes it via toISOString(),
+          // which re-expresses it in UTC and can shift the calendar day back by one for
+          // anyone east of UTC unless the field happens to get touched (which replaces it
+          // with a string via the date input's setter, masking the bug).
           if (this.transaction.transaction_schedule) {
             this.form.schedule_config.frequency =
               this.transaction.transaction_schedule.frequency;
@@ -1061,18 +1188,25 @@
               this.transaction.transaction_schedule.count;
             this.form.schedule_config.interval =
               this.transaction.transaction_schedule.interval;
+            this.form.schedule_config.by_day =
+              this.transaction.transaction_schedule.by_day;
+            this.form.schedule_config.by_month =
+              this.transaction.transaction_schedule.by_month;
 
-            this.form.schedule_config.start_date = parseIsoDate(
-              this.transaction.transaction_schedule.start_date,
-            );
-            this.form.schedule_config.next_date = parseIsoDate(
-              this.transaction.transaction_schedule.next_date,
-            );
+            this.form.schedule_config.start_date =
+              toDateInputValue(
+                this.transaction.transaction_schedule.start_date,
+              ) || null;
+            this.form.schedule_config.next_date =
+              toDateInputValue(
+                this.transaction.transaction_schedule.next_date,
+              ) || null;
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
-            this.form.schedule_config.end_date = parseIsoDate(
-              this.transaction.transaction_schedule.end_date,
-            );
+            this.form.schedule_config.end_date =
+              toDateInputValue(
+                this.transaction.transaction_schedule.end_date,
+              ) || null;
 
             this.form.schedule_config.inflation =
               this.transaction.transaction_schedule.inflation;
@@ -1087,11 +1221,15 @@
               this.form.schedule_config.count;
             this.form.original_schedule_config.interval =
               this.form.schedule_config.interval;
+            this.form.original_schedule_config.by_day =
+              this.form.schedule_config.by_day;
+            this.form.original_schedule_config.by_month =
+              this.form.schedule_config.by_month;
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
-            this.form.original_schedule_config.start_date = parseIsoDate(
-              this.form.schedule_config.start_date,
-            );
+            // Already a plain string at this point (see the schedule_config copy above).
+            this.form.original_schedule_config.start_date =
+              this.form.schedule_config.start_date;
             this.form.original_schedule_config.automatic_recording =
               this.form.schedule_config.automatic_recording;
 
@@ -1099,17 +1237,31 @@
             this.form.original_schedule_config.next_date = null;
 
             // Set new schedule start date to today
-            this.form.schedule_config.start_date = todayInUTC();
+            this.form.schedule_config.start_date = toIsoDateString();
 
             // If this is a schedule, then set the new next date to today
             if (this.form.schedule) {
-              this.form.schedule_config.next_date = todayInUTC();
+              this.form.schedule_config.next_date = toIsoDateString();
+            }
+
+            // The end date carried over from the original schedule may now be
+            // in the past relative to the new start date - the new schedule
+            // can't already be over before its first occurrence, so clear it.
+            const newEndDateValue = toDateInputValue(
+              this.form.schedule_config.end_date,
+            );
+            const newStartDateValue = toDateInputValue(
+              this.form.schedule_config.start_date,
+            );
+            if (newEndDateValue && newEndDateValue < newStartDateValue) {
+              this.form.schedule_config.end_date = null;
             }
 
             // Set original schedule end date to today - 1 day
-            this.form.original_schedule_config.end_date = new Date(
-              todayInUTC().getTime() - 24 * 60 * 60 * 1000,
-            );
+            const originalEndDate = new Date();
+            originalEndDate.setDate(originalEndDate.getDate() - 1);
+            this.form.original_schedule_config.end_date =
+              toIsoDateString(originalEndDate);
           }
         }
 
@@ -1122,6 +1274,19 @@
         this.$nextTick(() => {
           this.initializingTransaction = false;
         });
+
+        // The originalData snapshot itself is taken once the account/payee details
+        // requested by the caller (mounted()/the transaction watcher) have finished
+        // loading - see markFormClean() and its call sites. Assigning config.account_*_id
+        // above doesn't keep form.originalData in sync the way form.update() does, and
+        // those fields can still be reset and asynchronously repopulated afterwards
+        // (e.g. onChangeTransactionType(..., true) forcing a reset before the accounts
+        // are reselected), so snapshotting here would capture a transient, not final, state.
+      },
+
+      // Snapshot the current state as the "clean" baseline isDirty() compares against.
+      markFormClean() {
+        this.form.update(this.form.data());
       },
 
       normalizeTransactionItem(rawItem) {
@@ -1159,19 +1324,19 @@
         }
 
         // Confirm transaction type change with user
-        if (
-          !confirm(
-            __(
-              'Are you sure, you want to change the transaction type? Some data might get lost.',
-            ),
-          )
-        ) {
-          event.currentTarget.blur();
-          return false;
-        }
-
-        // Proceed with component update
-        this.onChangeTransactionType(newState, false);
+        const target = event.currentTarget;
+        confirmAction(
+          __(
+            'Are you sure, you want to change the transaction type? Some data might get lost.',
+          ),
+          { icon: 'warning', target: this.dropdownParentSelector },
+        ).then((result) => {
+          if (result.isConfirmed) {
+            this.onChangeTransactionType(newState, false);
+          } else {
+            target.blur();
+          }
+        });
       },
 
       /**
@@ -1344,7 +1509,10 @@
 
         const selector = '#account_' + type;
 
-        $.ajax({
+        // Returned so callers can wait for the select2 population (and the
+        // form field sync it triggers via a dispatched 'change' event) to
+        // settle before treating the form as loaded.
+        return $.ajax({
           url: this.getAccountApiUrl(type) + '/' + account_entity_id,
           data: {
             _token: this.csrfToken,
@@ -1356,10 +1524,30 @@
       },
 
       onCancel() {
-        if (confirm(__('Are you sure you want to discard any changes?'))) {
+        if (!this.isDirty()) {
           this.$emit('cancel');
+          return false;
         }
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          target: this.dropdownParentSelector,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.$emit('cancel');
+          }
+        });
         return false;
+      },
+
+      // True once any field differs from its state right after the form finished
+      // loading (new/cloned/editing/finalizing, etc - see the originalData snapshot
+      // at the end of initializeTransaction()).
+      isDirty() {
+        return (
+          JSON.stringify(this.form.data()) !==
+          JSON.stringify(this.form.originalData)
+        );
       },
 
       onSubmit() {
@@ -1460,7 +1648,7 @@
         }
         const endDate = new Date(date);
         endDate.setDate(endDate.getDate() - 1);
-        this.form.original_schedule_config.end_date = endDate;
+        this.form.original_schedule_config.end_date = toIsoDateString(endDate);
       },
       __,
 
@@ -1479,64 +1667,6 @@
         }
 
         return 'btn-outline-primary';
-      },
-    },
-
-    watch: {
-      remainingAmountToPayeeDefault(newAmount) {
-        this.form.remaining_payee_default_amount = newAmount;
-      },
-
-      payeeDefaultCategory(newId) {
-        this.form.remaining_payee_default_category_id = newId;
-      },
-
-      // On change of new schedule start date, adjust original schedule end date to previous day
-      'form.schedule_config.start_date': function (newDate) {
-        this.syncScheduleStartDate(newDate);
-      },
-
-      transaction(transaction) {
-        // TODO: consider using form.update()
-        this.form.reset();
-
-        // Copy values of existing transaction into component form data
-        this.initializeTransaction();
-
-        // Ensure that new transaction type is set
-        // Transaction type is now directly the enum value string
-        this.onChangeTransactionType(transaction.transaction_type, true);
-
-        // Load default value for accounts
-        this.getDefaultAccountDetails(
-          transaction.config.account_from_id,
-          'from',
-        );
-        this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
-      },
-
-      // Remove the form date value when schedule or budget is enabled, and restore it when disabled
-      'form.schedule': function (newState) {
-        if (this.initializingTransaction) {
-          return;
-        }
-
-        if (newState || this.form.budget) {
-          this.form.date = null;
-        } else {
-          this.form.date = todayInUTC();
-        }
-      },
-      'form.budget': function (newState) {
-        if (this.initializingTransaction) {
-          return;
-        }
-
-        if (newState || this.form.schedule) {
-          this.form.date = null;
-        } else {
-          this.form.date = todayInUTC();
-        }
       },
     },
   };

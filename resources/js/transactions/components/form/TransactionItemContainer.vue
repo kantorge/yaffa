@@ -18,11 +18,11 @@
           v-if="canApplySuggestions"
           type="button"
           class="btn btn-sm btn-outline-primary"
-          @click="applyStandardTransactionItems"
           :title="
             __('Apply standard transaction items based on past statistics')
           "
           :disabled="isLoadingSuggestions"
+          @click="applyStandardTransactionItems"
         >
           <i
             :class="
@@ -63,49 +63,50 @@
           type="button"
           class="btn btn-sm btn-success ms-1"
           dusk="button-add-transaction-item"
-          @click="this.$emit('addTransactionItem')"
           :title="__('New transaction item')"
           :disabled="!enabled"
+          @click="$emit('addTransactionItem')"
         >
           <i class="fa fa-plus"></i>
         </button>
       </div>
     </div>
-    <div class="card-body" id="transaction_item_container">
-      <div
-        class="list-group"
-        v-if="enabled"
-        v-for="(item, index) in transactionItems"
-        :key="item.id"
-      >
-        <transaction-item
-          @removeItem="removeItem(index)"
-          @update:amount="updateItemAmount(index, $event)"
-          @update:category_id="updateItemCategory(index, $event)"
-          @update:tags="updateItemTag(index, $event)"
-          @update:comment="updateItemComment(index, $event)"
-          @update:learnRecommendation="
-            updateItemLearnRecommendation(index, $event)
-          "
-          :id="item.id"
-          :amount="item.amount"
-          :category_id="item.category_id ? Number(item.category_id) : null"
-          :category_full_name="item.category_full_name || null"
-          :recommended_category_id="item.recommended_category_id || null"
-          :recommended_category_full_name="
-            item.recommended_category_full_name || null
-          "
-          :description="item.description || null"
-          :match_type="item.match_type || null"
-          :confidence_score="item.confidence_score || null"
-          :tags="item.tags || []"
-          :comment="item.comment"
-          :currencySymbol="currencySymbol"
-          :remainingAmount="remainingAmount"
-          :payee="payee"
-          :dropdown-parent-selector="dropdownParentSelector"
-        ></transaction-item>
-      </div>
+    <div id="transaction_item_container" class="card-body">
+      <template v-if="enabled">
+        <div
+          v-for="(item, index) in transactionItems"
+          :key="item.id"
+          class="list-group"
+        >
+          <transaction-item
+            :id="item.id"
+            :amount="item.amount"
+            :category_id="item.category_id ? Number(item.category_id) : null"
+            :category_full_name="item.category_full_name || null"
+            :recommended_category_id="item.recommended_category_id || null"
+            :recommended_category_full_name="
+              item.recommended_category_full_name || null
+            "
+            :description="item.description || null"
+            :match_type="item.match_type || null"
+            :confidence_score="item.confidence_score || null"
+            :tags="item.tags || []"
+            :comment="item.comment"
+            :currency-symbol="currencySymbol"
+            :remaining-amount="remainingAmount"
+            :payee="payee"
+            :dropdown-parent-selector="dropdownParentSelector"
+            @remove-item="removeItem(index)"
+            @update:amount="updateItemAmount(index, $event)"
+            @update:category_id="updateItemCategory(index, $event)"
+            @update:tags="updateItemTag(index, $event)"
+            @update:comment="updateItemComment(index, $event)"
+            @update:learn-recommendation="
+              updateItemLearnRecommendation(index, $event)
+            "
+          ></transaction-item>
+        </div>
+      </template>
       <div v-if="!enabled">
         {{ __('Transaction items are disabled for this transaction type') }}
       </div>
@@ -117,7 +118,7 @@
       </div>
     </div>
 
-    <div class="card-footer" v-if="transactionItems.length > 0">
+    <div v-if="transactionItems.length > 0" class="card-footer">
       <div class="text-end">
         <div class="btn-group d-sm-none">
           <button
@@ -148,9 +149,9 @@
         <button
           type="button"
           class="btn btn-sm btn-success ms-1"
-          @click="this.$emit('addTransactionItem')"
           :title="__('New transaction item')"
           :disabled="!enabled"
+          @click="$emit('addTransactionItem')"
         >
           <span class="fa fa-plus"></span>
         </button>
@@ -163,8 +164,13 @@
   import TransactionItem from './TransactionItem.vue';
   import { __ } from '@/shared/lib/i18n';
   import Swal from 'sweetalert2';
+  import Decimal from 'decimal.js';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getPayeeCategoryStats } from '@/payee/payee-stats-api';
+  import { confirmDelete } from '@/shared/lib/confirm';
+
+  // Matches transaction_items.amount's MoneyCast scale (app/Models/TransactionItem.php).
+  const ITEM_AMOUNT_SCALE = 4;
 
   export default {
     components: {
@@ -195,6 +201,12 @@
 
     emits: ['addTransactionItem'],
 
+    data() {
+      return {
+        isLoadingSuggestions: false,
+      };
+    },
+
     computed: {
       autoMergeEnabled() {
         return !!window.YAFFA?.userSettings
@@ -210,12 +222,6 @@
           amountFrom > 0
         );
       },
-    },
-
-    data() {
-      return {
-        isLoadingSuggestions: false,
-      };
     },
 
     mounted() {
@@ -291,16 +297,14 @@
 
       async applyStandardTransactionItems() {
         if (this.transactionItems.length > 0) {
-          const result = await Swal.fire({
-            title: __('Replace items?'),
-            text: __(
-              'Existing transaction items will be removed and overwritten.',
-            ),
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: __('Replace'),
-            cancelButtonText: __('Cancel'),
-          });
+          const result = await confirmDelete(
+            __('Existing transaction items will be removed and overwritten.'),
+            {
+              title: __('Replace items?'),
+              confirmButtonText: __('Replace'),
+              target: this.dropdownParentSelector,
+            },
+          );
 
           if (!result.isConfirmed) {
             return;
@@ -329,6 +333,10 @@
               ),
               icon: 'warning',
               confirmButtonText: __('OK'),
+              buttonsStyling: false,
+              customClass: {
+                confirmButton: 'btn btn-primary',
+              },
             });
 
             return;
@@ -401,7 +409,7 @@
           comment: null,
         }));
 
-        let allocatedAmount = 0;
+        let allocatedAmount = new Decimal(0);
 
         items.forEach((item, index) => {
           if (item.category_id === mostUsedStat.category_id) {
@@ -410,29 +418,35 @@
 
           const usageCount = normalizedStats[index].usage_count;
           const proportionalAmount = this.roundAmount(
-            (totalAmount * usageCount) / totalUsageCount,
+            new Decimal(totalAmount)
+              .times(usageCount)
+              .dividedBy(totalUsageCount),
           );
 
           item.amount = proportionalAmount;
-          allocatedAmount += proportionalAmount;
+          allocatedAmount = allocatedAmount.plus(proportionalAmount);
         });
 
-        const remainderAmount = this.roundAmount(totalAmount - allocatedAmount);
+        const remainderAmount = new Decimal(totalAmount).minus(allocatedAmount);
         const mostUsedItem = items.find(
           (item) => item.category_id === mostUsedStat.category_id,
         );
 
         if (mostUsedItem !== undefined) {
           mostUsedItem.amount = this.roundAmount(
-            mostUsedItem.amount + remainderAmount,
+            new Decimal(mostUsedItem.amount).plus(remainderAmount),
           );
         }
 
         return items.filter((item) => item.amount > 0);
       },
 
+      // Rounds to transaction_items.amount's stored scale using exact decimal
+      // arithmetic, avoiding the float drift a plain toFixed(4) round-trip risks.
       roundAmount(amount) {
-        return Number(Number(amount).toFixed(4));
+        return new Decimal(amount)
+          .toDecimalPlaces(ITEM_AMOUNT_SCALE)
+          .toNumber();
       },
 
       getNextItemId() {

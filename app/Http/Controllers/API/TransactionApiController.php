@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\TransactionRequest;
 use App\Http\Requests\API\FindTransactionsRequest;
+use App\Http\Requests\API\GetScheduledItemsRequest;
+use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
+use App\Models\Budget;
+use App\Models\Currency;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -21,19 +23,37 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\User;
-use App\Services\CategoryService;
 use App\Services\CategoryLearningService;
+use App\Services\CategoryService;
 use App\Services\TransactionItemMergeService;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidWeekday;
+use RuntimeException;
 
-class TransactionApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getItem', 'getScheduledItems', 'findTransactions',
+])]
+#[Middleware('abilities:write', only: [
+    'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
+    'updateInvestment', 'skipScheduleInstance', 'destroy',
+])]
+class TransactionApiController extends Controller
 {
     use CurrencyTrait;
 
@@ -45,24 +65,17 @@ class TransactionApiController extends Controller implements HasMiddleware
         $this->categoryService = new CategoryService();
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * V1: PATCH /api/v1/transactions/{transaction}/reconciliation
-     * Accepts { reconciled: true|false } in request body.
+     * Reconcile a transaction
+     *
+     * Accepts { reconciled: true|false } in the request body to mark the
+     * transaction as reconciled or unreconciled.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'transaction')]
     public function reconcile(Request $request, Transaction $transaction): JsonResponse
     {
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validate([
             'reconciled' => ['required', 'boolean'],
         ]);
@@ -76,18 +89,11 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * V1: GET /api/v1/transactions/scheduled-items?type=...
+     * Get a transaction
      */
-
+    #[Authorize('view', 'transaction')]
     public function getItem(Transaction $transaction): JsonResponse
     {
-        /**
-         * @get("/api/v1/transactions/{transaction}")
-         * @name("api.v1.transactions.show")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('view', $transaction);
-
         $transaction->loadDetails();
 
         return response()->json(
@@ -99,16 +105,16 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get scheduled transactions filtered by schedule type and optional criteria.
+     * List scheduled transactions
+     *
+     * Returns scheduled transactions filtered by schedule type and optional
+     * criteria such as account selection and categories.
      */
-    public function getScheduledItems(Request $request): JsonResponse
+    public function getScheduledItems(GetScheduledItemsRequest $request): JsonResponse
     {
-        $type = $request->query('type', 'any');
-
-        /**
-         * @get("/api/v1/transactions/scheduled-items?type=...")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
+        // Only 'schedule' and 'none' remain meaningful now that the budget flag is gone (FR-1);
+        // anything else (including the old 'any') is treated as 'none'.
+        $type = $request->query('type', 'none');
 
         // Return empty response if categories are required, but not set or empty
         if ($request->has('category_required')
@@ -124,19 +130,28 @@ class TransactionApiController extends Controller implements HasMiddleware
         $accountSelection = $request->query('accountSelection');
         $accountEntity = $request->query('accountEntity');
 
-        // Get all standard transactions
-        $standardTransactions = Transaction::with([
+        // Category/tag breakdown per item is only rendered by the account-show and
+        // schedules-report tables (via processTransaction()'s transaction_items -> categories/tags
+        // derivation); the dashboard ScheduleCalendar widget never reads transaction_items, so it
+        // opts out to skip these joins.
+        $standardTransactionRelations = [
             'config',
             'config.accountFrom',
             'config.accountTo',
             'currency',
             'transactionSchedule',
-            'transactionItems',
-            'transactionItems.category',
-            'transactionItems.tags',
-        ])
+        ];
+
+        if (!$request->has('includeItemDetails') || $request->boolean('includeItemDetails')) {
+            $standardTransactionRelations[] = 'transactionItems';
+            $standardTransactionRelations[] = 'transactionItems.category';
+            $standardTransactionRelations[] = 'transactionItems.tags';
+        }
+
+        // Get all standard transactions
+        $standardTransactions = Transaction::with($standardTransactionRelations)
             ->where('user_id', $request->user()->id)
-            ->byScheduleType($type)
+            ->where('schedule', $type === 'schedule')
             ->byType('standard')
             // Optionally add account filter
             ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
@@ -182,8 +197,10 @@ class TransactionApiController extends Controller implements HasMiddleware
             })
             ->get();
 
-        // Return empty collection if categories are required
-        if ($request->has('category_required')) {
+        // Return empty collection if categories are required, or a category filter is active -
+        // investment transactions structurally have no categorized items, so they can never match
+        // a category filter (mirrors the same exclusion in TransactionApiController::findTransactions()).
+        if ($request->has('category_required') || $categories->count() > 0) {
             $investmentTransactions = new Collection();
         } else {
             // Get all investment transactions
@@ -195,7 +212,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'transactionSchedule',
             ])
                 ->where('user_id', $request->user()->id)
-                ->byScheduleType($type)
+                ->where('schedule', $type === 'schedule')
                 ->byType('investment')
                 // Optionally add account filter
                 ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
@@ -211,24 +228,75 @@ class TransactionApiController extends Controller implements HasMiddleware
                 ->get();
         }
 
+        // FR-6: the merged schedules-report listing opts in explicitly via includeBudgets=1 - no
+        // other caller (dashboard ScheduleCalendar, account show) requests it, so their type=schedule
+        // fetches never see a Budget row, which they aren't shaped to handle (no transaction_schedule).
+        $budgetRows = new Collection();
+
+        if ($request->boolean('includeBudgets')) {
+            // Budget::currency() lazy-loads account->config->currency (or user->baseCurrency(),
+            // which re-queries regardless of eager-loading since it builds a fresh relation
+            // query rather than reading a loaded collection) per row - eager-load the
+            // account-scoped path and reuse the already-cached base currency for the
+            // account-agnostic one instead of calling ->currency() per row for those.
+            $baseCurrency = $this->getBaseCurrency();
+
+            $budgetRows = Budget::with(['category', 'account.config.currency'])
+                ->where('user_id', $request->user()->id)
+                ->where('active', true)
+                ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->where('account_id', $accountEntity))
+                ->when($accountSelection === 'none', fn ($query) => $query->whereNull('account_id'))
+                ->when($categories->count() > 0, fn ($query) => $query->whereIn('category_id', $categories->pluck('id')))
+                ->get()
+                ->map(fn (Budget $budget) => [
+                    'id' => $budget->id,
+                    'row_type' => 'budget',
+                    'transaction_type' => $budget->transaction_type->value,
+                    // Manually-built array, not a model's own toArray()/toJson() - stringify to
+                    // match MoneyCast::serialize()'s decimal-string wire format explicitly.
+                    'amount' => (string) $budget->amount->getAmount(),
+                    'comment' => $budget->comment,
+                    'category_id' => $budget->category_id,
+                    // Shaped like Transaction::categories (built from transaction_items) so the
+                    // shared category column renderer works unchanged for a Budget row too.
+                    'categories' => [$budget->category],
+                    'account_id' => $budget->account_id,
+                    'transaction_currency' => ($budget->account_id ? $budget->currency() : null) ?? $baseCurrency,
+                    // Synthetic, schedule-shaped period definition - a Budget has no next_date/
+                    // automatic_recording (FR-4), which render blank via the same convention an
+                    // empty category cell already uses (FR-6).
+                    'transaction_schedule' => [
+                        'start_date' => $budget->start_date->toDateString(),
+                        'end_date' => $budget->end_date?->toDateString(),
+                        'next_date' => null,
+                        'frequency' => $budget->frequency,
+                        'interval' => $budget->interval,
+                        'by_day' => $budget->by_day,
+                        'by_month' => $budget->by_month,
+                        'days_before_month_end' => $budget->days_before_month_end,
+                        'last_business_day_of_month' => $budget->last_business_day_of_month,
+                        'count' => $budget->count,
+                        'active' => $budget->active,
+                    ],
+                ]);
+        }
+
         return response()->json(
             [
-                'transactions' => $standardTransactions->concat($investmentTransactions),
+                'transactions' => $standardTransactions->concat($investmentTransactions)->concat($budgetRows),
             ],
             Response::HTTP_OK
         );
     }
 
     /**
-     * Search transactions by date range and related entities.
+     * Search transactions
+     *
+     * Searches transactions by date range and related entities such as
+     * accounts, categories, payees, and tags.
      */
     public function findTransactions(FindTransactionsRequest $request): JsonResponse
     {
-        /**
-         * @get("/api/transactions")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // A request without any search criteria will return an empty response to avoid loading all transactions
         if (!$request->hasAny([
             'date_from',
@@ -237,6 +305,8 @@ class TransactionApiController extends Controller implements HasMiddleware
             'categories',
             'payees',
             'tags',
+            'types',
+            'investments',
         ])) {
             return response()->json(
                 [
@@ -252,9 +322,13 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
 
+        // Get list of requested categories
+        // This also ensures that child categories are loaded for all parents
+        $categories = $this->categoryService->getChildCategories($request);
+
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->byType('standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
                 $query->where('date', '>=', $request->validated('date_from'));
@@ -278,11 +352,11 @@ class TransactionApiController extends Controller implements HasMiddleware
                         ->orWhereIn('account_to_id', $request->validated('payees'));
                 });
             })
-            ->when($request->has('categories') && $request->validated('categories'), function ($query) use ($request) {
-                $query->whereIn('id', function ($query) use ($request) {
+            ->when($request->has('categories') && $request->validated('categories'), function ($query) use ($categories) {
+                $query->whereIn('id', function ($query) use ($categories) {
                     $query->select('transaction_id')
                         ->from('transaction_items')
-                        ->whereIn('category_id', $request->validated('categories'));
+                        ->whereIn('category_id', $categories->pluck('id'));
                 });
             })
             ->when($request->has('tags') && $request->validated('tags'), function ($query) use ($request) {
@@ -295,14 +369,21 @@ class TransactionApiController extends Controller implements HasMiddleware
                                 ->whereIn('tag_id', $request->validated('tags'));
                         });
                 });
+            })
+            ->when($request->has('types') && $request->validated('types'), function ($query) use ($request) {
+                $query->whereIn('transaction_type', $request->validated('types'));
+            })
+            // Investments are an investment-only concept: a standard transaction can never match one
+            ->when($request->has('investments') && $request->validated('investments'), function ($query) {
+                $query->whereRaw('1 = 0');
             });
 
         // Get investment transactions matching any provided criteria
         // This part of the query is run only if relevant search criteria is provided, and no other search criteria is provided
-        if ($request->hasAny(['date_from', 'date_to','accounts'])
+        if ($request->hasAny(['date_from', 'date_to', 'accounts', 'types', 'investments'])
             && !($request->hasAny(['categories', 'payees', 'tags']))) {
             $investmentQuery = Transaction::where('user_id', $user->id)
-                ->byScheduleType('none')
+                ->where('schedule', false)
                 ->byType('investment')
                 ->when($request->has('date_from'), function ($query) use ($request) {
                     $query->where('date', '>=', $request->validated('date_from'));
@@ -316,10 +397,20 @@ class TransactionApiController extends Controller implements HasMiddleware
                             ->from('transaction_details_investment')
                             ->whereIn('account_id', $request->validated('accounts'));
                     });
+                })
+                ->when($request->has('types') && $request->validated('types'), function ($query) use ($request) {
+                    $query->whereIn('transaction_type', $request->validated('types'));
+                })
+                ->when($request->has('investments') && $request->validated('investments'), function ($query) use ($request) {
+                    $query->whereIn('config_id', function ($query) use ($request) {
+                        $query->select('id')
+                            ->from('transaction_details_investment')
+                            ->whereIn('investment_id', $request->validated('investments'));
+                    });
                 });
         } else {
             $investmentQuery = Transaction::where('user_id', $user->id)  // User ID is used for security reasons
-                ->byScheduleType('none')->byType('investment') // Pretend that we are searching for investment transactions
+                ->where('schedule', false)->byType('investment') // Pretend that we are searching for investment transactions
                 ->whereRaw('1 = 0'); // Make sure that the query returns no results
         }
 
@@ -384,26 +475,37 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Loop through all transactions and add the currency rate to the base currency
         // Also, calculate the amount in the base currency for the transaction and all its items, if applicable
         $transactions->map(function ($transaction) use ($baseCurrency, $allRatesMap) {
-            $transaction->currencyRateToBase = $this->getLatestRateFromMap(
+            // Keep the exact decimal rate for Money arithmetic below; currencyRateToBase
+            // itself stays a plain numeric API field, as it always has been.
+            $exactRate = $this->getLatestRateFromMap(
                 $transaction->currency_id,
                 $transaction->date,
                 $allRatesMap,
                 $baseCurrency->id
-            ) ?? 1;
+            ) ?? '1';
+            $transaction->currencyRateToBase = (float) $exactRate;
 
             // Extend the optional amount_to and amount_from fields in the config
             if ($transaction->config instanceof TransactionDetailStandard) {
-                if ($transaction->config->amount_to) {
-                    $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
+                if (! $transaction->config->amount_to->isZero()) {
+                    $transaction->config->amount_to_base = $this->convertToBase(
+                        $transaction->config->amount_to,
+                        $baseCurrency,
+                        $exactRate
+                    );
                 }
-                if ($transaction->config->amount_from) {
-                    $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+                if (! $transaction->config->amount_from->isZero()) {
+                    $transaction->config->amount_from_base = $this->convertToBase(
+                        $transaction->config->amount_from,
+                        $baseCurrency,
+                        $exactRate
+                    );
                 }
             }
 
             // Extend the amount field in the items
-            $transaction->transactionItems->map(function ($item) use ($transaction) {
-                $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
+            $transaction->transactionItems->map(function ($item) use ($exactRate, $baseCurrency) {
+                $item->amount_in_base = $this->convertToBase($item->amount, $baseCurrency, $exactRate);
             });
 
             return $transaction;
@@ -418,15 +520,24 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Create a standard transaction.
+     * Convert a Money amount into the user's base currency at the given rate, returning
+     * a decimal string (matching the wire format of the cast-backed money fields this
+     * value sits alongside in the response). Reuses the source amount's own scale for the
+     * converted value, since no persisted column governs this transient, derived field.
+     */
+    private function convertToBase(Money $amount, Currency $baseCurrency, string $rate): string
+    {
+        $scale = $amount->getAmount()->getScale();
+        $targetCurrency = MoneyCast::currencyFor($baseCurrency, $scale);
+
+        return (string) $amount->convertedTo($targetCurrency, $rate, roundingMode: RoundingMode::HalfUp)->getAmount();
+    }
+
+    /**
+     * Create a standard transaction
      */
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/transactions/standard")
-         * @name("api.v1.transactions.store-standard")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
@@ -455,18 +566,22 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             $transaction->push();
 
-            if ($transaction->schedule || $transaction->budget) {
+            if ($transaction->schedule) {
                 $transactionSchedule = new TransactionSchedule(['transaction_id' => $transaction->id]);
                 $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
 
         $this->mergeService->mergeIfEnabled($transaction);
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -483,15 +598,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Create an investment transaction.
+     * Create an investment transaction
      */
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/transactions/investment")
-         * @name("api.v1.transactions.store-investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
@@ -514,10 +624,14 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
+            // Runs in the same transaction as the transaction/schedule creation above,
+            // so a failed catch-up (see handleSourceTransactionUpdates()) rolls back
+            // the newly created transaction too, rather than leaving it committed
+            // alongside a source schedule that never actually caught up.
+            $this->handleSourceTransactionUpdates($validated, $request->user());
+
             return $transaction;
         });
-
-        $this->handleSourceTransactionUpdates($validated, $request->user());
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $request->user());
 
@@ -534,17 +648,11 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing standard transaction.
+     * Update a standard transaction
      */
+    #[Authorize('update', 'transaction')]
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/standard/{transaction}")
-         * @name("api.v1.transactions.update-standard")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -570,8 +678,8 @@ class TransactionApiController extends Controller implements HasMiddleware
             $attributeChanges['config'][$key] = $transaction->config->getOriginal($key);
         }
 
-        if ($transaction->schedule || $transaction->budget) {
-            // At this point, the schedule or budget flag cannot be changed,
+        if ($transaction->schedule) {
+            // At this point, the schedule flag cannot be changed,
             // so we can safely assume that the schedule exists
             $transaction->transactionSchedule->fill($validated['schedule_config']);
 
@@ -623,17 +731,11 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing investment transaction.
+     * Update an investment transaction
      */
+    #[Authorize('update', 'transaction')]
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/investment/{transaction}")
-         * @name("api.v1.transactions.update-investment")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $transaction);
-
         $validated = $request->validated();
 
         // Define a variable to keep track of changes
@@ -654,7 +756,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         }
 
         if ($transaction->schedule) {
-            // At this point, the schedule or budget flag cannot be changed,
+            // At this point, the schedule flag cannot be changed,
             // so we can safely assume that the schedule exists
             $transaction->transactionSchedule->fill($validated['schedule_config']);
 
@@ -722,17 +824,13 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Skip the next scheduled occurrence of a transaction.
+     * Skip a scheduled transaction
+     *
+     * Skips the next scheduled occurrence of a recurring transaction.
      */
+    #[Authorize('update', 'transaction')]
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
-        /**
-         * @patch("/api/v1/transactions/{transaction}/skip")
-         * @name("api.v1.transactions.skip")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('update', $transaction);
-
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
@@ -745,19 +843,12 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a transaction
      */
+    #[Authorize('delete', 'transaction')]
     public function destroy(Transaction $transaction): JsonResponse
     {
-        /**
-         * @delete("/api/v1/transactions/{transaction}")
-         * @name("api.v1.transactions.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-
         // Authorize the deletion of the transaction for the owner
-        Gate::authorize('delete', $transaction);
-
         // Load the details of the transaction for the event
         $transaction->loadDetails();
 
@@ -791,7 +882,13 @@ class TransactionApiController extends Controller implements HasMiddleware
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
-            $sourceTransaction->transactionSchedule->skipNextInstance();
+            if ($validated['catch_up_schedule'] ?? false) {
+                if (!$sourceTransaction->transactionSchedule->catchUpToDate()) {
+                    throw new RuntimeException(__('Unable to catch up the schedule to the current date.'));
+                }
+            } else {
+                $sourceTransaction->transactionSchedule->skipNextInstance();
+            }
 
             // This also triggers a TransactionUpdated event for the source transaction
             event(new TransactionUpdated($sourceTransaction, [
@@ -814,6 +911,24 @@ class TransactionApiController extends Controller implements HasMiddleware
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
 
             $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+
+            // next_date isn't necessarily present in original_schedule_config (the
+            // "close out the old schedule" flow always omits/nulls it), so a stale
+            // value from before this pattern change can survive the fill() above.
+            // Since next_date is trusted verbatim wherever a transaction is recorded
+            // (see TransactionSchedule::occursOn()), clear it here if it no longer
+            // matches the (possibly just-changed) recurrence rule.
+            $nextDate = $sourceTransaction->transactionSchedule->next_date;
+            if ($nextDate) {
+                try {
+                    if (!$sourceTransaction->transactionSchedule->occursOn($nextDate)) {
+                        $sourceTransaction->transactionSchedule->next_date = null;
+                    }
+                } catch (InvalidArgument|InvalidWeekday|Exception) {
+                    $sourceTransaction->transactionSchedule->next_date = null;
+                }
+            }
+
             $sourceTransaction->push();
 
             // This also triggers a TransactionUpdated event for the source transaction

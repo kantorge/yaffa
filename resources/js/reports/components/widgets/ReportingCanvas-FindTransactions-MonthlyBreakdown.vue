@@ -4,10 +4,10 @@
       <h2>{{ __('Monthly breakdown') }}</h2>
       <div class="form-check form-switch">
         <input
-          class="form-check-input"
-          type="checkbox"
           id="percentageToggle"
           v-model="showPercentages"
+          class="form-check-input"
+          type="checkbox"
         />
         <label class="form-check-label" for="percentageToggle">
           {{ __('Show percentages') }}
@@ -15,12 +15,12 @@
       </div>
     </div>
 
-    <ul class="list-group list-group-flush" v-if="busy">
+    <ul v-if="busy" class="list-group list-group-flush">
       <li
-        aria-hidden="true"
-        class="list-group-item placeholder-glow"
         v-for="i in 8"
         :key="i"
+        aria-hidden="true"
+        class="list-group-item placeholder-glow"
       >
         <span class="placeholder col-12"></span>
       </li>
@@ -81,8 +81,8 @@
                 <a
                   v-if="(row.values[month] || 0) !== 0"
                   href="#"
-                  @click.prevent="emitDrillDown(month, row.categoryIds)"
                   class="cell-link"
+                  @click.prevent="emitDrillDown(month, row.categoryIds)"
                 >
                   {{
                     formatCell(
@@ -128,8 +128,8 @@
                 <a
                   v-if="(section.subtotals[month] || 0) !== 0"
                   href="#"
-                  @click.prevent="emitDrillDown(month, section.allCategoryIds)"
                   class="cell-link"
+                  @click.prevent="emitDrillDown(month, section.allCategoryIds)"
                 >
                   {{
                     formatCell(
@@ -289,7 +289,11 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    getCachedDateTimeFormatter,
+  } from '@/shared/lib/i18n';
   import {
     buildBreakdownCacheKey,
     round2,
@@ -312,7 +316,6 @@
 
   export default {
     name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
-    emits: ['drill-down'],
     props: {
       transactions: {
         type: Array,
@@ -327,7 +330,20 @@
         type: Boolean,
         default: false,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
+    emits: ['drill-down'],
     data() {
       return {
         showPercentages: false,
@@ -335,9 +351,6 @@
         locale: window.YAFFA.userSettings.locale,
         cachedCategoryData: null,
       };
-    },
-    mounted() {
-      this.loadBreakdownCache();
     },
     computed: {
       /** @returns {string[]} Sorted unique YYYY-MM month strings extracted from transactions or cached data */
@@ -372,7 +385,11 @@
           return this.cachedCategoryData;
         }
 
-        return aggregateTransactionsByCategory(this.transactions);
+        return aggregateTransactionsByCategory(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
       },
 
       /**
@@ -467,6 +484,14 @@
           });
         }
       },
+      // A cached breakdown was computed with whatever scope was active at the time;
+      // toggling the switch must bypass it and recompute from the raw transactions.
+      matchingItemsOnly() {
+        this.cachedCategoryData = null;
+      },
+    },
+    mounted() {
+      this.loadBreakdownCache();
     },
 
     methods: {
@@ -491,8 +516,10 @@
 
       saveBreakdownCache() {
         try {
-          // Don't overwrite cache on drill-down pages
-          if (this.isDrillDown) return;
+          // Don't overwrite cache on drill-down pages, or with a narrowed
+          // aggregate that a differently-scoped load couldn't detect as stale
+          // (the cache key doesn't encode matchingItemsOnly).
+          if (this.isDrillDown || this.matchingItemsOnly) return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};
@@ -556,7 +583,7 @@
       formatMonthHeader(month) {
         const [year, mon] = month.split('-').map(Number);
         const date = new Date(year, mon - 1, 1);
-        return new Intl.DateTimeFormat(this.locale, {
+        return getCachedDateTimeFormatter(this.locale, {
           month: '2-digit',
           year: 'numeric',
         }).format(date);
@@ -797,36 +824,36 @@
      Uses :global() so no scoped [data-v-xxx] attribute is added; positioned
      after the light-mode variable block so it wins the cascade at equal
      specificity when the theme attribute is present. */
-  :global([data-coreui-theme="dark"] .reporting-monthly-breakdown) {
-    --rb-sticky-bg:  var(--cui-body-bg);
+  :global([data-coreui-theme='dark'] .reporting-monthly-breakdown) {
+    --rb-sticky-bg: var(--cui-body-bg);
 
-    --rb-blue-100:   rgba(13, 110, 253, 0.18);
-    --rb-blue-700:   #6ea8fe;
+    --rb-blue-100: rgba(13, 110, 253, 0.18);
+    --rb-blue-700: #6ea8fe;
     --rb-orange-100: rgba(253, 126, 20, 0.18);
     --rb-orange-700: #feb272;
-    --rb-green-100:  rgba(25, 135, 84, 0.18);
-    --rb-green-200:  rgba(25, 135, 84, 0.32);
-    --rb-green-300:  rgba(25, 135, 84, 0.48);
-    --rb-green-700:  #75b798;
-    --rb-teal-100:   rgba(32, 201, 151, 0.18);
-    --rb-teal-700:   #79dfc1;
+    --rb-green-100: rgba(25, 135, 84, 0.18);
+    --rb-green-200: rgba(25, 135, 84, 0.32);
+    --rb-green-300: rgba(25, 135, 84, 0.48);
+    --rb-green-700: #75b798;
+    --rb-teal-100: rgba(32, 201, 151, 0.18);
+    --rb-teal-700: #79dfc1;
     --rb-purple-100: rgba(111, 66, 193, 0.18);
     --rb-purple-700: #c29ffa;
-    --rb-pink-100:   rgba(214, 51, 132, 0.18);
-    --rb-pink-700:   #de6ea8;
+    --rb-pink-100: rgba(214, 51, 132, 0.18);
+    --rb-pink-700: #de6ea8;
     --rb-yellow-100: rgba(255, 193, 7, 0.18);
     --rb-yellow-700: #ffda6a;
-    --rb-cyan-100:   rgba(13, 202, 240, 0.18);
-    --rb-cyan-700:   #6edff6;
-    --rb-red-100:    rgba(220, 53, 69, 0.18);
-    --rb-red-200:    rgba(220, 53, 69, 0.32);
-    --rb-red-300:    rgba(220, 53, 69, 0.48);
+    --rb-cyan-100: rgba(13, 202, 240, 0.18);
+    --rb-cyan-700: #6edff6;
+    --rb-red-100: rgba(220, 53, 69, 0.18);
+    --rb-red-200: rgba(220, 53, 69, 0.32);
+    --rb-red-300: rgba(220, 53, 69, 0.48);
 
-    --rb-gray-100:   var(--cui-tertiary-bg);
-    --rb-gray-200:   var(--cui-secondary-bg);
-    --rb-gray-400:   rgba(255, 255, 255, 0.2);
-    --rb-gray-500:   rgba(255, 255, 255, 0.3);
-    --rb-gray-700:   var(--cui-body-color);
-    --rb-gray-800:   var(--cui-body-color);
+    --rb-gray-100: var(--cui-tertiary-bg);
+    --rb-gray-200: var(--cui-secondary-bg);
+    --rb-gray-400: rgba(255, 255, 255, 0.2);
+    --rb-gray-500: rgba(255, 255, 255, 0.3);
+    --rb-gray-700: var(--cui-body-color);
+    --rb-gray-800: var(--cui-body-color);
   }
 </style>

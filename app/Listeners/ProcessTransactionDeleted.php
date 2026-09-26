@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TransactionDeleted;
+use App\Services\CategoryWaterfallCacheService;
 use App\Services\TransactionService;
 
 class ProcessTransactionDeleted
@@ -21,5 +22,7 @@ class ProcessTransactionDeleted
 
         // Recalculate the relevant monthly summaries
         $this->transactionService->recalculateMonthlySummaries($event->transaction);
+
+        CategoryWaterfallCacheService::forgetForDate($event->transaction->user_id, $event->transaction->date);
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Events\DocumentImported;
 use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\AiDocument;
+use App\Models\AiDocumentFile;
 use App\Models\AiUserSettings;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
@@ -15,6 +16,7 @@ use App\Services\GoogleDriveService;
 use App\Services\DispositionResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -495,6 +497,52 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         $this->assertSame(0, AiDocument::count());
         Event::assertNotDispatched(DocumentImported::class);
         Notification::assertNotSentTo($user, GoogleDriveImportSuccess::class);
+    }
+
+    public function test_job_keeps_path_like_drive_file_names_inside_the_documents_own_directory(): void
+    {
+        $user = $this->createUserWithAiEnabled();
+        $config = GoogleDriveConfig::factory()->neverSynced()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+        ]);
+        $userDirectory = storage_path("app/ai_documents/{$user->id}") . '/';
+        $directories = [];
+
+        $mock = $this->createMockService([
+            'listNewFiles' => [
+                ['id' => 'file-up', 'name' => '../../../../../public/planted.pdf', 'mimeType' => 'application/pdf', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+                ['id' => 'file-win', 'name' => '..\\..\\windows.png', 'mimeType' => 'image/png', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+            ],
+            'downloadFile' => function ($fileId, $creds, $dest) use ($userDirectory, &$directories) {
+                // Never write outside the user's directory, so a regression cannot plant a file
+                if (! str_starts_with($dest, $userDirectory) || str_contains($dest, '..')) {
+                    throw new Exception("Unsafe destination {$dest}");
+                }
+
+                $directories[] = dirname($dest);
+                file_put_contents($dest, 'content');
+            },
+        ]);
+        $this->instance(GoogleDriveService::class, $mock);
+
+        $this->runJob($config->id);
+
+        // The job writes below the real storage path, not the faked disk
+        foreach ($directories as $directory) {
+            File::deleteDirectory($directory);
+        }
+
+        $this->assertDatabaseCount('ai_documents', 2);
+        $this->assertDatabaseHas('ai_document_files', ['file_name' => 'planted.pdf']);
+        $this->assertDatabaseHas('ai_document_files', ['file_name' => 'windows.png']);
+
+        foreach (['planted.pdf', 'windows.png'] as $name) {
+            $this->assertMatchesRegularExpression(
+                '#^ai_documents/' . $user->id . '/[0-9a-f-]{36}/' . preg_quote($name, '#') . '$#',
+                AiDocumentFile::where('file_name', $name)->value('file_path')
+            );
+        }
     }
 
     /**

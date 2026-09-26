@@ -11,6 +11,12 @@ parameters:
 
     ignoreErrors:
         - '#PHPDoc tag @var#'
+        # Pre-existing defensive instanceof checks against a non-nullable BelongsTo relation;
+        # only became visible to PHPStan once CurrencyRate's docblock/attribute ordering was
+        # fixed (see CurrencyRate.php) as part of the precision-improvements work.
+        -
+            message: '#Instanceof between App\\Models\\Currency and App\\Models\\Currency will always evaluate to true\.#'
+            path: app/Observers/CurrencyRateObserver.php
 
     excludePaths:
         - ./*/*/FileToBeExcluded.php

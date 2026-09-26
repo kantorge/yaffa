@@ -19,8 +19,7 @@
 
                                 @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.login-helper')
 
-                                <form method="POST" action="{{ route('login') }}" @if(config('recaptcha.api_site_key'))
-                                id="form-with-recaptcha" @endif>
+                                <form method="POST" action="{{ route('login') }}">
                                     @csrf
 
                                     @include('auth.components.email', ['autofocus' => true])
@@ -29,15 +28,7 @@
 
                                     <div class="row">
                                         <div class="col-5">
-                                            <button @class([
-                                                'btn',
-                                                'btn-primary',
-                                                'px-4',
-                                                'g-recaptcha' => config('recaptcha.api_site_key'),
-                                            ]) type="submit" dusk="login-button"
-                                                id="login" @if(config('recaptcha.api_site_key'))
-                                                    data-sitekey="{{ config('recaptcha.api_site_key') }}"
-                                                data-callback="onSubmit" @endif>
+                                            <button class="btn btn-primary px-4" type="submit" dusk="login-button" id="login">
                                                 {{ __('Login') }}
                                             </button>
                                         </div>

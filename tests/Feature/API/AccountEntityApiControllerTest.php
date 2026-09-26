@@ -1,0 +1,255 @@
+<?php
+
+namespace Tests\Feature\API;
+
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
+use App\Models\Currency;
+use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
+class AccountEntityApiControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_unauthenticated_user_cannot_trigger_account_monthly_summary_recalculation(): void
+    {
+        $response = $this->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
+
+        $this->assertUserNotAuthorized($response);
+        $response->assertJsonStructure(['error' => ['code', 'message']]);
+    }
+
+    public function test_it_updates_the_active_status_of_an_account_entity(): void
+    {
+        // Create a user and an account entity, which also needs a currency and an account group
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createForUser($user, AccountGroup::class);
+        $this->createForUser($user, Currency::class);
+
+        $accountEntity = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
+            'accountEntity' => $accountEntity->id,
+        ]), [
+            'active' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $this->assertEquals(1, $accountEntity->fresh()->active);
+    }
+
+    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity(): void
+    {
+        // Create a user and an account entity, which also needs a currency and an account group
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createForUser($user, AccountGroup::class);
+        $this->createForUser($user, Currency::class);
+
+        /** @var AccountEntity $accountEntity */
+        $accountEntity = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
+
+        // Try to update the account entity as an unauthenticated user
+        $response = $this->patchJson(
+            route(
+                'api.v1.account-entities.patch-active',
+                [
+                    'accountEntity' => $accountEntity->id,
+                ]
+            ),
+            ['active' => true],
+            [
+                'Accept' => 'application/json'
+            ]
+        );
+
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
+
+        $this->assertEquals(false, $accountEntity->fresh()->active);
+
+        // Try to update the account entity as a different user
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->patchJson(route('api.v1.account-entities.patch-active', [
+            'accountEntity' => $accountEntity->id,
+        ]), [
+            'active' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $this->assertEquals($accountEntity->fresh()->active, $accountEntity->active);
+    }
+
+    public function test_authenticated_user_can_trigger_account_monthly_summary_recalculation_for_current_user(): void
+    {
+        Artisan::spy();
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'language' => 'en',
+            'locale' => 'en-US',
+        ]);
+
+        AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account']);
+        AccountEntity::factory()->asAccount($user)->create(['config_type' => 'account']);
+
+        $otherUser = User::factory()->create();
+        AccountEntity::factory()->asAccount($otherUser)->create(['config_type' => 'account']);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.maintenance.recalculate-account-monthly-summaries'));
+
+        $response->assertOk()
+            ->assertJsonPath('message', __('maintenance.accountMonthlySummaries.queued'));
+
+        Artisan::shouldHaveReceived('queue')
+            ->once()
+            ->with('app:cache:account-monthly-summaries', [
+                'userId' => $user->id,
+            ]);
+    }
+
+    public function test_user_can_delete_an_existing_payee(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $account */
+        $payee = AccountEntity::factory()->asPayee($user)->create();
+
+        $payee->load('config');
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $payee));
+
+        // Response should be 200 OK
+        $response->assertStatus(Response::HTTP_OK);
+
+        // Check if model was deleted
+        $this->assertDatabaseMissing($payee->getTable(), $payee->attributesToArray());
+
+        // Check if config was also deleted
+        $this->assertDatabaseMissing($payee->config->getTable(), [
+            'id' => $payee->config->id,
+        ]);
+    }
+
+    public function test_user_can_delete_an_existing_account(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createForUser($user, AccountGroup::class);
+        $this->createForUser($user, Currency::class);
+
+        /** @var AccountEntity $account */
+        $account = AccountEntity::factory()->asAccount($user)->create([
+            'active' => false,
+        ]);
+
+        $account->load('config');
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $account));
+
+        // Response should be 200 OK
+        $response->assertStatus(Response::HTTP_OK);
+
+        // Check if model was deleted
+        $this->assertDatabaseMissing($account->getTable(), $account->attributesToArray());
+
+        // Check if config was also deleted
+        $this->assertDatabaseMissing($account->config->getTable(), [
+            'id' => $account->config->id,
+        ]);
+    }
+
+    public function test_user_cannot_delete_an_already_used_payee_or_account(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'language' => 'en',
+        ]);
+
+        // Create a transaction for this category, which also needs other models:
+        // account group, currency, account, payee
+        AccountGroup::factory()
+            ->for($user)
+            ->create();
+
+        Currency::factory()
+            ->for($user)
+            ->create();
+
+        $account = AccountEntity::factory()->asAccount($user)->create();
+
+        $payee = AccountEntity::factory()->asPayee($user)->create();
+
+        // Create a standard transaction with specific data
+        Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 1,
+                    'amount_to' => 1,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->withdrawal($user)
+            ->create();
+
+        Sanctum::actingAs($user, ['*']);
+
+        // Try to delete the payee
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $payee));
+
+        // Response should be 422 Unprocessable Entity
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        // Error message should be returned
+        $response->assertJsonFragment([
+            'error' => __('Payee is in use, cannot be deleted'),
+        ]);
+
+        // Payee should be in the database
+        $this->assertDatabaseHas($payee->getTable(), $payee->attributesToArray());
+
+        // Try to delete the account
+        $response = $this->deleteJson(route("api.v1.account-entities.destroy", $account));
+
+        // Response should be 422 Unprocessable Entity
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        // Error message should be returned
+        $response->assertJsonFragment([
+            'error' => __('Account is in use, cannot be deleted'),
+        ]);
+
+        // Account should be in the database
+        $this->assertDatabaseHas($account->getTable(), $account->attributesToArray());
+    }
+}
