@@ -1,16 +1,15 @@
 import 'datatables.net-bs5';
-import 'datatables.net-responsive-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 import { createApp } from 'vue';
 import PayeeForm from './components/PayeeForm.vue';
-import Swal from 'sweetalert2';
 
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
-import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
 
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 const dataTableSelector = '#table';
 let ajaxIsBusy = false;
@@ -76,7 +75,7 @@ function normalizePayee(payee) {
 }
 
 function getRowFromEvent(settings, element) {
-    const table = $(settings.nTable).DataTable();
+    const table = $(settings.table).DataTable();
     let rowElement = $(element).closest('tr');
 
     if (rowElement.hasClass('child')) {
@@ -311,19 +310,7 @@ const vueApp = createApp({
 
             ajaxIsBusy = true;
 
-            Swal.fire({
-                animation: false,
-                text: __('Are you sure to want to delete this item?'),
-                icon: 'warning',
-                showCancelButton: true,
-                cancelButtonText: __('Cancel'),
-                confirmButtonText: __('Confirm'),
-                buttonsStyling: false,
-                customClass: {
-                    confirmButton: 'btn btn-danger',
-                    cancelButton: 'btn btn-outline-secondary ms-3',
-                },
-            }).then((result) => {
+            confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
                 if (!result.isConfirmed) {
                     ajaxIsBusy = false;
                     return;
@@ -415,10 +402,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Name'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return `<div class="d-flex justify-content-start align-items-center">
-                        <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
-                        <span>${escapeHtml(data)}</span>
-                    </div>`;
+                    return escapeHtml(data);
                 }
 
                 return data;
@@ -446,7 +430,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type, row) {
                 if (type === 'display') {
                     if (data > 0) {
-                        const formattedCount = data.toLocaleString(window.YAFFA.userSettings.locale, {
+                        const formattedCount = toFormattedNumber(data, window.YAFFA.userSettings.locale, {
                             maximumFractionDigits: 0,
                             useGrouping: true,
                         });
@@ -522,6 +506,16 @@ window.table = $(dataTableSelector).DataTable({
             },
             searchable: true,
         },
+        {
+            title: __('Actions'),
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+            },
+            className: 'text-center',
+            orderable: false,
+            searchable: false,
+        },
     ],
     createdRow: function (row, data) {
         if (!data.config?.category && !data.category_suggestion) {
@@ -547,14 +541,13 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     select: {
         select: true,
         info: false,
         style: 'os',
     },
     initComplete: function (settings) {
-        $(settings.nTable).on('click', 'td.activeIcon > i', function () {
+        $(settings.table).on('click', 'td.activeIcon > i', function () {
             const row = getRowFromEvent(settings, this);
 
             // Do not request change if previous request is still in progress
@@ -594,7 +587,7 @@ window.table = $(dataTableSelector).DataTable({
             });
         });
 
-        $(settings.nTable).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
+        $(settings.table).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
             const row = getRowFromEvent(settings, this);
             const payee = row.data();
 

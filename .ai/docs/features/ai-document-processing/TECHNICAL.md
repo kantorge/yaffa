@@ -72,6 +72,7 @@ This file contains the implementation-oriented material extracted from the main 
     - `duplicate_amount_tolerance_percent` (decimal(5,2), default 10.0)
     - `duplicate_similarity_threshold` (decimal(4,3), default 0.5)
     - `category_matching_mode` (string(32), default 'child_preferred') — one of `best_match`, `parent_only`, `parent_preferred`, `child_only`, `child_preferred`
+    - `document_retention_days` (unsigned smallint, nullable, default `NULL`) — finalized AI documents older than this many days are deleted daily; `NULL` keeps them forever (see "File Storage & Retention")
     - `warn_on_child_mode_without_children` (boolean, default true) — surface warning when child-oriented mode is active but no child categories exist
   - Update existing `ReceivedMail` model to reflect new app behavior. (✅ implemented)
     - Remove `transaction_data`, `processed`, and `handled` flags, as AIdocument processing supersedes them. (✅ implemented)
@@ -99,7 +100,7 @@ This file contains the implementation-oriented material extracted from the main 
   - `AiUserSettingsApiController`
     - `GET /api/v1/ai/settings` → `api.v1.ai.settings.show` — returns fully resolved settings for the authenticated user; includes non-blocking warning payload when `warn_on_child_mode_without_children` is true and no active child categories exist
     - `PATCH /api/v1/ai/settings` → `api.v1.ai.settings.update` — partial update; returns updated resolved settings; PATCH-only, no dedicated reset-to-defaults endpoint
-    - Validation via `AiUserSettingsRequest` (thresholds 0.0-1.0, amount tolerance 0.0-100.0, `category_matching_mode` in allowed enum; upload limits validated from global config only)
+    - Validation via `AiUserSettingsRequest` (thresholds 0.0-1.0, amount tolerance 0.0-100.0, `category_matching_mode` in allowed enum, `document_retention_days` nullable integer 1-3650; upload limits validated from global config only)
     - Serialization: `AiUserSettingsResource`; authorization: `AiUserSettingsPolicy`
 
 - Services / Jobs:
@@ -208,6 +209,12 @@ This file contains the implementation-oriented material extracted from the main 
           - Enable Tesseract OCR (see Docker setup instructions)
           - Enable Vision AI in AI Provider settings (requires vision-capable model like gpt-4o or gemini-1.5-pro)
           - Upload text-based PDF instead of images
+    - **Old unprocessed documents reminder (retention cleanup)**
+      - Mailable: `App\Mail\AiDocumentsAwaitingAction`, sent from `CleanupOldAiDocuments` (not via an event)
+      - Subject: "Old AI documents are waiting for you"
+      - Content: number of old unprocessed documents, the retention period, a button linking to the AI document list pre-filtered to unprocessed documents received before the cutoff date
+      - View: `resources/views/emails/ai-documents-awaiting-action.blade.php`
+      - Sent at most once per user per run (daily), only when such documents exist
     - **Google Drive import notifications**
       - Sent from `ProcessGoogleDriveConfigJob` via user notifications
       - Success path uses `GoogleDriveImportSuccess`
@@ -351,12 +358,18 @@ A few notes on the statuses
   - Optionally resize to max pixels defined by the user. This can be different for Tesseract vs Vision API based on user preference and performance considerations.
   - Resized images not persisted (memory only, temporary for Vision API call)
   - Original files always retained
-- **Retention: (non-MVP, not implemented yet)**
-  - Environment variable: `AI_DOCUMENT_FILE_RETENTION_DAYS=90` (default)
-  - Empty or `0` disables auto-deletion
-  - Cleanup job: `php artisan ai-documents:cleanup-old-files`
-  - Scheduled daily via Laravel scheduler
-  - Only deletes files, not database records
+- **Retention (opt-in):**
+  - Setting: `ai_user_settings.document_retention_days` (unsigned smallint, nullable; validated as an integer between 1 and 3650), edited in the "Document Retention" section of the AI behavior settings form (`AiBehaviorSettings.vue`) or via `PATCH /api/v1/ai/settings`. `NULL` (the default, blank in the form) keeps everything, as deletion is irreversible. It is a per-user setting, independent of `ai_enabled`, so retention keeps working for users who switched AI processing off. There is no environment variable or global default
+  - Command: `php artisan ai-documents:cleanup-old-files {userId?}`, scheduled daily at 03:30 (only on the container with `RUNS_SCHEDULER`). The optional `userId` scopes a run to one user; the "Old AI document cleanup" button on the maintenance page queues the command for the current user, and is disabled until a retention period is set. The command name predates the current behavior and was kept for compatibility
+  - The command finds the users having a retention period (`document_retention_days > 0`) and dispatches `App\Jobs\CleanupOldAiDocuments` for each of them. The job resolves the period through `AiUserSettingsResolver`, so a queued job does nothing if the user cleared the setting in the meantime
+  - "Old" means both `created_at` **and** `updated_at` are older than the retention period (`AiDocument::olderThan()` scope), so a document touched recently (e.g. reprocessed) is never old
+  - **Finalized old documents are deleted**, together with their `ai_document_files` rows, the files on the `local` disk, and the linked `ReceivedMail` (which holds the stored email body, the main source of database growth). The user is not notified about these deletions
+  - The transaction created from a deleted document is **kept**: `transactions.ai_document_id` is a loose reference (`nullOnDelete`; the transaction only loses its "source document" link). This holds for every way of deleting a document, the retention cleanup and the manual delete action alike
+  - **Old documents in any other status** (`ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`) are never deleted. Instead, the job sends the owner one `App\Mail\AiDocumentsAwaitingAction` email per run (not per document) with the number of such documents and a link to `ai-documents.index?status=unprocessed&date_to=<cutoff date>`. This repeats on every daily run until the user finalizes or deletes them. `unprocessed` is a UI-only pseudo status of the list's status filter (every status except `finalized`, applied client-side in `AiDocumentTable.vue`); the API `status` parameter does not accept it
+  - "Processed" deliberately means finalized. A `ready_for_review` draft still needs the user's decision, so it is treated as unprocessed
+  - The deleted documents' Google Drive files are not touched. A Drive-sourced document whose file is still in the monitored folder can be re-imported as a duplicate by a manual (full) sync, as the deduplication relies on `google_drive_file_id` (see "Deleted AiDocument handling" below). This can only happen when the post-import actions don't remove/rename the file. Therefore a SweetAlert warning is shown when the user enables or changes the retention period in the settings form, and in the maintenance page's cleanup confirmation, if they have an enabled Google Drive config with no post-import action (`User::googleDriveKeepsImportedFiles()`; the settings page receives it as `aiSettingsPageMeta.drive_keeps_imported_files`). Scheduled runs cannot ask for confirmation
+  - Only paths recorded in `ai_document_files.file_path` are removed from disk. Afterwards the document's own directory (`ai_documents/{user_id}/{document id or uuid}`) is removed if it is empty; any other directory level, and a directory still containing untracked files, is left alone
+  - Text pasted into the upload form is stored like any other file (`ai_documents/{user_id}/{document_id}/text_input_<timestamp>.txt`, tracked in `ai_document_files`), so it is read, viewed and cleaned up the same way. Rows created by an earlier bug (`file_path = '1'`) are repaired by a migration
 - **File upload limits:**
   - Max files per submission: 3 (configurable via `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION`)
   - Max file size: 20MB per file (configurable via `AI_DOCUMENT_MAX_FILE_SIZE_MB`)

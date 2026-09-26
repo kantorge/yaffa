@@ -55,7 +55,7 @@
 
 <script setup>
   import { computed } from 'vue';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import AiDocumentJsonTreeNode from './AiDocumentJsonTreeNode.vue';
 
   const props = defineProps({
@@ -125,9 +125,7 @@
       return __('Unknown time');
     }
 
-    return new Date(timestamp).toLocaleString(
-      window.YAFFA.userSettings.locale || 'en',
-    );
+    return toFormattedDateTime(timestamp, window.YAFFA.userSettings.locale || 'en');
   };
 
   const formatStep = (step) => {

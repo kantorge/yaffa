@@ -30,17 +30,6 @@ class LoginTest extends TestCase
         return sprintf('/^%s$/', str_replace('\:seconds', '\d+', preg_quote(__('auth.throttle'), '/')));
     }
 
-    /**
-     * For all these tests, make sure that recaptcha is disabled.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        config(['recaptcha.api_site_key' => null]);
-        config(['recaptcha.api_secret_key' => null]);
-    }
-
     public function test_unsigned_visitor_can_access_the_login_form(): void
     {
         $response = $this->get($this->loginGetRoute());

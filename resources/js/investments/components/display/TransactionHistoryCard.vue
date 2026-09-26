@@ -37,7 +37,7 @@
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '@/shared/lib/datatable';
-  import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+  import { __, getDataTablesLanguageOptions, toFormattedNumber } from '@/shared/lib/i18n';
   import { toIsoDateString } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -70,7 +70,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (!result.isConfirmed) {
@@ -124,7 +124,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-warning',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (!result.isConfirmed) {
@@ -231,7 +231,7 @@
             title: __('Quantity'),
             render: function (data) {
               return data !== null && data !== ''
-                ? Number(data).toLocaleString(vm.locale)
+                ? toFormattedNumber(data, vm.locale)
                 : '';
             },
           },

@@ -163,8 +163,13 @@
   import TransactionItem from './TransactionItem.vue';
   import { __ } from '@/shared/lib/i18n';
   import Swal from 'sweetalert2';
+  import Decimal from 'decimal.js';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getPayeeCategoryStats } from '@/payee/payee-stats-api';
+  import { confirmDelete } from '@/shared/lib/confirm';
+
+  // Matches transaction_items.amount's MoneyCast scale (app/Models/TransactionItem.php).
+  const ITEM_AMOUNT_SCALE = 4;
 
   export default {
     components: {
@@ -291,16 +296,16 @@
 
       async applyStandardTransactionItems() {
         if (this.transactionItems.length > 0) {
-          const result = await Swal.fire({
-            title: __('Replace items?'),
-            text: __(
+          const result = await confirmDelete(
+            __(
               'Existing transaction items will be removed and overwritten.',
             ),
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: __('Replace'),
-            cancelButtonText: __('Cancel'),
-          });
+            {
+              title: __('Replace items?'),
+              confirmButtonText: __('Replace'),
+              target: this.dropdownParentSelector,
+            },
+          );
 
           if (!result.isConfirmed) {
             return;
@@ -329,6 +334,10 @@
               ),
               icon: 'warning',
               confirmButtonText: __('OK'),
+              buttonsStyling: false,
+              customClass: {
+                confirmButton: 'btn btn-primary',
+              },
             });
 
             return;
@@ -401,7 +410,7 @@
           comment: null,
         }));
 
-        let allocatedAmount = 0;
+        let allocatedAmount = new Decimal(0);
 
         items.forEach((item, index) => {
           if (item.category_id === mostUsedStat.category_id) {
@@ -410,29 +419,33 @@
 
           const usageCount = normalizedStats[index].usage_count;
           const proportionalAmount = this.roundAmount(
-            (totalAmount * usageCount) / totalUsageCount,
+            new Decimal(totalAmount)
+              .times(usageCount)
+              .dividedBy(totalUsageCount),
           );
 
           item.amount = proportionalAmount;
-          allocatedAmount += proportionalAmount;
+          allocatedAmount = allocatedAmount.plus(proportionalAmount);
         });
 
-        const remainderAmount = this.roundAmount(totalAmount - allocatedAmount);
+        const remainderAmount = new Decimal(totalAmount).minus(allocatedAmount);
         const mostUsedItem = items.find(
           (item) => item.category_id === mostUsedStat.category_id,
         );
 
         if (mostUsedItem !== undefined) {
           mostUsedItem.amount = this.roundAmount(
-            mostUsedItem.amount + remainderAmount,
+            new Decimal(mostUsedItem.amount).plus(remainderAmount),
           );
         }
 
         return items.filter((item) => item.amount > 0);
       },
 
+      // Rounds to transaction_items.amount's stored scale using exact decimal
+      // arithmetic, avoiding the float drift a plain toFixed(4) round-trip risks.
       roundAmount(amount) {
-        return Number(Number(amount).toFixed(4));
+        return new Decimal(amount).toDecimalPlaces(ITEM_AMOUNT_SCALE).toNumber();
       },
 
       getNextItemId() {

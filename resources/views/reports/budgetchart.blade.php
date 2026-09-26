@@ -54,12 +54,38 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div
+                                class="card-title collapse-control"
+                                data-coreui-toggle="collapse"
+                                data-coreui-target="#cardSearch"
+                        >
+                            <i class="fa fa-angle-down"></i>
+                            {{ __('Search') }}
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardSearch">
+                        @include('template.components.tablefilter-sidebar-search')
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-lg-9">
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div class="text-start">
                     <button name="reload" type="button" id="reload" class="btn btn-primary">{{ __('Load data') }}</button>
+                    <i
+                        class="fa fa-warning text-warning ms-2 d-none"
+                        id="stale-data-warning"
+                        data-bs-toggle="tooltip"
+                        title="{{ __('Filters have changed since the data was last loaded - reload to see the current selection.') }}"
+                        aria-label="{{ __('Filters have changed since the data was last loaded - reload to see the current selection.') }}"
+                    ></i>
                 </div>
                 <div class="text-end">
                     <div
@@ -88,29 +114,87 @@
                     </button>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body position-relative">
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-12">
-        <div class="card mb-3">
-            <div class="card-header">
-                <div class="card-title">
-                    {{ __('Scheduled and budgeted transactions for selected categories') }}
+                <div
+                    id="chart-loading-overlay"
+                    class="position-absolute top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center bg-body bg-opacity-75"
+                    style="z-index: 10;"
+                >
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <div class="card-title">
+                    {{ __('Budgets using the selected categories') }}
+                </div>
+                <div>
+                    <button
+                            class="btn btn-sm btn-success"
+                            id="button-new-budget"
+                            type="button"
+                            title="{{ __('New budget') }}"
+                    >
+                        <i class="fa fa-fw fa-piggy-bank"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body no-datatable-search">
                 <table class="table table-bordered table-hover no-footer" id="table"></table>
             </div>
         </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <div class="card-title">
+                    {{ __('Scheduled transactions using the selected categories') }}
+                </div>
+                <div>
+                    <a
+                            class="btn btn-sm btn-success"
+                            href="{{ route('transaction.create', [
+                                'type' => 'standard',
+                                'schedule' => '1',
+                                'callback' => 'back'
+                            ]) }}"
+                            title="{{ __('New scheduled standard transaction') }}"
+                    >
+                        <i class="fa fa-fw fa-cart-plus"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body no-datatable-search">
+                <table class="table table-bordered table-hover no-footer" id="scheduleTable"></table>
+            </div>
+        </div>
     </div>
 </div>
 
-@include('template.components.model-delete-form')
-@include('template.components.transaction-skip-form')
+<div id="budgetChartFormApp">
+    <budget-form
+        ref="budgetFormEdit"
+        action="edit"
+        id="editBudgetModal"
+        @budget-saved="onBudgetSaved"
+    ></budget-form>
+    <budget-form
+        ref="budgetFormReplace"
+        action="replace"
+        id="replaceBudgetModal"
+        @budget-saved="onBudgetSaved"
+    ></budget-form>
+    <budget-form
+        ref="budgetFormNew"
+        action="new"
+        id="newBudgetModal"
+        @budget-saved="onNewBudgetSaved"
+    ></budget-form>
+    <budget-quick-view ref="budgetQuickView" @edit="showEditBudgetModal"></budget-quick-view>
+</div>
 
 @stop

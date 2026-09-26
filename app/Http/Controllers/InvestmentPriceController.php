@@ -2,29 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Models\Investment;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentPriceController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class InvestmentPriceController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
-
     /**
      * Display the investment price list using Vue component manager.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function list(Investment $investment): View
     {
         /**
@@ -32,8 +27,6 @@ class InvestmentPriceController extends Controller implements HasMiddleware
          * @name('investment-price.list')
          * @middlewares('web', 'auth', 'verified')
          */
-        Gate::authorize('view', $investment);
-
         // Load currency details for JavaScript
         $investment->load('currency');
 

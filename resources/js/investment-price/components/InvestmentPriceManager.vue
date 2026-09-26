@@ -57,6 +57,7 @@
   import InvestmentPriceModal from './InvestmentPriceModal.vue';
   import PriceHistoryCard from '@/investments/components/display/PriceHistoryCard.vue';
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
+  import { filterByDateRange } from '@/shared/lib/date/filterByRange';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -132,32 +133,10 @@
         this.updateDisplayPrices();
       },
       updateDisplayPrices() {
-        if (!this.dateFrom && !this.dateTo) {
-          // Show all prices
-          this.displayPrices = null;
-          return;
-        }
-
-        // Filter prices by date range
-        const filtered = this.allPrices.filter((price) => {
-          const priceDate = new Date(price.date);
-
-          if (this.dateFrom && this.dateTo) {
-            const fromDate = new Date(this.dateFrom);
-            const toDate = new Date(this.dateTo);
-            return priceDate >= fromDate && priceDate <= toDate;
-          } else if (this.dateFrom) {
-            const fromDate = new Date(this.dateFrom);
-            return priceDate >= fromDate;
-          } else if (this.dateTo) {
-            const toDate = new Date(this.dateTo);
-            return priceDate <= toDate;
-          }
-
-          return true;
-        });
-
-        this.displayPrices = filtered;
+        // No range selected: show all prices (null is the Table's "show everything" sentinel).
+        this.displayPrices = (!this.dateFrom && !this.dateTo)
+          ? null
+          : filterByDateRange(this.allPrices, 'date', this.dateFrom, this.dateTo);
       },
       openAddModal() {
         this.editingPrice = null;

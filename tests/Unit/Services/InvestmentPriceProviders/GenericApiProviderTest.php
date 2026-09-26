@@ -71,7 +71,7 @@ class GenericApiProviderTest extends TestCase
         $provider = new GenericApiProvider($this->createMock(Client::class));
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Invalid JSON in headers_json');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON in headers_json');
 
         $provider->validateCredentials([
             'endpoint_url' => 'https://api.example.com/prices?symbol={symbol}',
@@ -149,7 +149,7 @@ class GenericApiProviderTest extends TestCase
         $provider = new GenericApiProvider($this->createMock(Client::class));
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         $provider->validateCredentials([
             'endpoint_url' => 'http://localhost:8080/prices',
@@ -175,7 +175,7 @@ class GenericApiProviderTest extends TestCase
         ];
 
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Endpoint URL must resolve to a public IP address.');
+        $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
 
         $provider->fetchPrices($investment);
     }

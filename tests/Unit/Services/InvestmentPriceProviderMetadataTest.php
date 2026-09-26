@@ -115,7 +115,7 @@ class InvestmentPriceProviderMetadataTest extends TestCase
     public function test_get_throws_exception_for_unknown_provider(): void
     {
         $this->expectException(PriceProviderException::class);
-        $this->expectExceptionMessage('Unknown price provider: nonexistent');
+        $this->expectExceptionMessageIsOrContains('Unknown price provider: nonexistent');
 
         InvestmentPriceProviderMetadata::get('nonexistent');
     }

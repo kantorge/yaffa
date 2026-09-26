@@ -22,6 +22,12 @@ return [
         "settings_hint" => "Ha a hiba továbbra is fennáll, ellenőrizd az AI modell és a szolgáltatói hitelesítő adatok beállítását.",
         "subject" => "A dokumentum feldolgozása sikertelen"
     ],
+    "ai_documents_awaiting_action" => [
+        "button_review_documents" => "Feldolgozatlan dokumentumok megtekintése",
+        "intro" => "Van :count db :days napnál régebbi AI dokumentumod, amely még nincs feldolgozva.",
+        "next_action_text" => "A régi dokumentumok véglegesítés után automatikusan törlődnek, a feldolgozatlanokat viszont mindig megőrizzük. Nézd át őket, vagy töröld, amelyekre már nincs szükséged. Amíg ez nem történik meg, naponta kapsz emlékeztetőt.",
+        "subject" => "Régi AI dokumentumok várnak rád"
+    ],
     "common" => [
         "greeting" => "Kedves :name,",
         "na" => "N/A",

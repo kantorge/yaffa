@@ -1,36 +1,13 @@
 <template>
-  <div class="modal" tabindex="-1" :id="id">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form
-          accept-charset="UTF-8"
-          @submit.prevent="onSubmit"
-          autocomplete="off"
-        >
-          <div class="modal-header">
-            <h5 class="modal-title" v-if="action == 'new'">
-              {{ __('Add new payee') }}
-            </h5>
-            <h5 class="modal-title" v-if="action == 'edit'">
-              {{ __('Edit payee') }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-coreui-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <AlertErrors
-              :form="form"
-              :message="__('There were some problems with your input.')"
-            />
-            <AlertSuccess
-              :form="form"
-              :message="__('Your changes have been saved!')"
-            />
-
+  <FormModal
+    ref="formModal"
+    :id="id"
+    :action="action"
+    :new-title="__('Add new payee')"
+    :edit-title="__('Edit payee')"
+    :form="form"
+    @submit="onSubmit"
+  >
             <div class="row mb-3">
               <label :for="nameInputId" class="form-label col-sm-3">
                 {{ __('Name') }}
@@ -148,26 +125,7 @@
                 </ul>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-default"
-              data-coreui-dismiss="modal"
-            >
-              {{ __('Close') }}
-            </button>
-            <Button
-              class="btn btn-primary"
-              :disabled="form.busy"
-              :form="form"
-              >{{ __('Save') }}</Button
-            >
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  </FormModal>
 </template>
 
 <script>
@@ -175,19 +133,13 @@
   initializeSelect2(window.YAFFA.userSettings.language);
 
   import Form from 'vform';
-  import {
-    Button,
-    AlertErrors,
-    AlertSuccess,
-  } from 'vform/src/components/bootstrap5';
 
+  import FormModal from '@/shared/ui/FormModal.vue';
   import { __ } from '@/shared/lib/i18n';
 
   export default {
     components: {
-      Button,
-      AlertErrors,
-      AlertSuccess,
+      FormModal,
     },
 
     props: {
@@ -274,9 +226,6 @@
       if (!this.simplified) {
         this.initializeCategoryPreferenceSelects();
       }
-
-      // Initialize modal
-      this.modal = new coreui.Modal(document.getElementById(this.id));
     },
 
     beforeUnmount() {
@@ -294,7 +243,7 @@
           this.loadPayeeData(payeeId);
         }
 
-        this.modal.show();
+        this.$refs.formModal.show();
       },
 
       initializeCategorySelect() {
@@ -485,6 +434,13 @@
                 data.deferred_categories || [],
               );
             }
+
+            // The freshly-loaded values are the "clean" baseline for the
+            // dirty check in FormModal, not the blank values the Form was
+            // constructed with.
+            this.form.originalData = JSON.parse(
+              JSON.stringify(this.form.data()),
+            );
           })
           .catch((error) => {
             console.error('Error loading payee:', error);
@@ -498,6 +454,7 @@
         this.form.reset();
         this.form.errors.clear();
 
+        this.form.name = '';
         this.form.active = true;
         this.form.alias = '';
         this.form.config.category_id = null;
@@ -516,6 +473,10 @@
             this.notPreferredSelect.empty().trigger('change');
           }
         }
+
+        // These blank values are the "clean" baseline for a new payee - without this,
+        // FormModal's dirty check would compare against whatever payee was last edited.
+        this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
 
         // Reset payee ID
         this.payeeId = null;
@@ -599,7 +560,7 @@
 
       hideAndReset() {
         this.resetForm();
-        this.modal.hide();
+        this.$refs.formModal.hide();
       },
 
       onSubmit() {

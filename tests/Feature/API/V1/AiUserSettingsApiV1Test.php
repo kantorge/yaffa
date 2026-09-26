@@ -6,6 +6,7 @@ use App\Models\AiUserSettings;
 use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AiUserSettingsApiV1Test extends TestCase
@@ -73,6 +74,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'duplicate_amount_tolerance_percent',
                 'duplicate_similarity_threshold',
                 'category_matching_mode',
+                'document_retention_days',
                 'warnings',
             ])
             ->assertJson([
@@ -93,6 +95,7 @@ class AiUserSettingsApiV1Test extends TestCase
             ->assertJsonPath('ocr_language', 'eng')
             ->assertJsonPath('generic_document_language', null)
             ->assertJsonPath('ai_enabled', false)
+            ->assertJsonPath('document_retention_days', null)
             ->assertJsonPath('prompt_chat_history_enabled', true);
 
         $this->assertDatabaseHas('ai_user_settings', [
@@ -187,6 +190,44 @@ class AiUserSettingsApiV1Test extends TestCase
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['generic_document_language']);
+    }
+
+    public function test_v1_update_sets_and_clears_document_retention_days(): void
+    {
+        config(['yaffa.sandbox_mode' => false]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.settings.update'), ['document_retention_days' => 90])
+            ->assertOk()
+            ->assertJsonPath('document_retention_days', 90);
+
+        $this->assertDatabaseHas('ai_user_settings', ['user_id' => $this->user->id, 'document_retention_days' => 90]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.settings.update'), ['document_retention_days' => null])
+            ->assertOk()
+            ->assertJsonPath('document_retention_days', null);
+
+        $this->assertDatabaseHas('ai_user_settings', ['user_id' => $this->user->id, 'document_retention_days' => null]);
+    }
+
+    #[DataProvider('invalidDocumentRetentionDays')]
+    public function test_v1_update_rejects_invalid_document_retention_days(mixed $value): void
+    {
+        $this->actingAs($this->user)
+            ->patchJson(route('api.v1.ai.settings.update'), ['document_retention_days' => $value])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['document_retention_days']);
+    }
+
+    public static function invalidDocumentRetentionDays(): array
+    {
+        return [
+            'zero' => [0],
+            'negative' => [-5],
+            'too large' => [3651],
+            'not a number' => ['abc'],
+        ];
     }
 
     public function test_v1_update_creates_missing_row_before_persisting(): void

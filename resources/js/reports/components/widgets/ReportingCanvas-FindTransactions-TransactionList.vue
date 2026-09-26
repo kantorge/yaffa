@@ -104,11 +104,8 @@
       },
     },
     watch: {
-      listTransactions: {
-        handler() {
-          this.redrawDataTable();
-        },
-        deep: true,
+      listTransactions() {
+        this.redrawDataTable();
       },
       busy(newBusy) {
         if (this.dataTable) {
@@ -219,7 +216,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (!result.isConfirmed) {

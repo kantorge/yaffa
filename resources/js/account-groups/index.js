@@ -3,11 +3,11 @@ import 'datatables.net-bs5';
 import {
     genericDataTablesActionButton,
     renderDeleteAssetButton,
-    initializeStandardExternalSearch
+    initializeStandardExternalSearch,
+    initializeDeleteAssetButtonListener
 } from '@/shared/lib/datatable';
 
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
-import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
 
@@ -53,48 +53,12 @@ window.table = $(dataTableSelector).DataTable({
     stateSave:      false,
     processing:     true,
     paging:         false,
-    initComplete: function (settings) {
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
+});
 
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            let element = $(this);
-            element.addClass('busy');
-
-            // Send request to change investment active state
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.account-groups.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.accountGroups = window.accountGroups
-                        .filter(accountGroup => accountGroup.id !== data.accountGroup.id);
-
-                    row.remove().draw();
-
-                    toastHelpers.showSuccessToast(__('Account group deleted'));
-                },
-                error: function (data) {
-                    toastHelpers.showErrorToast(__('Error while trying to delete account group: ') + data.responseJSON.error);
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
-                }
-            });
-        });
-    }
+// Listener for delete button
+initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.account-groups.destroy', __('Account group deleted'), function (id, tr) {
+    window.accountGroups = window.accountGroups.filter(accountGroup => accountGroup.id !== id);
+    table.row(tr).remove().draw();
 });
 
 // Listener for external search field

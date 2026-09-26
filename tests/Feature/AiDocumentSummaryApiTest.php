@@ -7,6 +7,7 @@ use App\Models\AiProviderConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
 
 class AiDocumentSummaryApiTest extends TestCase
 {
@@ -16,7 +17,10 @@ class AiDocumentSummaryApiTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.summary'));
 
         $response->assertOk()
@@ -39,7 +43,10 @@ class AiDocumentSummaryApiTest extends TestCase
         AiDocument::factory()->for($user)->create(['status' => 'processing_failed']);
         AiDocument::factory()->for($user)->create(['status' => 'finalized']);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.summary'));
 
         $response->assertOk()
@@ -60,7 +67,10 @@ class AiDocumentSummaryApiTest extends TestCase
         AiDocument::factory()->for($user)->create(['status' => 'ready_for_review']);
         AiDocument::factory()->for($otherUser)->create(['status' => 'ready_for_review']);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.summary'));
 
         $response->assertOk()
@@ -76,7 +86,10 @@ class AiDocumentSummaryApiTest extends TestCase
         $user = User::factory()->create();
         AiProviderConfig::factory()->for($user)->create();
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.summary'));
 
         $response->assertOk()
@@ -106,7 +119,10 @@ class AiDocumentSummaryApiTest extends TestCase
             'created_at' => now()->subDays(30),
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')
+        Sanctum::actingAs($user, ['*']);
+
+
+        $response = $this
             ->getJson(route('api.v1.documents.summary'));
 
         $response->assertOk();

@@ -8,33 +8,16 @@ use App\Listeners\CreateAiDocumentFromSource;
 use App\Models\ReceivedMail;
 use App\Models\User;
 use BeyondCode\Mailbox\InboundEmail;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
+#[Signature('app:simulate-incoming-email {--from= : Sender email address (must belong to an existing user)} {--subject= : Email subject} {--text= : Plain-text body} {--html= : HTML body} {--message-id= : Message ID override} {--user-id= : User ID to associate the email with} {--sync : Also run the AI document creation listener synchronously}')]
+#[Description('Simulate an incoming mailbox email and store it as a received mail')]
 class SimulateIncomingEmail extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:simulate-incoming-email
-        {--from= : Sender email address (must belong to an existing user)}
-        {--subject= : Email subject}
-        {--text= : Plain-text body}
-        {--html= : HTML body}
-        {--message-id= : Message ID override}
-        {--user-id= : User ID to associate the email with}
-        {--sync : Also run the AI document creation listener synchronously}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Simulate an incoming mailbox email and store it as a received mail';
-
     /**
      * Execute the console command.
      */

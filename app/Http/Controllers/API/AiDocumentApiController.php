@@ -18,13 +18,26 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
-class AiDocumentApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index', 'show', 'summary',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+])]
+#[Middleware('abilities:settings', only: [
+    'cleanupOldFiles',
+])]
+class AiDocumentApiController extends Controller
 {
     private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
 
@@ -33,25 +46,16 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     ) {
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
+     * Upload a document for AI processing
+     *
+     * Accepts uploaded files and/or text input, creates an AI document, and queues it for background processing.
+     *
      * @throws AuthorizationException
      */
+    #[Authorize('create', AiDocument::class)]
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/documents")
-         * @middleware("api", "auth:sanctum", "verified")
-         */
-        Gate::authorize('create', AiDocument::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -61,22 +65,29 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
         // Create the document
         $document = AiDocument::create([
-            'user_id' => $user->id,
             'status' => 'ready_for_processing',
             'source_type' => 'manual_upload',
             'custom_prompt' => $request->input('custom_prompt'),
         ]);
 
-        // Store uploaded files
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $this->storeFile($document, $file);
+        try {
+            // Store uploaded files
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $this->storeFile($document, $file);
+                }
             }
-        }
 
-        // Store text input if provided
-        if ($request->input('text_input')) {
-            $this->storeTextFile($document, $request->input('text_input'));
+            // Store text input if provided
+            if ($request->input('text_input')) {
+                $this->storeTextFile($document, $request->input('text_input'));
+            }
+        } catch (Throwable $e) {
+            // Don't leave a half-stored document (or its files) behind; cascades to the file records.
+            Storage::disk('local')->deleteDirectory("ai_documents/{$document->user_id}/{$document->id}");
+            $document->delete();
+
+            throw $e;
         }
 
         // Dispatch processing job
@@ -90,14 +101,15 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * PATCH /api/v1/documents/{id} - Update document (custom prompt or status)
+     * Update a document
+     *
+     * Updates the custom prompt or status of an AI document.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'aiDocument')]
     public function update(UpdateAiDocumentRequest $request, AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('update', $aiDocument);
-
         if ($request->filled('custom_prompt')) {
             $aiDocument->custom_prompt = $request->input('custom_prompt');
         }
@@ -116,7 +128,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents/summary - Aggregate stats for non-finalized documents
+     * Get document processing summary
+     *
+     * Returns aggregate counts (ready for review, processing failed, oldest pending) for the
+     * user's non-finalized AI documents.
      */
     public function summary(Request $request): JsonResponse
     {
@@ -152,7 +167,12 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/maintenance/cleanup-ai-document-old-files - Queue cleanup of old AI document files
+     * Cleanup old AI documents
+     *
+     * Queues the retention cleanup for the authenticated user. It deletes finalized AI documents older
+     * than the user's retention period (`document_retention_days`), together with their stored files and
+     * received emails, and emails a reminder about older documents that are not finalized. The
+     * transactions created from the documents are kept. Does nothing if no retention period is set.
      */
     public function cleanupOldFiles(Request $request): JsonResponse
     {
@@ -166,7 +186,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents - List user's documents with filters
+     * List documents
+     *
+     * Returns the user's AI documents, with optional filters for date range, status, source
+     * type, and free-text search.
      */
     public function index(Request $request): JsonResponse
     {
@@ -230,14 +253,15 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/documents/{id} - Get document details
+     * Get a document
+     *
+     * Returns full details for a single AI document, including matched entities and related records.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'aiDocument')]
     public function show(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('view', $aiDocument);
-
         $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
         $this->enrichProcessedData($aiDocument);
 
@@ -247,14 +271,16 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/documents/{id}/reprocess - Trigger document reprocessing
+     * Reprocess a document
+     *
+     * Resets a document to ready_for_processing and re-queues it for AI processing. Only
+     * allowed from a terminal or failed status.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('reprocess', 'aiDocument')]
     public function reprocess(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('reprocess', $aiDocument);
-
         if ($response = $this->ensureAiProcessingEnabled($aiDocument->user)) {
             return $response;
         }
@@ -283,14 +309,15 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/v1/documents/{id} - Delete a document and its files
+     * Delete a document
+     *
+     * Deletes an AI document, its stored files, and any linked received mail.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'aiDocument')]
     public function destroy(AiDocument $aiDocument): JsonResponse
     {
-        Gate::authorize('delete', $aiDocument);
-
         // Delete stored files
         foreach ($aiDocument->aiDocumentFiles as $file) {
             /** @var AiDocumentFile $file */
@@ -308,14 +335,16 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/documents/{id}/check-duplicates - Check for duplicate transactions
+     * Check a document for duplicate transactions
+     *
+     * Compares an AI-processed document's extracted transaction data against existing
+     * transactions to find likely duplicates.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'aiDocument')]
     public function checkDuplicates(AiDocument $aiDocument, DuplicateDetectionService $duplicateService): JsonResponse
     {
-        Gate::authorize('view', $aiDocument);
-
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
             return response()->json([], Response::HTTP_BAD_REQUEST);
@@ -348,7 +377,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
                 'id' => $duplicate['id'],
                 'similarity' => $duplicate['similarity'],
                 'date' => $transaction->date,
-                'amount' => $transaction->cashflow_value,
+                // Emitted as a decimal string (matching the wire format Eloquent's
+                // SerializesCastableAttributes gives this field elsewhere), since this is a
+                // raw array embedding the Money value directly, bypassing that control point.
+                'amount' => $transaction->cashflow_value !== null ? (string) $transaction->cashflow_value->getAmount() : null,
                 'type' => $transaction->config_type,
             ];
         }, $duplicates);
@@ -374,6 +406,10 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             'local'
         );
 
+        if ($path === false) {
+            throw new RuntimeException("Failed to store uploaded file {$filename}.");
+        }
+
         // Create database record
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,
@@ -390,10 +426,12 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     {
         $filename = 'text_input_' . now()->timestamp . '.txt';
 
-        $path = Storage::disk('local')->put(
-            "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}",
-            $textInput
-        );
+        // Storage::put() returns a bool, not the path
+        $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";
+
+        if (! Storage::disk('local')->put($path, $textInput)) {
+            throw new RuntimeException("Failed to store text input {$filename}.");
+        }
 
         AiDocumentFile::create([
             'ai_document_id' => $aiDocument->id,

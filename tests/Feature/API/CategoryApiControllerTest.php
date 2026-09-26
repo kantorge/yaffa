@@ -1,0 +1,460 @@
+<?php
+
+namespace Tests\Feature\API;
+
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
+use App\Models\Category;
+use App\Models\Currency;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
+class CategoryApiControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_returns_consistent_resource_shape_for_category_list(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $parent */
+        $parent = Category::factory()->for($user)->create([
+            'name' => 'Parent',
+            'active' => true,
+            'default_aggregation' => 'quarter',
+        ]);
+
+        /** @var Category $child */
+        $child = Category::factory()->for($user)->create([
+            'name' => 'Child',
+            'active' => false,
+            'parent_id' => $parent->id,
+            'default_aggregation' => 'year',
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'withInactive' => 1,
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonFragment([
+            'id' => $child->id,
+            'name' => 'Child',
+            'default_aggregation' => 'year',
+            'active' => false,
+        ]);
+        $response->assertJsonPath('1.full_name', 'Parent > Child');
+        $response->assertJsonMissingPath('1.text');
+    }
+
+    public function test_category_list_excludes_inactive_by_default(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Active',
+            'active' => true,
+        ]);
+
+        Category::factory()->for($user)->create([
+            'name' => 'Inactive',
+            'active' => false,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => '*',
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment([
+            'name' => 'Active',
+        ]);
+        $response->assertJsonMissing([
+            'name' => 'Inactive',
+        ]);
+    }
+
+    public function test_category_list_search_uses_consistent_resource_shape(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'name' => 'Groceries',
+            'active' => true,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->getJson(route('api.v1.categories.index', [
+            'q' => 'Gro',
+            'withInactive' => 1,
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('0.name', 'Groceries');
+        $response->assertJsonPath('0.full_name', 'Groceries');
+        $response->assertJsonMissingPath('0.text');
+    }
+
+    public function test_it_updates_the_active_status_of_a_category(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $category */
+        $category = Category::factory()
+            ->for($user)
+            ->create([
+                'active' => false,
+            ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
+            'category' => $category->id,
+        ]), [
+            'active' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $this->assertTrue($category->fresh()->active);
+    }
+
+    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_category(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $category */
+        $category = Category::factory()
+            ->for($user)
+            ->create([
+                'active' => false,
+            ]);
+
+        // Create a different user
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        // Try to update the category as an unauthenticated user
+        $response = $this->patchJson(
+            route('api.v1.categories.patch-active', [
+                'category' => $category->id,
+            ]),
+            ['active' => true],
+            [
+                'Accept' => 'application/json'
+            ]
+        );
+
+        $this->assertThat(
+            $response->status(),
+            $this->logicalOr(
+                $this->equalTo(Response::HTTP_UNAUTHORIZED),
+                $this->equalTo(Response::HTTP_FORBIDDEN)
+            )
+        );
+
+        $this->assertFalse($category->fresh()->active);
+
+        // Try to update the category as the different user
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->patchJson(route('api.v1.categories.patch-active', [
+            'category' => $category->id,
+        ]), [
+            'active' => true,
+        ]);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+
+        $this->assertFalse($category->fresh()->active);
+    }
+
+    public function test_it_deletes_a_category(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $category */
+        $category = Category::factory()
+            ->for($user)
+            ->create();
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->delete(route('api.v1.categories.destroy', [
+            'category' => $category->id,
+        ]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        // The response should contain the deleted category
+        $response->assertJsonFragment([
+            'id' => $category->id,
+        ]);
+
+        $this->assertDatabaseMissing('categories', [
+            'id' => $category->id,
+        ]);
+    }
+
+    public function test_it_does_not_delete_a_category_with_children(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $category */
+        $category = Category::factory()
+            ->for($user)
+            ->create();
+
+        // Create a children for this category
+        Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => $category->id,
+            ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->delete(route('api.v1.categories.destroy', [
+            'category' => $category->id,
+        ]));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
+
+        $this->assertDatabaseHas('categories', [
+            'id' => $category->id,
+        ]);
+    }
+
+    public function test_it_creates_a_category(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Test Category',
+            'active' => true,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertJsonFragment([
+            'name' => 'Test Category',
+        ]);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Test Category',
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_it_creates_a_category_with_parent(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var Category $parentCategory */
+        $parentCategory = Category::factory()
+            ->for($user)
+            ->create();
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Child Category',
+            'active' => true,
+            'parent_id' => $parentCategory->id,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertJsonFragment([
+            'name' => 'Child Category',
+            'parent_id' => $parentCategory->id,
+        ]);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Child Category',
+            'parent_id' => $parentCategory->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_it_rejects_creating_a_category_without_required_fields(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user, ['*']);
+
+        // Missing name
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'default_aggregation' => 'month',
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        // Missing default_aggregation
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Test',
+        ]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function test_it_rejects_creating_a_category_with_invalid_parent(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Test Category',
+            'active' => true,
+            'parent_id' => 99999,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function test_it_rejects_creating_a_duplicate_category(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        Category::factory()
+            ->for($user)
+            ->create(['name' => 'Existing Category']);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Existing Category',
+            'active' => true,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function test_it_rejects_creating_a_category_with_parent_from_another_user(): void
+    {
+        /** @var User $user1 */
+        $user1 = User::factory()->create();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        /** @var Category $parentCategory */
+        $parentCategory = Category::factory()
+            ->for($user1)
+            ->create();
+
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Child Category',
+            'active' => true,
+            'parent_id' => $parentCategory->id,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors('parent_id');
+    }
+
+    public function test_different_users_can_create_categories_with_the_same_name(): void
+    {
+        /** @var User $user1 */
+        $user1 = User::factory()->create();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        Category::factory()
+            ->for($user1)
+            ->create(['name' => 'Groceries']);
+
+        Sanctum::actingAs($user2, ['*']);
+        $response = $this->postJson(route('api.v1.categories.store'), [
+            'name' => 'Groceries',
+            'active' => true,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Groceries',
+            'user_id' => $user2->id,
+        ]);
+    }
+
+    public function test_it_does_not_delete_a_category_if_it_is_used_in_a_transaction(): void
+    {
+        // Create a user and a category
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $categoryParent = Category::factory()
+            ->for($user)
+            ->create();
+        $categoryChild = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => $categoryParent->id,
+            ]);
+
+        // Create a transaction for this category, which also needs other models:
+        // account group, currency, account, payee
+        AccountGroup::factory()
+            ->for($user)
+            ->create();
+
+        Currency::factory()
+            ->for($user)
+            ->create();
+
+        AccountEntity::factory()->asAccount($user)->create();
+
+        AccountEntity::factory()->asPayee($user)->create();
+
+        // Create a standard transaction with specific data
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create();
+
+        TransactionItem::factory()->create([
+            'transaction_id' => $transaction->id,
+            'category_id' => $categoryChild->id,
+        ]);
+
+        Sanctum::actingAs($user, ['*']);
+        $response = $this->delete(route('api.v1.categories.destroy', [
+            'category' => $categoryChild->id,
+        ]));
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJson([
+            'error' => __('Category is in use, cannot be deleted'),
+        ]);
+
+        $this->assertDatabaseHas('categories', [
+            'id' => $categoryChild->id,
+        ]);
+    }
+}

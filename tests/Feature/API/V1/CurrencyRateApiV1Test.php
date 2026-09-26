@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\API\V1;
 
+use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
@@ -11,6 +12,10 @@ use Tests\TestCase;
 
 class CurrencyRateApiV1Test extends TestCase
 {
+    use CurrencyTrait {
+        getAllCurrencyRatesByMonthCacheKey as public;
+        getCurrenciesCacheKey as public;
+    }
     use RefreshDatabase;
 
     private User $user;
@@ -188,8 +193,8 @@ class CurrencyRateApiV1Test extends TestCase
 
     public function test_v1_clear_cache_clears_currency_trait_caches(): void
     {
-        $currenciesCacheKey = "currencies_user_{$this->user->id}";
-        $monthlyRatesCacheKey = "allCurrencyRatesByMonth_forUser_{$this->user->id}";
+        $currenciesCacheKey = $this->getCurrenciesCacheKey($this->user->id);
+        $monthlyRatesCacheKey = $this->getAllCurrencyRatesByMonthCacheKey($this->user->id);
 
         Cache::put($currenciesCacheKey, ['cached' => true], now()->addMinute());
         Cache::put($monthlyRatesCacheKey, ['cached' => true], now()->addMinute());

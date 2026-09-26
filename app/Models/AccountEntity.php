@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Database\Factories\AccountEntityFactory;
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -70,26 +72,11 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|AccountEntity wherePreferredFileImportProfileId($value)
  * @mixin Eloquent
  */
+#[Fillable('name', 'active', 'config_type', 'config_id', 'preferred_file_import_profile_id', 'user_id', 'alias')]
+#[Hidden('config_id')]
 class AccountEntity extends Model
 {
     use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'active',
-        'config_type',
-        'config_id',
-        'preferred_file_import_profile_id',
-        'user_id',
-        'alias',
-    ];
-
-    protected $hidden = ['config_id'];
 
     protected function casts(): array
     {

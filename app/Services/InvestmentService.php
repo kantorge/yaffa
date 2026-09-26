@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Casts\DecimalCast;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Events\InvestmentPricesUpdated;
 use App\Exceptions\PriceProviderException;
@@ -13,10 +14,10 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Support\ScheduleInstance;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -89,10 +90,8 @@ class InvestmentService
                 return;
             }
 
-            Bus::batch([
-                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-fact', $accountEntity),
-                new CalculateAccountMonthlySummary($accountEntity->user, 'investment_value-forecast', $accountEntity),
-            ])->dispatch();
+            CalculateAccountMonthlySummary::dispatchNamed($accountEntity->user, 'investment_value-fact', $accountEntity);
+            CalculateAccountMonthlySummary::dispatchNamed($accountEntity->user, 'investment_value-forecast', $accountEntity);
         });
     }
 
@@ -127,7 +126,8 @@ class InvestmentService
                 if (! $transactionConfig instanceof TransactionDetailInvestment) {
                     $quantity = 0.0;
                 } else {
-                    $quantity = $transaction->transaction_type->quantityMultiplier() * (float) ($transactionConfig->quantity ?? 0);
+                    $quantity = $transaction->transaction_type->quantityMultiplier()
+                        * (DecimalCast::toFloat($transactionConfig->quantity) ?? 0.0);
                 }
 
                 $runningSchedule += $quantity;
@@ -263,6 +263,9 @@ class InvestmentService
      * Get latest price using specified strategy
      * Replaces Investment->getLatestPrice()
      *
+     * A thin float-collapsing wrapper around getLatestPriceExact(), for display-only
+     * consumers (e.g. InvestmentController) that don't accumulate this value.
+     *
      * @param  Investment  $investment  The investment to get price for
      * @param  string  $type  Can be 'stored', 'transaction' or 'combined'
      * @param  Carbon|null  $onOrBefore  Optional date filter
@@ -270,10 +273,26 @@ class InvestmentService
      */
     public function getLatestPrice(Investment $investment, string $type = 'combined', ?Carbon $onOrBefore = null): ?float
     {
+        return $this->getLatestPriceExact($investment, $type, $onOrBefore)?->toFloat();
+    }
+
+    /**
+     * Exact-arithmetic counterpart of getLatestPrice(): same resolution strategy (stored
+     * price, priced transaction, or whichever of the two is newer), but returns the
+     * underlying BigDecimal instead of collapsing to a float, for callers that accumulate
+     * this value (e.g. CalculateAccountMonthlySummary) rather than just displaying it.
+     *
+     * @param  Investment  $investment  The investment to get price for
+     * @param  string  $type  Can be 'stored', 'transaction' or 'combined'
+     * @param  Carbon|null  $onOrBefore  Optional date filter
+     */
+    public function getLatestPriceExact(Investment $investment, string $type = 'combined', ?Carbon $onOrBefore = null): ?BigDecimal
+    {
         if ($type === 'stored') {
             $price = $this->getLatestStoredPrice($investment, $onOrBefore);
+            $price?->setRelation('investment', $investment);
 
-            return $price instanceof InvestmentPrice ? $price->price : null;
+            return $price instanceof InvestmentPrice ? $price->price->getAmount() : null;
         }
 
         if ($type === 'transaction') {
@@ -296,6 +315,7 @@ class InvestmentService
     private function getLatestStoredPrice(Investment $investment, ?Carbon $onOrBefore = null): ?InvestmentPrice
     {
         return InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->when($onOrBefore, function ($query) use ($onOrBefore) {
                 $query->where('date', '<=', $onOrBefore);
             })
@@ -315,7 +335,7 @@ class InvestmentService
         return Transaction::with([
             'config',
         ])
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],
@@ -337,12 +357,16 @@ class InvestmentService
      *
      * @param  Investment  $investment  The investment to get price for
      * @param  Carbon|null  $onOrBefore  Optional date filter
-     * @return float|null The price or null
      */
-    private function getLatestCombinedPrice(Investment $investment, ?Carbon $onOrBefore = null): ?float
+    private function getLatestCombinedPrice(Investment $investment, ?Carbon $onOrBefore = null): ?BigDecimal
     {
         $price = $this->getLatestStoredPrice($investment, $onOrBefore);
+        $price?->setRelation('investment', $investment);
+
         $transaction = $this->getLatestTransactionWithPrice($investment, $onOrBefore);
+        if ($transaction?->config instanceof TransactionDetailInvestment) {
+            $transaction->config->setRelation('investment', $investment);
+        }
 
         return $this->resolveCombinedPrice($price, $transaction);
     }
@@ -351,11 +375,11 @@ class InvestmentService
      * Pick the winning price between a stored price row and a priced transaction,
      * whichever is newer. Shared by the single-lookup and batch-lookup paths.
      */
-    private function resolveCombinedPrice(?InvestmentPrice $price, ?Transaction $transaction): ?float
+    private function resolveCombinedPrice(?InvestmentPrice $price, ?Transaction $transaction): ?BigDecimal
     {
         if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
             if ($price->date > $transaction->date) {
-                return $price->price;
+                return $price->price->getAmount();
             }
 
             return $this->extractTransactionPrice($transaction);
@@ -363,7 +387,7 @@ class InvestmentService
 
         // We have only stored data
         if ($price instanceof InvestmentPrice) {
-            return $price->price;
+            return $price->price->getAmount();
         }
 
         // We have only transaction data
@@ -392,10 +416,30 @@ class InvestmentService
      * periods are being resolved. Intended for report/timeline views that need the price
      * as of many different dates across a user's whole portfolio.
      *
+     * A thin float-collapsing wrapper around getLatestPricesBatchExact(), for display-only
+     * consumers that don't accumulate this value.
+     *
      * @param  Collection<int, array{investment: Investment, date: Carbon|null}>  $requests
      * @return array<string, float|null> Map keyed by priceBatchKey() to the resolved price
      */
     public function getLatestPricesBatch(Collection $requests): array
+    {
+        return array_map(
+            fn (?BigDecimal $price) => $price?->toFloat(),
+            $this->getLatestPricesBatchExact($requests)
+        );
+    }
+
+    /**
+     * Exact-arithmetic counterpart of getLatestPricesBatch(): same batched resolution, but
+     * returns each price as a BigDecimal instead of collapsing it to a float, for callers
+     * that accumulate this value (e.g. CalculateAccountMonthlySummary) rather than just
+     * displaying it.
+     *
+     * @param  Collection<int, array{investment: Investment, date: Carbon|null}>  $requests
+     * @return array<string, BigDecimal|null> Map keyed by priceBatchKey() to the resolved price
+     */
+    public function getLatestPricesBatchExact(Collection $requests): array
     {
         if ($requests->isEmpty()) {
             return [];
@@ -409,7 +453,7 @@ class InvestmentService
             ->groupBy('investment_id');
 
         $pricedTransactionsByInvestment = Transaction::with('config')
-            ->byScheduleType('none')
+            ->where('schedule', false)
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],
@@ -443,7 +487,15 @@ class InvestmentService
             }
 
             $price = $this->latestOnOrBefore($storedPricesByInvestment->get($investment->id), $onOrBefore);
+            // Reuse the already-loaded $investment (including its currency, if the caller
+            // eager-loaded it) so MoneyCast's price-currency resolution doesn't lazy-load
+            // investment.currency per row - the dominant cost this batch method exists to avoid.
+            $price?->setRelation('investment', $investment);
+
             $transaction = $this->latestOnOrBefore($pricedTransactionsByInvestment->get($investment->id), $onOrBefore);
+            if ($transaction?->config instanceof TransactionDetailInvestment) {
+                $transaction->config->setRelation('investment', $investment);
+            }
 
             $results[$key] = $this->resolveCombinedPrice($price, $transaction);
         }
@@ -457,7 +509,6 @@ class InvestmentService
      *
      * @template TItem of InvestmentPrice|Transaction
      * @param  Collection<int, TItem>|null  $items
-     * @return TItem|null
      */
     private function latestOnOrBefore(?Collection $items, ?Carbon $onOrBefore): InvestmentPrice|Transaction|null
     {
@@ -472,7 +523,7 @@ class InvestmentService
         return $items->last(fn ($item) => $item->date <= $onOrBefore);
     }
 
-    private function extractTransactionPrice(?Transaction $transaction): ?float
+    private function extractTransactionPrice(?Transaction $transaction): ?BigDecimal
     {
         if (! $transaction instanceof Transaction) {
             return null;
@@ -484,7 +535,26 @@ class InvestmentService
             return null;
         }
 
-        return $transactionConfig->price;
+        return $transactionConfig->price->getAmount();
+    }
+
+    /**
+     * Get price history for an investment, ordered by date. `investment_id` and the
+     * eager-loaded `investment` relation are hidden again before returning - both are only
+     * loaded so MoneyCast can resolve price's currency via investment.currency, and aren't
+     * part of this endpoint's response shape.
+     *
+     * @param  array<int, string>  $columns
+     * @return Collection<int, InvestmentPrice>
+     */
+    public function getPrices(Investment $investment, array $columns = ['*']): Collection
+    {
+        return InvestmentPrice::where('investment_id', $investment->id)
+            ->select($columns)
+            ->with('investment.currency')
+            ->orderBy('date')
+            ->get()
+            ->makeHidden(['investment_id', 'investment']);
     }
 
     /**

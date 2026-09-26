@@ -14,7 +14,7 @@
                 {{ __('Settings') }}
               </div>
               <span
-                class="fa fa-info-circle text-primary"
+                class="fa fa-info-circle text-info"
                 data-bs-toggle="tooltip"
                 data-bs-placement="right"
                 :title="
@@ -62,7 +62,7 @@
                     v-model="form.schedule"
                   />
                   <label
-                    class="btn btn-outline-dark w-100"
+                    class="btn btn-outline-secondary w-100"
                     dusk="checkbox-transaction-schedule"
                     for="checkbox-investment-transaction-schedule"
                     :title="
@@ -113,38 +113,66 @@
                   </label>
                 </div>
                 <div
-                  class="col-8 col-sm-4 col-md-8 col-lg-4 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
-                  :class="{ 'has-error': form.errors.has('date') }"
+                  :class="[
+                    action === 'enter'
+                      ? 'col-8 col-sm-2 col-md-4 col-lg-2'
+                      : 'col-8 col-sm-4 col-md-8 col-lg-4',
+                    'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
+                    { 'has-error': form.errors.has('date') },
+                  ]"
                 >
                   <label class="form-label" for="investment-date">
                     {{ __('Date') }}
                   </label>
-                  <DatePicker
-                    :columns="2"
-                    :initial-page="datePickerInitialPage"
-                    :is-dark="isDarkMode"
-                    :masks="{
-                      L: 'YYYY-MM-DD',
-                      modelValue: 'YYYY-MM-DD',
-                    }"
-                    mode="date"
-                    :popover="{
-                      visibility: 'click',
-                      showDelay: 0,
-                      hideDelay: 0,
-                    }"
-                    v-model.string="form.date"
-                  >
-                    <template #default="{ inputValue, inputEvents }">
-                      <input
-                        class="form-control"
-                        :disabled="form.schedule"
-                        id="investment-date"
-                        :value="inputValue"
-                        v-on="inputEvents"
-                      />
-                    </template>
-                  </DatePicker>
+                  <input
+                    type="date"
+                    class="form-control"
+                    :disabled="form.schedule"
+                    id="investment-date"
+                    v-model="dateInput"
+                  />
+                </div>
+                <div
+                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
+                  v-if="action === 'enter'"
+                >
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      dusk="checkbox-investment-catch-up-schedule"
+                      id="checkbox-investment-catch-up-schedule"
+                      type="checkbox"
+                      value="1"
+                      v-model="form.catch_up_schedule"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="checkbox-investment-catch-up-schedule"
+                    >
+                      {{ __('Skip to nearest future occurrence') }}
+                      <i
+                        class="fa fa-info-circle text-info"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        :title="
+                          __(
+                            'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
+                          )
+                        "
+                      ></i>
+                      <i
+                        class="fa fa-triangle-exclamation text-warning ms-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        :title="
+                          __(
+                            'May close this schedule if no occurrences remain.',
+                          )
+                        "
+                        v-if="catchUpMayCloseSchedule"
+                      ></i>
+                    </label>
+                  </div>
                 </div>
                 <div
                   class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
@@ -174,7 +202,7 @@
                 {{ __('Details') }}
               </div>
               <span
-                class="fa fa-info-circle text-primary"
+                class="fa fa-info-circle text-info"
                 data-bs-toggle="tooltip"
                 data-bs-placement="right"
                 :title="
@@ -284,7 +312,7 @@
                         "
                       />
                       <label
-                        class="btn btn-outline-dark"
+                        class="btn btn-secondary"
                         :class="{ active: storePriceEnabled }"
                         for="store_price_checkbox"
                         :title="
@@ -386,7 +414,6 @@
       <transaction-schedule
         v-if="form.schedule"
         :isSchedule="form.schedule"
-        :isBudget="false"
         :schedule="form.schedule_config"
         :form="form"
       ></transaction-schedule>
@@ -398,9 +425,9 @@
         :allowCustomization="false"
         ref="scheduleOriginal"
         :isSchedule="form.schedule"
-        :isBudget="false"
         :schedule="form.original_schedule_config"
         :form="form"
+        field-prefix="original_schedule_config"
       ></transaction-schedule>
 
       <div class="card mb-3">
@@ -422,7 +449,7 @@
                 <button
                   v-for="item in activeCallbackOptions"
                   :key="item.id"
-                  class="btn btn-outline-dark"
+                  class="btn btn-outline-secondary"
                   :class="{ active: callback === item.value }"
                   type="button"
                   :value="item.value"
@@ -460,19 +487,19 @@
               class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
             >
               <button
-                class="btn btn-sm btn-outline-dark align-bottom"
+                class="btn btn btn-secondary"
                 @click="onCancel"
                 type="button"
               >
                 {{ __('Cancel') }}
               </button>
               <Button
-                class="btn btn-lg btn-primary ms-3 mt-2"
+                class="btn btn-primary ms-2"
                 :disabled="form.busy"
                 :form="form"
                 id="transactionFormInvestment-Save"
               >
-                <span class="fa fa-floppy-disk me-1" v-show="!form.busy"></span>
+                <span class="fa fa-save me-1" v-show="!form.busy"></span>
                 {{ __('Save') }}
               </Button>
             </div>
@@ -484,22 +511,25 @@
 </template>
 
 <script>
+  import { RRule } from 'rrule';
+  import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { confirmAction } from '@/shared/lib/confirm';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
-
-  import { DatePicker } from 'v-calendar';
 
   import TransactionSchedule from './TransactionSchedule.vue';
 
   import {
     processTransaction,
-    todayInUTC,
     toIsoDateString,
     initializeBootstrapTooltips,
     parseIsoDate,
+    byDayToRRuleWeekday,
+    toDateInputValue,
+    toRRuleDate,
   } from '@/shared/lib/helpers';
   import {
     __,
@@ -508,15 +538,11 @@
   } from '@/shared/lib/i18n';
   import { initializeSelect2 } from '@/shared/lib/select2';
   initializeSelect2(window.YAFFA.userSettings.language);
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
-    mixins: [colorModeMixin],
-
     components: {
       TransactionSchedule,
       MathInput,
-      DatePicker,
       Button,
       AlertErrors,
     },
@@ -563,8 +589,8 @@
         date: toIsoDateString(),
         comment: null,
         schedule: false,
-        budget: false,
         reconciled: false,
+        catch_up_schedule: false,
         config: {
           account_id: null,
           investment_id: null,
@@ -636,14 +662,26 @@
     },
 
     computed: {
+      // Uses exact decimal arithmetic: config.price/commission/tax/dividend arrive
+      // from the API as decimal strings (MoneyCast), which native `+` would silently
+      // string-concatenate instead of add.
       total() {
-        return (
-          (this.form.config.quantity || 0) * (this.form.config.price || 0) +
-          (this.form.config.dividend || 0) -
-          ((this.form.config.commission || 0) + (this.form.config.tax || 0)) *
-            // Taxes and commissions are added to the value when the transaction is a buy
-            this.transactionTypeSettings.amount_multiplier
-        );
+        const quantity = new Decimal(this.form.config.quantity || 0);
+        const price = new Decimal(this.form.config.price || 0);
+        const dividend = new Decimal(this.form.config.dividend || 0);
+        const commission = new Decimal(this.form.config.commission || 0);
+        const tax = new Decimal(this.form.config.tax || 0);
+
+        return quantity
+          .times(price)
+          .plus(dividend)
+          .minus(
+            commission
+              .plus(tax)
+              // Taxes and commissions are added to the value when the transaction is a buy
+              .times(this.transactionTypeSettings.amount_multiplier || 0),
+          )
+          .toNumber();
       },
 
       transactionTypeSettings() {
@@ -662,12 +700,56 @@
         return this.callbackOptions.filter((option) => option.enabled);
       },
 
-      datePickerInitialPage() {
-        const date = parseIsoDate(this.form.date) || new Date();
-        return {
-          year: date.getFullYear(),
-          month: date.getMonth(),
-        };
+      // Native <input type="date"> needs a 'YYYY-MM-DD' string, while
+      // form.date may hold a Date object (see toRRuleDate above) - this
+      // bridges the two without changing the stored type.
+      dateInput: {
+        get() {
+          return toDateInputValue(this.form.date);
+        },
+        set(value) {
+          this.form.date = value || null;
+        },
+      },
+
+      // Predicts whether catching up to today would close this schedule, by checking
+      // whether the rule (anchored at start_date, same as the backend's
+      // TransactionSchedule::catchUpToDate()) has any occurrence left on or after
+      // today. next_date doesn't need to be considered separately: it's always one of
+      // the rule's own occurrences, so "no occurrence on/after today anywhere in the
+      // rule" and "no occurrence on/after today reachable from next_date" agree.
+      catchUpMayCloseSchedule() {
+        if (this.action !== 'enter') {
+          return false;
+        }
+
+        const schedule = this.form.schedule_config;
+        if (!schedule?.frequency || !schedule?.start_date) {
+          return false;
+        }
+
+        const start = toRRuleDate(schedule.start_date);
+        if (!start) {
+          return false;
+        }
+
+        try {
+          const rule = new RRule({
+            freq: RRule[schedule.frequency],
+            interval: schedule.interval || 1,
+            dtstart: start,
+            until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
+            count: schedule.count || null,
+            byweekday: schedule.by_day
+              ? byDayToRRuleWeekday(schedule.by_day)
+              : null,
+            bymonth: schedule.by_month || null,
+          });
+
+          return rule.after(toRRuleDate(new Date()), true) === null;
+        } catch {
+          return false;
+        }
       },
 
       // Do we allow the user to edit the base settings?
@@ -779,7 +861,9 @@
         });
 
       // Load default value for account
-      this.getDefaultAccountDetails(this.form.config.account_id);
+      const accountReady = this.getDefaultAccountDetails(
+        this.form.config.account_id,
+      );
 
       // Investment dropdown functionality
       $('#investment')
@@ -872,13 +956,21 @@
         });
 
       // Load default value for investment
-      this.getDefaultInvestmentDetails(this.form.config.investment_id);
+      const investmentReady = this.getDefaultInvestmentDetails(
+        this.form.config.investment_id,
+      );
 
       // Initial sync between schedules, if applicable
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
       // Initialize tooltips
       initializeBootstrapTooltips();
+
+      // Snapshot the settled post-load state (both account/investment details loaded
+      // and synced into form.config) as the isDirty() baseline.
+      Promise.all([accountReady, investmentReady]).then(() => {
+        this.$nextTick(() => this.markFormClean());
+      });
     },
 
     beforeUnmount() {
@@ -892,7 +984,10 @@
           return;
         }
 
-        $.ajax({
+        // Returned so callers can wait for the select2 population (and the
+        // form field sync it triggers via a dispatched 'change' event) to
+        // settle before treating the form as loaded.
+        return $.ajax({
           url: '/api/v1/accounts/' + this.form.config.account_id,
           data: {
             _token: this.csrfToken,
@@ -916,7 +1011,10 @@
           return;
         }
 
-        $.ajax({
+        // Returned so callers can wait for the select2 population (and the
+        // form field sync it triggers via a dispatched 'change' event) to
+        // settle before treating the form as loaded.
+        return $.ajax({
           url: route('api.v1.investments.show', { investment: investment_id }),
           data: {
             _token: this.csrfToken,
@@ -941,12 +1039,13 @@
           this.form.id = this.transaction.id;
           this.form.transaction_type = this.transaction.transaction_type;
 
-          // Populate date from source transaction, and ensure that it's a Date object
-          this.form.date = parseIsoDate(this.transaction.date);
+          // Populate date from source transaction as a plain 'YYYY-MM-DD' string - a Date
+          // object here would be re-expressed in UTC by JSON.stringify() on submit, shifting
+          // the calendar day for anyone east of UTC unless the field happens to get touched.
+          this.form.date = toDateInputValue(this.transaction.date) || null;
 
           this.form.comment = this.transaction.comment;
           this.form.schedule = this.transaction.schedule ?? false;
-          this.form.budget = this.transaction.budget ?? false;
           this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration (handle both saved transactions and AI drafts)
@@ -959,8 +1058,12 @@
           this.form.config.account_id = config.account_id;
           this.form.config.investment_id = config.investment_id;
 
-          // Copy schedule config
-          // TODO: date conversion should take place here, or elsewehere?
+          // Copy schedule config. Dates are kept as plain 'YYYY-MM-DD' strings, never
+          // Date objects - a Date survives fine in the UI (toDateInputValue reads it with
+          // local getters), but JSON.stringify() on submit serializes it via toISOString(),
+          // which re-expresses it in UTC and can shift the calendar day back by one for
+          // anyone east of UTC unless the field happens to get touched (which replaces it
+          // with a string via the date input's setter, masking the bug).
           if (this.transaction.transaction_schedule) {
             this.form.schedule_config.frequency =
               this.transaction.transaction_schedule.frequency;
@@ -968,18 +1071,22 @@
               this.transaction.transaction_schedule.count;
             this.form.schedule_config.interval =
               this.transaction.transaction_schedule.interval;
+            this.form.schedule_config.by_day =
+              this.transaction.transaction_schedule.by_day;
+            this.form.schedule_config.by_month =
+              this.transaction.transaction_schedule.by_month;
 
-            this.form.schedule_config.start_date = parseIsoDate(
-              this.transaction.transaction_schedule.start_date,
-            );
-            this.form.schedule_config.next_date = parseIsoDate(
-              this.transaction.transaction_schedule.next_date,
-            );
+            this.form.schedule_config.start_date =
+              toDateInputValue(this.transaction.transaction_schedule.start_date) ||
+              null;
+            this.form.schedule_config.next_date =
+              toDateInputValue(this.transaction.transaction_schedule.next_date) ||
+              null;
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
-            this.form.schedule_config.end_date = parseIsoDate(
-              this.transaction.transaction_schedule.end_date,
-            );
+            this.form.schedule_config.end_date =
+              toDateInputValue(this.transaction.transaction_schedule.end_date) ||
+              null;
 
             this.form.schedule_config.inflation =
               this.transaction.transaction_schedule.inflation;
@@ -994,11 +1101,15 @@
               this.form.schedule_config.count;
             this.form.original_schedule_config.interval =
               this.form.schedule_config.interval;
+            this.form.original_schedule_config.by_day =
+              this.form.schedule_config.by_day;
+            this.form.original_schedule_config.by_month =
+              this.form.schedule_config.by_month;
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
-            this.form.original_schedule_config.start_date = parseIsoDate(
-              this.form.schedule_config.start_date,
-            );
+            // Already a plain string at this point (see the schedule_config copy above).
+            this.form.original_schedule_config.start_date =
+              this.form.schedule_config.start_date;
             this.form.original_schedule_config.automatic_recording =
               this.form.schedule_config.automatic_recording;
 
@@ -1006,23 +1117,50 @@
             this.form.original_schedule_config.next_date = undefined;
 
             // Set new schedule start date to today
-            this.form.schedule_config.start_date = todayInUTC();
+            this.form.schedule_config.start_date = toIsoDateString();
 
             // If this is a schedule, then set the new next date to today
             if (this.form.schedule) {
-              this.form.schedule_config.next_date = todayInUTC();
+              this.form.schedule_config.next_date = toIsoDateString();
+            }
+
+            // The end date carried over from the original schedule may now be
+            // in the past relative to the new start date - the new schedule
+            // can't already be over before its first occurrence, so clear it.
+            const newEndDateValue = toDateInputValue(
+              this.form.schedule_config.end_date,
+            );
+            const newStartDateValue = toDateInputValue(
+              this.form.schedule_config.start_date,
+            );
+            if (newEndDateValue && newEndDateValue < newStartDateValue) {
+              this.form.schedule_config.end_date = null;
             }
 
             // Set original schedule end date to today - 1 day
-            this.form.original_schedule_config.end_date = new Date(
-              todayInUTC().getTime() - 24 * 60 * 60 * 1000,
-            );
+            const originalEndDate = new Date();
+            originalEndDate.setDate(originalEndDate.getDate() - 1);
+            this.form.original_schedule_config.end_date =
+              toIsoDateString(originalEndDate);
           }
         }
 
         // Set form action and AI document ID
         this.form.action = this.action;
         this.form.ai_document_id = this.aiDocumentId;
+
+        // The originalData snapshot itself is taken once the account/investment details
+        // requested by the caller (mounted()/the transaction watcher) have finished
+        // loading - see markFormClean() and its call sites. Assigning config.account_id
+        // above doesn't keep form.originalData in sync the way form.update() does, and
+        // the async select2 population that follows resets it via a native <select>'s
+        // 'change' event, which coerces the value to a string - even when nothing about
+        // it semantically changed, so snapshotting here would capture a mistyped value.
+      },
+
+      // Snapshot the current state as the "clean" baseline isDirty() compares against.
+      markFormClean() {
+        this.form.update(this.form.data());
       },
 
       transactionTypeChanged() {
@@ -1082,10 +1220,30 @@
       },
 
       onCancel() {
-        if (confirm(__('Are you sure you want to discard any changes?'))) {
+        if (!this.isDirty()) {
           this.$emit('cancel');
+          return false;
         }
+
+        confirmAction(__('Are you sure you want to discard any changes?'), {
+          icon: 'warning',
+          target: this.dropdownParentSelector,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.$emit('cancel');
+          }
+        });
         return false;
+      },
+
+      // True once any field differs from its state right after the form finished
+      // loading (new/cloned/editing/finalizing, etc - see the originalData snapshot
+      // at the end of initializeTransaction()).
+      isDirty() {
+        return (
+          JSON.stringify(this.form.data()) !==
+          JSON.stringify(this.form.originalData)
+        );
       },
 
       onSubmit() {
@@ -1143,7 +1301,10 @@
           return;
         }
 
-        let date = new Date(newDate);
+        const date = parseIsoDate(newDate);
+        if (!date) {
+          return;
+        }
         date.setDate(date.getDate() - 1);
         this.form.original_schedule_config.end_date = toIsoDateString(date);
       },
@@ -1189,7 +1350,9 @@
           );
 
           if (response.data.exists) {
-            this.existingPriceForDate = response.data.price;
+            // The API emits price as a decimal string (MoneyCast); toFormattedCurrency()
+            // (used to display it below) requires a plain Number to format correctly.
+            this.existingPriceForDate = Number(response.data.price);
             this.storePriceEnabled = false;
           } else {
             this.existingPriceForDate = null;
@@ -1247,6 +1410,13 @@
         this.syncScheduleStartDate(newDate);
       },
 
+      // The catch-up warning icon is only rendered when this is true (v-if), so a
+      // newly-mounted icon needs its own tooltip initialization - the one in
+      // mounted() only covers icons already in the DOM at that point.
+      catchUpMayCloseSchedule() {
+        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
+      },
+
       // Check for existing price when date changes
       'form.date': function () {
         this.checkExistingPrice();
@@ -1265,14 +1435,28 @@
         this.initializeTransaction();
 
         // Load default value for accounts
-        this.getDefaultAccountDetails(transaction.config.account_id);
+        const accountReady = this.getDefaultAccountDetails(
+          transaction.config.account_id,
+        );
 
         // Load default value for investment, or clear if not set
+        let investmentReady;
         if (transaction.config.investment_id) {
-          this.getDefaultInvestmentDetails(transaction.config.investment_id);
+          investmentReady = this.getDefaultInvestmentDetails(
+            transaction.config.investment_id,
+          );
         } else {
           this.clearInvestmentDropdown();
         }
+
+        // Snapshot the settled post-load state as the isDirty() baseline - see
+        // markFormClean(). The async select2 population above resets config.account_id/
+        // investment_id via a native <select>'s 'change' event, which coerces the value
+        // to a string, so this must wait for both to settle rather than snapshotting
+        // right after initializeTransaction().
+        Promise.all([accountReady, investmentReady]).then(() => {
+          this.$nextTick(() => this.markFormClean());
+        });
       },
 
       existingPriceForDate(value) {

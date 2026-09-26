@@ -6,19 +6,19 @@ use App\Models\GoogleDriveConfig;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\Timeout;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
+#[Tries(1)]
+#[Timeout(60)]
 class GoogleDriveMonitorJob implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
-
-    public $tries = 1;
-
-    public $timeout = 60;
 
     private const DEFAULT_SYNC_INTERVAL_MINUTES = 15;
 

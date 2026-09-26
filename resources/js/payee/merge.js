@@ -1,4 +1,5 @@
 import { initializeSelect2 } from '@/shared/lib/select2';
+import { confirmAction } from '@/shared/lib/confirm';
 initializeSelect2(window.YAFFA.userSettings.language);
 
 // Add select2 functionality to payee_source select
@@ -114,14 +115,25 @@ $('#merge-payees-form').on('submit', function (e) {
         return;
     }
 
-    if (!confirm(__('Are you sure you want to merge these payees?'))) {
-        e.preventDefault();
-    }
+    e.preventDefault();
+    const form = e.target;
+
+    confirmAction(__('Are you sure you want to merge these payees?'), {
+        icon: 'warning',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit();
+        }
+    });
 });
 
 // Cancel button behaviour
 $('#cancel').on('click', function () {
-    if (confirm(__('Are you sure you want to discard any changes?'))) {
-        window.history.back();
-    }
+    confirmAction(__('Are you sure you want to discard any changes?'), {
+        icon: 'warning',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.history.back();
+        }
+    });
 });

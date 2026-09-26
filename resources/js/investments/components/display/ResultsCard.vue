@@ -17,9 +17,9 @@
         </label>
         <div class="col-6 col-sm-4">
           <input
+            v-model="dateFromString"
             type="date"
             class="form-control"
-            v-model="dateFromString"
             :max="dateToString"
           />
         </div>
@@ -28,9 +28,9 @@
         </label>
         <div class="col-6 col-sm-4">
           <input
+            v-model="dateToString"
             type="date"
             class="form-control"
-            v-model="dateToString"
             :min="dateFromString"
           />
         </div>
@@ -114,9 +114,22 @@
 </template>
 
 <script>
-  import { toFormattedCurrency, __ } from '@/shared/lib/i18n';
+  import { toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
+  import { computeInvestmentReturn } from '@/investments/lib/investmentReturn';
+
+  // The default/reset range starts at the earliest recorded transaction and always ends today -
+  // not at the latest transaction, which could be in the past (no recent activity) or a future
+  // scheduled instance (a projection, not a result).
+  function computeDateBounds(transactions) {
+    const allDates = transactions.map((t) => new Date(t.date));
+
+    return {
+      from: allDates.length ? new Date(Math.min(...allDates)) : new Date(),
+      to: new Date(),
+    };
+  }
 
   export default {
     name: 'ResultsCard',
@@ -129,13 +142,9 @@
     },
     emits: ['update:date-from', 'update:date-to'],
     data() {
-      const allDates = this.transactions.map((t) => new Date(t.date));
-      const minDate = allDates.length
-        ? new Date(Math.min(...allDates))
-        : new Date();
-      const maxDate = allDates.length
-        ? new Date(Math.max(...allDates))
-        : new Date();
+      const { from: minDate, to: maxDate } = computeDateBounds(
+        this.transactions,
+      );
       return {
         locale: window.YAFFA
           ? window.YAFFA.userSettings.locale
@@ -143,52 +152,6 @@
         internalDateFrom: this.dateFrom || minDate,
         internalDateTo: this.dateTo || maxDate,
       };
-    },
-    watch: {
-      dateFrom(val) {
-        if (val) this.internalDateFrom = val;
-      },
-      dateTo(val) {
-        if (val) this.internalDateTo = val;
-      },
-      internalDateFrom(val) {
-        if (
-          val &&
-          this.internalDateTo &&
-          val instanceof Date &&
-          this.internalDateTo instanceof Date &&
-          !isNaN(val) &&
-          !isNaN(this.internalDateTo) &&
-          val > this.internalDateTo
-        ) {
-          toastHelpers.showWarningToast(
-            this.__('The start date cannot be after the end date.'),
-          );
-
-          // Only auto-correct if internalDateTo is valid
-          this.internalDateFrom = new Date(this.internalDateTo);
-          this.$emit('update:date-from', this.internalDateTo);
-        }
-      },
-      internalDateTo(val) {
-        if (
-          val &&
-          this.internalDateFrom &&
-          val instanceof Date &&
-          this.internalDateFrom instanceof Date &&
-          !isNaN(val) &&
-          !isNaN(this.internalDateFrom) &&
-          val < this.internalDateFrom
-        ) {
-          toastHelpers.showWarningToast(
-            this.__('The end date cannot be before the start date.'),
-          );
-
-          // Only auto-correct if internalDateFrom is valid
-          this.internalDateTo = new Date(this.internalDateFrom);
-          this.$emit('update:date-to', this.internalDateFrom);
-        }
-      },
     },
     computed: {
       dateFromString: {
@@ -248,108 +211,135 @@
           this.$emit('update:date-to', d);
         },
       },
-      filteredTransactions() {
-        return this.transactions.filter((trx) => {
-          const d = new Date(trx.date);
-          return d >= this.internalDateFrom && d <= this.internalDateTo;
+      // Total economic return of the position over the selected period - see
+      // resources/js/investments/lib/investmentReturn.js for the full method (Modified
+      // Dietz, adapted so sale proceeds/dividends count as return rather than a withdrawal).
+      investmentReturn() {
+        return computeInvestmentReturn({
+          transactions: this.transactions,
+          prices: this.prices,
+          dateFrom: this.internalDateFrom,
+          dateTo: this.internalDateTo,
+          getTypeConfig: getTransactionTypeConfig,
         });
       },
       summary() {
-        const filtered = this.filteredTransactions;
-        const getSum = (arr, fn) => arr.reduce((sum, trx) => sum + fn(trx), 0);
-        const getQty = (arr, type) =>
-          getSum(
-            arr.filter((trx) => trx.transaction_type === type),
-            (trx) => trx.config.quantity || 0,
-          );
-        const getVal = (arr, type) =>
-          getSum(
-            arr.filter((trx) => trx.transaction_type === type),
-            (trx) => (trx.config.price || 0) * (trx.config.quantity || 0),
-          );
-        const getField = (arr, field) =>
-          getSum(arr, (trx) => trx.config[field] || 0);
-        const getQtyMult = (arr) =>
-          getSum(
-            arr,
-            (trx) =>
-              (getTransactionTypeConfig(trx.transaction_type).quantity_multiplier || 0) *
-              (trx.config.quantity || 0),
-          );
-        let lastPrice = 1;
-        if (this.prices.length > 0) {
-          lastPrice = this.prices[this.prices.length - 1].price;
-        } else {
-          const priceTrx = filtered
-            .filter((trx) => !isNaN(trx.price))
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-          if (priceTrx.length > 0) lastPrice = priceTrx[0].price;
-        }
-        const quantity = getQtyMult(filtered);
-        const value = quantity * lastPrice;
-        const buying = getVal(filtered, 'buy');
-        const selling = getVal(filtered, 'sell');
-        const added = getQty(filtered, 'add_shares');
-        const removed = getQty(filtered, 'remove_shares');
-        const dividend = getField(filtered, 'dividend');
-        const commission = getField(filtered, 'commission');
-        const taxes = getField(filtered, 'tax');
-        const result = selling + dividend + value - buying - commission - taxes;
+        const r = this.investmentReturn;
+        const toNum = (d) => (d == null ? null : d.toNumber());
 
         return {
-          Buying: buying,
-          Selling: selling,
-          Added: added,
-          Removed: removed,
-          Dividend: dividend,
-          Commission: commission,
-          Taxes: taxes,
-          Quantity: quantity,
-          Value: value,
-          Result: result,
+          Buying: toNum(r.buying),
+          Selling: toNum(r.selling),
+          Added: toNum(r.added),
+          Removed: toNum(r.removed),
+          Dividend: toNum(r.dividend),
+          Commission: toNum(r.commission),
+          Taxes: toNum(r.taxes),
+          Quantity: toNum(r.closingQuantity),
+          Value: toNum(r.closingValue),
+          Result: toNum(r.gain),
         };
       },
       roi() {
-        return this.summary.Buying === 0
-          ? 0
-          : this.summary.Result / this.summary.Buying;
+        return this.investmentReturn.roi;
       },
       roiString() {
-        return (this.roi * 100).toFixed(2) + '%';
+        return this.roi == null ? '—' : (this.roi * 100).toFixed(2) + '%';
       },
       aroi() {
+        if (this.roi == null) return null;
         const years = this.calculateYears(
           this.internalDateTo,
           this.internalDateFrom,
         );
-        return years > 0 ? Math.pow(1 + this.roi, 1 / years) - 1 : 0;
+        if (years <= 0) return 0;
+        const base = 1 + this.roi;
+        // CAGR is undefined for a >100% cumulative loss (no real root); report as a total loss.
+        return base > 0 ? Math.pow(base, 1 / years) - 1 : -1;
       },
       aroiString() {
-        return (this.aroi * 100).toFixed(2) + '%';
+        return this.aroi == null ? '—' : (this.aroi * 100).toFixed(2) + '%';
+      },
+    },
+    watch: {
+      dateFrom(val) {
+        if (val) this.internalDateFrom = val;
+      },
+      dateTo(val) {
+        if (val) this.internalDateTo = val;
+      },
+      internalDateFrom(val) {
+        if (
+          val &&
+          this.internalDateTo &&
+          val instanceof Date &&
+          this.internalDateTo instanceof Date &&
+          !isNaN(val) &&
+          !isNaN(this.internalDateTo) &&
+          val > this.internalDateTo
+        ) {
+          toastHelpers.showWarningToast(
+            this.__('The start date cannot be after the end date.'),
+          );
+
+          // Only auto-correct if internalDateTo is valid
+          this.internalDateFrom = new Date(this.internalDateTo);
+          this.$emit('update:date-from', this.internalDateTo);
+        }
+      },
+      internalDateTo(val) {
+        if (
+          val &&
+          this.internalDateFrom &&
+          val instanceof Date &&
+          this.internalDateFrom instanceof Date &&
+          !isNaN(val) &&
+          !isNaN(this.internalDateFrom) &&
+          val < this.internalDateFrom
+        ) {
+          toastHelpers.showWarningToast(
+            this.__('The end date cannot be before the start date.'),
+          );
+
+          // Only auto-correct if internalDateFrom is valid
+          this.internalDateTo = new Date(this.internalDateFrom);
+          this.$emit('update:date-to', this.internalDateFrom);
+        }
+      },
+      // investmentReturn is a freshly computed object on every recalculation (date change,
+      // or the transactions/prices props updating), so this fires on every recompute, not
+      // just the first time it becomes unresolved.
+      investmentReturn(val) {
+        if (val.roi === null) {
+          toastHelpers.showWarningToast(
+            this.__(
+              'Result and ROI cannot be calculated for this period: no price is known at or before the start date, and the investment already held a position then. Try a later start date, or add an earlier price.',
+            ),
+          );
+        }
       },
     },
     methods: {
       toFormattedCurrency,
       formatQuantity(value) {
         if (value === 0) return '0';
-        return value.toLocaleString(this.locale, {
+        return toFormattedNumber(value, this.locale, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 4,
         });
       },
       resetDates() {
-        const allDates = this.transactions.map((t) => new Date(t.date));
-        this.internalDateFrom = allDates.length
-          ? new Date(Math.min(...allDates))
-          : new Date();
-        this.internalDateTo = allDates.length
-          ? new Date(Math.max(...allDates))
-          : new Date();
+        const { from, to } = computeDateBounds(this.transactions);
+        this.internalDateFrom = from;
+        this.internalDateTo = to;
       },
+      // Fractional years (Actual/365.25), not whole years - a sub-year interval must still
+      // annualize (e.g. a 3-month span isn't "0 years"), and longer spans like 1.5 or 2.9
+      // years must use their exact fraction, not be floored to the nearest whole year.
       calculateYears(to, from) {
-        const diffMs = to - from;
-        const diffDate = new Date(diffMs);
-        return Math.abs(diffDate.getUTCFullYear() - 1970);
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const msPerYear = 365.25 * msPerDay;
+        return (to - from) / msPerYear;
       },
     },
   };

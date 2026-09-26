@@ -12,8 +12,7 @@
       "
       @click="skipInstance"
     >
-      <i class="fa fa-fw fa-fast-forward"></i>
-      {{ __('Skip instance') }}
+      <i class="fa me-1 fa-fast-forward"></i>{{ __('Skip instance') }}
     </button>
 
     <a
@@ -27,8 +26,7 @@
         transaction.transaction_schedule.next_date
       "
     >
-      <i class="fa fa-fw fa-pencil"></i>
-      {{ __('Enter instance') }}
+      <i class="fa me-1 fa-pencil"></i>{{ __('Enter instance') }}
     </a>
 
     <a
@@ -38,8 +36,7 @@
       :title="__('View details')"
       v-if="isModal && controls.show"
     >
-      <i class="fa fa-fw fa-search"></i>
-      {{ __('Open') }}
+      <i class="fa me-1 fa-search"></i>{{ __('Open') }}
     </a>
 
     <a
@@ -48,7 +45,7 @@
       class="btn btn-primary ms-2"
       :title="__('Edit')"
     >
-      <i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}
+      <i class="fa me-1 fa-edit"></i>{{ __('Edit') }}
     </a>
     <a
       v-if="controls.clone"
@@ -56,7 +53,7 @@
       class="btn btn-primary ms-2"
       :title="__('Clone')"
     >
-      <i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}
+      <i class="fa me-1 fa-clone"></i>{{ __('Clone') }}
     </a>
 
     <button
@@ -74,6 +71,7 @@
 
 <script>
   import { __ } from '@/shared/lib/i18n';
+  import { processTransaction } from '@/shared/lib/helpers';
 
   export default {
     name: 'ActionButtonBar',
@@ -126,8 +124,11 @@
         axios
           .patch(url)
           .then((response) => {
-            // Notify the parent component that the transaction has been updated
-            this.$emit('transactionUpdated', response.data.transaction);
+            // Notify the parent component that the transaction has been updated. Normalized
+            // here, at the single emit site, so every consumer (page container, quick-view
+            // modal, any future one) gets decimal-string wire-format fields already
+            // converted back to JS numbers.
+            this.$emit('transactionUpdated', processTransaction(response.data.transaction));
           })
           .catch((error) => {
             console.error(error);

@@ -1,8 +1,22 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate } from '@/shared/lib/i18n';
-import { getTransactionTypeConfig, parseIsoDate } from '@/shared/lib/helpers';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
+import {
+  escapeHtml,
+  getTransactionTypeConfig,
+  processTransaction,
+} from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
+import { confirmDelete } from '@/shared/lib/confirm';
 
 const route = window.route;
+
+// DataTables defaults to a blocking window.alert() on ajax/other errors (errMode: 'alert'),
+// which freezes the whole page behind a native dialog on a transient network hiccup.
+// Route errors through a dismissible toast instead.
+if ($.fn.dataTable) {
+    $.fn.dataTable.ext.errMode = function (settings, techNote, message) {
+        toastHelpers.showErrorToast(message);
+    };
+}
 
 export function dataTablesActionButton(id, action) {
     const functions = {
@@ -94,24 +108,6 @@ export function genericDataTablesActionButton(id, action, route) {
     }
 
     return functions[action](id, route);
-}
-
-export function initializeDeleteButtonListener(tableSelector, route) {
-    // Generate click listener for the table element provided
-    $(tableSelector).on("click", ".data-delete", function () {
-        // Confirm the action with the user
-        if (!confirm(__('Are you sure to want to delete this item?'))) {
-            return;
-        }
-
-        // Get the form placed in Blade component
-        let form = document.getElementById('form-delete');
-
-        // Adjust form action and submit
-        // Ziggy route helper is expected to exist at global scope
-        form.action = window.route(route, this.dataset.id);
-        form.submit();
-    });
 }
 
 export function initializeFilterToggle(table, column, name) {
@@ -327,7 +323,7 @@ export const transactionColumnDefinition = {
                     return typeConfig.label + " " + row.config.quantity;
                 }
 
-                return typeConfig.label + " " + row.config.quantity.toLocaleString(window.YAFFA.userSettings.locale, {
+                return typeConfig.label + " " + toFormattedNumber(row.config.quantity, window.YAFFA.userSettings.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
                 }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.userSettings.locale, row.transaction_currency);
@@ -483,6 +479,38 @@ export const transactionColumnDefinition = {
     },
 }
 
+/**
+ * Deletes a transaction via the API, removes its row from `selector`'s DataTable (matched by
+ * `id`), and shows a toast - shared logic behind the button-driven initializeAjaxDeleteButton()
+ * below and any other trigger (e.g. a contextual-actions menu item) that already knows the id
+ * without a `[data-delete]` button to read it from.
+ *
+ * @param {string} selector DataTables container selector the row lives in
+ * @param {number} id
+ * @returns {Promise<void>} Rejects (after showing the error toast) so a caller doing its own
+ *   busy-state bookkeeping (see initializeAjaxDeleteButton) can still hook .catch().
+ */
+export function deleteTransactionRow(selector, id) {
+    return axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+        .then(function () {
+            // Find and remove original row in schedule table
+            let row = $(selector).DataTable().row(function (_idx, data) {
+                return Number(data.id) === id;
+            });
+
+            row.remove().draw();
+
+            // Emit a custom event to global scope about the result
+            toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
+        })
+        .catch(function (error) {
+            // Emit a custom event to global scope about the result
+            toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
+
+            throw error;
+        });
+}
+
 export function initializeAjaxDeleteButton(selector, successCallback) {
     $(selector).on("click", "[data-delete]", function () {
         // Prevent running multiple times in parallel
@@ -494,30 +522,64 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
 
         $(this).addClass('busy');
 
-        axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+        deleteTransactionRow(selector, id)
             .then(function () {
-                // Find and remove original row in schedule table
-                let row = $(selector).dataTable().api().row(function (_idx, data) {
-                    return data.id === id;
-                });
-
-                row.remove().draw();
-
-                // Emit a custom event to global scope about the result
-                toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
-
                 // Execute callback if provided
                 if (typeof successCallback === 'function') {
                     successCallback();
                 }
             })
-            .catch(function (error) {
-                // Emit a custom event to global scope about the result
-                toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
-
+            .catch(function () {
                 $(selector).find(".busy[data-delete]").removeClass('busy')
             });
     });
+}
+
+/**
+ * Fetches a transaction and dispatches the showTransactionQuickViewModal event that
+ * TransactionShowModal.vue listens for - shared logic behind the button-driven
+ * initializeQuickViewButton() below and any other trigger (e.g. a contextual-actions menu item)
+ * that already knows the id without a `button.transaction-quickview` to read it from.
+ *
+ * @param {number|string} id
+ * @returns {Promise<void>}
+ */
+export function triggerTransactionQuickView(id) {
+    return fetch('/api/v1/transactions/' + id)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+
+            return response.json();
+        })
+        .then(function (data) {
+            // Normalizes dates and the decimal-string Money/BigDecimal fields (price,
+            // quantity, amount_from/to, etc.) back to plain JS values - same as every
+            // other consumer of a /api/v1/transactions/* response.
+            let transaction = processTransaction(data.transaction);
+
+            // Emit global event for modal to display
+            let event = new CustomEvent('showTransactionQuickViewModal', {
+                detail: {
+                    transaction: transaction,
+                    controls: {
+                        show: true,
+                        edit: true,
+                        clone: true,
+                        skip: true,
+                        enter: true,
+                        delete: true,
+                    }
+                }
+            });
+            window.dispatchEvent(event);
+        })
+        .catch((error) => {
+            toastHelpers.showErrorToast(
+                __('Error getting transactions: :error', {error: error})
+            );
+        });
 }
 
 // Initialize event listener for quick-view button
@@ -531,46 +593,7 @@ export function initializeQuickViewButton(selector) {
         $(this).addClass('busy');
         let el = $(this);
 
-        fetch('/api/v1/transactions/' + this.dataset.id)
-            .then(response => response.json())
-            .then(function (data) {
-                let transaction = data.transaction;
-
-                // Convert ISO date strings to local-timezone Date objects.
-                if (transaction.date) {
-                    transaction.date = parseIsoDate(transaction.date);
-                }
-                if (transaction.transaction_schedule) {
-                    if (transaction.transaction_schedule.start_date) {
-                        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
-                    }
-                    if (transaction.transaction_schedule.end_date) {
-                        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
-                    }
-                    if (transaction.transaction_schedule.next_date) {
-                        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
-                    }
-                }
-
-                // Emit global event for modal to display
-                let event = new CustomEvent('showTransactionQuickViewModal', {
-                    detail: {
-                        transaction: transaction,
-                        controls: {
-                            show: true,
-                            edit: true,
-                            clone: true,
-                            skip: true,
-                            enter: true,
-                            delete: true,
-                        }
-                    }
-                });
-                window.dispatchEvent(event);
-            })
-            .catch((error) => {
-                console.log(error);
-            })
+        triggerTransactionQuickView(this.dataset.id)
             .finally(() => {
                 el.removeClass('busy');
             });
@@ -640,6 +663,48 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
         </button> `;
 }
 
+/**
+ * Wires the click handler for the `.deleteIcon` button rendered by renderDeleteAssetButton():
+ * confirm -> axios DELETE -> toast, with the busy-class re-entrancy guard shared by every
+ * such delete flow (see currencies/index.js and tags/index.js for the `.data-delete`
+ * equivalent). Row/array bookkeeping is left to the caller via `onDeleted`, since it differs
+ * per entity (e.g. categories also recalculates sibling children counts and needs a full
+ * table invalidate rather than a single row removal).
+ *
+ * @param {string} tableSelector - DataTables container selector, e.g. '#table'
+ * @param {string} routeName - e.g. 'api.v1.account-groups.destroy'
+ * @param {string} successMessage
+ * @param {function(number, jQuery): void} onDeleted - called with the deleted id and the
+ *   button's `<tr>` after a successful delete, to remove the row / update local arrays
+ */
+export function initializeDeleteAssetButtonListener(tableSelector, routeName, successMessage, onDeleted) {
+    $(tableSelector).on('click', 'td > button.deleteIcon:not(.busy)', function () {
+        const button = $(this);
+        const id = Number(button.data('id'));
+
+        button.addClass('busy');
+
+        confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
+            if (!result.isConfirmed) {
+                button.removeClass('busy');
+                return;
+            }
+
+            axios.delete(window.route(routeName, id))
+                .then(function () {
+                    onDeleted(id, button.parents('tr'));
+                    toastHelpers.showSuccessToast(successMessage);
+                })
+                .catch(function (error) {
+                    toastHelpers.showErrorToast(error.response?.data?.error || __('Error while trying to delete item'));
+                })
+                .finally(function () {
+                    button.removeClass('busy');
+                });
+        });
+    });
+}
+
 // Import the jstree plugin
 import 'jstree/src/themes/default/style.css';
 import 'jstree';
@@ -698,4 +763,94 @@ export function investmentGroupTree(selector, data, changeHandler) {
         })
         .on('select_node.jstree', changeHandler)
         .on('deselect_node.jstree', changeHandler);
+}
+
+/**
+ * Initialize a jsTree plugin for categories: hierarchical (parent/child) and
+ * checkbox-selectable, fetched from the categories API. A simpler sibling of the bespoke
+ * category tree on the budget chart page (resources/js/reports/budgetchart.js) - that one also
+ * drives server-side aggregation (selected IDs as query params, per-node default_aggregation
+ * metadata, URL-param preset restoration), which this plain DataTables-filter use case doesn't
+ * need, so it isn't reused here beyond the same jstree init shape.
+ *
+ * No per-node icon is set (matches the icon-less investment group tree above) - a generic folder/
+ * checkmark icon on every node added no information beyond the node's own text/active styling.
+ *
+ * @param {string} selector
+ * @param {function} changeHandler
+ * @param {number[]} [presetSelectedIds]
+ * @param {Object} [options]
+ * @param {boolean} [options.syncUrl] When true, checking/unchecking a node rewrites the page URL's
+ *   `categories[]` query params to match the tree's current selection (pushState), the same
+ *   preset-filter convention budgetchart.js's own category tree already follows.
+ *
+ * @returns {void}
+ */
+export function categoryTree(selector, changeHandler, presetSelectedIds = [], options = {}) {
+    const { syncUrl = false } = options;
+
+    function handleChange() {
+        if (syncUrl) {
+            const treeInstance = $(selector).jstree(true);
+            const checked = treeInstance ? treeInstance.get_checked() : [];
+            const url = new URL(window.location.href);
+            url.searchParams.delete('categories[]');
+            checked.forEach(id => url.searchParams.append('categories[]', id));
+            window.history.pushState('', '', url.toString());
+        }
+
+        changeHandler();
+    }
+
+    $(selector)
+        .jstree({
+            core: {
+                data: function (_obj, callback) {
+                    fetch('/api/v1/categories?withInactive=1&q=*')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load categories: ${response.status}`);
+                            }
+
+                            return response.json();
+                        })
+                        .then(data => {
+                            const categories = data.map(function (category) {
+                                return {
+                                    id: category.id,
+                                    parent: category.parent_id || '#',
+                                    text: category.active
+                                        ? escapeHtml(category.name)
+                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + escapeHtml(category.name) + '</span>',
+                                    state: {
+                                        selected: presetSelectedIds.includes(category.id)
+                                    },
+                                };
+                            });
+                            callback.call(this, categories);
+                        })
+                        .catch(() => {
+                            toastHelpers.showErrorToast(__('Failed to load categories'));
+                            callback.call(this, []);
+                        });
+                },
+                themes: {
+                    dots: false,
+                    icons: false
+                }
+            },
+            plugins: ['checkbox'],
+            checkbox: {
+                keep_selected_style: false
+            },
+        })
+        .on('select_node.jstree', handleChange)
+        .on('deselect_node.jstree', handleChange)
+        .on('check_all.jstree', handleChange)
+        .on('uncheck_all.jstree', handleChange)
+        .on('ready.jstree', function () {
+            if (presetSelectedIds.length > 0) {
+                handleChange();
+            }
+        });
 }

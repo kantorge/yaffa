@@ -1,5 +1,7 @@
 import 'datatables.net-bs5';
-import "datatables.net-responsive-bs5";
+import 'datatables.net-select-bs5';
+import 'datatables.net-scroller-bs5';
+import 'datatables-contextual-actions';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import { getDataTablesLanguageOptions } from '@/shared/lib/i18n';
@@ -55,7 +57,7 @@ var dtColumnSettingPayee = {
     },
 };
 
-$(selectorHistoryTable).DataTable({
+let historyTable = $(selectorHistoryTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: transactionData,
     columns: [
@@ -129,30 +131,29 @@ $(selectorHistoryTable).DataTable({
         {
             title: __("Actions"),
             defaultContent: '',
+            // Rendering 5 buttons (10+ DOM nodes) per row here, for every row in a
+            // multi-thousand-row account history, was a major contributor to slow initial
+            // render. The actual actions are now defined once in the contextualActions() call
+            // below and shown on demand in a context menu - this cell only needs to render a
+            // trigger icon (and only for rows that actually have actions available).
             render: function (_data, _type, row) {
                 if (row.transaction_type === 'Opening balance') {
-                    return null;
+                    return '';
                 }
-                if (row.schedule) {
-                    if (row.schedule_first_instance) {
-                        return '<a href="' + route('transaction.open', { transaction: row.originalId, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + row.originalId + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> ';
-                    }
-                    return null;
+                if (row.schedule && !row.schedule_first_instance) {
+                    return '';
                 }
 
-                return dataTableHelpers.dataTablesActionButton(row.id, 'quickView') +
-                       dataTableHelpers.dataTablesActionButton(row.id, 'show') +
-                       dataTableHelpers.dataTablesActionButton(row.id, 'edit') +
-                       dataTableHelpers.dataTablesActionButton(row.id, 'clone') +
-                       dataTableHelpers.dataTablesActionButton(row.id, 'delete');
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            className: "dt-nowrap",
+            className: "text-center",
             orderable: false,
             searchable: false,
         }
     ],
     createdRow: function (row, data) {
+        $(row).attr('data-id', data.id);
+
         if (data.schedule) {
             $(row).addClass('text-muted text-italic');
         }
@@ -167,16 +168,147 @@ $(selectorHistoryTable).DataTable({
     order: [
         [0, "asc"]
     ],
-    responsive: true,
+    // Required so the contextualActions plugin below has row selection (.select()/.deselect())
+    // to work with; info:false suppresses the extra "(1 row selected)" text it would otherwise
+    // append every time a row is right-clicked or its action icon is used.
+    select: {
+        select: true,
+        info: false,
+        style: 'os',
+    },
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
+    // Scroller virtualizes rendering (only the rows near the viewport are ever real DOM nodes),
+    // which is what actually keeps a multi-thousand-row account history fast - scrollY alone
+    // does not do this, it just makes an already-fully-rendered table scroll in a fixed-height
+    // box. Scroller needs DataTables' own paging enabled internally to drive it, but the classic
+    // click-to-jump pagination control it would otherwise render fights with Scroller's own
+    // virtual-scroll position - clicking a page number reliably blanked the table, while
+    // scrolling (which drives Scroller correctly) worked fine. `dom` below drops the pagination
+    // control (and the now-meaningless length menu) from the rendered UI while leaving `paging`
+    // itself on, keeping just the processing indicator, the table, and the "Showing X to Y of Z"
+    // info text (which Scroller keeps in sync with the actual scroll position).
+    scroller: true,
+    paging: true,
+    dom: 'rti',
     stateSave: true,
     processing: true,
-    paging: false,
 });
 
-$(selectorScheduleTable).DataTable({
+// Contextual actions for historyTable, replacing the always-rendered per-row action buttons
+// (see the Actions column's render() above). Items mirror exactly what those buttons used to
+// do; isHidden mirrors the same row-type checks the old render() used to decide which buttons
+// to print.
+historyTable.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Quick view'),
+            iconClass: 'fa fa-eye',
+            contextMenuClasses: ['text-success'],
+            action: function (row) {
+                dataTableHelpers.triggerTransactionQuickView(row[0].id);
+            },
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'option',
+            title: __('View details'),
+            iconClass: 'fa fa-search',
+            contextMenuClasses: ['text-success'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'show' });
+            },
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+            },
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'option',
+            title: __('Clone'),
+            iconClass: 'fa fa-clone',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+            },
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'divider',
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'option',
+            title: __('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            action: function (row) {
+                dataTableHelpers.deleteTransactionRow(selectorHistoryTable, row[0].id);
+            },
+            isHidden: function (row) {
+                return row.transaction_type === 'Opening balance' || !!row.schedule;
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit and insert instance'),
+            iconClass: 'fa fa-pencil',
+            contextMenuClasses: ['text-success fw-bold'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].originalId, action: 'enter' });
+            },
+            isHidden: function (row) {
+                return !row.schedule || !row.schedule_first_instance;
+            },
+        },
+        {
+            type: 'option',
+            title: __('Skip current schedule'),
+            iconClass: 'fa fa-forward',
+            contextMenuClasses: ['text-warning fw-bold'],
+            action: function (row) {
+                const form = document.getElementById('form-skip');
+                form.action = route('transactions.skipScheduleInstance', { transaction: row[0].originalId });
+                form.submit();
+            },
+            isHidden: function (row) {
+                return !row.schedule || !row.schedule_first_instance;
+            },
+        },
+    ],
+});
+
+let scheduleTable = $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: scheduleData,
     columns: [
@@ -208,21 +340,20 @@ $(selectorScheduleTable).DataTable({
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            data: 'id',
             title: __("Actions"),
-            render: function (data, _type, _row) {
-                return '<a href="' + route('transaction.open' , { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
-                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> ' +
-                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
-                    dataTableHelpers.dataTablesActionButton(data, 'delete');
+            defaultContent: '',
+            render: function (_data, _type, _row) {
+                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
             },
-            orderable: false
+            className: "text-center",
+            orderable: false,
+            searchable: false,
         }
     ],
 
     createdRow: function (row, data) {
+        $(row).attr('data-id', data.id);
+
         var nextDate = data.transaction_schedule.next_date;
         if (nextDate < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('table-danger');
@@ -233,7 +364,13 @@ $(selectorScheduleTable).DataTable({
     order: [
         [0, "asc"]
     ],
-    responsive: true,
+    // Required so the contextualActions plugin below has row selection to work with; info:false
+    // suppresses the extra "(1 row selected)" text (see historyTable above for the same setup).
+    select: {
+        select: true,
+        info: false,
+        style: 'os',
+    },
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -242,9 +379,83 @@ $(selectorScheduleTable).DataTable({
     paging: false,
 });
 
-dataTableHelpers.initializeSkipInstanceButton("#historyTable, #scheduleTable");
-dataTableHelpers.initializeAjaxDeleteButton("#historyTable, #scheduleTable");
-dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
+// Contextual actions for scheduleTable, replacing the always-rendered per-row action buttons
+// (see the Actions column's render() above). Items mirror exactly what those buttons used to do -
+// same routes/ids, same #form-skip submission for skip, same confirmation-less delete.
+scheduleTable.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Edit and insert instance'),
+            iconClass: 'fa fa-pencil',
+            contextMenuClasses: ['text-success fw-bold'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'enter' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Skip current schedule'),
+            iconClass: 'fa fa-forward',
+            contextMenuClasses: ['text-warning fw-bold'],
+            action: function (row) {
+                const form = document.getElementById('form-skip');
+                form.action = route('transactions.skipScheduleInstance', { transaction: row[0].id });
+                form.submit();
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Clone'),
+            iconClass: 'fa fa-clone',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+            },
+        },
+        {
+            type: 'option',
+            title: __('Edit and create new schedule'),
+            iconClass: 'fa fa-calendar',
+            contextMenuClasses: ['text-primary'],
+            action: function (row) {
+                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'replace' });
+            },
+        },
+        {
+            type: 'divider',
+        },
+        {
+            type: 'option',
+            title: __('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            action: function (row) {
+                dataTableHelpers.deleteTransactionRow(selectorScheduleTable, row[0].id);
+            },
+        },
+    ],
+});
 
 $('input[name=reconciled]').on("change", function () {
     $(selectorHistoryTable).DataTable().column(1).search(this.value).draw();

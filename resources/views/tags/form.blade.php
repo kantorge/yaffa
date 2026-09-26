@@ -78,11 +78,11 @@
                 </div>
             </div>
         </div>
-        <div class="card-footer">
+        <div class="card-footer text-end">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('tags.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
         </div>
     </div>
 </form>

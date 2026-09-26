@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use App\Casts\DecimalCast;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -51,25 +53,12 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @mixin Eloquent
  * @mixin \Eloquent
  */
+#[Fillable('name', 'iso_code', 'base', 'auto_update', 'generic_decimal_precision', 'detailed_decimal_precision')]
 class Currency extends Model
 {
     use CurrencyTrait;
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'iso_code',
-        'base',
-        'auto_update',
-        'generic_decimal_precision',
-        'detailed_decimal_precision',
-    ];
 
     /**
      * Get the attributes that should be cast.
@@ -94,11 +83,11 @@ class Currency extends Model
     {
         // Invalidate cache when currency is created, updated, or deleted
         static::saved(function ($currency) {
-            Cache::forget("currencies_user_{$currency->user_id}");
+            Cache::forget($currency->getCurrenciesCacheKey($currency->user_id));
         });
 
         static::deleted(function ($currency) {
-            Cache::forget("currencies_user_{$currency->user_id}");
+            Cache::forget($currency->getCurrenciesCacheKey($currency->user_id));
         });
     }
 
@@ -154,7 +143,7 @@ class Currency extends Model
             ->latest('date')
             ->first();
 
-        return $rate instanceof CurrencyRate ? $rate->rate : null;
+        return $rate instanceof CurrencyRate ? DecimalCast::toFloat($rate->rate) : null;
     }
 
     /**
@@ -287,10 +276,10 @@ class Currency extends Model
             DB::commit();
 
             // Clear currency cache (bulk update doesn't trigger model events)
-            Cache::forget("currencies_user_{$this->user->id}");
+            Cache::forget($this->getCurrenciesCacheKey($this->user->id));
 
             // Clear currency rates cache
-            Cache::forget("allCurrencyRatesByMonth_forUser_{$this->user->id}");
+            Cache::forget($this->getAllCurrencyRatesByMonthCacheKey($this->user->id));
         } catch (Exception $e) {
             DB::rollback();
             return false;

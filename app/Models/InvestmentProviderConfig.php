@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,22 +36,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InvestmentProviderConfig whereUserId($value)
  * @mixin \Eloquent
  */
+#[Hidden('credentials')]
+#[Fillable('provider_key', 'credentials', 'options', 'last_error', 'rate_limit_overrides')]
 class InvestmentProviderConfig extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    protected $hidden = [
-        'credentials',
-    ];
-
-    protected $fillable = [
-        'provider_key',
-        'credentials',
-        'options',
-        'last_error',
-        'rate_limit_overrides',
-    ];
 
     protected function casts(): array
     {

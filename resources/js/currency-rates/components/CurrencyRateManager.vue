@@ -62,6 +62,7 @@
   import CurrencyRateChart from './CurrencyRateChart.vue';
   import CurrencyRateModal from './CurrencyRateModal.vue';
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
+  import { filterByDateRange } from '@/shared/lib/date/filterByRange';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
 
@@ -93,7 +94,8 @@
       return {
         fromCurrency: this.from,
         toCurrency: this.to,
-        allRates: this.normalizeRates(this.initialRates),
+        // Shallow-copy each item so later edits (splice/push in onRateSaved) never mutate the prop.
+        allRates: this.initialRates.map((rate) => ({ ...rate })),
         displayRates: null,
         dateFrom: null,
         dateTo: null,
@@ -128,41 +130,10 @@
         this.updateDisplayRates();
       },
       updateDisplayRates() {
-        if (!this.dateFrom && !this.dateTo) {
-          // Show all rates
-          this.displayRates = null;
-          return;
-        }
-
-        const fromTimestamp = this.dateFrom
-          ? new Date(this.dateFrom).getTime()
-          : null;
-        const toTimestamp = this.dateTo
-          ? new Date(this.dateTo).getTime()
-          : null;
-
-        // Filter rates by date range
-        const filtered = this.allRates.filter((rate) => {
-          const rateTimestamp = rate.dateTs;
-
-          if (fromTimestamp !== null && toTimestamp !== null) {
-            return (
-              rateTimestamp >= fromTimestamp && rateTimestamp <= toTimestamp
-            );
-          }
-
-          if (fromTimestamp !== null) {
-            return rateTimestamp >= fromTimestamp;
-          }
-
-          if (toTimestamp !== null) {
-            return rateTimestamp <= toTimestamp;
-          }
-
-          return true;
-        });
-
-        this.displayRates = filtered;
+        // No range selected: show all rates (null is the Table's "show everything" sentinel).
+        this.displayRates = (!this.dateFrom && !this.dateTo)
+          ? null
+          : filterByDateRange(this.allRates, 'date', this.dateFrom, this.dateTo);
       },
       openAddModal() {
         this.editingRate = null;
@@ -181,16 +152,15 @@
         toastHelpers.showSuccessToast(message);
 
         // Update or add the rate in allRates
-        const normalizedRate = this.normalizeRate(rate);
         const existingIndex = this.allRates.findIndex(
-          (r) => r.id === normalizedRate.id,
+          (r) => r.id === rate.id,
         );
         if (existingIndex !== -1) {
           // Update existing rate
-          this.allRates.splice(existingIndex, 1, normalizedRate);
+          this.allRates.splice(existingIndex, 1, rate);
         } else {
           // Add new rate
-          this.allRates.push(normalizedRate);
+          this.allRates.push(rate);
         }
 
         // Sort rates by date
@@ -231,7 +201,7 @@
             }),
           );
 
-          this.allRates = this.normalizeRates(response.data.rates);
+          this.allRates = response.data.rates;
 
           // Update display
           this.updateDisplayRates();
@@ -246,15 +216,6 @@
         } finally {
           this.isLoadingRates = false;
         }
-      },
-      normalizeRates(rates) {
-        return rates.map((rate) => this.normalizeRate(rate));
-      },
-      normalizeRate(rate) {
-        return {
-          ...rate,
-          dateTs: new Date(rate.date).getTime(),
-        };
       },
       __,
     },

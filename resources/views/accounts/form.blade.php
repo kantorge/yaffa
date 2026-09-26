@@ -86,7 +86,7 @@
                         id="opening_balance"
                         name="config[opening_balance]"
                         type="text"
-                        value="{{ old('config.opening_balance', $account['config']['opening_balance'] ?? '' ) }}"
+                        value="{{ old('config.opening_balance', ($account ?? null)?->config?->opening_balance?->getAmount()->stripTrailingZeros() ?? '' ) }}"
                     >
                 </div>
             </div>
@@ -133,6 +133,7 @@
                         class="form-select"
                         id="currency_id"
                         name="config[currency_id]"
+                        data-original-currency-id="{{ $account['config']['currency_id'] ?? '' }}"
                     >
                         @forelse($allCurrencies as $id => $name)
                             <option
@@ -251,12 +252,12 @@
                 </div>
             </div>
         </div>
-        <div class="card-footer">
+        <div class="card-footer text-end">
             @csrf
             <input name="config_type" type="hidden" value="account">
 
-            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('account-entity.index', ['type' => 'account']) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
         </div>
     </div>
 </form>

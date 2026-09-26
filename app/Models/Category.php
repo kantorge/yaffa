@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Http\Traits\ModelOwnedByUserTrait;
+use App\Observers\CategoryObserver;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\Appends;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 /**
  * App\Models\Category
@@ -60,27 +64,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
+#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation')]
+#[Appends('full_name')]
+#[ObservedBy([CategoryObserver::class])]
 class Category extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'description',
-        'active',
-        'parent_id',
-        'default_aggregation',
-    ];
-
-    protected $appends = [
-        'full_name',
-    ];
 
     protected function casts(): array
     {
@@ -143,6 +133,11 @@ class Category extends Model
     public function transactionItem(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
     }
 
     public function transaction(): HasManyThrough

@@ -6,8 +6,11 @@ use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
+use App\Http\Controllers\API\ApiTokenApiController;
+use App\Http\Controllers\API\BudgetApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
+use App\Http\Controllers\API\CurrencyApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\FileImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
@@ -23,6 +26,7 @@ use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TwoFactorApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +34,10 @@ use Illuminate\Support\Facades\Route;
 // API V1 - Versioned, resource-oriented routes
 // ============================================================
 Route::prefix('v1')->name('api.v1.')->group(function () {
+    // Currency endpoints
+    Route::delete('/currencies/{currency}', [CurrencyApiController::class, 'destroy'])
+        ->name('currencies.destroy');
+
     // CurrencyRate endpoints
     Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
         ->name('currency-rates.index');
@@ -173,6 +181,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::delete('/account-groups/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
         ->name('account-groups.destroy');
 
+    // Budget endpoints
+    Route::get('/budgets', [BudgetApiController::class, 'index'])
+        ->name('budgets.index');
+    Route::post('/budgets', [BudgetApiController::class, 'store'])
+        ->name('budgets.store');
+    Route::get('/budgets/{budget}', [BudgetApiController::class, 'getItem'])
+        ->name('budgets.show');
+    Route::patch('/budgets/{budget}', [BudgetApiController::class, 'update'])
+        ->name('budgets.update');
+    Route::delete('/budgets/{budget}', [BudgetApiController::class, 'destroy'])
+        ->name('budgets.destroy');
+
     // Category endpoints
     Route::get('/categories', [CategoryApiController::class, 'getList'])
         ->name('categories.index');
@@ -252,6 +272,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('tags.show');
     Route::patch('/tags/{tag}', [TagApiController::class, 'patchActive'])
         ->name('tags.patch-active');
+    Route::delete('/tags/{tag}', [TagApiController::class, 'destroy'])
+        ->name('tags.destroy');
 
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])
@@ -313,4 +335,25 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('users.me.preferences.get');
     Route::put('/users/me/preferences/{key}', [UserApiController::class, 'setPreference'])
         ->name('users.me.preferences.set');
+
+    // API token endpoints
+    Route::get('/users/me/tokens', [ApiTokenApiController::class, 'index'])
+        ->name('users.me.tokens.index');
+    Route::post('/users/me/tokens', [ApiTokenApiController::class, 'store'])
+        ->name('users.me.tokens.store');
+    Route::delete('/users/me/tokens/{id}', [ApiTokenApiController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('users.me.tokens.destroy');
+
+    // Two-factor authentication endpoints
+    Route::get('/users/me/two-factor', [TwoFactorApiController::class, 'show'])
+        ->name('users.me.two-factor.show');
+    Route::post('/users/me/two-factor/enroll', [TwoFactorApiController::class, 'enroll'])
+        ->name('users.me.two-factor.enroll');
+    Route::post('/users/me/two-factor/confirm', [TwoFactorApiController::class, 'confirm'])
+        ->name('users.me.two-factor.confirm');
+    Route::post('/users/me/two-factor/disable', [TwoFactorApiController::class, 'disable'])
+        ->name('users.me.two-factor.disable');
+    Route::post('/users/me/two-factor/recovery-codes', [TwoFactorApiController::class, 'regenerateRecoveryCodes'])
+        ->name('users.me.two-factor.recovery-codes');
 });

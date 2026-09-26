@@ -253,8 +253,9 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             $browser->click($deleteSelector)
                 ->waitFor('.swal2-container', 10)
                 ->click('.swal2-cancel')
-                ->waitUntilMissing('.swal2-container', 10)
-                ->pause(250);
+                // Cancel only resets a local busy flag - no request fires and the table
+                // doesn't change, so no further condition is needed after the dialog closes.
+                ->waitUntilMissing('.swal2-container', 10);
 
             $countAfterCancel = $this->getTableRowCount($browser, '#tab-transaction-list table');
             $this->assertSame($initialCount, $countAfterCancel);

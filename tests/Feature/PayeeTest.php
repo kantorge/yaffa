@@ -8,10 +8,12 @@ use App\Models\Payee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class PayeeTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -22,38 +24,25 @@ class PayeeTest extends TestCase
         $this->setBaseModel(AccountEntity::class);
     }
 
-    public function test_guest_cannot_access_resource(): void
+    protected function resourceAuthCollectionRouteParams(): array
     {
-        $this->get(route("{$this->base_route}.index", ['type' => 'payee']))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store", ['type' => 'payee']))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        Category::factory()->for($user)->create();
-        /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
-
-        $this->get(route("{$this->base_route}.edit", ['account_entity' => $payee->id]))
-            ->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", ['account_entity' => $payee->id]))
-            ->assertRedirectToRoute('login');
+        return ['type' => 'payee'];
     }
 
-    public function test_user_cannot_access_other_users_resource(): void
+    protected function resourceAuthMemberRouteParams(mixed $resource): array
     {
-        /** @var User $user1 */
-        $user1 = User::factory()->create();
+        return ['account_entity' => $resource->id];
+    }
 
-        /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user1)->for(Payee::factory()->withUser($user1), 'config')->create();
+    protected function resourceAuthSupportsDestroy(): bool
+    {
+        // account-entity.destroy does not exist - payees are only removed via the merge flow.
+        return false;
+    }
 
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['account_entity' => $payee->id]))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['account_entity' => $payee->id]))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+    protected function createResourceForAuthTest(User $user): AccountEntity
+    {
+        return AccountEntity::factory()->asPayee($user)->create();
     }
 
     public function test_user_can_view_list_of_payees(): void
@@ -61,10 +50,7 @@ class PayeeTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user), 'config')
-            ->count(5)
+        AccountEntity::factory()->asPayee($user)->count(5)
             ->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'payee']));
@@ -138,7 +124,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -159,7 +145,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -184,7 +170,7 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
 
         /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        $payee = AccountEntity::factory()->asPayee($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -213,10 +199,7 @@ class PayeeTest extends TestCase
     public function test_user_cannot_open_merge_form_for_other_users_payee(): void
     {
         $sourceOwner = User::factory()->create();
-        $payee = AccountEntity::factory()
-            ->for($sourceOwner)
-            ->for(Payee::factory()->withUser($sourceOwner), 'config')
-            ->create();
+        $payee = AccountEntity::factory()->asPayee($sourceOwner)->create();
 
         $otherUser = User::factory()->create();
 
@@ -230,15 +213,9 @@ class PayeeTest extends TestCase
         $sourceOwner = User::factory()->create();
         $targetOwner = User::factory()->create();
 
-        $foreignPayee = AccountEntity::factory()
-            ->for($sourceOwner)
-            ->for(Payee::factory()->withUser($sourceOwner), 'config')
-            ->create();
+        $foreignPayee = AccountEntity::factory()->asPayee($sourceOwner)->create();
 
-        $ownPayee = AccountEntity::factory()
-            ->for($targetOwner)
-            ->for(Payee::factory()->withUser($targetOwner), 'config')
-            ->create();
+        $ownPayee = AccountEntity::factory()->asPayee($targetOwner)->create();
 
         $response = $this->actingAs($targetOwner)
             ->postJson(route('payees.merge.submit'), [

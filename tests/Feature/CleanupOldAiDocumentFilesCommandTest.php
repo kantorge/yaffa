@@ -2,134 +2,339 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\CleanupOldAiDocuments;
+use App\Mail\AiDocumentsAwaitingAction;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\AiUserSettings;
+use App\Models\ReceivedMail;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
+/**
+ * The queue runs synchronously in tests, so the command also exercises CleanupOldAiDocuments.
+ */
 class CleanupOldAiDocumentFilesCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_deletes_only_files_older_than_configured_retention(): void
+    protected function setUp(): void
     {
+        parent::setUp();
+
         Storage::fake('local');
-        config()->set('ai-documents.local_storage_file_retention.retention_days', 90);
+        Mail::fake();
+    }
 
-        $user = User::factory()->create();
+    private function user(?int $retentionDays = 90, array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        AiUserSettings::factory()->create(['user_id' => $user->id, 'document_retention_days' => $retentionDays]);
 
-        $oldDocument = AiDocument::factory()->for($user)->create([
-            'created_at' => now()->subDays(95),
-        ]);
-        $newDocument = AiDocument::factory()->for($user)->create([
-            'created_at' => now()->subDays(20),
-        ]);
+        return $user;
+    }
 
-        $oldFilePath = "ai_documents/{$user->id}/{$oldDocument->id}/old.txt";
-        $newFilePath = "ai_documents/{$user->id}/{$newDocument->id}/new.txt";
+    private function document(User $user, string $status, int $ageInDays, ?int $updatedDaysAgo = null, array $attributes = []): AiDocument
+    {
+        return AiDocument::factory()->for($user)->create([
+            'status' => $status,
+            'created_at' => now()->subDays($ageInDays),
+            'updated_at' => now()->subDays($updatedDaysAgo ?? $ageInDays),
+        ] + $attributes);
+    }
 
-        Storage::disk('local')->put($oldFilePath, 'old');
-        Storage::disk('local')->put($newFilePath, 'new');
+    private function attachFile(AiDocument $document): AiDocumentFile
+    {
+        $path = "ai_documents/{$document->user_id}/{$document->id}/file.txt";
+        Storage::disk('local')->put($path, 'content');
 
-        AiDocumentFile::factory()->for($oldDocument)->create([
-            'file_path' => $oldFilePath,
-            'file_name' => 'old.txt',
+        return AiDocumentFile::factory()->for($document)->create([
+            'file_path' => $path,
+            'file_name' => 'file.txt',
             'file_type' => 'txt',
-        ]);
-        $newFileRecord = AiDocumentFile::factory()->for($newDocument)->create([
-            'file_path' => $newFilePath,
-            'file_name' => 'new.txt',
-            'file_type' => 'txt',
-        ]);
-
-        $this->artisan('ai-documents:cleanup-old-files')
-            ->assertSuccessful();
-
-        Storage::disk('local')->assertMissing($oldFilePath);
-        Storage::disk('local')->assertExists($newFilePath);
-        $this->assertDatabaseMissing('ai_document_files', [
-            'file_path' => $oldFilePath,
-        ]);
-        $this->assertDatabaseHas('ai_document_files', [
-            'id' => $newFileRecord->id,
         ]);
     }
 
-    public function test_it_skips_cleanup_when_retention_days_is_zero(): void
+    public function test_it_deletes_old_finalized_documents_with_their_files_and_received_mail(): void
     {
-        Storage::fake('local');
-        config()->set('ai-documents.local_storage_file_retention.retention_days', 0);
+        $user = $this->user();
+        $mail = ReceivedMail::factory()->for($user)->create();
+        $document = $this->document($user, 'finalized', 100, attributes: ['received_mail_id' => $mail->id]);
+        $file = $this->attachFile($document);
 
-        $user = User::factory()->create();
-        $document = AiDocument::factory()->for($user)->create([
-            'created_at' => now()->subDays(365),
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+        $this->assertDatabaseMissing('ai_document_files', ['id' => $file->id]);
+        $this->assertDatabaseMissing('received_mails', ['id' => $mail->id]);
+        Storage::disk('local')->assertMissing($file->file_path);
+        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
+    }
+
+    public function test_it_keeps_the_transaction_of_a_deleted_document(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $transaction = Transaction::factory()->for($user)->withdrawal($user)->create([
+            'ai_document_id' => $document->id,
         ]);
 
-        $filePath = "ai_documents/{$user->id}/{$document->id}/kept.txt";
-        Storage::disk('local')->put($filePath, 'kept');
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
 
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+        $this->assertDatabaseHas('transactions', ['id' => $transaction->id, 'ai_document_id' => null]);
+    }
+
+    public function test_it_removes_the_emptied_document_directory_but_not_a_directory_with_other_content(): void
+    {
+        $user = $this->user();
+        $emptied = $this->document($user, 'finalized', 100);
+        $emptiedFile = $this->attachFile($emptied);
+        $shared = $this->document($user, 'finalized', 100);
+        $this->attachFile($shared);
+        $strayFile = "ai_documents/{$user->id}/{$shared->id}/not_tracked.txt";
+        Storage::disk('local')->put($strayFile, 'stray');
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertTrue(Storage::disk('local')->directoryMissing(dirname($emptiedFile->file_path)));
+        Storage::disk('local')->assertExists($strayFile);
+    }
+
+    public function test_it_never_deletes_files_outside_the_users_document_directory(): void
+    {
+        $user = $this->user();
+        $other = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $foreign = "ai_documents/{$other->id}/1/theirs.txt";
+        foreach (['unrelated/keep.txt', 'loose/only.txt', $foreign, "ai_documents/{$user->id}/../{$other->id}/1/theirs.txt"] as $path) {
+            Storage::disk('local')->put($path, 'keep');
+        }
+        foreach (['1', 'loose/only.txt', $foreign, "ai_documents/{$user->id}/x/../../{$other->id}/1/theirs.txt"] as $path) {
+            AiDocumentFile::factory()->for($document)->create(['file_path' => $path, 'file_name' => 'x.txt', 'file_type' => 'txt']);
+        }
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+        foreach (['unrelated/keep.txt', 'loose/only.txt', $foreign] as $path) {
+            Storage::disk('local')->assertExists($path);
+        }
+    }
+
+    public function test_it_never_deletes_files_reached_through_a_symlink(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $outside = Storage::disk('local')->path('outside');
+        $userRoot = Storage::disk('local')->path("ai_documents/{$user->id}");
+        Storage::disk('local')->put('outside/secret.txt', 'keep');
+        mkdir($userRoot, 0755, true);
+        symlink($outside, "{$userRoot}/{$document->id}");
         AiDocumentFile::factory()->for($document)->create([
-            'file_path' => $filePath,
-            'file_name' => 'kept.txt',
+            'file_path' => "ai_documents/{$user->id}/{$document->id}/secret.txt",
+            'file_name' => 'secret.txt',
             'file_type' => 'txt',
         ]);
 
-        $this->artisan('ai-documents:cleanup-old-files')
-            ->assertSuccessful();
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
 
-        Storage::disk('local')->assertExists($filePath);
+        Storage::disk('local')->assertExists('outside/secret.txt');
+    }
+
+    public function test_it_keeps_the_document_when_its_files_cannot_be_deleted(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $this->attachFile($document);
+        $disk = Mockery::mock(Storage::disk('local'));
+        $disk->shouldReceive('delete')->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+        $this->assertDatabaseCount('ai_document_files', 1);
+    }
+
+    public function test_it_keeps_finalized_documents_that_are_recent_or_were_updated_recently(): void
+    {
+        $user = $this->user();
+        $recent = $this->document($user, 'finalized', 20);
+        $recentlyTouched = $this->document($user, 'finalized', 200, 10);
+        $recentFile = $this->attachFile($recent);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $recent->id]);
+        $this->assertDatabaseHas('ai_documents', ['id' => $recentlyTouched->id]);
+        Storage::disk('local')->assertExists($recentFile->file_path);
+        Mail::assertNothingSent();
+    }
+
+    public function test_it_keeps_old_unprocessed_documents_and_sends_one_reminder_per_user(): void
+    {
+        $user = $this->user(90, ['language' => 'en']);
+        $otherUser = $this->user();
+
+        $failed = $this->document($user, 'processing_failed', 100);
+        $forReview = $this->document($user, 'ready_for_review', 150);
+        $failedFile = $this->attachFile($failed);
+        $this->document($user, 'ready_for_review', 10);
+        $this->document($otherUser, 'ready_for_review', 10);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $failed->id]);
+        $this->assertDatabaseHas('ai_documents', ['id' => $forReview->id]);
+        Storage::disk('local')->assertExists($failedFile->file_path);
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 1);
+        Mail::assertSent(
+            AiDocumentsAwaitingAction::class,
+            fn (AiDocumentsAwaitingAction $mail) => $mail->hasTo($user->email)
+                && $mail->count === 2
+                && $mail->retentionDays === 90
+        );
+    }
+
+    public function test_reminder_links_to_the_unprocessed_filter_of_the_index_view(): void
+    {
+        $user = $this->user();
+        $this->document($user, 'processing_failed', 100);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, function (AiDocumentsAwaitingAction $mail) {
+            $mail->assertSeeInHtml(route('ai-documents.index', [
+                'status' => 'unprocessed',
+                'date_to' => now()->subDays(90)->toDateString(),
+            ]));
+
+            return true;
+        });
+    }
+
+    public function test_it_does_nothing_for_users_without_a_retention_setting(): void
+    {
+        $user = $this->user(null);
+        $userWithoutSettings = User::factory()->create();
+        $finalized = $this->document($user, 'finalized', 365);
+        $this->document($user, 'ready_for_review', 365);
+        $untouched = $this->document($userWithoutSettings, 'finalized', 365);
+        $file = $this->attachFile($finalized);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $finalized->id]);
+        $this->assertDatabaseHas('ai_documents', ['id' => $untouched->id]);
+        Storage::disk('local')->assertExists($file->file_path);
+        Mail::assertNothingSent();
+    }
+
+    public function test_each_user_gets_their_own_retention_period(): void
+    {
+        $shortRetention = $this->user(30);
+        $longRetention = $this->user(365);
+        $shortDocument = $this->document($shortRetention, 'finalized', 100);
+        $longDocument = $this->document($longRetention, 'finalized', 100);
+        $this->document($longRetention, 'ready_for_review', 100);
+        $this->document($shortRetention, 'ready_for_review', 100);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $shortDocument->id]);
+        $this->assertDatabaseHas('ai_documents', ['id' => $longDocument->id]);
+        // Only the user whose retention has passed is reminded
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 1);
+        Mail::assertSent(
+            AiDocumentsAwaitingAction::class,
+            fn (AiDocumentsAwaitingAction $mail) => $mail->hasTo($shortRetention->email) && $mail->retentionDays === 30
+        );
     }
 
     public function test_it_can_scope_cleanup_to_a_specific_user(): void
     {
-        Storage::fake('local');
-        config()->set('ai-documents.local_storage_file_retention.retention_days', 90);
+        $user = $this->user();
+        $otherUser = $this->user();
+        $userDocument = $this->document($user, 'finalized', 100);
+        $otherUserDocument = $this->document($otherUser, 'finalized', 100);
+        $this->document($otherUser, 'ready_for_review', 100);
 
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $this->artisan('ai-documents:cleanup-old-files', ['userId' => $user->id])->assertSuccessful();
 
-        $userDocument = AiDocument::factory()->for($user)->create([
-            'created_at' => now()->subDays(100),
-        ]);
-        $otherUserDocument = AiDocument::factory()->for($otherUser)->create([
-            'created_at' => now()->subDays(100),
-        ]);
-
-        $userPath = "ai_documents/{$user->id}/{$userDocument->id}/user.txt";
-        $otherUserPath = "ai_documents/{$otherUser->id}/{$otherUserDocument->id}/other.txt";
-
-        Storage::disk('local')->put($userPath, 'u');
-        Storage::disk('local')->put($otherUserPath, 'o');
-
-        $userRecord = AiDocumentFile::factory()->for($userDocument)->create([
-            'file_path' => $userPath,
-            'file_name' => 'user.txt',
-            'file_type' => 'txt',
-        ]);
-        $otherUserRecord = AiDocumentFile::factory()->for($otherUserDocument)->create([
-            'file_path' => $otherUserPath,
-            'file_name' => 'other.txt',
-            'file_type' => 'txt',
-        ]);
-
-        $this->artisan('ai-documents:cleanup-old-files', ['userId' => $user->id])
-            ->assertSuccessful();
-
-        Storage::disk('local')->assertMissing($userPath);
-        Storage::disk('local')->assertExists($otherUserPath);
-        $this->assertDatabaseMissing('ai_document_files', [
-            'id' => $userRecord->id,
-        ]);
-        $this->assertDatabaseHas('ai_document_files', [
-            'id' => $otherUserRecord->id,
-        ]);
+        $this->assertDatabaseMissing('ai_documents', ['id' => $userDocument->id]);
+        $this->assertDatabaseHas('ai_documents', ['id' => $otherUserDocument->id]);
+        Mail::assertNothingSent();
     }
 
     public function test_it_fails_when_user_id_is_invalid(): void
     {
         $this->artisan('ai-documents:cleanup-old-files', ['userId' => 999999])
             ->assertFailed();
+    }
+
+    public function test_a_queued_job_does_nothing_if_the_setting_was_cleared_before_it_ran(): void
+    {
+        $user = $this->user(30);
+        $document = $this->document($user, 'finalized', 100);
+        $file = $this->attachFile($document);
+        $job = new CleanupOldAiDocuments($user->id);
+
+        // Dispatched while a retention period was set, but the user cleared it before the worker got to it
+        AiUserSettings::where('user_id', $user->id)->update(['document_retention_days' => null]);
+        dispatch_sync($job);
+
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertExists($file->file_path);
+
+        // Control: with the period set again, the same job deletes the document
+        AiUserSettings::where('user_id', $user->id)->update(['document_retention_days' => 30]);
+        dispatch_sync($job);
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+    }
+
+    public function test_the_reminder_is_sent_on_every_run_until_the_document_is_handled(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'ready_for_review', 100);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 2);
+
+        // Finalizing touches the document, so it is neither reminded about nor deleted any more
+        $document->update(['status' => 'finalized']);
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        Mail::assertSent(AiDocumentsAwaitingAction::class, 2);
+        $this->assertDatabaseHas('ai_documents', ['id' => $document->id]);
+    }
+
+    /**
+     * Rows imported before Drive file names were sanitized can hold a path Flysystem cannot address.
+     */
+    public function test_a_file_with_a_backslash_in_its_name_is_left_alone_while_the_document_is_deleted(): void
+    {
+        $user = $this->user();
+        $document = $this->document($user, 'finalized', 100);
+        $path = "ai_documents/{$user->id}/{$document->id}/a\\b.txt";
+        $absolutePath = Storage::disk('local')->path($path);
+        mkdir(dirname($absolutePath), 0755, true);
+        file_put_contents($absolutePath, 'content');
+        AiDocumentFile::factory()->for($document)->create(['file_path' => $path, 'file_name' => 'a\\b.txt', 'file_type' => 'txt']);
+
+        $this->artisan('ai-documents:cleanup-old-files')->assertSuccessful();
+
+        $this->assertDatabaseMissing('ai_documents', ['id' => $document->id]);
+        $this->assertFileExists($absolutePath);
     }
 }

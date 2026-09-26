@@ -47,7 +47,7 @@ class CategoryLearningApiControllerTest extends TestCase
             'active' => true,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->getJson(route('api.v1.category-learning.index'));
 
@@ -68,7 +68,7 @@ class CategoryLearningApiControllerTest extends TestCase
             'active' => true,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $this->getJson(route('api.v1.category-learning.show', ['categoryLearning' => $learning->id]))
             ->assertOk()
@@ -81,7 +81,7 @@ class CategoryLearningApiControllerTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['user_id' => $user->id]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $createResponse = $this->postJson(route('api.v1.category-learning.store'), [
             'item_description' => 'Coffee Beans',
@@ -140,7 +140,7 @@ class CategoryLearningApiControllerTest extends TestCase
             'active' => false,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson(route('api.v1.category-learning.store'), [
             'item_description' => 'Coffee Beans',
@@ -170,7 +170,7 @@ class CategoryLearningApiControllerTest extends TestCase
             'active' => true,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $this->postJson(route('api.v1.category-learning.deactivate', ['categoryLearning' => $learning->id]))
             ->assertStatus(Response::HTTP_FORBIDDEN);
@@ -200,7 +200,7 @@ class CategoryLearningApiControllerTest extends TestCase
             'active' => false,
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $this->postJson(route('api.v1.category-learning.merge'), [
             'source_id' => $source->id,

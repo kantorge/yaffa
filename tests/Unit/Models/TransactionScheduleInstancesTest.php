@@ -2,13 +2,14 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Support\ScheduleInstance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -28,10 +29,7 @@ class TransactionScheduleInstancesTest extends TestCase
             'end_date' => now()->addYears(5),
         ]);
 
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
+        $account = AccountEntity::factory()->asAccount($user)->create();
 
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
@@ -70,14 +68,14 @@ class TransactionScheduleInstancesTest extends TestCase
         $this->assertGreaterThan(50, $instances->count());
 
         foreach ($instances->take(5) as $instance) {
-            $this->assertSame(100.0, $instance->config->amount_from);
+            $this->assertSame('100.0000', (string) $instance->config->amount_from->getAmount());
         }
         $queryCountAfterFew = count(DB::getQueryLog());
 
         foreach ($instances as $instance) {
             $this->assertInstanceOf(ScheduleInstance::class, $instance);
             $this->assertInstanceOf(TransactionDetailStandard::class, $instance->config);
-            $this->assertSame(100.0, $instance->config->amount_from);
+            $this->assertSame('100.0000', (string) $instance->config->amount_from->getAmount());
         }
         $queryCountAfterAll = count(DB::getQueryLog());
 
@@ -116,7 +114,7 @@ class TransactionScheduleInstancesTest extends TestCase
 
         $instances = $transaction->scheduleInstances();
 
-        // Calling code (e.g. MainController::account_details()) stashes ad-hoc values onto
+        // Calling code (e.g. AccountEntityController::history()) stashes ad-hoc values onto
         // virtual instances after generation (a running total, in that case) - confirm the DTO
         // supports arbitrary get/set the same way a replicated Eloquent model did.
         foreach ($instances as $index => $instance) {
@@ -124,5 +122,293 @@ class TransactionScheduleInstancesTest extends TestCase
         }
 
         $this->assertSame([0, 10, 20], $instances->pluck('running_total')->all());
+    }
+
+    /**
+     * Regression guard for the by_day/by_month drift fixed by routing scheduleInstances() through
+     * RecurrenceRuleService::buildRule() instead of a hand-built Recurr\Rule (see
+     * .ai/docs/features/budget-schedule-redesign/architecture.md, "Known Risks"). Before the fix,
+     * an ordinal-weekday rule like "first Wednesday of every month" silently fell back to plain
+     * FREQ=MONTHLY;INTERVAL=1-from-start_date, landing on the same day-of-month every time
+     * regardless of which weekday it fell on.
+     */
+    public function test_schedule_instances_honor_by_day_ordinal_weekday_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        // 2026-01-07 is the first Wednesday of January 2026.
+        $startDate = Carbon::parse('2026-01-07');
+        $this->assertSame('Wednesday', $startDate->format('l'));
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'by_day' => '1WE',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        // 6 monthly occurrences, one "first Wednesday" per month - a plain FREQ=MONTHLY fallback
+        // would instead land on the 7th of every month, which is only sometimes a Wednesday.
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $this->assertSame(
+                'Wednesday',
+                $instance->date->format('l'),
+                "Occurrence on {$instance->date->toDateString()} is not a Wednesday - by_day was not applied."
+            );
+            $this->assertLessThanOrEqual(
+                7,
+                $instance->date->day,
+                "Occurrence on {$instance->date->toDateString()} is not the FIRST Wednesday of its month."
+            );
+        }
+    }
+
+    /**
+     * scheduleInstances() must honor the days-before-month-end pattern (recurrence-rrule-
+     * storage.md FR-14) the same way it honors by_day above - every occurrence lands the
+     * configured number of days before its month's last day.
+     */
+    public function test_schedule_instances_honor_days_before_month_end_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $startDate = Carbon::parse('2026-01-01');
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'days_before_month_end' => 4,
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $expected = $instance->date->clone()->endOfMonth()->subDays(4);
+            $this->assertSame(
+                $expected->toDateString(),
+                $instance->date->toDateString(),
+                "Occurrence is not 4 days before the end of its month."
+            );
+        }
+    }
+
+    /**
+     * scheduleInstances() must honor the last-business-day-of-month pattern (recurrence-rrule-
+     * storage.md FR-14) - every occurrence is a weekday, and no later weekday exists in the same
+     * month.
+     */
+    public function test_schedule_instances_honor_last_business_day_of_month_pattern(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYears(2),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $startDate = Carbon::parse('2026-01-01');
+
+        $transaction->transactionSchedule->update([
+            'start_date' => $startDate,
+            'next_date' => $startDate,
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+            'last_business_day_of_month' => true,
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $instances = $transaction->scheduleInstances(
+            constraintStart: $startDate->clone(),
+            maxLookAhead: $startDate->clone()->addMonths(6),
+        );
+
+        $this->assertGreaterThanOrEqual(6, $instances->count());
+
+        foreach ($instances as $instance) {
+            $this->assertNotContains($instance->date->format('l'), ['Saturday', 'Sunday']);
+
+            for ($day = $instance->date->clone()->addDay(); $day->month === $instance->date->month; $day->addDay()) {
+                $this->assertContains(
+                    $day->format('l'),
+                    ['Saturday', 'Sunday'],
+                    "{$day->toDateString()} is a later weekday in the same month as the reported last business day."
+                );
+            }
+        }
+    }
+
+    /**
+     * Regression coverage for the performance-audit finding that scheduleInstances() recomputed
+     * the recurrence expansion from scratch on every call. Seeds the exact cache key it computes
+     * with a sentinel value - if the method actually hits the cache instead of recomputing, the
+     * returned instance carries the sentinel date verbatim rather than a real occurrence date.
+     */
+    public function test_schedule_instances_uses_the_cached_occurrence_dates(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['end_date' => now()->addYears(2)]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => Carbon::parse('2024-01-01'),
+            'next_date' => Carbon::parse('2024-01-01'),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+        $schedule = $transaction->transactionSchedule;
+
+        $constraintStart = Carbon::parse('2024-01-01');
+        $maxLookAhead = Carbon::parse('2024-04-01');
+
+        $cacheKey = "schedule-occurrences:{$schedule->id}:{$schedule->updated_at->timestamp}:"
+            . "{$transaction->updated_at->timestamp}:2024-01-01:2024-04-01:500";
+        Cache::put($cacheKey, ['2099-01-01'], now()->addHour());
+
+        $instances = $transaction->scheduleInstances($constraintStart, $maxLookAhead);
+
+        $this->assertCount(1, $instances);
+        $this->assertSame('2099-01-01', $instances->first()->date->toDateString());
+    }
+
+    /**
+     * Touching the schedule (which bumps updated_at) must change the cache key so the next call
+     * recomputes instead of serving a stale result from before the change.
+     */
+    public function test_schedule_instances_recompute_after_the_schedule_is_touched(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create(['end_date' => now()->addYears(2)]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => Carbon::parse('2024-01-01'),
+            'next_date' => Carbon::parse('2024-01-01'),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $constraintStart = Carbon::parse('2024-01-01');
+        $maxLookAhead = Carbon::parse('2024-04-01');
+
+        $before = $transaction->scheduleInstances($constraintStart->clone(), $maxLookAhead->clone());
+        $this->assertCount(4, $before);
+
+        // Second-precision timestamp cache key: without a real time gap, an update landing in
+        // the same wall-clock second as create() wouldn't change updated_at->timestamp.
+        $this->travel(1)->seconds();
+        $transaction->transactionSchedule->update(['frequency' => 'WEEKLY']);
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+
+        $after = $transaction->scheduleInstances($constraintStart->clone(), $maxLookAhead->clone());
+
+        $this->assertGreaterThan($before->count(), $after->count());
+    }
+
+    /**
+     * Regression guard: rows loaded from database/seeders/demo.sql (and any other raw-SQL import
+     * that skips Eloquent) have NULL created_at/updated_at, since the INSERT statements omit those
+     * columns and both are nullable with no DB default. scheduleInstances()'s cache-key builder
+     * previously dereferenced ->timestamp on that null unconditionally, which broke the 3.6.1 -> v4
+     * upgrade path (Transaction.php:367, "Attempt to read property \"timestamp\" on null") as soon
+     * as a scheduled transaction's forecast was recalculated.
+     */
+    public function test_schedule_instances_tolerate_null_updated_at_timestamps(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'end_date' => now()->addYear(),
+        ]);
+
+        /** @var Transaction $transaction */
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal_schedule($user)
+            ->create();
+
+        $transaction->transactionSchedule->update([
+            'start_date' => now()->startOfMonth(),
+            'next_date' => now()->startOfMonth(),
+            'end_date' => null,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
+
+        DB::table('transactions')->where('id', $transaction->id)->update(['updated_at' => null]);
+        DB::table('transaction_schedules')->where('id', $transaction->transactionSchedule->id)->update(['updated_at' => null]);
+
+        $transaction = Transaction::with(['config', 'transactionSchedule'])->findOrFail($transaction->id);
+        $this->assertNull($transaction->updated_at);
+        $this->assertNull($transaction->transactionSchedule->updated_at);
+
+        $instances = $transaction->scheduleInstances();
+
+        $this->assertGreaterThan(0, $instances->count());
     }
 }

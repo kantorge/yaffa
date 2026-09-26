@@ -190,25 +190,27 @@ class CurrencyRateManagementTest extends DuskTestCase
         $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
         $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
-        // Create rates with different dates
+        // Create rates dated in the previous month, so they always fall outside "this month"
+        $outsideCurrentMonth = now()->subMonthNoOverflow();
+
         CurrencyRate::factory()
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-02-10',
+                'date' => $outsideCurrentMonth->copy()->day(min(10, $outsideCurrentMonth->daysInMonth))->format('Y-m-d'),
                 'rate' => 1.1,
             ]);
 
         CurrencyRate::factory()
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-02-15',
+                'date' => $outsideCurrentMonth->copy()->day(min(15, $outsideCurrentMonth->daysInMonth))->format('Y-m-d'),
                 'rate' => 1.2,
             ]);
 
         CurrencyRate::factory()
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-02-20',
+                'date' => $outsideCurrentMonth->copy()->day(min(20, $outsideCurrentMonth->daysInMonth))->format('Y-m-d'),
                 'rate' => 1.3,
             ]);
 
@@ -218,11 +220,14 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
                 // Select date range preset
-                ->select('#dateRangeFilterPresets', 'thisMonth')
-                // Wait for filter to apply - this is done locally, so a short pause is sufficient
-                ->pause(2000)
-                // Verify table shows filtered results
-                ->assertPresent('#ratesTable');
+                ->select('#dateRangeFilterPresets', 'thisMonth');
+
+            // Wait for the table to react to the filter: the fixture rates are dated last month,
+            // so filtering to "this month" leaves none of them visible.
+            $browser->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#ratesTable') === 0);
+
+            // Verify table shows filtered results
+            $browser->assertPresent('#ratesTable');
         });
     }
 

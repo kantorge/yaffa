@@ -22,6 +22,12 @@ return [
         "settings_hint" => "Si le problème persiste, vérifiez le modèle IA et les identifiants du fournisseur.",
         "subject" => "Échec du traitement du document"
     ],
+    "ai_documents_awaiting_action" => [
+        "button_review_documents" => "Examiner les documents non traités",
+        "intro" => "Vous avez :count document(s) IA datant de plus de :days jours qui n'ont pas encore été traités.",
+        "next_action_text" => "Les anciens documents sont supprimés automatiquement une fois finalisés, mais les documents non traités sont toujours conservés. Examinez-les ou supprimez ceux dont vous n'avez plus besoin. Vous recevrez ce rappel chaque jour jusque-là.",
+        "subject" => "D'anciens documents IA vous attendent"
+    ],
     "common" => [
         "greeting" => "Bonjour :name,",
         "na" => "N/D",

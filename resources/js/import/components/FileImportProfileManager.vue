@@ -230,10 +230,10 @@
                   :disabled="!editAiFile || aiSuggesting"
                   @click="requestEditAiSuggestion"
                 >
-                  <span
+                  <i
                     v-if="aiSuggesting"
-                    class="spinner-border spinner-border-sm me-1"
-                  ></span>
+                    class="fa fa-spinner fa-spin me-1"
+                  ></i>
                   {{
                     aiSuggesting
                       ? __('Requesting suggestion…')
@@ -242,7 +242,7 @@
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-secondary"
+                  class="btn btn-sm btn-secondary"
                   :disabled="aiSuggesting"
                   @click="showEditAiPanel = false"
                 >
@@ -334,15 +334,15 @@
             :disabled="saving || (fileType === 'csv' && !!mappingJsonError)"
             @click="saveProfile"
           >
-            <span
+            <i
               v-if="saving"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
+              class="fa fa-spinner fa-spin me-1"
+            ></i>
             {{ __('Save') }}
           </button>
           <button
             type="button"
-            class="btn btn-sm btn-outline-secondary"
+            class="btn btn-sm btn-secondary"
             :disabled="saving"
             @click="cancelEdit"
           >
@@ -440,7 +440,7 @@
                 >
                   <button
                     type="button"
-                    class="btn btn-sm btn-outline-danger"
+                    class="btn btn-sm btn-danger"
                     disabled
                   >
                     <i class="fa fa-trash"></i>
@@ -450,15 +450,17 @@
               <template v-else>
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-danger"
+                  class="btn btn-sm btn-danger"
                   :disabled="!!editingProfile || deletingId === profile.id"
                   @click="deleteProfile(profile)"
                 >
-                  <span
-                    v-if="deletingId === profile.id"
-                    class="spinner-border spinner-border-sm"
-                  ></span>
-                  <i v-else class="fa fa-trash"></i>
+                  <i
+                    :class="
+                      deletingId === profile.id
+                        ? 'fa fa-spinner fa-spin'
+                        : 'fa fa-trash'
+                    "
+                  ></i>
                 </button>
               </template>
             </td>
@@ -745,7 +747,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         });
 

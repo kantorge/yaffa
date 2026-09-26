@@ -672,8 +672,10 @@
               :form="form"
               dusk="button-save-google-drive"
             >
-              <i v-show="!form.busy" class="fa fa-save me-1"></i>
-              {{
+              <i
+                class="fa me-1 fa-save"
+                v-show="!form.busy"
+              ></i>{{
                 hasConfig
                   ? __('user.googleDriveSettings.buttons.update')
                   : __('user.googleDriveSettings.buttons.save')
@@ -692,8 +694,7 @@
                   'fa me-1',
                   testingConnection ? 'fa-spinner fa-spin' : 'fa-plug',
                 ]"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.testConnection') }}
+              ></i>{{ __('user.googleDriveSettings.buttons.testConnection') }}
             </button>
 
             <button
@@ -705,20 +706,22 @@
               @click="triggerSync"
             >
               <i
-                :class="['fa', syncing ? 'fa-spinner fa-spin' : 'fa-sync']"
-              ></i>
-              {{ __('user.googleDriveSettings.buttons.manualSync') }}
+                :class="[
+                  'fa',
+                  'me-1',
+                  syncing ? 'fa-spinner fa-spin' : 'fa-sync',
+                ]"
+              ></i>{{ __('user.googleDriveSettings.buttons.manualSync') }}
             </button>
 
             <button
               v-if="!hasConfig && showForm"
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               dusk="button-cancel-add-google-drive"
               @click="cancelAdd"
             >
-              <i class="fa fa-times me-1"></i>
-              {{ __('user.googleDriveSettings.buttons.cancel') }}
+              <i class="fa me-1 fa-times"></i>{{ __('user.googleDriveSettings.buttons.cancel') }}
             </button>
           </div>
 
@@ -729,8 +732,7 @@
             dusk="button-delete-google-drive"
             @click="deleteConfig"
           >
-            <i class="fa fa-trash"></i>
-            {{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
+            <i class="fa me-1 fa-trash"></i>{{ __('user.googleDriveSettings.buttons.deleteConfiguration') }}
           </button>
         </div>
       </div>
@@ -838,7 +840,7 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-secondary"
               data-coreui-dismiss="modal"
               dusk="button-folder-browser-cancel"
             >
@@ -861,7 +863,7 @@
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
@@ -969,7 +971,7 @@
           if (Number.isNaN(date.getTime())) {
             return this.lastSyncAt;
           }
-          return date.toLocaleString();
+          return toFormattedDateTime(date, window.YAFFA.userSettings.locale);
         } catch {
           return this.lastSyncAt;
         }
@@ -1013,11 +1015,7 @@
       this.$nextTick(() => {
         const el = this.$refs.folderBrowserModalEl;
         if (el) {
-          if (window.coreui && window.coreui.Modal) {
-            this.folderBrowserModal = new window.coreui.Modal(el);
-          } else if (window.bootstrap && window.bootstrap.Modal) {
-            this.folderBrowserModal = new window.bootstrap.Modal(el);
-          }
+          this.folderBrowserModal = new window.coreui.Modal(el);
         }
       });
     },
@@ -1231,7 +1229,7 @@
               buttonsStyling: false,
               customClass: {
                 confirmButton: 'btn btn-primary',
-                cancelButton: 'btn btn-outline-secondary ms-3',
+                cancelButton: 'btn btn-secondary ms-3',
               },
             });
 
@@ -1436,7 +1434,7 @@
           buttonsStyling: false,
           customClass: {
             confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-outline-secondary ms-3',
+            cancelButton: 'btn btn-secondary ms-3',
           },
         }).then((result) => {
           if (result.isConfirmed) {

@@ -27,18 +27,26 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->statefulApi();
-        $middleware->api(\App\Http\Middleware\SetLocale::class);
+        $middleware->api(append: [
+            \App\Http\Middleware\SetLocale::class,
+            'throttle:api',
+        ]);
 
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
             'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: [
+        $middleware->preventRequestForgery(except: [
             '/telescope/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
         $exceptions->render(function (AuthorizationException $e, Request $request) {
             if ($request->is('api/v1/*')) {
                 return response()->json([

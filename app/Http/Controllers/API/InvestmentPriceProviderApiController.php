@@ -6,25 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TestInvestmentPriceProviderFetchRequest;
 use App\Models\Investment;
 use App\Services\InvestmentPriceProviderContextResolver;
-use App\Services\InvestmentProviderAvailabilityService;
 use App\Services\InvestmentPriceProviderRegistry;
+use App\Services\InvestmentProviderAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class InvestmentPriceProviderApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'available',
+])]
+#[Middleware('abilities:write', only: [
+    'testFetch',
+])]
+class InvestmentPriceProviderApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     public function __construct(
         private InvestmentProviderAvailabilityService $availabilityService,
         private InvestmentPriceProviderRegistry $providerRegistry,
@@ -32,6 +32,12 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
     ) {
     }
 
+    /**
+     * List available investment price providers
+     *
+     * Returns the providers available to the current user, optionally including
+     * providers that are configured but currently unavailable.
+     */
     public function available(Request $request): JsonResponse
     {
         return response()->json(
@@ -43,6 +49,12 @@ class InvestmentPriceProviderApiController extends Controller implements HasMidd
         );
     }
 
+    /**
+     * Test a price provider fetch
+     *
+     * Performs a trial price fetch for the given provider and symbol/settings without
+     * persisting anything, so the user can validate credentials and settings before saving.
+     */
     public function testFetch(TestInvestmentPriceProviderFetchRequest $request, string $providerKey): JsonResponse
     {
         if (! $this->providerRegistry->has($providerKey)) {

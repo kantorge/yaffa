@@ -289,7 +289,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, getCachedDateTimeFormatter } from '@/shared/lib/i18n';
   import {
     buildBreakdownCacheKey,
     round2,
@@ -326,6 +326,18 @@
       isDrillDown: {
         type: Boolean,
         default: false,
+      },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
       },
     },
     data() {
@@ -372,7 +384,11 @@
           return this.cachedCategoryData;
         }
 
-        return aggregateTransactionsByCategory(this.transactions);
+        return aggregateTransactionsByCategory(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
       },
 
       /**
@@ -467,6 +483,11 @@
           });
         }
       },
+      // A cached breakdown was computed with whatever scope was active at the time;
+      // toggling the switch must bypass it and recompute from the raw transactions.
+      matchingItemsOnly() {
+        this.cachedCategoryData = null;
+      },
     },
 
     methods: {
@@ -491,8 +512,10 @@
 
       saveBreakdownCache() {
         try {
-          // Don't overwrite cache on drill-down pages
-          if (this.isDrillDown) return;
+          // Don't overwrite cache on drill-down pages, or with a narrowed
+          // aggregate that a differently-scoped load couldn't detect as stale
+          // (the cache key doesn't encode matchingItemsOnly).
+          if (this.isDrillDown || this.matchingItemsOnly) return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};
@@ -556,7 +579,7 @@
       formatMonthHeader(month) {
         const [year, mon] = month.split('-').map(Number);
         const date = new Date(year, mon - 1, 1);
-        return new Intl.DateTimeFormat(this.locale, {
+        return getCachedDateTimeFormatter(this.locale, {
           month: '2-digit',
           year: 'numeric',
         }).format(date);

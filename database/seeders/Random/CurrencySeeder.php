@@ -6,7 +6,6 @@ use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
-use OverflowException;
 
 class CurrencySeeder extends Seeder
 {
@@ -22,26 +21,10 @@ class CurrencySeeder extends Seeder
         }
 
         $users->each(function ($user) use ($count) {
-            // TODO: use Faker unique instead of replicating its functionality
-            $maxRetries = 10000;
-            $uniques = [];
-
+            // CurrencyFactory::configure() already guarantees a unique name/iso_code per user
+            // against previously saved rows, so creating one at a time (not batched) is enough.
             for ($j = 0; $j < $count; $j++) {
-                $i = 0;
-
-                do {
-                    $res = Currency::factory()
-                        ->for($user)
-                        ->make();
-
-                    $i++;
-
-                    if ($i > $maxRetries) {
-                        throw new OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
-                    }
-                } while (in_array($res->name, $uniques, true));
-                $uniques[] = $res->name;
-                $res->save();
+                Currency::factory()->for($user)->create();
             }
 
             // Set a random currency to be default

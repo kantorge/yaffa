@@ -3,10 +3,9 @@
 namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\AccountEntity;
-use App\Models\Investment;
-use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
+use Facebook\WebDriver\WebDriverKeys;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -79,8 +78,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->assertNotChecked('#checkbox-investment-transaction-reconciled')
 
                 // Test the date field with prefixed ID
-                ->assertPresent('#investment-date')
-                ->type('#investment-date', '2025-01-15')
+                ->assertPresent('#investment-date');
+
+            $this->setDateInput($browser, '#investment-date', '2025-01-15');
+
+            $browser
                 ->assertInputValue('#investment-date', '2025-01-15')
 
                 // Test the comment field with prefixed ID
@@ -136,8 +138,8 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
             // Verify the transaction was saved in the database
             $transaction = Transaction::orderByDesc('id')->first();
             $this->assertNotNull($transaction);
-            $this->assertEquals(10, $transaction->config->quantity);
-            $this->assertEquals(20, $transaction->config->price);
+            $this->assertEquals(10, $transaction->config->quantity->toFloat());
+            $this->assertEquals(20, $transaction->config->price->getAmount()->toFloat());
 
             // Now reopen the modal and verify investment is cleared
             $browser
@@ -180,8 +182,11 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
             $selectedInvestment = $browser->text('#investment + .select2 .select2-selection__rendered');
 
             $browser
-                // Cancel the dialog by clicking the close button
+                // Cancel the dialog by clicking the close button - the form is dirty
+                // (an investment was selected), so a discard-changes confirm is expected
                 ->click('#modal-transaction-form-investment .modal-header .btn-close')
+                ->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
                 // Wait for the modal to close
                 ->waitUntilMissing('#modal-transaction-form-investment', 10)
 
@@ -201,188 +206,54 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
         });
     }
 
-    public function test_store_price_checkbox_is_visible_when_no_existing_price(): void
+    public function test_escape_key_closes_modal_when_form_is_untouched(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                // Load the view for a random account
                 ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
-                // Wait for the page to load
                 ->waitForText('Account details')
-                // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
-                // Wait for the modal to load
                 ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
-                ->waitFor('#investment', 10)
+                ->waitForTextIn('#account + .select2 .select2-selection__rendered', $this->accountEntity->name, 10);
 
-                // Select investment
-                ->select2('#investment', null, 10)
-                // Select transaction type
-                ->select('#transaction_type', 'buy')
-                // Add quantity
-                ->type('#transaction_quantity', '10')
-                // Add price - this should trigger the price check
-                ->type('#transaction_price', '25.50')
-                // Wait for the store price checkbox to appear
-                ->waitFor('#store_price_checkbox', 10)
-                // Verify the checkbox is visible
-                ->assertVisible('#store_price_checkbox')
-                ->assertVisible('label[for="store_price_checkbox"]');
+            // CoreUI's FocusTrap.activate() calls trapElement.focus() on show - this only
+            // works if the modal root has tabindex="-1" (it's a plain <div> otherwise, and
+            // .focus() on a non-focusable element is a silent no-op). Confirm focus actually
+            // landed inside the modal, since that's what lets a bubbled Escape keydown reach
+            // CoreUI's own dismiss listener (bound on the modal root) in the first place.
+            $focusInsideModal = $browser->script(
+                "return !!(document.activeElement && document.activeElement.closest('#modal-transaction-form-investment'));"
+            )[0] ?? false;
+            $this->assertTrue(
+                $focusInsideModal,
+                'Focus should land inside the modal on open, otherwise a bubbled Escape keydown never reaches it.'
+            );
+
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+
+            $browser->waitUntilMissing('#modal-transaction-form-investment', 5)
+                ->assertNotPresent('.swal2-popup');
         });
     }
 
-    public function test_store_price_checkbox_is_not_visible_when_price_exists(): void
+    public function test_escape_key_confirms_discard_when_form_is_dirty(): void
     {
-        // First create an investment price for today
-        $investment = Investment::where('name', 'Test investment USD')->first();
-        InvestmentPrice::create([
-            'investment_id' => $investment->id,
-            'date' => now()->format('Y-m-d'),
-            'price' => 100.00,
-        ]);
-
-        $this->browse(function (Browser $browser) use ($investment) {
+        $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                // Load the view for a random account
                 ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
-                // Wait for the page to load
                 ->waitForText('Account details')
-                // Click the "new investment transaction" button
                 ->click('#create-investment-transaction-button')
-                // Wait for the modal to load
                 ->waitForText('Finalize transaction draft')
                 ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
                 ->waitFor('#investment', 10)
+                ->select2('#investment', null, 10);
 
-                // Select transaction type - although generally Buy is the default selection
-                ->select('#transaction_type', 'buy')
-                // Select the specific investment that has a price - this should trigger the price check
-                ->select2ExactSearch('#investment', $investment->name, 10)
-                // Wait a bit for the API call to complete, the price info should be visible now
-                ->waitFor('span.existing-price-label', 10)
-                // Verify the store price checkbox is NOT visible
-                ->assertMissing('#store_price_checkbox');
-        });
-    }
+            $browser->driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
 
-    public function test_user_can_save_transaction_with_price_storage_enabled(): void
-    {
-        // Get an investment without price for today
-        $investment = Investment::where('name', 'Test investment USD')->first();
-
-        // Ensure no price exists for today
-        InvestmentPrice::where('investment_id', $investment->id)
-            ->where('date', now()->format('Y-m-d'))
-            ->delete();
-
-        $this->browse(function (Browser $browser) use ($investment) {
-            $browser->loginAs($this->user)
-                // Load the view for a random account
-                ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
-                // Wait for the page to load
-                ->waitForText('Account details')
-                // Click the "new investment transaction" button
-                ->click('#create-investment-transaction-button')
-                // Wait for the modal to load
-                ->waitForText('Finalize transaction draft')
-                ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
-                ->waitFor('#investment', 10)
-
-                // Fill the form
-                ->select2ExactSearch('#investment', $investment->name, 10)
-                ->select('#transaction_type', 'buy')
-                ->type('#transaction_quantity', '10')
-                ->type('#transaction_price', '35.75')
-                ->type('#transaction_commission', '5')
-                ->type('#transaction_tax', '2')
-
-                // Wait for store price checkbox to appear and enable it
-                ->waitFor('#store_price_checkbox', 10)
-                ->click('label[for="store_price_checkbox"]')
-                ->assertChecked('#store_price_checkbox')
-
-                // Submit form
-                ->click('#transactionFormInvestment-Save')
-                // Two success messages should be available
-                ->waitFor('.toast-container .toast.bg-success.show', 10)
-                ->pause(500)  // Give both toasts time to render
-                ->assertSeeIn('.toast-container', 'Transaction added')
-                ->assertSeeIn('.toast-container', 'Investment price stored')
-                // Wait for the modal to close
-                ->waitUntilMissing('#modal-transaction-form-investment', 10);
-
-            // Verify the transaction was saved in the database
-            $transaction = Transaction::orderByDesc('id')->first();
-            $this->assertNotNull($transaction);
-            $this->assertEquals(10, $transaction->config->quantity);
-            $this->assertEquals(35.75, $transaction->config->price);
-
-            // Verify the investment price was saved in the database
-            $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)
-                ->where('date', now()->format('Y-m-d'))
-                ->first();
-            $this->assertNotNull($investmentPrice);
-            $this->assertEquals(35.75, $investmentPrice->price);
-        });
-    }
-
-    public function test_user_can_save_transaction_without_price_storage(): void
-    {
-        // Get an investment without price for today
-        $investment = Investment::where('name', 'Test investment USD')->first();
-
-        // Ensure no price exists for today
-        InvestmentPrice::where('investment_id', $investment->id)
-            ->where('date', now()->format('Y-m-d'))
-            ->delete();
-
-        $this->browse(function (Browser $browser) use ($investment) {
-            $browser->loginAs($this->user)
-                // Load the view for an account with the same currency as the investment
-                ->visitRoute('account-entity.show', ['account_entity' => $this->accountEntity->id])
-                // Wait for the page to load
-                ->waitForText('Account details')
-                // Click the "new investment transaction" button
-                ->click('#create-investment-transaction-button')
-                // Wait for the modal to load
-                ->waitForText('Finalize transaction draft')
-                ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
-                ->waitFor('#investment', 10)
-
-                // Fill the form
-                ->select2ExactSearch('#investment', $investment->name, 10)
-                ->select('#transaction_type', 'buy')
-                ->type('#transaction_quantity', '5')
-                ->type('#transaction_price', '42.25')
-                ->type('#transaction_commission', '3')
-
-                // Wait for store price checkbox to appear but DO NOT enable it
-                ->waitFor('#store_price_checkbox', 10)
-                ->assertNotChecked('#store_price_checkbox')
-
-                // Submit form
-                ->click('#transactionFormInvestment-Save')
-                // Wait for the modal to close
-                ->waitUntilMissing('#modal-transaction-form-investment', 10)
-                // A success message should be available for the transaction
-                ->waitForTextIn('.toast-container .toast.bg-success.show', 'Transaction added', 10);
-
-            // Verify the transaction was saved
-            $transaction = Transaction::orderByDesc('id')->first();
-            $this->assertNotNull($transaction);
-            $this->assertEquals(5, $transaction->config->quantity);
-            $this->assertEquals(42.25, $transaction->config->price);
-
-            // Verify the investment price was NOT saved in the database
-            $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)
-                ->where('date', now()->format('Y-m-d'))
-                ->first();
-            $this->assertNull($investmentPrice);
+            $browser->waitFor('.swal2-popup', 5)
+                ->click('.swal2-confirm')
+                ->waitUntilMissing('#modal-transaction-form-investment', 5);
         });
     }
 }

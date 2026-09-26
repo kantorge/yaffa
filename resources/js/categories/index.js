@@ -1,10 +1,10 @@
 import 'datatables.net-bs5';
-import "datatables.net-responsive-bs5";
 
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     renderDeleteAssetButton,
+    initializeDeleteAssetButtonListener,
 } from '@/shared/lib/datatable';
 
 import { __, getDataTablesLanguageOptions, toFormattedDate } from '@/shared/lib/i18n';
@@ -12,6 +12,14 @@ import { escapeHtml, initializeBootstrapTooltips } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 
 const dataTableSelector = '#table';
+
+// Matches the categories[]=<id> preset-filter URL convention used by the budget chart and
+// schedules/budgets reports (see resources/js/reports/budgetchart.js).
+function categoryFilteredReportUrl(baseUrl, categoryId) {
+    const url = new URL(baseUrl);
+    url.searchParams.append('categories[]', categoryId);
+    return url.toString();
+}
 
 function recalculateChildrenCounts(categories) {
     const childrenCountByParentId = {};
@@ -61,7 +69,7 @@ const deleteButtonConditions = [
         property: 'transactions_count_with_schedule',
         value: 0,
         negate: false,
-        errorMessage: __('It is used in scheduled or budget transactions.'),
+        errorMessage: __('It is used in scheduled transactions.'),
     },
     {
         property: 'children_count',
@@ -86,6 +94,12 @@ const deleteButtonConditions = [
         value: 0,
         negate: false,
         errorMessage: __('It is used as not preferred category by some payees.'),
+    },
+    {
+        property: 'budgets_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used by one or more budgets.'),
     }
 ];
 
@@ -127,14 +141,36 @@ window.table = $(dataTableSelector).DataTable({
             className: "text-center activeIcon",
         },
         {
-            // Display count of associated transactions
+            // Display count of associated transactions, linking to the find-transactions
+            // report filtered to this category
             data: "transactions_count_regular",
             title: __("Transactions"),
-            render: function(data, type) {
-                if (type === 'display') {
-                    return (data > 0 ? data : __('Never used'));
+            render: function(data, type, row) {
+                if (type !== 'display') {
+                    return data;
                 }
-                return data;
+                if (!(data > 0)) {
+                    return __('Never used');
+                }
+
+                return `<a href="${categoryFilteredReportUrl(route('reports.transactions'), row.id)}">${data}</a>`;
+            },
+            type: 'num',
+        },
+        {
+            // Display count of associated budgets (active or inactive), linking to the
+            // schedules and budgets report filtered to this category
+            data: "budgets_count",
+            title: __("Budgets"),
+            render: function(data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+                if (!(data > 0)) {
+                    return __('None');
+                }
+
+                return `<a href="${categoryFilteredReportUrl(route('report.schedules'), row.id)}">${data}</a>`;
             },
             type: 'num',
         },
@@ -184,11 +220,14 @@ window.table = $(dataTableSelector).DataTable({
         if (data.transactions_count_regular === 0) {
             $('td:eq(3)', row).addClass("text-muted text-italic");
         }
-        if (!data.transactions_min_date) {
+        if (data.budgets_count === 0) {
             $('td:eq(4)', row).addClass("text-muted text-italic");
         }
-        if (!data.transactions_max_date) {
+        if (!data.transactions_min_date) {
             $('td:eq(5)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_max_date) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
         }
     },
     order: [
@@ -200,15 +239,14 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
-    responsive: true,
     drawCallback: function () {
         initializeBootstrapTooltips(document.querySelector(dataTableSelector));
     },
     initComplete : function(settings) {
         initializeBootstrapTooltips(document.querySelector(dataTableSelector));
 
-        $(settings.nTable).on("click", "td.activeIcon > i", function() {
-            var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+        $(settings.table).on("click", "td.activeIcon > i", function() {
+            var row = $(settings.table).DataTable().row( $(this).parents('tr') );
 
             // Do not request change if previous request is still in progress
             if ($(this).hasClass("fa-spinner")) {
@@ -243,56 +281,22 @@ window.table = $(dataTableSelector).DataTable({
                 },
                 complete: function(_data) {
                     // Re-render row
-                    row.invalidate();
+                    row.invalidate().draw(false);
                 }
             });
         });
 
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            let element = $(this);
-            element.addClass('busy');
-
-            // Send request to change investment active state
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.v1.categories.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.categories = window.categories.filter(category => category.id !== data.category.id);
-                    recalculateChildrenCounts(window.categories);
-
-                    row.remove();
-                    table.rows().invalidate().draw(false);
-                    toastHelpers.showSuccessToast(
-                        __('Category deleted')
-                    );
-                },
-                error: function (data) {
-                    toastHelpers.showErrorToast(
-                        __('Error while trying to delete category: ') + data.responseJSON.error
-                    );
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
-                }
-            });
-        });
     }
+});
+
+// Listener for delete button. A full invalidate+redraw (rather than removing just the deleted
+// row) is needed because deleting a category also changes children_count on its parent's other
+// rows, which the delete button's own enabled/disabled state depends on.
+initializeDeleteAssetButtonListener(dataTableSelector, 'api.v1.categories.destroy', __('Category deleted'), function (id, tr) {
+    window.categories = window.categories.filter(category => category.id !== id);
+    recalculateChildrenCounts(window.categories);
+    table.row(tr).remove();
+    table.rows().invalidate().draw(false);
 });
 
 // Listeners for filters

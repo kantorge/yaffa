@@ -163,6 +163,7 @@
                         class="form-select"
                         id="currency_id"
                         name="currency_id"
+                        data-original-currency-id="{{ $investment['currency_id'] ?? '' }}"
                     >
                         @forelse($allCurrencies as $id => $name)
                             <option
@@ -221,11 +222,11 @@
             </div>
 
         </div>
-        <div class="card-footer">
+        <div class="card-footer text-end">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('investments.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
         </div>
     </div>
 </form>

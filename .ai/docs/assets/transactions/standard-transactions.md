@@ -30,7 +30,7 @@ This is the part of the transaction system most users interact with most often d
 
 - Supports withdrawals, deposits, and transfers.
 - Supports category allocation through transaction items for withdrawals and deposits.
-- Supports optional scheduling and budgeting for future planning.
+- Supports optional scheduling for future planning; a scheduled withdrawal/deposit's items automatically count toward category budget comparison, with no separate flag.
 
 ### Conceptual Benefits
 
@@ -116,7 +116,7 @@ Important distinction:
 
 - transaction subtype
 - source and destination account(s) or payee
-- schedule of budget flag (the concept of scheduling and budgeting is described in a separate file)
+- schedule configuration (described in a separate file; see [Schedules](schedules.md))
 - amount field(s)
 - date or schedule configuration
 - optional comment
@@ -133,9 +133,9 @@ Important distinction:
 
 - Withdrawal and deposit are payee-linked cashflow transactions.
 - Transfer links two real accounts and should remain neutral at portfolio level.
-- Standard transactions can be historical, scheduled, budgeted, or both planned and scheduled.
+- Standard transactions can be historical or scheduled.
 - Reconciled status is only meaningful for historical standard transactions.
-- Budget mode is available for standard cashflow planning, but not for transfer behavior.
+- A scheduled withdrawal/deposit's categorized items automatically feed category budget comparison; transfers never do, since they have no items. A category-level target with no linked transaction at all is a standalone [Budget](../budget/budget.md), not a mode of a standard transaction.
 - Transaction items are most important for withdrawal and deposit because those are the main categorized cashflow use cases.
 
 ## User Flow
@@ -144,13 +144,13 @@ Important distinction:
 2. YAFFA adapts the source and destination fields accordingly.
 3. User enters the amounts and optional comment.
 4. For deposit or withdrawal, the user can split the transaction into multiple categorized items.
-5. The transaction is saved as historical or planning-oriented depending on the selected mode.
+5. The transaction is saved as historical or scheduled depending on the selected mode.
 
 ## Edge Cases / Constraints
 
 - Transfer should not be mixed conceptually with normal spending or income.
-- Budget mode is not intended for transfer scenarios.
-- Scheduled and budgeted standard transactions cannot be reconciled until they become actual historical records.
+- Transfers are never included in category budget comparison, since they never have transaction items.
+- Scheduled standard transactions cannot be reconciled until they become actual historical records.
 
 ## Dependencies
 
@@ -167,7 +167,7 @@ Important distinction:
 ## Frontend Interaction
 
 - The standard transaction form presents buttons for withdrawal, deposit, and transfer.
-- The same form can expose scheduling and budget controls when appropriate.
+- The same form can expose scheduling controls when appropriate; there is no budget checkbox on this form — a standalone target with no linked transaction is created as a [Budget](../budget/budget.md) instead, from the schedules report page.
 - Split items are shown as part of the detailed entry workflow.
 
 ## Confidence Level

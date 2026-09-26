@@ -17,13 +17,16 @@ return [
 
     // Tables/columns in demo.sql whose dates are relative to seed_anchor_date and must be
     // shifted in lockstep by both app:sandbox:reset-database and the sandbox dump/promote commands.
+    // An optional rrule_column names a RFC 5545 RRULE column whose UNTIL date is shifted too (it
+    // is stored inside the string, so it can't be listed under columns).
     // Note: investment_prices is intentionally NOT included here - its seed dates are already
     // authored close to "now" (not relative to seed_anchor_date like the tables below), so shifting
     // it by the same offset would push prices into the future. It is still included in the dump/
     // promote table list so manual edits to it are captured, just without a date shift applied.
     'seed_date_shift_columns' => [
         'transactions' => ['columns' => ['date'], 'scope' => ['user_id' => 1]],
-        'transaction_schedules' => ['columns' => ['start_date', 'next_date', 'end_date'], 'scope' => null],
+        'transaction_schedules' => ['columns' => ['start_date', 'next_date'], 'scope' => null, 'rrule_column' => 'rrule'],
+        'budgets' => ['columns' => ['start_date'], 'scope' => ['user_id' => 1], 'rrule_column' => 'rrule'],
     ],
 
     // Tables where reset-database's own post-load steps (not the demo.sql load itself) create

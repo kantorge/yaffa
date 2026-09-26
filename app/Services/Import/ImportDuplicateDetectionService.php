@@ -2,6 +2,7 @@
 
 namespace App\Services\Import;
 
+use App\Casts\MoneyCast;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
 use App\Models\User;
@@ -74,7 +75,9 @@ class ImportDuplicateDetectionService
                         'summary' => [
                             'date' => $transaction?->date?->format('Y-m-d'),
                             'comment' => $transaction?->comment,
-                            'amount' => $transaction ? (float) $transaction->transactionItems->sum('amount') : null,
+                            'amount' => $transaction
+                                ? $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount))
+                                : null,
                         ],
                     ];
                 })
@@ -153,7 +156,9 @@ class ImportDuplicateDetectionService
                         'summary' => [
                             'next_date' => $transaction?->transactionSchedule?->next_date?->format('Y-m-d'),
                             'comment' => $transaction?->comment,
-                            'amount' => $transaction ? (float) $transaction->transactionItems->sum('amount') : null,
+                            'amount' => $transaction
+                                ? $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount))
+                                : null,
                             'frequency' => $transaction?->transactionSchedule?->frequency,
                         ],
                     ];
@@ -356,7 +361,7 @@ class ImportDuplicateDetectionService
         $signals = ['date'];
 
         $draftAmount = is_numeric($draft['amount'] ?? null) ? (float) $draft['amount'] : null;
-        $transactionAmount = (float) $transaction->transactionItems->sum('amount');
+        $transactionAmount = $transaction->transactionItems->sum(fn ($item) => MoneyCast::toFloat($item->amount));
 
         if ($draftAmount !== null && abs($draftAmount - $transactionAmount) < 0.005) {
             $signals[] = 'amount';

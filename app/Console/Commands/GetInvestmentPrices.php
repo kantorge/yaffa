@@ -7,9 +7,13 @@ use App\Models\Investment;
 use App\Services\InvestmentProviderPreflightService;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
+#[Signature('app:investment-prices:get')]
+#[Description('Run retrieval of investment prices for all investments with known price providers.')]
 class GetInvestmentPrices extends Command
 {
     public function __construct(
@@ -18,20 +22,6 @@ class GetInvestmentPrices extends Command
     ) {
         parent::__construct();
     }
-
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:investment-prices:get';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Run retrieval of investment prices for all investments with known price providers.';
 
     /**
      * Execute the console command.

@@ -10,7 +10,7 @@ use App\Services\AiUserSettingsResolver;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Storage;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class CreateAiDocumentFromSource implements ShouldQueue
 {

@@ -4,3 +4,27 @@
   will-change: auto;
   @include transition(padding .15s);
 }
+
+// Geometry that other CSS derives from a .sidebar-family element (--cui-sidebar-occupy-start
+// for .wrapper's padding-left; --cui-sidebar-width-driven margins for any .sidebar-overlaid
+// panel, e.g. #quick-action-bar) isn't stable on the very first style/layout pass. Combined
+// with the transitions CoreUI puts on .sidebar and .wrapper, that settling visibly animates
+// in on every page load instead of being correct from the first frame - which causes two
+// separate problems:
+//  - it shifts all page content (breadcrumbs, action buttons, ...) out from under a click
+//    aimed at its pre-shift position;
+//  - CoreUI's Sidebar reads an .sidebar-overlaid panel's bounding rect at construction time
+//    to decide whether it's open (`_show`); if construction lands inside this unsettled
+//    window, it can wrongly conclude an actually-closed panel (like the quick-action-bar) is
+//    open, and wire up CoreUI's own document-wide "click outside closes it" listener - which
+//    then silently swallows the very next click ANYWHERE on the page (e.g. a nav link needing
+//    a second click to work) before removing itself.
+// Disabling the transition only for this initial settling window fixes both at the root:
+// every layout value is correct from the first frame, so there's no unsettled state left for
+// either CSS positioning or CoreUI's own rect-reading JS to observe. app.js removes this class
+// a couple of frames after first paint, so later, user-triggered sidebar toggles still animate
+// as intended.
+body.pre-render .wrapper,
+body.pre-render .sidebar {
+  transition: none !important;
+}

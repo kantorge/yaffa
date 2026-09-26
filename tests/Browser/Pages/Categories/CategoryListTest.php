@@ -4,7 +4,6 @@ namespace Tests\Browser\Pages\Categories;
 
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Payee;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
@@ -157,10 +156,7 @@ class CategoryListTest extends DuskTestCase
                 'parent_id' => null,
             ]);
 
-        AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(['category_id' => $payeeDefaultCategory->id]), 'config')
-            ->create();
+        AccountEntity::factory()->asPayee($user, ['category_id' => $payeeDefaultCategory->id])->create();
 
         // Parent category which is the preferred category of a payee, which cannot be deleted
         /** @var Category $payeePreferredCategory */
@@ -171,10 +167,7 @@ class CategoryListTest extends DuskTestCase
             ]);
 
         /** @var AccountEntity $payeeWithPreferredCategory */
-        $payeeWithPreferredCategory = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
-            ->create();
+        $payeeWithPreferredCategory = AccountEntity::factory()->asPayee($user, ['category_id' => null])->create();
 
         $payeeWithPreferredCategory
             ->categoryPreference()
@@ -189,10 +182,7 @@ class CategoryListTest extends DuskTestCase
             ]);
 
         /** @var AccountEntity $payeeWithDeferredCategory */
-        $payeeWithDeferredCategory = AccountEntity::factory()
-            ->for($user)
-            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
-            ->create();
+        $payeeWithDeferredCategory = AccountEntity::factory()->asPayee($user, ['category_id' => null])->create();
 
         $payeeWithDeferredCategory
             ->categoryPreference()

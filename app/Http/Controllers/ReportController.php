@@ -2,26 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class ReportController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class ReportController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
-
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
 
     public function cashFlow(Request $request): View
     {

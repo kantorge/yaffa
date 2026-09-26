@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable redis \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-    pdo pdo_mysql mbstring zip xml gd exif
+    pdo pdo_mysql mbstring zip xml gd exif bcmath
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -58,8 +58,10 @@ COPY ./docker/php-logging.ini /usr/local/etc/php/conf.d/zz-php-logging.ini
 # Install dependencies via Composer
 RUN composer install --no-dev --no-interaction --no-progress
 
-# Set permissions for the app files (to ensure Apache can access the app)
-RUN chown -R www-data:www-data /var/www/html \
+# Only storage/ and bootstrap/cache/ need to be writable by Apache at runtime -- the rest of
+# the app (notably vendor/, 50k+ files) only needs to stay readable, which COPY already leaves
+# it as. Scoping the chown to match the chmod avoids recursing over the whole tree.
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Replace the default Apache vhost with one that points at Laravel's public/ directory.

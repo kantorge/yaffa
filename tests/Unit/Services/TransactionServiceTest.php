@@ -6,6 +6,7 @@ use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\TransactionService;
+use Brick\Money\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -24,6 +25,19 @@ class TransactionServiceTest extends TestCase
 
         $this->service = new TransactionService();
         $this->user = User::factory()->create();
+    }
+
+    /**
+     * getTransactionCashFlow() now returns Money (FR-7); compare its exact amount
+     * rather than relying on PHP's loose float equality.
+     */
+    private function assertCashFlowEquals(float $expected, ?Money $actual): void
+    {
+        $this->assertNotNull($actual);
+        $this->assertSame(
+            number_format($expected, $actual->getAmount()->getScale(), '.', ''),
+            (string) $actual->getAmount()
+        );
     }
 
     /**
@@ -148,8 +162,7 @@ class TransactionServiceTest extends TestCase
 
         $cashFlow = $this->service->getTransactionCashFlow($transaction);
 
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(-100, $cashFlow);
+        $this->assertCashFlowEquals(-100, $cashFlow);
     }
 
     /**
@@ -169,8 +182,7 @@ class TransactionServiceTest extends TestCase
 
         $cashFlow = $this->service->getTransactionCashFlow($transaction);
 
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(100, $cashFlow);
+        $this->assertCashFlowEquals(100, $cashFlow);
     }
 
     /**
@@ -206,8 +218,7 @@ class TransactionServiceTest extends TestCase
 
         // Buy: -(price * quantity + commission + tax)
         // -1 * (10 * 5) + 0 - 1 - 2 = -53
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(-53, $cashFlow);
+        $this->assertCashFlowEquals(-53, $cashFlow);
     }
 
     /**
@@ -228,8 +239,7 @@ class TransactionServiceTest extends TestCase
 
         // Sell: +(price * quantity - commission - tax)
         // 1 * (10 * 5) + 0 - 1 - 2 = 47
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(47, $cashFlow);
+        $this->assertCashFlowEquals(47, $cashFlow);
     }
 
     /**
@@ -249,8 +259,66 @@ class TransactionServiceTest extends TestCase
 
         // Dividend: 0 * (price * quantity) + dividend - commission - tax
         // 0 + 100 - 10 - 2 = 88
-        $this->assertNotNull($cashFlow);
-        $this->assertEquals(88, $cashFlow);
+        $this->assertCashFlowEquals(88, $cashFlow);
+    }
+
+    /**
+     * add_shares/remove_shares have no price, so amountMultiplier() is null for them - they
+     * carry no cash flow on their own.
+     */
+    public function test_get_transaction_cash_flow_for_investment_add_shares_without_fee_returns_null(): void
+    {
+        $transaction = Transaction::factory()
+            ->add_shares($this->user, [
+                'quantity' => 5,
+                'commission' => null,
+                'tax' => null,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        $this->assertNull($cashFlow);
+    }
+
+    /**
+     * A commission/tax recorded against an add_shares correction is still a real cash cost
+     * even though the share increase itself has no price - it must reduce the cash flow
+     * rather than being dropped because amountMultiplier() is null for this type.
+     */
+    public function test_get_transaction_cash_flow_for_investment_add_shares_with_fee(): void
+    {
+        $transaction = Transaction::factory()
+            ->add_shares($this->user, [
+                'quantity' => 5,
+                'commission' => 2,
+                'tax' => 1,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        // Add shares: 0 (no price/quantity term) - commission - tax = -3
+        $this->assertCashFlowEquals(-3, $cashFlow);
+    }
+
+    /**
+     * Mirror of the add_shares case above for remove_shares.
+     */
+    public function test_get_transaction_cash_flow_for_investment_remove_shares_with_fee(): void
+    {
+        $transaction = Transaction::factory()
+            ->remove_shares($this->user, [
+                'quantity' => 5,
+                'commission' => 2,
+                'tax' => 1,
+            ])
+            ->create(['user_id' => $this->user->id]);
+
+        $cashFlow = $this->service->getTransactionCashFlow($transaction);
+
+        // Remove shares: 0 (no price/quantity term) - commission - tax = -3
+        $this->assertCashFlowEquals(-3, $cashFlow);
     }
 
     /**
@@ -291,7 +359,6 @@ class TransactionServiceTest extends TestCase
         // Assert the new transaction has correct properties
         $this->assertEquals($originalNextDate?->format('Y-m-d'), $newTransaction->date?->format('Y-m-d'));
         $this->assertFalse($newTransaction->schedule);
-        $this->assertFalse($newTransaction->budget);
         $this->assertEquals($scheduledTransaction->user_id, $newTransaction->user_id);
     }
 
@@ -372,7 +439,6 @@ class TransactionServiceTest extends TestCase
             ->create([
                 'user_id' => $this->user->id,
                 'schedule' => false,
-                'budget' => false,
             ]);
 
         $this->service->recalculateMonthlySummaries($transaction);
@@ -380,7 +446,6 @@ class TransactionServiceTest extends TestCase
         // For simple transactions, the job is dispatched synchronously
         // We can't easily test dispatch_sync, but we can verify the transaction is loaded correctly
         $this->assertFalse($transaction->schedule);
-        $this->assertFalse($transaction->budget);
     }
 
     /**
@@ -395,7 +460,6 @@ class TransactionServiceTest extends TestCase
             ->create([
                 'user_id' => $this->user->id,
                 'schedule' => true,
-                'budget' => false,
             ]);
 
         $this->service->recalculateMonthlySummaries($transaction);

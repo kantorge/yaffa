@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Bkwld\Cloner\Cloneable;
+use Brick\Money\Money;
 use Database\Factories\TransactionItemFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -18,8 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id
  * @property int $transaction_id
  * @property int|null $category_id
- * @property float $amount
- * @property float|null $amount_in_base
+ * @property-read Money $amount
+ * @property-write Money|string|int|float $amount
+ * @property string|null $amount_in_base
  * @property string|null $comment
  * @property-read Category|null $category
  * @property-read Collection|Tag[] $tags
@@ -37,29 +42,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @mixin Eloquent
  * @mixin \Eloquent
  */
+#[WithoutTimestamps]
+#[Fillable('transaction_id', 'category_id', 'amount', 'comment')]
 class TransactionItem extends Model
 {
     use Cloneable;
     use HasFactory;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'transaction_id',
-        'category_id',
-        'amount',
-        'comment',
-    ];
 
     protected $cloneable_relations = [
         'tags',
@@ -68,13 +56,22 @@ class TransactionItem extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'float',
+            'amount' => MoneyCast::class . ':4,resolveAmountCurrency',
         ];
     }
 
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
+    }
+
+    /**
+     * The currency an item's amount is denominated in is the parent transaction's
+     * currency (falling back to the user's base currency, same as Transaction::transaction_currency).
+     */
+    public function resolveAmountCurrency(): Currency
+    {
+        return $this->loadMissing('transaction')->transaction->transaction_currency;
     }
 
     public function category(): BelongsTo

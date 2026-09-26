@@ -36,7 +36,17 @@
       <p aria-hidden="true" v-if="!ready" class="placeholder-glow">
         <span class="placeholder col-12"></span>
       </p>
-      <div id="categoryWaterfallChart" ref="chartdiv" v-show="ready"></div>
+      <waterfall-chart
+        v-show="ready"
+        :raw-data="rawData"
+        :result-label="__('widget.categoryWaterfall.result')"
+        :base-currency="baseCurrency"
+        :locale="locale"
+        :language="language"
+        :no-data-message="__('widget.categoryWaterfall.noData')"
+        clickable
+        @column-click="handleColumnClick"
+      ></waterfall-chart>
     </div>
     <div class="card-footer text-end">
       <div
@@ -103,17 +113,22 @@
 </template>
 
 <script>
-  import * as am4core from '@amcharts/amcharts4/core';
-  import * as am4charts from '@amcharts/amcharts4/charts';
-  import am4themes_animated from '@amcharts/amcharts4/themes/animated';
-  am4core.useTheme(am4themes_animated);
   import { __, toFormattedDate } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
-  import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
-  import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+  import WaterfallChart from '@/shared/ui/charts/WaterfallChart.vue';
+
+  function formatDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 
   export default {
+    components: {
+      'waterfall-chart': WaterfallChart,
+    },
     props: {
       categoryAxisVisible: {
         type: Boolean,
@@ -130,6 +145,7 @@
         busy: false,
         baseCurrency: window.YAFFA.userSettings.baseCurrency,
         locale: window.YAFFA.userSettings.locale,
+        language: window.YAFFA.userSettings.language,
         rawData: [],
         missingRateCurrencies: [],
         year: new Date().getFullYear(),
@@ -147,123 +163,7 @@
       this.available = true;
       this.refreshData();
     },
-    mounted() {
-      if (!this.available) {
-        return;
-      }
-
-      this.createChart();
-      this._colorModeHandler = () => {
-        if (this.chart) this.chart.dispose();
-        this.createChart();
-        if (!this.rawData || this.rawData.length === 0) {
-          this.noDataMessagecontainer.show();
-        } else {
-          this.noDataMessagecontainer.hide();
-        }
-      };
-      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-    },
     methods: {
-      createChart() {
-        applyAmChartsColorTheme(am4core);
-
-        let chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart);
-        applyAmChartsLocalization(
-          chart,
-          this.locale,
-          window.YAFFA.userSettings.language,
-        );
-        chart.hiddenState.properties.opacity = 0;
-
-        // Set up number formatting
-        chart.numberFormatter.intlLocales = this.locale;
-        chart.numberFormatter.numberFormat = {
-          style: 'currency',
-          currency: this.baseCurrency.iso_code,
-          minimumFractionDigits: 0,
-        };
-
-        chart.data = this.chartData;
-
-        var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
-        categoryAxis.dataFields.category = 'category';
-        categoryAxis.renderer.minGridDistance = 40;
-
-        if (!this.categoryAxisVisible) {
-          categoryAxis.hide();
-        } else {
-          categoryAxis.events.on('sizechanged', function (ev) {
-            var axis = ev.target;
-            var cellWidth = axis.pixelWidth / (axis.endIndex - axis.startIndex);
-            if (cellWidth < axis.renderer.labels.template.maxWidth) {
-              axis.renderer.labels.template.rotation = -45;
-              axis.renderer.labels.template.horizontalCenter = 'right';
-              axis.renderer.labels.template.verticalCenter = 'middle';
-            } else {
-              axis.renderer.labels.template.rotation = 0;
-              axis.renderer.labels.template.horizontalCenter = 'middle';
-              axis.renderer.labels.template.verticalCenter = 'top';
-            }
-          });
-        }
-
-        chart.yAxes.push(new am4charts.ValueAxis());
-
-        var columnSeries = chart.series.push(new am4charts.ColumnSeries());
-        columnSeries.dataFields.categoryX = 'category';
-        columnSeries.dataFields.valueY = 'barValue';
-        columnSeries.dataFields.openValueY = 'open';
-        columnSeries.fillOpacity = 0.8;
-        columnSeries.sequencedInterpolation = true;
-        columnSeries.interpolationDuration = 1500;
-        columnSeries.tooltipText = `[bold]{categoryX}[/]: {value}`;
-
-        var columnTemplate = columnSeries.columns.template;
-        columnTemplate.strokeOpacity = 0;
-        columnTemplate.propertyFields.fill = 'color';
-
-        var stepSeries = chart.series.push(new am4charts.StepLineSeries());
-        stepSeries.dataFields.categoryX = 'category';
-        stepSeries.dataFields.valueY = 'stepValue';
-        stepSeries.noRisers = true;
-        stepSeries.stroke = new am4core.InterfaceColorSet().getFor(
-          'alternativeBackground',
-        );
-        stepSeries.strokeDasharray = '3,3';
-        stepSeries.interpolationDuration = 2000;
-        stepSeries.sequencedInterpolation = true;
-
-        // Because column width is 80%, we modify start/end locations so that step would start with column and end with next column
-        stepSeries.startLocation = 0.1;
-        stepSeries.endLocation = 1.1;
-
-        chart.cursor = new am4charts.XYCursor();
-        chart.cursor.behavior = 'none';
-
-        // Optional message for missing data
-        const noDataMessagecontainer = chart.chartContainer.createChild(
-          am4core.Container,
-        );
-        noDataMessagecontainer.id = 'noDataMessagecontainer';
-        noDataMessagecontainer.align = 'center';
-        noDataMessagecontainer.isMeasured = false;
-        noDataMessagecontainer.x = am4core.percent(50);
-        noDataMessagecontainer.horizontalCenter = 'middle';
-        noDataMessagecontainer.y = am4core.percent(50);
-        noDataMessagecontainer.verticalCenter = 'middle';
-        noDataMessagecontainer.layout = 'vertical';
-
-        const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
-        messageLabel.text = __('widget.categoryWaterfall.noData');
-        messageLabel.textAlign = 'middle';
-        messageLabel.maxWidth = 300;
-        messageLabel.wrap = true;
-
-        this.chart = chart;
-        this.noDataMessagecontainer = noDataMessagecontainer;
-      },
-
       previousMonth: function () {
         this.month--;
         if (this.month < 1) {
@@ -314,18 +214,34 @@
             this.missingRateCurrencies =
               data.warnings?.currenciesWithoutRates || [];
 
-            if (!this.rawData || this.rawData.length === 0) {
-              this.noDataMessagecontainer.show();
-            } else {
-              this.noDataMessagecontainer.hide();
-            }
-
             this.ready = true;
           })
           .finally(() => (this.busy = false))
           .catch((error) => {
             toastHelpers.showErrorToast(error.message);
           });
+      },
+
+      /**
+       * Open the find transactions report, filtered to the month currently shown by
+       * the chart, the transaction types that contributed to the clicked bucket, and
+       * (for standard categories) the underlying top-level category. The find
+       * transactions report already expands a top-level category into itself plus its
+       * children (same as the budget chart and scheduled items filters), which matches
+       * how this bucket was aggregated in the first place.
+       */
+      handleColumnClick(bucket) {
+        const query = {
+          date_from: formatDate(new Date(this.year, this.month - 1, 1)),
+          date_to: formatDate(new Date(this.year, this.month, 0)),
+          types: bucket.transaction_types || [],
+        };
+
+        if (bucket.category_id) {
+          query.categories = [bucket.category_id];
+        }
+
+        window.location.href = this.route('reports.transactions', query);
       },
 
       __,
@@ -343,59 +259,6 @@
           __('widget.categoryWaterfall.missingRatesTooltipSuffix')
         );
       },
-      chartData() {
-        var openHistory = 0;
-
-        let data = this.rawData
-          .sort(function (a, b) {
-            // Assign the values of a and b to x and y respectively
-            let x = a.value;
-            let y = b.value;
-
-            // If both x and y are negative, convert them to positive by multiplying by -1
-            // The reason for this is that we want negative values to be sorted as absolute values
-            if (x < 0 && y < 0) {
-              x = x * -1;
-              y = y * -1;
-            }
-
-            // Compare x and y
-            return x > y ? -1 : x < y ? 1 : 0;
-          })
-          .map(function (category) {
-            // Assign opening to the last known value
-            category.open = openHistory;
-            category.stepValue = openHistory + category.value;
-            category.barValue = openHistory + category.value;
-
-            // Adjust open with current value
-            openHistory = category.barValue;
-
-            // Adjust color
-            category.color =
-              category.value > 0
-                ? am4core.color('green')
-                : am4core.color('red');
-
-            return category;
-          });
-
-        // Add end result if there are more than one data points
-        if (data.length > 1) {
-          // Open history is the last value of the data
-          data.push({
-            category: __('widget.categoryWaterfall.result'),
-            open: 0,
-            stepValue: 0,
-            barValue: openHistory,
-            value: openHistory,
-            color:
-              openHistory > 0 ? am4core.color('green') : am4core.color('red'),
-          });
-        }
-
-        return data;
-      },
 
       dateLabel() {
         const date = new Date(this.year, this.month - 1, 1);
@@ -405,28 +268,8 @@
         });
       },
     },
-    beforeUnmount() {
-      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
-      if (this.chart) {
-        this.chart.dispose();
-      }
-    },
     updated() {
-      if (!this.chart) {
-        return;
-      }
-
-      // Update chart based on props
-      this.chart.data = this.chartData;
-      this.chart.validateData();
       initializeBootstrapTooltips(this.$el);
     },
   };
 </script>
-
-<style scoped>
-  #categoryWaterfallChart {
-    width: 100%;
-    height: 350px;
-  }
-</style>

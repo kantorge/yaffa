@@ -5,26 +5,15 @@ namespace App\Console\Commands;
 use App\Jobs\MergeStandardTransactionItemsJob;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 
+#[Signature('app:transactions:merge-standard-items' . ' {userId? : The ID of the user whose transactions to process. All users are processed if not set.}')]
+#[Description('Merge duplicate transaction items on existing standard transactions for legacy data cleanup, if enabled for the user.')]
 class MergeStandardTransactionItems extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:transactions:merge-standard-items'
-        . ' {userId? : The ID of the user whose transactions to process. All users are processed if not set.}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Merge duplicate transaction items on existing standard transactions for legacy data cleanup, if enabled for the user.';
-
     /**
      * Execute the console command.
      */

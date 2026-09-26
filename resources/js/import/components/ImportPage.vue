@@ -157,7 +157,7 @@
             buttonsStyling: false,
             customClass: {
               confirmButton: 'btn btn-danger',
-              cancelButton: 'btn btn-outline-secondary ms-3',
+              cancelButton: 'btn btn-secondary ms-3',
             },
           });
 
@@ -291,7 +291,7 @@
             buttonsStyling: false,
             customClass: {
               confirmButton: 'btn btn-danger',
-              cancelButton: 'btn btn-outline-secondary ms-3',
+              cancelButton: 'btn btn-secondary ms-3',
             },
           });
           if (!result.isConfirmed) {
@@ -429,7 +429,6 @@
           transaction_type: txType,
           date: draft.date,
           schedule: false,
-          budget: false,
           reconciled: false,
           comment: null,
           config: {

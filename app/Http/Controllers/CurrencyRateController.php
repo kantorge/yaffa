@@ -2,27 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
-class CurrencyRateController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class CurrencyRateController extends Controller
 {
     use CurrencyTrait;
-
-    public static function middleware(): array
-    {
-        return ['auth', 'verified'];
-    }
 
     /**
      * Display a listing of the resource, based on the selected currencies.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'from')]
     public function index(Currency $from, Currency $to): View
     {
         /**
@@ -32,7 +31,6 @@ class CurrencyRateController extends Controller implements HasMiddleware
          */
 
         // Authorize user access to requested currencies
-        Gate::authorize('view', $from);
         Gate::authorize('view', $to);
 
         return view('currency-rates.index', [

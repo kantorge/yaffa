@@ -70,7 +70,7 @@ Use this widget when the user wants to know What is scheduled soon?
 
 ## Core Logic / Rules
 
-- Only items with a valid next scheduled date are shown.
+- Only items with a valid next scheduled date are shown. Standalone [Budget](../../assets/budget/budget.md) rows have no next date and never appear here — this widget is schedule-only, unlike the merged Schedules & Budgets report.
 - The calendar focuses on schedule instances rather than the full transaction history.
 - The widget is a visibility tool, not a full schedule-management interface.
 - The popover can stay open long enough for interaction and closes when the calendar moves or the widget is dismissed.

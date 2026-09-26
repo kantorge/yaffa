@@ -7,7 +7,6 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -22,7 +21,6 @@ class InvestmentGroupController extends Controller implements HasMiddleware
             new Middleware('can:viewAny,' . InvestmentGroup::class, only: ['index']),
             new Middleware('can:create,' . InvestmentGroup::class, only: ['create', 'store']),
             new Middleware('can:update,investment_group', only: ['edit', 'update']),
-            new Middleware('can:delete,investment_group', only: ['destroy']),
         ];
     }
 
@@ -105,31 +103,5 @@ class InvestmentGroupController extends Controller implements HasMiddleware
         self::addSimpleSuccessMessage(__('Investment group updated'));
 
         return to_route('investment-groups.index');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
-    {
-        /**
-         * @delete("/investment-groups/{investment_group}")
-         * @name("investment-groups.destroy")
-         * @middlewares("web", "auth", "verified")
-         */
-        try {
-            $investmentGroup->delete();
-            self::addSimpleSuccessMessage(__('Investment group deleted'));
-
-            return to_route('investment-groups.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleErrorMessage(__('Investment group is in use, cannot be deleted'));
-            } else {
-                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
-        }
     }
 }

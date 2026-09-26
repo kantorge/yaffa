@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
+use App\Models\TransactionDetailInvestment;
 use Closure;
 use Illuminate\Validation\Rule;
 
@@ -73,6 +75,26 @@ class AccountEntityRequest extends FormRequest
                     'required',
                     Rule::exists('currencies', 'id')
                         ->where(fn ($query) => $query->where('user_id', $this->user()->id)),
+                    // An investment transaction's commission/tax/dividend are cast to the
+                    // account's currency (MoneyCast) while price is cast to the investment's
+                    // - changing the account's currency after it's been used would silently
+                    // mismatch every existing transaction's stored values against a currency
+                    // they were never recorded in.
+                    function (string $attribute, mixed $value, Closure $fail) use ($accountEntity): void {
+                        if (!$accountEntity instanceof AccountEntity || !$accountEntity->config instanceof Account) {
+                            return;
+                        }
+
+                        if ((int) $value === (int) $accountEntity->config->currency_id) {
+                            return;
+                        }
+
+                        $used = TransactionDetailInvestment::where('account_id', $accountEntity->id)->exists();
+
+                        if ($used) {
+                            $fail(__('The currency cannot be changed because this account is already used in an investment transaction.'));
+                        }
+                    },
                 ],
                 'config.default_date_range' => [
                     'nullable',

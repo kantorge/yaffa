@@ -30,6 +30,9 @@ cp .env.example docker/.env
 sed -i 's|^DB_HOST=.*|DB_HOST=db|' docker/.env
 sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" docker/.env
 
+print_step "Validating https profile (Caddy) wiring"
+docker compose -f "$COMPOSE_FILE" --profile https config -q
+
 print_step "Starting core services"
 docker compose -f "$COMPOSE_FILE" up -d db redis app
 

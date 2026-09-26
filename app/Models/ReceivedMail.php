@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,17 +36,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereUserId($value)
  * @mixin Eloquent
  */
+#[Fillable('message_id', 'user_id', 'subject', 'html', 'text')]
 class ReceivedMail extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'message_id',
-        'user_id',
-        'subject',
-        'html',
-        'text',
-    ];
 
     public function user(): BelongsTo
     {

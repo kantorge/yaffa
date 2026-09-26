@@ -186,7 +186,6 @@
         <transaction-schedule
           :isVisible="transaction.schedule"
           :isSchedule="transaction.schedule"
-          :isBudget="false"
           :schedule="transaction.transaction_schedule || {}"
         ></transaction-schedule>
       </div>
@@ -196,7 +195,7 @@
 
 <script>
   import TransactionSchedule from './Schedule.vue';
-  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import { __, toFormattedCurrency, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
 
   export default {
     components: {
@@ -236,7 +235,7 @@
           return __('Not set');
         }
 
-        return this.transaction.config.quantity.toLocaleString(this.locale, {
+        return toFormattedNumber(this.transaction.config.quantity, this.locale, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 4,
         });

@@ -24,7 +24,15 @@ class TransactionTest extends TestCase
         $this->user = User::factory()->create();
     }
 
-    public function test_by_schedule_type_scope_filters_transactions_for_each_supported_mode(): void
+    /**
+     * FR-1: byScheduleType() is removed entirely in favor of a single isSchedule() scope
+     * (where('schedule', true)); the schedule=false case is expressed as a plain inline
+     * where('schedule', false) at call sites that need it. Neither depends on (or is affected
+     * by) the removed transactions.budget column any more, unlike the old
+     * 'budget'/'budget_only'/'both'/'any' branches this replaces - standalone budgets are now a
+     * separate `Budget` entity entirely, not a Transaction variant.
+     */
+    public function test_is_schedule_scope_filters_transactions_with_schedule_true(): void
     {
         $transactions = $this->createTransactionsForScheduleTypeScope();
         $otherUser = User::factory()->create();
@@ -33,94 +41,29 @@ class TransactionTest extends TestCase
             ->deposit($otherUser)
             ->create([
                 'user_id' => $otherUser->id,
-                'schedule' => false,
-                'budget' => true,
+                'schedule' => true,
             ]);
-
-        $this->assertSame(
-            [$transactions['schedule_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('schedule')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
 
         $this->assertSame(
             [$transactions['schedule_only']->id],
             Transaction::query()
                 ->where('user_id', $this->user->id)
-                ->byScheduleType('schedule_only')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['budget_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('budget')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['budget_only']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('budget_only')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('both')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['schedule_only']->id, $transactions['budget_only']->id, $transactions['both']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('any')
-                ->orderBy('id')
-                ->pluck('id')
-                ->all()
-        );
-
-        $this->assertSame(
-            [$transactions['regular']->id],
-            Transaction::query()
-                ->where('user_id', $this->user->id)
-                ->byScheduleType('none')
+                ->isSchedule()
                 ->orderBy('id')
                 ->pluck('id')
                 ->all()
         );
     }
 
-    public function test_by_schedule_type_scope_returns_unfiltered_query_for_unknown_type(): void
+    public function test_inline_schedule_false_where_clause_filters_transactions_with_schedule_false(): void
     {
         $transactions = $this->createTransactionsForScheduleTypeScope();
 
         $this->assertSame(
-            collect($transactions)
-                ->pluck('id')
-                ->sort()
-                ->values()
-                ->all(),
+            [$transactions['regular']->id],
             Transaction::query()
                 ->where('user_id', $this->user->id)
-                ->byScheduleType('unexpected-filter')
+                ->where('schedule', false)
                 ->orderBy('id')
                 ->pluck('id')
                 ->all()
@@ -135,28 +78,12 @@ class TransactionTest extends TestCase
                 ->create([
                     'user_id' => $this->user->id,
                     'schedule' => false,
-                    'budget' => false,
                 ]),
             'schedule_only' => Transaction::factory()
                 ->deposit($this->user)
                 ->create([
                     'user_id' => $this->user->id,
                     'schedule' => true,
-                    'budget' => false,
-                ]),
-            'budget_only' => Transaction::factory()
-                ->deposit($this->user)
-                ->create([
-                    'user_id' => $this->user->id,
-                    'schedule' => false,
-                    'budget' => true,
-                ]),
-            'both' => Transaction::factory()
-                ->deposit($this->user)
-                ->create([
-                    'user_id' => $this->user->id,
-                    'schedule' => true,
-                    'budget' => true,
                 ]),
         ];
     }
@@ -178,9 +105,6 @@ class TransactionTest extends TestCase
 
         $this->get(route('transaction.open', ['transaction' => $transaction->id, 'action' => 'edit']))
             ->assertRedirectToRoute('login');
-
-        $this->delete(route('transactions.destroy', ['transaction' => $transaction->id]))
-            ->assertRedirectToRoute('login');
     }
 
     /**
@@ -200,10 +124,6 @@ class TransactionTest extends TestCase
 
         $this->actingAs($this->user)
             ->get(route('transaction.open', ['transaction' => $transaction->id, 'action' => 'edit']))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-
-        $this->actingAs($this->user)
-            ->delete(route('transactions.destroy', ['transaction' => $transaction->id]))
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
@@ -398,28 +318,6 @@ class TransactionTest extends TestCase
     }
 
     /**
-     * Test that user can delete their own transaction
-     */
-    public function test_user_can_delete_own_transaction(): void
-    {
-        $transaction = Transaction::factory()
-            ->withdrawal($this->user)
-            ->create(['user_id' => $this->user->id]);
-
-        $transactionId = $transaction->id;
-        $configId = $transaction->config_id;
-
-        $response = $this->actingAs($this->user)
-            ->delete(route('transactions.destroy', ['transaction' => $transaction->id]));
-
-        $response->assertRedirect();
-
-        // Verify transaction was deleted
-        $this->assertDatabaseMissing('transactions', ['id' => $transactionId]);
-        $this->assertDatabaseMissing('transaction_details_standard', ['id' => $configId]);
-    }
-
-    /**
      * Test that user can skip a scheduled transaction instance
      */
     public function test_user_can_skip_scheduled_transaction_instance(): void
@@ -558,6 +456,11 @@ class TransactionTest extends TestCase
 
     public function test_create_from_draft_does_not_leak_other_users_account_entity(): void
     {
+        // The draft preview must still render (falling back to the acting user's base
+        // currency) even when the referenced account can't be resolved - give the
+        // acting user a currency to fall back to, same as every other test's fixtures.
+        \App\Models\Currency::factory()->for($this->user)->create(['base' => true]);
+
         $otherUser = User::factory()->create();
         $otherAccount = AccountEntity::factory()
             ->for($otherUser)
@@ -588,7 +491,45 @@ class TransactionTest extends TestCase
 
         /** @var Transaction $transaction */
         $transaction = $response->viewData('transaction');
-        $this->assertNull($transaction->config->getRelation('account_from'));
+        $this->assertNull($transaction->config->getRelation('accountFrom'));
         $response->assertDontSee('Other User Secret Account');
+    }
+
+    public function test_create_from_draft_ignores_spoofed_user_id(): void
+    {
+        \App\Models\Currency::factory()->for($this->user)->create(['base' => true]);
+
+        $otherUser = User::factory()->create();
+        \App\Models\Currency::factory()->for($otherUser)->create([
+            'base' => true,
+            'name' => 'Other User Secret Currency',
+            'iso_code' => 'ZZZ',
+        ]);
+
+        $draftData = [
+            'config_type' => 'standard',
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+            'date' => now()->format('Y-m-d'),
+            'user_id' => $otherUser->id,
+            'config' => [
+                'account_from_id' => null,
+                'account_to_id' => null,
+                'amount_from' => 100,
+                'amount_to' => 100,
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('transactions.createFromDraft'), [
+                'transaction' => json_encode($draftData),
+            ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        /** @var Transaction $transaction */
+        $transaction = $response->viewData('transaction');
+        $this->assertNotSame($otherUser->id, $transaction->user_id);
+        $response->assertDontSee('Other User Secret Currency');
+        $response->assertDontSee('ZZZ');
     }
 }

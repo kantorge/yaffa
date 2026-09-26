@@ -1,0 +1,56 @@
+# Version control history -- large and irrelevant to the build.
+.git
+.gitattributes
+
+# Rebuilt inside the image (composer install / npm ci); shipping a local copy
+# is wasteful at best and can inject a mismatched local install at worst.
+/vendor
+/node_modules
+
+# Secrets and local environment overrides -- must never end up in a shipped image.
+.env
+.env.backup
+.env.*.local
+
+# IDE and editor metadata
+/.idea
+/.vscode
+/.continue
+/.nova
+
+# Laravel IDE helper artifacts
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# Test and tooling caches
+/.phpunit.cache
+.phpunit.result.cache
+.pint.cache
+.eslintcache
+.stylelintcache
+
+# OS noise
+.DS_Store
+Thumbs.db
+npm-debug.log
+yarn-error.log
+
+# Generated storage content: logs, debugbar captures, cached views/sessions, local
+# exports. The image only needs the directory skeleton (preserved by the .gitignore
+# placeholders each subdirectory tracks); the actual runtime content is seeded fresh
+# into the yaffa_storage volume on first container start, and a local export could
+# contain real data that has no business being baked into a shipped image.
+storage/*.sql
+storage/logs/*.log
+storage/debugbar/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/pail/*
+
+# Generated frontend build output -- the assets stage produces its own via `npm run build`.
+/public/build
+/public/hot
+/public/storage

@@ -13,13 +13,21 @@ use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 
-class GoogleDriveConfigApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:settings', only: [
+    'show', 'store', 'update', 'destroy', 'test',
+    'sync', 'folderName', 'folderNameByCredentials',
+    'folders', 'foldersByCredentials',
+])]
+class GoogleDriveConfigApiController extends Controller
 {
     /**
      * Required Google service account JSON keys.
@@ -42,25 +50,13 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     ) {
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * Get the current Google Drive configuration for the authenticated user.
+     * Get Google Drive configuration
+     *
+     * Returns the current Google Drive configuration for the authenticated user.
      */
     public function show(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/google-drive/config")
-         * @name("api.v1.google-drive.config.show")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
         // For MVP, we assume one config per user
         /** @var User $user */
         $user = $request->user();
@@ -81,18 +77,16 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * Create Google Drive configuration
+     *
+     * Creates the Google Drive configuration for the authenticated user, replacing any
+     * existing configuration (only one config is supported per user).
+     *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function store(GoogleDriveConfigRequest $request): JsonResponse
     {
-        /**
-         * @post("/api/v1/google-drive/config")
-         * @name("api.v1.google-drive.config.store")
-         * @middlewares("api", "auth:sanctum", "verified")
-         */
-
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         /** @var User $user */
         $user = $request->user();
 
@@ -105,7 +99,6 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         // Create new config
         $config = GoogleDriveConfig::create([
-            'user_id' => $user->id,
             'service_account_email' => $serviceAccountEmail,
             'service_account_json' => $request->input('service_account_json'),
             'folder_id' => $request->input('folder_id'),
@@ -121,14 +114,13 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * PATCH /api/v1/google-drive/config/{id} - Update Google Drive config
+     * Update Google Drive configuration
      *
      * @throws AuthorizationException
      */
+    #[Authorize('update', 'googleDriveConfig')]
     public function update(GoogleDriveConfigRequest $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('update', $googleDriveConfig);
-
         $validated = $request->validated();
 
         // Prepare update data
@@ -157,21 +149,22 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/v1/google-drive/config/{id} - Delete Google Drive config
+     * Delete Google Drive configuration
      *
      * @throws AuthorizationException
      */
+    #[Authorize('delete', 'googleDriveConfig')]
     public function destroy(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('delete', $googleDriveConfig);
-
         $googleDriveConfig->delete();
 
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
     /**
-     * POST /api/v1/google-drive/test - Test Google Drive connection
+     * Test Google Drive connection
+     *
+     * Validates the provided credentials by attempting to connect to the configured folder(s).
      */
     public function test(GoogleDriveConfigRequest $request): JsonResponse
     {
@@ -246,14 +239,15 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/google-drive/sync/{id} - Manually trigger sync for a config
+     * Trigger Google Drive sync
+     *
+     * Manually queues a sync job for the given configuration.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('sync', 'googleDriveConfig')]
     public function sync(GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('sync', $googleDriveConfig);
-
         if (! $googleDriveConfig->enabled) {
             return response()->json([
                 'error' => [
@@ -272,15 +266,15 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/google-drive/config/{googleDriveConfig}/folder-name
+     * Get Google Drive folder name
+     *
      * Fetch the display name of the config's import folder (or a different folder via ?folder_id=).
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'googleDriveConfig')]
     public function folderName(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('view', $googleDriveConfig);
-
         $folderId = $request->query('folder_id', $googleDriveConfig->folder_id);
 
         if (empty($folderId)) {
@@ -309,15 +303,16 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/google-drive/config/folder-name
-     * Fetch the display name for a folder using provided credentials.
+     * Get folder name by credentials
+     *
+     * Fetch the display name for a folder using provided credentials, without requiring
+     * a saved configuration.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function folderNameByCredentials(Request $request): JsonResponse
     {
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         $validated = $request->validate([
             'folder_id' => ['required', 'string', 'max:255'],
             'service_account_json' => [
@@ -350,15 +345,15 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * GET /api/v1/google-drive/config/{googleDriveConfig}/folders
+     * List Google Drive folders
+     *
      * List Drive folders accessible to the service account, optionally under a given parent.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'googleDriveConfig')]
     public function folders(Request $request, GoogleDriveConfig $googleDriveConfig): JsonResponse
     {
-        Gate::authorize('view', $googleDriveConfig);
-
         $parentId = $request->query('parent_id');
 
         try {
@@ -413,15 +408,15 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * POST /api/v1/google-drive/config/folders
+     * List folders by credentials
+     *
      * List Drive folders accessible using provided credentials, optionally under a given parent.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('create', GoogleDriveConfig::class)]
     public function foldersByCredentials(Request $request): JsonResponse
     {
-        Gate::authorize('create', GoogleDriveConfig::class);
-
         $validated = $request->validate([
             'parent_id' => ['nullable', 'string', 'max:255'],
             'service_account_json' => [

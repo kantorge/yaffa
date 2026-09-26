@@ -2,19 +2,23 @@
 
 namespace App\Models;
 
+use App\Casts\DecimalCast;
 use App\Observers\CurrencyRateObserver;
+use Brick\Math\BigDecimal;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[ObservedBy([CurrencyRateObserver::class])]
 /**
  * @property int $id
  * @property int $from_id
  * @property int $to_id
  * @property \Illuminate\Support\Carbon $date
- * @property float $rate
+ * @property-read BigDecimal $rate
+ * @property-write BigDecimal|string|int|float $rate
  * @property-read Currency $currencyFrom
  * @property-read Currency $currencyTo
  * @method static \Database\Factories\CurrencyRateFactory factory($count = null, $state = [])
@@ -28,23 +32,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CurrencyRate whereToId($value)
  * @mixin \Eloquent
  */
+#[WithoutTimestamps]
+#[Fillable('date', 'from_id', 'to_id', 'rate')]
+#[ObservedBy([CurrencyRateObserver::class])]
 class CurrencyRate extends Model
 {
     use HasFactory;
-
-    public $timestamps = false;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'date',
-        'from_id',
-        'to_id',
-        'rate',
-    ];
 
     /**
      * Get the attributes that should be cast.
@@ -55,7 +48,7 @@ class CurrencyRate extends Model
     {
         return [
             'date' => 'datetime:Y-m-d',
-            'rate' => 'float',
+            'rate' => DecimalCast::class . ':10',
         ];
     }
 
@@ -68,6 +61,5 @@ class CurrencyRate extends Model
     {
         return $this->belongsTo(Currency::class, 'to_id');
     }
-
 
 }

@@ -2,47 +2,44 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Resources\CategoryResource;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryRequest;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\Services\CategoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 
-class CategoryApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'getList', 'getItem',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'patchActive', 'destroy',
+])]
+class CategoryApiController extends Controller
 {
     protected CategoryService $categoryService;
 
     public function __construct()
     {
-
         $this->categoryService = new CategoryService();
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * Get a list of categories with optional search and usage-based ordering.
+     * List categories
+     *
+     * Returns categories matching an optional search term, ordered by name or,
+     * when no term is given, by usage against the user's transactions.
      */
     public function getList(Request $request): JsonResponse
     {
-        /**
-         * @get("/api/v1/categories")
-         * @name("api.v1.categories.index")
-         * @middlewares("api", "auth:sanctum")
-         */
         $user = $request->user();
 
         $query = $request->query('q');
@@ -131,17 +128,13 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Get a category by ID.
+     * Get a category
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
+    #[Authorize('view', 'category')]
     public function getItem(Category $category): JsonResponse
     {
-        /**
-         * @get("/api/v1/categories/{category}")
-         * @name("api.v1.categories.show")
-         * @middlewares("api", "auth:sanctum")
-         */
-        Gate::authorize('view', $category);
-
         return response()
             ->json(
                 $category,
@@ -150,31 +143,28 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Store a newly created category in storage.
+     * Create a category
      *
-     * @post("/api/v1/categories")
-     * @name("api.v1.categories.store")
-     * @middlewares("api", "auth:sanctum")
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
+    #[Authorize('create', Category::class)]
     public function store(CategoryRequest $request): JsonResponse
     {
-        Gate::authorize('create', Category::class);
-
         $category = $request->user()->categories()->create($request->validated());
 
         return response()->json($category, Response::HTTP_CREATED);
     }
 
     /**
-     * V1: PATCH /api/v1/categories/{category}
-     * Accepts { active: true|false } in request body.
+     * Update category active status
+     *
+     * Accepts { active: true|false } in the request body.
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
+    #[Authorize('update', 'category')]
     public function patchActive(Request $request, Category $category): JsonResponse
     {
-        Gate::authorize('update', $category);
-
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $category->active = $validated['active'];
@@ -184,16 +174,13 @@ class CategoryApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Delete a category.
+     * Delete a category
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
+    #[Authorize('delete', 'category')]
     public function destroy(Category $category): JsonResponse
     {
-        /**
-         * @delete("/api/v1/categories/{category}")
-         * @name("api.v1.categories.destroy")
-         * @middlewares("api", "auth:sanctum")
-         */
-        Gate::authorize('delete', $category);
         $result = $this->categoryService->delete($category);
 
         if ($result['success']) {

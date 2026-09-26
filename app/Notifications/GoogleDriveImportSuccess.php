@@ -18,12 +18,12 @@ class GoogleDriveImportSuccess extends Notification
     {
     }
 
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    public function toMail($notifiable)
+    public function toMail($notifiable): MailMessage
     {
         return (new MailMessage())
             ->subject(__('mail.google_drive_import_success.subject'))

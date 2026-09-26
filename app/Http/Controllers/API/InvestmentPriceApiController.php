@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CheckPriceInvestmentPriceApiRequest;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\CheckPriceInvestmentPriceApiRequest;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -12,37 +12,40 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
-class InvestmentPriceApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index', 'checkPrice',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'destroy', 'retrieveMissingPrices',
+])]
+class InvestmentPriceApiController extends Controller
 {
     public function __construct(
         protected InvestmentService $investmentService
     ) {
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
     /**
-     * Get investment prices, optionally filtered by date range.
+     * List investment prices
+     *
+     * Returns investment prices for the given investment, optionally filtered by date range.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function index(Request $request, Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
         $query = InvestmentPrice::where('investment_id', $investment->id)
+            ->with('investment.currency')
             ->orderBy('date');
 
         if ($dateFrom) {
@@ -61,7 +64,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Store a new investment price.
+     * Add an investment price
+     *
+     * Creates a new price entry for the investment and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -84,7 +89,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update an existing investment price.
+     * Update an investment price
+     *
+     * Updates the price entry and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -106,7 +113,9 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Delete an investment price.
+     * Delete an investment price
+     *
+     * Deletes the price entry and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
@@ -126,14 +135,16 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Retrieve missing investment prices from the provider.
+     * Retrieve missing investment prices
+     *
+     * Downloads investment prices from the configured provider, starting from the latest
+     * known price date (or 30 days ago if none exist), and recalculates related account balances.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function retrieveMissingPrices(Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         // Get latest known date of price date, so we can retrieve missing values
         /** @var InvestmentPrice|null $lastPrice */
         $lastPrice = $investment->investmentPrices()->latest('date')->first();
@@ -150,14 +161,16 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Check if a price exists for a specific date and investment.
+     * Check if a price exists
+     *
+     * Checks whether a price exists for the investment on a specific date, and returns
+     * its value if found.
      *
      * @throws AuthorizationException
      */
+    #[Authorize('view', 'investment')]
     public function checkPrice(CheckPriceInvestmentPriceApiRequest $request, Investment $investment): JsonResponse
     {
-        Gate::authorize('view', $investment);
-
         $validated = $request->validated();
 
         $existingPrice = InvestmentPrice::where('investment_id', $investment->id)
@@ -166,7 +179,11 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
 
         return response()->json([
             'exists' => $existingPrice !== null,
-            'price' => $existingPrice ? $existingPrice->price : null,
+            // Emitted as a decimal string, not the raw Money object, to match the
+            // wire format Eloquent's SerializesCastableAttributes gives this same
+            // field everywhere else (Money::jsonSerialize() would otherwise emit
+            // {"amount": ..., "currency": ...} instead).
+            'price' => $existingPrice?->price !== null ? (string) $existingPrice->price->getAmount() : null,
         ]);
     }
 }

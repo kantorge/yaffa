@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Models\GoogleDriveConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class GoogleDriveConfigTest extends TestCase
 {

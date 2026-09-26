@@ -123,7 +123,9 @@
       },
 
       hide() {
-        $('#widgetPayeeCategoryRecommendation').hide();
+        // The template's outer v-if="payeeSuggestion" already gates the whole
+        // card, so clearing it is enough to hide it reactively.
+        this.payeeSuggestion = null;
       },
 
       escapeHtml(value) {

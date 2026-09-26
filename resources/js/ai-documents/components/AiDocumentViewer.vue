@@ -545,7 +545,7 @@
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
-  import { __ } from '@/shared/lib/i18n';
+  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
@@ -557,6 +557,7 @@
   import AiDocumentDuplicates from './AiDocumentDuplicates.vue';
   import AiDocumentProcessingHistory from './AiDocumentProcessingHistory.vue';
   import Swal from 'sweetalert2';
+  import { confirmDelete } from '@/shared/lib/confirm';
 
   const aiDocument = ref(window.aiDocument || {});
   const statusLabels = window.aiDocumentStatusLabels || {};
@@ -572,7 +573,7 @@
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.created_at).toLocaleString(locale);
+    return toFormattedDateTime(aiDocument.value.created_at, locale);
   });
 
   const processedAtLabel = computed(() => {
@@ -580,7 +581,7 @@
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.processed_at).toLocaleString(locale);
+    return toFormattedDateTime(aiDocument.value.processed_at, locale);
   });
 
   const statusLabel = computed(
@@ -797,7 +798,7 @@
       buttonsStyling: false,
       customClass: {
         confirmButton: 'btn btn-warning',
-        cancelButton: 'btn btn-outline-secondary ms-3',
+        cancelButton: 'btn btn-secondary ms-3',
       },
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -839,17 +840,8 @@
 
     isBusy.value = true;
 
-    Swal.fire({
-      text: __('Are you sure you want to delete this document?'),
-      icon: 'warning',
-      showCancelButton: true,
-      cancelButtonText: __('Cancel'),
+    confirmDelete(__('Are you sure you want to delete this document?'), {
       confirmButtonText: __('Delete'),
-      buttonsStyling: false,
-      customClass: {
-        confirmButton: 'btn btn-danger',
-        cancelButton: 'btn btn-outline-secondary ms-3',
-      },
     }).then((result) => {
       if (!result.isConfirmed) {
         isBusy.value = false;

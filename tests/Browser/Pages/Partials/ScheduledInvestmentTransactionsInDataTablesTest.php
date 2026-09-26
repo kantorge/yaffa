@@ -7,6 +7,8 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\User;
+use Brick\Math\BigDecimal;
+use Brick\Money\Money;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
@@ -55,7 +57,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -69,15 +70,15 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
+                // The 7th column is the payee, which contains the account name
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
+                // The 8th column is the category, which contains the investment type
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Buy');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                + ($transaction->config->commission ?? 0) + ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                + $this->toFloatOrZero($transaction->config->commission) + $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "- " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -89,8 +90,8 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            // The 9th column is the amount, which contains the formatted value
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 
@@ -120,7 +121,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -134,15 +134,15 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
+                // The 7th column is the payee, which contains the account name
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
+                // The 8th column is the category, which contains the investment type
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Sell');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                - $this->toFloatOrZero($transaction->config->commission) - $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "+ " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -154,8 +154,8 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            // The 9th column is the amount, which contains the formatted value
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 
@@ -187,7 +187,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
-                'budget' => false,
                 // Normally, this would be set by the model created event
                 'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
             ]);
@@ -201,15 +200,15 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
                 ->waitFor($this->getTableRowSelector($transaction), 10)
-                // The 8th column is the payee, which contains the account name
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-                // The 9th column is the category, which contains the investment type
-                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
+                // The 7th column is the payee, which contains the account name
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(7)'), 'Investment account USD')
+                // The 8th column is the category, which contains the investment type
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Dividend');
 
             // Calculate the formatted value of the transaction using JavaScript
-            $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-                + ($transaction->config->dividend ?? 0)
-                - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+            $value = $this->toFloatOrZero($transaction->config->quantity) * $this->toFloatOrZero($transaction->config->price)
+                + $this->toFloatOrZero($transaction->config->dividend)
+                - $this->toFloatOrZero($transaction->config->commission) - $this->toFloatOrZero($transaction->config->tax);
             $formattedValue = "+ " . $browser
                 ->script("const value = {$value};
                     return value.toLocaleString(
@@ -221,13 +220,27 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                         minimumFractionDigits: 0
                     });")[0];
 
-            // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
+            // The 9th column is the amount, which contains the formatted value
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), $formattedValue);
         });
     }
 
     private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
     {
-        return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');
+        return '#table tbody tr[data-id="' . $transaction->id . '"][data-row-type="schedule"]' . ($postfix ? ' ' . $postfix : '');
+    }
+
+    /**
+     * quantity/price/commission/tax/dividend are now DecimalCast/MoneyCast attributes
+     * (BigDecimal/Money), not floats - unwrap to a float for the plain-JS arithmetic
+     * this test embeds into the browser script.
+     */
+    private function toFloatOrZero(BigDecimal|Money|null $value): float
+    {
+        return match (true) {
+            $value === null => 0.0,
+            $value instanceof Money => $value->getAmount()->toFloat(),
+            default => $value->toFloat(),
+        };
     }
 }

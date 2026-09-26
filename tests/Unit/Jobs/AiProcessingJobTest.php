@@ -49,7 +49,7 @@ class AiProcessingJobTest extends TestCase
         $job = new AiProcessingJob($document);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Temporary API timeout');
+        $this->expectExceptionMessageIsOrContains('Temporary API timeout');
 
         $job->handle($service, $settingsResolver);
 

@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\View\View;
 
-class SearchController extends Controller implements HasMiddleware
+#[Middleware('auth')]
+#[Middleware('verified')]
+class SearchController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            'verified',
-        ];
-    }
-
     /**
      * Search various models based on the search term.
      */

@@ -2,16 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Account;
-use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
+use Tests\Feature\Concerns\AuthorizesResourceCrudForUnverifiedUsers;
 use Tests\TestCase;
 
 class AccountGroupTest extends TestCase
 {
+    use AuthorizesResourceCrud;
+    use AuthorizesResourceCrudForUnverifiedUsers;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -22,49 +24,14 @@ class AccountGroupTest extends TestCase
         $this->setBaseModel(AccountGroup::class);
     }
 
-    public function test_guest_cannot_access_resource(): void
+    /**
+     * Delete moved to AccountGroupApiController (api.v1.account-groups.destroy) - the web
+     * destroy route/action was removed as dead code. See AccountGroupApiControllerTest for
+     * delete behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-
-        $user = User::factory()->create();
-        $accountGroup = $this->createForUser($user, $this->base_model);
-
-        $this->get(route("{$this->base_route}.edit", $accountGroup))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $accountGroup))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirectToRoute('login');
-    }
-
-    public function test_unverified_user_cannot_access_resource(): void
-    {
-        $user_unverified = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirectToRoute('verification.notice');
-
-        $user = User::factory()->create();
-        $accountGroup = $this->createForUser($user, $this->base_model);
-
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $accountGroup))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $accountGroup))->assertRedirectToRoute('verification.notice');
-        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirectToRoute('verification.notice');
-    }
-
-    public function test_user_cannot_access_other_users_resource(): void
-    {
-        $user1 = User::factory()->create();
-        $accountGroup = $this->createForUser($user1, $this->base_model);
-
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
+        return false;
     }
 
     public function test_user_can_view_list_of_account_groups(): void
@@ -168,30 +135,5 @@ class AccountGroupTest extends TestCase
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
-    }
-
-    public function test_user_can_delete_an_existing_account_group(): void
-    {
-        $user = User::factory()->create();
-        $this->assertDestroyWithUser($user);
-    }
-
-    public function test_user_cannot_delete_account_group_with_attached_account(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-
-        /** @var AccountEntity $accountGroup */
-        $account = AccountEntity::factory()
-            ->for($user)
-            ->for(Account::factory()->withUser($user), 'config')
-            ->create();
-        $account->load('config');
-        $accountGroup = $account->config->accountGroup;
-
-        $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $accountGroup->id));
-        $response->assertSessionHas('notification_collection.0.type', 'danger');
-
-        $this->assertDatabaseHas($accountGroup->getTable(), $accountGroup->toArray());
     }
 }

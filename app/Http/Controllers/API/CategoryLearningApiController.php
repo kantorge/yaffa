@@ -9,26 +9,33 @@ use App\Http\Resources\CategoryLearningResource;
 use App\Models\CategoryLearning;
 use App\Models\User;
 use App\Services\CategoryLearningManagementService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
-class CategoryLearningApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index', 'show',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'deactivate', 'activate', 'destroy', 'merge',
+])]
+class CategoryLearningApiController extends Controller
 {
     public function __construct(private CategoryLearningManagementService $managementService)
     {
     }
 
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
+    /**
+     * List category learnings
+     *
+     * @throws AuthorizationException
+     */
     public function index(CategoryLearningRequest $request): JsonResponse
     {
         /** @var User $user */
@@ -41,6 +48,11 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         return response()->json(CategoryLearningResource::collection($items)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Get a category learning
+     *
+     * @throws AuthorizationException
+     */
     public function show(Request $request, CategoryLearning $categoryLearning): JsonResponse
     {
         /** @var User $user */
@@ -58,6 +70,14 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Create a category learning
+     *
+     * Creates a new learned payee-to-category mapping, or updates the existing one
+     * if a matching mapping already exists for the user.
+     *
+     * @throws AuthorizationException
+     */
     public function store(CategoryLearningRequest $request): JsonResponse
     {
         /** @var User $user */
@@ -73,37 +93,53 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         );
     }
 
+    /**
+     * Update a category learning
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'categoryLearning')]
     public function update(CategoryLearningRequest $request, CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->update($categoryLearning, $request->validated());
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Deactivate a category learning
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'categoryLearning')]
     public function deactivate(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->deactivate($categoryLearning);
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Activate a category learning
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'categoryLearning')]
     public function activate(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('update', $categoryLearning);
-
         $learning = $this->managementService->activate($categoryLearning);
 
         return response()->json(new CategoryLearningResource($learning)->resolve(), Response::HTTP_OK);
     }
 
+    /**
+     * Delete a category learning
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('delete', 'categoryLearning')]
     public function destroy(CategoryLearning $categoryLearning): JsonResponse
     {
-        Gate::authorize('delete', $categoryLearning);
-
         $this->managementService->destroy($categoryLearning);
 
         return response()->json([
@@ -111,6 +147,13 @@ class CategoryLearningApiController extends Controller implements HasMiddleware
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Merge two category learnings
+     *
+     * Merges the source learning into the target learning and removes the source.
+     *
+     * @throws AuthorizationException
+     */
     public function merge(CategoryLearningMergeRequest $request): JsonResponse
     {
         $validated = $request->validated();

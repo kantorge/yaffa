@@ -84,30 +84,13 @@
           </label>
           <div class="col-sm-9">
             <div class="input-group">
-              <DatePicker
-                :is-dark="isDarkMode"
-                :is-required="true"
-                :masks="{
-                  L: 'YYYY-MM-DD',
-                  modelValue: 'YYYY-MM-DD',
-                }"
-                mode="date"
-                :popover="{
-                  visibility: 'click',
-                  showDelay: 0,
-                  hideDelay: 0,
-                }"
-                v-model.string="form.start_date"
-              >
-                <template #default="{ inputValue, inputEvents }">
-                  <input
-                    class="form-control"
-                    id="start_date"
-                    :value="inputValue"
-                    v-on="inputEvents"
-                  />
-                </template>
-              </DatePicker>
+              <input
+                type="date"
+                class="form-control"
+                id="start_date"
+                v-model="startDateInput"
+                required
+              />
               <span
                 class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
@@ -130,30 +113,13 @@
           </label>
           <div class="col-sm-9">
             <div class="input-group">
-              <DatePicker
-                :is-dark="isDarkMode"
-                :is-required="true"
-                :masks="{
-                  L: 'YYYY-MM-DD',
-                  modelValue: 'YYYY-MM-DD',
-                }"
-                mode="date"
-                :popover="{
-                  visibility: 'click',
-                  showDelay: 0,
-                  hideDelay: 0,
-                }"
-                v-model.string="form.end_date"
-              >
-                <template #default="{ inputValue, inputEvents }">
-                  <input
-                    class="form-control"
-                    id="end_date"
-                    :value="inputValue"
-                    v-on="inputEvents"
-                  />
-                </template>
-              </DatePicker>
+              <input
+                type="date"
+                class="form-control"
+                id="end_date"
+                v-model="endDateInput"
+                required
+              />
               <span
                 class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
@@ -275,19 +241,15 @@
   });
 </script>
 <script>
-  import { DatePicker } from 'v-calendar';
   import { __ } from '@/shared/lib/i18n';
-  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import { initializeBootstrapTooltips, toDateInputValue } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
-  import { colorModeMixin } from '@/shared/lib/ui/colorModeMixin';
 
   export default {
     name: 'UserSettings',
-    mixins: [colorModeMixin],
     components: {
-      DatePicker,
       Button,
       HasError,
     },
@@ -304,6 +266,24 @@
           false,
       }),
     }),
+    computed: {
+      startDateInput: {
+        get() {
+          return toDateInputValue(this.form.start_date);
+        },
+        set(value) {
+          this.form.start_date = value || null;
+        },
+      },
+      endDateInput: {
+        get() {
+          return toDateInputValue(this.form.end_date);
+        },
+        set(value) {
+          this.form.end_date = value || null;
+        },
+      },
+    },
     mounted() {
       // Finally, initialize tooltips
       initializeBootstrapTooltips(this.$el);

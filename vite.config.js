@@ -26,9 +26,11 @@ export default defineConfig({
             { find: 'vue', replacement: 'vue/dist/vue.esm-bundler.js' },
             // Define aliases for easier imports
             { find: '@', replacement: path.resolve(__dirname, 'resources/js') },
-            // Prevent bundling optional amCharts PDF export dependencies
+            // Prevent bundling optional amCharts PDF/XLSX export dependencies (unused - no export menu in this app)
             { find: /^pdfmake\/build\/pdfmake\.js$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
             { find: /^(\.\.\/)+pdfmake\/vfs_fonts(\.js)?$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
+            { find: /^(\.\.\/)+bundled\/xlsx$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
+            { find: /^(\.\.\/)+canvg\/index\.js$/, replacement: path.resolve(__dirname, 'resources/js/shims/noop-module.js') },
         ],
     },
     optimizeDeps: {
@@ -50,6 +52,9 @@ export default defineConfig({
         },
     },
     server: {
+        watch: {
+            ignored: ['**/storage/framework/views/**'],
+        },
         host: '0.0.0.0',
         port: Number(process.env.VITE_PORT) || 5173,
         strictPort: true,

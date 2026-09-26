@@ -3,32 +3,26 @@
 namespace App\Console\Commands;
 
 use App\Services\SandboxDemoDataExporter;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Signature('app:sandbox:promote-database {--force : Skip the confirmation prompt} {--force-sandbox : Allow running this command even if sandbox mode is not enabled}')]
+#[Description('Dump the demo (sandbox) database directly into database/seeders/demo.sql, ready for review and commit')]
 class PromoteDemoDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:sandbox:promote-database
-        {--force : Skip the confirmation prompt}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Dump the demo (sandbox) database directly into database/seeders/demo.sql, ready for review and commit';
-
     /**
      * Execute the console command.
      */
     public function handle(SandboxDemoDataExporter $exporter): int
     {
+        if ($this->option('force-sandbox') && app()->environment('production')) {
+            $this->error('--force-sandbox cannot be used in the production environment.');
+            return Command::FAILURE;
+        }
+
         // This command cannot be run if sandbox mode is not enabled
-        if (! config('yaffa.sandbox_mode')) {
+        if (! config('yaffa.sandbox_mode') && ! $this->option('force-sandbox')) {
             $this->error('This command can only be run in sandbox mode.');
             return Command::FAILURE;
         }

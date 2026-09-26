@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
@@ -11,10 +12,12 @@ use App\Support\ScheduleInstance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Tests\Feature\Concerns\AuthorizesResourceCrud;
 use Tests\TestCase;
 
 class InvestmentTest extends TestCase
 {
+    use AuthorizesResourceCrud;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -25,40 +28,21 @@ class InvestmentTest extends TestCase
         $this->setBaseModel(Investment::class);
     }
 
-    public function test_guest_cannot_access_resource(): void
+    protected function createResourceForAuthTest(User $user): Investment
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
-        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
-        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
-
-        /** @var User $user */
-        $user = User::factory()->create();
         $this->createPrerequisites($user);
-        /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $investment->id))->assertRedirectToRoute('login');
-        $this->patch(route("{$this->base_route}.update", $investment->id))->assertRedirectToRoute('login');
-        $this->delete(route("{$this->base_route}.destroy", $investment->id))->assertRedirectToRoute('login');
+        return Investment::factory()->for($user)->withUser($user)->create();
     }
 
-    public function test_user_cannot_access_other_users_resource(): void
+    /**
+     * Delete moved to InvestmentApiController (api.v1.investments.destroy) - the web destroy
+     * route/action was removed as dead code. See InvestmentApiControllerTest for delete
+     * behavior coverage.
+     */
+    protected function resourceAuthSupportsDestroy(): bool
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createPrerequisites($user);
-        /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
-
-        /** @var User $user2 */
-        $user2 = User::factory()->create();
-
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investment->id))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
+        return false;
     }
 
     public function test_user_can_view_list_of_investments(): void
@@ -66,7 +50,7 @@ class InvestmentTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
-        Investment::factory()->for($user)->count(5)->create();
+        Investment::factory()->for($user)->withUser($user)->count(5)->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
@@ -380,14 +364,6 @@ class InvestmentTest extends TestCase
         $this->assertSame(',', $investment->provider_settings['decimal_separator']);
     }
 
-    public function test_user_can_delete_an_existing_investment(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->createPrerequisites($user);
-        $this->assertDestroyWithUser($user);
-    }
-
     public function test_investment_show_derives_scheduled_instances_from_next_date(): void
     {
         /** @var User $user */
@@ -409,14 +385,17 @@ class InvestmentTest extends TestCase
             ])
             ->create();
 
-        $scheduledTransaction->transactionSchedule()->update([
+        // frequency/end_date/count are virtual (decomposed from `rrule`, not real columns), so
+        // this must go through the model instance (fill()/save()), not the relation query
+        // builder's raw mass-update - active is recomputed automatically either way (next_date
+        // is set, so isActive() is true regardless).
+        $scheduledTransaction->transactionSchedule->update([
             'start_date' => '2026-01-01',
             'next_date' => '2026-03-01',
             'end_date' => '2026-04-01',
             'frequency' => 'MONTHLY',
             'interval' => 1,
             'count' => null,
-            'active' => true,
         ]);
 
         $response = $this->actingAs($user)->get(route('investments.show', $investment));
@@ -438,6 +417,78 @@ class InvestmentTest extends TestCase
         $this->assertSame(['2026-03-01', '2026-04-01'], $scheduledDates);
         $this->assertTrue((bool) $scheduledInstances->first()?->schedule_first_instance);
         $this->assertFalse((bool) $scheduledInstances->last()?->schedule_first_instance);
+    }
+
+    /**
+     * An investment transaction's price is cast to the investment's currency (MoneyCast) -
+     * changing it after the investment is already used in a transaction would silently
+     * mismatch every existing transaction's stored price against a currency it was never
+     * recorded in.
+     */
+    public function test_currency_cannot_be_changed_once_used_in_a_transaction(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
+        $otherCurrency = Currency::factory()->for($user)->create();
+
+        /** @var Investment $investment */
+        $investment = Investment::factory()->for($user)->create([
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+
+        $accountEntity = AccountEntity::factory()->asAccount($user, ['currency_id' => $currency->id])->create();
+
+        Transaction::factory()
+            ->for($user)
+            ->buy($user, [
+                'account_id' => $accountEntity->id,
+                'investment_id' => $investment->id,
+            ])
+            ->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    $investment->id
+                ),
+                [
+                    'name' => $investment->name,
+                    'active' => $investment->active,
+                    'symbol' => $investment->symbol,
+                    'investment_group_id' => $investment->investment_group_id,
+                    'currency_id' => $otherCurrency->id,
+                    'auto_update' => $investment->auto_update,
+                    'investment_price_provider' => $investment->investment_price_provider,
+                ]
+            );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors(['currency_id']);
+
+        // Leaving the currency unchanged must still be allowed.
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route(
+                    "{$this->base_route}.update",
+                    $investment->id
+                ),
+                [
+                    'name' => $investment->name,
+                    'active' => $investment->active,
+                    'symbol' => $investment->symbol,
+                    'investment_group_id' => $investment->investment_group_id,
+                    'currency_id' => $investment->currency_id,
+                    'auto_update' => $investment->auto_update,
+                    'investment_price_provider' => $investment->investment_price_provider,
+                ]
+            );
+
+        $response->assertRedirectToRoute("{$this->base_route}.index");
     }
 
     private function createPrerequisites(?User $user = null): array

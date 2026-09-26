@@ -125,6 +125,9 @@
         <div>
             <a href="https://yaffa.cc/" target="_blank" rel="noopener">{{ config('app.name') }}</a>
             {{ config('yaffa.version') }}
+            @if (config('yaffa.build'))
+                <span class="text-body-secondary">({{ config('yaffa.build') }})</span>
+            @endif
         </div>
         <div class="ms-auto">
             <a href="https://github.com/kantorge/yaffa" class="text-body" target="_blank" rel="noopener">

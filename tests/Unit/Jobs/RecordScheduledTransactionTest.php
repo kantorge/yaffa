@@ -3,11 +3,9 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\RecordScheduledTransaction;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,8 +21,8 @@ class RecordScheduledTransactionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user), 'config')->create();
-        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
+        AccountEntity::factory()->asAccount($user)->create();
+        AccountEntity::factory()->asPayee($user)->create();
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */
@@ -74,7 +72,7 @@ class RecordScheduledTransactionTest extends TestCase
         $user = User::factory()->create();
 
         InvestmentGroup::factory()->for($user)->create();
-        AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user), 'config')->create();
+        AccountEntity::factory()->asAccount($user)->create();
         Investment::factory()->for($user)->withUser($user)->create();
 
         // Create a scheduled investment transaction

@@ -4,25 +4,15 @@ namespace App\Console\Commands;
 
 use App\Models\Transaction;
 use App\Services\TransactionService;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 
+#[Signature('app:calculate-transaction-cached-data')]
+#[Description('Loop all transactions and calculate the cached data for each one.')]
 class CalculateTransactionCachedData extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:calculate-transaction-cached-data';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Loop all transactions and calculate the cached data for each one.';
-
     private TransactionService $transactionService;
 
     /**

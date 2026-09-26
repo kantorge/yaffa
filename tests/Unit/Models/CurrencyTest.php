@@ -77,7 +77,7 @@ class CurrencyTest extends TestCase
             ]);
 
         $this->expectException(CurrencyRateConversionException::class);
-        $this->expectExceptionMessage('Currency is the same as the base currency');
+        $this->expectExceptionMessageIsOrContains('Currency is the same as the base currency');
 
         $baseCurrency->retrieveCurrencyRateToBase();
     }
@@ -85,7 +85,7 @@ class CurrencyTest extends TestCase
     public function test_throws_exception_for_currency_not_supported_by_api(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
-        $this->expectExceptionMessage('One or more of the currencies are not supported by the API');
+        $this->expectExceptionMessageIsOrContains('One or more of the currencies are not supported by the API');
 
         // Create a user
         /** @var User $user */
@@ -121,7 +121,7 @@ class CurrencyTest extends TestCase
     public function test_throws_exception_when_no_data_returned_from_api(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
-        $this->expectExceptionMessage('No data returned from the API');
+        $this->expectExceptionMessageIsOrContains('No data returned from the API');
 
         // Create a user
         /** @var User $user */
@@ -161,7 +161,7 @@ class CurrencyTest extends TestCase
     public function test_throws_exception_when_rate_is_out_of_range(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
-        $this->expectExceptionMessage('Currency rate is out of the valid range');
+        $this->expectExceptionMessageIsOrContains('Currency rate is out of the valid range');
 
         // Create a user
         /** @var User $user */
@@ -205,7 +205,7 @@ class CurrencyTest extends TestCase
     public function test_throws_exception_when_rate_is_negative(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
-        $this->expectExceptionMessage('Currency rate is out of the valid range');
+        $this->expectExceptionMessageIsOrContains('Currency rate is out of the valid range');
 
         // Create a user
         /** @var User $user */

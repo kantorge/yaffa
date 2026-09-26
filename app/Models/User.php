@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +17,8 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Laragear\TwoFactor\Contracts\TwoFactorAuthenticatable;
+use Laragear\TwoFactor\TwoFactorAuthentication;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\ModelFlags\Models\Concerns\HasFlags;
@@ -99,40 +103,16 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder<static>|User whereAccountDetailsDateRange($value)
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements MustVerifyEmail, Onboardable
+#[Fillable('name', 'email', 'password', 'language', 'locale', 'start_date', 'end_date', 'account_details_date_range', 'auto_merge_standard_transaction_items')]
+#[Hidden('password', 'remember_token')]
+class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoFactorAuthenticatable
 {
     use GetsOnboarded;
     use HasApiTokens;
     use HasFactory;
     use HasFlags;
     use Notifiable;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'language',
-        'locale',
-        'start_date',
-        'end_date',
-        'account_details_date_range',
-        'auto_merge_standard_transaction_items',
-    ];
-
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    use TwoFactorAuthentication;
 
     /**
      * Get the attributes that should be cast.
@@ -257,11 +237,32 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
+     * Whether an enabled Google Drive import leaves the imported files in the monitored folder (no
+     * post-import action). Deleting the documents created from them lets a manual full sync import
+     * those files again as duplicates.
+     */
+    public function googleDriveKeepsImportedFiles(): bool
+    {
+        return $this->googleDriveConfigs()
+            ->where('enabled', true)
+            ->get()
+            ->contains(fn (GoogleDriveConfig $config) => empty($config->post_import_actions));
+    }
+
+    /**
      * @return HasMany<CategoryLearning, $this>
      */
     public function categoryLearning(): HasMany
     {
         return $this->hasMany(CategoryLearning::class);
+    }
+
+    /**
+     * @return HasMany<Budget, $this>
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
     }
 
     /**

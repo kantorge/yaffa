@@ -10,27 +10,36 @@ use App\Models\AccountEntity;
 use App\Models\AiProviderConfig;
 use App\Models\FileImportProfile;
 use App\Services\Import\AiImportProfileSuggestionService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use RuntimeException;
 
-class FileImportProfileApiController extends Controller implements HasMiddleware
+#[Middleware('auth:sanctum')]
+#[Middleware('verified')]
+#[Middleware('abilities:read', only: [
+    'index',
+])]
+#[Middleware('abilities:write', only: [
+    'store', 'update', 'destroy', 'suggest',
+])]
+class FileImportProfileApiController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            'auth:sanctum',
-            'verified',
-        ];
-    }
-
+    /**
+     * List file import profiles
+     *
+     * Returns file import profiles selectable by the current user, optionally filtered
+     * by file type (csv or qif).
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('viewAny', FileImportProfile::class)]
     public function index(Request $request): JsonResponse
     {
-        Gate::authorize('viewAny', FileImportProfile::class);
-
         $user = $request->user();
 
         $query = FileImportProfile::query()
@@ -53,10 +62,14 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         ], Response::HTTP_OK);
     }
 
+    /**
+     * Create a file import profile
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('create', FileImportProfile::class)]
     public function store(FileImportProfileRequest $request): JsonResponse
     {
-        Gate::authorize('create', FileImportProfile::class);
-
         $user = $request->user();
 
         $profile = new FileImportProfile([
@@ -79,20 +92,30 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json(['data' => $profile], Response::HTTP_CREATED);
     }
 
+    /**
+     * Update a file import profile
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'profile')]
     public function update(FileImportProfileRequest $request, FileImportProfile $profile): JsonResponse
     {
-        Gate::authorize('update', $profile);
-
         $profile->fill($request->validated());
         $profile->save();
 
         return response()->json(['data' => $profile], Response::HTTP_OK);
     }
 
+    /**
+     * Delete a file import profile
+     *
+     * Fails if the profile is set as the default import profile for one or more accounts.
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('delete', 'profile')]
     public function destroy(FileImportProfile $profile): JsonResponse
     {
-        Gate::authorize('delete', $profile);
-
         if ($profile->accountEntities()->exists()) {
             return response()->json([
                 'message' => __('This profile cannot be deleted because it is set as the default for one or more accounts.'),
@@ -104,6 +127,14 @@ class FileImportProfileApiController extends Controller implements HasMiddleware
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
+    /**
+     * Suggest a file import profile
+     *
+     * Uses the user's configured AI provider to analyze an uploaded CSV file and suggest
+     * a matching file import profile (delimiter, header, column mapping, etc.).
+     *
+     * @throws AuthorizationException
+     */
     public function suggest(SuggestFileImportProfileRequest $request, AiImportProfileSuggestionService $service): JsonResponse
     {
         $user = $request->user();

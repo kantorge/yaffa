@@ -42,13 +42,17 @@ class CurrencyRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:0',
-                'max:100',
+                // Display floor must never exceed STORAGE_SCALE.AMOUNT (resources/js/shared/lib/money/scale.js),
+                // or Intl.NumberFormat throws when minimumFractionDigits > maximumFractionDigits.
+                'max:4',
             ],
             'detailed_decimal_precision' => [
                 'nullable',
                 'integer',
                 'min:0',
-                'max:100',
+                // Display floor must never exceed STORAGE_SCALE.PRICE (resources/js/shared/lib/money/scale.js),
+                // or Intl.NumberFormat throws when minimumFractionDigits > maximumFractionDigits.
+                'max:10',
             ],
         ];
     }

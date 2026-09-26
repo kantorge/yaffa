@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,19 +31,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int|null $investments_count
  * @mixin \Eloquent
  */
+#[Fillable('name')]
 class InvestmentGroup extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-    ];
 
     public function user(): BelongsTo
     {

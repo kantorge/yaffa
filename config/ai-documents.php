@@ -12,13 +12,6 @@ return [
     ],
 
     /*
-     * File retention and cleanup - NOT IMPLEMENTED YET, but reserved for future use.
-     */
-    'local_storage_file_retention' => [
-        'retention_days' => env('AI_DOCUMENT_FILE_RETENTION_DAYS', 90),
-    ],
-
-    /*
      * Supported AI providers and models
      */
     'providers' => [

@@ -1,3 +1,4 @@
+*.log
 ## IDE and editor metadata
 /.idea
 /.idea/sonarlint

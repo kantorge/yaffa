@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Http\Traits\CurrencyTrait;
 use App\Models\CurrencyRate;
 use App\Models\Currency;
 use App\Models\User;
@@ -9,11 +10,11 @@ use Illuminate\Support\Facades\Cache;
 
 class CurrencyRateObserver
 {
+    use CurrencyTrait;
+
     protected function invalidateMonthlyCurrencyRateCache(User $user): void
     {
-        $cacheKey = "allCurrencyRatesByMonth_forUser_{$user->id}";
-
-        Cache::forget($cacheKey);
+        Cache::forget($this->getAllCurrencyRatesByMonthCacheKey($user->id));
     }
 
     /**
