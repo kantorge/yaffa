@@ -2,14 +2,18 @@ const YAFFA_SESSION_STORAGE_KEY = 'YAFFA';
 
 const readYaffaSessionState = () => {
     try {
-        const serializedState = window.sessionStorage.getItem(YAFFA_SESSION_STORAGE_KEY);
+        const serializedState = window.sessionStorage.getItem(
+            YAFFA_SESSION_STORAGE_KEY,
+        );
         if (!serializedState) {
             return {};
         }
 
         const parsedState = JSON.parse(serializedState);
 
-        return parsedState && typeof parsedState === 'object' ? parsedState : {};
+        return parsedState && typeof parsedState === 'object'
+            ? parsedState
+            : {};
     } catch {
         return {};
     }
@@ -17,7 +21,10 @@ const readYaffaSessionState = () => {
 
 const writeYaffaSessionState = (state) => {
     try {
-        window.sessionStorage.setItem(YAFFA_SESSION_STORAGE_KEY, JSON.stringify(state));
+        window.sessionStorage.setItem(
+            YAFFA_SESSION_STORAGE_KEY,
+            JSON.stringify(state),
+        );
     } catch {
         // Ignore storage write failures (e.g. storage is unavailable).
     }
@@ -25,7 +32,10 @@ const writeYaffaSessionState = (state) => {
 
 const setSidebarHiddenState = (isHidden) => {
     const currentState = readYaffaSessionState();
-    const uiState = currentState.ui && typeof currentState.ui === 'object' ? currentState.ui : {};
+    const uiState =
+        currentState.ui && typeof currentState.ui === 'object'
+            ? currentState.ui
+            : {};
     uiState.sidebarHidden = isHidden;
     currentState.ui = uiState;
 

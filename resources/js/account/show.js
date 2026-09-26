@@ -4,7 +4,10 @@ import 'datatables-contextual-actions';
 
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import * as helpers from '@/shared/lib/helpers';
-import { getDataTablesLanguageOptions, toFormattedCurrency } from '@/shared/lib/i18n';
+import {
+    getDataTablesLanguageOptions,
+    toFormattedCurrency,
+} from '@/shared/lib/i18n';
 import * as toastHelpers from '@/shared/lib/toast';
 import { initializeTwoColumnLeftControlPanelToggle } from '@/shared/lib/ui/leftControlPanelToggle';
 import { pollUntilReady } from '@/shared/lib/busyPoll';
@@ -14,7 +17,8 @@ const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
 const selectorLeftControlPanel = '#accountLeftControlPanel';
 const selectorMainContent = '#accountMainContent';
-const selectorLeftControlPanelToggleButton = '#toggleAccountLeftControlPanelButton';
+const selectorLeftControlPanelToggleButton =
+    '#toggleAccountLeftControlPanelButton';
 
 let currentDateFilters = {
     dateFrom: window.filters?.date_from || null,
@@ -60,7 +64,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
     ajax: function (_data, callback, _settings) {
         if (initialLoad) {
             initialLoad = false;
-            callback({data: []}); // Don't fire ajax, just return empty set
+            callback({ data: [] }); // Don't fire ajax, just return empty set
             return;
         }
 
@@ -74,47 +78,53 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         params.append('accounts[]', account.id);
 
         // Ajax will now only fire programmatically, via ajax.reload()
-        fetch(
-            '/api/v1/transactions?' + params,
-            {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': window.csrfToken,
-                },
-            }
-        )
+        fetch('/api/v1/transactions?' + params, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': window.csrfToken,
+            },
+        })
             .then((response) => response.json())
             .then((data) => {
                 let result = data.data
                     .map(helpers.processTransaction)
                     .map(processTransaction);
 
-                callback({data: result});
+                callback({ data: result });
             });
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
+            'date',
+            __('Date'),
+            window.YAFFA.userSettings.locale,
+        ),
         {
-            data: "reconciled",
+            data: 'reconciled',
             title: '<span title="' + __('Reconciled') + '">R</span>',
-            className: "text-center",
+            className: 'text-center',
             render: function (_data, type, row) {
                 if (type === 'filter') {
-                    return (!row.schedule
-                        && (row.config_type === 'standard' || row.config_type === 'investment')
-                            ? (row.reconciled ? __('Reconciled') : __('Uncleared'))
-                            : __('Unavailable')
-                    );
+                    return !row.schedule &&
+                        (row.config_type === 'standard' ||
+                            row.config_type === 'investment')
+                        ? row.reconciled
+                            ? __('Reconciled')
+                            : __('Uncleared')
+                        : __('Unavailable');
                 }
-                return (!row.schedule
-                    && (row.config_type === 'standard' || row.config_type === 'investment')
-                        ? (row.reconciled
-                                ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
-                                : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
-                        )
-                        : '<i class="fa fa-circle text-muted"></i>'
-                );
+                return !row.schedule &&
+                    (row.config_type === 'standard' ||
+                        row.config_type === 'investment')
+                    ? row.reconciled
+                        ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' +
+                          row.id +
+                          '"></i>'
+                        : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' +
+                          row.id +
+                          '"></i>'
+                    : '<i class="fa fa-circle text-muted"></i>';
             },
             orderable: false,
         },
@@ -124,18 +134,22 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            title: __("Actions"),
+            title: __('Actions'),
             defaultContent: '',
             // See resources/js/account/history.js's historyTable for the reference shape: the
             // actual actions are defined once in the contextualActions() call below and shown
             // on demand in a context menu - this cell only needs to render a trigger icon.
             render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+                return (
+                    '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+                    __('Actions') +
+                    '"></i>'
+                );
             },
-            className: "text-center dt-shrink",
+            className: 'text-center dt-shrink',
             orderable: false,
             searchable: false,
-        }
+        },
     ],
     /**
      * Callback for every row created: row and column specific formatting.
@@ -167,9 +181,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             api.columns.adjust().draw();
         }, 2000);
     },
-    order: [
-        [0, "asc"]
-    ],
+    order: [[0, 'asc']],
     // Required so the contextualActions plugin below has row selection to work with; info:false
     // suppresses the extra "(1 row selected)" text it would otherwise append.
     select: {
@@ -197,7 +209,7 @@ dtHistory.contextualActions({
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
-        enabled: false
+        enabled: false,
     },
     items: [
         {
@@ -215,7 +227,10 @@ dtHistory.contextualActions({
             iconClass: 'fa fa-search',
             contextMenuClasses: ['text-success'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'show' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'show',
+                });
             },
         },
         {
@@ -224,7 +239,10 @@ dtHistory.contextualActions({
             iconClass: 'fa fa-edit',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'edit',
+                });
             },
         },
         {
@@ -233,7 +251,10 @@ dtHistory.contextualActions({
             iconClass: 'fa fa-clone',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'clone',
+                });
             },
         },
         {
@@ -245,7 +266,8 @@ dtHistory.contextualActions({
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             action: function (row) {
-                dataTableHelpers.deleteTransactionRow(selectorHistoryTable, row[0].id)
+                dataTableHelpers
+                    .deleteTransactionRow(selectorHistoryTable, row[0].id)
                     .then(getAccountBalance)
                     .catch(() => {});
             },
@@ -256,35 +278,47 @@ dtHistory.contextualActions({
 let dtSchedule = $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     ajax: {
-        url: '/api/v1/transactions/scheduled-items?type=schedule' +
-            '&accountEntity=' + window.account.id +
+        url:
+            '/api/v1/transactions/scheduled-items?type=schedule' +
+            '&accountEntity=' +
+            window.account.id +
             '&accountSelection=selected',
         type: 'GET',
         dataSrc: function (data) {
             return data.transactions
                 .map(helpers.processTransaction)
                 .map(processTransaction)
-                .filter(transaction => transaction.transaction_schedule.next_date);
+                .filter(
+                    (transaction) => transaction.transaction_schedule.next_date,
+                );
         },
-        deferRender: true
+        deferRender: true,
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
+            'transaction_schedule.next_date',
+            __('Next date'),
+            window.YAFFA.userSettings.locale,
+        ),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amountCustom,
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            title: __("Actions"),
+            title: __('Actions'),
             defaultContent: '',
             render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+                return (
+                    '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+                    __('Actions') +
+                    '"></i>'
+                );
             },
-            className: "text-center dt-shrink",
+            className: 'text-center dt-shrink',
             orderable: false,
             searchable: false,
-        }
+        },
     ],
     /**
      * Callback for every row created: colorize the next date.
@@ -300,9 +334,15 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
 
         // This data is required, but just to be on the safe side, let's validate it
         if (data.transaction_schedule.next_date) {
-            if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+            if (
+                data.transaction_schedule.next_date <
+                new Date(new Date().setHours(0, 0, 0, 0))
+            ) {
                 $(row).addClass('table-danger');
-            } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+            } else if (
+                data.transaction_schedule.next_date <
+                new Date(new Date().setHours(24, 0, 0, 0))
+            ) {
                 $(row).addClass('table-warning');
             }
         }
@@ -328,7 +368,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
     },
     order: [
         // Next date is the first column
-        [0, "asc"]
+        [0, 'asc'],
     ],
     // Required so the contextualActions plugin below has row selection to work with; info:false
     // suppresses the extra "(1 row selected)" text it would otherwise append.
@@ -358,7 +398,7 @@ dtSchedule.contextualActions({
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
-        enabled: false
+        enabled: false,
     },
     items: [
         {
@@ -370,7 +410,7 @@ dtSchedule.contextualActions({
                 // TODO: should this data be passed back and forth instead of storing it?
                 recentTransactionDraftId = Number(row[0].id);
 
-                const transaction = {...row[0]};
+                const transaction = { ...row[0] };
 
                 // Remove schedule data
                 transaction.schedule = false;
@@ -382,7 +422,7 @@ dtSchedule.contextualActions({
                 const event = new CustomEvent('initiateEnterInstance', {
                     detail: {
                         transaction: transaction,
-                    }
+                    },
                 });
                 window.dispatchEvent(event);
             },
@@ -395,18 +435,24 @@ dtSchedule.contextualActions({
             action: function (row) {
                 const id = row[0].id;
 
-                axios.patch('/api/v1/transactions/' + id + '/skip')
+                axios
+                    .patch('/api/v1/transactions/' + id + '/skip')
                     .then(function (response) {
                         // Find and update original row in schedule table
-                        let scheduleRow = dtSchedule.row(function (_idx, data, _node) {
-                            return Number(data.id) === id;
-                        });
+                        let scheduleRow = dtSchedule.row(
+                            function (_idx, data, _node) {
+                                return Number(data.id) === id;
+                            },
+                        );
 
                         let data = scheduleRow.data();
-                        let newNextDate = response.data.transaction.transaction_schedule.next_date;
+                        let newNextDate =
+                            response.data.transaction.transaction_schedule
+                                .next_date;
                         // If next date exists, update the row. Otherwise remove it.
                         if (newNextDate) {
-                            data.transaction_schedule.next_date = helpers.parseIsoDate(newNextDate);
+                            data.transaction_schedule.next_date =
+                                helpers.parseIsoDate(newNextDate);
                             scheduleRow.data(data).draw();
 
                             toastHelpers.showToast(
@@ -414,25 +460,36 @@ dtSchedule.contextualActions({
                                 __('Schedule instance skipped.'),
                                 'bg-success',
                                 {
-                                    headerSmall: helpers.transactionLink(id, __('Go to transaction')),
-                                }
+                                    headerSmall: helpers.transactionLink(
+                                        id,
+                                        __('Go to transaction'),
+                                    ),
+                                },
                             );
                         } else {
                             scheduleRow.remove().draw();
 
                             toastHelpers.showToast(
                                 __('Success'),
-                                __('Schedule instance skipped. This schedule has ended.'),
+                                __(
+                                    'Schedule instance skipped. This schedule has ended.',
+                                ),
                                 'bg-success',
                                 {
-                                    headerSmall: helpers.transactionLink(id, __('Go to transaction')),
-                                }
+                                    headerSmall: helpers.transactionLink(
+                                        id,
+                                        __('Go to transaction'),
+                                    ),
+                                },
                             );
                         }
                     })
                     .catch(function (error) {
                         toastHelpers.showErrorToast(
-                            __('Error skipping transaction (#:transactionId): :error', {transactionId: id, error: error})
+                            __(
+                                'Error skipping transaction (#:transactionId): :error',
+                                { transactionId: id, error: error },
+                            ),
                         );
                     });
             },
@@ -443,7 +500,10 @@ dtSchedule.contextualActions({
             iconClass: 'fa fa-edit',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'edit',
+                });
             },
         },
         {
@@ -452,7 +512,10 @@ dtSchedule.contextualActions({
             iconClass: 'fa fa-clone',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'clone',
+                });
             },
         },
         {
@@ -461,7 +524,10 @@ dtSchedule.contextualActions({
             iconClass: 'fa fa-calendar',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'replace' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'replace',
+                });
             },
         },
         {
@@ -473,7 +539,10 @@ dtSchedule.contextualActions({
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             action: function (row) {
-                dataTableHelpers.deleteTransactionRow(selectorScheduleTable, row[0].id);
+                dataTableHelpers.deleteTransactionRow(
+                    selectorScheduleTable,
+                    row[0].id,
+                );
             },
         },
     ],
@@ -482,24 +551,31 @@ dtSchedule.contextualActions({
 // Define and run a function to get the account balance
 let getAccountBalance = function () {
     // Get the balance related elements
-    let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
+    let elementOpeningBalance = document.getElementById(
+        'overviewOpeningBalance',
+    );
     let elementCurrentCash = document.getElementById('overviewCurrentCash');
-    let elementCurrentBalance = document.getElementById('overviewCurrentBalance');
+    let elementCurrentBalance = document.getElementById(
+        'overviewCurrentBalance',
+    );
 
     // Ensure that spinner icon is shown for all elements
     elementOpeningBalance.innerHTML =
         elementCurrentCash.innerHTML =
-            elementCurrentBalance.innerHTML =
-                '<i class="fa fa-fw fa-spinner fa-spin"></i>';
+        elementCurrentBalance.innerHTML =
+            '<i class="fa fa-fw fa-spinner fa-spin"></i>';
 
     pollUntilReady(
-        () => axios.get('/api/v1/accounts/' + window.account.id + '/balance').then((response) => response.data),
+        () =>
+            axios
+                .get('/api/v1/accounts/' + window.account.id + '/balance')
+                .then((response) => response.data),
         {
             onBusy: function (message) {
                 elementOpeningBalance.innerHTML =
                     elementCurrentCash.innerHTML =
-                        elementCurrentBalance.innerHTML =
-                            `<i
+                    elementCurrentBalance.innerHTML =
+                        `<i
                                  class="text-warning fa-solid fa-triangle-exclamation"
                                  title="${message}"
                          ></i>`;
@@ -510,61 +586,65 @@ let getAccountBalance = function () {
                 elementOpeningBalance.innerText = toFormattedCurrency(
                     balance.config.opening_balance,
                     window.YAFFA.userSettings.locale,
-                    balance.config.currency
+                    balance.config.currency,
                 );
 
                 elementCurrentCash.innerText = toFormattedCurrency(
                     balance.cash,
                     window.YAFFA.userSettings.locale,
-                    window.YAFFA.userSettings.baseCurrency
+                    window.YAFFA.userSettings.baseCurrency,
                 );
 
                 if (balance.hasOwnProperty('cash_foreign')) {
-                    elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
-                        balance.cash_foreign,
-                        window.YAFFA.userSettings.locale,
-                        balance.config.currency
-                    );
+                    elementCurrentCash.innerText +=
+                        ' / ' +
+                        toFormattedCurrency(
+                            balance.cash_foreign,
+                            window.YAFFA.userSettings.locale,
+                            balance.config.currency,
+                        );
                 }
 
                 elementCurrentBalance.innerText = toFormattedCurrency(
                     balance.sum,
                     window.YAFFA.userSettings.locale,
-                    window.YAFFA.userSettings.baseCurrency
+                    window.YAFFA.userSettings.baseCurrency,
                 );
 
                 if (balance.hasOwnProperty('sum_foreign')) {
-                    elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
-                        balance.sum_foreign,
-                        window.YAFFA.userSettings.locale,
-                        balance.config.currency
-                    );
+                    elementCurrentBalance.innerText +=
+                        ' / ' +
+                        toFormattedCurrency(
+                            balance.sum_foreign,
+                            window.YAFFA.userSettings.locale,
+                            balance.config.currency,
+                        );
                 }
             },
             onError: function (error) {
                 elementOpeningBalance.innerHTML =
                     elementCurrentCash.innerHTML =
-                        elementCurrentBalance.innerHTML =
-                            `<i
+                    elementCurrentBalance.innerHTML =
+                        `<i
                                  class="text-danger fa-solid fa-triangle-exclamation"
                                  title="${__('Error while retrieving data')}"
                          ></i>`;
 
                 toastHelpers.showErrorToast(error.message);
             },
-        }
+        },
     );
-}
+};
 getAccountBalance();
 
 // Reconciled button listener
-$(selectorHistoryTable).on("click", "i.reconcile", function () {
-    if ($(this).hasClass("fa-spinner")) {
+$(selectorHistoryTable).on('click', 'i.reconcile', function () {
+    if ($(this).hasClass('fa-spinner')) {
         return false;
     }
 
-    const currentState = $(this).data("reconciled");
-    const currentId = Number($(this).data("id"));
+    const currentState = $(this).data('reconciled');
+    const currentId = Number($(this).data('id'));
 
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
@@ -572,25 +652,27 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         type: 'PATCH',
         url: '/api/v1/transactions/' + currentId + '/reconciliation',
         data: JSON.stringify({
-            "reconciled": currentState ? false : true,
+            reconciled: currentState ? false : true,
         }),
         contentType: 'application/json',
         headers: { 'X-CSRF-TOKEN': csrfToken },
         success: function (_data) {
-            let row = $(selectorHistoryTable).DataTable().row(function (_idx, data, _node) {
-                return Number(data.id) === currentId
-            });
-            let data = row.data()
+            let row = $(selectorHistoryTable)
+                .DataTable()
+                .row(function (_idx, data, _node) {
+                    return Number(data.id) === currentId;
+                });
+            let data = row.data();
 
             data.reconciled = !currentState;
 
             row.data(data).draw();
-        }
+        },
     });
 });
 
 // Reconciled flag search buttons
-$('input[name=reconciled]').on("change", function () {
+$('input[name=reconciled]').on('change', function () {
     $(selectorHistoryTable).DataTable().column(1).search(this.value).draw();
 });
 
@@ -602,7 +684,7 @@ function reloadTable() {
     });
 }
 
-const handleDateRangeUpdated = ({dateFrom, dateTo, preset}) => {
+const handleDateRangeUpdated = ({ dateFrom, dateTo, preset }) => {
     currentDateFilters = {
         dateFrom: dateFrom || null,
         dateTo: dateTo || null,
@@ -623,15 +705,15 @@ const dateRangeApp = createApp({
             initialPreset: currentDateFilters.preset,
         };
     },
-    methods: {
-        onDateRangeUpdated(payload) {
-            handleDateRangeUpdated(payload);
-        },
-    },
     mounted() {
         if (hasInitialFilters && this.$refs.dateFilter?.emitDates) {
             this.$refs.dateFilter.emitDates();
         }
+    },
+    methods: {
+        onDateRangeUpdated(payload) {
+            handleDateRangeUpdated(payload);
+        },
     },
 });
 
@@ -658,7 +740,7 @@ $('#create-standard-transaction-button').on('click', function () {
         detail: {
             transaction: transaction,
             type: 'standard',
-        }
+        },
     });
     window.dispatchEvent(event);
 });
@@ -686,7 +768,7 @@ $('#create-investment-transaction-button').on('click', function () {
         detail: {
             transaction: transaction,
             type: 'investment',
-        }
+        },
     });
     window.dispatchEvent(event);
 });
@@ -694,7 +776,9 @@ $('#create-investment-transaction-button').on('click', function () {
 // Set up an event listener for the recently created transaction
 window.addEventListener('transaction-created', function (event) {
     // Transform incoming data — helpers.processTransaction() already converts dates
-    let transaction = processTransaction(helpers.processTransaction(event.detail.transaction));
+    let transaction = processTransaction(
+        helpers.processTransaction(event.detail.transaction),
+    );
 
     // Add the newly created transaction to the history table, regardless if the date range and account matches
     dtHistory.row.add(transaction).draw();
@@ -719,53 +803,60 @@ window.addEventListener('transaction-created', function (event) {
 });
 
 // Add event listener for the cache update button
-document.getElementById('recalculateMonthlyCachedData').addEventListener('click', function () {
-    // Prevent running multiple times in parallel
-    if (this.classList.contains("busy")) {
-        return false;
-    }
+document
+    .getElementById('recalculateMonthlyCachedData')
+    .addEventListener('click', function () {
+        // Prevent running multiple times in parallel
+        if (this.classList.contains('busy')) {
+            return false;
+        }
 
-    this.classList.add('busy');
-    const button = this;
+        this.classList.add('busy');
+        const button = this;
 
-    axios.post(window.route(
-        'api.v1.accounts.monthly-summary',
-        {accountEntity: window.account.id}
-    ))
-        .then(function (response) {
-            const data = response.data;
-            toastHelpers.showSuccessToast(data.message);
+        axios
+            .post(
+                window.route('api.v1.accounts.monthly-summary', {
+                    accountEntity: window.account.id,
+                }),
+            )
+            .then(function (response) {
+                const data = response.data;
+                toastHelpers.showSuccessToast(data.message);
 
-            // Reload the account balance with a static delay
-            setTimeout(getAccountBalance, 5000);
-        })
-        .catch(function (error) {
-            toastHelpers.showErrorToast(error.message);
-        })
-        .finally(function () {
-            button.classList.remove('busy');
-        });
-});
+                // Reload the account balance with a static delay
+                setTimeout(getAccountBalance, 5000);
+            })
+            .catch(function (error) {
+                toastHelpers.showErrorToast(error.message);
+            })
+            .finally(function () {
+                button.classList.remove('busy');
+            });
+    });
 
 // Initialize Vue for the quick view
 import { createApp } from 'vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
-const app = createApp({})
+const app = createApp({});
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from '@/transactions/components/display/Modal.vue'
-import CreateStandardTransactionModal from '@/transactions/components/form/ModalStandard.vue'
-import CreateInvestmentTransactionModal from '@/transactions/components/form/ModalInvestment.vue'
+import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+import CreateStandardTransactionModal from '@/transactions/components/form/ModalStandard.vue';
+import CreateInvestmentTransactionModal from '@/transactions/components/form/ModalInvestment.vue';
 
-app.component('transaction-show-modal', TransactionShowModal)
-app.component('transaction-create-standard-modal', CreateStandardTransactionModal)
-app.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
+app.component('TransactionShowModal', TransactionShowModal);
+app.component('TransactionCreateStandardModal', CreateStandardTransactionModal);
+app.component(
+    'TransactionCreateInvestmentModal',
+    CreateInvestmentTransactionModal,
+);
 
-app.mount('#app')
+app.mount('#app');
 
 // Initialize tooltips in table
 $(document).ready(function () {

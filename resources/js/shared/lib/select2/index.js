@@ -36,8 +36,14 @@ function patchSelect2SearchInputPlaceholder() {
     const originalRenderSearchDropdown = SearchDropdown.prototype.render;
 
     SearchDropdown.prototype.render = function () {
-        const renderedSearchDropdown = originalRenderSearchDropdown.apply(this, arguments);
-        this.$search.attr('placeholder', this.options.get('searchInputPlaceholder'));
+        const renderedSearchDropdown = originalRenderSearchDropdown.apply(
+            this,
+            arguments,
+        );
+        this.$search.attr(
+            'placeholder',
+            this.options.get('searchInputPlaceholder'),
+        );
 
         return renderedSearchDropdown;
     };
@@ -54,7 +60,11 @@ function ensureSelect2Initialized() {
     isSelect2Initialized = true;
 }
 
-export function initializeSelect2(lang = window.YAFFA?.userSettings?.language || window.YAFFA?.language || 'en') {
+export function initializeSelect2(
+    lang = window.YAFFA?.userSettings?.language ||
+        window.YAFFA?.language ||
+        'en',
+) {
     ensureSelect2Initialized();
     patchSelect2SearchInputPlaceholder();
 

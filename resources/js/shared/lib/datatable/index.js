@@ -1,8 +1,13 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
 import {
-  escapeHtml,
-  getTransactionTypeConfig,
-  processTransaction,
+    __,
+    toFormattedCurrency as toFormattedCurrencyHelper,
+    toFormattedDate,
+    toFormattedNumber,
+} from '@/shared/lib/i18n';
+import {
+    escapeHtml,
+    getTransactionTypeConfig,
+    processTransaction,
 } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
@@ -50,7 +55,7 @@ export function dataTablesActionButton(id, action) {
                 <a
                     href="${route('transaction.open', {
                         transaction: id,
-                        action: 'show'
+                        action: 'show',
                     })}"
                     class="btn btn-xs btn-success"
                     title="${__('View details')}"
@@ -59,40 +64,64 @@ export function dataTablesActionButton(id, action) {
                 </a> `;
         },
         edit: function () {
-            return '<a href="' + route('transaction.open', {
-                transaction: id,
-                action: 'edit'
-            }) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-edit"></i></a> ';
+            return (
+                '<a href="' +
+                route('transaction.open', {
+                    transaction: id,
+                    action: 'edit',
+                }) +
+                '" class="btn btn-xs btn-primary" title="' +
+                __('Edit') +
+                '"><i class="fa fa-fw fa-edit"></i></a> '
+            );
         },
         clone() {
-            return '<a href="' + route('transaction.open', {
-                transaction: id,
-                action: 'clone'
-            }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ';
+            return (
+                '<a href="' +
+                route('transaction.open', {
+                    transaction: id,
+                    action: 'clone',
+                }) +
+                '" class="btn btn-xs btn-primary" title="' +
+                __('Clone') +
+                '"><i class="fa fa-fw fa-clone"></i></a> '
+            );
         },
         replace() {
-            return '<a href="' + route('transaction.open', {
-                transaction: id,
-                action: 'replace'
-            }) + '" class="btn btn-xs btn-primary" title="' + __('Edit and create new schedule') + '"><i class="fa fa-fw fa-calendar"></i></a> ';
+            return (
+                '<a href="' +
+                route('transaction.open', {
+                    transaction: id,
+                    action: 'replace',
+                }) +
+                '" class="btn btn-xs btn-primary" title="' +
+                __('Edit and create new schedule') +
+                '"><i class="fa fa-fw fa-calendar"></i></a> '
+            );
         },
         skip: function () {
-            return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
+            return (
+                '<button class="btn btn-xs btn-warning" data-skip data-id="' +
+                id +
+                '" type="button" title="' +
+                __('Skip current schedule') +
+                '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
+            );
         },
         enter: function () {
             return `
                 <a
                     href="${route('transaction.open', {
                         transaction: id,
-                        action: 'enter'
+                        action: 'enter',
                     })}"
                     class="btn btn-xs btn-success"
                     title="${__('Edit and insert instance')}"
                 >
                     <i class="fa fa-fw fa-pencil"></i>
                 </a> `;
-        }
-    }
+        },
+    };
 
     return functions[action]();
 }
@@ -100,23 +129,38 @@ export function dataTablesActionButton(id, action) {
 export function genericDataTablesActionButton(id, action, route) {
     const functions = {
         delete: function (id) {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
+            return (
+                '<button class="btn btn-xs btn-danger data-delete" data-id="' +
+                id +
+                '" type="submit" title="' +
+                __('Delete') +
+                '"><i class="fa fa-fw fa-trash"></i></button> '
+            );
         },
         edit: function (id, route) {
-            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-pencil"></i></a> ';
+            return (
+                '<a href="' +
+                window.route(route, id) +
+                '" class="btn btn-xs btn-primary" title="' +
+                __('Edit') +
+                '"><i class="fa fa-fw fa-pencil"></i></a> '
+            );
         },
-    }
+    };
 
     return functions[action](id, route);
 }
 
 export function initializeFilterToggle(table, column, name) {
-    $('input[name=' + name + ']').on("change", function () {
+    $('input[name=' + name + ']').on('change', function () {
         table.column(column).search(this.value).draw();
     });
 }
 
-export function initializeStandardExternalSearch(table, searchSelector = '#table_filter_search_text') {
+export function initializeStandardExternalSearch(
+    table,
+    searchSelector = '#table_filter_search_text',
+) {
     $(searchSelector).on('input', function () {
         table.search(this.value).draw();
     });
@@ -128,13 +172,17 @@ export function tagIcon(tags, type) {
     }
 
     // Currently just the name is used
-    tags = tags.map(tag => tag.name);
+    tags = tags.map((tag) => tag.name);
 
     if (type === 'filter') {
         return tags.join(', ');
     }
 
-    return ' <i class="fa fa-tag text-primary" data-bs-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
+    return (
+        ' <i class="fa fa-tag text-primary" data-bs-toggle="tooltip" data-placement="top" title="' +
+        tags.join(', ') +
+        '"></i>'
+    );
 }
 
 export function commentIcon(comment, type) {
@@ -146,7 +194,11 @@ export function commentIcon(comment, type) {
         return comment;
     }
 
-    return ' <i class="fa fa-comment text-primary" data-bs-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
+    return (
+        ' <i class="fa fa-comment text-primary" data-bs-toggle="tooltip" data-placement="top" title="' +
+        comment +
+        '"></i>'
+    );
 }
 
 /**
@@ -158,7 +210,13 @@ export function commentIcon(comment, type) {
  * @param {'generic'|'detailed'} [precision='generic']
  * @returns {number|string}
  */
-export function toFormattedCurrency(type, input, locale, currency, precision = 'generic') {
+export function toFormattedCurrency(
+    type,
+    input,
+    locale,
+    currency,
+    precision = 'generic',
+) {
     if (type === 'filter' || type === 'sort') {
         return input;
     }
@@ -171,20 +229,24 @@ export function toFormattedCurrency(type, input, locale, currency, precision = '
 }
 
 export function initializeSkipInstanceButton(selector) {
-    $(selector).on("click", ".data-skip", function () {
+    $(selector).on('click', '.data-skip', function () {
         let form = document.getElementById('form-skip');
-        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
+        form.action = route('transactions.skipScheduleInstance', {
+            transaction: this.dataset.id,
+        });
         form.submit();
     });
 }
 
 export function booleanToTableIcon(data, type) {
     if (type === 'filter') {
-        return (data ? __('Yes') : __('No'));
+        return data ? __('Yes') : __('No');
     }
-    return (data
-        ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
-        : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
+    return data
+        ? '<i class="fa fa-check-square text-success" title="' +
+              __('Yes') +
+              '"></i>'
+        : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>';
 }
 
 export function transactionTypeIcon(transactionType, customTitle) {
@@ -192,22 +254,38 @@ export function transactionTypeIcon(transactionType, customTitle) {
 
     if (typeConfig.category === 'standard') {
         if (transactionType === 'withdrawal') {
-            customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+            customTitle = customTitle || __('Withdrawal');
+            return (
+                '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' +
+                customTitle +
+                '"></i>'
+            );
         }
         if (transactionType === 'deposit') {
-            customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+            customTitle = customTitle || __('Deposit');
+            return (
+                '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' +
+                customTitle +
+                '"></i>'
+            );
         }
         if (transactionType === 'transfer') {
-            customTitle = customTitle || __("Transfer");
-            return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+            customTitle = customTitle || __('Transfer');
+            return (
+                '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' +
+                customTitle +
+                '"></i>'
+            );
         }
     }
 
     if (typeConfig.category === 'investment') {
         customTitle = customTitle || typeConfig.label;
-        return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+        return (
+            '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' +
+            customTitle +
+            '"></i>'
+        );
     }
 
     return null;
@@ -234,7 +312,7 @@ export const transactionColumnDefinition = {
 
                 return data;
             },
-            className: "dt-nowrap",
+            className: 'dt-nowrap',
             type: 'date',
         };
     },
@@ -247,7 +325,7 @@ export const transactionColumnDefinition = {
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
-            className: "text-center",
+            className: 'text-center',
         };
     },
 
@@ -268,7 +346,7 @@ export const transactionColumnDefinition = {
                 if (row.transaction_type === 'transfer') {
                     return __('Transfer from :account_from to :account_to', {
                         account_from: row.config.account_from?.name,
-                        account_to: row.config.account_to?.name
+                        account_to: row.config.account_to?.name,
                     });
                 }
             }
@@ -320,21 +398,36 @@ export const transactionColumnDefinition = {
                     return typeConfig.label;
                 }
                 if (!isNaN(typeConfig.amount_multiplier)) {
-                    return typeConfig.label + " " + row.config.quantity;
+                    return typeConfig.label + ' ' + row.config.quantity;
                 }
 
-                return typeConfig.label + " " + toFormattedNumber(row.config.quantity, window.YAFFA.userSettings.locale, {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4
-                }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.userSettings.locale, row.transaction_currency);
+                return (
+                    typeConfig.label +
+                    ' ' +
+                    toFormattedNumber(
+                        row.config.quantity,
+                        window.YAFFA.userSettings.locale,
+                        {
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: 4,
+                        },
+                    ) +
+                    ' @ ' +
+                    toFormattedCurrency(
+                        type,
+                        row.config.price,
+                        window.YAFFA.userSettings.locale,
+                        row.transaction_currency,
+                    )
+                );
             }
         },
-        orderable: false
+        orderable: false,
     },
 
     // Amount
     amount: {
-        title: __("Amount"),
+        title: __('Amount'),
         defaultContent: '',
         /**
          * @param _data
@@ -356,34 +449,47 @@ export const transactionColumnDefinition = {
                         prefix = '+ ';
                     }
 
-                    return prefix + toFormattedCurrency(
-                        type,
-                        row.config.amount_to,
-                        window.YAFFA.userSettings.locale,
-                        row.transaction_currency
+                    return (
+                        prefix +
+                        toFormattedCurrency(
+                            type,
+                            row.config.amount_to,
+                            window.YAFFA.userSettings.locale,
+                            row.transaction_currency,
+                        )
                     );
                 }
                 if (typeConfig.category === 'investment') {
-                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
+                    let amount =
+                        (row.config.quantity ?? 0) * (row.config.price ?? 0) +
+                        (row.config.dividend ?? 0);
 
                     if (typeConfig.amount_multiplier === -1) {
                         prefix = '- ';
-                        amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + toFormattedCurrency(
-                            type,
-                            amount,
-                            window.YAFFA.userSettings.locale,
-                            row.transaction_currency
+                        amount =
+                            amount + row.config.commission + row.config.tax;
+                        return (
+                            prefix +
+                            toFormattedCurrency(
+                                type,
+                                amount,
+                                window.YAFFA.userSettings.locale,
+                                row.transaction_currency,
+                            )
                         );
                     }
                     if (typeConfig.amount_multiplier === 1) {
                         prefix = '+ ';
-                        amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + toFormattedCurrency(
-                            type,
-                            amount,
-                            window.YAFFA.userSettings.locale,
-                            row.transaction_currency
+                        amount =
+                            amount - row.config.commission - row.config.tax;
+                        return (
+                            prefix +
+                            toFormattedCurrency(
+                                type,
+                                amount,
+                                window.YAFFA.userSettings.locale,
+                                row.transaction_currency,
+                            )
                         );
                     }
                 }
@@ -398,8 +504,8 @@ export const transactionColumnDefinition = {
     },
 
     // Amount referring to the global account currency
-    amountCustom:  {
-        title: __("Amount"),
+    amountCustom: {
+        title: __('Amount'),
         data: 'current_cash_flow',
         defaultContent: '',
         render: function (data, type) {
@@ -408,7 +514,7 @@ export const transactionColumnDefinition = {
                     type,
                     data,
                     window.YAFFA.userSettings.locale,
-                    window.account.config.currency
+                    window.account.config.currency,
                 );
             }
 
@@ -426,7 +532,7 @@ export const transactionColumnDefinition = {
         class: 'text-truncate',
         createdCell: function (td, cellData) {
             $(td).prop('title', cellData || '');
-        }
+        },
     },
 
     // Comma separated list of tag attached to transaction items
@@ -436,29 +542,29 @@ export const transactionColumnDefinition = {
         defaultContent: '',
         render: function (data) {
             if (data?.length > 0) {
-                return data.map(tag => tag.name).join(', ');
+                return data.map((tag) => tag.name).join(', ');
             }
-        }
+        },
     },
 
     // Combined icons for comment and tags
     extra: {
-        title: __("Extra"),
+        title: __('Extra'),
         defaultContent: '',
         render: function (_data, type, row) {
             return commentIcon(row.comment, type) + tagIcon(row.tags, type);
         },
-        className: "text-center",
+        className: 'text-center',
         orderable: false,
     },
 
     // Icon for the transaction type
-    type: function(withIcon = false) {
+    type: function (withIcon = false) {
         return {
             title: __('Type'),
             defaultContent: '',
             data: 'transaction_type',
-            render: function(data, type, _row) {
+            render: function (data, type, _row) {
                 const typeConfig = getTransactionTypeConfig(data);
 
                 if (type === 'filter' || type === 'type') {
@@ -472,12 +578,14 @@ export const transactionColumnDefinition = {
                     return transactionTypeIcon(data);
                 }
 
-                return typeConfig ? typeConfig.label : (data.charAt(0).toUpperCase() + data.slice(1));
+                return typeConfig
+                    ? typeConfig.label
+                    : data.charAt(0).toUpperCase() + data.slice(1);
             },
-            className: (withIcon ? "text-center" : ""),
-        }
+            className: withIcon ? 'text-center' : '',
+        };
     },
-}
+};
 
 /**
  * Deletes a transaction via the API, removes its row from `selector`'s DataTable (matched by
@@ -491,30 +599,44 @@ export const transactionColumnDefinition = {
  *   busy-state bookkeeping (see initializeAjaxDeleteButton) can still hook .catch().
  */
 export function deleteTransactionRow(selector, id) {
-    return axios.delete(window.route('api.v1.transactions.destroy', {transaction: id}))
+    return axios
+        .delete(
+            window.route('api.v1.transactions.destroy', { transaction: id }),
+        )
         .then(function () {
             // Find and remove original row in schedule table
-            let row = $(selector).DataTable().row(function (_idx, data) {
-                return Number(data.id) === id;
-            });
+            let row = $(selector)
+                .DataTable()
+                .row(function (_idx, data) {
+                    return Number(data.id) === id;
+                });
 
             row.remove().draw();
 
             // Emit a custom event to global scope about the result
-            toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
+            toastHelpers.showSuccessToast(
+                __('Transaction deleted (#:transactionId)', {
+                    transactionId: id,
+                }),
+            );
         })
         .catch(function (error) {
             // Emit a custom event to global scope about the result
-            toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
+            toastHelpers.showErrorToast(
+                __('Error deleting transaction (#:transactionId): :error', {
+                    transactionId: id,
+                    error: error,
+                }),
+            );
 
             throw error;
         });
 }
 
 export function initializeAjaxDeleteButton(selector, successCallback) {
-    $(selector).on("click", "[data-delete]", function () {
+    $(selector).on('click', '[data-delete]', function () {
         // Prevent running multiple times in parallel
-        if ($(this).hasClass("busy")) {
+        if ($(this).hasClass('busy')) {
             return false;
         }
 
@@ -530,7 +652,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
                 }
             })
             .catch(function () {
-                $(selector).find(".busy[data-delete]").removeClass('busy')
+                $(selector).find('.busy[data-delete]').removeClass('busy');
             });
     });
 }
@@ -546,7 +668,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
  */
 export function triggerTransactionQuickView(id) {
     return fetch('/api/v1/transactions/' + id)
-        .then(response => {
+        .then((response) => {
             if (!response.ok) {
                 throw new Error(response.statusText);
             }
@@ -570,14 +692,14 @@ export function triggerTransactionQuickView(id) {
                         skip: true,
                         enter: true,
                         delete: true,
-                    }
-                }
+                    },
+                },
             });
             window.dispatchEvent(event);
         })
         .catch((error) => {
             toastHelpers.showErrorToast(
-                __('Error getting transactions: :error', {error: error})
+                __('Error getting transactions: :error', { error: error }),
             );
         });
 }
@@ -586,17 +708,16 @@ export function triggerTransactionQuickView(id) {
 export function initializeQuickViewButton(selector) {
     $(selector).on('click', 'button.transaction-quickview', function () {
         // Prevent running multiple times in parallel
-        if ($(this).hasClass("busy")) {
+        if ($(this).hasClass('busy')) {
             return false;
         }
 
         $(this).addClass('busy');
         let el = $(this);
 
-        triggerTransactionQuickView(this.dataset.id)
-            .finally(() => {
-                el.removeClass('busy');
-            });
+        triggerTransactionQuickView(this.dataset.id).finally(() => {
+            el.removeClass('busy');
+        });
     });
 }
 
@@ -617,11 +738,9 @@ export function initializeQuickViewButton(selector) {
  */
 export function renderDeleteAssetButton(row, requirements, errorMessage) {
     let passes = 0;
-    let errorMessages = [
-        errorMessage + "\n"
-    ];
+    let errorMessages = [errorMessage + '\n'];
 
-    requirements.forEach(requirement => {
+    requirements.forEach((requirement) => {
         if (requirement.negate) {
             if (row[requirement.property] !== requirement.value) {
                 passes++;
@@ -650,7 +769,7 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
             </button> `;
     }
 
-    let title = errorMessages.join("\n");
+    let title = errorMessages.join('\n');
 
     return `
         <button
@@ -677,32 +796,47 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
  * @param {function(number, jQuery): void} onDeleted - called with the deleted id and the
  *   button's `<tr>` after a successful delete, to remove the row / update local arrays
  */
-export function initializeDeleteAssetButtonListener(tableSelector, routeName, successMessage, onDeleted) {
-    $(tableSelector).on('click', 'td > button.deleteIcon:not(.busy)', function () {
-        const button = $(this);
-        const id = Number(button.data('id'));
+export function initializeDeleteAssetButtonListener(
+    tableSelector,
+    routeName,
+    successMessage,
+    onDeleted,
+) {
+    $(tableSelector).on(
+        'click',
+        'td > button.deleteIcon:not(.busy)',
+        function () {
+            const button = $(this);
+            const id = Number(button.data('id'));
 
-        button.addClass('busy');
+            button.addClass('busy');
 
-        confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
-            if (!result.isConfirmed) {
-                button.removeClass('busy');
-                return;
-            }
+            confirmDelete(__('Are you sure to want to delete this item?')).then(
+                (result) => {
+                    if (!result.isConfirmed) {
+                        button.removeClass('busy');
+                        return;
+                    }
 
-            axios.delete(window.route(routeName, id))
-                .then(function () {
-                    onDeleted(id, button.parents('tr'));
-                    toastHelpers.showSuccessToast(successMessage);
-                })
-                .catch(function (error) {
-                    toastHelpers.showErrorToast(error.response?.data?.error || __('Error while trying to delete item'));
-                })
-                .finally(function () {
-                    button.removeClass('busy');
-                });
-        });
-    });
+                    axios
+                        .delete(window.route(routeName, id))
+                        .then(function () {
+                            onDeleted(id, button.parents('tr'));
+                            toastHelpers.showSuccessToast(successMessage);
+                        })
+                        .catch(function (error) {
+                            toastHelpers.showErrorToast(
+                                error.response?.data?.error ||
+                                    __('Error while trying to delete item'),
+                            );
+                        })
+                        .finally(function () {
+                            button.removeClass('busy');
+                        });
+                },
+            );
+        },
+    );
 }
 
 // Import the jstree plugin
@@ -722,14 +856,14 @@ export function investmentGroupTree(selector, data, changeHandler) {
     // The data is expected to be an array of objects with the raw properties from the database
     // Convert them to the format expected by the jstree plugin
     const treeData = (data || [])
-        .map(group => {
+        .map((group) => {
             return {
-                id:  group.id,
+                id: group.id,
                 parent: 0,
                 text: group.name,
                 state: {
-                    selected: false
-                }
+                    selected: false,
+                },
             };
         })
         .sort((a, b) => a.text.localeCompare(b.text));
@@ -741,8 +875,8 @@ export function investmentGroupTree(selector, data, changeHandler) {
         text: __('Investment groups'),
         state: {
             selected: true,
-            opened: true
-        }
+            opened: true,
+        },
     });
 
     // Initialize the jstree plugin, including the checkbox plugin and the callback for change events
@@ -753,13 +887,13 @@ export function investmentGroupTree(selector, data, changeHandler) {
                 data: treeData,
                 themes: {
                     dots: false,
-                    icons: false
-                }
+                    icons: false,
+                },
             },
             plugins: ['checkbox'],
             checkbox: {
-                keep_selected_style: false
-            }
+                keep_selected_style: false,
+            },
         })
         .on('select_node.jstree', changeHandler)
         .on('deselect_node.jstree', changeHandler);
@@ -786,7 +920,12 @@ export function investmentGroupTree(selector, data, changeHandler) {
  *
  * @returns {void}
  */
-export function categoryTree(selector, changeHandler, presetSelectedIds = [], options = {}) {
+export function categoryTree(
+    selector,
+    changeHandler,
+    presetSelectedIds = [],
+    options = {},
+) {
     const { syncUrl = false } = options;
 
     function handleChange() {
@@ -795,7 +934,9 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
             const checked = treeInstance ? treeInstance.get_checked() : [];
             const url = new URL(window.location.href);
             url.searchParams.delete('categories[]');
-            checked.forEach(id => url.searchParams.append('categories[]', id));
+            checked.forEach((id) =>
+                url.searchParams.append('categories[]', id),
+            );
             window.history.pushState('', '', url.toString());
         }
 
@@ -807,41 +948,51 @@ export function categoryTree(selector, changeHandler, presetSelectedIds = [], op
             core: {
                 data: function (_obj, callback) {
                     fetch('/api/v1/categories?withInactive=1&q=*')
-                        .then(response => {
+                        .then((response) => {
                             if (!response.ok) {
-                                throw new Error(`Failed to load categories: ${response.status}`);
+                                throw new Error(
+                                    `Failed to load categories: ${response.status}`,
+                                );
                             }
 
                             return response.json();
                         })
-                        .then(data => {
+                        .then((data) => {
                             const categories = data.map(function (category) {
                                 return {
                                     id: category.id,
                                     parent: category.parent_id || '#',
                                     text: category.active
                                         ? escapeHtml(category.name)
-                                        : '<span class="text-muted" title="' + __('Inactive') + '">' + escapeHtml(category.name) + '</span>',
+                                        : '<span class="text-muted" title="' +
+                                          __('Inactive') +
+                                          '">' +
+                                          escapeHtml(category.name) +
+                                          '</span>',
                                     state: {
-                                        selected: presetSelectedIds.includes(category.id)
+                                        selected: presetSelectedIds.includes(
+                                            category.id,
+                                        ),
                                     },
                                 };
                             });
                             callback.call(this, categories);
                         })
                         .catch(() => {
-                            toastHelpers.showErrorToast(__('Failed to load categories'));
+                            toastHelpers.showErrorToast(
+                                __('Failed to load categories'),
+                            );
                             callback.call(this, []);
                         });
                 },
                 themes: {
                     dots: false,
-                    icons: false
-                }
+                    icons: false,
+                },
             },
             plugins: ['checkbox'],
             checkbox: {
-                keep_selected_style: false
+                keep_selected_style: false,
             },
         })
         .on('select_node.jstree', handleChange)

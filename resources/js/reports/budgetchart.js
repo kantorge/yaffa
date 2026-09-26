@@ -12,9 +12,16 @@ import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import { initializeSelect2 } from '@/shared/lib/select2';
-import { initializeBootstrapTooltips, scheduleCadenceText, getArrayParamFromUrl } from '@/shared/lib/helpers';
+import {
+    initializeBootstrapTooltips,
+    scheduleCadenceText,
+    getArrayParamFromUrl,
+} from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
-import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+} from '@/shared/lib/ui/amchartsColorTheme';
 import { confirmDelete } from '@/shared/lib/confirm';
 import { createApp } from 'vue';
 import BudgetForm from '@/reports/components/BudgetForm.vue';
@@ -23,7 +30,7 @@ import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 // Category tree
 import 'jstree';
-import 'jstree/src/themes/default/style.css'
+import 'jstree/src/themes/default/style.css';
 
 // Select2 for account selection
 initializeSelect2(window.YAFFA.userSettings.language);
@@ -31,9 +38,13 @@ initializeSelect2(window.YAFFA.userSettings.language);
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
 
-const getSelectedCategoryIds = () => ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked').map(String) : []);
+const getSelectedCategoryIds = () =>
+    $(treeSelector).jstree()
+        ? $(treeSelector).jstree('get_checked').map(String)
+        : [];
 
-const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
+const getAverage = (data, attribute) =>
+    data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
 const computeMovingAverage = (baseData, interval) => {
     // Don't do any calculations if there is no data
@@ -83,7 +94,7 @@ const computeMovingAverage = (baseData, interval) => {
         currentItem.movingAverage = getAverage(previousPeriod, 'actual');
 
         return currentItem;
-    })
+    });
 };
 
 // FR-7: flatten the per-period budgetBreakdown arrays budgetChart() returns into one row per
@@ -169,7 +180,13 @@ function buildScheduleBreakdownRows(rawData) {
 
 const elementRefreshButton = document.getElementById('reload');
 
-let chart, dateAxis, seriesActual, seriesForecast, seriesBudget, seriesMovingAverage, scrollbarX;
+let chart,
+    dateAxis,
+    seriesActual,
+    seriesForecast,
+    seriesBudget,
+    seriesMovingAverage,
+    scrollbarX;
 
 function initChart() {
     if (chart) chart.dispose();
@@ -178,27 +195,31 @@ function initChart() {
     am4core.useTheme(am4themes_animated);
     am4core.useTheme(am4themes_kelly);
 
-    chart = am4core.create("chartdiv", am4charts.XYChart);
+    chart = am4core.create('chartdiv', am4charts.XYChart);
     window.chart = chart;
-    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
+    applyAmChartsLocalization(
+        chart,
+        window.YAFFA.userSettings.locale,
+        window.YAFFA.userSettings.language,
+    );
 
     chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
     chart.numberFormatter.numberFormat = {
         style: 'currency',
         currency: window.YAFFA.userSettings.baseCurrency.iso_code,
-        minimumFractionDigits: 0
+        minimumFractionDigits: 0,
     };
 
     dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-    dateAxis.dataFields.category = "period";
+    dateAxis.dataFields.category = 'period';
     dateAxis.baseInterval = {
-        timeUnit: "month",
-        count: 1
-    }
-    dateAxis.dateFormats.setKey("month", "yyyy MMM");
+        timeUnit: 'month',
+        count: 1,
+    };
+    dateAxis.dateFormats.setKey('month', 'yyyy MMM');
 
     // Highlight the current month, mirroring the cash flow chart's own current-month marker.
-    dateAxis.events.on("datavalidated", function (ev) {
+    dateAxis.events.on('datavalidated', function (ev) {
         const axis = ev.target;
         const now = new Date();
 
@@ -206,7 +227,7 @@ function initChart() {
         const range = axis.axisRanges.create();
         range.date = new Date(now.getFullYear(), now.getMonth(), 1);
         range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fill = am4core.color('#396478');
         range.axisFill.fillOpacity = 0.4;
         range.grid.strokeOpacity = 0;
     });
@@ -217,16 +238,16 @@ function initChart() {
     // Consistent color pairing across the 4 series: "Actual" (fact) and "Moving average" share
     // one color family (blue); "Forecast" and "Budget" - both plan/projection series - share
     // another (purple), so the chart reads as two pairs rather than four unrelated colors.
-    const colorActual = am4core.color("#2E86C1");
-    const colorMovingAverage = am4core.color("#1B4F72");
-    const colorForecastFill = am4core.color("#b39ddb");
-    const colorForecastStroke = am4core.color("#7e57c2");
+    const colorActual = am4core.color('#2E86C1');
+    const colorMovingAverage = am4core.color('#1B4F72');
+    const colorForecastFill = am4core.color('#b39ddb');
+    const colorForecastStroke = am4core.color('#7e57c2');
 
     seriesActual = chart.series.push(new am4charts.ColumnSeries());
-    seriesActual.dataFields.valueY = "actual";
-    seriesActual.dataFields.dateX = "date";
-    seriesActual.name = __("Actual");
-    seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
+    seriesActual.dataFields.valueY = 'actual';
+    seriesActual.dataFields.dateX = 'date';
+    seriesActual.name = __('Actual');
+    seriesActual.tooltipText = '[bold]' + __('Actual') + ':[/] {valueY}';
     seriesActual.stacked = true;
     // Set on the series itself (not just columns.template) - the tooltip background derives its
     // color from the series' own fill/stroke, not from the column template, so setting only the
@@ -242,29 +263,29 @@ function initChart() {
     // two bars read as "so far + what's still expected this period." Lighter purple fill and a
     // dashed border distinguish it as a plan/forecast rather than recorded fact.
     seriesForecast = chart.series.push(new am4charts.ColumnSeries());
-    seriesForecast.dataFields.valueY = "forecast";
-    seriesForecast.dataFields.dateX = "date";
-    seriesForecast.name = __("Forecast");
-    seriesForecast.tooltipText = "[bold]" + __('Forecast') + ":[/] {valueY}";
+    seriesForecast.dataFields.valueY = 'forecast';
+    seriesForecast.dataFields.dateX = 'date';
+    seriesForecast.name = __('Forecast');
+    seriesForecast.tooltipText = '[bold]' + __('Forecast') + ':[/] {valueY}';
     seriesForecast.stacked = true;
     seriesForecast.fill = colorForecastFill;
     seriesForecast.stroke = colorForecastStroke;
     seriesForecast.columns.template.fill = colorForecastFill;
     seriesForecast.columns.template.stroke = colorForecastStroke;
     seriesForecast.columns.template.strokeWidth = 1;
-    seriesForecast.columns.template.strokeDasharray = "3,3";
+    seriesForecast.columns.template.strokeDasharray = '3,3';
     seriesForecast.tooltip.getFillFromObject = false;
     seriesForecast.tooltip.background.fill = colorForecastStroke;
 
     seriesBudget = chart.series.push(new am4charts.LineSeries());
     seriesBudget.strokeWidth = 3;
-    seriesBudget.strokeDasharray = "8,4";
+    seriesBudget.strokeDasharray = '8,4';
     seriesBudget.fill = colorForecastStroke;
     seriesBudget.stroke = colorForecastStroke;
-    seriesBudget.dataFields.valueY = "budget";
-    seriesBudget.dataFields.dateX = "date";
-    seriesBudget.name = __("Budget");
-    seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
+    seriesBudget.dataFields.valueY = 'budget';
+    seriesBudget.dataFields.dateX = 'date';
+    seriesBudget.name = __('Budget');
+    seriesBudget.tooltipText = '[bold]' + __('Budget') + ':[/] {valueY}';
     seriesBudget.tooltip.getFillFromObject = false;
     seriesBudget.tooltip.background.fill = colorForecastStroke;
 
@@ -272,10 +293,11 @@ function initChart() {
     seriesMovingAverage.strokeWidth = 3;
     seriesMovingAverage.fill = colorMovingAverage;
     seriesMovingAverage.stroke = colorMovingAverage;
-    seriesMovingAverage.dataFields.valueY = "movingAverage";
-    seriesMovingAverage.dataFields.dateX = "date";
-    seriesMovingAverage.name = __("Moving average");
-    seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
+    seriesMovingAverage.dataFields.valueY = 'movingAverage';
+    seriesMovingAverage.dataFields.dateX = 'date';
+    seriesMovingAverage.name = __('Moving average');
+    seriesMovingAverage.tooltipText =
+        '[bold]' + __('Moving average') + ':[/] {valueY}';
     seriesMovingAverage.tooltip.getFillFromObject = false;
     seriesMovingAverage.tooltip.background.fill = colorMovingAverage;
 
@@ -293,14 +315,14 @@ function initChart() {
 initChart();
 
 // Set AmCharts zoom in functionality for button (set up once; dateAxis is module-level)
-const btnZoomIn = document.getElementById('btnZoomIn')
+const btnZoomIn = document.getElementById('btnZoomIn');
 if (btnZoomIn) {
     btnZoomIn.addEventListener('click', function () {
         // Zoom to current month +/- 13 months
         const currentDate = new Date();
         dateAxis.zoomToDates(
             new Date(currentDate.setMonth(currentDate.getMonth() - 13)),
-            new Date(currentDate.setMonth(currentDate.getMonth() + 26))
+            new Date(currentDate.setMonth(currentDate.getMonth() + 26)),
         );
     });
 }
@@ -326,28 +348,37 @@ let reloadData = function () {
     elementRefreshButton.disabled = true;
     chartLoadingOverlay.classList.remove('d-none');
     chartLoadingOverlay.classList.add('d-flex');
-    const selectedCategories = ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked', true) : []);
+    const selectedCategories = $(treeSelector).jstree()
+        ? $(treeSelector).jstree('get_checked', true)
+        : [];
 
     $.ajax({
         url: window.route('api.v1.reports.budget-chart'),
         timeout: 30000,
         data: {
-            categories: selectedCategories.map(category => category.id),
-            accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
+            categories: selectedCategories.map((category) => category.id),
+            accountSelection: $(
+                'input[name=table_filter_account_scope]:checked',
+            ).val(),
             accountEntity: $(accountSelector).val(),
-        }
+        },
     })
         .fail(function (jqXHR, textStatus) {
-            const message = textStatus === 'timeout'
-                ? __('Loading the budget chart timed out. Please try again with fewer categories, or try again later.')
-                : __('Failed to load the budget chart: :error', { error: jqXHR.statusText || textStatus });
+            const message =
+                textStatus === 'timeout'
+                    ? __(
+                          'Loading the budget chart timed out. Please try again with fewer categories, or try again later.',
+                      )
+                    : __('Failed to load the budget chart: :error', {
+                          error: jqXHR.statusText || textStatus,
+                      });
 
             toastHelpers.showErrorToast(message);
         })
         .done(function (data) {
             markDataFresh();
 
-            const chartData = Array.isArray(data) ? data : (data.chartData || []);
+            const chartData = Array.isArray(data) ? data : data.chartData || [];
 
             // Convert date strings to Date objects
             const parsedChartData = chartData.map(function (item) {
@@ -376,24 +407,40 @@ let reloadData = function () {
             });
 
             // Set the radio button based on the aggregation
-            document.querySelector('input[name="chart_time_interval"][value="' + aggregation + '"]').checked = true;
+            document.querySelector(
+                'input[name="chart_time_interval"][value="' +
+                    aggregation +
+                    '"]',
+            ).checked = true;
 
             // Update the chart
             updateChart(rawData);
 
             // FR-7: the drill-down tables are driven directly by budgetChart()'s own
             // contributing-rows data (budgetBreakdown/scheduleBreakdown) - no separate request.
-            window.table.clear().rows.add(buildBudgetBreakdownRows(rawData)).draw();
-            window.scheduleTable.clear().rows.add(buildScheduleBreakdownRows(rawData)).draw();
+            window.table
+                .clear()
+                .rows.add(buildBudgetBreakdownRows(rawData))
+                .draw();
+            window.scheduleTable
+                .clear()
+                .rows.add(buildScheduleBreakdownRows(rawData))
+                .draw();
 
-            if (data.warnings && data.warnings.currenciesWithoutRates && data.warnings.currenciesWithoutRates.length > 0) {
+            if (
+                data.warnings &&
+                data.warnings.currenciesWithoutRates &&
+                data.warnings.currenciesWithoutRates.length > 0
+            ) {
                 const currencyList = data.warnings.currenciesWithoutRates
-                    .map(c => `${c.name} (${c.iso_code})`)
+                    .map((c) => `${c.name} (${c.iso_code})`)
                     .join(', ');
 
                 toastHelpers.showWarningToast(
-                    __('reports.cashflow.missingRatesWarningPrefix') + currencyList +
-                    '. ' + __('reports.cashflow.missingRatesWarningSuffix')
+                    __('reports.cashflow.missingRatesWarningPrefix') +
+                        currencyList +
+                        '. ' +
+                        __('reports.cashflow.missingRatesWarningSuffix'),
                 );
             }
         })
@@ -402,7 +449,7 @@ let reloadData = function () {
             chartLoadingOverlay.classList.add('d-none');
             chartLoadingOverlay.classList.remove('d-flex');
         });
-}
+};
 
 function updateChart(rawData) {
     if (rawData.length === 0) {
@@ -411,7 +458,9 @@ function updateChart(rawData) {
         return;
     }
 
-    const aggregation = document.querySelector('input[name="chart_time_interval"]:checked')?.value || 'month';
+    const aggregation =
+        document.querySelector('input[name="chart_time_interval"]:checked')
+            ?.value || 'month';
     let data;
 
     // Aggregate the data by quarter or year, based on user selection
@@ -419,8 +468,9 @@ function updateChart(rawData) {
         data = rawData.reduce((acc, item) => {
             const quarter = Math.floor(item.date.getMonth() / 3);
             const existingItem = acc.find(
-                acc_item => acc_item.date.getFullYear() === item.date.getFullYear()
-                    && Math.floor(acc_item.date.getMonth() / 3) === quarter
+                (acc_item) =>
+                    acc_item.date.getFullYear() === item.date.getFullYear() &&
+                    Math.floor(acc_item.date.getMonth() / 3) === quarter,
             );
 
             // Initialize keys if they do not exist
@@ -451,13 +501,20 @@ function updateChart(rawData) {
         const maxDate = data[data.length - 1].date;
         let currentDate = new Date(minDate);
         while (currentDate < maxDate) {
-            if (!data.find(
-                item => item.date.getFullYear() === currentDate.getFullYear()
-                    && Math.floor(item.date.getMonth() / 3) === Math.floor(currentDate.getMonth() / 3))
+            if (
+                !data.find(
+                    (item) =>
+                        item.date.getFullYear() === currentDate.getFullYear() &&
+                        Math.floor(item.date.getMonth() / 3) ===
+                            Math.floor(currentDate.getMonth() / 3),
+                )
             ) {
                 data.push({
                     date: new Date(currentDate),
-                    period: currentDate.getFullYear() + ' Q' + (Math.floor(currentDate.getMonth() / 3) + 1),
+                    period:
+                        currentDate.getFullYear() +
+                        ' Q' +
+                        (Math.floor(currentDate.getMonth() / 3) + 1),
                     actual: 0,
                     budget: 0,
                     forecast: 0,
@@ -469,12 +526,13 @@ function updateChart(rawData) {
         // Change the date axis base interval based on the aggregation
         dateAxis.baseInterval = {
             timeUnit: 'month',
-            count: 3
-        }
+            count: 3,
+        };
     } else if (aggregation === 'year') {
         data = rawData.reduce((acc, item) => {
             const existingItem = acc.find(
-                acc_item => acc_item.date.getFullYear() === item.date.getFullYear()
+                (acc_item) =>
+                    acc_item.date.getFullYear() === item.date.getFullYear(),
             );
 
             // Initialize keys if they do not exist
@@ -505,8 +563,11 @@ function updateChart(rawData) {
         const maxDate = data[data.length - 1].date;
         let currentDate = new Date(minDate);
         while (currentDate < maxDate) {
-            if (!data.find(
-                item => item.date.getFullYear() === currentDate.getFullYear())
+            if (
+                !data.find(
+                    (item) =>
+                        item.date.getFullYear() === currentDate.getFullYear(),
+                )
             ) {
                 data.push({
                     date: new Date(currentDate),
@@ -522,8 +583,8 @@ function updateChart(rawData) {
         // Change the date axis base interval based on the aggregation
         dateAxis.baseInterval = {
             timeUnit: 'year',
-            count: 1
-        }
+            count: 1,
+        };
     } else {
         data = rawData.slice();
 
@@ -532,10 +593,13 @@ function updateChart(rawData) {
         const maxDate = data[data.length - 1].date;
         let currentDate = new Date(minDate);
         while (currentDate < maxDate) {
-            if (!data.find(
-                item => item.date.getFullYear() === currentDate.getFullYear()
-                    && item.date.getMonth() === currentDate.getMonth()
-                    && item.date.getDate() === currentDate.getDate())
+            if (
+                !data.find(
+                    (item) =>
+                        item.date.getFullYear() === currentDate.getFullYear() &&
+                        item.date.getMonth() === currentDate.getMonth() &&
+                        item.date.getDate() === currentDate.getDate(),
+                )
             ) {
                 data.push({
                     date: new Date(currentDate),
@@ -551,8 +615,8 @@ function updateChart(rawData) {
         // Change the date axis base interval based on the aggregation
         dateAxis.baseInterval = {
             timeUnit: 'month',
-            count: 1
-        }
+            count: 1,
+        };
     }
 
     // Sort the data by date
@@ -570,11 +634,13 @@ function updateChart(rawData) {
 elementRefreshButton.addEventListener('click', reloadData);
 
 // Attach event listener to time interval radio buttons to redraw the chart using the already loaded data
-document.querySelectorAll('input[name="chart_time_interval"]').forEach(function (element) {
-    element.addEventListener('change', function () {
-        updateChart(rawData);
+document
+    .querySelectorAll('input[name="chart_time_interval"]')
+    .forEach(function (element) {
+        element.addEventListener('change', function () {
+            updateChart(rawData);
+        });
     });
-});
 
 const tableSelector = '#table';
 const scheduleTableSelector = '#scheduleTable';
@@ -618,8 +684,15 @@ const budgetFormApp = createApp({
 
             // A budget created for a category outside the current selection wouldn't show up in
             // this chart anyway - warn instead of silently reloading data that won't change.
-            if (selectedCategoryIds.length > 0 && !selectedCategoryIds.includes(String(budget.category_id))) {
-                toastHelpers.showWarningToast(__('The new budget\'s category is not part of the current selection, so the chart was not refreshed.'));
+            if (
+                selectedCategoryIds.length > 0 &&
+                !selectedCategoryIds.includes(String(budget.category_id))
+            ) {
+                toastHelpers.showWarningToast(
+                    __(
+                        "The new budget's category is not part of the current selection, so the chart was not refreshed.",
+                    ),
+                );
                 return;
             }
 
@@ -639,7 +712,8 @@ function confirmAndDelete(routeName, routeParams, id) {
             return;
         }
 
-        window.axios.delete(window.route(routeName, routeParams))
+        window.axios
+            .delete(window.route(routeName, routeParams))
             .then(function () {
                 toastHelpers.showSuccessToast(__('Deleted (#:id)', { id }));
                 reloadData();
@@ -649,7 +723,7 @@ function confirmAndDelete(routeName, routeParams, id) {
                     __('Error deleting (#:id): :error', {
                         id,
                         error: error.response?.data?.message || error.message,
-                    })
+                    }),
                 );
             });
     });
@@ -674,7 +748,7 @@ function amountColumn() {
                 type,
                 data,
                 window.YAFFA.userSettings.locale,
-                row.currency
+                row.currency,
             );
 
             // FR-8: when inflation compounds the amount across periods, show both the starting
@@ -687,7 +761,7 @@ function amountColumn() {
                 type,
                 row.amountStart,
                 window.YAFFA.userSettings.locale,
-                row.currency
+                row.currency,
             );
 
             return start + ' &rarr; ' + end;
@@ -747,9 +821,7 @@ window.table = $(tableSelector).DataTable({
             $('td', row).eq(1).addClass('text-muted text-italic');
         }
     },
-    order: [
-        [0, "asc"]
-    ],
+    order: [[0, 'asc']],
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -774,12 +846,18 @@ $(tableSelector).on('click', '[data-delete-budget]', function () {
     deleteBudget(Number(this.dataset.deleteBudget));
 });
 
-document.getElementById('button-new-budget').addEventListener('click', function () {
-    budgetForm.showNewBudgetModal();
-});
+document
+    .getElementById('button-new-budget')
+    .addEventListener('click', function () {
+        budgetForm.showNewBudgetModal();
+    });
 
 function deleteScheduleTransaction(transactionId) {
-    confirmAndDelete('api.v1.transactions.destroy', { transaction: transactionId }, transactionId);
+    confirmAndDelete(
+        'api.v1.transactions.destroy',
+        { transaction: transactionId },
+        transactionId,
+    );
 }
 
 // Same idea as the budgets table above, for the schedule-transaction side of the total
@@ -819,9 +897,7 @@ window.scheduleTable = $(scheduleTableSelector).DataTable({
             },
         },
     ],
-    order: [
-        [0, "asc"]
-    ],
+    order: [[0, 'asc']],
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -851,18 +927,23 @@ let presetFilters = {
         }
 
         return presetFilters.account !== false;
-
-    }
+    },
 };
 
 /** @var {URLSearchParams} searchParams URL search parameters */
 const searchParams = new URLSearchParams(window.location.search);
 /** @var {Array} presetCategories Array of initially selected category IDs */
-const presetCategories = getArrayParamFromUrl(searchParams, 'categories').map(category => parseInt(category));
-presetCategories.forEach(category => presetFilters.categories[category] = false);
+const presetCategories = getArrayParamFromUrl(searchParams, 'categories').map(
+    (category) => parseInt(category),
+);
+presetCategories.forEach(
+    (category) => (presetFilters.categories[category] = false),
+);
 
 /** @var {number} presetAccount ID of initially selected account */
-const presetAccount = searchParams.has('accountEntity') ? parseInt(searchParams.get('accountEntity')) : undefined;
+const presetAccount = searchParams.has('accountEntity')
+    ? parseInt(searchParams.get('accountEntity'))
+    : undefined;
 if (typeof presetAccount !== 'undefined') {
     presetFilters.account = false;
 }
@@ -881,17 +962,24 @@ let rebuildUrl = function () {
     }
 
     // Categories
-    $(treeSelector).jstree('get_checked').forEach((category) => url.searchParams.append('categories[]', category));
+    $(treeSelector)
+        .jstree('get_checked')
+        .forEach((category) =>
+            url.searchParams.append('categories[]', category),
+        );
 
     // Update the URL
     window.history.pushState('', '', url.toString());
 
     // Finally, adjust reload button availability: at least one category must be checked, and
     // if the account scope is restricted to a single account, one must be selected
-    const accountScopeRequiresSelection = $('input[name=table_filter_account_scope]:checked').val() === 'selected';
-    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0)
-        || (accountScopeRequiresSelection && !$(accountSelector).val());
-}
+    const accountScopeRequiresSelection =
+        $('input[name=table_filter_account_scope]:checked').val() ===
+        'selected';
+    elementRefreshButton.disabled =
+        $(treeSelector).jstree('get_checked').length === 0 ||
+        (accountScopeRequiresSelection && !$(accountSelector).val());
+};
 
 // Initialize category tree view
 $(treeSelector)
@@ -899,8 +987,8 @@ $(treeSelector)
         core: {
             data: function (_obj, callback) {
                 fetch('/api/v1/categories?withInactive=1&q=*')
-                    .then(response => response.json())
-                    .then(data => {
+                    .then((response) => response.json())
+                    .then((data) => {
                         /**
                          * category represents an instance of a category model
                          * @var {Object} category
@@ -909,40 +997,50 @@ $(treeSelector)
                          */
                         let categories = data.map(function (category) {
                             // Mark this preset item as ready, if it is preset
-                            if (presetFilters.categories[category.id] !== undefined) {
+                            if (
+                                presetFilters.categories[category.id] !==
+                                undefined
+                            ) {
                                 presetFilters.categories[category.id] = true;
                             }
 
                             return {
                                 id: category.id,
                                 parent: category.parent_id || '#',
-                                default_aggregation: category.default_aggregation,
-                                text: (category.active ? category.name : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>'),
+                                default_aggregation:
+                                    category.default_aggregation,
+                                text: category.active
+                                    ? category.name
+                                    : '<span class="text-muted" title="' +
+                                      __('Inactive') +
+                                      '">' +
+                                      category.name +
+                                      '</span>',
                                 full_name: category.full_name,
                                 state: {
-                                    selected: presetCategories.includes(category.id)
-                                }
-                            }
+                                    selected: presetCategories.includes(
+                                        category.id,
+                                    ),
+                                },
+                            };
                         });
                         callback.call(this, categories);
-                    })
+                    });
             },
             themes: {
                 dots: false,
-                icons: false
-            }
+                icons: false,
+            },
         },
-        plugins: [
-            "checkbox"
-        ],
+        plugins: ['checkbox'],
         checkbox: {
-            keep_selected_style: false
+            keep_selected_style: false,
         },
     })
     .on('select_node.jstree', rebuildUrl)
     .on('deselect_node.jstree', rebuildUrl)
     .on('ready.jstree', function () {
-        if (($(treeSelector).jstree('get_checked').length > 0)) {
+        if ($(treeSelector).jstree('get_checked').length > 0) {
             if (presetFilters.ready()) {
                 reloadData();
             }
@@ -952,33 +1050,34 @@ $(treeSelector)
     });
 
 // Account filter
-$(accountSelector).select2({
-    theme: "bootstrap-5",
-    ajax: {
-        url: '/api/v1/accounts',
-        dataType: 'json',
-        delay: 150,
-        data: function (params) {
-            return {
-                q: params.term,
-                withInactive: true,
-            };
+$(accountSelector)
+    .select2({
+        theme: 'bootstrap-5',
+        ajax: {
+            url: '/api/v1/accounts',
+            dataType: 'json',
+            delay: 150,
+            data: function (params) {
+                return {
+                    q: params.term,
+                    withInactive: true,
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: data.map(function (account) {
+                        return {
+                            id: account.id,
+                            text: account.name,
+                        };
+                    }),
+                };
+            },
+            cache: true,
         },
-        processResults: function (data) {
-            return {
-                results: data.map(function (account) {
-                    return {
-                        id: account.id,
-                        text: account.name,
-                    }
-                }),
-            };
-        },
-        cache: true
-    },
-    placeholder: __("Select account"),
-    allowClear: true
-})
+        placeholder: __('Select account'),
+        allowClear: true,
+    })
     .on('select2:select', rebuildUrl)
     .on('select2:unselect', rebuildUrl);
 
@@ -988,50 +1087,56 @@ if (typeof presetAccount !== 'undefined') {
         url: '/api/v1/accounts/' + presetAccount,
         data: {
             _token: window.csrfToken,
+        },
+    }).done((data) => {
+        // Create the option and append to Select2
+        $(accountSelector)
+            .append(new Option(data.name, data.id, true, true))
+            .trigger('change')
+            .trigger({
+                type: 'select2:select',
+                params: {
+                    data: {
+                        id: data.id,
+                        name: data.name,
+                    },
+                },
+            });
+
+        presetFilters.account = true;
+
+        // Initial data for the preset account, if other preset filters are ready
+        if (
+            presetFilters.ready() &&
+            $(treeSelector).jstree('get_checked').length > 0
+        ) {
+            reloadData();
         }
-    })
-        .done(data => {
-            // Create the option and append to Select2
-            $(accountSelector).append(new Option(data.name, data.id, true, true))
-                .trigger('change')
-                .trigger({
-                    type: 'select2:select',
-                    params: {
-                        data: {
-                            id: data.id,
-                            name: data.name,
-                        }
-                    }
-                });
-
-            presetFilters.account = true;
-
-            // Initial data for the preset account, if other preset filters are ready
-            if (presetFilters.ready() && $(treeSelector).jstree('get_checked').length > 0) {
-                reloadData();
-            }
-        });
+    });
 } else {
     // Initial data for the preset account, if other preset filters are ready
-    if (presetFilters.ready() && $(treeSelector).jstree('get_checked').length > 0) {
+    if (
+        presetFilters.ready() &&
+        $(treeSelector).jstree('get_checked').length > 0
+    ) {
         reloadData();
     }
 }
 
 // Select all button function
-document.getElementById('all').addEventListener('click', function() {
+document.getElementById('all').addEventListener('click', function () {
     $(treeSelector).jstree('check_all');
-    rebuildUrl()
+    rebuildUrl();
 });
 
 // Clear button function
-document.getElementById('clear').addEventListener('click', function() {
+document.getElementById('clear').addEventListener('click', function () {
     $(treeSelector).jstree('uncheck_all');
-    rebuildUrl()
+    rebuildUrl();
 });
 
 // Account type switch
-$('input[name=table_filter_account_scope]').on("change", function() {
+$('input[name=table_filter_account_scope]').on('change', function () {
     // Only selected items are needed, so we need to enable the account selector
     $(accountSelector).prop('disabled', this.value !== 'selected');
 
@@ -1044,7 +1149,10 @@ $('input[name=table_filter_account_scope]').on("change", function() {
 });
 
 // Set initial state of account selector
-$(accountSelector).prop('disabled', $('input[name=table_filter_account_scope]:checked').val() !== 'selected');
+$(accountSelector).prop(
+    'disabled',
+    $('input[name=table_filter_account_scope]:checked').val() !== 'selected',
+);
 
 document.addEventListener(COLOR_MODE_EVENT, () => {
     initChart();

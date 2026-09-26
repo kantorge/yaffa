@@ -1,347 +1,377 @@
 <template>
-  <div class="card" id="userSettingsForm">
-    <form
-      accept-charset="UTF-8"
-      @submit.prevent="onSubmit"
-      @keydown="form.onKeydown($event)"
-      autocomplete="off"
-    >
-      <div class="card-header">
-        <div class="card-title">
-          {{ __('Update user settings') }}
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <label for="language" class="col-form-label col-sm-3">
-            {{ __('Language') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <select
-                class="form-select"
-                id="language"
-                name="language"
-                v-model="form.language"
-              >
-                <option
-                  v-for="(language, code) in languages"
-                  :key="code"
-                  :value="code"
-                >
-                  {{ language }}
-                </option>
-              </select>
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="__('Controls the language used in YAFFA.')"
-              >
-                <i class="fa fa-info-circle"></i>
-              </span>
-            </div>
-            <HasError field="language" :form="form" />
-          </div>
-        </div>
-        <div class="row">
-          <label for="locale" class="col-form-label col-sm-3">
-            {{ __('Locale') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <select
-                class="form-select"
-                id="locale"
-                name="locale"
-                v-model="form.locale"
-              >
-                <option
-                  v-for="(locale, code) in locales"
-                  :key="code"
-                  :value="code"
-                >
-                  {{ locale }}
-                </option>
-              </select>
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="
-                  __('Controls how numbers, dates, currencies are formatted.')
-                "
-              >
-                <i class="fa fa-info-circle text-info"></i>
-              </span>
-            </div>
-            <HasError field="locale" :form="form" />
-          </div>
-        </div>
-        <div class="row">
-          <label for="start_date" class="col-form-label col-sm-3">
-            {{ __('Start date for YAFFA') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <input
-                type="date"
-                class="form-control"
-                id="start_date"
-                v-model="startDateInput"
-                required
-              />
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="
-                  __(
-                    'The earliest date YAFFA uses to retrieve currency exchange rates and investment prices. You can record transactions to earlier dates, if needed.',
-                  )
-                "
-              >
-                <i class="fa fa-info-circle"></i>
-              </span>
-            </div>
-            <HasError field="start_date" :form="form" />
-          </div>
-        </div>
-        <div class="row">
-          <label for="end_date" class="col-form-label col-sm-3">
-            {{ __('End date for YAFFA') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <input
-                type="date"
-                class="form-control"
-                id="end_date"
-                v-model="endDateInput"
-                required
-              />
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="
-                  __('How long would you like YAFFA to calculate forecasts.')
-                "
-              >
-                <i class="fa fa-info-circle"></i>
-              </span>
-            </div>
-            <HasError field="end_date" :form="form" />
-          </div>
-        </div>
-        <div class="row">
-          <label
-            for="account_details_date_range"
-            class="col-form-label col-sm-3"
-          >
-            {{ __('Default date range for account details') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <select
-                class="form-select"
-                id="account_details_date_range"
-                name="account_details_date_range"
-                v-model="form.account_details_date_range"
-              >
-                <option value="none">
-                  {{ __("Don't load data by default") }}
-                </option>
-                <optgroup v-for="group in datePresets" :label="__(group.label)">
-                  <option v-for="option in group.options" :value="option.value">
-                    {{ __(option.label) }}
-                  </option>
-                </optgroup>
-              </select>
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="
-                  __(
-                    'The default date range to load transactions from when opening account details. This can be changed on the fly in the account details view.',
-                  )
-                "
-              >
-                <i class="fa fa-info-circle"></i>
-              </span>
-            </div>
-            <HasError field="account_details_date_range" :form="form" />
-          </div>
-        </div>
-        <div class="row">
-          <label
-            for="auto_merge_standard_transaction_items"
-            class="col-form-label col-sm-3"
-          >
-            {{ __('Auto-merge standard transaction items') }}
-          </label>
-          <div class="col-sm-9">
-            <div class="input-group">
-              <div class="input-group-text">
-                <input
-                  class="form-check-input mt-0"
-                  type="checkbox"
-                  id="auto_merge_standard_transaction_items"
-                  name="auto_merge_standard_transaction_items"
-                  v-model="form.auto_merge_standard_transaction_items"
-                />
-              </div>
-              <span
-                class="input-group-text btn btn-outline-input-info"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="top"
-                :title="
-                  __(
-                    'When enabled, YAFFA automatically merges transaction items that share the same category and tags (or no tags) and have no comment into a single item, summing their amounts.',
-                  )
-                "
-              >
-                <i class="fa fa-info-circle"></i>
-              </span>
-            </div>
-            <HasError
-              field="auto_merge_standard_transaction_items"
-              :form="form"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="card-footer">
-        <Button
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-update-settings"
+    <div id="userSettingsForm" class="card">
+        <form
+            accept-charset="UTF-8"
+            autocomplete="off"
+            @submit.prevent="onSubmit"
+            @keydown="form.onKeydown($event)"
         >
-          {{ __('Save') }}
-        </Button>
-      </div>
-    </form>
-  </div>
+            <div class="card-header">
+                <div class="card-title">
+                    {{ __('Update user settings') }}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <label for="language" class="col-form-label col-sm-3">
+                        {{ __('Language') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <select
+                                id="language"
+                                v-model="form.language"
+                                class="form-select"
+                                name="language"
+                            >
+                                <option
+                                    v-for="(language, code) in languages"
+                                    :key="code"
+                                    :value="code"
+                                >
+                                    {{ language }}
+                                </option>
+                            </select>
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __('Controls the language used in YAFFA.')
+                                "
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </div>
+                        <HasError field="language" :form="form" />
+                    </div>
+                </div>
+                <div class="row">
+                    <label for="locale" class="col-form-label col-sm-3">
+                        {{ __('Locale') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <select
+                                id="locale"
+                                v-model="form.locale"
+                                class="form-select"
+                                name="locale"
+                            >
+                                <option
+                                    v-for="(locale, code) in locales"
+                                    :key="code"
+                                    :value="code"
+                                >
+                                    {{ locale }}
+                                </option>
+                            </select>
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __(
+                                        'Controls how numbers, dates, currencies are formatted.',
+                                    )
+                                "
+                            >
+                                <i class="fa fa-info-circle text-info"></i>
+                            </span>
+                        </div>
+                        <HasError field="locale" :form="form" />
+                    </div>
+                </div>
+                <div class="row">
+                    <label for="start_date" class="col-form-label col-sm-3">
+                        {{ __('Start date for YAFFA') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <input
+                                id="start_date"
+                                v-model="startDateInput"
+                                type="date"
+                                class="form-control"
+                                required
+                            />
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __(
+                                        'The earliest date YAFFA uses to retrieve currency exchange rates and investment prices. You can record transactions to earlier dates, if needed.',
+                                    )
+                                "
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </div>
+                        <HasError field="start_date" :form="form" />
+                    </div>
+                </div>
+                <div class="row">
+                    <label for="end_date" class="col-form-label col-sm-3">
+                        {{ __('End date for YAFFA') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <input
+                                id="end_date"
+                                v-model="endDateInput"
+                                type="date"
+                                class="form-control"
+                                required
+                            />
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __(
+                                        'How long would you like YAFFA to calculate forecasts.',
+                                    )
+                                "
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </div>
+                        <HasError field="end_date" :form="form" />
+                    </div>
+                </div>
+                <div class="row">
+                    <label
+                        for="account_details_date_range"
+                        class="col-form-label col-sm-3"
+                    >
+                        {{ __('Default date range for account details') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <select
+                                id="account_details_date_range"
+                                v-model="form.account_details_date_range"
+                                class="form-select"
+                                name="account_details_date_range"
+                            >
+                                <option value="none">
+                                    {{ __("Don't load data by default") }}
+                                </option>
+                                <optgroup
+                                    v-for="group in datePresets"
+                                    :label="__(group.label)"
+                                >
+                                    <option
+                                        v-for="option in group.options"
+                                        :value="option.value"
+                                    >
+                                        {{ __(option.label) }}
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __(
+                                        'The default date range to load transactions from when opening account details. This can be changed on the fly in the account details view.',
+                                    )
+                                "
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </div>
+                        <HasError
+                            field="account_details_date_range"
+                            :form="form"
+                        />
+                    </div>
+                </div>
+                <div class="row">
+                    <label
+                        for="auto_merge_standard_transaction_items"
+                        class="col-form-label col-sm-3"
+                    >
+                        {{ __('Auto-merge standard transaction items') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <div class="input-group-text">
+                                <input
+                                    id="auto_merge_standard_transaction_items"
+                                    v-model="
+                                        form.auto_merge_standard_transaction_items
+                                    "
+                                    class="form-check-input mt-0"
+                                    type="checkbox"
+                                    name="auto_merge_standard_transaction_items"
+                                />
+                            </div>
+                            <span
+                                class="input-group-text btn btn-outline-input-info"
+                                data-coreui-toggle="tooltip"
+                                data-coreui-placement="top"
+                                :title="
+                                    __(
+                                        'When enabled, YAFFA automatically merges transaction items that share the same category and tags (or no tags) and have no comment into a single item, summing their amounts.',
+                                    )
+                                "
+                            >
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </div>
+                        <HasError
+                            field="auto_merge_standard_transaction_items"
+                            :form="form"
+                        />
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <Button
+                    class="btn btn-primary"
+                    :form="form"
+                    dusk="button-update-settings"
+                >
+                    {{ __('Save') }}
+                </Button>
+            </div>
+        </form>
+    </div>
 </template>
 <script setup>
-  const props = defineProps({
-    languages: {
-      type: Object,
-      default: window.languages,
-    },
-    locales: {
-      type: Object,
-      default: window.locales,
-    },
-    datePresets: {
-      type: Object,
-      default: window.YAFFA.config.datePresets,
-    },
-  });
+    const props = defineProps({
+        languages: {
+            type: Object,
+            default: window.languages,
+        },
+        locales: {
+            type: Object,
+            default: window.locales,
+        },
+        datePresets: {
+            type: Object,
+            default: window.YAFFA.config.datePresets,
+        },
+    });
 </script>
 <script>
-  import { __ } from '@/shared/lib/i18n';
-  import { initializeBootstrapTooltips, toDateInputValue } from '@/shared/lib/helpers';
-  import * as toastHelpers from '@/shared/lib/toast';
-  import Form from 'vform';
-  import { Button, HasError } from 'vform/src/components/bootstrap5';
+    import { __ } from '@/shared/lib/i18n';
+    import {
+        initializeBootstrapTooltips,
+        toDateInputValue,
+    } from '@/shared/lib/helpers';
+    import * as toastHelpers from '@/shared/lib/toast';
+    import Form from 'vform';
+    import { Button, HasError } from 'vform/src/components/bootstrap5';
 
-  export default {
-    name: 'UserSettings',
-    components: {
-      Button,
-      HasError,
-    },
-    data: () => ({
-      form: new Form({
-        language: window.YAFFA.userSettings.language,
-        locale: window.YAFFA.userSettings.locale,
-        end_date: window.YAFFA.userSettings.end_date,
-        start_date: window.YAFFA.userSettings.start_date,
-        account_details_date_range:
-          window.YAFFA.userSettings.account_details_date_range || 'none',
-        auto_merge_standard_transaction_items:
-          window.YAFFA.userSettings.auto_merge_standard_transaction_items ||
-          false,
-      }),
-    }),
-    computed: {
-      startDateInput: {
-        get() {
-          return toDateInputValue(this.form.start_date);
+    export default {
+        name: 'UserSettings',
+        components: {
+            Button,
+            HasError,
         },
-        set(value) {
-          this.form.start_date = value || null;
+        data: () => ({
+            form: new Form({
+                language: window.YAFFA.userSettings.language,
+                locale: window.YAFFA.userSettings.locale,
+                end_date: window.YAFFA.userSettings.end_date,
+                start_date: window.YAFFA.userSettings.start_date,
+                account_details_date_range:
+                    window.YAFFA.userSettings.account_details_date_range ||
+                    'none',
+                auto_merge_standard_transaction_items:
+                    window.YAFFA.userSettings
+                        .auto_merge_standard_transaction_items || false,
+            }),
+        }),
+        computed: {
+            startDateInput: {
+                get() {
+                    return toDateInputValue(this.form.start_date);
+                },
+                set(value) {
+                    this.form.start_date = value || null;
+                },
+            },
+            endDateInput: {
+                get() {
+                    return toDateInputValue(this.form.end_date);
+                },
+                set(value) {
+                    this.form.end_date = value || null;
+                },
+            },
         },
-      },
-      endDateInput: {
-        get() {
-          return toDateInputValue(this.form.end_date);
+        mounted() {
+            // Finally, initialize tooltips
+            initializeBootstrapTooltips(this.$el);
         },
-        set(value) {
-          this.form.end_date = value || null;
-        },
-      },
-    },
-    mounted() {
-      // Finally, initialize tooltips
-      initializeBootstrapTooltips(this.$el);
-    },
-    methods: {
-      onSubmit: function () {
-        let _vue = this;
-        this.form.busy = true;
+        methods: {
+            onSubmit: function () {
+                let _vue = this;
+                this.form.busy = true;
 
-        // Send the form data to the server via the API route
-        this.form
-          .patch(this.route('api.v1.users.me.settings'), this.form)
-          .then((response) => {
-            if (response.status === 200) {
-              // Update the global YAFFA object with the new settings
-              window.YAFFA.userSettings.language = response.data.data.language;
-              window.YAFFA.userSettings.locale = response.data.data.locale;
-              window.YAFFA.userSettings.start_date =
-                response.data.data.start_date;
-              window.YAFFA.userSettings.end_date = response.data.data.end_date;
-              window.YAFFA.userSettings.account_details_date_range =
-                response.data.data.account_details_date_range;
-              window.YAFFA.userSettings.auto_merge_standard_transaction_items =
-                response.data.data.auto_merge_standard_transaction_items;
+                // Send the form data to the server via the API route
+                this.form
+                    .patch(this.route('api.v1.users.me.settings'), this.form)
+                    .then((response) => {
+                        if (response.status === 200) {
+                            // Update the global YAFFA object with the new settings
+                            window.YAFFA.userSettings.language =
+                                response.data.data.language;
+                            window.YAFFA.userSettings.locale =
+                                response.data.data.locale;
+                            window.YAFFA.userSettings.start_date =
+                                response.data.data.start_date;
+                            window.YAFFA.userSettings.end_date =
+                                response.data.data.end_date;
+                            window.YAFFA.userSettings.account_details_date_range =
+                                response.data.data.account_details_date_range;
+                            window.YAFFA.userSettings.auto_merge_standard_transaction_items =
+                                response.data.data.auto_merge_standard_transaction_items;
 
-              // Emit a custom event to global scope about the result
-              toastHelpers.showSuccessToast(__('User settings updated'));
+                            // Emit a custom event to global scope about the result
+                            toastHelpers.showSuccessToast(
+                                __('User settings updated'),
+                            );
 
-              // If the cached data is recalculated, emit an additional event
-              response.data.warnings.forEach((warning) => {
-                toastHelpers.showWarningToast(warning);
-              });
-            }
-          })
-          .catch((error) => {
-            if (error.response.status === 422) {
-              toastHelpers.showErrorToast(
-                __('Validation failed. Please check the form for errors.'),
-              );
-            } else {
-              console.error(error);
-              toastHelpers.showErrorToast(
-                __('An error occurred. Please try again later.'),
-              );
-            }
-          })
-          .finally(() => {
-            _vue.form.busy = false;
-          });
-      },
-      __,
-    },
-  };
+                            // If the cached data is recalculated, emit an additional event
+                            response.data.warnings.forEach((warning) => {
+                                toastHelpers.showWarningToast(warning);
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        if (error.response.status === 422) {
+                            toastHelpers.showErrorToast(
+                                __(
+                                    'Validation failed. Please check the form for errors.',
+                                ),
+                            );
+                        } else {
+                            console.error(error);
+                            toastHelpers.showErrorToast(
+                                __(
+                                    'An error occurred. Please try again later.',
+                                ),
+                            );
+                        }
+                    })
+                    .finally(() => {
+                        _vue.form.busy = false;
+                    });
+            },
+            __,
+        },
+    };
 </script>
 
 <style scoped>
-  form div.row:not(:last-child) {
-    /* Apply mb-3 margin only to rows except the last one */
-    margin-bottom: 1rem !important;
-  }
+    form div.row:not(:last-child) {
+        /* Apply mb-3 margin only to rows except the last one */
+        margin-bottom: 1rem !important;
+    }
 </style>

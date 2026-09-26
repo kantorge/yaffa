@@ -1,1485 +1,1649 @@
 <template>
-  <div id="transactionFormInvestment">
-    <AlertErrors
-      :form="form"
-      :message="__('There were some problems with your input.')"
-    />
+    <div id="transactionFormInvestment">
+        <AlertErrors
+            :form="form"
+            :message="__('There were some problems with your input.')"
+        />
 
-    <form accept-charset="UTF-8" @submit.prevent="onSubmit" autocomplete="off">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-              <div class="card-title">
-                {{ __('Settings') }}
-              </div>
-              <span
-                class="fa fa-info-circle text-info"
-                data-bs-toggle="tooltip"
-                data-bs-placement="right"
-                :title="
-                  __(
-                    'These settings cannot be changed after saving the transaction.',
-                  )
-                "
-              ></span>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-12 col-md-8 col-lg-12 col-xl-8 mb-2 mb-xl-0">
-                  <div class="form-group">
-                    <label for="transaction_type" class="form-label">
-                      {{ __('Transaction type') }}
-                    </label>
-                    <select
-                      id="transaction_type"
-                      class="form-select"
-                      v-model="form.transaction_type"
-                      :disabled="!isBaseSettingsEditsAllowed"
-                      @change="transactionTypeChanged($event)"
-                    >
-                      <option
-                        v-for="item in transactionTypes"
-                        :key="item.value"
-                        :value="item.value"
-                      >
-                        {{ item.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-                <div
-                  class="col col-xl-4 d-flex justify-content-center"
-                  v-if="!simplified"
-                >
-                  <input
-                    class="btn-check"
-                    :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
-                    id="checkbox-investment-transaction-schedule"
-                    type="checkbox"
-                    autocomplete="off"
-                    value="1"
-                    v-model="form.schedule"
-                  />
-                  <label
-                    class="btn btn-outline-secondary w-100"
-                    dusk="checkbox-transaction-schedule"
-                    for="checkbox-investment-transaction-schedule"
-                    :title="
-                      action === 'replace'
-                        ? __(
-                            'You cannot change schedule settings for this type of action',
-                          )
-                        : ''
-                    "
-                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
-                  >
-                    <span class="fa-solid fa-arrows-rotate"></span><br />
-                    {{ __('Scheduled') }}
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-8">
-          <div class="card mb-3">
-            <div class="card-header">
-              <div class="card-title">
-                {{ __('Properties') }}
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div
-                  class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
-                >
-                  <input
-                    class="btn-check"
-                    :disabled="form.schedule"
-                    id="checkbox-investment-transaction-reconciled"
-                    type="checkbox"
-                    autocomplete="off"
-                    value="1"
-                    v-model="form.reconciled"
-                  />
-                  <label
-                    class="btn btn-outline-success"
-                    for="checkbox-investment-transaction-reconciled"
-                  >
-                    <span class="fa fa-check"></span><br />
-                    {{ __('Reconciled') }}
-                  </label>
-                </div>
-                <div
-                  :class="[
-                    action === 'enter'
-                      ? 'col-8 col-sm-2 col-md-4 col-lg-2'
-                      : 'col-8 col-sm-4 col-md-8 col-lg-4',
-                    'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
-                    { 'has-error': form.errors.has('date') },
-                  ]"
-                >
-                  <label class="form-label" for="investment-date">
-                    {{ __('Date') }}
-                  </label>
-                  <input
-                    type="date"
-                    class="form-control"
-                    :disabled="form.schedule"
-                    id="investment-date"
-                    v-model="dateInput"
-                  />
-                </div>
-                <div
-                  class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
-                  v-if="action === 'enter'"
-                >
-                  <div class="form-check">
-                    <input
-                      class="form-check-input"
-                      dusk="checkbox-investment-catch-up-schedule"
-                      id="checkbox-investment-catch-up-schedule"
-                      type="checkbox"
-                      value="1"
-                      v-model="form.catch_up_schedule"
-                    />
-                    <label
-                      class="form-check-label"
-                      for="checkbox-investment-catch-up-schedule"
-                    >
-                      {{ __('Skip to nearest future occurrence') }}
-                      <i
-                        class="fa fa-info-circle text-info"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        :title="
-                          __(
-                            'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
-                          )
-                        "
-                      ></i>
-                      <i
-                        class="fa fa-triangle-exclamation text-warning ms-1"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        :title="
-                          __(
-                            'May close this schedule if no occurrences remain.',
-                          )
-                        "
-                        v-if="catchUpMayCloseSchedule"
-                      ></i>
-                    </label>
-                  </div>
-                </div>
-                <div
-                  class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
-                  :class="form.errors.has('comment') ? 'has-error' : ''"
-                >
-                  <label for="investment-comment" class="form-label">
-                    {{ __('Comment') }}
-                  </label>
-                  <input
-                    class="form-control"
-                    id="investment-comment"
-                    maxlength="255"
-                    type="text"
-                    v-model="form.comment"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-              <div class="card-title">
-                {{ __('Details') }}
-              </div>
-              <span
-                class="fa fa-info-circle text-info"
-                data-bs-toggle="tooltip"
-                data-bs-placement="right"
-                :title="
-                  __(
-                    'The currency of the account and the investment must be the same. This will limit the account and investment options available in the dropdowns.',
-                  )
-                "
-              ></span>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-12 mb-3">
-                  <div class="form-group">
-                    <label for="account" class="form-label">
-                      {{ __('Account') }}
-                    </label>
-                    <select
-                      class="form-select"
-                      id="account"
-                      v-model="form.config.account_id"
-                      style="width: 100% !important"
-                    ></select>
-                  </div>
-                </div>
-                <div class="col-12 mb-2">
-                  <div class="form-group">
-                    <label for="investment" class="form-label">
-                      {{ __('Investment') }}
-                    </label>
-                    <select
-                      class="form-control"
-                      id="investment"
-                      v-model="form.config.investment_id"
-                      style="width: 100% !important"
-                    ></select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-8">
-          <div class="card mb-3">
-            <div class="card-header">
-              <div class="card-title">
-                {{ __('Details') }}
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <div class="form-group">
-                    <label for="transaction_quantity" class="form-label">
-                      {{ __('Quantity') }}
-                    </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_quantity"
-                      v-model="form.config.quantity"
-                      :disabled="!transactionTypeSettings.quantity"
-                    ></MathInput>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div class="form-group focus-zoom">
-                    <label for="transaction_price" class="form-label">
-                      {{ __('Price') }}
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
-                        {{ getCurrencySymbol(locale, currency.iso_code) }}
-                      </span>
-                      <MathInput
-                        class="form-control"
-                        id="transaction_price"
-                        v-model="form.config.price"
-                        :disabled="!transactionTypeSettings.price"
-                        @input="onPriceChange"
-                      ></MathInput>
-                      <span
-                        class="input-group-text existing-price-label"
-                        v-if="existingPriceForDate !== null"
-                        :title="
-                          __('Existing price for this date. Click to apply.')
-                        "
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        @click="form.config.price = existingPriceForDate"
-                        >{{
-                          toFormattedCurrency(
-                            existingPriceForDate,
-                            locale,
-                            investment_currency,
-                          )
-                        }}</span
-                      >
-                      <!-- Toggle checkbox as button addon -->
-                      <input
-                        class="btn-check"
-                        type="checkbox"
-                        id="store_price_checkbox"
-                        autocomplete="off"
-                        v-model="storePriceEnabled"
-                        v-if="
-                          shouldShowStorePriceCheckbox &&
-                          existingPriceForDate === null
-                        "
-                      />
-                      <label
-                        class="btn btn-secondary"
-                        :class="{ active: storePriceEnabled }"
-                        for="store_price_checkbox"
-                        :title="
-                          __(
-                            'Store this value as the investment price for this date',
-                          )
-                        "
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        v-if="
-                          shouldShowStorePriceCheckbox &&
-                          existingPriceForDate === null
-                        "
-                      >
-                        {{ __('Store price') }}
-                      </label>
-                    </div>
-                  </div>
-                </div>
+        <form
+            accept-charset="UTF-8"
+            autocomplete="off"
+            @submit.prevent="onSubmit"
+        >
+            <div class="row">
                 <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="transaction_dividend" class="form-label">
-                      {{ __('Dividend') }}
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
-                        {{ getCurrencySymbol(locale, currency.iso_code) }}
-                      </span>
-                      <MathInput
-                        class="form-control"
-                        id="transaction_dividend"
-                        v-model="form.config.dividend"
-                        :disabled="!transactionTypeSettings.dividend"
-                      ></MathInput>
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between">
+                            <div class="card-title">
+                                {{ __('Settings') }}
+                            </div>
+                            <span
+                                class="fa fa-info-circle text-info"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="right"
+                                :title="
+                                    __(
+                                        'These settings cannot be changed after saving the transaction.',
+                                    )
+                                "
+                            ></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div
+                                    class="col-12 col-md-8 col-lg-12 col-xl-8 mb-2 mb-xl-0"
+                                >
+                                    <div class="form-group">
+                                        <label
+                                            for="transaction_type"
+                                            class="form-label"
+                                        >
+                                            {{ __('Transaction type') }}
+                                        </label>
+                                        <select
+                                            id="transaction_type"
+                                            v-model="form.transaction_type"
+                                            class="form-select"
+                                            :disabled="
+                                                !isBaseSettingsEditsAllowed
+                                            "
+                                            @change="
+                                                transactionTypeChanged($event)
+                                            "
+                                        >
+                                            <option
+                                                v-for="item in transactionTypes"
+                                                :key="item.value"
+                                                :value="item.value"
+                                            >
+                                                {{ item.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="!simplified"
+                                    class="col col-xl-4 d-flex justify-content-center"
+                                >
+                                    <input
+                                        id="checkbox-investment-transaction-schedule"
+                                        v-model="form.schedule"
+                                        class="btn-check"
+                                        :disabled="
+                                            form.reconciled ||
+                                            !isBaseSettingsEditsAllowed
+                                        "
+                                        type="checkbox"
+                                        autocomplete="off"
+                                        value="1"
+                                    />
+                                    <label
+                                        class="btn btn-outline-secondary w-100"
+                                        dusk="checkbox-transaction-schedule"
+                                        for="checkbox-investment-transaction-schedule"
+                                        :title="
+                                            action === 'replace'
+                                                ? __(
+                                                      'You cannot change schedule settings for this type of action',
+                                                  )
+                                                : ''
+                                        "
+                                        :data-bs-toggle="
+                                            action === 'replace'
+                                                ? 'tooltip'
+                                                : ''
+                                        "
+                                    >
+                                        <span
+                                            class="fa-solid fa-arrows-rotate"
+                                        ></span
+                                        ><br />
+                                        {{ __('Scheduled') }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <div class="form-group">
-                    <label for="transaction_commission" class="form-label">
-                      {{ __('Commission') }}
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
-                        {{ getCurrencySymbol(locale, currency.iso_code) }}
-                      </span>
-                      <MathInput
-                        class="form-control"
-                        id="transaction_commission"
-                        v-model="form.config.commission"
-                      ></MathInput>
+
+                <div class="col-md-8">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Properties') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div
+                                    class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
+                                >
+                                    <input
+                                        id="checkbox-investment-transaction-reconciled"
+                                        v-model="form.reconciled"
+                                        class="btn-check"
+                                        :disabled="form.schedule"
+                                        type="checkbox"
+                                        autocomplete="off"
+                                        value="1"
+                                    />
+                                    <label
+                                        class="btn btn-outline-success"
+                                        for="checkbox-investment-transaction-reconciled"
+                                    >
+                                        <span class="fa fa-check"></span><br />
+                                        {{ __('Reconciled') }}
+                                    </label>
+                                </div>
+                                <div
+                                    :class="[
+                                        action === 'enter'
+                                            ? 'col-8 col-sm-2 col-md-4 col-lg-2'
+                                            : 'col-8 col-sm-4 col-md-8 col-lg-4',
+                                        'mb-3 mb-sm-0 mb-md-3 mb-lg-0',
+                                        {
+                                            'has-error':
+                                                form.errors.has('date'),
+                                        },
+                                    ]"
+                                >
+                                    <label
+                                        class="form-label"
+                                        for="investment-date"
+                                    >
+                                        {{ __('Date') }}
+                                    </label>
+                                    <input
+                                        id="investment-date"
+                                        v-model="dateInput"
+                                        type="date"
+                                        class="form-control"
+                                        :disabled="form.schedule"
+                                    />
+                                </div>
+                                <div
+                                    v-if="action === 'enter'"
+                                    class="col-12 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
+                                >
+                                    <div class="form-check">
+                                        <input
+                                            id="checkbox-investment-catch-up-schedule"
+                                            v-model="form.catch_up_schedule"
+                                            class="form-check-input"
+                                            dusk="checkbox-investment-catch-up-schedule"
+                                            type="checkbox"
+                                            value="1"
+                                        />
+                                        <label
+                                            class="form-check-label"
+                                            for="checkbox-investment-catch-up-schedule"
+                                        >
+                                            {{
+                                                __(
+                                                    'Skip to nearest future occurrence',
+                                                )
+                                            }}
+                                            <i
+                                                class="fa fa-info-circle text-info"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                :title="
+                                                    __(
+                                                        'Instead of the next date, also advances the schedule past any other occurrences still due, so its next occurrence is today or later.',
+                                                    )
+                                                "
+                                            ></i>
+                                            <i
+                                                v-if="catchUpMayCloseSchedule"
+                                                class="fa fa-triangle-exclamation text-warning ms-1"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                :title="
+                                                    __(
+                                                        'May close this schedule if no occurrences remain.',
+                                                    )
+                                                "
+                                            ></i>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div
+                                    class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
+                                    :class="
+                                        form.errors.has('comment')
+                                            ? 'has-error'
+                                            : ''
+                                    "
+                                >
+                                    <label
+                                        for="investment-comment"
+                                        class="form-label"
+                                    >
+                                        {{ __('Comment') }}
+                                    </label>
+                                    <input
+                                        id="investment-comment"
+                                        v-model="form.comment"
+                                        class="form-control"
+                                        maxlength="255"
+                                        type="text"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <div class="form-group">
-                    <label for="transaction_tax" class="form-label">
-                      {{ __('Tax') }}
-                    </label>
-                    <div class="input-group">
-                      <span class="input-group-text" v-if="currency">
-                        {{ getCurrencySymbol(locale, currency.iso_code) }}
-                      </span>
-                      <MathInput
-                        class="form-control"
-                        id="transaction_tax"
-                        v-model="form.config.tax"
-                      ></MathInput>
-                    </div>
-                  </div>
-                </div>
+            </div>
+            <div class="row">
                 <div class="col-md-4">
-                  <dl class="row">
-                    <dt class="col-12 form-label">
-                      {{ __('Total cashflow value') }}
-                    </dt>
-                    <dd class="col-12">
-                      <span
-                        class="me-1"
-                        v-if="currency"
-                        dusk="transaction-total-value"
-                      >
-                        {{ toFormattedCurrency(total, this.locale, currency) }}
-                      </span>
-                      <span v-else>
-                        {{ total }}
-                      </span>
-                    </dd>
-                  </dl>
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between">
+                            <div class="card-title">
+                                {{ __('Details') }}
+                            </div>
+                            <span
+                                class="fa fa-info-circle text-info"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="right"
+                                :title="
+                                    __(
+                                        'The currency of the account and the investment must be the same. This will limit the account and investment options available in the dropdowns.',
+                                    )
+                                "
+                            ></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <div class="form-group">
+                                        <label for="account" class="form-label">
+                                            {{ __('Account') }}
+                                        </label>
+                                        <select
+                                            id="account"
+                                            v-model="form.config.account_id"
+                                            class="form-select"
+                                            style="width: 100% !important"
+                                        ></select>
+                                    </div>
+                                </div>
+                                <div class="col-12 mb-2">
+                                    <div class="form-group">
+                                        <label
+                                            for="investment"
+                                            class="form-label"
+                                        >
+                                            {{ __('Investment') }}
+                                        </label>
+                                        <select
+                                            id="investment"
+                                            v-model="form.config.investment_id"
+                                            class="form-control"
+                                            style="width: 100% !important"
+                                        ></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+                <div class="col-md-8">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Details') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label
+                                            for="transaction_quantity"
+                                            class="form-label"
+                                        >
+                                            {{ __('Quantity') }}
+                                        </label>
+                                        <MathInput
+                                            id="transaction_quantity"
+                                            v-model="form.config.quantity"
+                                            class="form-control"
+                                            :disabled="
+                                                !transactionTypeSettings.quantity
+                                            "
+                                        ></MathInput>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group focus-zoom">
+                                        <label
+                                            for="transaction_price"
+                                            class="form-label"
+                                        >
+                                            {{ __('Price') }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span
+                                                v-if="currency"
+                                                class="input-group-text"
+                                            >
+                                                {{
+                                                    getCurrencySymbol(
+                                                        locale,
+                                                        currency.iso_code,
+                                                    )
+                                                }}
+                                            </span>
+                                            <MathInput
+                                                id="transaction_price"
+                                                v-model="form.config.price"
+                                                class="form-control"
+                                                :disabled="
+                                                    !transactionTypeSettings.price
+                                                "
+                                                @input="onPriceChange"
+                                            ></MathInput>
+                                            <span
+                                                v-if="
+                                                    existingPriceForDate !==
+                                                    null
+                                                "
+                                                class="input-group-text existing-price-label"
+                                                :title="
+                                                    __(
+                                                        'Existing price for this date. Click to apply.',
+                                                    )
+                                                "
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                @click="
+                                                    form.config.price =
+                                                        existingPriceForDate
+                                                "
+                                                >{{
+                                                    toFormattedCurrency(
+                                                        existingPriceForDate,
+                                                        locale,
+                                                        investment_currency,
+                                                    )
+                                                }}</span
+                                            >
+                                            <!-- Toggle checkbox as button addon -->
+                                            <input
+                                                v-if="
+                                                    shouldShowStorePriceCheckbox &&
+                                                    existingPriceForDate ===
+                                                        null
+                                                "
+                                                id="store_price_checkbox"
+                                                v-model="storePriceEnabled"
+                                                class="btn-check"
+                                                type="checkbox"
+                                                autocomplete="off"
+                                            />
+                                            <label
+                                                v-if="
+                                                    shouldShowStorePriceCheckbox &&
+                                                    existingPriceForDate ===
+                                                        null
+                                                "
+                                                class="btn btn-secondary"
+                                                :class="{
+                                                    active: storePriceEnabled,
+                                                }"
+                                                for="store_price_checkbox"
+                                                :title="
+                                                    __(
+                                                        'Store this value as the investment price for this date',
+                                                    )
+                                                "
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                            >
+                                                {{ __('Store price') }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label
+                                            for="transaction_dividend"
+                                            class="form-label"
+                                        >
+                                            {{ __('Dividend') }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span
+                                                v-if="currency"
+                                                class="input-group-text"
+                                            >
+                                                {{
+                                                    getCurrencySymbol(
+                                                        locale,
+                                                        currency.iso_code,
+                                                    )
+                                                }}
+                                            </span>
+                                            <MathInput
+                                                id="transaction_dividend"
+                                                v-model="form.config.dividend"
+                                                class="form-control"
+                                                :disabled="
+                                                    !transactionTypeSettings.dividend
+                                                "
+                                            ></MathInput>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label
+                                            for="transaction_commission"
+                                            class="form-label"
+                                        >
+                                            {{ __('Commission') }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span
+                                                v-if="currency"
+                                                class="input-group-text"
+                                            >
+                                                {{
+                                                    getCurrencySymbol(
+                                                        locale,
+                                                        currency.iso_code,
+                                                    )
+                                                }}
+                                            </span>
+                                            <MathInput
+                                                id="transaction_commission"
+                                                v-model="form.config.commission"
+                                                class="form-control"
+                                            ></MathInput>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label
+                                            for="transaction_tax"
+                                            class="form-label"
+                                        >
+                                            {{ __('Tax') }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span
+                                                v-if="currency"
+                                                class="input-group-text"
+                                            >
+                                                {{
+                                                    getCurrencySymbol(
+                                                        locale,
+                                                        currency.iso_code,
+                                                    )
+                                                }}
+                                            </span>
+                                            <MathInput
+                                                id="transaction_tax"
+                                                v-model="form.config.tax"
+                                                class="form-control"
+                                            ></MathInput>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-12 form-label">
+                                            {{ __('Total cashflow value') }}
+                                        </dt>
+                                        <dd class="col-12">
+                                            <span
+                                                v-if="currency"
+                                                class="me-1"
+                                                dusk="transaction-total-value"
+                                            >
+                                                {{
+                                                    toFormattedCurrency(
+                                                        total,
+                                                        locale,
+                                                        currency,
+                                                    )
+                                                }}
+                                            </span>
+                                            <span v-else>
+                                                {{ total }}
+                                            </span>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <transaction-schedule
-        v-if="form.schedule"
-        :isSchedule="form.schedule"
-        :schedule="form.schedule_config"
-        :form="form"
-      ></transaction-schedule>
-
-      <transaction-schedule
-        v-if="form.schedule && action === 'replace'"
-        :withCheckbox="true"
-        :title="__('Update base schedule')"
-        :allowCustomization="false"
-        ref="scheduleOriginal"
-        :isSchedule="form.schedule"
-        :schedule="form.original_schedule_config"
-        :form="form"
-        field-prefix="original_schedule_config"
-      ></transaction-schedule>
-
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="row justify-content-end">
-            <div
-              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
-              v-if="!fromModal"
-              dusk="action-after-save-desktop-button-group"
-            >
-              <span class="form-label block-label">
-                {{ __('Action after saving') }}
-              </span>
-              <div
-                class="btn-group"
-                role="group"
-                aria-label="{{ __('Action after saving') }}"
-              >
-                <button
-                  v-for="item in activeCallbackOptions"
-                  :key="item.id"
-                  class="btn btn-outline-secondary"
-                  :class="{ active: callback === item.value }"
-                  type="button"
-                  :value="item.value"
-                  @click="callback = $event.currentTarget.getAttribute('value')"
-                >
-                  {{ item.label }}
-                </button>
-              </div>
-            </div>
-            <div
-              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
-              v-if="!fromModal"
-            >
-              <label
-                class="form-label"
-                for="callback-selector-mobile-investment"
-              >
-                {{ __('Action after saving') }}
-              </label>
-              <select
-                class="form-control"
-                v-model="callback"
-                id="callback-selector-mobile-investment"
-              >
-                <option
-                  v-for="item in activeCallbackOptions"
-                  :key="item.id"
-                  :value="item.value"
-                >
-                  {{ item.label }}
-                </option>
-              </select>
-            </div>
-            <div
-              class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
-            >
-              <button
-                class="btn btn btn-secondary"
-                @click="onCancel"
-                type="button"
-              >
-                {{ __('Cancel') }}
-              </button>
-              <Button
-                class="btn btn-primary ms-2"
-                :disabled="form.busy"
+            <transaction-schedule
+                v-if="form.schedule"
+                :is-schedule="form.schedule"
+                :schedule="form.schedule_config"
                 :form="form"
-                id="transactionFormInvestment-Save"
-              >
-                <span class="fa fa-save me-1" v-show="!form.busy"></span>
-                {{ __('Save') }}
-              </Button>
+            ></transaction-schedule>
+
+            <transaction-schedule
+                v-if="form.schedule && action === 'replace'"
+                ref="scheduleOriginal"
+                :with-checkbox="true"
+                :title="__('Update base schedule')"
+                :allow-customization="false"
+                :is-schedule="form.schedule"
+                :schedule="form.original_schedule_config"
+                :form="form"
+                field-prefix="original_schedule_config"
+            ></transaction-schedule>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row justify-content-end">
+                        <div
+                            v-if="!fromModal"
+                            class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
+                            dusk="action-after-save-desktop-button-group"
+                        >
+                            <span class="form-label block-label">
+                                {{ __('Action after saving') }}
+                            </span>
+                            <div
+                                class="btn-group"
+                                role="group"
+                                aria-label="{{ __('Action after saving') }}"
+                            >
+                                <button
+                                    v-for="item in activeCallbackOptions"
+                                    :key="item.id"
+                                    class="btn btn-outline-secondary"
+                                    :class="{ active: callback === item.value }"
+                                    type="button"
+                                    :value="item.value"
+                                    @click="
+                                        callback =
+                                            $event.currentTarget.getAttribute(
+                                                'value',
+                                            )
+                                    "
+                                >
+                                    {{ item.label }}
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            v-if="!fromModal"
+                            class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
+                        >
+                            <label
+                                class="form-label"
+                                for="callback-selector-mobile-investment"
+                            >
+                                {{ __('Action after saving') }}
+                            </label>
+                            <select
+                                id="callback-selector-mobile-investment"
+                                v-model="callback"
+                                class="form-control"
+                            >
+                                <option
+                                    v-for="item in activeCallbackOptions"
+                                    :key="item.id"
+                                    :value="item.value"
+                                >
+                                    {{ item.label }}
+                                </option>
+                            </select>
+                        </div>
+                        <div
+                            class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
+                        >
+                            <button
+                                class="btn btn btn-secondary"
+                                type="button"
+                                @click="onCancel"
+                            >
+                                {{ __('Cancel') }}
+                            </button>
+                            <Button
+                                id="transactionFormInvestment-Save"
+                                class="btn btn-primary ms-2"
+                                :disabled="form.busy"
+                                :form="form"
+                            >
+                                <span
+                                    v-show="!form.busy"
+                                    class="fa fa-save me-1"
+                                ></span>
+                                {{ __('Save') }}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </form>
-  </div>
+        </form>
+    </div>
 </template>
 
 <script>
-  import { RRule } from 'rrule';
-  import Decimal from 'decimal.js';
-  import MathInput from '@/shared/ui/form/MathInput.vue';
-  import * as toastHelpers from '@/shared/lib/toast';
-  import { confirmAction } from '@/shared/lib/confirm';
+    import { RRule } from 'rrule';
+    import Decimal from 'decimal.js';
+    import MathInput from '@/shared/ui/form/MathInput.vue';
+    import * as toastHelpers from '@/shared/lib/toast';
+    import { confirmAction } from '@/shared/lib/confirm';
 
-  import Form from 'vform';
-  import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
+    import Form from 'vform';
+    import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
 
-  import TransactionSchedule from './TransactionSchedule.vue';
+    import TransactionSchedule from './TransactionSchedule.vue';
 
-  import {
-    processTransaction,
-    toIsoDateString,
-    initializeBootstrapTooltips,
-    parseIsoDate,
-    byDayToRRuleWeekday,
-    toDateInputValue,
-    toRRuleDate,
-  } from '@/shared/lib/helpers';
-  import {
-    __,
-    getCurrencySymbol,
-    toFormattedCurrency,
-  } from '@/shared/lib/i18n';
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
+    import {
+        processTransaction,
+        toIsoDateString,
+        initializeBootstrapTooltips,
+        parseIsoDate,
+        byDayToRRuleWeekday,
+        toDateInputValue,
+        toRRuleDate,
+    } from '@/shared/lib/helpers';
+    import {
+        __,
+        getCurrencySymbol,
+        toFormattedCurrency,
+    } from '@/shared/lib/i18n';
+    import { initializeSelect2 } from '@/shared/lib/select2';
+    initializeSelect2(window.YAFFA.userSettings.language);
 
-  export default {
-    components: {
-      TransactionSchedule,
-      MathInput,
-      Button,
-      AlertErrors,
-    },
-
-    props: {
-      action: String,
-      initialCallback: {
-        type: String,
-        default: 'create',
-      },
-      transaction: Object,
-      simplified: {
-        // If true, no schedule option is shown
-        type: Boolean,
-        default: false,
-      },
-      fromModal: {
-        // If true, the form is shown in a modal, which controls a few parts of the form
-        // - availability of callback options
-        type: Boolean,
-        default: false,
-      },
-      locale: {
-        type: String,
-        default: window.YAFFA.userSettings.locale,
-      },
-      aiDocumentId: {
-        type: Number,
-        default: null,
-      },
-      dropdownParentSelector: {
-        type: String,
-        default: 'body',
-      },
-    },
-
-    data() {
-      let data = {};
-
-      // Main form data
-      data.form = new Form({
-        transaction_type: 'buy',
-        config_type: 'investment',
-        date: toIsoDateString(),
-        comment: null,
-        schedule: false,
-        reconciled: false,
-        catch_up_schedule: false,
-        config: {
-          account_id: null,
-          investment_id: null,
-          quantity: null,
-          price: null,
-          commission: null,
-          tax: null,
-          dividend: null,
+    export default {
+        components: {
+            TransactionSchedule,
+            MathInput,
+            Button,
+            AlertErrors,
         },
-        schedule_config: {
-          frequency: 'DAILY',
-          interval: 1,
-        },
-        ai_document_id: null,
-      });
 
-      // Other values
-      data.account_currency = null;
-      data.investment_currency = null;
-
-      data.csrfToken = window.csrfToken;
-      data.callback = this.initialCallback;
-
-      // Store price feature related data
-      data.storePriceEnabled = false;
-      data.existingPriceForDate = null;
-      data.priceCheckTimeout = null;
-
-      // Possible callback options
-      data.callbackOptions = [
-        {
-          value: 'create',
-          label: __('callback.newTransaction'),
-          enabled: true,
-        },
-        {
-          value: 'clone',
-          label: __('callback.cloneTransaction'),
-          enabled: true,
-        },
-        {
-          value: 'show',
-          label: __('callback.showTransaction'),
-          enabled: true,
-        },
-        {
-          value: 'returnToPrimaryAccount',
-          label: __('callback.returnToPrimaryAccount'),
-          enabled: true,
-        },
-        {
-          value: 'returnToInvestment',
-          label: __('callback.returnToInvestment'),
-          enabled: true,
-        },
-        {
-          value: 'returnToDashboard',
-          label: __('callback.returnToDashboard'),
-          enabled: true,
-        },
-        {
-          value: 'back',
-          label: __('callback.returnToPreviousPage'),
-          enabled: true,
-        },
-      ];
-
-      return data;
-    },
-
-    computed: {
-      // Uses exact decimal arithmetic: config.price/commission/tax/dividend arrive
-      // from the API as decimal strings (MoneyCast), which native `+` would silently
-      // string-concatenate instead of add.
-      total() {
-        const quantity = new Decimal(this.form.config.quantity || 0);
-        const price = new Decimal(this.form.config.price || 0);
-        const dividend = new Decimal(this.form.config.dividend || 0);
-        const commission = new Decimal(this.form.config.commission || 0);
-        const tax = new Decimal(this.form.config.tax || 0);
-
-        return quantity
-          .times(price)
-          .plus(dividend)
-          .minus(
-            commission
-              .plus(tax)
-              // Taxes and commissions are added to the value when the transaction is a buy
-              .times(this.transactionTypeSettings.amount_multiplier || 0),
-          )
-          .toNumber();
-      },
-
-      transactionTypeSettings() {
-        return (
-          this.transactionTypes.find(
-            (item) => item.value === this.form.transaction_type,
-          ) || {}
-        );
-      },
-
-      currency() {
-        return this.account_currency || this.investment_currency;
-      },
-
-      activeCallbackOptions() {
-        return this.callbackOptions.filter((option) => option.enabled);
-      },
-
-      // Native <input type="date"> needs a 'YYYY-MM-DD' string, while
-      // form.date may hold a Date object (see toRRuleDate above) - this
-      // bridges the two without changing the stored type.
-      dateInput: {
-        get() {
-          return toDateInputValue(this.form.date);
-        },
-        set(value) {
-          this.form.date = value || null;
-        },
-      },
-
-      // Predicts whether catching up to today would close this schedule, by checking
-      // whether the rule (anchored at start_date, same as the backend's
-      // TransactionSchedule::catchUpToDate()) has any occurrence left on or after
-      // today. next_date doesn't need to be considered separately: it's always one of
-      // the rule's own occurrences, so "no occurrence on/after today anywhere in the
-      // rule" and "no occurrence on/after today reachable from next_date" agree.
-      catchUpMayCloseSchedule() {
-        if (this.action !== 'enter') {
-          return false;
-        }
-
-        const schedule = this.form.schedule_config;
-        if (!schedule?.frequency || !schedule?.start_date) {
-          return false;
-        }
-
-        const start = toRRuleDate(schedule.start_date);
-        if (!start) {
-          return false;
-        }
-
-        try {
-          const rule = new RRule({
-            freq: RRule[schedule.frequency],
-            interval: schedule.interval || 1,
-            dtstart: start,
-            until: schedule.end_date ? toRRuleDate(schedule.end_date) : null,
-            count: schedule.count || null,
-            byweekday: schedule.by_day
-              ? byDayToRRuleWeekday(schedule.by_day)
-              : null,
-            bymonth: schedule.by_month || null,
-          });
-
-          return rule.after(toRRuleDate(new Date()), true) === null;
-        } catch {
-          return false;
-        }
-      },
-
-      // Do we allow the user to edit the base settings?
-      isBaseSettingsEditsAllowed() {
-        return ['create', 'clone', 'finalize'].includes(this.action);
-      },
-
-      // Should we show the "Store this as a price" checkbox?
-      shouldShowStorePriceCheckbox() {
-        return (
-          ['create', 'clone', 'finalize'].includes(this.action) &&
-          !this.form.schedule &&
-          this.transactionTypeSettings.price &&
-          // At the moment, overwriting is not supported
-          !this.existingPriceForDate
-        );
-      },
-    },
-
-    created() {
-      // Load transaction types from window global context first
-      const transactionTypesConfig = window.YAFFA.config.transactionTypes || {};
-
-      // Filter and map investment types to component format
-      this.transactionTypes = Object.values(transactionTypesConfig)
-        .filter((type) => type.category === 'investment')
-        .map((type) => ({
-          name: type.label,
-          value: type.value,
-          quantity: ['buy', 'sell', 'add_shares', 'remove_shares'].includes(
-            type.value,
-          ),
-          price: ['buy', 'sell'].includes(type.value),
-          dividend: ['dividend', 'interest_yield'].includes(type.value),
-          amount_multiplier: type.amount_multiplier,
-        }));
-
-      // Copy values of existing transaction into component form data
-      this.initializeTransaction();
-
-      // Check for various default values in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('account')) {
-        this.form.config.account_id = urlParams.get('account');
-      }
-      if (urlParams.get('investment')) {
-        this.form.config.investment_id = urlParams.get('investment');
-      }
-
-      // Set form action
-      this.form.action = this.action;
-      this.form.ai_document_id = this.aiDocumentId;
-    },
-
-    mounted() {
-      // Account dropdown functionality
-      $('#account')
-        .select2({
-          ajax: {
-            url: '/api/v1/accounts/investment',
-            dataType: 'json',
-            delay: 150,
-            data: (params) => {
-              return {
-                q: params.term,
-                transaction_type: this.form.transaction_type,
-                currency_id: this.investment_currency?.id,
-                _token: this.csrfToken,
-              };
+        props: {
+            action: String,
+            initialCallback: {
+                type: String,
+                default: 'create',
             },
-            processResults: (data) => {
-              return {
-                results: data,
-              };
+            transaction: Object,
+            simplified: {
+                // If true, no schedule option is shown
+                type: Boolean,
+                default: false,
             },
-            cache: true,
-          },
-          selectOnClose: false,
-          placeholder: __('Select account'),
-          searchInputPlaceholder: __('Type to search...'),
-          allowClear: true,
-          width: 'resolve',
-          theme: 'bootstrap-5',
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          $.ajax({
-            url: '/api/v1/accounts/' + e.params.data.id,
-            data: {
-              _token: this.csrfToken,
+            fromModal: {
+                // If true, the form is shown in a modal, which controls a few parts of the form
+                // - availability of callback options
+                type: Boolean,
+                default: false,
             },
-          }).done((data) => {
-            this.account_currency = data.config.currency;
-          });
-        })
-        .on('select2:unselect', () => {
-          this.form.config.account_id = null;
-          this.account_currency = null;
-        })
-        .on('select2:clear', () => {
-          this.form.config.account_id = null;
-          this.account_currency = null;
-        });
-
-      // Load default value for account
-      const accountReady = this.getDefaultAccountDetails(
-        this.form.config.account_id,
-      );
-
-      // Investment dropdown functionality
-      $('#investment')
-        .select2({
-          ajax: {
-            url: '/api/v1/investments',
-            data: (params) => {
-              return {
-                query: params.term,
-                active: 1,
-                currency_id: this.account_currency?.id,
-                limit: 10,
-                // We rely on server-side sorting, so let's set it here
-                sort_by: 'name',
-                sort_order: 'asc',
-                _token: this.csrfToken,
-              };
+            locale: {
+                type: String,
+                default: window.YAFFA.userSettings.locale,
             },
-            dataType: 'json',
-            delay: 150,
-            processResults: (data) => {
-              // Let's format the results to a format used by Select2
-              return {
-                results: data.map((item) => ({
-                  id: item.id,
-                  text: item.name,
-                  currency_id: item.currency_id,
-                  html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
-                  title: item.name,
-                })),
-              };
+            aiDocumentId: {
+                type: Number,
+                default: null,
             },
-            cache: true,
-          },
-          escapeMarkup: function (markup) {
-            return markup;
-          },
-          templateResult: function (data) {
-            return data.html;
-          },
-          templateSelection: function (data) {
-            return data.text;
-          },
-          selectOnClose: false,
-          placeholder: __('Select investment'),
-          searchInputPlaceholder: __('Type to search...'),
-          allowClear: true,
-          width: 'resolve',
-          theme: 'bootstrap-5',
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          // Set currency id immediately to avoid a race condition in account filtering.
-          if (e.params.data.currency_id) {
-            this.investment_currency = {
-              id: e.params.data.currency_id,
-            };
-          }
-
-          $.ajax({
-            url: route('api.v1.investments.show', {
-              investment: e.params.data.id,
-            }),
-            data: {
-              _token: this.csrfToken,
+            dropdownParentSelector: {
+                type: String,
+                default: 'body',
             },
-          }).done((data) => {
-            this.investment_currency = data.currency;
-          });
-        })
-        .on('select2:unselect', () => {
-          this.investment_currency = null;
-          this.form.config.investment_id = null;
-          // Reset price-related data when investment is cleared
-          this.existingPriceForDate = null;
-          this.storePriceEnabled = false;
-        })
-        .on('select2:clear', () => {
-          this.investment_currency = null;
-          this.form.config.investment_id = null;
-          // Reset price-related data when investment is cleared
-          this.existingPriceForDate = null;
-          this.storePriceEnabled = false;
-        });
+        },
 
-      // Load default value for investment
-      const investmentReady = this.getDefaultInvestmentDetails(
-        this.form.config.investment_id,
-      );
+        data() {
+            let data = {};
 
-      // Initial sync between schedules, if applicable
-      this.syncScheduleStartDate(this.form.schedule_config.start_date);
-
-      // Initialize tooltips
-      initializeBootstrapTooltips();
-
-      // Snapshot the settled post-load state (both account/investment details loaded
-      // and synced into form.config) as the isDirty() baseline.
-      Promise.all([accountReady, investmentReady]).then(() => {
-        this.$nextTick(() => this.markFormClean());
-      });
-    },
-
-    beforeUnmount() {
-      $('#account').off().select2('destroy');
-      $('#investment').off().select2('destroy');
-    },
-
-    methods: {
-      getDefaultAccountDetails(account_id) {
-        if (!account_id) {
-          return;
-        }
-
-        // Returned so callers can wait for the select2 population (and the
-        // form field sync it triggers via a dispatched 'change' event) to
-        // settle before treating the form as loaded.
-        return $.ajax({
-          url: '/api/v1/accounts/' + this.form.config.account_id,
-          data: {
-            _token: this.csrfToken,
-          },
-        }).done((data) => {
-          // Create the option and append to Select2
-          $('#account')
-            .append(new Option(data.name, data.id, true, true))
-            .trigger('change')
-            .trigger({
-              type: 'select2:select',
-              params: {
-                data: data,
-              },
-            });
-        });
-      },
-
-      getDefaultInvestmentDetails(investment_id) {
-        if (!investment_id) {
-          return;
-        }
-
-        // Returned so callers can wait for the select2 population (and the
-        // form field sync it triggers via a dispatched 'change' event) to
-        // settle before treating the form as loaded.
-        return $.ajax({
-          url: route('api.v1.investments.show', { investment: investment_id }),
-          data: {
-            _token: this.csrfToken,
-          },
-        }).done((data) => {
-          // Create the option and append to Select2
-          $('#investment')
-            .append(new Option(data.name, data.id, true, true))
-            .trigger('change')
-            .trigger({
-              type: 'select2:select',
-              params: {
-                data: data,
-              },
-            });
-        });
-      },
-
-      initializeTransaction() {
-        if (this.transaction && Object.keys(this.transaction).length > 0) {
-          // Populate form data with already known values
-          this.form.id = this.transaction.id;
-          this.form.transaction_type = this.transaction.transaction_type;
-
-          // Populate date from source transaction as a plain 'YYYY-MM-DD' string - a Date
-          // object here would be re-expressed in UTC by JSON.stringify() on submit, shifting
-          // the calendar day for anyone east of UTC unless the field happens to get touched.
-          this.form.date = toDateInputValue(this.transaction.date) || null;
-
-          this.form.comment = this.transaction.comment;
-          this.form.schedule = this.transaction.schedule ?? false;
-          this.form.reconciled = this.transaction.reconciled ?? false;
-
-          // Copy configuration (handle both saved transactions and AI drafts)
-          const config = this.transaction.config || {};
-          this.form.config.quantity = config.quantity;
-          this.form.config.price = config.price;
-          this.form.config.commission = config.commission;
-          this.form.config.tax = config.tax;
-          this.form.config.dividend = config.dividend;
-          this.form.config.account_id = config.account_id;
-          this.form.config.investment_id = config.investment_id;
-
-          // Copy schedule config. Dates are kept as plain 'YYYY-MM-DD' strings, never
-          // Date objects - a Date survives fine in the UI (toDateInputValue reads it with
-          // local getters), but JSON.stringify() on submit serializes it via toISOString(),
-          // which re-expresses it in UTC and can shift the calendar day back by one for
-          // anyone east of UTC unless the field happens to get touched (which replaces it
-          // with a string via the date input's setter, masking the bug).
-          if (this.transaction.transaction_schedule) {
-            this.form.schedule_config.frequency =
-              this.transaction.transaction_schedule.frequency;
-            this.form.schedule_config.count =
-              this.transaction.transaction_schedule.count;
-            this.form.schedule_config.interval =
-              this.transaction.transaction_schedule.interval;
-            this.form.schedule_config.by_day =
-              this.transaction.transaction_schedule.by_day;
-            this.form.schedule_config.by_month =
-              this.transaction.transaction_schedule.by_month;
-
-            this.form.schedule_config.start_date =
-              toDateInputValue(this.transaction.transaction_schedule.start_date) ||
-              null;
-            this.form.schedule_config.next_date =
-              toDateInputValue(this.transaction.transaction_schedule.next_date) ||
-              null;
-            this.form.schedule_config.automatic_recording =
-              this.transaction.transaction_schedule.automatic_recording;
-            this.form.schedule_config.end_date =
-              toDateInputValue(this.transaction.transaction_schedule.end_date) ||
-              null;
-
-            this.form.schedule_config.inflation =
-              this.transaction.transaction_schedule.inflation;
-          }
-
-          // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
-          if (this.action === 'replace') {
-            this.form.original_schedule_config = {};
-            this.form.original_schedule_config.frequency =
-              this.form.schedule_config.frequency;
-            this.form.original_schedule_config.count =
-              this.form.schedule_config.count;
-            this.form.original_schedule_config.interval =
-              this.form.schedule_config.interval;
-            this.form.original_schedule_config.by_day =
-              this.form.schedule_config.by_day;
-            this.form.original_schedule_config.by_month =
-              this.form.schedule_config.by_month;
-            this.form.original_schedule_config.inflation =
-              this.form.schedule_config.inflation;
-            // Already a plain string at this point (see the schedule_config copy above).
-            this.form.original_schedule_config.start_date =
-              this.form.schedule_config.start_date;
-            this.form.original_schedule_config.automatic_recording =
-              this.form.schedule_config.automatic_recording;
-
-            // Reset next date of original schedule config to set it ended
-            this.form.original_schedule_config.next_date = undefined;
-
-            // Set new schedule start date to today
-            this.form.schedule_config.start_date = toIsoDateString();
-
-            // If this is a schedule, then set the new next date to today
-            if (this.form.schedule) {
-              this.form.schedule_config.next_date = toIsoDateString();
-            }
-
-            // The end date carried over from the original schedule may now be
-            // in the past relative to the new start date - the new schedule
-            // can't already be over before its first occurrence, so clear it.
-            const newEndDateValue = toDateInputValue(
-              this.form.schedule_config.end_date,
-            );
-            const newStartDateValue = toDateInputValue(
-              this.form.schedule_config.start_date,
-            );
-            if (newEndDateValue && newEndDateValue < newStartDateValue) {
-              this.form.schedule_config.end_date = null;
-            }
-
-            // Set original schedule end date to today - 1 day
-            const originalEndDate = new Date();
-            originalEndDate.setDate(originalEndDate.getDate() - 1);
-            this.form.original_schedule_config.end_date =
-              toIsoDateString(originalEndDate);
-          }
-        }
-
-        // Set form action and AI document ID
-        this.form.action = this.action;
-        this.form.ai_document_id = this.aiDocumentId;
-
-        // The originalData snapshot itself is taken once the account/investment details
-        // requested by the caller (mounted()/the transaction watcher) have finished
-        // loading - see markFormClean() and its call sites. Assigning config.account_id
-        // above doesn't keep form.originalData in sync the way form.update() does, and
-        // the async select2 population that follows resets it via a native <select>'s
-        // 'change' event, which coerces the value to a string - even when nothing about
-        // it semantically changed, so snapshotting here would capture a mistyped value.
-      },
-
-      // Snapshot the current state as the "clean" baseline isDirty() compares against.
-      markFormClean() {
-        this.form.update(this.form.data());
-      },
-
-      transactionTypeChanged() {
-        const settings = this.transactionTypeSettings;
-        if (!settings.quantity) {
-          this.form.config.quantity = null;
-        }
-        if (!settings.price) {
-          this.form.config.price = null;
-        }
-        if (!settings.dividend) {
-          this.form.config.dividend = null;
-        }
-      },
-
-      loadCallbackUrl(transactionId) {
-        if (this.callback === 'returnToDashboard') {
-          location.href = this.route('home');
-          return;
-        }
-
-        if (this.callback === 'new') {
-          location.href = this.route('transaction.create', {
-            type: 'investment',
-          });
-          return;
-        }
-
-        if (this.callback === 'clone') {
-          location.href = this.route('transaction.open', {
-            transaction: transactionId,
-            action: 'clone',
-          });
-          return;
-        }
-
-        if (this.callback === 'returnToPrimaryAccount') {
-          location.href = this.route('account.history', {
-            account: this.form.config.account_id,
-          });
-          return;
-        }
-
-        if (this.callback === 'returnToSecondaryAccount') {
-          location.href = this.route('account.history', {
-            account: this.form.config.account_id,
-          });
-          return;
-        }
-
-        // Default, return back
-        if (document.referrer) {
-          location.href = document.referrer;
-        } else {
-          history.back();
-        }
-      },
-
-      onCancel() {
-        if (!this.isDirty()) {
-          this.$emit('cancel');
-          return false;
-        }
-
-        confirmAction(__('Are you sure you want to discard any changes?'), {
-          icon: 'warning',
-          target: this.dropdownParentSelector,
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.$emit('cancel');
-          }
-        });
-        return false;
-      },
-
-      // True once any field differs from its state right after the form finished
-      // loading (new/cloned/editing/finalizing, etc - see the originalData snapshot
-      // at the end of initializeTransaction()).
-      isDirty() {
-        return (
-          JSON.stringify(this.form.data()) !==
-          JSON.stringify(this.form.originalData)
-        );
-      },
-
-      onSubmit() {
-        // Editing an existing transaction needs PATCH method
-        if (this.action === 'edit') {
-          this.form
-            .patch(
-              this.route('api.v1.transactions.update-investment', {
-                transaction: this.form.id,
-              }),
-              this.form,
-            )
-            .then((response) => {
-              this.$emit(
-                'success',
-                processTransaction(response.data.transaction),
-                {
-                  callback: this.callback,
+            // Main form data
+            data.form = new Form({
+                transaction_type: 'buy',
+                config_type: 'investment',
+                date: toIsoDateString(),
+                comment: null,
+                schedule: false,
+                reconciled: false,
+                catch_up_schedule: false,
+                config: {
+                    account_id: null,
+                    investment_id: null,
+                    quantity: null,
+                    price: null,
+                    commission: null,
+                    tax: null,
+                    dividend: null,
                 },
-              );
+                schedule_config: {
+                    frequency: 'DAILY',
+                    interval: 1,
+                },
+                ai_document_id: null,
             });
-          return;
-        }
 
-        // Any type of new transaction needs POST method
-        this.form
-          .post(this.route('api.v1.transactions.store-investment'), this.form)
-          .then(async (response) => {
-            // Store price if enabled
-            const investmentPriceStoredResult = await this.storePriceIfEnabled(
-              response.data.transaction,
+            // Other values
+            data.account_currency = null;
+            data.investment_currency = null;
+
+            data.csrfToken = window.csrfToken;
+            data.callback = this.initialCallback;
+
+            // Store price feature related data
+            data.storePriceEnabled = false;
+            data.existingPriceForDate = null;
+            data.priceCheckTimeout = null;
+
+            // Possible callback options
+            data.callbackOptions = [
+                {
+                    value: 'create',
+                    label: __('callback.newTransaction'),
+                    enabled: true,
+                },
+                {
+                    value: 'clone',
+                    label: __('callback.cloneTransaction'),
+                    enabled: true,
+                },
+                {
+                    value: 'show',
+                    label: __('callback.showTransaction'),
+                    enabled: true,
+                },
+                {
+                    value: 'returnToPrimaryAccount',
+                    label: __('callback.returnToPrimaryAccount'),
+                    enabled: true,
+                },
+                {
+                    value: 'returnToInvestment',
+                    label: __('callback.returnToInvestment'),
+                    enabled: true,
+                },
+                {
+                    value: 'returnToDashboard',
+                    label: __('callback.returnToDashboard'),
+                    enabled: true,
+                },
+                {
+                    value: 'back',
+                    label: __('callback.returnToPreviousPage'),
+                    enabled: true,
+                },
+            ];
+
+            return data;
+        },
+
+        computed: {
+            // Uses exact decimal arithmetic: config.price/commission/tax/dividend arrive
+            // from the API as decimal strings (MoneyCast), which native `+` would silently
+            // string-concatenate instead of add.
+            total() {
+                const quantity = new Decimal(this.form.config.quantity || 0);
+                const price = new Decimal(this.form.config.price || 0);
+                const dividend = new Decimal(this.form.config.dividend || 0);
+                const commission = new Decimal(
+                    this.form.config.commission || 0,
+                );
+                const tax = new Decimal(this.form.config.tax || 0);
+
+                return quantity
+                    .times(price)
+                    .plus(dividend)
+                    .minus(
+                        commission
+                            .plus(tax)
+                            // Taxes and commissions are added to the value when the transaction is a buy
+                            .times(
+                                this.transactionTypeSettings
+                                    .amount_multiplier || 0,
+                            ),
+                    )
+                    .toNumber();
+            },
+
+            transactionTypeSettings() {
+                return (
+                    this.transactionTypes.find(
+                        (item) => item.value === this.form.transaction_type,
+                    ) || {}
+                );
+            },
+
+            currency() {
+                return this.account_currency || this.investment_currency;
+            },
+
+            activeCallbackOptions() {
+                return this.callbackOptions.filter((option) => option.enabled);
+            },
+
+            // Native <input type="date"> needs a 'YYYY-MM-DD' string, while
+            // form.date may hold a Date object (see toRRuleDate above) - this
+            // bridges the two without changing the stored type.
+            dateInput: {
+                get() {
+                    return toDateInputValue(this.form.date);
+                },
+                set(value) {
+                    this.form.date = value || null;
+                },
+            },
+
+            // Predicts whether catching up to today would close this schedule, by checking
+            // whether the rule (anchored at start_date, same as the backend's
+            // TransactionSchedule::catchUpToDate()) has any occurrence left on or after
+            // today. next_date doesn't need to be considered separately: it's always one of
+            // the rule's own occurrences, so "no occurrence on/after today anywhere in the
+            // rule" and "no occurrence on/after today reachable from next_date" agree.
+            catchUpMayCloseSchedule() {
+                if (this.action !== 'enter') {
+                    return false;
+                }
+
+                const schedule = this.form.schedule_config;
+                if (!schedule?.frequency || !schedule?.start_date) {
+                    return false;
+                }
+
+                const start = toRRuleDate(schedule.start_date);
+                if (!start) {
+                    return false;
+                }
+
+                try {
+                    const rule = new RRule({
+                        freq: RRule[schedule.frequency],
+                        interval: schedule.interval || 1,
+                        dtstart: start,
+                        until: schedule.end_date
+                            ? toRRuleDate(schedule.end_date)
+                            : null,
+                        count: schedule.count || null,
+                        byweekday: schedule.by_day
+                            ? byDayToRRuleWeekday(schedule.by_day)
+                            : null,
+                        bymonth: schedule.by_month || null,
+                    });
+
+                    return rule.after(toRRuleDate(new Date()), true) === null;
+                } catch {
+                    return false;
+                }
+            },
+
+            // Do we allow the user to edit the base settings?
+            isBaseSettingsEditsAllowed() {
+                return ['create', 'clone', 'finalize'].includes(this.action);
+            },
+
+            // Should we show the "Store this as a price" checkbox?
+            shouldShowStorePriceCheckbox() {
+                return (
+                    ['create', 'clone', 'finalize'].includes(this.action) &&
+                    !this.form.schedule &&
+                    this.transactionTypeSettings.price &&
+                    // At the moment, overwriting is not supported
+                    !this.existingPriceForDate
+                );
+            },
+        },
+
+        watch: {
+            // On change of new schedule start date, adjust original schedule end date to previous day
+            'form.schedule_config.start_date': function (newDate) {
+                this.syncScheduleStartDate(newDate);
+            },
+
+            // The catch-up warning icon is only rendered when this is true (v-if), so a
+            // newly-mounted icon needs its own tooltip initialization - the one in
+            // mounted() only covers icons already in the DOM at that point.
+            catchUpMayCloseSchedule() {
+                this.$nextTick(() => initializeBootstrapTooltips(this.$el));
+            },
+
+            // Check for existing price when date changes
+            'form.date': function () {
+                this.checkExistingPrice();
+            },
+
+            // Check for existing price when investment changes
+            'form.config.investment_id': function () {
+                this.checkExistingPrice();
+            },
+
+            transaction(transaction) {
+                // TODO: consider using form.update()
+                this.form.reset();
+
+                // Copy values of existing transaction into component form data
+                this.initializeTransaction();
+
+                // Load default value for accounts
+                const accountReady = this.getDefaultAccountDetails(
+                    transaction.config.account_id,
+                );
+
+                // Load default value for investment, or clear if not set
+                let investmentReady;
+                if (transaction.config.investment_id) {
+                    investmentReady = this.getDefaultInvestmentDetails(
+                        transaction.config.investment_id,
+                    );
+                } else {
+                    this.clearInvestmentDropdown();
+                }
+
+                // Snapshot the settled post-load state as the isDirty() baseline - see
+                // markFormClean(). The async select2 population above resets config.account_id/
+                // investment_id via a native <select>'s 'change' event, which coerces the value
+                // to a string, so this must wait for both to settle rather than snapshotting
+                // right after initializeTransaction().
+                Promise.all([accountReady, investmentReady]).then(() => {
+                    this.$nextTick(() => this.markFormClean());
+                });
+            },
+
+            existingPriceForDate(value) {
+                if (value !== null) {
+                    this.$nextTick(() => {
+                        initializeBootstrapTooltips();
+                    });
+                }
+            },
+        },
+
+        created() {
+            // Load transaction types from window global context first
+            const transactionTypesConfig =
+                window.YAFFA.config.transactionTypes || {};
+
+            // Filter and map investment types to component format
+            this.transactionTypes = Object.values(transactionTypesConfig)
+                .filter((type) => type.category === 'investment')
+                .map((type) => ({
+                    name: type.label,
+                    value: type.value,
+                    quantity: [
+                        'buy',
+                        'sell',
+                        'add_shares',
+                        'remove_shares',
+                    ].includes(type.value),
+                    price: ['buy', 'sell'].includes(type.value),
+                    dividend: ['dividend', 'interest_yield'].includes(
+                        type.value,
+                    ),
+                    amount_multiplier: type.amount_multiplier,
+                }));
+
+            // Copy values of existing transaction into component form data
+            this.initializeTransaction();
+
+            // Check for various default values in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('account')) {
+                this.form.config.account_id = urlParams.get('account');
+            }
+            if (urlParams.get('investment')) {
+                this.form.config.investment_id = urlParams.get('investment');
+            }
+
+            // Set form action
+            this.form.action = this.action;
+            this.form.ai_document_id = this.aiDocumentId;
+        },
+
+        mounted() {
+            // Account dropdown functionality
+            $('#account')
+                .select2({
+                    ajax: {
+                        url: '/api/v1/accounts/investment',
+                        dataType: 'json',
+                        delay: 150,
+                        data: (params) => {
+                            return {
+                                q: params.term,
+                                transaction_type: this.form.transaction_type,
+                                currency_id: this.investment_currency?.id,
+                                _token: this.csrfToken,
+                            };
+                        },
+                        processResults: (data) => {
+                            return {
+                                results: data,
+                            };
+                        },
+                        cache: true,
+                    },
+                    selectOnClose: false,
+                    placeholder: __('Select account'),
+                    searchInputPlaceholder: __('Type to search...'),
+                    allowClear: true,
+                    width: 'resolve',
+                    theme: 'bootstrap-5',
+                    dropdownParent: $(this.dropdownParentSelector),
+                })
+                .on('select2:select', (e) => {
+                    const event = new Event('change', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    e.target.dispatchEvent(event);
+
+                    $.ajax({
+                        url: '/api/v1/accounts/' + e.params.data.id,
+                        data: {
+                            _token: this.csrfToken,
+                        },
+                    }).done((data) => {
+                        this.account_currency = data.config.currency;
+                    });
+                })
+                .on('select2:unselect', () => {
+                    this.form.config.account_id = null;
+                    this.account_currency = null;
+                })
+                .on('select2:clear', () => {
+                    this.form.config.account_id = null;
+                    this.account_currency = null;
+                });
+
+            // Load default value for account
+            const accountReady = this.getDefaultAccountDetails(
+                this.form.config.account_id,
             );
 
-            this.$emit(
-              'success',
-              processTransaction(response.data.transaction),
-              {
-                callback: this.callback,
-                investmentPriceStoredResult: investmentPriceStoredResult,
-              },
+            // Investment dropdown functionality
+            $('#investment')
+                .select2({
+                    ajax: {
+                        url: '/api/v1/investments',
+                        data: (params) => {
+                            return {
+                                query: params.term,
+                                active: 1,
+                                currency_id: this.account_currency?.id,
+                                limit: 10,
+                                // We rely on server-side sorting, so let's set it here
+                                sort_by: 'name',
+                                sort_order: 'asc',
+                                _token: this.csrfToken,
+                            };
+                        },
+                        dataType: 'json',
+                        delay: 150,
+                        processResults: (data) => {
+                            // Let's format the results to a format used by Select2
+                            return {
+                                results: data.map((item) => ({
+                                    id: item.id,
+                                    text: item.name,
+                                    currency_id: item.currency_id,
+                                    html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
+                                    title: item.name,
+                                })),
+                            };
+                        },
+                        cache: true,
+                    },
+                    escapeMarkup: function (markup) {
+                        return markup;
+                    },
+                    templateResult: function (data) {
+                        return data.html;
+                    },
+                    templateSelection: function (data) {
+                        return data.text;
+                    },
+                    selectOnClose: false,
+                    placeholder: __('Select investment'),
+                    searchInputPlaceholder: __('Type to search...'),
+                    allowClear: true,
+                    width: 'resolve',
+                    theme: 'bootstrap-5',
+                    dropdownParent: $(this.dropdownParentSelector),
+                })
+                .on('select2:select', (e) => {
+                    const event = new Event('change', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    e.target.dispatchEvent(event);
+
+                    // Set currency id immediately to avoid a race condition in account filtering.
+                    if (e.params.data.currency_id) {
+                        this.investment_currency = {
+                            id: e.params.data.currency_id,
+                        };
+                    }
+
+                    $.ajax({
+                        url: route('api.v1.investments.show', {
+                            investment: e.params.data.id,
+                        }),
+                        data: {
+                            _token: this.csrfToken,
+                        },
+                    }).done((data) => {
+                        this.investment_currency = data.currency;
+                    });
+                })
+                .on('select2:unselect', () => {
+                    this.investment_currency = null;
+                    this.form.config.investment_id = null;
+                    // Reset price-related data when investment is cleared
+                    this.existingPriceForDate = null;
+                    this.storePriceEnabled = false;
+                })
+                .on('select2:clear', () => {
+                    this.investment_currency = null;
+                    this.form.config.investment_id = null;
+                    // Reset price-related data when investment is cleared
+                    this.existingPriceForDate = null;
+                    this.storePriceEnabled = false;
+                });
+
+            // Load default value for investment
+            const investmentReady = this.getDefaultInvestmentDetails(
+                this.form.config.investment_id,
             );
-          });
-      },
 
-      // Sync the standard schedule start date to the cloned schedule end date
-      syncScheduleStartDate(newDate) {
-        if (!this.form.original_schedule_config) {
-          return;
-        }
+            // Initial sync between schedules, if applicable
+            this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
-        if (
-          !this.$refs.scheduleOriginal ||
-          this.$refs.scheduleOriginal.allowCustomization
-        ) {
-          return;
-        }
-
-        const date = parseIsoDate(newDate);
-        if (!date) {
-          return;
-        }
-        date.setDate(date.getDate() - 1);
-        this.form.original_schedule_config.end_date = toIsoDateString(date);
-      },
-
-      // Clear the investment dropdown (used when resetting the form in modal context)
-      clearInvestmentDropdown() {
-        $('#investment').val(null).trigger('change');
-        this.investment_currency = null;
-      },
-
-      async checkExistingPrice() {
-        if (
-          !this.form.config.investment_id ||
-          !this.form.date ||
-          !this.shouldShowStorePriceCheckbox
-        ) {
-          this.existingPriceForDate = null;
-          return;
-        }
-
-        try {
-          // Ensure date is properly formatted
-          let dateString;
-          if (this.form.date instanceof Date) {
-            dateString = toIsoDateString(this.form.date);
-          } else if (typeof this.form.date === 'string') {
-            // If it's already a string, use it directly
-            dateString = this.form.date;
-          } else {
-            // Fallback to today if date is invalid
-            dateString = toIsoDateString(new Date());
-          }
-
-          const response = await window.axios.get(
-            this.route('api.v1.investment-prices.check', {
-              investment: this.form.config.investment_id,
-            }),
-            {
-              params: {
-                date: dateString,
-              },
-            },
-          );
-
-          if (response.data.exists) {
-            // The API emits price as a decimal string (MoneyCast); toFormattedCurrency()
-            // (used to display it below) requires a plain Number to format correctly.
-            this.existingPriceForDate = Number(response.data.price);
-            this.storePriceEnabled = false;
-          } else {
-            this.existingPriceForDate = null;
-          }
-        } catch (error) {
-          console.error('Failed to check existing price:', error);
-          this.existingPriceForDate = null;
-        }
-      },
-
-      onPriceChange() {
-        // Debounce price check
-        if (this.priceCheckTimeout) {
-          clearTimeout(this.priceCheckTimeout);
-        }
-
-        this.priceCheckTimeout = setTimeout(() => {
-          this.checkExistingPrice();
-        }, 500);
-      },
-
-      async storePriceIfEnabled(transaction) {
-        if (!this.storePriceEnabled || !transaction.config.price) {
-          return;
-        }
-
-        try {
-          await window.axios.post(
-            this.route('api.v1.investment-prices.store'),
-            {
-              investment_id: transaction.config.investment_id,
-              date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
-              price: transaction.config.price,
-            },
-          );
-
-          // Show success toast
-          return 'success';
-        } catch (error) {
-          // If duplicate (422), show warning instead of error
-          if (error.response && error.response.status === 422) {
-            return 'skipped';
-          } else {
-            return 'error';
-          }
-        }
-      },
-      getCurrencySymbol,
-      toFormattedCurrency,
-    },
-
-    watch: {
-      // On change of new schedule start date, adjust original schedule end date to previous day
-      'form.schedule_config.start_date': function (newDate) {
-        this.syncScheduleStartDate(newDate);
-      },
-
-      // The catch-up warning icon is only rendered when this is true (v-if), so a
-      // newly-mounted icon needs its own tooltip initialization - the one in
-      // mounted() only covers icons already in the DOM at that point.
-      catchUpMayCloseSchedule() {
-        this.$nextTick(() => initializeBootstrapTooltips(this.$el));
-      },
-
-      // Check for existing price when date changes
-      'form.date': function () {
-        this.checkExistingPrice();
-      },
-
-      // Check for existing price when investment changes
-      'form.config.investment_id': function () {
-        this.checkExistingPrice();
-      },
-
-      transaction(transaction) {
-        // TODO: consider using form.update()
-        this.form.reset();
-
-        // Copy values of existing transaction into component form data
-        this.initializeTransaction();
-
-        // Load default value for accounts
-        const accountReady = this.getDefaultAccountDetails(
-          transaction.config.account_id,
-        );
-
-        // Load default value for investment, or clear if not set
-        let investmentReady;
-        if (transaction.config.investment_id) {
-          investmentReady = this.getDefaultInvestmentDetails(
-            transaction.config.investment_id,
-          );
-        } else {
-          this.clearInvestmentDropdown();
-        }
-
-        // Snapshot the settled post-load state as the isDirty() baseline - see
-        // markFormClean(). The async select2 population above resets config.account_id/
-        // investment_id via a native <select>'s 'change' event, which coerces the value
-        // to a string, so this must wait for both to settle rather than snapshotting
-        // right after initializeTransaction().
-        Promise.all([accountReady, investmentReady]).then(() => {
-          this.$nextTick(() => this.markFormClean());
-        });
-      },
-
-      existingPriceForDate(value) {
-        if (value !== null) {
-          this.$nextTick(() => {
+            // Initialize tooltips
             initializeBootstrapTooltips();
-          });
-        }
-      },
-    },
-  };
+
+            // Snapshot the settled post-load state (both account/investment details loaded
+            // and synced into form.config) as the isDirty() baseline.
+            Promise.all([accountReady, investmentReady]).then(() => {
+                this.$nextTick(() => this.markFormClean());
+            });
+        },
+
+        beforeUnmount() {
+            $('#account').off().select2('destroy');
+            $('#investment').off().select2('destroy');
+        },
+
+        methods: {
+            getDefaultAccountDetails(account_id) {
+                if (!account_id) {
+                    return;
+                }
+
+                // Returned so callers can wait for the select2 population (and the
+                // form field sync it triggers via a dispatched 'change' event) to
+                // settle before treating the form as loaded.
+                return $.ajax({
+                    url: '/api/v1/accounts/' + this.form.config.account_id,
+                    data: {
+                        _token: this.csrfToken,
+                    },
+                }).done((data) => {
+                    // Create the option and append to Select2
+                    $('#account')
+                        .append(new Option(data.name, data.id, true, true))
+                        .trigger('change')
+                        .trigger({
+                            type: 'select2:select',
+                            params: {
+                                data: data,
+                            },
+                        });
+                });
+            },
+
+            getDefaultInvestmentDetails(investment_id) {
+                if (!investment_id) {
+                    return;
+                }
+
+                // Returned so callers can wait for the select2 population (and the
+                // form field sync it triggers via a dispatched 'change' event) to
+                // settle before treating the form as loaded.
+                return $.ajax({
+                    url: route('api.v1.investments.show', {
+                        investment: investment_id,
+                    }),
+                    data: {
+                        _token: this.csrfToken,
+                    },
+                }).done((data) => {
+                    // Create the option and append to Select2
+                    $('#investment')
+                        .append(new Option(data.name, data.id, true, true))
+                        .trigger('change')
+                        .trigger({
+                            type: 'select2:select',
+                            params: {
+                                data: data,
+                            },
+                        });
+                });
+            },
+
+            initializeTransaction() {
+                if (
+                    this.transaction &&
+                    Object.keys(this.transaction).length > 0
+                ) {
+                    // Populate form data with already known values
+                    this.form.id = this.transaction.id;
+                    this.form.transaction_type =
+                        this.transaction.transaction_type;
+
+                    // Populate date from source transaction as a plain 'YYYY-MM-DD' string - a Date
+                    // object here would be re-expressed in UTC by JSON.stringify() on submit, shifting
+                    // the calendar day for anyone east of UTC unless the field happens to get touched.
+                    this.form.date =
+                        toDateInputValue(this.transaction.date) || null;
+
+                    this.form.comment = this.transaction.comment;
+                    this.form.schedule = this.transaction.schedule ?? false;
+                    this.form.reconciled = this.transaction.reconciled ?? false;
+
+                    // Copy configuration (handle both saved transactions and AI drafts)
+                    const config = this.transaction.config || {};
+                    this.form.config.quantity = config.quantity;
+                    this.form.config.price = config.price;
+                    this.form.config.commission = config.commission;
+                    this.form.config.tax = config.tax;
+                    this.form.config.dividend = config.dividend;
+                    this.form.config.account_id = config.account_id;
+                    this.form.config.investment_id = config.investment_id;
+
+                    // Copy schedule config. Dates are kept as plain 'YYYY-MM-DD' strings, never
+                    // Date objects - a Date survives fine in the UI (toDateInputValue reads it with
+                    // local getters), but JSON.stringify() on submit serializes it via toISOString(),
+                    // which re-expresses it in UTC and can shift the calendar day back by one for
+                    // anyone east of UTC unless the field happens to get touched (which replaces it
+                    // with a string via the date input's setter, masking the bug).
+                    if (this.transaction.transaction_schedule) {
+                        this.form.schedule_config.frequency =
+                            this.transaction.transaction_schedule.frequency;
+                        this.form.schedule_config.count =
+                            this.transaction.transaction_schedule.count;
+                        this.form.schedule_config.interval =
+                            this.transaction.transaction_schedule.interval;
+                        this.form.schedule_config.by_day =
+                            this.transaction.transaction_schedule.by_day;
+                        this.form.schedule_config.by_month =
+                            this.transaction.transaction_schedule.by_month;
+
+                        this.form.schedule_config.start_date =
+                            toDateInputValue(
+                                this.transaction.transaction_schedule
+                                    .start_date,
+                            ) || null;
+                        this.form.schedule_config.next_date =
+                            toDateInputValue(
+                                this.transaction.transaction_schedule.next_date,
+                            ) || null;
+                        this.form.schedule_config.automatic_recording =
+                            this.transaction.transaction_schedule.automatic_recording;
+                        this.form.schedule_config.end_date =
+                            toDateInputValue(
+                                this.transaction.transaction_schedule.end_date,
+                            ) || null;
+
+                        this.form.schedule_config.inflation =
+                            this.transaction.transaction_schedule.inflation;
+                    }
+
+                    // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
+                    if (this.action === 'replace') {
+                        this.form.original_schedule_config = {};
+                        this.form.original_schedule_config.frequency =
+                            this.form.schedule_config.frequency;
+                        this.form.original_schedule_config.count =
+                            this.form.schedule_config.count;
+                        this.form.original_schedule_config.interval =
+                            this.form.schedule_config.interval;
+                        this.form.original_schedule_config.by_day =
+                            this.form.schedule_config.by_day;
+                        this.form.original_schedule_config.by_month =
+                            this.form.schedule_config.by_month;
+                        this.form.original_schedule_config.inflation =
+                            this.form.schedule_config.inflation;
+                        // Already a plain string at this point (see the schedule_config copy above).
+                        this.form.original_schedule_config.start_date =
+                            this.form.schedule_config.start_date;
+                        this.form.original_schedule_config.automatic_recording =
+                            this.form.schedule_config.automatic_recording;
+
+                        // Reset next date of original schedule config to set it ended
+                        this.form.original_schedule_config.next_date =
+                            undefined;
+
+                        // Set new schedule start date to today
+                        this.form.schedule_config.start_date =
+                            toIsoDateString();
+
+                        // If this is a schedule, then set the new next date to today
+                        if (this.form.schedule) {
+                            this.form.schedule_config.next_date =
+                                toIsoDateString();
+                        }
+
+                        // The end date carried over from the original schedule may now be
+                        // in the past relative to the new start date - the new schedule
+                        // can't already be over before its first occurrence, so clear it.
+                        const newEndDateValue = toDateInputValue(
+                            this.form.schedule_config.end_date,
+                        );
+                        const newStartDateValue = toDateInputValue(
+                            this.form.schedule_config.start_date,
+                        );
+                        if (
+                            newEndDateValue &&
+                            newEndDateValue < newStartDateValue
+                        ) {
+                            this.form.schedule_config.end_date = null;
+                        }
+
+                        // Set original schedule end date to today - 1 day
+                        const originalEndDate = new Date();
+                        originalEndDate.setDate(originalEndDate.getDate() - 1);
+                        this.form.original_schedule_config.end_date =
+                            toIsoDateString(originalEndDate);
+                    }
+                }
+
+                // Set form action and AI document ID
+                this.form.action = this.action;
+                this.form.ai_document_id = this.aiDocumentId;
+
+                // The originalData snapshot itself is taken once the account/investment details
+                // requested by the caller (mounted()/the transaction watcher) have finished
+                // loading - see markFormClean() and its call sites. Assigning config.account_id
+                // above doesn't keep form.originalData in sync the way form.update() does, and
+                // the async select2 population that follows resets it via a native <select>'s
+                // 'change' event, which coerces the value to a string - even when nothing about
+                // it semantically changed, so snapshotting here would capture a mistyped value.
+            },
+
+            // Snapshot the current state as the "clean" baseline isDirty() compares against.
+            markFormClean() {
+                this.form.update(this.form.data());
+            },
+
+            transactionTypeChanged() {
+                const settings = this.transactionTypeSettings;
+                if (!settings.quantity) {
+                    this.form.config.quantity = null;
+                }
+                if (!settings.price) {
+                    this.form.config.price = null;
+                }
+                if (!settings.dividend) {
+                    this.form.config.dividend = null;
+                }
+            },
+
+            loadCallbackUrl(transactionId) {
+                if (this.callback === 'returnToDashboard') {
+                    location.href = this.route('home');
+                    return;
+                }
+
+                if (this.callback === 'new') {
+                    location.href = this.route('transaction.create', {
+                        type: 'investment',
+                    });
+                    return;
+                }
+
+                if (this.callback === 'clone') {
+                    location.href = this.route('transaction.open', {
+                        transaction: transactionId,
+                        action: 'clone',
+                    });
+                    return;
+                }
+
+                if (this.callback === 'returnToPrimaryAccount') {
+                    location.href = this.route('account.history', {
+                        account: this.form.config.account_id,
+                    });
+                    return;
+                }
+
+                if (this.callback === 'returnToSecondaryAccount') {
+                    location.href = this.route('account.history', {
+                        account: this.form.config.account_id,
+                    });
+                    return;
+                }
+
+                // Default, return back
+                if (document.referrer) {
+                    location.href = document.referrer;
+                } else {
+                    history.back();
+                }
+            },
+
+            onCancel() {
+                if (!this.isDirty()) {
+                    this.$emit('cancel');
+                    return false;
+                }
+
+                confirmAction(
+                    __('Are you sure you want to discard any changes?'),
+                    {
+                        icon: 'warning',
+                        target: this.dropdownParentSelector,
+                    },
+                ).then((result) => {
+                    if (result.isConfirmed) {
+                        this.$emit('cancel');
+                    }
+                });
+                return false;
+            },
+
+            // True once any field differs from its state right after the form finished
+            // loading (new/cloned/editing/finalizing, etc - see the originalData snapshot
+            // at the end of initializeTransaction()).
+            isDirty() {
+                return (
+                    JSON.stringify(this.form.data()) !==
+                    JSON.stringify(this.form.originalData)
+                );
+            },
+
+            onSubmit() {
+                // Editing an existing transaction needs PATCH method
+                if (this.action === 'edit') {
+                    this.form
+                        .patch(
+                            this.route(
+                                'api.v1.transactions.update-investment',
+                                {
+                                    transaction: this.form.id,
+                                },
+                            ),
+                            this.form,
+                        )
+                        .then((response) => {
+                            this.$emit(
+                                'success',
+                                processTransaction(response.data.transaction),
+                                {
+                                    callback: this.callback,
+                                },
+                            );
+                        });
+                    return;
+                }
+
+                // Any type of new transaction needs POST method
+                this.form
+                    .post(
+                        this.route('api.v1.transactions.store-investment'),
+                        this.form,
+                    )
+                    .then(async (response) => {
+                        // Store price if enabled
+                        const investmentPriceStoredResult =
+                            await this.storePriceIfEnabled(
+                                response.data.transaction,
+                            );
+
+                        this.$emit(
+                            'success',
+                            processTransaction(response.data.transaction),
+                            {
+                                callback: this.callback,
+                                investmentPriceStoredResult:
+                                    investmentPriceStoredResult,
+                            },
+                        );
+                    });
+            },
+
+            // Sync the standard schedule start date to the cloned schedule end date
+            syncScheduleStartDate(newDate) {
+                if (!this.form.original_schedule_config) {
+                    return;
+                }
+
+                if (
+                    !this.$refs.scheduleOriginal ||
+                    this.$refs.scheduleOriginal.allowCustomization
+                ) {
+                    return;
+                }
+
+                const date = parseIsoDate(newDate);
+                if (!date) {
+                    return;
+                }
+                date.setDate(date.getDate() - 1);
+                this.form.original_schedule_config.end_date =
+                    toIsoDateString(date);
+            },
+
+            // Clear the investment dropdown (used when resetting the form in modal context)
+            clearInvestmentDropdown() {
+                $('#investment').val(null).trigger('change');
+                this.investment_currency = null;
+            },
+
+            async checkExistingPrice() {
+                if (
+                    !this.form.config.investment_id ||
+                    !this.form.date ||
+                    !this.shouldShowStorePriceCheckbox
+                ) {
+                    this.existingPriceForDate = null;
+                    return;
+                }
+
+                try {
+                    // Ensure date is properly formatted
+                    let dateString;
+                    if (this.form.date instanceof Date) {
+                        dateString = toIsoDateString(this.form.date);
+                    } else if (typeof this.form.date === 'string') {
+                        // If it's already a string, use it directly
+                        dateString = this.form.date;
+                    } else {
+                        // Fallback to today if date is invalid
+                        dateString = toIsoDateString(new Date());
+                    }
+
+                    const response = await window.axios.get(
+                        this.route('api.v1.investment-prices.check', {
+                            investment: this.form.config.investment_id,
+                        }),
+                        {
+                            params: {
+                                date: dateString,
+                            },
+                        },
+                    );
+
+                    if (response.data.exists) {
+                        // The API emits price as a decimal string (MoneyCast); toFormattedCurrency()
+                        // (used to display it below) requires a plain Number to format correctly.
+                        this.existingPriceForDate = Number(response.data.price);
+                        this.storePriceEnabled = false;
+                    } else {
+                        this.existingPriceForDate = null;
+                    }
+                } catch (error) {
+                    console.error('Failed to check existing price:', error);
+                    this.existingPriceForDate = null;
+                }
+            },
+
+            onPriceChange() {
+                // Debounce price check
+                if (this.priceCheckTimeout) {
+                    clearTimeout(this.priceCheckTimeout);
+                }
+
+                this.priceCheckTimeout = setTimeout(() => {
+                    this.checkExistingPrice();
+                }, 500);
+            },
+
+            async storePriceIfEnabled(transaction) {
+                if (!this.storePriceEnabled || !transaction.config.price) {
+                    return;
+                }
+
+                try {
+                    await window.axios.post(
+                        this.route('api.v1.investment-prices.store'),
+                        {
+                            investment_id: transaction.config.investment_id,
+                            date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
+                            price: transaction.config.price,
+                        },
+                    );
+
+                    // Show success toast
+                    return 'success';
+                } catch (error) {
+                    // If duplicate (422), show warning instead of error
+                    if (error.response && error.response.status === 422) {
+                        return 'skipped';
+                    } else {
+                        return 'error';
+                    }
+                }
+            },
+            getCurrencySymbol,
+            toFormattedCurrency,
+        },
+    };
 </script>
 
 <style scoped>
-  @media (min-width: 576px) {
-    .block-label {
-      display: block;
+    @media (min-width: 576px) {
+        .block-label {
+            display: block;
+        }
     }
-  }
 
-  @media (max-width: 575.98px) {
-    .block-label {
-      margin-right: 10px;
+    @media (max-width: 575.98px) {
+        .block-label {
+            margin-right: 10px;
+        }
     }
-  }
 </style>

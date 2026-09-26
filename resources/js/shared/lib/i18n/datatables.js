@@ -22,15 +22,17 @@ export function normalizeDataTablesLocale(locale) {
 
 export function resolveDataTablesLocaleCandidates(locale, language) {
     const normalizedLocale = normalizeDataTablesLocale(locale);
-    const normalizedLanguage = typeof language === 'string'
-        ? language.toLowerCase()
-        : null;
+    const normalizedLanguage =
+        typeof language === 'string' ? language.toLowerCase() : null;
 
     return [
         normalizedLocale,
         dataTablesLanguageFallbackLocales[normalizedLanguage],
         dataTablesLanguageFallbackLocales.en,
-    ].filter((candidate, index, list) => candidate && list.indexOf(candidate) === index);
+    ].filter(
+        (candidate, index, list) =>
+            candidate && list.indexOf(candidate) === index,
+    );
 }
 
 function getActiveLocale() {
@@ -38,10 +40,15 @@ function getActiveLocale() {
 }
 
 function getActiveLanguage() {
-    return window.YAFFA?.userSettings?.language || window.YAFFA?.language || null;
+    return (
+        window.YAFFA?.userSettings?.language || window.YAFFA?.language || null
+    );
 }
 
-export async function loadDataTablesLanguage(locale = getActiveLocale(), language = getActiveLanguage()) {
+export async function loadDataTablesLanguage(
+    locale = getActiveLocale(),
+    language = getActiveLanguage(),
+) {
     const candidates = resolveDataTablesLocaleCandidates(locale, language);
 
     for (const candidate of candidates) {
@@ -91,13 +98,21 @@ function applyDataTablesLanguageToExistingTables(languageOptions) {
     }
 
     tables.iterator('table', function (settings) {
-        settings.oLanguage = $.extend(true, {}, settings.oLanguage, languageOptions);
+        settings.oLanguage = $.extend(
+            true,
+            {},
+            settings.oLanguage,
+            languageOptions,
+        );
     });
 
     tables.draw(false);
 }
 
-export async function initializeDataTablesI18n(locale = getActiveLocale(), language = getActiveLanguage()) {
+export async function initializeDataTablesI18n(
+    locale = getActiveLocale(),
+    language = getActiveLanguage(),
+) {
     const languageOptions = await loadDataTablesLanguage(locale, language);
 
     if (!languageOptions) {

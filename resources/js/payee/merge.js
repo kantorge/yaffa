@@ -6,7 +6,7 @@ initializeSelect2(window.YAFFA.userSettings.language);
 const selectorSourcePayee = '#payee_source';
 const selectorTargetPayee = '#payee_target';
 $(selectorSourcePayee).select2({
-    theme: "bootstrap-5",
+    theme: 'bootstrap-5',
     placeholder: __('Select payee to be merged'),
     allowClear: true,
     selectOnClose: false,
@@ -32,7 +32,7 @@ $(selectorSourcePayee).select2({
             }
 
             return {
-                results: data.map(item => ({
+                results: data.map((item) => ({
                     id: item.id,
                     text: item.name,
                 })),
@@ -52,7 +52,7 @@ if (payeeSource) {
 
 // Add select2 functionality to payee_target select
 $(selectorTargetPayee).select2({
-    theme: "bootstrap-5",
+    theme: 'bootstrap-5',
     placeholder: __('Select payee to be merged into'),
     allowClear: true,
     selectOnClose: false,
@@ -78,7 +78,7 @@ $(selectorTargetPayee).select2({
             }
 
             return {
-                results: data.map(item => ({
+                results: data.map((item) => ({
                     id: item.id,
                     text: item.name,
                 })),
@@ -109,7 +109,7 @@ $('#merge-payees-form').on('submit', function (e) {
 
     // Validate if action radio button is selected
     let action = $('input[name=action]:checked').val();
-    if (typeof action === "undefined") {
+    if (typeof action === 'undefined') {
         e.preventDefault();
         alert(__('Please select an action'));
         return;

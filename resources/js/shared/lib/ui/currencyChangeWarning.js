@@ -13,26 +13,26 @@ import { __ } from '@/shared/lib/i18n';
  * @param {string} message
  */
 export function warnOnCurrencyChange(selectEl, message) {
-  const originalCurrencyId = selectEl.dataset.originalCurrencyId;
+    const originalCurrencyId = selectEl.dataset.originalCurrencyId;
 
-  if (!originalCurrencyId) {
-    return;
-  }
-
-  selectEl.addEventListener('change', () => {
-    if (selectEl.value === originalCurrencyId) {
-      return;
+    if (!originalCurrencyId) {
+        return;
     }
 
-    Swal.fire({
-      animation: false,
-      icon: 'warning',
-      text: message,
-      confirmButtonText: __('OK'),
-      buttonsStyling: false,
-      customClass: {
-        confirmButton: 'btn btn-primary',
-      },
+    selectEl.addEventListener('change', () => {
+        if (selectEl.value === originalCurrencyId) {
+            return;
+        }
+
+        Swal.fire({
+            animation: false,
+            icon: 'warning',
+            text: message,
+            confirmButtonText: __('OK'),
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn btn-primary',
+            },
+        });
     });
-  });
 }

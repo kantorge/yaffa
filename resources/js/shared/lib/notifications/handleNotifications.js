@@ -10,9 +10,9 @@ export function storeNotification(type, message, options = {}) {
     let pendingNotifications;
     try {
         pendingNotifications =
-        JSON.parse(
-            localStorage.getItem('pendingBootstrapNotifications') || '[]',
-        ) || [];
+            JSON.parse(
+                localStorage.getItem('pendingBootstrapNotifications') || '[]',
+            ) || [];
     } catch (e) {
         console.error(
             'Failed to parse pending notifications from localStorage:',

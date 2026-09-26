@@ -1,255 +1,261 @@
 <template>
-  <div class="modal fade" id="modal-transaction-form-standard" tabindex="-1">
-    <div class="modal-dialog modal-xxl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            {{ modalTitle }}
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-coreui-dismiss="modal"
-            aria-label="Close"
-          ></button>
+    <div id="modal-transaction-form-standard" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-xxl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {{ modalTitle }}
+                    </h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-coreui-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body d-none d-lg-block">
+                    <transaction-form-standard
+                        ref="form"
+                        :action="action"
+                        :transaction="transactionData"
+                        :simplified="true"
+                        :from-modal="true"
+                        :ai-document-id="aiDocumentId"
+                        :dropdown-parent-selector="'#transaction_item_container'"
+                        @cancel="onCancel"
+                        @success="onSuccess"
+                    ></transaction-form-standard>
+                </div>
+                <div class="modal-body d-block d-lg-none">
+                    {{
+                        __(
+                            'Sorry, the transaction form is not available on smaller screens.',
+                        )
+                    }}
+                </div>
+            </div>
         </div>
-        <div class="modal-body d-none d-lg-block">
-          <transaction-form-standard
-            ref="form"
-            :action="action"
-            :transaction="transactionData"
-            :simplified="true"
-            :fromModal="true"
-            :ai-document-id="aiDocumentId"
-            :dropdown-parent-selector="'#transaction_item_container'"
-            @cancel="onCancel"
-            @success="onSuccess"
-          ></transaction-form-standard>
-        </div>
-        <div class="modal-body d-block d-lg-none">
-          {{
-            __(
-              'Sorry, the transaction form is not available on smaller screens.',
-            )
-          }}
-        </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script>
-  import TransactionFormStandard from './TransactionFormStandard.vue';
-  import { transactionLink } from '@/shared/lib/helpers';
-  import * as toastHelpers from '@/shared/lib/toast';
-  import { confirmAction } from '@/shared/lib/confirm';
+    import TransactionFormStandard from './TransactionFormStandard.vue';
+    import { transactionLink } from '@/shared/lib/helpers';
+    import * as toastHelpers from '@/shared/lib/toast';
+    import { confirmAction } from '@/shared/lib/confirm';
 
-  export default {
-    name: 'CreateStandardTransactionModal',
-    components: {
-      TransactionFormStandard,
-    },
-    props: {
-      transaction: {
-        type: Object,
-        default: {
-          transaction_type: 'withdrawal',
-          date: new Date(),
-          schedule: false,
-          reconciled: false,
-          comment: null,
-          config: {
-            account_from_id: null,
-            account_to_id: null,
-            amount_from: null,
-            amount_to: null,
-          },
+    export default {
+        name: 'CreateStandardTransactionModal',
+        components: {
+            TransactionFormStandard,
         },
-      },
-      aiDocumentId: {
-        type: Number,
-        default: null,
-      },
-    },
-    data() {
-      let data = {
-        action: 'create',
-        // Set right before a programmatic hide() so the hide.coreui.modal listener
-        // lets it through once without re-running the dirty check.
-        forceClose: false,
-      };
-      data.transactionData = Object.assign({}, this.transaction);
-      return data;
-    },
-    methods: {
-      hide() {
-        this.forceClose = true;
-        this.modal.hide();
-      },
-      onCancel() {
-        this.hide();
-      },
-      // Cancelable pre-dismiss hook (backdrop click, Esc, close button) - ask for
-      // confirmation only if the form has unsaved changes. The in-form Cancel button
-      // already runs its own dirty check before emitting 'cancel', which routes
-      // through hide() and is let through here via forceClose.
-      onHide(event) {
-        if (this.forceClose) {
-          this.forceClose = false;
-          return;
-        }
+        props: {
+            transaction: {
+                type: Object,
+                default: () => ({
+                    transaction_type: 'withdrawal',
+                    date: new Date(),
+                    schedule: false,
+                    reconciled: false,
+                    comment: null,
+                    config: {
+                        account_from_id: null,
+                        account_to_id: null,
+                        amount_from: null,
+                        amount_to: null,
+                    },
+                }),
+            },
+            aiDocumentId: {
+                type: Number,
+                default: null,
+            },
+        },
+        data() {
+            let data = {
+                action: 'create',
+                // Set right before a programmatic hide() so the hide.coreui.modal listener
+                // lets it through once without re-running the dirty check.
+                forceClose: false,
+            };
+            data.transactionData = Object.assign({}, this.transaction);
+            return data;
+        },
+        computed: {
+            modalTitle() {
+                const titles = new Map([
+                    ['create', __('Add new transaction')],
+                    ['edit', __('Modify existing transaction')],
+                    ['clone', __('Clone existing transaction')],
+                    ['enter', __('Enter scheduled transaction instance')],
+                    [
+                        'replace',
+                        __('Clone scheduled transaction and close base item'),
+                    ],
+                    ['finalize', __('Finalize transaction draft')],
+                ]);
 
-        if (!this.$refs.form?.isDirty()) {
-          return;
-        }
-
-        event.preventDefault();
-
-        confirmAction(__('Are you sure you want to discard any changes?'), {
-          icon: 'warning',
-          confirmButtonText: __('Discard changes'),
-          target: '#modal-transaction-form-standard',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.hide();
-          }
-        });
-      },
-      onSuccess(transaction, options = {}) {
-        // Emit a custom event to global scope about the new transaction to be displayed as a notification
-        toastHelpers.showToast(
-          __('Success'),
-          __('Transaction added.'),
-          'bg-success',
-          {
-            headerSmall: transactionLink(
-              transaction.id,
-              __('Go to transaction'),
-            ),
-          },
-        );
-
-        if (options.categoryLearningSummary) {
-          const summary = options.categoryLearningSummary;
-
-          if (
-            (summary.created || 0) +
-              (summary.updated || 0) +
-              (summary.incremented || 0) >
-            0
-          ) {
-            toastHelpers.showInfoToast(
-              __('categoryLearning.summary', {
-                created: summary.created || 0,
-                updated: summary.updated || 0,
-                incremented: summary.incremented || 0,
-              }),
+                return titles.get(this.action);
+            },
+        },
+        mounted() {
+            // Set up event listener for global scope about new schedule instance to be opened in modal editor
+            window.addEventListener(
+                'initiateEnterInstance',
+                this.handleInitiateEnterInstance,
             );
-          }
-        }
 
-        // Emit a custom event about the new transaction to be displayed
-        let transactionEvent = new CustomEvent('transaction-created', {
-          detail: {
-            // Pass the entire transaction object to the event
-            transaction: transaction,
-          },
-        });
-        window.dispatchEvent(transactionEvent);
+            // Set up event listener for global scope about new transaction draft to be opened in modal editor
+            window.addEventListener(
+                'initiateCreateFromDraft',
+                this.handleInitiateCreateFromDraft,
+            );
 
-        // Hide the modal
-        this.hide();
-      },
-      onInitiateEnterInstance(transaction) {
-        this.action = 'enter';
-        this.transactionData = transaction;
+            // Initialize modal
+            this.modal = new coreui.Modal(
+                document.getElementById('modal-transaction-form-standard'),
+            );
+            document
+                .getElementById('modal-transaction-form-standard')
+                .addEventListener('hide.coreui.modal', this.onHide);
+        },
+        beforeUnmount() {
+            // Clean up event listeners when component is destroyed
+            window.removeEventListener(
+                'initiateEnterInstance',
+                this.handleInitiateEnterInstance,
+            );
+            window.removeEventListener(
+                'initiateCreateFromDraft',
+                this.handleInitiateCreateFromDraft,
+            );
+            document
+                .getElementById('modal-transaction-form-standard')
+                .removeEventListener('hide.coreui.modal', this.onHide);
+        },
+        methods: {
+            hide() {
+                this.forceClose = true;
+                this.modal.hide();
+            },
+            onCancel() {
+                this.hide();
+            },
+            // Cancelable pre-dismiss hook (backdrop click, Esc, close button) - ask for
+            // confirmation only if the form has unsaved changes. The in-form Cancel button
+            // already runs its own dirty check before emitting 'cancel', which routes
+            // through hide() and is let through here via forceClose.
+            onHide(event) {
+                if (this.forceClose) {
+                    this.forceClose = false;
+                    return;
+                }
 
-        this.modal.show();
-      },
-      onInitiateCreateDraft(transaction) {
-        this.action = 'finalize';
-        this.transactionData = transaction;
+                if (!this.$refs.form?.isDirty()) {
+                    return;
+                }
 
-        this.modal.show();
-      },
-      handleInitiateEnterInstance(event) {
-        // Validate that transaction type is standard
-        if (event.detail.transaction.config_type !== 'standard') {
-          return;
-        }
+                event.preventDefault();
 
-        this.onInitiateEnterInstance(event.detail.transaction);
-      },
-      handleInitiateCreateFromDraft(event) {
-        // Validate that transaction type is standard
-        if (event.detail.type !== 'standard') {
-          return;
-        }
+                confirmAction(
+                    __('Are you sure you want to discard any changes?'),
+                    {
+                        icon: 'warning',
+                        confirmButtonText: __('Discard changes'),
+                        target: '#modal-transaction-form-standard',
+                    },
+                ).then((result) => {
+                    if (result.isConfirmed) {
+                        this.hide();
+                    }
+                });
+            },
+            onSuccess(transaction, options = {}) {
+                // Emit a custom event to global scope about the new transaction to be displayed as a notification
+                toastHelpers.showToast(
+                    __('Success'),
+                    __('Transaction added.'),
+                    'bg-success',
+                    {
+                        headerSmall: transactionLink(
+                            transaction.id,
+                            __('Go to transaction'),
+                        ),
+                    },
+                );
 
-        this.onInitiateCreateDraft(event.detail.transaction);
-      },
-    },
-    mounted() {
-      // Set up event listener for global scope about new schedule instance to be opened in modal editor
-      window.addEventListener(
-        'initiateEnterInstance',
-        this.handleInitiateEnterInstance,
-      );
+                if (options.categoryLearningSummary) {
+                    const summary = options.categoryLearningSummary;
 
-      // Set up event listener for global scope about new transaction draft to be opened in modal editor
-      window.addEventListener(
-        'initiateCreateFromDraft',
-        this.handleInitiateCreateFromDraft,
-      );
+                    if (
+                        (summary.created || 0) +
+                            (summary.updated || 0) +
+                            (summary.incremented || 0) >
+                        0
+                    ) {
+                        toastHelpers.showInfoToast(
+                            __('categoryLearning.summary', {
+                                created: summary.created || 0,
+                                updated: summary.updated || 0,
+                                incremented: summary.incremented || 0,
+                            }),
+                        );
+                    }
+                }
 
-      // Initialize modal
-      this.modal = new coreui.Modal(
-        document.getElementById('modal-transaction-form-standard'),
-      );
-      document
-        .getElementById('modal-transaction-form-standard')
-        .addEventListener('hide.coreui.modal', this.onHide);
-    },
-    beforeUnmount() {
-      // Clean up event listeners when component is destroyed
-      window.removeEventListener(
-        'initiateEnterInstance',
-        this.handleInitiateEnterInstance,
-      );
-      window.removeEventListener(
-        'initiateCreateFromDraft',
-        this.handleInitiateCreateFromDraft,
-      );
-      document
-        .getElementById('modal-transaction-form-standard')
-        .removeEventListener('hide.coreui.modal', this.onHide);
-    },
-    computed: {
-      modalTitle() {
-        const titles = new Map([
-          ['create', __('Add new transaction')],
-          ['edit', __('Modify existing transaction')],
-          ['clone', __('Clone existing transaction')],
-          ['enter', __('Enter scheduled transaction instance')],
-          ['replace', __('Clone scheduled transaction and close base item')],
-          ['finalize', __('Finalize transaction draft')],
-        ]);
+                // Emit a custom event about the new transaction to be displayed
+                let transactionEvent = new CustomEvent('transaction-created', {
+                    detail: {
+                        // Pass the entire transaction object to the event
+                        transaction: transaction,
+                    },
+                });
+                window.dispatchEvent(transactionEvent);
 
-        return titles.get(this.action);
-      },
-    },
-  };
+                // Hide the modal
+                this.hide();
+            },
+            onInitiateEnterInstance(transaction) {
+                this.action = 'enter';
+                this.transactionData = transaction;
+
+                this.modal.show();
+            },
+            onInitiateCreateDraft(transaction) {
+                this.action = 'finalize';
+                this.transactionData = transaction;
+
+                this.modal.show();
+            },
+            handleInitiateEnterInstance(event) {
+                // Validate that transaction type is standard
+                if (event.detail.transaction.config_type !== 'standard') {
+                    return;
+                }
+
+                this.onInitiateEnterInstance(event.detail.transaction);
+            },
+            handleInitiateCreateFromDraft(event) {
+                // Validate that transaction type is standard
+                if (event.detail.type !== 'standard') {
+                    return;
+                }
+
+                this.onInitiateCreateDraft(event.detail.transaction);
+            },
+        },
+    };
 </script>
 
 <style scoped>
-  @media (min-width: 992px) {
-    .modal-xxl {
-      --cui-modal-width: 1400px;
+    @media (min-width: 992px) {
+        .modal-xxl {
+            --cui-modal-width: 1400px;
+        }
     }
-  }
-  @media (min-width: 1200px) {
-    .modal-xxl {
-      --cui-modal-width: 1800px;
+    @media (min-width: 1200px) {
+        .modal-xxl {
+            --cui-modal-width: 1800px;
+        }
     }
-  }
 </style>

@@ -8,25 +8,26 @@ import Decimal from 'decimal.js';
  * "unknown", never substitute a guessed value.
  */
 export function priceAsOf(date, prices, transactions) {
-  const time = date.getTime();
+    const time = date.getTime();
 
-  const fromHistory = prices
-    .filter((p) => new Date(p.date).getTime() <= time)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (fromHistory.length > 0) {
-    return new Decimal(fromHistory[0].price || 0);
-  }
+    const fromHistory = prices
+        .filter((p) => new Date(p.date).getTime() <= time)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (fromHistory.length > 0) {
+        return new Decimal(fromHistory[0].price || 0);
+    }
 
-  const fromTransactions = transactions
-    .filter(
-      (t) => t.config?.price != null && new Date(t.date).getTime() <= time,
-    )
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (fromTransactions.length > 0) {
-    return new Decimal(fromTransactions[0].config.price);
-  }
+    const fromTransactions = transactions
+        .filter(
+            (t) =>
+                t.config?.price != null && new Date(t.date).getTime() <= time,
+        )
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (fromTransactions.length > 0) {
+        return new Decimal(fromTransactions[0].config.price);
+    }
 
-  return null;
+    return null;
 }
 
 /**
@@ -34,13 +35,15 @@ export function priceAsOf(date, prices, transactions) {
  * a reporting period starting on `date`.
  */
 export function quantityBefore(date, transactions, getTypeConfig) {
-  return transactions
-    .filter((t) => new Date(t.date) < date)
-    .reduce((sum, t) => {
-      const multiplier = getTypeConfig(t.transaction_type).quantity_multiplier;
-      if (multiplier == null || t.config?.quantity == null) return sum;
-      return sum.plus(new Decimal(multiplier).times(t.config.quantity));
-    }, new Decimal(0));
+    return transactions
+        .filter((t) => new Date(t.date) < date)
+        .reduce((sum, t) => {
+            const multiplier = getTypeConfig(
+                t.transaction_type,
+            ).quantity_multiplier;
+            if (multiplier == null || t.config?.quantity == null) return sum;
+            return sum.plus(new Decimal(multiplier).times(t.config.quantity));
+        }, new Decimal(0));
 }
 
 /**
@@ -71,126 +74,143 @@ export function quantityBefore(date, transactions, getTypeConfig) {
  * valuation must surface as "unknown" to the caller, never silently default to 0 or 1.
  */
 export function computeInvestmentReturn({
-  transactions,
-  prices,
-  dateFrom,
-  dateTo,
-  getTypeConfig,
+    transactions,
+    prices,
+    dateFrom,
+    dateTo,
+    getTypeConfig,
 }) {
-  const periodMs = dateTo - dateFrom;
-  const inWindow = transactions.filter((t) => {
-    const d = new Date(t.date);
-    return d >= dateFrom && d <= dateTo;
-  });
+    const periodMs = dateTo - dateFrom;
+    const inWindow = transactions.filter((t) => {
+        const d = new Date(t.date);
+        return d >= dateFrom && d <= dateTo;
+    });
 
-  const openingQuantity = quantityBefore(dateFrom, transactions, getTypeConfig);
-  const windowQuantityChange = inWindow.reduce((sum, t) => {
-    const multiplier = getTypeConfig(t.transaction_type).quantity_multiplier;
-    if (multiplier == null || t.config?.quantity == null) return sum;
-    return sum.plus(new Decimal(multiplier).times(t.config.quantity));
-  }, new Decimal(0));
-  const closingQuantity = openingQuantity.plus(windowQuantityChange);
+    const openingQuantity = quantityBefore(
+        dateFrom,
+        transactions,
+        getTypeConfig,
+    );
+    const windowQuantityChange = inWindow.reduce((sum, t) => {
+        const multiplier = getTypeConfig(
+            t.transaction_type,
+        ).quantity_multiplier;
+        if (multiplier == null || t.config?.quantity == null) return sum;
+        return sum.plus(new Decimal(multiplier).times(t.config.quantity));
+    }, new Decimal(0));
+    const closingQuantity = openingQuantity.plus(windowQuantityChange);
 
-  const openingPrice = openingQuantity.isZero()
-    ? new Decimal(0)
-    : priceAsOf(dateFrom, prices, transactions);
-  const closingPrice = closingQuantity.isZero()
-    ? new Decimal(0)
-    : priceAsOf(dateTo, prices, transactions);
+    const openingPrice = openingQuantity.isZero()
+        ? new Decimal(0)
+        : priceAsOf(dateFrom, prices, transactions);
+    const closingPrice = closingQuantity.isZero()
+        ? new Decimal(0)
+        : priceAsOf(dateTo, prices, transactions);
 
-  const openingValue =
-    openingPrice == null ? null : openingQuantity.times(openingPrice);
-  const closingValue =
-    closingPrice == null ? null : closingQuantity.times(closingPrice);
+    const openingValue =
+        openingPrice == null ? null : openingQuantity.times(openingPrice);
+    const closingValue =
+        closingPrice == null ? null : closingQuantity.times(closingPrice);
 
-  let buying = new Decimal(0); // gross (price x quantity), informational only
-  let selling = new Decimal(0); // gross (price x quantity), informational only
-  let added = new Decimal(0);
-  let removed = new Decimal(0);
-  let dividend = new Decimal(0); // raw dividend/interest_yield field, informational only
-  let commission = new Decimal(0);
-  let taxes = new Decimal(0);
-  let cashFlowGain = new Decimal(0);
-  let weightedPurchaseCapital = new Decimal(0);
+    let buying = new Decimal(0); // gross (price x quantity), informational only
+    let selling = new Decimal(0); // gross (price x quantity), informational only
+    let added = new Decimal(0);
+    let removed = new Decimal(0);
+    let dividend = new Decimal(0); // raw dividend/interest_yield field, informational only
+    let commission = new Decimal(0);
+    let taxes = new Decimal(0);
+    let cashFlowGain = new Decimal(0);
+    let weightedPurchaseCapital = new Decimal(0);
 
-  for (const t of inWindow) {
-    const cfg = t.config || {};
-    const comm =
-      cfg.commission != null ? new Decimal(cfg.commission) : new Decimal(0);
-    const tax = cfg.tax != null ? new Decimal(cfg.tax) : new Decimal(0);
-    commission = commission.plus(comm);
-    taxes = taxes.plus(tax);
+    for (const t of inWindow) {
+        const cfg = t.config || {};
+        const comm =
+            cfg.commission != null
+                ? new Decimal(cfg.commission)
+                : new Decimal(0);
+        const tax = cfg.tax != null ? new Decimal(cfg.tax) : new Decimal(0);
+        commission = commission.plus(comm);
+        taxes = taxes.plus(tax);
 
-    if (
-      t.transaction_type === 'buy' &&
-      cfg.price != null &&
-      cfg.quantity != null
-    ) {
-      const gross = new Decimal(cfg.price).times(cfg.quantity);
-      buying = buying.plus(gross);
-      const netCost = gross.plus(comm).plus(tax);
-      cashFlowGain = cashFlowGain.minus(netCost);
-      const weight =
-        periodMs > 0
-          ? Math.min(1, Math.max(0, (dateTo - new Date(t.date)) / periodMs))
-          : 1;
-      weightedPurchaseCapital = weightedPurchaseCapital.plus(
-        netCost.times(weight),
-      );
-    } else if (
-      t.transaction_type === 'sell' &&
-      cfg.price != null &&
-      cfg.quantity != null
-    ) {
-      const gross = new Decimal(cfg.price).times(cfg.quantity);
-      selling = selling.plus(gross);
-      cashFlowGain = cashFlowGain.plus(gross.minus(comm).minus(tax));
-    } else if (
-      t.transaction_type === 'dividend' ||
-      t.transaction_type === 'interest_yield'
-    ) {
-      const div =
-        cfg.dividend != null ? new Decimal(cfg.dividend) : new Decimal(0);
-      dividend = dividend.plus(div);
-      cashFlowGain = cashFlowGain.plus(div.minus(comm).minus(tax));
-    } else if (t.transaction_type === 'add_shares') {
-      added = added.plus(cfg.quantity != null ? new Decimal(cfg.quantity) : 0);
-      cashFlowGain = cashFlowGain.minus(comm).minus(tax);
-    } else if (t.transaction_type === 'remove_shares') {
-      removed = removed.plus(
-        cfg.quantity != null ? new Decimal(cfg.quantity) : 0,
-      );
-      cashFlowGain = cashFlowGain.minus(comm).minus(tax);
+        if (
+            t.transaction_type === 'buy' &&
+            cfg.price != null &&
+            cfg.quantity != null
+        ) {
+            const gross = new Decimal(cfg.price).times(cfg.quantity);
+            buying = buying.plus(gross);
+            const netCost = gross.plus(comm).plus(tax);
+            cashFlowGain = cashFlowGain.minus(netCost);
+            const weight =
+                periodMs > 0
+                    ? Math.min(
+                          1,
+                          Math.max(0, (dateTo - new Date(t.date)) / periodMs),
+                      )
+                    : 1;
+            weightedPurchaseCapital = weightedPurchaseCapital.plus(
+                netCost.times(weight),
+            );
+        } else if (
+            t.transaction_type === 'sell' &&
+            cfg.price != null &&
+            cfg.quantity != null
+        ) {
+            const gross = new Decimal(cfg.price).times(cfg.quantity);
+            selling = selling.plus(gross);
+            cashFlowGain = cashFlowGain.plus(gross.minus(comm).minus(tax));
+        } else if (
+            t.transaction_type === 'dividend' ||
+            t.transaction_type === 'interest_yield'
+        ) {
+            const div =
+                cfg.dividend != null
+                    ? new Decimal(cfg.dividend)
+                    : new Decimal(0);
+            dividend = dividend.plus(div);
+            cashFlowGain = cashFlowGain.plus(div.minus(comm).minus(tax));
+        } else if (t.transaction_type === 'add_shares') {
+            added = added.plus(
+                cfg.quantity != null ? new Decimal(cfg.quantity) : 0,
+            );
+            cashFlowGain = cashFlowGain.minus(comm).minus(tax);
+        } else if (t.transaction_type === 'remove_shares') {
+            removed = removed.plus(
+                cfg.quantity != null ? new Decimal(cfg.quantity) : 0,
+            );
+            cashFlowGain = cashFlowGain.minus(comm).minus(tax);
+        }
     }
-  }
 
-  const gain =
-    openingValue == null || closingValue == null
-      ? null
-      : closingValue.minus(openingValue).plus(cashFlowGain);
+    const gain =
+        openingValue == null || closingValue == null
+            ? null
+            : closingValue.minus(openingValue).plus(cashFlowGain);
 
-  const avgCapital =
-    openingValue == null ? null : openingValue.plus(weightedPurchaseCapital);
+    const avgCapital =
+        openingValue == null
+            ? null
+            : openingValue.plus(weightedPurchaseCapital);
 
-  let roi = null;
-  if (gain != null && avgCapital != null) {
-    roi = avgCapital.isZero() ? 0 : gain.dividedBy(avgCapital).toNumber();
-  }
+    let roi = null;
+    if (gain != null && avgCapital != null) {
+        roi = avgCapital.isZero() ? 0 : gain.dividedBy(avgCapital).toNumber();
+    }
 
-  return {
-    openingQuantity,
-    closingQuantity,
-    openingValue,
-    closingValue,
-    buying,
-    selling,
-    added,
-    removed,
-    dividend,
-    commission,
-    taxes,
-    gain,
-    avgCapital,
-    roi,
-  };
+    return {
+        openingQuantity,
+        closingQuantity,
+        openingValue,
+        closingValue,
+        buying,
+        selling,
+        added,
+        removed,
+        dividend,
+        commission,
+        taxes,
+        gain,
+        avgCapital,
+        roi,
+    };
 }

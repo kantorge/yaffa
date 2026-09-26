@@ -9,6 +9,6 @@
  * - PRICE (10): TransactionDetailInvestment::price, InvestmentPrice::price.
  */
 export const STORAGE_SCALE = {
-  AMOUNT: 4,
-  PRICE: 10,
+    AMOUNT: 4,
+    PRICE: 10,
 };

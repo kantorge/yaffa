@@ -34,7 +34,9 @@ document.querySelectorAll('.maintenance-task-btn').forEach((button) => {
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRF-TOKEN': document.querySelector(
+                        'meta[name="csrf-token"]',
+                    ).content,
                     'Content-Type': 'application/json',
                 },
             });
@@ -42,12 +44,18 @@ document.querySelectorAll('.maintenance-task-btn').forEach((button) => {
             const data = await response.json();
 
             if (response.ok) {
-                toastHelpers.showSuccessToast(data.message || __('maintenance.taskSuccessFallback'));
+                toastHelpers.showSuccessToast(
+                    data.message || __('maintenance.taskSuccessFallback'),
+                );
             } else {
-                toastHelpers.showWarningToast(data.message || __('maintenance.taskFailureFallback'));
+                toastHelpers.showWarningToast(
+                    data.message || __('maintenance.taskFailureFallback'),
+                );
             }
         } catch (error) {
-            toastHelpers.showWarningToast(__('maintenance.networkErrorPrefix') + error.message);
+            toastHelpers.showWarningToast(
+                __('maintenance.networkErrorPrefix') + error.message,
+            );
         } finally {
             button.disabled = false;
         }

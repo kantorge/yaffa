@@ -6,7 +6,12 @@ import PayeeForm from './components/PayeeForm.vue';
 
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import { escapeHtml, escapeHtmlWithLineBreaks } from '@/shared/lib/helpers';
-import { __, getDataTablesLanguageOptions, toFormattedDate, toFormattedNumber } from '@/shared/lib/i18n';
+import {
+    __,
+    getDataTablesLanguageOptions,
+    toFormattedDate,
+    toFormattedNumber,
+} from '@/shared/lib/i18n';
 
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
@@ -43,15 +48,20 @@ function normalizePayee(payee) {
     const toMinDate = toDateOrNull(payee.to_min_date);
     const toMaxDate = toDateOrNull(payee.to_max_date);
 
-    const transactionsMinDate = fromMinDate && toMinDate
-        ? new Date(Math.min(fromMinDate, toMinDate))
-        : fromMinDate || toMinDate;
-    const transactionsMaxDate = fromMaxDate && toMaxDate
-        ? new Date(Math.max(fromMaxDate, toMaxDate))
-        : fromMaxDate || toMaxDate;
+    const transactionsMinDate =
+        fromMinDate && toMinDate
+            ? new Date(Math.min(fromMinDate, toMinDate))
+            : fromMinDate || toMinDate;
+    const transactionsMaxDate =
+        fromMaxDate && toMaxDate
+            ? new Date(Math.max(fromMaxDate, toMaxDate))
+            : fromMaxDate || toMaxDate;
 
-    const hasDefaultCategory = Boolean(payee?.config?.category_id || payee?.config?.category?.id);
-    const hasCategorySuggestion = !hasDefaultCategory && Boolean(payee.category_suggestion);
+    const hasDefaultCategory = Boolean(
+        payee?.config?.category_id || payee?.config?.category?.id,
+    );
+    const hasCategorySuggestion =
+        !hasDefaultCategory && Boolean(payee.category_suggestion);
 
     return {
         ...payee,
@@ -59,7 +69,9 @@ function normalizePayee(payee) {
             category: null,
             category_id: null,
         },
-        category_suggestion: hasDefaultCategory ? null : (payee.category_suggestion || null),
+        category_suggestion: hasDefaultCategory
+            ? null
+            : payee.category_suggestion || null,
         has_default_category: hasDefaultCategory,
         has_category_suggestion: hasCategorySuggestion,
         from_count: fromCount,
@@ -112,11 +124,22 @@ const vueApp = createApp({
                     row.data(normalizedPayee).draw(false);
                 }
 
-                const filtersWereReset = this.focusPayeeInTable(payeeId, payee.name);
+                const filtersWereReset = this.focusPayeeInTable(
+                    payeeId,
+                    payee.name,
+                );
                 if (filtersWereReset) {
-                    toastHelpers.showInfoToast(__('Existing payee selected. Filters were reset and the row is highlighted.'));
+                    toastHelpers.showInfoToast(
+                        __(
+                            'Existing payee selected. Filters were reset and the row is highlighted.',
+                        ),
+                    );
                 } else {
-                    toastHelpers.showInfoToast(__('Existing payee selected and highlighted in the list.'));
+                    toastHelpers.showInfoToast(
+                        __(
+                            'Existing payee selected and highlighted in the list.',
+                        ),
+                    );
                 }
 
                 return;
@@ -143,7 +166,9 @@ const vueApp = createApp({
 
             toastHelpers.showSuccessToast(
                 filtersWereReset
-                    ? __('Payee added. Filters were reset and the new row is highlighted.')
+                    ? __(
+                          'Payee added. Filters were reset and the new row is highlighted.',
+                      )
                     : __('Payee added'),
             );
         },
@@ -223,10 +248,15 @@ const vueApp = createApp({
                     }),
                 )
                 .then(() => {
-                    this.onPayeeSuggestionAccepted(payee.id, payee.category_suggestion);
+                    this.onPayeeSuggestionAccepted(
+                        payee.id,
+                        payee.category_suggestion,
+                    );
                 })
                 .catch(() => {
-                    toastHelpers.showErrorToast(__('Error while updating default category'));
+                    toastHelpers.showErrorToast(
+                        __('Error while updating default category'),
+                    );
                 })
                 .finally(() => {
                     button.find('.fa-spinner').addClass('d-none');
@@ -235,9 +265,18 @@ const vueApp = createApp({
                 });
         },
         resetPayeeTableFilters() {
-            $('input[name=table_filter_active][value=""]').prop('checked', true);
-            $('input[name=table_filter_default_category][value=""]').prop('checked', true);
-            $('input[name=table_filter_category_suggestion][value=""]').prop('checked', true);
+            $('input[name=table_filter_active][value=""]').prop(
+                'checked',
+                true,
+            );
+            $('input[name=table_filter_default_category][value=""]').prop(
+                'checked',
+                true,
+            );
+            $('input[name=table_filter_category_suggestion][value=""]').prop(
+                'checked',
+                true,
+            );
             $('#table_filter_search_text').val('');
 
             window.table.column(1).search('');
@@ -284,15 +323,25 @@ const vueApp = createApp({
                     return;
                 }
 
-                const scrollBody = $(window.table.table().container()).find('.dt-scroll-body');
+                const scrollBody = $(window.table.table().container()).find(
+                    '.dt-scroll-body',
+                );
                 if (scrollBody.length > 0) {
                     const rowPosition = $(rowNode).position();
                     if (rowPosition) {
-                        const targetScrollTop = scrollBody.scrollTop() + rowPosition.top - (scrollBody.height() / 2);
-                        scrollBody.stop(true).animate({ scrollTop: targetScrollTop }, 200);
+                        const targetScrollTop =
+                            scrollBody.scrollTop() +
+                            rowPosition.top -
+                            scrollBody.height() / 2;
+                        scrollBody
+                            .stop(true)
+                            .animate({ scrollTop: targetScrollTop }, 200);
                     }
                 } else {
-                    rowNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    rowNode.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                    });
                 }
 
                 $(rowNode).addClass('table-warning');
@@ -310,33 +359,45 @@ const vueApp = createApp({
 
             ajaxIsBusy = true;
 
-            confirmDelete(__('Are you sure to want to delete this item?')).then((result) => {
-                if (!result.isConfirmed) {
-                    ajaxIsBusy = false;
-                    return;
-                }
-
-                window.axios
-                    .delete(window.route('api.v1.account-entities.destroy', payee.id))
-                    .then((response) => {
-                        const deletedPayeeId = response.data.accountEntity.id;
-
-                        window.payees = window.payees.filter((item) => item.id !== deletedPayeeId);
-
-                        window.table
-                            .row((_, data) => data.id === deletedPayeeId)
-                            .remove()
-                            .draw(false);
-
-                        toastHelpers.showSuccessToast(__('Payee deleted'));
-                    })
-                    .catch(() => {
-                        toastHelpers.showErrorToast(__('Error while trying to delete payee'));
-                    })
-                    .finally(() => {
+            confirmDelete(__('Are you sure to want to delete this item?')).then(
+                (result) => {
+                    if (!result.isConfirmed) {
                         ajaxIsBusy = false;
-                    });
-            });
+                        return;
+                    }
+
+                    window.axios
+                        .delete(
+                            window.route(
+                                'api.v1.account-entities.destroy',
+                                payee.id,
+                            ),
+                        )
+                        .then((response) => {
+                            const deletedPayeeId =
+                                response.data.accountEntity.id;
+
+                            window.payees = window.payees.filter(
+                                (item) => item.id !== deletedPayeeId,
+                            );
+
+                            window.table
+                                .row((_, data) => data.id === deletedPayeeId)
+                                .remove()
+                                .draw(false);
+
+                            toastHelpers.showSuccessToast(__('Payee deleted'));
+                        })
+                        .catch(() => {
+                            toastHelpers.showErrorToast(
+                                __('Error while trying to delete payee'),
+                            );
+                        })
+                        .finally(() => {
+                            ajaxIsBusy = false;
+                        });
+                },
+            );
         },
         openMergeForm(payeeId) {
             window.location.href = window.route('payees.merge.form', {
@@ -354,7 +415,9 @@ const vueApp = createApp({
             const notSetLabel = __('Not set');
 
             if (type !== 'display') {
-                return defaultCategoryName || suggestion?.category || notSetLabel;
+                return (
+                    defaultCategoryName || suggestion?.category || notSetLabel
+                );
             }
 
             if (defaultCategoryName) {
@@ -430,10 +493,14 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type, row) {
                 if (type === 'display') {
                     if (data > 0) {
-                        const formattedCount = toFormattedNumber(data, window.YAFFA.userSettings.locale, {
-                            maximumFractionDigits: 0,
-                            useGrouping: true,
-                        });
+                        const formattedCount = toFormattedNumber(
+                            data,
+                            window.YAFFA.userSettings.locale,
+                            {
+                                maximumFractionDigits: 0,
+                                useGrouping: true,
+                            },
+                        );
 
                         return `<a href="${escapeHtml(window.route('reports.transactions', { payees: [row.id] }))}" title="${escapeHtml(__('Show transactions'))}">${escapeHtml(formattedCount)}</a>`;
                     }
@@ -450,7 +517,11 @@ window.table = $(dataTableSelector).DataTable({
             title: __('First transaction'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return toFormattedDate(data, window.YAFFA.userSettings.locale, __('Never used'));
+                    return toFormattedDate(
+                        data,
+                        window.YAFFA.userSettings.locale,
+                        __('Never used'),
+                    );
                 }
 
                 return data || null;
@@ -462,7 +533,11 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Last transaction'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return toFormattedDate(data, window.YAFFA.userSettings.locale, __('Never used'));
+                    return toFormattedDate(
+                        data,
+                        window.YAFFA.userSettings.locale,
+                        __('Never used'),
+                    );
                 }
 
                 return data || null;
@@ -474,7 +549,9 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Import alias'),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data ? escapeHtmlWithLineBreaks(data) : escapeHtml(__('Not set'));
+                    return data
+                        ? escapeHtmlWithLineBreaks(data)
+                        : escapeHtml(__('Not set'));
                 }
 
                 return data;
@@ -510,7 +587,11 @@ window.table = $(dataTableSelector).DataTable({
             title: __('Actions'),
             defaultContent: '',
             render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+                return (
+                    '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+                    __('Actions') +
+                    '"></i>'
+                );
             },
             className: 'text-center',
             orderable: false,
@@ -579,7 +660,9 @@ window.table = $(dataTableSelector).DataTable({
                     }
                 },
                 error: function () {
-                    toastHelpers.showErrorToast(__('Error while changing payee active state'));
+                    toastHelpers.showErrorToast(
+                        __('Error while changing payee active state'),
+                    );
                 },
                 complete: function () {
                     row.invalidate().draw(false);
@@ -587,16 +670,20 @@ window.table = $(dataTableSelector).DataTable({
             });
         });
 
-        $(settings.table).on('click', 'button.accept-payee-category-suggestion:not(.busy)', function () {
-            const row = getRowFromEvent(settings, this);
-            const payee = row.data();
+        $(settings.table).on(
+            'click',
+            'button.accept-payee-category-suggestion:not(.busy)',
+            function () {
+                const row = getRowFromEvent(settings, this);
+                const payee = row.data();
 
-            if (!payee) {
-                return;
-            }
+                if (!payee) {
+                    return;
+                }
 
-            app.acceptCategorySuggestion(payee, this);
-        });
+                app.acceptCategorySuggestion(payee, this);
+            },
+        );
     },
 });
 
@@ -668,11 +755,11 @@ window.table.contextualActions({
             contextMenuClasses: ['text-muted'],
             isHidden: function (row) {
                 return row.transactions_count === 0;
-            } ,
+            },
             action: function () {
                 // No action, just info
-            }
-        }
+            },
+        },
     ],
 });
 

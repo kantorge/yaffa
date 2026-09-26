@@ -1,4 +1,4 @@
-const demoLoginButton =  document.getElementById('loginWithDemoCredentials');
+const demoLoginButton = document.getElementById('loginWithDemoCredentials');
 if (demoLoginButton) {
     demoLoginButton.addEventListener('click', function () {
         document.getElementById('email').value = 'demo@yaffa.cc';

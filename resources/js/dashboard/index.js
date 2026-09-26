@@ -10,11 +10,11 @@ import Dashboard from './components/Dashboard.vue';
 import CreateStandardTransactionModal from '@/transactions/components/form/ModalStandard.vue';
 import CreateInvestmentTransactionModal from '@/transactions/components/form/ModalInvestment.vue';
 
-app.component('dashboard', Dashboard);
-app.component('transaction-create-standard-modal', CreateStandardTransactionModal);
+app.component('Dashboard', Dashboard);
+app.component('TransactionCreateStandardModal', CreateStandardTransactionModal);
 app.component(
-  'transaction-create-investment-modal',
-  CreateInvestmentTransactionModal,
+    'TransactionCreateInvestmentModal',
+    CreateInvestmentTransactionModal,
 );
 
 app.mount('#app');

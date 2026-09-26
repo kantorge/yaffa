@@ -1,302 +1,328 @@
 <template>
-  <div class="modal fade" id="investmentPriceModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            {{
-              isEditMode
-                ? __('Edit Investment Price')
-                : __('Add Investment Price')
-            }}
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-coreui-dismiss="modal"
-            aria-label="Close"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitForm">
-            <div class="mb-3">
-              <label for="priceDate" class="form-label">{{ __('Date') }}</label>
-              <input
-                type="date"
-                class="form-control"
-                id="priceDate"
-                v-model="formData.date"
-                :class="{ 'is-invalid': errors.date }"
-                required
-              />
-              <div class="invalid-feedback" v-if="errors.date">
-                <div v-if="Array.isArray(errors.date)">
-                  <div v-for="error in errors.date" :key="error">
-                    {{ error }}
-                  </div>
+    <div id="investmentPriceModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {{
+                            isEditMode
+                                ? __('Edit Investment Price')
+                                : __('Add Investment Price')
+                        }}
+                    </h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-coreui-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
                 </div>
-                <div v-else>{{ errors.date }}</div>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label for="priceValue" class="form-label">
-                {{ __('Investment price') }}
-                <small class="text-muted" v-if="investment.currency"
-                  >({{ investment.currency.iso_code }})</small
-                >
-              </label>
-              <input
-                type="number"
-                step="0.0001"
-                min="0.0000000001"
-                class="form-control"
-                id="priceValue"
-                v-model.number="formData.price"
-                :class="{ 'is-invalid': errors.price }"
-                required
-              />
-              <div class="invalid-feedback" v-if="errors.price">
-                <div v-if="Array.isArray(errors.price)">
-                  <div v-for="error in errors.price" :key="error">
-                    {{ error }}
-                  </div>
+                <div class="modal-body">
+                    <form @submit.prevent="submitForm">
+                        <div class="mb-3">
+                            <label for="priceDate" class="form-label">{{
+                                __('Date')
+                            }}</label>
+                            <input
+                                id="priceDate"
+                                v-model="formData.date"
+                                type="date"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.date }"
+                                required
+                            />
+                            <div v-if="errors.date" class="invalid-feedback">
+                                <div v-if="Array.isArray(errors.date)">
+                                    <div
+                                        v-for="error in errors.date"
+                                        :key="error"
+                                    >
+                                        {{ error }}
+                                    </div>
+                                </div>
+                                <div v-else>{{ errors.date }}</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="priceValue" class="form-label">
+                                {{ __('Investment price') }}
+                                <small
+                                    v-if="investment.currency"
+                                    class="text-muted"
+                                    >({{ investment.currency.iso_code }})</small
+                                >
+                            </label>
+                            <input
+                                id="priceValue"
+                                v-model.number="formData.price"
+                                type="number"
+                                step="0.0001"
+                                min="0.0000000001"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.price }"
+                                required
+                            />
+                            <div v-if="errors.price" class="invalid-feedback">
+                                <div v-if="Array.isArray(errors.price)">
+                                    <div
+                                        v-for="error in errors.price"
+                                        :key="error"
+                                    >
+                                        {{ error }}
+                                    </div>
+                                </div>
+                                <div v-else>{{ errors.price }}</div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <div v-else>{{ errors.price }}</div>
-              </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-coreui-dismiss="modal"
+                        :disabled="isSubmitting"
+                    >
+                        <i
+                            v-if="isSubmitting"
+                            class="fa fa-spinner fa-spin me-1"
+                        ></i>
+                        {{ __('Cancel') }}
+                    </button>
+                    <button
+                        id="priceSubmit"
+                        type="button"
+                        class="btn btn-primary"
+                        :disabled="isSubmitting"
+                        @click="submitForm"
+                    >
+                        <i
+                            v-if="isSubmitting"
+                            class="fa fa-spinner fa-spin me-1"
+                        ></i>
+                        {{ isEditMode ? __('Update') : __('Add') }}
+                    </button>
+                </div>
             </div>
-          </form>
         </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-coreui-dismiss="modal"
-            :disabled="isSubmitting"
-          >
-            <i
-              v-if="isSubmitting"
-              class="fa fa-spinner fa-spin me-1"
-            ></i>
-            {{ __('Cancel') }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="priceSubmit"
-            @click="submitForm"
-            :disabled="isSubmitting"
-          >
-            <i
-              v-if="isSubmitting"
-              class="fa fa-spinner fa-spin me-1"
-            ></i>
-            {{ isEditMode ? __('Update') : __('Add') }}
-          </button>
-        </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
-  import * as toastHelpers from '@/shared/lib/toast';
-  import { confirmAction } from '@/shared/lib/confirm';
+    import { __ } from '@/shared/lib/i18n';
+    import * as toastHelpers from '@/shared/lib/toast';
+    import { confirmAction } from '@/shared/lib/confirm';
 
-  export default {
-    name: 'InvestmentPriceModal',
-    props: {
-      investment: {
-        type: Object,
-        required: true,
-      },
-      editPrice: {
-        type: Object,
-        default: null,
-      },
-    },
-    emits: ['saved', 'close'],
-    data() {
-      return {
-        formData: {
-          date: '',
-          price: null,
+    export default {
+        name: 'InvestmentPriceModal',
+        props: {
+            investment: {
+                type: Object,
+                required: true,
+            },
+            editPrice: {
+                type: Object,
+                default: null,
+            },
         },
-        // Snapshot of formData (JSON string) taken whenever the form is in
-        // a "clean" state (opened for edit, reset for a new price) - the
-        // dirty check compares the current formData against this.
-        originalFormData: null,
-        errors: {},
-        isSubmitting: false,
-        modal: null,
-        // Set right before a programmatic hide() so the hide.coreui.modal
-        // listener lets it through once without re-running the dirty check.
-        forceCloseModal: false,
-        // True while the modal is mid fade-in/out transition (see hide()).
-        modalTransitioning: false,
-      };
-    },
-    computed: {
-      isEditMode() {
-        return this.editPrice !== null;
-      },
-    },
-    watch: {
-      editPrice: {
-        immediate: true,
-        handler(price) {
-          if (price) {
-            // Convert Date object to YYYY-MM-DD string format for input type="date"
-            if (price.date instanceof Date) {
-              this.formData.date = price.date.toISOString().split('T')[0];
-            } else {
-              this.formData.date = price.date;
-            }
-            // Ensure price is a number
-            this.formData.price =
-              typeof price.price === 'string'
-                ? parseFloat(price.price)
-                : price.price;
-          } else {
-            this.resetForm();
-          }
-
-          this.originalFormData = JSON.stringify(this.formData);
+        emits: ['saved', 'close'],
+        data() {
+            return {
+                formData: {
+                    date: '',
+                    price: null,
+                },
+                // Snapshot of formData (JSON string) taken whenever the form is in
+                // a "clean" state (opened for edit, reset for a new price) - the
+                // dirty check compares the current formData against this.
+                originalFormData: null,
+                errors: {},
+                isSubmitting: false,
+                modal: null,
+                // Set right before a programmatic hide() so the hide.coreui.modal
+                // listener lets it through once without re-running the dirty check.
+                forceCloseModal: false,
+                // True while the modal is mid fade-in/out transition (see hide()).
+                modalTransitioning: false,
+            };
         },
-      },
-    },
-    mounted() {
-      const modalElement = document.getElementById('investmentPriceModal');
+        computed: {
+            isEditMode() {
+                return this.editPrice !== null;
+            },
+        },
+        watch: {
+            editPrice: {
+                immediate: true,
+                handler(price) {
+                    if (price) {
+                        // Convert Date object to YYYY-MM-DD string format for input type="date"
+                        if (price.date instanceof Date) {
+                            this.formData.date = price.date
+                                .toISOString()
+                                .split('T')[0];
+                        } else {
+                            this.formData.date = price.date;
+                        }
+                        // Ensure price is a number
+                        this.formData.price =
+                            typeof price.price === 'string'
+                                ? parseFloat(price.price)
+                                : price.price;
+                    } else {
+                        this.resetForm();
+                    }
 
-      this.modal = new window.coreui.Modal(modalElement);
-
-      // CoreUI's Modal.hide() silently no-ops if called while the modal is still
-      // mid "show" transition (its internal _isTransitioning guard) - track that
-      // state ourselves so hide() can defer instead of losing the call outright.
-      modalElement.addEventListener('show.coreui.modal', () => {
-        this.modalTransitioning = true;
-      });
-      modalElement.addEventListener('shown.coreui.modal', () => {
-        this.modalTransitioning = false;
-      });
-
-      modalElement.addEventListener('hidden.bs.modal', () => {
-        this.resetForm();
-        this.$emit('close');
-      });
-
-      // Also listen for CoreUI modal events
-      modalElement.addEventListener('hidden.coreui.modal', () => {
-        this.resetForm();
-        this.$emit('close');
-      });
-
-      // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
-      // programmatic hide() alike) - ask for confirmation if there are
-      // unsaved changes.
-      modalElement.addEventListener('hide.coreui.modal', (event) => {
-        if (this.forceCloseModal) {
-          this.forceCloseModal = false;
-          return;
-        }
-
-        if (JSON.stringify(this.formData) === this.originalFormData) {
-          return;
-        }
-
-        event.preventDefault();
-
-        confirmAction(__('Are you sure you want to discard any changes?'), {
-          icon: 'warning',
-          confirmButtonText: __('Discard changes'),
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.hide();
-          }
-        });
-      });
-    },
-    methods: {
-      show() {
-        this.modal.show();
-      },
-      hide() {
-        this.forceCloseModal = true;
-
-        // A fast programmatic edit-and-submit can call hide() before the
-        // modal's own fade-in transition has finished; CoreUI's Modal.hide()
-        // silently no-ops in that state, so defer until it's done showing.
-        if (this.modalTransitioning) {
-          document
-            .getElementById('investmentPriceModal')
-            .addEventListener('shown.coreui.modal', () => this.modal.hide(), { once: true });
-          return;
-        }
-
-        this.modal.hide();
-      },
-      resetForm() {
-        this.formData = {
-          date: '',
-          price: null,
-        };
-        this.errors = {};
-      },
-      async submitForm() {
-        if (this.isSubmitting) {
-          return;
-        }
-
-        this.errors = {};
-        this.isSubmitting = true;
-
-        const data = {
-          investment_id: this.investment.id,
-          date: this.formData.date,
-          price: this.formData.price,
-        };
-
-        // Include id when updating for validation rule to work
-        if (this.isEditMode) {
-          data.id = this.editPrice.id;
-        }
-
-        try {
-          let response;
-          if (this.isEditMode) {
-            response = await window.axios.put(
-              this.route('api.v1.investment-prices.update', {
-                investmentPrice: this.editPrice.id,
-              }),
-              data,
+                    this.originalFormData = JSON.stringify(this.formData);
+                },
+            },
+        },
+        mounted() {
+            const modalElement = document.getElementById(
+                'investmentPriceModal',
             );
-          } else {
-            response = await window.axios.post(
-              this.route('api.v1.investment-prices.store'),
-              data,
-            );
-          }
 
-          // Emit success event with the price data
-          this.$emit('saved', response.data.price, response.data.message);
+            this.modal = new window.coreui.Modal(modalElement);
 
-          // Hide modal
-          this.hide();
-        } catch (error) {
-          if (error.response && error.response.status === 422) {
-            // Validation errors
-            this.errors = error.response.data.errors;
-          } else {
-            // Show generic error toast
-            toastHelpers.showErrorToast(
-              error.response?.data?.message || this.__('An error occurred'),
-            );
-          }
-        } finally {
-          this.isSubmitting = false;
-        }
-      },
-      __,
-    },
-  };
+            // CoreUI's Modal.hide() silently no-ops if called while the modal is still
+            // mid "show" transition (its internal _isTransitioning guard) - track that
+            // state ourselves so hide() can defer instead of losing the call outright.
+            modalElement.addEventListener('show.coreui.modal', () => {
+                this.modalTransitioning = true;
+            });
+            modalElement.addEventListener('shown.coreui.modal', () => {
+                this.modalTransitioning = false;
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                this.resetForm();
+                this.$emit('close');
+            });
+
+            // Also listen for CoreUI modal events
+            modalElement.addEventListener('hidden.coreui.modal', () => {
+                this.resetForm();
+                this.$emit('close');
+            });
+
+            // Cancelable pre-dismiss hook (backdrop click, Esc, close button, and
+            // programmatic hide() alike) - ask for confirmation if there are
+            // unsaved changes.
+            modalElement.addEventListener('hide.coreui.modal', (event) => {
+                if (this.forceCloseModal) {
+                    this.forceCloseModal = false;
+                    return;
+                }
+
+                if (JSON.stringify(this.formData) === this.originalFormData) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                confirmAction(
+                    __('Are you sure you want to discard any changes?'),
+                    {
+                        icon: 'warning',
+                        confirmButtonText: __('Discard changes'),
+                    },
+                ).then((result) => {
+                    if (result.isConfirmed) {
+                        this.hide();
+                    }
+                });
+            });
+        },
+        methods: {
+            show() {
+                this.modal.show();
+            },
+            hide() {
+                this.forceCloseModal = true;
+
+                // A fast programmatic edit-and-submit can call hide() before the
+                // modal's own fade-in transition has finished; CoreUI's Modal.hide()
+                // silently no-ops in that state, so defer until it's done showing.
+                if (this.modalTransitioning) {
+                    document
+                        .getElementById('investmentPriceModal')
+                        .addEventListener(
+                            'shown.coreui.modal',
+                            () => this.modal.hide(),
+                            { once: true },
+                        );
+                    return;
+                }
+
+                this.modal.hide();
+            },
+            resetForm() {
+                this.formData = {
+                    date: '',
+                    price: null,
+                };
+                this.errors = {};
+            },
+            async submitForm() {
+                if (this.isSubmitting) {
+                    return;
+                }
+
+                this.errors = {};
+                this.isSubmitting = true;
+
+                const data = {
+                    investment_id: this.investment.id,
+                    date: this.formData.date,
+                    price: this.formData.price,
+                };
+
+                // Include id when updating for validation rule to work
+                if (this.isEditMode) {
+                    data.id = this.editPrice.id;
+                }
+
+                try {
+                    let response;
+                    if (this.isEditMode) {
+                        response = await window.axios.put(
+                            this.route('api.v1.investment-prices.update', {
+                                investmentPrice: this.editPrice.id,
+                            }),
+                            data,
+                        );
+                    } else {
+                        response = await window.axios.post(
+                            this.route('api.v1.investment-prices.store'),
+                            data,
+                        );
+                    }
+
+                    // Emit success event with the price data
+                    this.$emit(
+                        'saved',
+                        response.data.price,
+                        response.data.message,
+                    );
+
+                    // Hide modal
+                    this.hide();
+                } catch (error) {
+                    if (error.response && error.response.status === 422) {
+                        // Validation errors
+                        this.errors = error.response.data.errors;
+                    } else {
+                        // Show generic error toast
+                        toastHelpers.showErrorToast(
+                            error.response?.data?.message ||
+                                this.__('An error occurred'),
+                        );
+                    }
+                } finally {
+                    this.isSubmitting = false;
+                }
+            },
+            __,
+        },
+    };
 </script>

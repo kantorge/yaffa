@@ -29,13 +29,15 @@ export function getArrayParamFromUrl(searchParams, name) {
  */
 export function getTransactionTypeConfig(transactionTypeValue) {
     const transactionTypes = window.YAFFA.config.transactionTypes || {};
-    return transactionTypes[transactionTypeValue] || {
-        value: transactionTypeValue,
-        label: transactionTypeValue,
-        category: 'unknown',
-        amount_multiplier: null,
-        quantity_multiplier: null,
-    };
+    return (
+        transactionTypes[transactionTypeValue] || {
+            value: transactionTypeValue,
+            label: transactionTypeValue,
+            category: 'unknown',
+            amount_multiplier: null,
+            quantity_multiplier: null,
+        }
+    );
 }
 
 /**
@@ -123,7 +125,9 @@ export function toRRuleDate(value) {
     }
 
     if (value instanceof Date) {
-        return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
+        return new Date(
+            Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()),
+        );
     }
 
     const parts = String(value).split('-').map(Number);
@@ -186,40 +190,61 @@ export function processTransaction(transaction) {
 
     if (transaction.config) {
         if (transaction.config_type === 'standard') {
-            transaction.config.amount_from = toNumberOrNull(transaction.config.amount_from);
-            transaction.config.amount_to = toNumberOrNull(transaction.config.amount_to);
+            transaction.config.amount_from = toNumberOrNull(
+                transaction.config.amount_from,
+            );
+            transaction.config.amount_to = toNumberOrNull(
+                transaction.config.amount_to,
+            );
         } else if (transaction.config_type === 'investment') {
             transaction.config.price = toNumberOrNull(transaction.config.price);
-            transaction.config.quantity = toNumberOrNull(transaction.config.quantity);
-            transaction.config.commission = toNumberOrNull(transaction.config.commission);
+            transaction.config.quantity = toNumberOrNull(
+                transaction.config.quantity,
+            );
+            transaction.config.commission = toNumberOrNull(
+                transaction.config.commission,
+            );
             transaction.config.tax = toNumberOrNull(transaction.config.tax);
-            transaction.config.dividend = toNumberOrNull(transaction.config.dividend);
+            transaction.config.dividend = toNumberOrNull(
+                transaction.config.dividend,
+            );
         }
     }
 
     // toIsoDateString uses local date components, so year_month is always correct.
-    transaction.year_month = transaction.date ? toIsoDateString(transaction.date).slice(0, 7) : null;
+    transaction.year_month = transaction.date
+        ? toIsoDateString(transaction.date).slice(0, 7)
+        : null;
 
     if (transaction.transaction_schedule?.start_date) {
-        transaction.transaction_schedule.start_date = parseIsoDate(transaction.transaction_schedule.start_date);
+        transaction.transaction_schedule.start_date = parseIsoDate(
+            transaction.transaction_schedule.start_date,
+        );
     }
 
     if (transaction.transaction_schedule?.end_date) {
-        transaction.transaction_schedule.end_date = parseIsoDate(transaction.transaction_schedule.end_date);
+        transaction.transaction_schedule.end_date = parseIsoDate(
+            transaction.transaction_schedule.end_date,
+        );
     }
 
     if (transaction.transaction_schedule?.next_date) {
-        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
+        transaction.transaction_schedule.next_date = parseIsoDate(
+            transaction.transaction_schedule.next_date,
+        );
     }
 
     // We need an array of categories for standard transactions, extracted from the item array
     if (transaction.config_type === 'standard') {
         // We only need each category once, so we need to remove duplicates by their IDs
         transaction.categories = transaction.transaction_items
-            .map(item => item.category)
+            .map((item) => item.category)
             // Exclude null categories
-            .filter(category => category)
-            .filter((category, index, self) => self.findIndex(c => c.id === category.id) === index);
+            .filter((category) => category)
+            .filter(
+                (category, index, self) =>
+                    self.findIndex((c) => c.id === category.id) === index,
+            );
     } else {
         transaction.categories = [];
     }
@@ -228,12 +253,15 @@ export function processTransaction(transaction) {
     if (transaction.config_type === 'standard') {
         // We only need each tag once, so we need to remove duplicates by their IDs
         transaction.tags = transaction.transaction_items
-            .map(item => item.tags)
+            .map((item) => item.tags)
             // Flatten the array of arrays
             .flat()
             // Exclude null tags
-            .filter(tag => tag)
-            .filter((tag, index, self) => self.findIndex(t => t.id === tag.id) === index);
+            .filter((tag) => tag)
+            .filter(
+                (tag, index, self) =>
+                    self.findIndex((t) => t.id === tag.id) === index,
+            );
     } else {
         transaction.tags = [];
     }
@@ -287,20 +315,38 @@ export const weekdayLabels = Object.fromEntries(
     ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
         // 2024-01-07 is a Sunday, so index 0..6 walks Sunday through Saturday.
         const date = new Date(2024, 0, 7 + index);
-        return [code, capitalize(new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date))];
-    })
+        return [
+            code,
+            capitalize(
+                new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
+                    date,
+                ),
+            ),
+        ];
+    }),
 );
 
 export const monthLabels = Object.fromEntries(
     Array.from({ length: 12 }, (_, index) => {
         const date = new Date(2024, index, 1);
-        return [index + 1, capitalize(new Intl.DateTimeFormat(locale, { month: 'long' }).format(date))];
-    })
+        return [
+            index + 1,
+            capitalize(
+                new Intl.DateTimeFormat(locale, { month: 'long' }).format(date),
+            ),
+        ];
+    }),
 );
 
-export const ordinalOptions = Object.entries(ordinalLabels).map(([value, label]) => ({ value, label }));
-export const weekdayOptions = Object.entries(weekdayLabels).map(([value, label]) => ({ value, label }));
-export const monthOptions = Object.entries(monthLabels).map(([value, label]) => ({ value: Number(value), label }));
+export const ordinalOptions = Object.entries(ordinalLabels).map(
+    ([value, label]) => ({ value, label }),
+);
+export const weekdayOptions = Object.entries(weekdayLabels).map(
+    ([value, label]) => ({ value, label }),
+);
+export const monthOptions = Object.entries(monthLabels).map(
+    ([value, label]) => ({ value: Number(value), label }),
+);
 
 // schedule.start_date may be either a Date object (as processTransaction() leaves it
 // on a read-only display transaction) or a 'YYYY-MM-DD' string (the form's own
@@ -338,11 +384,14 @@ export function processScheduledTransaction(transaction) {
         // month-end, last-business-day) is active on a YEARLY rule - mirrors the backend's
         // HasRecurrenceRule::effectiveRrule().
         const hasMonthScopedPattern = Boolean(
-            schedule.by_day || schedule.days_before_month_end != null || schedule.last_business_day_of_month,
+            schedule.by_day ||
+            schedule.days_before_month_end != null ||
+            schedule.last_business_day_of_month,
         );
-        const byMonth = hasMonthScopedPattern && schedule.frequency === 'YEARLY'
-            ? schedule.by_month || null
-            : null;
+        const byMonth =
+            hasMonthScopedPattern && schedule.frequency === 'YEARLY'
+                ? schedule.by_month || null
+                : null;
 
         const ruleOptions = {
             dtstart: toRRuleDate(schedule.start_date),
@@ -355,7 +404,9 @@ export function processScheduledTransaction(transaction) {
         if (schedule.days_before_month_end != null) {
             ruleOptions.bymonthday = -(schedule.days_before_month_end + 1);
         } else if (schedule.last_business_day_of_month) {
-            ruleOptions.byweekday = businessDayWeekdays.map((code) => RRule[code]);
+            ruleOptions.byweekday = businessDayWeekdays.map(
+                (code) => RRule[code],
+            );
             ruleOptions.bysetpos = -1;
         } else if (schedule.by_day) {
             ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
@@ -372,7 +423,11 @@ export function processScheduledTransaction(transaction) {
 // parseIsoDate). Shared so the budget chart's breakdown tables and the budget quick-view modal
 // build the same rrule.js text the same way, translated into the current YAFFA user language.
 export function scheduleCadenceText(schedule) {
-    if (!schedule || !schedule.start_date || !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)) {
+    if (
+        !schedule ||
+        !schedule.start_date ||
+        !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(schedule.frequency)
+    ) {
         return '';
     }
 
@@ -400,13 +455,10 @@ export function scheduleCadenceText(schedule) {
  * @returns {string}
  */
 export function transactionLink(id, text) {
-    const url = window.route(
-        'transaction.open',
-        {
-            action: 'show',
-            transaction: id,
-        }
-    );
+    const url = window.route('transaction.open', {
+        action: 'show',
+        transaction: id,
+    });
 
     return `<a href="${url}">${text}</a>`;
 }

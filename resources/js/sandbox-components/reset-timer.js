@@ -15,8 +15,10 @@ function getNextResetDate() {
             nextReset.setUTCDate(now.getUTCDate() + (day === 5 ? 3 : 2));
         }
     } else {
-        const daysUntilNextReset = [1, 3, 5].find(d => d > day) || 1;
-        nextReset.setUTCDate(now.getUTCDate() + ((daysUntilNextReset - day + 7) % 7));
+        const daysUntilNextReset = [1, 3, 5].find((d) => d > day) || 1;
+        nextReset.setUTCDate(
+            now.getUTCDate() + ((daysUntilNextReset - day + 7) % 7),
+        );
     }
 
     return nextReset;
@@ -37,10 +39,7 @@ function getTimeoutMessage(days, hours) {
     const daysLabel = days === 1 ? __('day') : __('days');
     const hoursLabel = hours === 1 ? __('hour') : __('hours');
 
-    return __(
-        'sandbox.reset.timer',
-        { days, daysLabel, hours, hoursLabel }
-    );
+    return __('sandbox.reset.timer', { days, daysLabel, hours, hoursLabel });
 }
 
 // Display the countdown alert using a self-invoking function

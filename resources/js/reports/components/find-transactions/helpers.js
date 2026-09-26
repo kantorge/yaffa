@@ -16,17 +16,20 @@ import { getArrayParamFromUrl } from '@/shared/lib/helpers';
  * @returns {string} JSON-serialized key
  */
 export function buildFilterCacheKey(filters) {
-  return JSON.stringify({
-    date_from: filters.date_from || null,
-    date_to: filters.date_to || null,
-    accounts: (filters.accounts || []).slice().sort(),
-    categories: (filters.categories || []).slice().sort(),
-    payees: (filters.payees || []).slice().sort(),
-    tags: (filters.tags || []).slice().sort(),
-    types: (filters.types || []).slice().sort(),
-    investments: (filters.investments || []).slice().sort(),
-    locale: filters.locale || (window.YAFFA && window.YAFFA.userSettings.locale) || null,
-  });
+    return JSON.stringify({
+        date_from: filters.date_from || null,
+        date_to: filters.date_to || null,
+        accounts: (filters.accounts || []).slice().sort(),
+        categories: (filters.categories || []).slice().sort(),
+        payees: (filters.payees || []).slice().sort(),
+        tags: (filters.tags || []).slice().sort(),
+        types: (filters.types || []).slice().sort(),
+        investments: (filters.investments || []).slice().sort(),
+        locale:
+            filters.locale ||
+            (window.YAFFA && window.YAFFA.userSettings.locale) ||
+            null,
+    });
 }
 
 /**
@@ -38,18 +41,18 @@ export function buildFilterCacheKey(filters) {
  * @returns {string} JSON-serialized key
  */
 export function buildBreakdownCacheKey(searchString = window.location.search) {
-  const urlParams = new URLSearchParams(searchString);
-  return buildFilterCacheKey({
-    date_from: urlParams.get('date_from'),
-    date_to: urlParams.get('date_to'),
-    accounts: getArrayParamFromUrl(urlParams, 'accounts'),
-    categories: getArrayParamFromUrl(urlParams, 'categories'),
-    payees: getArrayParamFromUrl(urlParams, 'payees'),
-    tags: getArrayParamFromUrl(urlParams, 'tags'),
-    types: getArrayParamFromUrl(urlParams, 'types'),
-    investments: getArrayParamFromUrl(urlParams, 'investments'),
-    locale: (window.YAFFA && window.YAFFA.userSettings.locale) || null,
-  });
+    const urlParams = new URLSearchParams(searchString);
+    return buildFilterCacheKey({
+        date_from: urlParams.get('date_from'),
+        date_to: urlParams.get('date_to'),
+        accounts: getArrayParamFromUrl(urlParams, 'accounts'),
+        categories: getArrayParamFromUrl(urlParams, 'categories'),
+        payees: getArrayParamFromUrl(urlParams, 'payees'),
+        tags: getArrayParamFromUrl(urlParams, 'tags'),
+        types: getArrayParamFromUrl(urlParams, 'types'),
+        investments: getArrayParamFromUrl(urlParams, 'investments'),
+        locale: (window.YAFFA && window.YAFFA.userSettings.locale) || null,
+    });
 }
 
 /**
@@ -60,7 +63,7 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
  * @returns {number} Rounded value
  */
 export function round2(num) {
-  return new Decimal(num).toDecimalPlaces(2).toNumber();
+    return new Decimal(num).toDecimalPlaces(2).toNumber();
 }
 
 /**
@@ -72,16 +75,21 @@ export function round2(num) {
  * @returns {{isDeposit: boolean, isWithdrawal: boolean, isTransfer: boolean, isInvestment: boolean}}
  */
 export function getTransactionTypeFlags(transaction) {
-  if (!transaction || !transaction.transaction_type) {
-    return { isDeposit: false, isWithdrawal: false, isTransfer: false, isInvestment: false };
-  }
+    if (!transaction || !transaction.transaction_type) {
+        return {
+            isDeposit: false,
+            isWithdrawal: false,
+            isTransfer: false,
+            isInvestment: false,
+        };
+    }
 
-  return {
-    isDeposit: transaction.transaction_type === 'deposit',
-    isWithdrawal: transaction.transaction_type === 'withdrawal',
-    isTransfer: transaction.transaction_type === 'transfer',
-    isInvestment: transaction.config_type === 'investment',
-  };
+    return {
+        isDeposit: transaction.transaction_type === 'deposit',
+        isWithdrawal: transaction.transaction_type === 'withdrawal',
+        isTransfer: transaction.transaction_type === 'transfer',
+        isInvestment: transaction.config_type === 'investment',
+    };
 }
 
 /**
@@ -102,23 +110,26 @@ export function getTransactionTypeFlags(transaction) {
  * @param {string[]} [filters.tagIds] - Selected tag ids
  * @returns {boolean}
  */
-export function itemMatchesActiveFilters(item, { categoryIds = [], tagIds = [] } = {}) {
-  if (categoryIds.length === 0 && tagIds.length === 0) {
-    return true;
-  }
+export function itemMatchesActiveFilters(
+    item,
+    { categoryIds = [], tagIds = [] } = {},
+) {
+    if (categoryIds.length === 0 && tagIds.length === 0) {
+        return true;
+    }
 
-  const matchesCategory =
-    categoryIds.length > 0 &&
-    !!item.category &&
-    (categoryIds.includes(String(item.category.id)) ||
-      (item.category.parent &&
-        categoryIds.includes(String(item.category.parent.id))));
+    const matchesCategory =
+        categoryIds.length > 0 &&
+        !!item.category &&
+        (categoryIds.includes(String(item.category.id)) ||
+            (item.category.parent &&
+                categoryIds.includes(String(item.category.parent.id))));
 
-  const matchesTag =
-    tagIds.length > 0 &&
-    (item.tags || []).some((tag) => tag && tagIds.includes(String(tag.id)));
+    const matchesTag =
+        tagIds.length > 0 &&
+        (item.tags || []).some((tag) => tag && tagIds.includes(String(tag.id)));
 
-  return Boolean(matchesCategory || matchesTag);
+    return Boolean(matchesCategory || matchesTag);
 }
 
 /**
@@ -138,97 +149,104 @@ export function itemMatchesActiveFilters(item, { categoryIds = [], tagIds = [] }
  * @returns {Object<string, {values: Object, depositValues: Object, withdrawalValues: Object, categoryIds: Set, depositTotal: number, withdrawalTotal: number, rawName: string, parentName: string, parentId: number}>}
  */
 export function aggregateTransactionsByCategory(transactions, options = {}) {
-  const { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = options;
-  const data = {};
+    const {
+        matchingItemsOnly = false,
+        categoryIds = [],
+        tagIds = [],
+    } = options;
+    const data = {};
 
-  transactions.forEach((transaction) => {
-    // Sanity check for date
-    if (!transaction.date || !(transaction.date instanceof Date)) return;
+    transactions.forEach((transaction) => {
+        // Sanity check for date
+        if (!transaction.date || !(transaction.date instanceof Date)) return;
 
-    const typeFlags = getTransactionTypeFlags(transaction);
+        const typeFlags = getTransactionTypeFlags(transaction);
 
-    // For the category level breakdown, transfers and investments are not relevant, as they are not associated with a category
-    if (typeFlags.isTransfer || typeFlags.isInvestment) return;
+        // For the category level breakdown, transfers and investments are not relevant, as they are not associated with a category
+        if (typeFlags.isTransfer || typeFlags.isInvestment) return;
 
-    const month = transaction.year_month;
+        const month = transaction.year_month;
 
-    // Skip transactions without items, as they cannot be categorized
-    if (!transaction.transaction_items) {
-      return;
-    }
+        // Skip transactions without items, as they cannot be categorized
+        if (!transaction.transaction_items) {
+            return;
+        }
 
-    transaction.transaction_items.forEach((item) => {
-      // Theoretically, all transaction items should have a category due to database constraints, but we add a safety check here just in case of data issues
-      if (!item.category) {
-        return;
-      }
+        transaction.transaction_items.forEach((item) => {
+            // Theoretically, all transaction items should have a category due to database constraints, but we add a safety check here just in case of data issues
+            if (!item.category) {
+                return;
+            }
 
-      if (
-        matchingItemsOnly &&
-        !itemMatchesActiveFilters(item, { categoryIds, tagIds })
-      ) {
-        return;
-      }
+            if (
+                matchingItemsOnly &&
+                !itemMatchesActiveFilters(item, { categoryIds, tagIds })
+            ) {
+                return;
+            }
 
-      // Category ID is mandatory on a database level, but we add an untranslated fallback name for safety in case of data issues
-      const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
-      const categoryId = item.category.id;
+            // Category ID is mandatory on a database level, but we add an untranslated fallback name for safety in case of data issues
+            const categoryName =
+                item.category.full_name ||
+                item.category.name ||
+                'Error: no category assigned';
+            const categoryId = item.category.id;
 
-      let amount = Number(item.amount_in_base || 0);
+            let amount = Number(item.amount_in_base || 0);
 
-      if (!isFinite(amount)) {
-        amount = 0;
-      }
+            if (!isFinite(amount)) {
+                amount = 0;
+            }
 
-      const parentName = item.category.parent?.name || null;
-      const parentId = item.category.parent?.id || null;
+            const parentName = item.category.parent?.name || null;
+            const parentId = item.category.parent?.id || null;
 
-      if (!data[categoryName]) {
-        data[categoryName] = {
-          values: {},
-          depositValues: {},
-          withdrawalValues: {},
-          categoryIds: new Set(),
-          depositTotal: 0,
-          withdrawalTotal: 0,
-          rawName: item.category.name || categoryName,
-          parentName,
-          parentId,
-        };
-      }
+            if (!data[categoryName]) {
+                data[categoryName] = {
+                    values: {},
+                    depositValues: {},
+                    withdrawalValues: {},
+                    categoryIds: new Set(),
+                    depositTotal: 0,
+                    withdrawalTotal: 0,
+                    rawName: item.category.name || categoryName,
+                    parentName,
+                    parentId,
+                };
+            }
 
-      data[categoryName].categoryIds.add(categoryId);
+            data[categoryName].categoryIds.add(categoryId);
 
-      if (typeFlags.isDeposit) {
-        data[categoryName].depositTotal += amount;
-        data[categoryName].depositValues[month] =
-          (data[categoryName].depositValues[month] || 0) + amount;
-      } else {
-        data[categoryName].withdrawalTotal += amount;
-        data[categoryName].withdrawalValues[month] =
-          (data[categoryName].withdrawalValues[month] || 0) + amount;
-      }
+            if (typeFlags.isDeposit) {
+                data[categoryName].depositTotal += amount;
+                data[categoryName].depositValues[month] =
+                    (data[categoryName].depositValues[month] || 0) + amount;
+            } else {
+                data[categoryName].withdrawalTotal += amount;
+                data[categoryName].withdrawalValues[month] =
+                    (data[categoryName].withdrawalValues[month] || 0) + amount;
+            }
+        });
     });
-  });
 
-  // Calculate net values per month: income = deposits - withdrawals
-  Object.values(data).forEach((entry) => {
-    const isIncome = entry.depositTotal > entry.withdrawalTotal;
-    const months = new Set([
-      ...Object.keys(entry.depositValues),
-      ...Object.keys(entry.withdrawalValues),
-    ]);
+    // Calculate net values per month: income = deposits - withdrawals
+    Object.values(data).forEach((entry) => {
+        const isIncome = entry.depositTotal > entry.withdrawalTotal;
+        const months = new Set([
+            ...Object.keys(entry.depositValues),
+            ...Object.keys(entry.withdrawalValues),
+        ]);
 
-    months.forEach((month) => {
-      const deposits = entry.depositValues[month] || 0;
-      const withdrawals = entry.withdrawalValues[month] || 0;
-      entry.values[month] = isIncome
-        ? deposits - withdrawals
-        : withdrawals - deposits;
+        months.forEach((month) => {
+            const deposits = entry.depositValues[month] || 0;
+            const withdrawals = entry.withdrawalValues[month] || 0;
+            entry.values[month] = isIncome
+                ? deposits - withdrawals
+                : withdrawals - deposits;
+        });
     });
-  });
 
-  return data;
+    return data;
 }
 
 /**
@@ -241,41 +259,52 @@ export function aggregateTransactionsByCategory(transactions, options = {}) {
  * @param {number} monthCount - Total number of months (for average calculation)
  * @returns {{rows: Array<{name, displayName, values, total, avg, nonZeroAvg, nonZeroCount, categoryIds, isIncome}>, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}}
  */
-export function processCategoryGroup(categoryNames, catData, months, monthCount) {
-  const rows = categoryNames.map((catName) => {
-    const entry = catData[catName];
-    const values = entry.values;
-    const total = months.reduce((sum, month) => sum + (values[month] || 0), 0);
-    const nonZeroCount = months
-      .map((month) => values[month] || 0)
-      .filter((v) => v !== 0).length;
-    const avg = nonZeroCount > 0 ? total / monthCount : 0;
-    const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
+export function processCategoryGroup(
+    categoryNames,
+    catData,
+    months,
+    monthCount,
+) {
+    const rows = categoryNames.map((catName) => {
+        const entry = catData[catName];
+        const values = entry.values;
+        const total = months.reduce(
+            (sum, month) => sum + (values[month] || 0),
+            0,
+        );
+        const nonZeroCount = months
+            .map((month) => values[month] || 0)
+            .filter((v) => v !== 0).length;
+        const avg = nonZeroCount > 0 ? total / monthCount : 0;
+        const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
 
-    return {
-      name: catName,
-      displayName: entry.rawName || catName,
-      values,
-      total: round2(total),
-      avg: round2(avg),
-      nonZeroAvg: round2(nonZeroAvg),
-      nonZeroCount,
-      categoryIds: Array.from(entry.categoryIds),
-      isIncome: entry.depositTotal > entry.withdrawalTotal,
-    };
-  });
+        return {
+            name: catName,
+            displayName: entry.rawName || catName,
+            values,
+            total: round2(total),
+            avg: round2(avg),
+            nonZeroAvg: round2(nonZeroAvg),
+            nonZeroCount,
+            categoryIds: Array.from(entry.categoryIds),
+            isIncome: entry.depositTotal > entry.withdrawalTotal,
+        };
+    });
 
-  rows.sort((a, b) => b.total - a.total);
+    rows.sort((a, b) => b.total - a.total);
 
-  const subtotals = {};
-  months.forEach((month) => {
-    subtotals[month] = rows.reduce((sum, r) => sum + (r.values[month] || 0), 0);
-  });
-  const subtotalSum = round2(rows.reduce((sum, r) => sum + r.total, 0));
-  const subtotalAvg = round2(subtotalSum / monthCount);
-  const allCategoryIds = rows.flatMap((r) => r.categoryIds);
+    const subtotals = {};
+    months.forEach((month) => {
+        subtotals[month] = rows.reduce(
+            (sum, r) => sum + (r.values[month] || 0),
+            0,
+        );
+    });
+    const subtotalSum = round2(rows.reduce((sum, r) => sum + r.total, 0));
+    const subtotalAvg = round2(subtotalSum / monthCount);
+    const allCategoryIds = rows.flatMap((r) => r.categoryIds);
 
-  return { rows, subtotals, subtotalSum, subtotalAvg, allCategoryIds };
+    return { rows, subtotals, subtotalSum, subtotalAvg, allCategoryIds };
 }
 
 /**
@@ -294,30 +323,30 @@ export function processCategoryGroup(categoryNames, catData, months, monthCount)
  * @returns {string} CSS class name or empty string
  */
 export function calculateDeviationClass(
-  value,
-  nonZeroAvg,
-  nonZeroCount,
-  isIncome,
+    value,
+    nonZeroAvg,
+    nonZeroCount,
+    isIncome,
 ) {
-  if (nonZeroCount < 3 || value === 0 || nonZeroAvg === 0) return '';
+    if (nonZeroCount < 3 || value === 0 || nonZeroAvg === 0) return '';
 
-  // As long as we don't expect the levels to be configurable by the user,
-  // we can keep them hardcoded here for simplicity
-  const deviationLevels = { level1: 0.05, level2: 0.1, level3: 0.15 };
+    // As long as we don't expect the levels to be configurable by the user,
+    // we can keep them hardcoded here for simplicity
+    const deviationLevels = { level1: 0.05, level2: 0.1, level3: 0.15 };
 
-  const deviation = (value - nonZeroAvg) / nonZeroAvg;
-  const above = isIncome ? 'low' : 'high';
-  const below = isIncome ? 'high' : 'low';
+    const deviation = (value - nonZeroAvg) / nonZeroAvg;
+    const above = isIncome ? 'low' : 'high';
+    const below = isIncome ? 'high' : 'low';
 
-  if (deviation > deviationLevels.level3) return `bg-deviation-${above}-3`;
-  if (deviation > deviationLevels.level2) return `bg-deviation-${above}-2`;
-  if (deviation > deviationLevels.level1) return `bg-deviation-${above}-1`;
+    if (deviation > deviationLevels.level3) return `bg-deviation-${above}-3`;
+    if (deviation > deviationLevels.level2) return `bg-deviation-${above}-2`;
+    if (deviation > deviationLevels.level1) return `bg-deviation-${above}-1`;
 
-  if (deviation < -deviationLevels.level3) return `bg-deviation-${below}-3`;
-  if (deviation < -deviationLevels.level2) return `bg-deviation-${below}-2`;
-  if (deviation < -deviationLevels.level1) return `bg-deviation-${below}-1`;
+    if (deviation < -deviationLevels.level3) return `bg-deviation-${below}-3`;
+    if (deviation < -deviationLevels.level2) return `bg-deviation-${below}-2`;
+    if (deviation < -deviationLevels.level1) return `bg-deviation-${below}-1`;
 
-  return '';
+    return '';
 }
 
 /**
@@ -333,87 +362,100 @@ export function calculateDeviationClass(
  * @returns {Array<{title: string, cssClass: string, isIncome: boolean, rows: Array, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}>}
  */
 export function buildSectionHierarchy(
-  categoryData,
-  months,
-  monthCount,
-  sectionCssClasses = [
-    's-section-0',
-    's-section-1',
-    's-section-2',
-    's-section-3',
-    's-section-4',
-    's-section-5',
-    's-section-6',
-    's-section-7',
-  ],
-  translateFn = (s) => s,
+    categoryData,
+    months,
+    monthCount,
+    sectionCssClasses = [
+        's-section-0',
+        's-section-1',
+        's-section-2',
+        's-section-3',
+        's-section-4',
+        's-section-5',
+        's-section-6',
+        's-section-7',
+    ],
+    translateFn = (s) => s,
 ) {
-  // Group categories by parent name
-  const groups = {};
-  const noParent = [];
+    // Group categories by parent name
+    const groups = {};
+    const noParent = [];
 
-  Object.keys(categoryData).forEach((catName) => {
-    const entry = categoryData[catName];
-    if (entry.parentName) {
-      if (!groups[entry.parentName]) groups[entry.parentName] = [];
-      groups[entry.parentName].push(catName);
-    } else {
-      noParent.push(catName);
+    Object.keys(categoryData).forEach((catName) => {
+        const entry = categoryData[catName];
+        if (entry.parentName) {
+            if (!groups[entry.parentName]) groups[entry.parentName] = [];
+            groups[entry.parentName].push(catName);
+        } else {
+            noParent.push(catName);
+        }
+    });
+
+    // Pre-calculate totals per parent group, then sort descending
+    const parentTotals = Object.fromEntries(
+        Object.keys(groups).map((parentName) => [
+            parentName,
+            groups[parentName].reduce(
+                (sum, c) =>
+                    sum +
+                    months.reduce(
+                        (sum, month) =>
+                            sum + (categoryData[c].values[month] || 0),
+                        0,
+                    ),
+                0,
+            ),
+        ]),
+    );
+    const sortedParents = Object.keys(groups).sort(
+        (a, b) => parentTotals[b] - parentTotals[a],
+    );
+
+    // Build sections from parent groups
+    const sections = [];
+    sortedParents.forEach((parentName, idx) => {
+        const group = processCategoryGroup(
+            groups[parentName],
+            categoryData,
+            months,
+            monthCount,
+        );
+        const isIncome = groups[parentName].every(
+            (c) =>
+                categoryData[c].depositTotal > categoryData[c].withdrawalTotal,
+        );
+        sections.push({
+            title: parentName,
+            cssClass: sectionCssClasses[idx % sectionCssClasses.length],
+            isIncome,
+            ...group,
+        });
+    });
+
+    // Add "Other" section for parentless categories
+    if (noParent.length > 0) {
+        const group = processCategoryGroup(
+            noParent,
+            categoryData,
+            months,
+            monthCount,
+        );
+        const isIncome = noParent.every(
+            (c) =>
+                categoryData[c].depositTotal > categoryData[c].withdrawalTotal,
+        );
+        const otherTitle = isIncome
+            ? translateFn('Other income')
+            : translateFn('Other expenses');
+        sections.push({
+            title: otherTitle,
+            cssClass: 's-other',
+            isIncome,
+            ...group,
+        });
     }
-  });
 
-  // Pre-calculate totals per parent group, then sort descending
-  const parentTotals = Object.fromEntries(
-    Object.keys(groups).map((parentName) => [
-      parentName,
-      groups[parentName].reduce(
-        (sum, c) =>
-          sum +
-          months.reduce((sum, month) => sum + (categoryData[c].values[month] || 0), 0),
-        0,
-      ),
-    ]),
-  );
-  const sortedParents = Object.keys(groups).sort(
-    (a, b) => parentTotals[b] - parentTotals[a],
-  );
-
-  // Build sections from parent groups
-  const sections = [];
-  sortedParents.forEach((parentName, idx) => {
-    const group = processCategoryGroup(
-      groups[parentName],
-      categoryData,
-      months,
-      monthCount,
-    );
-    const isIncome = groups[parentName].every(
-      (c) => categoryData[c].depositTotal > categoryData[c].withdrawalTotal,
-    );
-    sections.push({
-      title: parentName,
-      cssClass: sectionCssClasses[idx % sectionCssClasses.length],
-      isIncome,
-      ...group,
-    });
-  });
-
-  // Add "Other" section for parentless categories
-  if (noParent.length > 0) {
-    const group = processCategoryGroup(noParent, categoryData, months, monthCount);
-    const isIncome = noParent.every(
-      (c) => categoryData[c].depositTotal > categoryData[c].withdrawalTotal,
-    );
-    const otherTitle = isIncome ? translateFn('Other income') : translateFn('Other expenses');
-    sections.push({
-      title: otherTitle,
-      cssClass: 's-other',
-      isIncome,
-      ...group,
-    });
-  }
-
-  return sections;
+    return sections;
 }
 
 /**
@@ -426,21 +468,21 @@ export function buildSectionHierarchy(
  * @returns {Object<string, number>} Monthly totals keyed by YYYY-MM
  */
 export function calculateMonthlyTotalsByType(categoryData, months, isIncome) {
-  const totals = {};
-  months.forEach((m) => {
-    totals[m] = 0;
-  });
+    const totals = {};
+    months.forEach((m) => {
+        totals[m] = 0;
+    });
 
-  Object.values(categoryData).forEach((entry) => {
-    const entryIsIncome = entry.depositTotal > entry.withdrawalTotal;
-    if (entryIsIncome === isIncome) {
-      months.forEach((m) => {
-        totals[m] += entry.values[m] || 0;
-      });
-    }
-  });
+    Object.values(categoryData).forEach((entry) => {
+        const entryIsIncome = entry.depositTotal > entry.withdrawalTotal;
+        if (entryIsIncome === isIncome) {
+            months.forEach((m) => {
+                totals[m] += entry.values[m] || 0;
+            });
+        }
+    });
 
-  return totals;
+    return totals;
 }
 
 /**
@@ -471,49 +513,64 @@ const INVESTMENT_CASHFLOW_TYPES = ['dividend', 'interest_yield'];
  * @returns {Array<{category: string, value: number}>}
  */
 export function aggregateTransactionsForWaterfall(
-  transactions,
-  translateFn = (s) => s,
-  options = {},
+    transactions,
+    translateFn = (s) => s,
+    options = {},
 ) {
-  const { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = options;
-  const dataByCategory = {};
+    const {
+        matchingItemsOnly = false,
+        categoryIds = [],
+        tagIds = [],
+    } = options;
+    const dataByCategory = {};
 
-  transactions.forEach((transaction) => {
-    if (transaction.config_type === 'standard') {
-      if (transaction.transaction_type === 'transfer') return;
+    transactions.forEach((transaction) => {
+        if (transaction.config_type === 'standard') {
+            if (transaction.transaction_type === 'transfer') return;
 
-      (transaction.transaction_items || []).forEach((item) => {
-        if (!item.category) return;
+            (transaction.transaction_items || []).forEach((item) => {
+                if (!item.category) return;
 
-        if (
-          matchingItemsOnly &&
-          !itemMatchesActiveFilters(item, { categoryIds, tagIds })
-        ) {
-          return;
+                if (
+                    matchingItemsOnly &&
+                    !itemMatchesActiveFilters(item, { categoryIds, tagIds })
+                ) {
+                    return;
+                }
+
+                const topCategory = item.category.parent || item.category;
+                const label = topCategory.name;
+                const amount = Number(item.amount_in_base || 0);
+                const signed =
+                    transaction.transaction_type === 'withdrawal'
+                        ? -amount
+                        : amount;
+
+                dataByCategory[label] =
+                    (dataByCategory[label] || 0) +
+                    (isFinite(signed) ? signed : 0);
+            });
+        } else if (transaction.config_type === 'investment') {
+            if (
+                !INVESTMENT_CASHFLOW_TYPES.includes(
+                    transaction.transaction_type,
+                )
+            )
+                return;
+
+            const rate = transaction.currencyRateToBase ?? 1;
+            const amount = Number(transaction.cashflow_value || 0) * rate;
+            const label = translateFn(
+                amount < 0 ? 'Investment payment' : 'Investment income',
+            );
+
+            dataByCategory[label] =
+                (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
         }
+    });
 
-        const topCategory = item.category.parent || item.category;
-        const label = topCategory.name;
-        const amount = Number(item.amount_in_base || 0);
-        const signed = transaction.transaction_type === 'withdrawal' ? -amount : amount;
-
-        dataByCategory[label] =
-          (dataByCategory[label] || 0) + (isFinite(signed) ? signed : 0);
-      });
-    } else if (transaction.config_type === 'investment') {
-      if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type)) return;
-
-      const rate = transaction.currencyRateToBase ?? 1;
-      const amount = Number(transaction.cashflow_value || 0) * rate;
-      const label = translateFn(amount < 0 ? 'Investment payment' : 'Investment income');
-
-      dataByCategory[label] =
-        (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
-    }
-  });
-
-  return Object.entries(dataByCategory).map(([category, value]) => ({
-    category,
-    value,
-  }));
+    return Object.entries(dataByCategory).map(([category, value]) => ({
+        category,
+        value,
+    }));
 }

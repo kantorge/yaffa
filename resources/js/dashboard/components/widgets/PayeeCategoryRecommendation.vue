@@ -1,170 +1,180 @@
 <template>
-  <div
-    id="widgetPayeeCategoryRecommendation"
-    class="card mb-4"
-    v-if="payeeSuggestion"
-  >
-    <div class="card-header d-flex justify-content-between">
-      <div class="card-title">
-        {{ __('widget.payeeCategoryRecommendation.cardTitle') }}
-      </div>
-      <div>
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          @click="hide"
-          :disabled="busy"
-        ></button>
-      </div>
+    <div
+        v-if="payeeSuggestion"
+        id="widgetPayeeCategoryRecommendation"
+        class="card mb-4"
+    >
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
+                {{ __('widget.payeeCategoryRecommendation.cardTitle') }}
+            </div>
+            <div>
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    :disabled="busy"
+                    @click="hide"
+                ></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <p v-html="paragraph"></p>
+            <div v-if="!success">
+                <button
+                    type="button"
+                    class="btn btn-success me-2"
+                    :title="
+                        __('widget.payeeCategoryRecommendation.acceptTitle')
+                    "
+                    :disabled="busy"
+                    @click="accept"
+                >
+                    {{ __('widget.payeeCategoryRecommendation.acceptButton') }}
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-primary me-2"
+                    :title="
+                        __('widget.payeeCategoryRecommendation.maybeLaterTitle')
+                    "
+                    :disabled="busy"
+                    @click="hide"
+                >
+                    {{
+                        __(
+                            'widget.payeeCategoryRecommendation.maybeLaterButton',
+                        )
+                    }}
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-outline-dark me-2"
+                    :title="
+                        __('widget.payeeCategoryRecommendation.dismissTitle')
+                    "
+                    :disabled="busy"
+                    @click="dismiss"
+                >
+                    {{ __('widget.payeeCategoryRecommendation.dismissButton') }}
+                </button>
+            </div>
+        </div>
+        <div v-if="error || success" class="card-footer">
+            <span v-if="error" class="text-danger">{{
+                __('widget.payeeCategoryRecommendation.error')
+            }}</span>
+            <span v-if="success" class="text-success">{{
+                __('widget.payeeCategoryRecommendation.success')
+            }}</span>
+        </div>
     </div>
-    <div class="card-body">
-      <p v-html="paragraph"></p>
-      <div v-if="!success">
-        <button
-          type="button"
-          class="btn btn-success me-2"
-          :title="__('widget.payeeCategoryRecommendation.acceptTitle')"
-          @click="accept"
-          :disabled="busy"
-        >
-          {{ __('widget.payeeCategoryRecommendation.acceptButton') }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-primary me-2"
-          :title="__('widget.payeeCategoryRecommendation.maybeLaterTitle')"
-          @click="hide"
-          :disabled="busy"
-        >
-          {{ __('widget.payeeCategoryRecommendation.maybeLaterButton') }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-dark me-2"
-          :title="__('widget.payeeCategoryRecommendation.dismissTitle')"
-          @click="dismiss"
-          :disabled="busy"
-        >
-          {{ __('widget.payeeCategoryRecommendation.dismissButton') }}
-        </button>
-      </div>
-    </div>
-    <div class="card-footer" v-if="error || success">
-      <span class="text-danger" v-if="error">{{
-        __('widget.payeeCategoryRecommendation.error')
-      }}</span>
-      <span class="text-success" v-if="success">{{
-        __('widget.payeeCategoryRecommendation.success')
-      }}</span>
-    </div>
-  </div>
 </template>
 
 <script>
-  import { __ } from '@/shared/lib/i18n';
+    import { __ } from '@/shared/lib/i18n';
 
-  export default {
-    data() {
-      return {
-        payeeSuggestion: null,
-        error: false,
-        busy: false,
-        success: false,
-      };
-    },
+    export default {
+        data() {
+            return {
+                payeeSuggestion: null,
+                error: false,
+                busy: false,
+                success: false,
+            };
+        },
 
-    created() {
-      axios
-        .get('/api/v1/payees/category-suggestions/default')
-        .then((response) => (this.payeeSuggestion = response.data));
-    },
+        computed: {
+            editlink() {
+                return this.route('account-entity.edit', {
+                    type: 'payee',
+                    account_entity: this.payeeSuggestion.payee_id,
+                });
+            },
 
-    methods: {
-      accept() {
-        this.busy = true;
-        let vue = this;
+            paragraph() {
+                if (!this.payeeSuggestion) {
+                    return '';
+                }
 
-        axios
-          .post(
-            '/api/v1/payees/' +
-              this.payeeSuggestion.payee_id +
-              '/category-suggestions/accept/' +
-              this.payeeSuggestion.max_category_id,
-          )
-          .then(function () {
-            vue.success = true;
-            vue.error = false;
-          })
-          .catch(function () {
-            vue.success = false;
-            vue.error = true;
-          })
-          .finally(() => (vue.busy = false));
-      },
+                return __('widget.payeeCategoryRecommendation.paragraph', {
+                    payeeLink: this.payeeLink,
+                    categoryText: this.categoryText,
+                    maxCount: this.payeeSuggestion.max,
+                    totalCount: this.payeeSuggestion.sum,
+                });
+            },
 
-      dismiss() {
-        this.busy = true;
-        let vue = this;
+            payeeLink() {
+                return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
+            },
 
-        axios
-          .post(
-            '/api/v1/payees/' +
-              this.payeeSuggestion.payee_id +
-              '/category-suggestions/dismiss',
-          )
-          .finally(() => this.hide())
-          .catch(function () {
-            vue.success = false;
-            vue.error = true;
-          });
+            categoryText() {
+                return `<strong>${this.escapeHtml(this.payeeSuggestion.category)}</strong>`;
+            },
+        },
 
-        this.busy = false;
-      },
+        created() {
+            axios
+                .get('/api/v1/payees/category-suggestions/default')
+                .then((response) => (this.payeeSuggestion = response.data));
+        },
 
-      hide() {
-        // The template's outer v-if="payeeSuggestion" already gates the whole
-        // card, so clearing it is enough to hide it reactively.
-        this.payeeSuggestion = null;
-      },
+        methods: {
+            accept() {
+                this.busy = true;
+                let vue = this;
 
-      escapeHtml(value) {
-        const textNode = document.createElement('div');
-        textNode.textContent = value;
+                axios
+                    .post(
+                        '/api/v1/payees/' +
+                            this.payeeSuggestion.payee_id +
+                            '/category-suggestions/accept/' +
+                            this.payeeSuggestion.max_category_id,
+                    )
+                    .then(function () {
+                        vue.success = true;
+                        vue.error = false;
+                    })
+                    .catch(function () {
+                        vue.success = false;
+                        vue.error = true;
+                    })
+                    .finally(() => (vue.busy = false));
+            },
 
-        return textNode.innerHTML;
-      },
-      __,
-    },
+            dismiss() {
+                this.busy = true;
+                let vue = this;
 
-    computed: {
-      editlink() {
-        return this.route('account-entity.edit', {
-          type: 'payee',
-          account_entity: this.payeeSuggestion.payee_id,
-        });
-      },
+                axios
+                    .post(
+                        '/api/v1/payees/' +
+                            this.payeeSuggestion.payee_id +
+                            '/category-suggestions/dismiss',
+                    )
+                    .finally(() => this.hide())
+                    .catch(function () {
+                        vue.success = false;
+                        vue.error = true;
+                    });
 
-      paragraph() {
-        if (!this.payeeSuggestion) {
-          return '';
-        }
+                this.busy = false;
+            },
 
-        return __('widget.payeeCategoryRecommendation.paragraph', {
-          payeeLink: this.payeeLink,
-          categoryText: this.categoryText,
-          maxCount: this.payeeSuggestion.max,
-          totalCount: this.payeeSuggestion.sum,
-        });
-      },
+            hide() {
+                // The template's outer v-if="payeeSuggestion" already gates the whole
+                // card, so clearing it is enough to hide it reactively.
+                this.payeeSuggestion = null;
+            },
 
-      payeeLink() {
-        return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
-      },
+            escapeHtml(value) {
+                const textNode = document.createElement('div');
+                textNode.textContent = value;
 
-      categoryText() {
-        return `<strong>${this.escapeHtml(this.payeeSuggestion.category)}</strong>`;
-      },
-    },
-  };
+                return textNode.innerHTML;
+            },
+            __,
+        },
+    };
 </script>

@@ -2,7 +2,9 @@ import { __ } from '@/shared/lib/i18n';
 
 export const getLeftControlPanelToggleState = function (isCollapsed) {
     return {
-        title: isCollapsed ? __('Expand left control panel') : __('Collapse left control panel'),
+        title: isCollapsed
+            ? __('Expand left control panel')
+            : __('Collapse left control panel'),
         iconClass: isCollapsed ? 'fa-angles-right' : 'fa-angles-left',
         ariaExpanded: String(!isCollapsed),
     };
@@ -10,7 +12,9 @@ export const getLeftControlPanelToggleState = function (isCollapsed) {
 
 export const applyLeftControlPanelToggleState = function (button, isCollapsed) {
     const state = getLeftControlPanelToggleState(isCollapsed);
-    const icon = button.querySelector('[data-left-control-panel-toggle-icon]') ?? button.querySelector('i');
+    const icon =
+        button.querySelector('[data-left-control-panel-toggle-icon]') ??
+        button.querySelector('i');
 
     if (icon) {
         icon.classList.remove('fa-angles-right', 'fa-angles-left');

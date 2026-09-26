@@ -27,15 +27,17 @@ export function normalizeAmChartsLocale(locale) {
 
 export function resolveAmChartsLocaleCandidates(locale, language) {
     const normalizedLocale = normalizeAmChartsLocale(locale);
-    const normalizedLanguage = typeof language === 'string'
-        ? language.toLowerCase()
-        : null;
+    const normalizedLanguage =
+        typeof language === 'string' ? language.toLowerCase() : null;
 
     return [
         normalizedLocale,
         amChartsLanguageFallbackLocales[normalizedLanguage],
         amChartsLanguageFallbackLocales.en,
-    ].filter((candidate, index, list) => candidate && list.indexOf(candidate) === index);
+    ].filter(
+        (candidate, index, list) =>
+            candidate && list.indexOf(candidate) === index,
+    );
 }
 
 export async function loadAmChartsLocale(locale, language) {
@@ -53,7 +55,11 @@ export async function loadAmChartsLocale(locale, language) {
     return null;
 }
 
-export async function applyAmChartsLocalization(chart, locale = window.YAFFA?.locale, language = window.YAFFA?.language) {
+export async function applyAmChartsLocalization(
+    chart,
+    locale = window.YAFFA?.locale,
+    language = window.YAFFA?.language,
+) {
     if (!chart) {
         return null;
     }

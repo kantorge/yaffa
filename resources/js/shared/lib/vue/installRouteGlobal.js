@@ -1,3 +1,3 @@
 export function installRouteGlobal(app) {
-  app.config.globalProperties.route = window.route;
+    app.config.globalProperties.route = window.route;
 }

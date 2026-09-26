@@ -20,8 +20,13 @@ window.transactionData = window.transactionData.map(function (transaction) {
 });
 
 window.scheduleData = window.scheduleData.map(function (transaction) {
-    if (transaction.transaction_schedule && transaction.transaction_schedule.next_date) {
-        transaction.transaction_schedule.next_date = parseIsoDate(transaction.transaction_schedule.next_date);
+    if (
+        transaction.transaction_schedule &&
+        transaction.transaction_schedule.next_date
+    ) {
+        transaction.transaction_schedule.next_date = parseIsoDate(
+            transaction.transaction_schedule.next_date,
+        );
     }
 
     return transaction;
@@ -41,9 +46,13 @@ var dtColumnSettingPayee = {
             }
             if (row.transaction_type === 'transfer') {
                 if (row.transactionOperator === -1) {
-                    return __('Transfer to :account', {account: row.account_to_name});
+                    return __('Transfer to :account', {
+                        account: row.account_to_name,
+                    });
                 } else {
-                    return __('Transfer from :account', {account: row.account_from_name});
+                    return __('Transfer from :account', {
+                        account: row.account_from_name,
+                    });
                 }
             }
         }
@@ -61,30 +70,36 @@ let historyTable = $(selectorHistoryTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: transactionData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
+            'date',
+            __('Date'),
+            window.YAFFA.userSettings.locale,
+        ),
         {
-            data: "reconciled",
+            data: 'reconciled',
             title: '<span title="' + __('Reconciled') + '">R</span>',
-            className: "text-center",
+            className: 'text-center',
             render: function (_data, type, row) {
                 if (type === 'filter') {
-                    return (!row.schedule
-                        && (row.config_type === 'standard' || row.config_type === 'investment')
-                        ? (row.reconciled
+                    return !row.schedule &&
+                        (row.config_type === 'standard' ||
+                            row.config_type === 'investment')
+                        ? row.reconciled
                             ? __('Reconciled')
                             : __('Uncleared')
-                        )
-                        : __('Unavailable')
-                    );
+                        : __('Unavailable');
                 }
-                return (!row.schedule
-                    && (row.config_type === 'standard' || row.config_type === 'investment')
-                    ? (row.reconciled
-                        ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
-                        : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
-                    )
-                    : '<i class="fa fa-circle text-muted"></i>'
-                );
+                return !row.schedule &&
+                    (row.config_type === 'standard' ||
+                        row.config_type === 'investment')
+                    ? row.reconciled
+                        ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' +
+                          row.id +
+                          '"></i>'
+                        : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' +
+                          row.id +
+                          '"></i>'
+                    : '<i class="fa fa-circle text-muted"></i>';
             },
             orderable: false,
         },
@@ -97,7 +112,12 @@ let historyTable = $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    row.amount_from,
+                    window.YAFFA.userSettings.locale,
+                    currency,
+                );
             },
             className: 'dt-nowrap',
         },
@@ -108,7 +128,12 @@ let historyTable = $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    row.amount_to,
+                    window.YAFFA.userSettings.locale,
+                    currency,
+                );
             },
             className: 'dt-nowrap',
         },
@@ -117,19 +142,24 @@ let historyTable = $(selectorHistoryTable).DataTable({
             title: __('Running total'),
             defaultContent: '',
             render: function (data, type) {
-                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.userSettings.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    data,
+                    window.YAFFA.userSettings.locale,
+                    currency,
+                );
             },
             className: 'dt-nowrap',
             createdCell: function (td, cellData) {
                 if (cellData < 0) {
                     $(td).addClass('text-danger');
                 }
-            }
+            },
         },
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            title: __("Actions"),
+            title: __('Actions'),
             defaultContent: '',
             // Rendering 5 buttons (10+ DOM nodes) per row here, for every row in a
             // multi-thousand-row account history, was a major contributor to slow initial
@@ -144,12 +174,16 @@ let historyTable = $(selectorHistoryTable).DataTable({
                     return '';
                 }
 
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+                return (
+                    '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+                    __('Actions') +
+                    '"></i>'
+                );
             },
-            className: "text-center",
+            className: 'text-center',
             orderable: false,
             searchable: false,
-        }
+        },
     ],
     createdRow: function (row, data) {
         $(row).attr('data-id', data.id);
@@ -158,16 +192,14 @@ let historyTable = $(selectorHistoryTable).DataTable({
             $(row).addClass('text-muted text-italic');
         }
     },
-    initComplete: function() {
+    initComplete: function () {
         // Get the Datatable API instance
         var api = this.api();
-        setTimeout(function() {
+        setTimeout(function () {
             api.columns.adjust().draw();
         }, 2000);
     },
-    order: [
-        [0, "asc"]
-    ],
+    order: [[0, 'asc']],
     // Required so the contextualActions plugin below has row selection (.select()/.deselect())
     // to work with; info:false suppresses the extra "(1 row selected)" text it would otherwise
     // append every time a row is right-clicked or its action icon is used.
@@ -210,7 +242,7 @@ historyTable.contextualActions({
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
-        enabled: false
+        enabled: false,
     },
     items: [
         {
@@ -222,7 +254,9 @@ historyTable.contextualActions({
                 dataTableHelpers.triggerTransactionQuickView(row[0].id);
             },
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
@@ -231,10 +265,15 @@ historyTable.contextualActions({
             iconClass: 'fa fa-search',
             contextMenuClasses: ['text-success'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'show' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'show',
+                });
             },
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
@@ -243,10 +282,15 @@ historyTable.contextualActions({
             iconClass: 'fa fa-edit',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'edit',
+                });
             },
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
@@ -255,16 +299,23 @@ historyTable.contextualActions({
             iconClass: 'fa fa-clone',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'clone',
+                });
             },
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
             type: 'divider',
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
@@ -273,10 +324,15 @@ historyTable.contextualActions({
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             action: function (row) {
-                dataTableHelpers.deleteTransactionRow(selectorHistoryTable, row[0].id);
+                dataTableHelpers.deleteTransactionRow(
+                    selectorHistoryTable,
+                    row[0].id,
+                );
             },
             isHidden: function (row) {
-                return row.transaction_type === 'Opening balance' || !!row.schedule;
+                return (
+                    row.transaction_type === 'Opening balance' || !!row.schedule
+                );
             },
         },
         {
@@ -285,7 +341,10 @@ historyTable.contextualActions({
             iconClass: 'fa fa-pencil',
             contextMenuClasses: ['text-success fw-bold'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].originalId, action: 'enter' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].originalId,
+                    action: 'enter',
+                });
             },
             isHidden: function (row) {
                 return !row.schedule || !row.schedule_first_instance;
@@ -298,7 +357,9 @@ historyTable.contextualActions({
             contextMenuClasses: ['text-warning fw-bold'],
             action: function (row) {
                 const form = document.getElementById('form-skip');
-                form.action = route('transactions.skipScheduleInstance', { transaction: row[0].originalId });
+                form.action = route('transactions.skipScheduleInstance', {
+                    transaction: row[0].originalId,
+                });
                 form.submit();
             },
             isHidden: function (row) {
@@ -312,43 +373,61 @@ let scheduleTable = $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: scheduleData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
+            'transaction_schedule.next_date',
+            __('Next date'),
+            window.YAFFA.userSettings.locale,
+        ),
         dtColumnSettingPayee,
         dataTableHelpers.transactionColumnDefinition.category,
         {
-            title: "Withdrawal",
+            title: 'Withdrawal',
             defaultContent: '',
             render: function (_data, type, row) {
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    row.amount_from,
+                    window.YAFFA.userSettings.locale,
+                    currency,
+                );
             },
-            className: 'dt-nowrap'
+            className: 'dt-nowrap',
         },
         {
-            title: "Deposit",
+            title: 'Deposit',
             defaultContent: '',
             render: function (_data, type, row) {
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    row.amount_to,
+                    window.YAFFA.userSettings.locale,
+                    currency,
+                );
             },
-            className: 'dt-nowrap'
+            className: 'dt-nowrap',
         },
         dataTableHelpers.transactionColumnDefinition.comment,
         dataTableHelpers.transactionColumnDefinition.tags,
         {
-            title: __("Actions"),
+            title: __('Actions'),
             defaultContent: '',
             render: function (_data, _type, _row) {
-                return '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' + __('Actions') + '"></i>';
+                return (
+                    '<i class="hover-icon fa fa-fw fa-ellipsis-vertical" title="' +
+                    __('Actions') +
+                    '"></i>'
+                );
             },
-            className: "text-center",
+            className: 'text-center',
             orderable: false,
             searchable: false,
-        }
+        },
     ],
 
     createdRow: function (row, data) {
@@ -361,9 +440,7 @@ let scheduleTable = $(selectorScheduleTable).DataTable({
             $(row).addClass('table-warning');
         }
     },
-    order: [
-        [0, "asc"]
-    ],
+    order: [[0, 'asc']],
     // Required so the contextualActions plugin below has row selection to work with; info:false
     // suppresses the extra "(1 row selected)" text (see historyTable above for the same setup).
     select: {
@@ -392,7 +469,7 @@ scheduleTable.contextualActions({
         triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
-        enabled: false
+        enabled: false,
     },
     items: [
         {
@@ -401,7 +478,10 @@ scheduleTable.contextualActions({
             iconClass: 'fa fa-pencil',
             contextMenuClasses: ['text-success fw-bold'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'enter' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'enter',
+                });
             },
         },
         {
@@ -411,7 +491,9 @@ scheduleTable.contextualActions({
             contextMenuClasses: ['text-warning fw-bold'],
             action: function (row) {
                 const form = document.getElementById('form-skip');
-                form.action = route('transactions.skipScheduleInstance', { transaction: row[0].id });
+                form.action = route('transactions.skipScheduleInstance', {
+                    transaction: row[0].id,
+                });
                 form.submit();
             },
         },
@@ -421,7 +503,10 @@ scheduleTable.contextualActions({
             iconClass: 'fa fa-edit',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'edit' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'edit',
+                });
             },
         },
         {
@@ -430,7 +515,10 @@ scheduleTable.contextualActions({
             iconClass: 'fa fa-clone',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'clone' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'clone',
+                });
             },
         },
         {
@@ -439,7 +527,10 @@ scheduleTable.contextualActions({
             iconClass: 'fa fa-calendar',
             contextMenuClasses: ['text-primary'],
             action: function (row) {
-                window.location.href = route('transaction.open', { transaction: row[0].id, action: 'replace' });
+                window.location.href = route('transaction.open', {
+                    transaction: row[0].id,
+                    action: 'replace',
+                });
             },
         },
         {
@@ -451,53 +542,61 @@ scheduleTable.contextualActions({
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             action: function (row) {
-                dataTableHelpers.deleteTransactionRow(selectorScheduleTable, row[0].id);
+                dataTableHelpers.deleteTransactionRow(
+                    selectorScheduleTable,
+                    row[0].id,
+                );
             },
         },
     ],
 });
 
-$('input[name=reconciled]').on("change", function () {
+$('input[name=reconciled]').on('change', function () {
     $(selectorHistoryTable).DataTable().column(1).search(this.value).draw();
 });
 
-$(selectorHistoryTable).on("click", "i.reconcile", function () {
-    if ($(this).hasClass("fa-spinner")) {
+$(selectorHistoryTable).on('click', 'i.reconcile', function () {
+    if ($(this).hasClass('fa-spinner')) {
         return false;
     }
 
-    var currentState = $(this).data("reconciled");
+    var currentState = $(this).data('reconciled');
 
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
         type: 'PATCH',
-        url: '/api/v1/transactions/' + $(this).data("id") + '/reconciliation',
+        url: '/api/v1/transactions/' + $(this).data('id') + '/reconciliation',
         data: JSON.stringify({
-            "reconciled": !currentState ? true : false,
+            reconciled: !currentState ? true : false,
         }),
         contentType: 'application/json',
         headers: { 'X-CSRF-TOKEN': csrfToken },
         success: (data) => {
             currentState = data.transaction.reconciled;
 
-            $(this).removeClass()
+            $(this)
+                .removeClass()
                 .addClass('fa reconcile')
-                .addClass((currentState ? "fa-check-circle text-success" : "fa-circle text-info"))
-                .data("reconciled", currentState);
-        }
+                .addClass(
+                    currentState
+                        ? 'fa-check-circle text-success'
+                        : 'fa-circle text-info',
+                )
+                .data('reconciled', currentState);
+        },
     });
 });
 
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
-const app = createApp({})
+const app = createApp({});
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
 installRouteGlobal(app);
 
-import TransactionShowModal from '@/transactions/components/display/Modal.vue'
-app.component('transaction-show-modal', TransactionShowModal)
+import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+app.component('TransactionShowModal', TransactionShowModal);
 
-app.mount('#app')
+app.mount('#app');

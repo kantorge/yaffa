@@ -56,13 +56,21 @@ export function getCachedDateTimeFormatter(locale, options) {
     const key = formatterCacheKey(locale, options);
 
     if (!dateTimeFormatterCache.has(key)) {
-        dateTimeFormatterCache.set(key, new Intl.DateTimeFormat(locale, options));
+        dateTimeFormatterCache.set(
+            key,
+            new Intl.DateTimeFormat(locale, options),
+        );
     }
 
     return dateTimeFormatterCache.get(key);
 }
 
-export function toFormattedCurrency(input, locale, currencySettings, precision = 'generic') {
+export function toFormattedCurrency(
+    input,
+    locale,
+    currencySettings,
+    precision = 'generic',
+) {
     // Fallback to raw input if currency settings are missing
     if (!currencySettings || !currencySettings.iso_code) {
         return input.toString();
@@ -87,12 +95,16 @@ export function toFormattedCurrency(input, locale, currencySettings, precision =
     // number with zeros it doesn't have. The currency's configured precision is a ceiling only,
     // rounding any real fractional content down to at most that many digits. When it isn't
     // configured (null), undefined lets Intl apply the currency's own default (e.g. 2 for EUR).
-    const minDigits = precision === 'detailed'
-        ? (currencySettings.detailed_decimal_precision ?? currencySettings.generic_decimal_precision ?? 0)
-        : 0;
-    const maxDigits = precision === 'detailed'
-        ? STORAGE_SCALE.PRICE
-        : (currencySettings.generic_decimal_precision ?? undefined);
+    const minDigits =
+        precision === 'detailed'
+            ? (currencySettings.detailed_decimal_precision ??
+              currencySettings.generic_decimal_precision ??
+              0)
+            : 0;
+    const maxDigits =
+        precision === 'detailed'
+            ? STORAGE_SCALE.PRICE
+            : (currencySettings.generic_decimal_precision ?? undefined);
 
     return getCachedNumberFormatter(locale, {
         style: 'currency',
@@ -138,7 +150,13 @@ export function toFormattedNumber(input, locale, options = undefined) {
  *
  * @type {string}
  */
-export function toFormattedDate(input, locale, fallback, allowIsoParse = false, dateOptions = undefined) {
+export function toFormattedDate(
+    input,
+    locale,
+    fallback,
+    allowIsoParse = false,
+    dateOptions = undefined,
+) {
     if (input === null || input === undefined) {
         return fallback;
     }
@@ -146,9 +164,10 @@ export function toFormattedDate(input, locale, fallback, allowIsoParse = false, 
     let date = input;
 
     if (!(date instanceof Date)) {
-        date = (allowIsoParse && typeof input === 'string')
-            ? parseIsoDate(input)
-            : new Date(input);
+        date =
+            allowIsoParse && typeof input === 'string'
+                ? parseIsoDate(input)
+                : new Date(input);
     }
 
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
@@ -184,7 +203,12 @@ const DEFAULT_DATE_TIME_OPTIONS = {
  * default (full numeric date + time) - pass explicit options to customize.
  * @returns {string}
  */
-export function toFormattedDateTime(input, locale, fallback = '', options = DEFAULT_DATE_TIME_OPTIONS) {
+export function toFormattedDateTime(
+    input,
+    locale,
+    fallback = '',
+    options = DEFAULT_DATE_TIME_OPTIONS,
+) {
     if (input === null || input === undefined) {
         return fallback;
     }

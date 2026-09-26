@@ -9,15 +9,15 @@
  * @returns {Array<Object>}
  */
 export function filterByDateRange(items, dateField, dateFrom, dateTo) {
-  const from = dateFrom ? new Date(dateFrom).getTime() : null;
-  const to = dateTo ? new Date(dateTo).getTime() : null;
+    const from = dateFrom ? new Date(dateFrom).getTime() : null;
+    const to = dateTo ? new Date(dateTo).getTime() : null;
 
-  return items.filter((item) => {
-    const ts = new Date(item[dateField]).getTime();
+    return items.filter((item) => {
+        const ts = new Date(item[dateField]).getTime();
 
-    if (from !== null && ts < from) return false;
-    if (to !== null && ts > to) return false;
+        if (from !== null && ts < from) return false;
+        if (to !== null && ts > to) return false;
 
-    return true;
-  });
+        return true;
+    });
 }

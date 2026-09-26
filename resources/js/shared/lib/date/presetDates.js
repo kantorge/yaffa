@@ -30,27 +30,51 @@ const presetCalculators = {
         end: date,
     }),
     yesterday: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 1,
+        ),
         end: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1),
     }),
     previous7Days: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 7),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 7,
+        ),
         end: date,
     }),
     previous30Days: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 30),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 30,
+        ),
         end: date,
     }),
     previous90Days: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 90),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 90,
+        ),
         end: date,
     }),
     previous180Days: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 180),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 180,
+        ),
         end: date,
     }),
     previous365Days: (date) => ({
-        start: new Date(date.getFullYear(), date.getMonth(), date.getDate() - 365),
+        start: new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate() - 365,
+        ),
         end: date,
     }),
     previousMonth: (date) => ({

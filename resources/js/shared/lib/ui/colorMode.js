@@ -14,11 +14,14 @@ const applyMode = (mode) => {
         icon.classList.toggle('fa-sun', mode === 'dark');
         icon.classList.toggle('fa-moon', mode !== 'dark');
     });
-    document.dispatchEvent(new CustomEvent('yaffa:colorModeChange', { detail: { mode } }));
+    document.dispatchEvent(
+        new CustomEvent('yaffa:colorModeChange', { detail: { mode } }),
+    );
 };
 
 const toggleMode = () => {
-    const current = document.documentElement.getAttribute('data-coreui-theme') || 'light';
+    const current =
+        document.documentElement.getAttribute('data-coreui-theme') || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
     try {
         localStorage.setItem(STORAGE_KEY, next);
@@ -31,7 +34,9 @@ const toggleMode = () => {
 export const initializeColorMode = () => {
     applyMode(getStoredMode());
 
-    document.querySelectorAll('[data-action="toggle-color-mode"]').forEach((btn) => {
-        btn.addEventListener('click', toggleMode);
-    });
+    document
+        .querySelectorAll('[data-action="toggle-color-mode"]')
+        .forEach((btn) => {
+            btn.addEventListener('click', toggleMode);
+        });
 };

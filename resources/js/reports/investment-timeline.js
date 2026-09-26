@@ -7,7 +7,10 @@ am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
 import { __, toFormattedCurrency, toFormattedNumber } from '@/shared/lib/i18n';
-import { applyAmChartsColorTheme, COLOR_MODE_EVENT } from '@/shared/lib/ui/amchartsColorTheme';
+import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+} from '@/shared/lib/ui/amchartsColorTheme';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import * as toastHelpers from '@/shared/lib/toast';
 import { investmentGroupTree } from '@/shared/lib/datatable';
@@ -22,11 +25,15 @@ function initializeChart() {
 
     applyAmChartsColorTheme(am4core);
 
-    chart = am4core.create("chart", am4charts.XYChart);
-    applyAmChartsLocalization(chart, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.language);
+    chart = am4core.create('chart', am4charts.XYChart);
+    applyAmChartsLocalization(
+        chart,
+        window.YAFFA.userSettings.locale,
+        window.YAFFA.userSettings.language,
+    );
     chart.hiddenState.properties.opacity = 0;
     chart.paddingRight = 30;
-    chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+    chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
     chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
     chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
 
@@ -36,7 +43,7 @@ function initializeChart() {
     chart.data = window.chartData;
 
     var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
-    categoryAxis.dataFields.category = "name";
+    categoryAxis.dataFields.category = 'name';
     categoryAxis.renderer.labels.template.disabled = true;
     categoryAxis.renderer.grid.template.location = 0;
     categoryAxis.renderer.inversed = true;
@@ -44,15 +51,15 @@ function initializeChart() {
     categoryAxis.renderer.cellEndLocation = 0.9;
 
     var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-    dateAxis.dateFormatter.dateFormat = "yyyy-MM-dd";
+    dateAxis.dateFormatter.dateFormat = 'yyyy-MM-dd';
     dateAxis.renderer.minGridDistance = 70;
-    dateAxis.baseInterval = { count: 1, timeUnit: "month" };
+    dateAxis.baseInterval = { count: 1, timeUnit: 'month' };
     dateAxis.max = new Date(window.YAFFA.userSettings.end_date).getTime();
     dateAxis.strictMinMax = true;
     dateAxis.renderer.tooltipLocation = 0;
 
     // Set up event listener to date axis to highlight current month
-    dateAxis.events.on("datavalidated", function(ev) {
+    dateAxis.events.on('datavalidated', function (ev) {
         var axis = ev.target;
         const now = new Date();
 
@@ -60,7 +67,7 @@ function initializeChart() {
         var range = axis.axisRanges.create();
         range.date = new Date(now.getFullYear(), now.getMonth(), 1);
         range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fill = am4core.color('#396478');
         range.axisFill.fillOpacity = 0.5;
         range.grid.strokeOpacity = 0;
     });
@@ -70,11 +77,11 @@ function initializeChart() {
 ----
 {openDateX} - {dateX}
 ${__('Last quantity')}: {formatted_quantity}
-${__('Estimated end value')}: {formatted_value}`
+${__('Estimated end value')}: {formatted_value}`;
 
-    series1.dataFields.openDateX = "start";
-    series1.dataFields.dateX = "end";
-    series1.dataFields.categoryY = "name";
+    series1.dataFields.openDateX = 'start';
+    series1.dataFields.dateX = 'end';
+    series1.dataFields.categoryY = 'name';
     series1.columns.template.strokeOpacity = 1;
     series1.columns.template.height = am4core.percent(100);
 
@@ -83,82 +90,94 @@ ${__('Estimated end value')}: {formatted_value}`
 }
 
 function filterData() {
-    const filterActive = document.querySelector('input[name="table_filter_active"]:checked').value;
-    const filterOpen = document.querySelector('input[name="table_filter_open"]:checked').value;
+    const filterActive = document.querySelector(
+        'input[name="table_filter_active"]:checked',
+    ).value;
+    const filterOpen = document.querySelector(
+        'input[name="table_filter_open"]:checked',
+    ).value;
 
     // Get the free text search value
-    const searchValue = document.getElementById('table_filter_search_text').value.trim().toLowerCase();
+    const searchValue = document
+        .getElementById('table_filter_search_text')
+        .value.trim()
+        .toLowerCase();
 
     // Handle the jsTree selection
-    const selectedNodeIds = $(selectorTreeContainer).jstree().get_checked().map(id => Number(id));
+    const selectedNodeIds = $(selectorTreeContainer)
+        .jstree()
+        .get_checked()
+        .map((id) => Number(id));
 
     let today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     chart.data = window.chartData
-                    // Filter by active flag
-                    .filter(function(item) {
-                        if (filterActive === '') {
-                            return true;
-                        }
-                        return item.active === (filterActive === __('Yes'));
-                    })
-                    // Filter by open status
-                    .filter(function(item) {
-                        if (filterOpen === '') {
-                            return true;
-                        }
-                        let end = new Date(item.end);
-                        end.setHours(0,0,0,0);
-                        if (filterOpen === __('Yes')) {
-                            return end >= today;
-                        } else {
-                            return end < today;
-                        }
-                    })
-                    // Filter by investment group
-                    .filter(function(investment) {
-                        /**
-                         * @var {object} investment
-                         * @property {object} investment.investment_group
-                         * @property {number} investment.investment_group.id
-                         **/
-                        return selectedNodeIds.includes(investment.investment_group.id);
-                    })
-                    // Filter by free text search
-                    .filter(function(item) {
-                        if (searchValue === '') {
-                            return true;
-                        }
-                        return item.name.toLowerCase().includes(searchValue);
-                    });
+        // Filter by active flag
+        .filter(function (item) {
+            if (filterActive === '') {
+                return true;
+            }
+            return item.active === (filterActive === __('Yes'));
+        })
+        // Filter by open status
+        .filter(function (item) {
+            if (filterOpen === '') {
+                return true;
+            }
+            let end = new Date(item.end);
+            end.setHours(0, 0, 0, 0);
+            if (filterOpen === __('Yes')) {
+                return end >= today;
+            } else {
+                return end < today;
+            }
+        })
+        // Filter by investment group
+        .filter(function (investment) {
+            /**
+             * @var {object} investment
+             * @property {object} investment.investment_group
+             * @property {number} investment.investment_group.id
+             **/
+            return selectedNodeIds.includes(investment.investment_group.id);
+        })
+        // Filter by free text search
+        .filter(function (item) {
+            if (searchValue === '') {
+                return true;
+            }
+            return item.name.toLowerCase().includes(searchValue);
+        });
 }
 
 // Refresh chart data on input change
-document.querySelectorAll('#cardFilters input[type="radio"]').forEach(input => {
-    input.addEventListener('change', filterData);
-});
-document.getElementById('table_filter_search_text').addEventListener('keyup', filterData);
+document
+    .querySelectorAll('#cardFilters input[type="radio"]')
+    .forEach((input) => {
+        input.addEventListener('change', filterData);
+    });
+document
+    .getElementById('table_filter_search_text')
+    .addEventListener('keyup', filterData);
 
 // Search box clear button
-document.getElementById('table_filter_search_text_clear').addEventListener('click', function() {
-    document.getElementById('table_filter_search_text').value = '';
-    filterData();
-});
+document
+    .getElementById('table_filter_search_text_clear')
+    .addEventListener('click', function () {
+        document.getElementById('table_filter_search_text').value = '';
+        filterData();
+    });
 
 // Initialize the "tree" for the investment group filter list
 const selectorTreeContainer = '#investment-group-tree-container';
-investmentGroupTree(
-    selectorTreeContainer,
-    window.investmentGroups,
-    filterData
-);
+investmentGroupTree(selectorTreeContainer, window.investmentGroups, filterData);
 
 // Fetch API and calculate Gantt dates
 fetch('/api/v1/investments/timeline')
-    .then(response => response.json())
-    .then(function(data) {
-        window.chartData = data.map(function(item) {
+    .then((response) => response.json())
+    .then(function (data) {
+        window.chartData = data.map(function (item) {
             item.value = item.quantity * item.last_price;
 
             item.formatted_quantity = toFormattedNumber(
@@ -167,9 +186,13 @@ fetch('/api/v1/investments/timeline')
                 {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 4,
-                }
+                },
             );
-            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.userSettings.locale, item.currency);
+            item.formatted_value = toFormattedCurrency(
+                item.value,
+                window.YAFFA.userSettings.locale,
+                item.currency,
+            );
 
             return item;
         });
@@ -180,9 +203,9 @@ fetch('/api/v1/investments/timeline')
         document.getElementById('chart-placeholder').style.display = 'none';
         document.getElementById('chart').style.display = 'block';
     })
-    .catch(error => {
+    .catch((error) => {
         toastHelpers.showErrorToast(
-            __('Error: :error', {error: error.message})
+            __('Error: :error', { error: error.message }),
         );
     });
 

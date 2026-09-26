@@ -22,7 +22,7 @@ const config = {
 
             return {
                 results: data
-                    .filter(function(item) {
+                    .filter(function (item) {
                         return !otherItems.includes(item.id.toString());
                     })
                     .map(function (item) {
@@ -33,7 +33,7 @@ const config = {
                     }),
             };
         },
-        cache: true
+        cache: true,
     },
     selectOnClose: true,
     placeholder: __('Select category'),
@@ -47,35 +47,35 @@ $('#not_preferred').select2(config);
 
 // Load default values for the selects
 categoryPreferences
-.filter(category => category.preferred)
-.forEach(category => {
-    $('#preferred')
-    .append(new Option(category.full_name, category.id, true, true))
-    .trigger('change')
-    .trigger({
-        type: 'select2:select',
-        params: {
-            data: {
-                id: category.id,
-                name: category.full_name,
-            }
-        }
+    .filter((category) => category.preferred)
+    .forEach((category) => {
+        $('#preferred')
+            .append(new Option(category.full_name, category.id, true, true))
+            .trigger('change')
+            .trigger({
+                type: 'select2:select',
+                params: {
+                    data: {
+                        id: category.id,
+                        name: category.full_name,
+                    },
+                },
+            });
     });
-});
 
 categoryPreferences
-.filter(category => !category.preferred)
-.forEach(category => {
-    $('#not_preferred')
-    .append(new Option(category.full_name, category.id, true, true))
-    .trigger('change')
-    .trigger({
-        type: 'select2:select',
-        params: {
-            data: {
-                id: category.id,
-                name: category.full_name,
-            }
-        }
+    .filter((category) => !category.preferred)
+    .forEach((category) => {
+        $('#not_preferred')
+            .append(new Option(category.full_name, category.id, true, true))
+            .trigger('change')
+            .trigger({
+                type: 'select2:select',
+                params: {
+                    data: {
+                        id: category.id,
+                        name: category.full_name,
+                    },
+                },
+            });
     });
-});
