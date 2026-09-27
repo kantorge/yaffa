@@ -312,24 +312,11 @@ const vueApp = createApp({
           return;
         }
 
-        const scrollBody = $(window.table.table().container()).find(
-          '.dt-scroll-body',
-        );
-        if (scrollBody.length > 0) {
-          const rowPosition = $(rowNode).position();
-          if (rowPosition) {
-            const targetScrollTop =
-              scrollBody.scrollTop() +
-              rowPosition.top -
-              scrollBody.height() / 2;
-            scrollBody.stop(true).animate({ scrollTop: targetScrollTop }, 200);
-          }
-        } else {
-          rowNode.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        }
+        // Scrolls the DataTables scroll body and, if needed, the page itself
+        rowNode.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
 
         $(rowNode).addClass('table-warning');
         setTimeout(() => {

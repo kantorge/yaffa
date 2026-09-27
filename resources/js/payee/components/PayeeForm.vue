@@ -105,6 +105,9 @@
       <hr />
       <span class="form-label col-sm-3">
         {{ __('Are you looking for any of these payees?') }}
+        <small class="d-block text-muted">
+          {{ __('Click the payee to view and activate.') }}
+        </small>
       </span>
       <div class="col-sm-9">
         <ul id="similar-payee-list" class="list-unstyled">
@@ -114,10 +117,12 @@
             class="mt-2"
             :data-id="similarPayee.id"
           >
-            <a href="#" @click.prevent="onSelectPayee(similarPayee)">
-              {{ similarPayee.name }}
-              <span v-if="!similarPayee.active">({{ __('inactive') }})</span>
-            </a>
+            <a href="#" @click.prevent="onSelectPayee(similarPayee)">{{
+              similarPayee.name
+            }}</a>
+            <span v-if="!similarPayee.active" class="text-muted">
+              ({{ __('inactive') }})
+            </span>
           </li>
         </ul>
       </div>
