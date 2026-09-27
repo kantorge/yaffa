@@ -1,4 +1,4 @@
-name: Unit Tests
+name: E2E Tests (Pest Browser)
 
 on:
   pull_request:
@@ -6,13 +6,18 @@ on:
       - main
     paths:
       - 'app/**'
-      - 'tests/Unit/**'
-      - 'database/factories/**'
-      - 'database/migrations/**'
+      - 'tests/PEST/**'
+      - 'tests/Pest.php'
+      - 'tests/TestCase.php'
+      - 'database/**'
+      - 'resources/**'
+      - 'routes/**'
       - 'composer.json'
       - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
       - 'phpunit.xml'
-      - 'tests/Pest.php'
 
   workflow_dispatch:
 
@@ -21,9 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit-tests:
+  e2e:
     runs-on: ubuntu-latest
-    name: Run Unit Tests
+    name: Run Pest Browser Tests
 
     services:
       mysql:
@@ -42,16 +47,11 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, dom, fileinfo, mysql
-          coverage: xdebug
-        env:
-          fail-fast: true
+          extensions: mbstring, dom, fileinfo, mysql, sockets
+          coverage: none
 
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Start MySQL service
-        run: sudo /etc/init.d/mysql start
 
       - name: Get composer cache directory
         run: echo "COMPOSER_CACHE_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
@@ -66,25 +66,38 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
+      - name: Cache NPM Dependencies
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Assets
+        run: npm run build
+
       - name: Prepare Laravel Application
         run: ln -f -s .env.ci .env
 
       - name: Clear Config
         run: php artisan config:clear
 
-      - name: Run Migration
-        run: php artisan migrate -v
+      # Pest serves the app in-process: no artisan serve, no chromedriver.
+      # The suite migrates and seeds the testing database itself (RefreshDatabase + $seed).
+      - name: Run Pest Browser Tests
+        run: vendor/bin/pest --colors=never --testsuite=Browser
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
-      - name: Run Unit Tests
-        run: vendor/bin/pest --colors=never --coverage-clover=coverage.xml --testsuite Unit
-        env:
-          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
-
-      - name: Upload coverage to Codacy
-        if: github.event_name != 'pull_request'
-        uses: codacy/codacy-coverage-reporter-action@v1
+      - name: Upload Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v6
         with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.xml
+          name: e2e-screenshots
+          path: tests/Browser/Screenshots

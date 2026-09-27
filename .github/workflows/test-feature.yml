@@ -13,6 +13,7 @@ on:
       - 'composer.json'
       - 'composer.lock'
       - 'phpunit.xml'
+      - 'tests/Pest.php'
 
   workflow_dispatch:
 
@@ -91,7 +92,7 @@ jobs:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
       - name: Run Feature Tests
-        run: vendor/bin/phpunit --colors=never --coverage-clover=coverage.xml --testsuite Feature
+        run: vendor/bin/pest --colors=never --coverage-clover=coverage.xml --testsuite Feature
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
