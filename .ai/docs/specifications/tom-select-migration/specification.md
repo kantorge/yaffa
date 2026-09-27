@@ -398,14 +398,17 @@ Both libraries ship during Phases 1–3. This is safe because page scripts are l
 
 The Phase 3 PR description **must** repeat this list so the owner can check each item by hand:
 
-- [ ] **R1: create-tag option position (FR-6, Q4).** In a transaction item's tag select, type a
+- [x] **R1: create-tag option position (FR-6, Q4).** In a transaction item's tag select, type a
       tag name that doesn't exist. Tom Select shows "<term> (new)" at the **top** of the list;
       Select2 showed it at the bottom. Decide whether to keep this, or have the factory move it
       last.
-- [ ] **R2: `selectOnClose` (FR-1 item 8, Q5).** On the transaction item category select (V5),
+      **Resolved:** checked by the owner, kept at the top.
+- [x] **R2: `selectOnClose` (FR-1 item 8, Q5).** On the transaction item category select (V5),
       type part of a name and then Tab or click away. The
       highlighted option should be selected, as it is today. Decide whether it feels right or
       causes accidental selections.
+      **Resolved:** the owner removed it. Tab or click-away no longer selects, and the factory
+      option was deleted (it had no other caller).
 
 (R3, about the unthemed payee page, is gone: the page was removed in Phase 0b.)
 

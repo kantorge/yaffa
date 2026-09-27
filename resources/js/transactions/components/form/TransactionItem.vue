@@ -373,7 +373,6 @@
           params: (term) => ({ q: term || undefined, payee: this.payee }),
           mapResult: (item) => ({ id: item.id, text: item.full_name }),
           placeholder: __('Select category'),
-          selectOnClose: true,
           onChange: (value) => {
             this.categoryIdData = value ? Number(value) : null;
 

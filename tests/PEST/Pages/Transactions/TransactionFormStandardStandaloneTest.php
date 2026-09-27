@@ -505,28 +505,21 @@ it('creates a new tag and keeps existing ones in a transaction item', function (
         ->and($tags->firstWhere('name', 'Kids')->id)->toBe($existingTag->id);
 })->group('critical');
 
-it('selects the highlighted item category when the dropdown closes by Tab or click-away after a search', function () {
-    $groceries = Category::firstWhere('name', 'Groceries');
-
+it('does not select the highlighted item category when the dropdown closes by Tab or click-away', function () {
     $page = visit(route('transaction.create', ['type' => 'standard']));
     standardStandaloneReady($page);
 
-    // Tab away from a search: the first (highlighted) result is selected
+    // Tab away from a search
     $firstSelectId = $this->addTransactionItem($page);
     $this->searchTomSelect($page, $firstSelectId, 'Groceries');
     $page->keys("#{$firstSelectId} + .ts-wrapper .dropdown-input", 'Tab');
-    $this->assertTomSelectValues($page, $firstSelectId, [$groceries->id]);
+    $this->waitUntil($page, "!document.querySelector('#{$firstSelectId}').tomselect.isOpen");
+    $this->assertTomSelectValues($page, $firstSelectId, []);
 
-    // Click away from a search: the same
+    // Click away from a search
     $secondSelectId = $this->addTransactionItem($page);
     $this->searchTomSelect($page, $secondSelectId, 'Groceries');
     $page->click('#transaction_amount_from');
-    $this->assertTomSelectValues($page, $secondSelectId, [$groceries->id]);
-
-    // Closing without a search selects nothing
-    $thirdSelectId = $this->addTransactionItem($page);
-    $this->searchTomSelect($page, $thirdSelectId, '');
-    $page->keys("#{$thirdSelectId} + .ts-wrapper .dropdown-input", 'Tab');
-    $this->waitUntil($page, "!document.querySelector('#{$thirdSelectId}').tomselect.isOpen");
-    $this->assertTomSelectValues($page, $thirdSelectId, []);
+    $this->waitUntil($page, "!document.querySelector('#{$secondSelectId}').tomselect.isOpen");
+    $this->assertTomSelectValues($page, $secondSelectId, []);
 })->group('critical');

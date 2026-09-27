@@ -55,8 +55,6 @@ const withQuery = (url, params) => {
  * @param {function(Object, function): string} [options.renderOption] Dropdown option HTML. Receives
  *   Tom Select's `escape`, which must wrap every piece of API data.
  * @param {function(Object, function): string} [options.renderItem] Selected item HTML, as renderOption.
- * @param {boolean} [options.selectOnClose] Select the highlighted option when the dropdown closes by
- *   blur or Tab after a non-empty search.
  * @param {function(Object): void} [options.onSelect] Called with the selected item's data when an
  *   item is added by the user or by a non-silent setSelected().
  * @param {function(): void} [options.onClear] Called once whenever the value becomes empty (clear
@@ -77,7 +75,6 @@ export function createRemoteSelect(
     create = false,
     renderOption,
     renderItem,
-    selectOnClose = false,
     onSelect,
     onClear,
     onChange,
@@ -209,25 +206,6 @@ export function createRemoteSelect(
     window.clearTimeout(requestTimer);
     abortController?.abort();
   });
-
-  if (selectOnClose) {
-    ts.hook('before', 'onBlur', (event) => {
-      const option = ts.activeOption;
-      // Focus moving from the control into the dropdown input is not a close
-      if (
-        event?.relatedTarget === ts.control_input ||
-        !document.hasFocus() ||
-        !ts.isOpen ||
-        ts.inputValue() === '' ||
-        ts.loading ||
-        !option ||
-        !ts.canSelect(option)
-      ) {
-        return;
-      }
-      ts.addItem(option.dataset.value);
-    });
-  }
 
   ts.on('item_add', (value) => {
     if (!muted) {

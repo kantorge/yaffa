@@ -44,8 +44,9 @@ way on every page.
 - Options always reflect the current form state, because every open and every debounced keystroke
   (150 ms) queries again and there is no cache. After changing the account, the investment list
   shows only investments in the new account's currency.
-- On the transaction item category select, typing part of a name and pressing Tab picks the
-  highlighted match (`selectOnClose`), so the hands stay on the keyboard.
+- Closing a dropdown by Tab or click-away never selects anything: only Enter or a click picks an
+  option. This prevents accidental selections (owner decision R2; Select2's `selectOnClose` was
+  dropped).
 - New tags can be created inline from the tag select. The create option ("… (new)") is not offered
   when a tag with that name (case-insensitive) is already listed.
 - Dropdowns inside modals open in place, aren't clipped, and keep keyboard focus. Esc closes only
@@ -75,7 +76,7 @@ way on every page.
   matters. It is covered by `queryString.test.js` (run with `node --test`).
 - Per-widget behaviour comes from options: `url`/`params` (evaluated on every request, so they can
   read live form state), `mapResult`, `filterResults` (cross-select exclusion), `multiple`,
-  `create`, `allowClear`, `selectOnClose`, `renderOption`/`renderItem`, and
+  `create`, `allowClear`, `renderOption`/`renderItem`, and
   `onSelect`/`onChange`/`onClear`.
 - Theming: `resources/sass/app.scss` imports Tom Select's Bootstrap 5 SCSS, compiled against the
   CoreUI variables. The `.ts-wrapper`/`.ts-dropdown` rules in `resources/sass/_custom.scss` point
@@ -119,9 +120,7 @@ way on every page.
   loading an existing transaction doesn't make its form dirty.
 - `onClear` fires once whenever the value becomes empty (clear button, removing the last chip, or a
   non-silent `clearSelect()`).
-- `selectOnClose` selects the highlighted option only when the dropdown closes by blur or Tab after
-  a non-empty search, with a finished load and a selectable option. Clicking into the dropdown's
-  own search input doesn't count as a close.
+- Tab or blur closes the dropdown without selecting. Only Enter or a click selects.
 - Any API data used in custom templates must go through Tom Select's `escape`. For example, an
   investment named `<img src=x onerror=…>` is shown as literal text.
 
@@ -130,7 +129,7 @@ way on every page.
 1. The user clicks the category select or tabs into it. The dropdown opens and immediately
    requests `/api/v1/categories` (with payee context) with an empty term.
 2. The user types "gro". After 150 ms the list is replaced with the server's matches.
-3. The user presses Tab. The highlighted category is selected and focus moves on.
+3. The user presses Enter. The highlighted category is selected.
 4. The user presses the clear button. The value empties and the component is notified once.
 
 ### Edge Cases / Constraints
@@ -142,7 +141,7 @@ way on every page.
   changes, because the endpoint changes. A request still pending from the old instance is aborted.
 - Multi-selects force `multiple` on the underlying `<select>`, so Tom Select returns an array value.
 - The create-tag option is listed first in the dropdown. The previous library listed it last. The
-  owner reviews this (spec §15, R1).
+  owner accepted this (spec §15, R1).
 - jQuery remains in the app for DataTables, jsTree and `$.ajax`. The selects don't use it.
 
 ### Dependencies
