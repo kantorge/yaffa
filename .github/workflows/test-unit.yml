@@ -72,13 +72,16 @@ jobs:
       - name: Clear Config
         run: php artisan config:clear
 
+      - name: Grant Parallel Test Databases
+        run: mysql --host=127.0.0.1 --port=${{ job.services.mysql.ports['3306'] }} --user=root --password=secretroot -e "GRANT ALL PRIVILEGES ON \`testing%\`.* TO 'default'@'%';"
+
       - name: Run Migration
         run: php artisan migrate -v
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
       - name: Run Unit Tests
-        run: vendor/bin/pest --colors=never --coverage-clover=coverage.xml --testsuite Unit
+        run: vendor/bin/pest --parallel --colors=never --coverage-clover=coverage.xml --testsuite Unit
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 

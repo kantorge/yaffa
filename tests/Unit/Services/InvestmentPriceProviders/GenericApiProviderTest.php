@@ -68,7 +68,7 @@ class GenericApiProviderTest extends TestCase
 
     public function test_validate_credentials_rejects_invalid_json_fields(): void
     {
-        $provider = new GenericApiProvider($this->createMock(Client::class));
+        $provider = new GenericApiProvider($this->createStub(Client::class));
 
         $this->expectException(PriceProviderException::class);
         $this->expectExceptionMessageIsOrContains('Invalid JSON in headers_json');
@@ -132,7 +132,7 @@ class GenericApiProviderTest extends TestCase
 
     public function test_validate_credentials_allows_placeholders_in_endpoint_url(): void
     {
-        $provider = new GenericApiProvider($this->createMock(Client::class));
+        $provider = new GenericApiProvider($this->createStub(Client::class));
 
         $provider->validateCredentials([
             'endpoint_url' => 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
@@ -146,7 +146,7 @@ class GenericApiProviderTest extends TestCase
 
     public function test_validate_credentials_rejects_localhost_endpoint(): void
     {
-        $provider = new GenericApiProvider($this->createMock(Client::class));
+        $provider = new GenericApiProvider($this->createStub(Client::class));
 
         $this->expectException(PriceProviderException::class);
         $this->expectExceptionMessageIsOrContains('Endpoint URL must resolve to a public IP address.');
