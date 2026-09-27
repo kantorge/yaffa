@@ -12,12 +12,10 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
-use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Services\PayeeCategoryStatsService;
-use App\Services\PayeePersistenceService;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -40,7 +38,6 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
-        private readonly PayeePersistenceService $payeePersistenceService,
     ) {
     }
 
@@ -199,8 +196,8 @@ class AccountEntityController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      *
-     * @return View|RedirectResponse
-     * @uses createPayee
+     * Payees are created in the payee list modal, so their create page redirects there.
+     *
      * @uses createAccount
      */
     public function create(Request $request): View|RedirectResponse
@@ -212,7 +209,11 @@ class AccountEntityController extends Controller implements HasMiddleware
          */
         $this->checkTypeParam($request);
 
-        return $this->{'create' . Str::ucfirst($request->type)}();
+        if ($request->type === 'payee') {
+            return to_route('account-entity.index', ['type' => 'payee', 'create' => 1]);
+        }
+
+        return $this->createAccount();
     }
 
     private function createAccount(): View|RedirectResponse
@@ -255,17 +256,8 @@ class AccountEntityController extends Controller implements HasMiddleware
         ]);
     }
 
-    private function createPayee(): View
-    {
-        JavaScriptFacade::put([
-            'categoryPreferences' => [],
-        ]);
-
-        return view('payees.form');
-    }
-
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created account. Payees are only written through the API.
      */
     public function store(AccountEntityRequest $request): RedirectResponse
     {
@@ -298,32 +290,25 @@ class AccountEntityController extends Controller implements HasMiddleware
             return to_route('account-entity.index', ['type' => 'account']);
         }
 
-        if ($validated['config_type'] === 'payee') {
-            $this->payeePersistenceService->store($request);
-
-            self::addSimpleSuccessMessage(__('Payee added'));
-
-            return to_route('account-entity.index', ['type' => 'payee']);
-        }
-
-        // This redirect is theoretically not used
-        return redirect()->back();
+        abort(Response::HTTP_NOT_FOUND);
     }
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @uses editPayee
-     * @uses editAccount
+     * Payees are edited in the payee list modal, so their edit page redirects there.
      */
-    public function edit(AccountEntity $accountEntity): View
+    public function edit(AccountEntity $accountEntity): View|RedirectResponse
     {
         /**
          * @get("/account-entity/{account_entity}/edit")
          * @name("account-entity.edit")
          * @middlewares("web", "auth", "verified")
          */
-        return $this->{'edit' . Str::ucfirst($accountEntity->config_type)}($accountEntity);
+        if ($accountEntity->config_type === 'payee') {
+            return to_route('account-entity.index', ['type' => 'payee', 'edit' => $accountEntity->id]);
+        }
+
+        return $this->editAccount($accountEntity);
     }
 
     private function editAccount(AccountEntity $accountEntity): View
@@ -348,30 +333,8 @@ class AccountEntityController extends Controller implements HasMiddleware
         );
     }
 
-    private function editPayee(AccountEntity $accountEntity): View
-    {
-        $accountEntity->load(['config', 'categoryPreference.parent']);
-
-        // Simplify the category preference structure and pass it as JavaScript variable
-        $categoryPreference = $accountEntity->categoryPreference->map(fn (Category $item): array => [
-            'id' => $item->id,
-            'full_name' => $item->full_name,
-            'preferred' => (bool) data_get($item, 'pivot.preferred', false),
-        ]);
-        JavaScriptFacade::put([
-            'categoryPreferences' => $categoryPreference->toArray(),
-        ]);
-
-        return view(
-            'payees.form',
-            [
-                'payee' => $accountEntity,
-            ]
-        );
-    }
-
     /**
-     * Update the specified resource in storage.
+     * Update the specified account. Payees are only written through the API.
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
@@ -396,16 +359,7 @@ class AccountEntityController extends Controller implements HasMiddleware
             return to_route('account-entity.index', ['type' => 'account']);
         }
 
-        if ($accountEntity->config_type === 'payee') {
-            $this->payeePersistenceService->update($accountEntity, $request);
-
-            self::addSimpleSuccessMessage(__('Payee updated'));
-
-            return to_route('account-entity.index', ['type' => 'payee']);
-        }
-
-        // This redirect is theoretically not used
-        return redirect()->back();
+        abort(Response::HTTP_NOT_FOUND);
     }
 
     /**

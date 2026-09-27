@@ -133,6 +133,7 @@
 
   import FormModal from '@/shared/ui/FormModal.vue';
   import { __ } from '@/shared/lib/i18n';
+  import { showErrorToast } from '@/shared/lib/toast';
 
   export default {
     components: {
@@ -237,12 +238,20 @@
       show(payeeId = null) {
         this.resetForm();
 
-        if (payeeId !== null) {
-          // Load payee data for editing
-          this.loadPayeeData(payeeId);
+        if (payeeId === null) {
+          this.$refs.formModal.show();
+          return;
         }
 
-        this.$refs.formModal.show();
+        // Open the edit modal only once the payee has loaded, so an unknown or
+        // inaccessible ID never leaves a half-filled modal behind.
+        this.loadPayeeData(payeeId)
+          .then(() => this.$refs.formModal.show())
+          .catch((error) => {
+            console.error('Error loading payee:', error);
+            this.resetForm();
+            showErrorToast(__('Failed to load payee data'));
+          });
       },
 
       initializeCategorySelect() {
@@ -395,7 +404,7 @@
         this.payeeId = payeeId;
 
         // Fetch payee data from API
-        fetch(route('api.v1.payees.show', { accountEntity: payeeId }))
+        return fetch(route('api.v1.payees.show', { accountEntity: payeeId }))
           .then((response) => {
             if (!response.ok) {
               throw new Error('Failed to load payee data');
@@ -440,12 +449,6 @@
             this.form.originalData = JSON.parse(
               JSON.stringify(this.form.data()),
             );
-          })
-          .catch((error) => {
-            console.error('Error loading payee:', error);
-            this.form.errors.set({
-              general: __('Failed to load payee data'),
-            });
           });
       },
 

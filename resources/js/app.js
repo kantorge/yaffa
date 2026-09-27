@@ -111,13 +111,6 @@ if (
 }
 
 if (
-  (current === 'account-entity.create' || current === 'account-entity.edit') &&
-  route().params.type === 'payee'
-) {
-  loadModule('payee/form');
-}
-
-if (
   current === 'transaction.create' &&
   ['standard', 'investment'].includes(route().params.type)
 ) {

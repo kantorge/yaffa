@@ -304,7 +304,7 @@ an empty term than the widget needs), **stop and ask** rather than changing the 
 - [ ] `grep -rniI select2 app resources tests config routes composer.json package.json .github`
       returns nothing
 - [ ] `npm run build` output contains no `select2` string
-- [ ] Payee form unification (FR-8, done in Phase 0b): `resources/js/payee/form.js`,
+- [x] Payee form unification (FR-8, done in Phase 0b): `resources/js/payee/form.js`,
       `resources/views/payees/form.blade.php`, `CategoryListComposer` + its registration,
       `createPayee()`/`editPayee()` removed; no `payees.form` or `payee/form` references left
 

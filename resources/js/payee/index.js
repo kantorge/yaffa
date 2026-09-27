@@ -763,3 +763,21 @@ $('#table_filter_search_text').on('input', function () {
 $('#button-new-payee').on('click', function () {
   app.showNewPayeeModal();
 });
+
+// Deep links from the old payee create/edit routes (?create=1 / ?edit={id}).
+// Drop the parameter so a reload or Back doesn't reopen the modal.
+const deepLinkUrl = new URL(window.location.href);
+const deepLinkEditId = toNumericId(deepLinkUrl.searchParams.get('edit'));
+if (deepLinkUrl.searchParams.get('create') === '1') {
+  app.showNewPayeeModal();
+} else if (deepLinkEditId !== null && deepLinkEditId > 0) {
+  app.showEditPayeeModal(deepLinkEditId);
+}
+if (
+  deepLinkUrl.searchParams.has('create') ||
+  deepLinkUrl.searchParams.has('edit')
+) {
+  deepLinkUrl.searchParams.delete('create');
+  deepLinkUrl.searchParams.delete('edit');
+  window.history.replaceState(window.history.state, '', deepLinkUrl);
+}
