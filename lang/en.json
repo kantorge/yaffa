@@ -1615,5 +1615,7 @@
     "No account": "No account",
     "No account (base currency, account-agnostic)": "No account (base currency, account-agnostic)",
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.",
-    "Failed to load categories": "Failed to load categories"
+    "Failed to load categories": "Failed to load categories",
+    "No results found": "No results found",
+    "Searching...": "Searching..."
 }

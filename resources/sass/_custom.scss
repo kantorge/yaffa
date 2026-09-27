@@ -392,6 +392,56 @@ button[type="submit"] .spinner-border {
     margin-right: 0.25rem;
 }
 
+// Tom Select: the Bootstrap 5 theme hardcodes a few light-mode colours (its Sass colour maths
+// can't take CSS variables), so point them at CoreUI variables to follow data-coreui-theme.
+.ts-wrapper {
+    .ts-control input::placeholder {
+        color: var(--cui-secondary-color);
+    }
+
+    // Selected-value chips (multi)
+    &.multi .ts-control > div {
+        color: var(--cui-body-color);
+        background: var(--cui-tertiary-bg);
+    }
+
+    &.plugin-remove_button .item .remove {
+        border-color: var(--cui-border-color) !important;
+
+        &:hover {
+            background: var(--cui-secondary-bg);
+        }
+    }
+
+    .clear-button {
+        color: var(--cui-secondary-color);
+
+        &:hover {
+            color: var(--cui-body-color);
+        }
+    }
+}
+
+.ts-dropdown {
+    color: var(--cui-body-color);
+    border-color: var(--cui-border-color);
+
+    .dropdown-input {
+        color: var(--cui-body-color);
+        border-color: var(--cui-border-color);
+
+        // Lighter than the control's placeholder, as the Select2 search input was
+        &::placeholder {
+            color: var(--cui-secondary-color);
+            opacity: 0.5;
+        }
+    }
+
+    .no-results {
+        color: var(--cui-secondary-color);
+    }
+}
+
 // Lighter placeholder for Select2 search input
 .select2-container--bootstrap-5 .select2-search__field::placeholder {
     color: var(--cui-secondary-color);

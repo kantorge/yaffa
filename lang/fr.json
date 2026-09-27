@@ -1614,5 +1614,7 @@
     "No account": "Aucun compte",
     "No account (base currency, account-agnostic)": "Aucun compte (devise de base, indépendant du compte)",
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ce modèle couvre trop de périodes (:count) pour être enregistré. Choisissez une date de début plus récente ou une récurrence moins fréquente.",
-    "Failed to load categories": "Échec du chargement des catégories"
+    "Failed to load categories": "Échec du chargement des catégories",
+    "No results found": "Aucun résultat trouvé",
+    "Searching...": "Recherche en cours..."
 }

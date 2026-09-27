@@ -1614,5 +1614,7 @@
     "No account": "Nincs számla",
     "No account (base currency, account-agnostic)": "Nincs számla (alapdeviza, számlától független)",
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ez a minta túl sok időszakot ölel fel (:count) a mentéshez. Válasszon egy későbbi kezdő dátumot vagy ritkábban ismétlődő mintát.",
-    "Failed to load categories": "A kategóriák betöltése sikertelen"
+    "Failed to load categories": "A kategóriák betöltése sikertelen",
+    "No results found": "Nincs találat",
+    "Searching...": "Keresés..."
 }

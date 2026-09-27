@@ -4,6 +4,9 @@
 // Import styles
 @import "@coreui/coreui/scss/coreui";
 
+// Tom Select (compiled against the CoreUI variables above; colours are re-pointed to CoreUI CSS variables in _custom.scss)
+@import "tom-select/dist/scss/tom-select.bootstrap5";
+
 @import "layout";
 
 // Custom CSS
