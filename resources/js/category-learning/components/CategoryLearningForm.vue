@@ -83,10 +83,13 @@
 </template>
 
 <script>
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
-
+  import { markRaw } from 'vue';
   import Form from 'vform';
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
 
   import FormModal from '@/shared/ui/FormModal.vue';
 
@@ -153,6 +156,8 @@
     },
 
     beforeUnmount() {
+      this.categorySelect?.destroy();
+
       if (this.similarLearningsDebounceTimeout) {
         clearTimeout(this.similarLearningsDebounceTimeout);
       }
@@ -169,7 +174,14 @@
           this.form.active = Boolean(learning.active);
 
           if (learning.category) {
-            this.setSelectValue(this.categorySelect, learning.category);
+            setSelected(
+              this.categorySelect,
+              {
+                id: learning.category.id,
+                text: learning.category.full_name || learning.category.name,
+              },
+              { silent: true },
+            );
           }
 
           // The freshly-loaded values are the "clean" baseline for the
@@ -182,63 +194,20 @@
       },
 
       initializeCategorySelect() {
-        this.categorySelect = $(this.$el).find(`#${this.categorySelectId}`);
-
-        this.categorySelect
-          .select2({
-            language: window.YAFFA.userSettings.language,
-            theme: 'bootstrap-5',
-            ajax: {
+        this.categorySelect = markRaw(
+          createRemoteSelect(
+            this.$el.querySelector(`#${this.categorySelectId}`),
+            {
               url: '/api/v1/categories',
-              dataType: 'json',
-              delay: 150,
-              data: function (params) {
-                return {
-                  _token: csrfToken,
-                  q: params.term || '*',
-                  withInactive: true,
-                };
+              params: (term) => ({ q: term || '*', withInactive: true }),
+              mapResult: (item) => ({ id: item.id, text: item.full_name }),
+              placeholder: __('Select category'),
+              onChange: (value) => {
+                this.form.category_id = value ? Number(value) : null;
               },
-              processResults: function (data) {
-                const results = Array.isArray(data) ? data : data.data || [];
-
-                return {
-                  results: results.map(function (item) {
-                    return {
-                      id: item.id,
-                      text: item.full_name,
-                    };
-                  }),
-                };
-              },
-              cache: true,
             },
-            selectOnClose: false,
-            placeholder: __('Select category'),
-            allowClear: true,
-            dropdownParent: $('#' + this.id),
-          })
-          .on('select2:select select2:unselect', () => {
-            const selectedValue = this.categorySelect.val();
-            this.form.category_id =
-              selectedValue === null || selectedValue === ''
-                ? null
-                : Number(selectedValue);
-          });
-      },
-
-      setSelectValue(selectElement, category) {
-        if (!selectElement || !category) {
-          return;
-        }
-
-        const option = new Option(
-          category.full_name || category.name,
-          category.id,
-          true,
-          true,
+          ),
         );
-        selectElement.append(option).trigger('change');
       },
 
       resetForm() {
@@ -258,7 +227,7 @@
         this.similarLearningsRequestId++;
 
         if (this.categorySelect) {
-          this.categorySelect.empty().val(null).trigger('change');
+          clearSelect(this.categorySelect, { silent: true });
         }
       },
 
