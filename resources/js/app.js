@@ -142,6 +142,23 @@ if (document.readyState === 'loading') {
   initializeColorMode();
 }
 
+// Clear button of the shared sidebar table search (tablefilter-sidebar-search.blade.php).
+// Firing input/keyup lets whatever search listener the page registered redraw its table.
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('[data-table-search-clear]')) {
+    return;
+  }
+
+  const input = document.getElementById('table_filter_search_text');
+  if (!input) {
+    return;
+  }
+
+  input.value = '';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+});
+
 // The "pre-render" class (see master.blade.php and _layout.scss) disables the sidebar/
 // wrapper layout transition for the very first style/layout pass, since geometry other CSS
 // (and CoreUI's own JS) derives from .sidebar-family elements isn't stable until then. Two

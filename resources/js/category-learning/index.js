@@ -358,11 +358,6 @@ const buildTable = (rows) => {
     window.table.search($(this).val()).draw();
   });
 
-  $('#table_filter_search_text_clear').on('click', function () {
-    $('#table_filter_search_text').val('');
-    window.table.search('').draw();
-  });
-
   const categoryFilterSelect = $('#table_filter_category');
   categoryFilterSelect.select2({
     theme: 'bootstrap-5',
