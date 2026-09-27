@@ -45,6 +45,7 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, dom, fileinfo, mysql
           coverage: xdebug
+          ini-values: xdebug.max_nesting_level=8192
         env:
           fail-fast: true
 

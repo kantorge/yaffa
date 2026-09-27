@@ -113,7 +113,7 @@
         ],
         "coverage": [
             "@putenv SAIL_XDEBUG_MODE=coverage",
-            "bash -c './vendor/bin/sail artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
+            "bash -c './vendor/bin/sail php -d xdebug.max_nesting_level=8192 artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
         ],
         "setup": [
             "composer install",
