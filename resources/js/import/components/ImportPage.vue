@@ -98,6 +98,7 @@
   import Swal from 'sweetalert2';
   import axios from 'axios';
   import { __ } from '@/shared/lib/i18n';
+  import { showWarningToast } from '@/shared/lib/toast';
   import ImportSourceSelector from './ImportSourceSelector.vue';
   import ImportUploadCard from './ImportUploadCard.vue';
   import ImportDraftTable from './ImportDraftTable.vue';
@@ -371,6 +372,12 @@
           this.parseWarnings = Array.isArray(response.data?.warnings)
             ? response.data.warnings
             : [];
+
+          if (this.drafts.length === 0) {
+            showWarningToast(
+              __('No transactions were found in the uploaded file.'),
+            );
+          }
 
           if (this.sourceType === 'csv' && this.selectedProfileId) {
             localStorage.setItem(

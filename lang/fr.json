@@ -762,6 +762,7 @@
     "No data rows to preview": "Aucune ligne de données à prévisualiser",
     "No database match found": "Aucune correspondance dans la base de données",
     "No draft data available to finalize.": "Aucune donnée préliminaire disponible pour finalisation.",
+    "No transactions were found in the uploaded file.": "Aucune transaction n'a été trouvée dans le fichier téléchargé.",
     "No drafts parsed yet. Upload a file to begin review.": "Aucun brouillon analysé pour l'instant. Téléchargez un fichier pour commencer la révision.",
     "No email content available": "Aucun contenu de courriel disponible",
     "No existing AI provider configuration found": "Aucune configuration de fournisseur d'IA existante trouvée",

@@ -762,6 +762,7 @@
     "No data rows to preview": "Nincsenek előnézeti adatsorok",
     "No database match found": "Nem található adatbázis-egyezés",
     "No draft data available to finalize.": "Nincsenek véglegesíthető vázlatadatok.",
+    "No transactions were found in the uploaded file.": "A feltöltött fájlban nem található tranzakció.",
     "No drafts parsed yet. Upload a file to begin review.": "Nincsenek még feldolgozott tételek. Töltsön fel egy fájlt az áttekintés megkezdéséhez.",
     "No email content available": "Nincs elérhető e-mail tartalom",
     "No existing AI provider configuration found": "Nem található meglévő AI-szolgáltató konfiguráció",
