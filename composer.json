@@ -60,8 +60,7 @@
         "pestphp/pest": "^5.2",
         "pestphp/pest-plugin-browser": "^5.0",
         "pestphp/pest-plugin-laravel": "^5.0",
-        "phpunit/phpunit": "^13.0",
-        "roquie/laravel-dusk-select2": "dev-custom_package"
+        "phpunit/phpunit": "^13.0"
     },
     "config": {
         "discard-changes": true,
@@ -132,11 +131,5 @@
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/kantorge/laravel-dusk-select2"
-        }
-    ],
     "minimum-stability": "stable"
 }

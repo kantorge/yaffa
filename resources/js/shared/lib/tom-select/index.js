@@ -10,7 +10,7 @@ TomSelect.define('clear_button', clearButton);
 TomSelect.define('dropdown_input', dropdownInput);
 TomSelect.define('remove_button', removeButton);
 
-// Select2's `delay: 150`
+// Debounce for search requests
 const REQUEST_DELAY_MS = 150;
 
 // Set while setSelected()/clearSelect() run with `silent: true`, so the item_add/change listeners
@@ -30,14 +30,14 @@ const withQuery = (url, params) => {
 
 /**
  * Create a Tom Select instance that searches a remote endpoint (the shared replacement for the
- * `$(el).select2({ ajax: ... })` pattern).
+ * jQuery-plugin remote select pattern).
  *
  * - Every dropdown open and every keystroke (debounced) fetches again: there is no query cache,
  *   because several selects filter by state that changes at runtime.
  * - The dropdown shows exactly the last server response, in server order (no client re-scoring).
  * - The underlying <select> stays in sync, so form submission and `select.value` keep working.
  * - The dropdown stays inside the control's wrapper (Tom Select's default), so inside a modal it is
- *   within the modal's focus trap without a Select2-style `dropdownParent`.
+ *   within the modal's focus trap without a separate `dropdownParent`.
  *
  * @param {HTMLSelectElement|string} element
  * @param {Object} options
@@ -56,7 +56,7 @@ const withQuery = (url, params) => {
  *   Tom Select's `escape`, which must wrap every piece of API data.
  * @param {function(Object, function): string} [options.renderItem] Selected item HTML, as renderOption.
  * @param {boolean} [options.selectOnClose] Select the highlighted option when the dropdown closes by
- *   blur or Tab after a non-empty search (Select2's `selectOnClose`).
+ *   blur or Tab after a non-empty search.
  * @param {function(Object): void} [options.onSelect] Called with the selected item's data when an
  *   item is added by the user or by a non-silent setSelected().
  * @param {function(): void} [options.onClear] Called once whenever the value becomes empty (clear
@@ -195,7 +195,7 @@ export function createRemoteSelect(
     return { query, tokens: [], items, total: items.length };
   });
 
-  // Opening with an empty search runs a request, as Select2 did
+  // Opening with an empty search runs a request (e.g. to show the most-used items)
   ts.on('dropdown_open', () => {
     ts.load(ts.inputValue());
     ts.refreshOptions(false);
@@ -250,7 +250,7 @@ export function createRemoteSelect(
 }
 
 /**
- * Add option(s) and select them (replaces Select2's `append(new Option(...)).trigger(...)`).
+ * Add option(s) and select them.
  * Unless silent, this runs the same onSelect/onChange path a user selection runs.
  *
  * @param {TomSelect} ts

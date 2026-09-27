@@ -1,5 +1,5 @@
 /**
- * Serialize flat request params the way Select2's `$.ajax` call did.
+ * Serialize flat request params the way the previous jQuery `$.ajax`-based selects did.
  *
  * Backends branch on whether a key is present (e.g. `GET /api/v1/accounts` without `q` returns
  * the most-used accounts, with `q` - even empty - it searches), so this is behaviour, not style:

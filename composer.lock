@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "37c2f6b9f86ac1329b26befc9b464ee6",
+    "content-hash": "87a18477723e04f8f3009dc1ada71060",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -14468,52 +14468,6 @@
             "time": "2026-05-16T17:55:38+00:00"
         },
         {
-            "name": "roquie/laravel-dusk-select2",
-            "version": "dev-custom_package",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/kantorge/laravel-dusk-select2.git",
-                "reference": "9eaa2959a9f0afa4b42111640068ba703d79b6dc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/9eaa2959a9f0afa4b42111640068ba703d79b6dc",
-                "reference": "9eaa2959a9f0afa4b42111640068ba703d79b6dc",
-                "shasum": ""
-            },
-            "require-dev": {
-                "laravel/dusk": "^6.19",
-                "php": ">=8.1",
-                "phpunit/phpunit": "^9.5",
-                "symfony/var-dumper": "^5.4"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "src/macro.php"
-                ]
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Laravel\\Dusk\\Select2\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "roquie",
-                    "email": "roquie0@gmail.com"
-                }
-            ],
-            "description": "Select2.js support for the Laravel Dusk testing.",
-            "support": {
-                "source": "https://github.com/kantorge/laravel-dusk-select2/tree/custom_package"
-            },
-            "time": "2026-08-29T12:03:55+00:00"
-        },
-        {
             "name": "sebastian/cli-parser",
             "version": "5.0.1",
             "source": {
@@ -15925,9 +15879,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "roquie/laravel-dusk-select2": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

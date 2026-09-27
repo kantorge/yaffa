@@ -430,7 +430,7 @@ it('loads all details of the source transaction into the clone form', function (
 
     $page = visit(route('transaction.open', ['action' => 'clone', 'transaction' => $transaction->id]));
 
-    // The Dusk test had these account assertions commented out (Select2 made them unreliable)
+    // The Dusk test had these account assertions commented out (the old select widget made them unreliable)
     $this->assertTomSelectValues($page, 'account_from', [$transaction->config->account_from_id]);
     $this->assertTomSelectValues($page, 'account_to', [$transaction->config->account_to_id]);
 

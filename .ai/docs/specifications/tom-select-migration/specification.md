@@ -289,21 +289,21 @@ an empty term than the widget needs), **stop and ask** rather than changing the 
 
 ## 9. Removal Checklist (G5)
 
-- [ ] `package.json`: `select2`, `select2-bootstrap-5-theme` removed; lockfile updated
-- [ ] `composer.json`: `roquie/laravel-dusk-select2` removed from `require-dev`, and the
+- [x] `package.json`: `select2`, `select2-bootstrap-5-theme` removed; lockfile updated
+- [x] `composer.json`: `roquie/laravel-dusk-select2` removed from `require-dev`, and the
       `repositories` VCS entry for `kantorge/laravel-dusk-select2` removed; lockfile updated
-- [ ] `resources/js/shared/lib/select2/` deleted
-- [ ] `resources/js/shared/lib/i18n/select2.js` deleted, and its re-export removed from
+- [x] `resources/js/shared/lib/select2/` deleted
+- [x] `resources/js/shared/lib/i18n/select2.js` deleted, and its re-export removed from
       `shared/lib/i18n/index.js`
-- [ ] Select2 imports removed from `resources/sass/app.scss`; Select2 blocks removed from
+- [x] Select2 imports removed from `resources/sass/app.scss`; Select2 blocks removed from
       `resources/sass/_custom.scss`
-- [ ] `tests/DuskTestCase.php`: `getSelect2Values`, `getSelect2ValueCount`,
+- [x] `tests/DuskTestCase.php`: `getSelect2Values`, `getSelect2ValueCount`,
       `waitForSelect2ValueCount`, `assertSelect2Values`, `assertSelect2HasNoSelection` removed
-- [ ] The six Dusk test files listed in §8 deleted (after their Pest equivalents pass)
-- [ ] Leftover `tests/Browser/console/*` logs for deleted tests removed if tracked
-- [ ] `grep -rniI select2 app resources tests config routes composer.json package.json .github`
+- [x] The six Dusk test files listed in §8 deleted (after their Pest equivalents pass)
+- [x] Leftover `tests/Browser/console/*` logs for deleted tests removed if tracked
+- [x] `grep -rniI select2 app resources tests config routes composer.json package.json .github`
       returns nothing
-- [ ] `npm run build` output contains no `select2` string
+- [x] `npm run build` output contains no `select2` string
 - [x] Payee form unification (FR-8, done in Phase 0b): `resources/js/payee/form.js`,
       `resources/views/payees/form.blade.php`, `CategoryListComposer` + its registration,
       `createPayee()`/`editPayee()` removed; no `payees.form` or `payee/form` references left
