@@ -119,8 +119,8 @@
           {{ __('Category') }}
         </span>
         <select
-          v-model.number="categoryIdData"
           class="form-select category"
+          :data-testid="'transaction-item-category-' + id"
         ></select>
       </div>
       <div class="col-12 col-sm-2 form-group">
@@ -151,10 +151,8 @@
           {{ __('Tags') }}
         </span>
         <select
-          v-model="tagsData"
           class="form-select tag"
-          multiple="multiple"
-          data-width="100%"
+          :data-testid="'transaction-item-tags-' + id"
         ></select>
       </div>
       <div
@@ -198,9 +196,13 @@
 <script>
   import Decimal from 'decimal.js';
   import MathInput from '@/shared/ui/form/MathInput.vue';
+  import { markRaw } from 'vue';
   import { __ } from '@/shared/lib/i18n';
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
 
   export default {
     components: {
@@ -228,10 +230,6 @@
         type: [Number, null],
         default: null,
       },
-      dropdownParentSelector: {
-        type: String,
-        default: 'body',
-      },
       confidenceThreshold: {
         type: Number,
         default: 0.7,
@@ -252,7 +250,6 @@
       return {
         categoryIdData: this.category_id,
         amountData: this.amount,
-        tagsData: this.tags,
         commentData: this.comment,
         isRecommendationAccepted: false,
         suggestionRemoved: false,
@@ -370,63 +367,35 @@
     },
 
     mounted() {
-      // Add select2 functionality to category
-      let elementCategory = $(
-        '#transaction_item_' + this.id + ' select.category',
+      this.categorySelect = markRaw(
+        createRemoteSelect(this.$el.querySelector('select.category'), {
+          url: '/api/v1/categories',
+          params: (term) => ({ q: term || undefined, payee: this.payee }),
+          mapResult: (item) => ({ id: item.id, text: item.full_name }),
+          placeholder: __('Select category'),
+          selectOnClose: true,
+          onChange: (value) => {
+            this.categoryIdData = value ? Number(value) : null;
+
+            // Track if user is changing from recommendation
+            if (this.recommended_category_id) {
+              this.isRecommendationAccepted =
+                this.categoryIdData === this.recommended_category_id;
+            }
+
+            if (!value) {
+              this.learnRecommendation = false;
+              this.onLearnRecommendationChange();
+            }
+
+            this.$emit('update:category_id', this.categoryIdData);
+          },
+        }),
       );
 
-      elementCategory
-        .select2({
-          language: window.YAFFA.userSettings.language,
-          theme: 'bootstrap-5',
-          ajax: {
-            url: '/api/v1/categories',
-            dataType: 'json',
-            delay: 150,
-            data: (params) => {
-              return {
-                q: params.term,
-                payee: this.payee,
-              };
-            },
-            processResults: (data) => ({
-              results: data.map((item) => ({
-                id: item.id,
-                text: item.full_name,
-              })),
-            }),
-            cache: true,
-          },
-          selectOnClose: true,
-          placeholder: __('Select category'),
-          allowClear: true,
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select select2:unselect', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          // Track if user is changing from recommendation
-          const newValue = event.target.value;
-          if (this.recommended_category_id) {
-            this.isRecommendationAccepted =
-              newValue == this.recommended_category_id;
-          }
-
-          if (!newValue) {
-            this.learnRecommendation = false;
-            this.onLearnRecommendationChange();
-          }
-
-          this.$emit('update:category_id', event.target.value);
-        });
-
-      // Load selected item for category select2
       // Prefer the saved category when editing; only auto-load recommendation
-      // when there is no existing category.
+      // when there is no existing category. Not silent: the change handler
+      // above emits the value and tracks the recommendation state.
       const shouldAutoLoadRecommendation =
         !this.category_id &&
         this.recommended_category_id &&
@@ -434,127 +403,45 @@
           (this.match_type === 'ai' &&
             this.confidence_score >= this.confidenceThreshold));
 
-      const canPreloadCategory =
-        this.category_id && this.category_full_name && !this.suggestionRemoved;
-
-      const canPreloadRecommendation =
-        shouldAutoLoadRecommendation &&
-        this.recommended_category_full_name &&
-        !this.suggestionRemoved;
-
-      const preloadCategory = (category) => {
-        const option = new Option(category.full_name, category.id, true, true);
-        elementCategory.append(option).trigger('change');
-
-        // Manually trigger the `select2:select` event
-        elementCategory.trigger({
-          type: 'select2:select',
-          params: {
-            data: category,
-          },
-        });
-      };
-
-      if (canPreloadCategory) {
-        preloadCategory({
+      if (this.category_id && this.category_full_name) {
+        setSelected(this.categorySelect, {
           id: this.category_id,
-          full_name: this.category_full_name,
+          text: this.category_full_name,
         });
-      } else if (canPreloadRecommendation) {
-        preloadCategory({
+      } else if (
+        shouldAutoLoadRecommendation &&
+        this.recommended_category_full_name
+      ) {
+        setSelected(this.categorySelect, {
           id: this.recommended_category_id,
-          full_name: this.recommended_category_full_name,
+          text: this.recommended_category_full_name,
         });
-
-        // Track if we're using the recommendation and emit the category_id
-        this.isRecommendationAccepted = true;
-        this.categoryIdData = this.recommended_category_id;
-        // Emit the category_id so parent component tracks it
-        this.$emit('update:category_id', this.recommended_category_id);
       }
 
-      // Add select2 functionality to tag
-      let elementTags = $('#transaction_item_' + this.id + ' select.tag');
-      elementTags
-        .select2({
-          tags: true,
-          createTag: function (params) {
-            return {
-              id: params.term,
-              text: params.term,
-              newOption: true,
-            };
-          },
-          insertTag: function (data, tag) {
-            // Insert the tag at the end of the results
-            data.push(tag);
-          },
-          templateResult: function (data) {
-            let $result = $('<span></span>');
-
-            $result.text(data.text);
-
-            if (data.newOption) {
-              $result.append(' <em>(new)</em>');
-            }
-
-            return $result;
-          },
-          ajax: {
-            url: '/api/v1/tags',
-            dataType: 'json',
-            delay: 150,
-            processResults: function (data) {
-              return {
-                results: data,
-              };
-            },
-            cache: true,
-          },
+      this.tagSelect = markRaw(
+        createRemoteSelect(this.$el.querySelector('select.tag'), {
+          url: '/api/v1/tags',
+          params: (term) => ({ q: term || undefined }),
+          multiple: true,
+          create: true,
           placeholder: __('Select tag(s)'),
-          allowClear: true,
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select select2:unselect', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
+          // Existing tags are sent as their ID, new ones as the typed text
+          onChange: (values) => this.$emit('update:tags', values),
+        }),
+      );
 
-          this.$emit('update:tags', $(e.target).select2('val'));
-        });
-
-      // Add already existing tags as labels
+      // Not silent: replaces the parent's {id, name} tag objects with the submitted value format
       if (this.tags.length > 0) {
-        let data = [];
-        this.tags.forEach(function (tag) {
-          data.push({
-            id: tag.id,
-            name: tag.name,
-          });
-
-          const option = new Option(tag.name, tag.id, true, true);
-          elementTags.append(option).trigger('change');
-        });
-
-        // Manually trigger the `select2:select` event
-        elementTags.trigger({
-          type: 'select2:select',
-          params: {
-            data: data,
-          },
-        });
+        setSelected(
+          this.tagSelect,
+          this.tags.map((tag) => ({ id: tag.id, text: tag.name })),
+        );
       }
     },
 
     beforeUnmount() {
-      $('#transaction_item_' + this.id + ' select.category')
-        .off()
-        .select2('destroy');
-      $('#transaction_item_' + this.id + ' select.tag')
-        .off()
-        .select2('destroy');
+      this.categorySelect?.destroy();
+      this.tagSelect?.destroy();
     },
 
     methods: {
@@ -607,11 +494,7 @@
         // Emit the category change to parent component
         this.$emit('update:category_id', null);
 
-        // Clear the select2 selection
-        const $category = $(
-          '#transaction_item_' + this.id + ' select.category',
-        );
-        $category.val(null).trigger('change');
+        clearSelect(this.categorySelect, { silent: true });
       },
 
       /**
@@ -631,41 +514,12 @@
           this.recommended_category_id &&
           this.recommended_category_full_name
         ) {
-          this.categoryIdData = this.recommended_category_id;
-          this.isRecommendationAccepted = true;
-
-          // Re-initialize select2 with the category
-          const $category = $(
-            '#transaction_item_' + this.id + ' select.category',
-          );
-
-          // Clear existing options first
-          $category.empty();
-
-          const option = new Option(
-            this.recommended_category_full_name,
-            this.recommended_category_id,
-            true,
-            true,
-          );
-          $category.append(option).trigger('change');
-
-          // Manually trigger the select2:select event
-          $category.trigger({
-            type: 'select2:select',
-            params: {
-              data: {
-                id: this.recommended_category_id,
-                name: this.recommended_category_full_name,
-              },
-            },
+          // Not silent: the change handler emits the category and marks the recommendation accepted
+          clearSelect(this.categorySelect, { silent: true });
+          setSelected(this.categorySelect, {
+            id: this.recommended_category_id,
+            text: this.recommended_category_full_name,
           });
-
-          // Emit the category change
-          this.$emit('update:category_id', this.recommended_category_id);
-
-          // Clear the "don't learn" flag - learning is enabled when accepting
-          this.onLearnRecommendationChange();
         }
       },
 

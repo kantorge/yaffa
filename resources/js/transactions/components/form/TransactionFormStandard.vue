@@ -1,5 +1,5 @@
 <template>
-  <div id="transactionFormStandard">
+  <div id="transactionFormStandard" :data-loaded="formLoaded">
     <AlertErrors
       :form="form"
       message="There were some problems with your input."
@@ -265,11 +265,7 @@
                     {{ accountFromFieldLabel }}
                   </span>
                   <div id="account_from_container" class="input-group">
-                    <select
-                      id="account_from"
-                      v-model="form.config.account_from_id"
-                      class="form-select"
-                    ></select>
+                    <select id="account_from" class="form-select"></select>
                     <button
                       v-if="form.transaction_type === 'deposit' && !fromModal"
                       class="btn btn-success"
@@ -293,11 +289,7 @@
                     {{ accountToFieldLabel }}
                   </span>
                   <div id="account_to_container" class="input-group">
-                    <select
-                      id="account_to"
-                      v-model="form.config.account_to_id"
-                      class="form-select"
-                    ></select>
+                    <select id="account_to" class="form-select"></select>
                     <button
                       v-if="
                         form.transaction_type === 'withdrawal' && !fromModal
@@ -578,8 +570,8 @@
     getCurrencySymbol,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
+  import { markRaw } from 'vue';
+  import { createRemoteSelect, setSelected } from '@/shared/lib/tom-select';
 
   import { confirmAction } from '@/shared/lib/confirm';
 
@@ -645,6 +637,9 @@
 
     data() {
       let data = {};
+
+      // True once the presets have settled and the isDirty() baseline is taken (see markFormClean())
+      data.formLoaded = false;
 
       // Storing all data and references about source account or payee
       // Set as withdrawal by default
@@ -965,6 +960,8 @@
       },
 
       transaction(transaction) {
+        this.formLoaded = false;
+
         // TODO: consider using form.update()
         this.form.reset();
 
@@ -1015,93 +1012,15 @@
     },
 
     mounted() {
-      // Account FROM dropdown functionality
-      $('#account_from')
-        .select2(this.getAccountSelectConfig('from'))
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
+      this.accountSelects = {};
+      this.initializeAccountSelect('from');
+      this.initializeAccountSelect('to');
 
-          if (this.getAccountType('from') === 'account') {
-            $.ajax({
-              url: '/api/v1/accounts/' + e.params.data.id,
-              data: {
-                _token: this.csrfToken,
-              },
-            }).done((data) => {
-              this.from.account_currency = data.config.currency;
-            });
-          } else {
-            $.ajax({
-              url: '/api/v1/payees/' + e.params.data.id,
-              data: {
-                _token: this.csrfToken,
-              },
-            }).done((data) => {
-              if (data.config.category) {
-                this.payeeCategory.id = data.config.category.id;
-                this.payeeCategory.text = data.config.category.full_name;
-              }
-            });
-          }
-        })
-        .on('select2:unselect', () => {
-          this.resetAccount('from');
-          if (this.getAccountType('from') === 'payee') {
-            this.resetPayee();
-          }
-        });
-
-      // Load default value for account FROM, based on transaction type
+      // Load default values for the accounts, based on transaction type
       const accountFromReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_from_id,
         'from',
       );
-
-      // Account TO dropdown functionality
-      $('#account_to')
-        .select2(this.getAccountSelectConfig('to'))
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          if (this.getAccountType('to') === 'account') {
-            $.ajax({
-              url: '/api/v1/accounts/' + e.params.data.id,
-              data: {
-                _token: this.csrfToken,
-              },
-            }).done((data) => {
-              this.to.account_currency = data.config.currency;
-            });
-          } else if (this.getAccountType('to') === 'payee') {
-            $.ajax({
-              url: '/api/v1/payees/' + e.params.data.id,
-              data: {
-                _token: this.csrfToken,
-              },
-            }).done((data) => {
-              if (data.config.category) {
-                this.payeeCategory.id = data.config.category.id;
-                this.payeeCategory.text = data.config.category.full_name;
-              }
-            });
-          }
-        })
-        .on('select2:unselect', () => {
-          this.resetAccount('to');
-          if (this.getAccountType('to') === 'payee') {
-            this.resetPayee();
-          }
-        });
-
-      // Load default value for account TO
       const accountToReady = this.getDefaultAccountDetails(
         this.transaction?.config?.account_to_id,
         'to',
@@ -1121,8 +1040,8 @@
     },
 
     beforeUnmount() {
-      $('#account_from').off().select2('destroy');
-      $('#account_to').off().select2('destroy');
+      this.accountSelects.from?.destroy();
+      this.accountSelects.to?.destroy();
     },
 
     methods: {
@@ -1287,6 +1206,7 @@
       // Snapshot the current state as the "clean" baseline isDirty() compares against.
       markFormClean() {
         this.form.update(this.form.data());
+        this.formLoaded = true;
       },
 
       normalizeTransactionItem(rawItem) {
@@ -1358,11 +1278,7 @@
             this.resetPayee();
           }
 
-          $('#account_from')
-            .val(null)
-            .trigger('change')
-            .select2('destroy')
-            .select2(this.getAccountSelectConfig('from'));
+          this.initializeAccountSelect('from');
         }
 
         // Reassign account TO functionality, if changed
@@ -1372,11 +1288,7 @@
             this.resetPayee();
           }
 
-          $('#account_to')
-            .val(null)
-            .trigger('change')
-            .select2('destroy')
-            .select2(this.getAccountSelectConfig('to'));
+          this.initializeAccountSelect('to');
         }
 
         // Remove all items, if transaction type is transfer
@@ -1450,52 +1362,71 @@
         return __('Select payee');
       },
 
-      getAccountSelectConfig(type) {
-        let otherType = type === 'from' ? 'to' : 'from';
+      // (Re)create the account/payee select of one side: its endpoint, placeholder and
+      // params depend on the transaction type, so a type change recreates it (empty)
+      initializeAccountSelect(type) {
+        const otherType = type === 'from' ? 'to' : 'from';
 
-        return {
-          theme: 'bootstrap-5',
-          language: window.YAFFA.userSettings.language,
-          ajax: {
+        this.accountSelects[type]?.destroy();
+        this.accountSelects[type] = markRaw(
+          createRemoteSelect(document.getElementById('account_' + type), {
             url: this.getAccountApiUrl(type),
-            dataType: 'json',
-            delay: 150,
-            data: (params) => {
-              return {
-                _token: this.csrfToken,
-                q: params.term,
-                transaction_type: this.form.transaction_type,
-                account_type: type,
-                account_entity_id: this.accountId,
-              };
-            },
-            processResults: (data) => {
-              // Exclude account that is selected in other account select
-              let otherAccountId =
+            params: (term) => ({
+              q: term || undefined,
+              transaction_type: this.form.transaction_type,
+              account_type: type,
+              account_entity_id: this.accountId,
+            }),
+            mapResult: (account) => ({ id: account.id, text: account.name }),
+            // Exclude account that is selected in other account select
+            filterResults: (results) => {
+              const otherAccountId =
                 this.form.config['account_' + otherType + '_id'];
-              if (otherAccountId) {
-                data = data.filter((item) => item.id != otherAccountId);
-              }
 
-              return {
-                results: data.map((account) => {
-                  return {
-                    id: account.id,
-                    text: account.name,
-                  };
-                }),
-              };
+              return otherAccountId
+                ? results.filter((item) => item.id != otherAccountId)
+                : results;
             },
-            cache: true,
-          },
-          selectOnClose: false,
-          // Set placeholder based on type parameter and transaction type
-          placeholder: this.getPlaceholder(type),
-          allowClear: true,
-          width: 'resolve',
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(this.dropdownParentSelector),
-        };
+            placeholder: this.getPlaceholder(type),
+            onSelect: (item) => this.onAccountSelected(type, item.id),
+            onClear: () => {
+              this.resetAccount(type);
+              if (this.getAccountType(type) === 'payee') {
+                this.resetPayee();
+              }
+            },
+          }),
+        );
+      },
+
+      // Store the selected account/payee and load the details that depend on it. Returns the
+      // details request, so presets can wait for it before the form is treated as loaded.
+      onAccountSelected(type, id) {
+        this.form.config['account_' + type + '_id'] = Number(id);
+
+        if (this.getAccountType(type) === 'account') {
+          return window.axios.get('/api/v1/accounts/' + id).then(({ data }) => {
+            this[type].account_currency = data.config.currency;
+          });
+        }
+
+        return window.axios.get('/api/v1/payees/' + id).then(({ data }) => {
+          if (data.config.category) {
+            this.payeeCategory.id = data.config.category.id;
+            this.payeeCategory.text = data.config.category.full_name;
+          }
+        });
+      },
+
+      // Select an account/payee from code, with the same side effects as a user selection
+      presetAccount(type, id, name) {
+        setSelected(
+          this.accountSelects[type],
+          { id, text: name },
+          { silent: true },
+        );
+
+        return this.onAccountSelected(type, id);
       },
 
       getDefaultAccountDetails(account_entity_id, type) {
@@ -1507,20 +1438,11 @@
           return;
         }
 
-        const selector = '#account_' + type;
-
-        // Returned so callers can wait for the select2 population (and the
-        // form field sync it triggers via a dispatched 'change' event) to
+        // Returned so callers can wait for the preset and its detail request to
         // settle before treating the form as loaded.
-        return $.ajax({
-          url: this.getAccountApiUrl(type) + '/' + account_entity_id,
-          data: {
-            _token: this.csrfToken,
-          },
-        }).done((data) => {
-          // Create the option and append to Select2
-          this.addNewItemToSelect(selector, data.id, data.name);
-        });
+        return window.axios
+          .get(this.getAccountApiUrl(type) + '/' + account_entity_id)
+          .then(({ data }) => this.presetAccount(type, data.id, data.name));
       },
 
       onCancel() {
@@ -1609,27 +1531,11 @@
           return;
         }
 
-        const accountSelector =
-          this.form.transaction_type === 'withdrawal'
-            ? '#account_to'
-            : '#account_from';
-
-        this.addNewItemToSelect(accountSelector, payee.id, payee.name);
-      },
-
-      addNewItemToSelect(selector, id, name) {
-        $(selector)
-          .append(new Option(name, id, true, true))
-          .trigger('change')
-          .trigger({
-            type: 'select2:select',
-            params: {
-              data: {
-                id: id,
-                name: name,
-              },
-            },
-          });
+        this.presetAccount(
+          this.form.transaction_type === 'withdrawal' ? 'to' : 'from',
+          payee.id,
+          payee.name,
+        );
       },
 
       // Sync the standard schedule start date to the cloned schedule end date

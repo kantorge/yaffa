@@ -1617,5 +1617,6 @@
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.",
     "Failed to load categories": "Failed to load categories",
     "No results found": "No results found",
-    "Searching...": "Searching..."
+    "Searching...": "Searching...",
+    "(new)": "(new)"
 }

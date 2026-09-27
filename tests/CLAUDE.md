@@ -61,6 +61,8 @@ be run with `pest`/`artisan test` — plain `vendor/bin/phpunit` can't load them
 - Groups: `->group('critical')` / `->group('extended')`
 - Prefer IDs and `data-testid` selectors; no `sleep()`/`wait(n)`/`retry()` — wait on a condition
 - Mirror the Dusk layout (`tests/PEST/Pages/...`); shared helpers go in `tests/PEST/Support/`
+- Each browser test's own closure must call `visit(` (the plugin scans the closure source for it to start
+  Playwright and the in-process server). A helper may take the page, but must not be the only place `visit()` is called
 
 ## Dusk-Specific (legacy)
 

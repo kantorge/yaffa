@@ -31,7 +31,7 @@ abstract class BrowserTestCase extends TestCase
     /**
      * Wait until the given JavaScript expression is truthy on the page (Pest browser assertions don't wait).
      */
-    protected function waitUntil(object $page, string $expression, int $timeoutMs = 5000): void
+    public function waitUntil(object $page, string $expression, int $timeoutMs = 5000): void
     {
         $page->script(<<<JS
             () => new Promise((resolve, reject) => {
@@ -46,13 +46,16 @@ abstract class BrowserTestCase extends TestCase
                 check();
             })
         JS);
+
+        // A wait that times out fails the test, so a satisfied one is an assertion
+        $this->addToAssertionCount(1);
     }
 
     /**
      * Open the Tom Select built on <select id="$selectId">, type $search into its dropdown input, click the
      * option whose label is exactly $label, and wait until it is the value.
      */
-    protected function chooseTomSelectOption(object $page, string $selectId, string $search, string $label): void
+    public function chooseTomSelectOption(object $page, string $selectId, string $search, string $label): void
     {
         $this->searchTomSelect($page, $selectId, $search);
 
@@ -68,10 +71,15 @@ abstract class BrowserTestCase extends TestCase
     /**
      * Open the dropdown, type $search into its search input, and wait until the results are shown.
      */
-    protected function searchTomSelect(object $page, string $selectId, string $search): void
+    public function searchTomSelect(object $page, string $selectId, string $search): void
     {
-        $page->click("#{$selectId} + .ts-wrapper .ts-control")
-            ->type("#{$selectId} + .ts-wrapper .dropdown-input", $search);
+        // A multi select stays open after a pick; clicking its control again could hit a chip's remove button
+        if (! $page->script("() => document.querySelector('#{$selectId}').tomselect.isOpen")) {
+            $page->click("#{$selectId} + .ts-wrapper .ts-control");
+        }
+        // Type only once the dropdown is open: opening it resets the search input
+        $this->waitUntil($page, "document.querySelector('#{$selectId}').tomselect.isOpen");
+        $page->type("#{$selectId} + .ts-wrapper .dropdown-input", $search);
         $this->waitUntil($page, "(() => { const ts = document.querySelector('#{$selectId}').tomselect; return ts.isOpen && !ts.loading; })()");
     }
 
@@ -81,7 +89,7 @@ abstract class BrowserTestCase extends TestCase
      *
      * @param  array<int, int|string>  $expected
      */
-    protected function assertTomSelectValues(object $page, string $selectId, array $expected): void
+    public function assertTomSelectValues(object $page, string $selectId, array $expected): void
     {
         $values = "[].concat(document.querySelector('#{$selectId}').tomselect.getValue()).filter((v) => v !== '')";
         $this->waitUntil($page, "document.querySelector('#{$selectId}')?.tomselect && {$values}.length === " . count($expected));
@@ -94,10 +102,54 @@ abstract class BrowserTestCase extends TestCase
     /**
      * Click the clear button and wait until the value is empty.
      */
-    protected function clearTomSelect(object $page, string $selectId): void
+    public function clearTomSelect(object $page, string $selectId): void
     {
         $page->click("#{$selectId} + .ts-wrapper .clear-button");
         $this->waitUntil($page, "document.querySelector('#{$selectId}').tomselect.items.length === 0");
+    }
+
+    /**
+     * Wait until the element matching $selector contains $text.
+     */
+    public function waitForTextIn(object $page, string $selector, string $text): void
+    {
+        $this->waitUntil($page, 'document.querySelector(' . $this->jsString($selector) . ')?.textContent.includes(' . $this->jsString($text) . ')');
+    }
+
+    /**
+     * Return the id of the Tom Select-managed <select data-testid="$testId"> (Tom Select gives id-less selects one),
+     * for use with the other Tom Select helpers.
+     */
+    public function tomSelectIdByTestId(object $page, string $testId): string
+    {
+        $select = "document.querySelector('[data-testid=\"{$testId}\"]')";
+        $this->waitUntil($page, "{$select}?.tomselect");
+
+        return $page->script("() => {$select}.id");
+    }
+
+    /**
+     * Click "add transaction item" and wait until the new item's category select is ready. Returns that select's id.
+     */
+    public function addTransactionItem(object $page): string
+    {
+        $rows = "document.querySelectorAll('#transaction_item_container .transaction_item_row')";
+        $count = $page->script("() => {$rows}.length");
+
+        $page->click('[dusk="button-add-transaction-item"]');
+        $this->waitUntil($page, "{$rows}.length === " . ($count + 1) . " && {$rows}[{$count}].querySelector('select.category').tomselect");
+
+        return $page->script("() => {$rows}[{$count}].querySelector('select.category').id");
+    }
+
+    /**
+     * Wait for the SweetAlert2 dialog, confirm it and wait until it is gone.
+     */
+    public function confirmSwal(object $page): void
+    {
+        $this->waitUntil($page, "document.querySelector('.swal2-confirm')");
+        $page->click('.swal2-confirm');
+        $this->waitUntil($page, "!document.querySelector('.swal2-container')");
     }
 
     private function jsString(string $value): string

@@ -1617,5 +1617,6 @@
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ten wzorzec obejmuje zbyt wiele okresów (:count), aby go zapisać. Wybierz nowszą datę rozpoczęcia lub rzadziej powtarzający się cykl.",
     "Failed to load categories": "Nie udało się załadować kategorii",
     "No results found": "Nie znaleziono wyników",
-    "Searching...": "Wyszukiwanie..."
+    "Searching...": "Wyszukiwanie...",
+    "(new)": "(nowy)"
 }

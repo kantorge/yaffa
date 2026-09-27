@@ -50,6 +50,13 @@ const withQuery = (url, params) => {
  * @param {string} [options.placeholder]
  * @param {boolean} [options.multiple]
  * @param {boolean} [options.allowClear] Show a clear button. Default: true.
+ * @param {boolean} [options.create] Offer to create an option from the typed text (tags). Its value
+ *   and label are the raw text. Not offered when an option with that label (case-insensitive) exists.
+ * @param {function(Object, function): string} [options.renderOption] Dropdown option HTML. Receives
+ *   Tom Select's `escape`, which must wrap every piece of API data.
+ * @param {function(Object, function): string} [options.renderItem] Selected item HTML, as renderOption.
+ * @param {boolean} [options.selectOnClose] Select the highlighted option when the dropdown closes by
+ *   blur or Tab after a non-empty search (Select2's `selectOnClose`).
  * @param {function(Object): void} [options.onSelect] Called with the selected item's data when an
  *   item is added by the user or by a non-silent setSelected().
  * @param {function(): void} [options.onClear] Called once whenever the value becomes empty (clear
@@ -67,6 +74,10 @@ export function createRemoteSelect(
     placeholder = '',
     multiple = false,
     allowClear = true,
+    create = false,
+    renderOption,
+    renderItem,
+    selectOnClose = false,
     onSelect,
     onClear,
     onChange,
@@ -147,7 +158,23 @@ export function createRemoteSelect(
           });
       }, REQUEST_DELAY_MS);
     },
+    create,
+    createFilter(input) {
+      const label = input.toLowerCase();
+
+      return (
+        this.options[input] === undefined &&
+        !Object.values(this.options).some(
+          (option) => String(option.text).toLowerCase() === label,
+        )
+      );
+    },
     render: {
+      // Only set when given: an undefined entry would replace Tom Select's default template
+      ...(renderOption && { option: renderOption }),
+      ...(renderItem && { item: renderItem }),
+      option_create: (data, escape) =>
+        `<div class="create">${escape(data.input)} <em>${escape(__('(new)'))}</em></div>`,
       no_results: () =>
         `<div class="no-results">${escape(__('No results found'))}</div>`,
       loading: () =>
@@ -175,6 +202,32 @@ export function createRemoteSelect(
   });
 
   ts.control_input.placeholder = __('Type to search...');
+
+  // A pending request must not call back into a destroyed instance (e.g. one recreated on a
+  // transaction type change)
+  ts.hook('before', 'destroy', () => {
+    window.clearTimeout(requestTimer);
+    abortController?.abort();
+  });
+
+  if (selectOnClose) {
+    ts.hook('before', 'onBlur', (event) => {
+      const option = ts.activeOption;
+      // Focus moving from the control into the dropdown input is not a close
+      if (
+        event?.relatedTarget === ts.control_input ||
+        !document.hasFocus() ||
+        !ts.isOpen ||
+        ts.inputValue() === '' ||
+        ts.loading ||
+        !option ||
+        !ts.canSelect(option)
+      ) {
+        return;
+      }
+      ts.addItem(option.dataset.value);
+    });
+  }
 
   ts.on('item_add', (value) => {
     if (!muted) {
