@@ -123,7 +123,7 @@ class AccountEntityRequest extends FormRequest
                 ],
                 'config.preferred.*' => [
                     Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', $this->user()->id)),
-                    Rule::notIn('config.not_preferred'),
+                    Rule::notIn($this->scalarList('config.not_preferred')),
                 ],
                 'config.not_preferred' => [
                     'nullable',
@@ -131,13 +131,23 @@ class AccountEntityRequest extends FormRequest
                 ],
                 'config.not_preferred.*' => [
                     Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', $this->user()->id)),
-                    Rule::notIn('config.preferred'),
+                    Rule::notIn($this->scalarList('config.preferred')),
                     'different:config.category_id',
                 ],
             ]);
         }
 
         return $rules;
+    }
+
+    /**
+     * Scalar values of an input array, for use as literal Rule::notIn() values.
+     *
+     * @return array<int, int|string>
+     */
+    private function scalarList(string $key): array
+    {
+        return array_values(array_filter((array) $this->input($key), 'is_scalar'));
     }
 
     /**
