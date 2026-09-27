@@ -57,8 +57,9 @@ way on every page.
 - One consistent picker for the core domain entities (account, payee, category, tag, investment)
   makes those entities feel like one connected model, not a set of separate screens.
 - Excluding invalid choices up front (the merge target can't equal the source, an item can't be
-  both a preferred and an excluded payee category) prevents structurally wrong data instead of
-  rejecting it after submission.
+  both a preferred and an excluded payee category) keeps users from picking a structurally wrong
+  combination. This is UX only: merge is enforced server-side, but preferred vs excluded currently
+  is not (see `architecture.md`, Known risks).
 
 ### Technical Description
 
@@ -168,6 +169,8 @@ way on every page.
 - Shared helpers live in `tests/PEST/Support/BrowserTestCase.php`: `chooseTomSelectOption`,
   `searchTomSelect`, `assertTomSelectValues`, `clearTomSelect` and `tomSelectIdByTestId`.
 - Unit: `resources/js/shared/lib/tom-select/queryString.test.js`.
+- The full coverage map is in `tests.md`. The trust-boundary view is in `architecture.md`, `flows.md`,
+  `permissions.md` and `variables.md`.
 
 ### Domain Concepts
 
