@@ -92,7 +92,8 @@ class CategoryLearningApiControllerTest extends TestCase
         $createResponse->assertStatus(Response::HTTP_CREATED)
             ->assertJsonPath('item_description', 'coffee beans')
             ->assertJsonPath('usage_count', 0)
-            ->assertJsonPath('status', 'active');
+            ->assertJsonPath('status', 'active')
+            ->assertJsonPath('category.id', $category->id);
 
         $learningId = (int) $createResponse->json('id');
 
@@ -106,7 +107,9 @@ class CategoryLearningApiControllerTest extends TestCase
 
         $archiveResponse = $this->postJson(route('api.v1.category-learning.deactivate', ['categoryLearning' => $learningId]));
 
-        $archiveResponse->assertOk()->assertJsonPath('status', 'inactive');
+        $archiveResponse->assertOk()
+            ->assertJsonPath('status', 'inactive')
+            ->assertJsonPath('category.id', $category->id);
 
         $this->assertDatabaseHas('category_learning', [
             'id' => $learningId,
@@ -117,7 +120,9 @@ class CategoryLearningApiControllerTest extends TestCase
 
         $unarchiveResponse = $this->postJson(route('api.v1.category-learning.activate', ['categoryLearning' => $learningId]));
 
-        $unarchiveResponse->assertOk()->assertJsonPath('status', 'active');
+        $unarchiveResponse->assertOk()
+            ->assertJsonPath('status', 'active')
+            ->assertJsonPath('category.id', $category->id);
 
         $this->assertTrue(CategoryLearning::query()->findOrFail($learningId)->active);
 

@@ -141,14 +141,23 @@ const createMergeSelect = (element, otherElement) =>
     params: (term) => ({ search: term || undefined, status: 'all' }),
     mapResult: (item) => ({
       id: item.id,
+      category_id: item.category?.id,
       text: learningLabel(
         item.item_description,
         item.category?.full_name || item.category?.name || __('Not set'),
       ),
     }),
-    // Exclude the entry selected on the other side
-    filterResults: (results) =>
-      results.filter((item) => String(item.id) !== otherElement.value),
+    // Exclude the entry selected on the other side, and entries of other categories (only same-category
+    // entries can be merged)
+    filterResults: (results) => {
+      const other = otherElement.tomselect.options[otherElement.value];
+
+      return results.filter(
+        (item) =>
+          String(item.id) !== otherElement.value &&
+          (!other || String(item.category_id) === String(other.category_id)),
+      );
+    },
     placeholder: __('Select category learning entry'),
   });
 
@@ -172,6 +181,7 @@ const openMergeModal = (sourceLearning = null) => {
       mergeSourceSelect,
       {
         id: sourceLearning.id,
+        category_id: sourceLearning.category_id,
         text: learningLabel(
           sourceLearning.item_description,
           sourceLearning.category_name,
