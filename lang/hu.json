@@ -265,6 +265,7 @@
     "Controls the language used in YAFFA.": "A YAFFA megjelenési nyelve.",
     "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.": "Azt szabályozza, hogy a mesterséges intelligencia a dokumentumelemek hozzárendelésekor a legjobb szemantikai egyezést, a szülőkategóriákat vagy az alárendelt kategóriákat részesíti-e előnyben.",
     "Could not access Google Drive. Ensure the service account credentials are valid.": "Nem sikerült elérni a Google Drive-ot. Ellenőrizze, hogy a szolgáltatásfiók hitelesítő adatai érvényesek-e.",
+    "Could not load preselected filter item #:id for :filter. The search runs without it.": "Nem sikerült betölteni a(z) :filter szűrő #:id azonosítójú előre kiválasztott elemét. A keresés nélküle fut.",
     "Count": "Darabszám",
     "Create": "Létrehozás",
     "Create a new category learning entry or merge two entries when they represent the same meaning.": "Hozzon létre új kategóriatanulási bejegyzést, vagy egyesítsen két bejegyzést, ha ugyanazt a jelentést képviselik.",

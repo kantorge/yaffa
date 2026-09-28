@@ -265,6 +265,7 @@
     "Controls the language used in YAFFA.": "Kontroluje język używany w YAFFA.",
     "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.": "Kontroluje, czy podczas przypisywania elementów dokumentu sztuczna inteligencja ma priorytetyzować najlepsze dopasowanie semantyczne, kategorie nadrzędne czy kategorie podrzędne.",
     "Could not access Google Drive. Ensure the service account credentials are valid.": "Nie można uzyskać dostępu do Dysku Google. Upewnij się, że dane uwierzytelniające konta usługi są prawidłowe.",
+    "Could not load preselected filter item #:id for :filter. The search runs without it.": "Nie udało się wczytać wstępnie wybranego elementu #:id dla :filter. Wyszukiwanie zostanie wykonane bez niego.",
     "Count": "Liczba",
     "Create": "Tworzyć",
     "Create a new category learning entry or merge two entries when they represent the same meaning.": "Utwórz nowy wpis uczenia kategorii lub scal dwa wpisy, jeśli oznaczają to samo.",

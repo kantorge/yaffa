@@ -24,6 +24,7 @@
 <script>
   import { markRaw } from 'vue';
   import { __ } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
   import {
     createRemoteSelect,
     setSelected,
@@ -123,7 +124,19 @@
               text: data[this.detailsLabelField],
             });
           })
-          // A failed lookup still settles, so the card doesn't stay not-ready forever
+          // A failed lookup still settles (below), so the card doesn't stay not-ready forever,
+          // but the user must know the requested filter was dropped from the search
+          .catch(() => {
+            toastHelpers.showErrorToast(
+              __(
+                'Could not load preselected filter item #:id for :filter. The search runs without it.',
+                {
+                  id: item,
+                  filter: __(this.title),
+                },
+              ),
+            );
+          })
           .finally(() => {
             this.itemsToPreset = this.itemsToPreset.filter((id) => id !== item);
 
