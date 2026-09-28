@@ -266,6 +266,8 @@
     "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.": "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.",
     "Could not access Google Drive. Ensure the service account credentials are valid.": "Could not access Google Drive. Ensure the service account credentials are valid.",
     "Could not load preselected filter item #:id for :filter. The search runs without it.": "Could not load preselected filter item #:id for :filter. The search runs without it.",
+    "Invalid value \":value\" for :param. The search runs without it.": "Invalid value \":value\" for :param. The search runs without it.",
+    "Start date :from is later than end date :to. The search runs without a date range.": "Start date :from is later than end date :to. The search runs without a date range.",
     "Count": "Count",
     "Create": "Create",
     "Create a new category learning entry or merge two entries when they represent the same meaning.": "Create a new category learning entry or merge two entries when they represent the same meaning.",

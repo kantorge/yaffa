@@ -266,6 +266,8 @@
     "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.": "Azt szabályozza, hogy a mesterséges intelligencia a dokumentumelemek hozzárendelésekor a legjobb szemantikai egyezést, a szülőkategóriákat vagy az alárendelt kategóriákat részesíti-e előnyben.",
     "Could not access Google Drive. Ensure the service account credentials are valid.": "Nem sikerült elérni a Google Drive-ot. Ellenőrizze, hogy a szolgáltatásfiók hitelesítő adatai érvényesek-e.",
     "Could not load preselected filter item #:id for :filter. The search runs without it.": "Nem sikerült betölteni a(z) :filter szűrő #:id azonosítójú előre kiválasztott elemét. A keresés nélküle fut.",
+    "Invalid value \":value\" for :param. The search runs without it.": "Érvénytelen érték (\":value\") a(z) :param paraméterhez. A keresés nélküle fut.",
+    "Start date :from is later than end date :to. The search runs without a date range.": "A kezdő dátum (:from) későbbi, mint a záró dátum (:to). A keresés dátumtartomány nélkül fut.",
     "Count": "Darabszám",
     "Create": "Létrehozás",
     "Create a new category learning entry or merge two entries when they represent the same meaning.": "Hozzon létre új kategóriatanulási bejegyzést, vagy egyesítsen két bejegyzést, ha ugyanazt a jelentést képviselik.",

@@ -127,6 +127,8 @@
           // A failed lookup still settles (below), so the card doesn't stay not-ready forever,
           // but the user must know the requested filter was dropped from the search
           .catch(() => {
+            // The parent still holds the unresolved id from the URL; sync it to what's actually selected
+            this.$emit('update', this.select.getValue());
             toastHelpers.showErrorToast(
               __(
                 'Could not load preselected filter item #:id for :filter. The search runs without it.',
