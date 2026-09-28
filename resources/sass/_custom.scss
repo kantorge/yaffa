@@ -422,6 +422,14 @@ button[type="submit"] .spinner-border {
     }
 }
 
+// Tom Select leaves the hidden original <select> as the input group's first child, so CoreUI's
+// `.input-group > :not(:first-child)` rule squares the wrapper's start corners - restore them.
+.input-group > .tomselected:first-child + .ts-wrapper {
+    margin-inline-start: 0 !important;
+    border-start-start-radius: var(--cui-border-radius) !important;
+    border-end-start-radius: var(--cui-border-radius) !important;
+}
+
 .ts-dropdown {
     color: var(--cui-body-color);
     border-color: var(--cui-border-color);
