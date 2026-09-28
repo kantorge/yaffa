@@ -16,6 +16,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Services\PayeeCategoryStatsService;
+use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,16 @@ class AccountEntityController extends Controller implements HasMiddleware
             new Middleware('can:view,account', only: ['history']),
             new Middleware('can:create,' . AccountEntity::class, only: ['create', 'store']),
             new Middleware('can:update,account_entity', only: ['edit', 'update']),
+            // Payees are only written through the API - reject them before AccountEntityRequest validates
+            new Middleware(function (Request $request, Closure $next) {
+                $payeeWrite = $request->route('account_entity') instanceof AccountEntity
+                    ? $request->route('account_entity')->config_type === 'payee'
+                    : $request->input('config_type') === 'payee';
+
+                abort_if($payeeWrite, Response::HTTP_NOT_FOUND);
+
+                return $next($request);
+            }, only: ['store', 'update']),
         ];
     }
 

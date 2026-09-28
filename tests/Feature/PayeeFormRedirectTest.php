@@ -67,3 +67,15 @@ it('rejects updating a payee through the web route', function () {
 
     expect($payee->fresh()->name)->not->toBe('Renamed payee');
 });
+
+it('rejects an invalid payee write through the web route before validating it', function () {
+    $user = User::factory()->create();
+    $payee = AccountEntity::factory()->asPayee($user)->create();
+
+    $this->actingAs($user);
+
+    $this->post(route('account-entity.store', ['type' => 'payee']), ['config_type' => 'payee'])
+        ->assertStatus(Response::HTTP_NOT_FOUND);
+    $this->patch(route('account-entity.update', ['account_entity' => $payee->id]), [])
+        ->assertStatus(Response::HTTP_NOT_FOUND);
+});

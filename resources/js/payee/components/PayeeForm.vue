@@ -187,6 +187,7 @@
       data.notPreferredSelect = null;
       data.similarPayeesDebounceTimeout = null;
       data.similarPayeesRequestId = 0;
+      data.payeeRequestId = 0;
 
       return data;
     },
@@ -253,9 +254,20 @@
 
         // Open the edit modal only once the payee has loaded, so an unknown or
         // inaccessible ID never leaves a half-filled modal behind.
-        this.loadPayeeData(payeeId)
-          .then(() => this.$refs.formModal.show())
+        // resetForm() above invalidated any earlier load, so only this request may act.
+        const requestId = this.payeeRequestId;
+
+        this.loadPayeeData(payeeId, requestId)
+          .then(() => {
+            if (requestId === this.payeeRequestId) {
+              this.$refs.formModal.show();
+            }
+          })
           .catch((error) => {
+            if (requestId !== this.payeeRequestId) {
+              return;
+            }
+
             console.error('Error loading payee:', error);
             this.resetForm();
             showErrorToast(__('Failed to load payee data'));
@@ -321,7 +333,7 @@
         }));
       },
 
-      loadPayeeData(payeeId) {
+      loadPayeeData(payeeId, requestId) {
         this.payeeId = payeeId;
 
         // Fetch payee data from API
@@ -333,6 +345,11 @@
             return response.json();
           })
           .then((data) => {
+            // A newer show() or a reset superseded this request
+            if (requestId !== this.payeeRequestId) {
+              return;
+            }
+
             this.form.name = data.name;
             this.form.active = Boolean(data.active);
             this.form.alias = data.alias || '';
@@ -406,8 +423,9 @@
         // FormModal's dirty check would compare against whatever payee was last edited.
         this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
 
-        // Reset payee ID
+        // Reset payee ID, and drop any payee load still in flight
         this.payeeId = null;
+        this.payeeRequestId++;
 
         // Reset list of similar payees
         this.similarPayees = [];

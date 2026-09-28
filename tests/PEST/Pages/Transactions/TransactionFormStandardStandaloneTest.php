@@ -471,7 +471,7 @@ it('resets the next date of the original transaction by default when replacing a
     $newTransaction = Transaction::orderByDesc('id')->with('transactionSchedule')->first();
     expect($newTransaction->transactionSchedule->start_date->format('Y-m-d'))->toBe(now()->format('Y-m-d'))
         ->and($newTransaction->transactionSchedule->next_date->format('Y-m-d'))->toBe(now()->format('Y-m-d'))
-        ->and($transaction->next_date)->toBeNull();
+        ->and($transaction->fresh('transactionSchedule')->transactionSchedule->next_date)->toBeNull();
 })->group('critical');
 
 /*

@@ -122,7 +122,9 @@
               id: data.id,
               text: data[this.detailsLabelField],
             });
-
+          })
+          // A failed lookup still settles, so the card doesn't stay not-ready forever
+          .finally(() => {
             this.itemsToPreset = this.itemsToPreset.filter((id) => id !== item);
 
             if (this.itemsToPreset.length === 0) {

@@ -108,6 +108,8 @@ it('accepts an update with any supported api_key shape', function (array $payloa
 ]);
 
 it('allows keeping an existing unsupported model on update', function () {
+    markGeminiProUnsupported();
+
     $config = AiProviderConfig::factory()->create([
         'user_id' => $this->user->id,
         'provider' => 'gemini',
