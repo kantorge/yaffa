@@ -57,8 +57,10 @@
         "laravel/tinker": "^3.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^13.0",
-        "roquie/laravel-dusk-select2": "dev-custom_package"
+        "pestphp/pest": "^5.2",
+        "pestphp/pest-plugin-browser": "^5.0",
+        "pestphp/pest-plugin-laravel": "^5.0",
+        "phpunit/phpunit": "^13.0"
     },
     "config": {
         "discard-changes": true,
@@ -66,7 +68,8 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
         }
     },
     "autoload": {
@@ -110,7 +113,7 @@
         ],
         "coverage": [
             "@putenv SAIL_XDEBUG_MODE=coverage",
-            "bash -c './vendor/bin/sail artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
+            "bash -c './vendor/bin/sail php -d xdebug.max_nesting_level=8192 artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
         ],
         "setup": [
             "composer install",
@@ -128,11 +131,5 @@
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/kantorge/laravel-dusk-select2"
-        }
-    ],
     "minimum-stability": "stable"
 }

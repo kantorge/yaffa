@@ -312,24 +312,11 @@ const vueApp = createApp({
           return;
         }
 
-        const scrollBody = $(window.table.table().container()).find(
-          '.dt-scroll-body',
-        );
-        if (scrollBody.length > 0) {
-          const rowPosition = $(rowNode).position();
-          if (rowPosition) {
-            const targetScrollTop =
-              scrollBody.scrollTop() +
-              rowPosition.top -
-              scrollBody.height() / 2;
-            scrollBody.stop(true).animate({ scrollTop: targetScrollTop }, 200);
-          }
-        } else {
-          rowNode.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        }
+        // Scrolls the DataTables scroll body and, if needed, the page itself
+        rowNode.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
 
         $(rowNode).addClass('table-warning');
         setTimeout(() => {
@@ -763,3 +750,21 @@ $('#table_filter_search_text').on('input', function () {
 $('#button-new-payee').on('click', function () {
   app.showNewPayeeModal();
 });
+
+// Deep links from the old payee create/edit routes (?create=1 / ?edit={id}).
+// Drop the parameter so a reload or Back doesn't reopen the modal.
+const deepLinkUrl = new URL(window.location.href);
+const deepLinkEditId = toNumericId(deepLinkUrl.searchParams.get('edit'));
+if (deepLinkUrl.searchParams.get('create') === '1') {
+  app.showNewPayeeModal();
+} else if (deepLinkEditId !== null && deepLinkEditId > 0) {
+  app.showEditPayeeModal(deepLinkEditId);
+}
+if (
+  deepLinkUrl.searchParams.has('create') ||
+  deepLinkUrl.searchParams.has('edit')
+) {
+  deepLinkUrl.searchParams.delete('create');
+  deepLinkUrl.searchParams.delete('edit');
+  window.history.replaceState(window.history.state, '', deepLinkUrl);
+}

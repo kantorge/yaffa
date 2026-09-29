@@ -55,6 +55,7 @@ If API behavior or UI requirements are unclear, STOP and ask for clarification.
 - Avoid business logic in components
 - Prefer computed properties over watchers
 - Handle async state explicitly (loading / error / empty)
+- Searchable dropdowns go through `createRemoteSelect()` (`resources/js/shared/lib/tom-select/`), never a new select library or a raw `new TomSelect()`. Custom `renderOption`/`renderItem` templates return HTML: wrap every piece of API data in the `escape` argument (payee/category/investment names are user-entered). Client-side exclusions (`filterResults`) are UX only, and the Form Request must enforce the same rule. See `.ai/docs/features/remote-select/`.
 
 ---
 

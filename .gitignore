@@ -52,3 +52,6 @@ yarn-error.log
 ## Laravel Homestead
 Homestead.json
 Homestead.yaml
+
+# Pest browser plugin screenshots (path is fixed by the plugin)
+/tests/Browser/Screenshots

@@ -363,6 +363,7 @@
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
   import presetCalculators from '@/shared/lib/date/presetDates';
+  import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
 
   function formatDate(date) {
     if (!date) return null;
@@ -395,17 +396,19 @@
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
-      const datePreset = urlParams.get('date_preset') || null;
-      let dateFrom = urlParams.get('date_from') || null;
-      let dateTo = urlParams.get('date_to') || null;
+      // Unusable date params are dropped (search runs without them); their warnings are shown in mounted()
+      let {
+        preset: datePreset,
+        dateFrom,
+        dateTo,
+        warnings: invalidDateParams,
+      } = readDateRangeParams(urlParams);
+      const hasExplicitDates = !!(dateFrom || dateTo);
 
-      if (datePreset && !dateFrom && !dateTo) {
-        const calculator = presetCalculators[datePreset];
-        if (calculator) {
-          const dates = calculator(new Date());
-          dateFrom = formatDate(dates.start);
-          dateTo = formatDate(dates.end);
-        }
+      if (datePreset && !hasExplicitDates) {
+        const dates = presetCalculators[datePreset](new Date());
+        dateFrom = formatDate(dates.start);
+        dateTo = formatDate(dates.end);
       }
 
       return {
@@ -415,10 +418,8 @@
         activeTab: 'summary',
         dateFrom,
         dateTo,
-        selectedPreset:
-          urlParams.get('date_from') || urlParams.get('date_to')
-            ? null
-            : datePreset,
+        selectedPreset: hasExplicitDates ? null : datePreset,
+        invalidDateParams,
         allTypeValues: Object.keys(window.YAFFA.config.transactionTypes || {}),
         standardTypeValues: Object.values(
           window.YAFFA.config.transactionTypes || {},
@@ -566,6 +567,13 @@
         });
       } else {
         this.activeTab = 'summary';
+      }
+
+      if (this.invalidDateParams.length > 0) {
+        this.invalidDateParams.forEach((message) =>
+          toastHelpers.showErrorToast(message),
+        );
+        this.rebuildUrl(this.initialTab, this.returnTo);
       }
 
       this.ready = true;

@@ -71,8 +71,8 @@ Role-specific implementation guidelines live in `.ai/agents/`:
 - **Services over controllers**: business logic lives in `app/Services/`
 - **Form Requests**: all validation via dedicated `app/Http/Requests/` classes
 - **No SPA state**: Blade pages are independent; Vue components are self-contained islands
-- **PHPUnit only** — no Pest
-- **Feature tests preferred** over Dusk; Dusk only for critical E2E flows
+- **New tests are written in Pest 5** (any level); existing PHPUnit tests are not converted without owner approval
+- **Feature tests preferred**; browser tests only for critical E2E flows, as Pest browser tests in `tests/PEST/` (excluded from the default run: `pest --testsuite=Browser`). **Dusk is legacy** — no new Dusk tests
 - **Build output** (`public/js/`, `public/css/`) is Git-ignored — do not commit built assets
 
 ## Directory Reference

@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-  import { nextTick, ref } from 'vue';
+  import { nextTick, onMounted, ref } from 'vue';
   import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import AiDocumentActions from './AiDocumentActions.vue';
@@ -95,6 +95,7 @@
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import { __ } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
+  import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
 
   const documents = ref([]);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
@@ -109,25 +110,24 @@
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const initialDateFrom = ref(urlParams.get('date_from') || null);
-  const initialDateTo = ref(urlParams.get('date_to') || null);
+  // Unusable date params are dropped (search runs without them); their warnings are shown on mount
+  const receivedDates = readDateRangeParams(urlParams);
+  const detectedDates = readDateRangeParams(urlParams, 'detected_');
+  const initialDateFrom = ref(receivedDates.dateFrom);
+  const initialDateTo = ref(receivedDates.dateTo);
   const initialStatus = ref(urlParams.get('status') || 'ready_for_review');
   const initialSource = ref(urlParams.get('source') || '');
   const initialSearch = ref(urlParams.get('search') || '');
   const hasExplicitDateFilter = Boolean(
     initialDateFrom.value || initialDateTo.value,
   );
+  // Explicit dates win over a preset; the default applies only when neither is given
   const initialPreset = ref(
-    urlParams.get('date_preset') ||
-      (hasExplicitDateFilter ? null : 'previous90Days'),
+    hasExplicitDateFilter ? null : receivedDates.preset || 'previous90Days',
   );
-  const initialDetectedDateFrom = ref(
-    urlParams.get('detected_date_from') || null,
-  );
-  const initialDetectedDateTo = ref(urlParams.get('detected_date_to') || null);
-  const initialDetectedDatePreset = ref(
-    urlParams.get('detected_date_preset') || null,
-  );
+  const initialDetectedDateFrom = ref(detectedDates.dateFrom);
+  const initialDetectedDateTo = ref(detectedDates.dateTo);
+  const initialDetectedDatePreset = ref(detectedDates.preset);
 
   const currentFilters = ref({
     status: initialStatus.value,
@@ -187,6 +187,14 @@
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
     window.history.replaceState('', '', nextUrl);
   };
+
+  onMounted(() => {
+    const warnings = [...receivedDates.warnings, ...detectedDates.warnings];
+    if (warnings.length > 0) {
+      warnings.forEach((message) => toastHelpers.showErrorToast(message));
+      rebuildUrl();
+    }
+  });
 
   const onFiltersUpdated = (filters) => {
     currentFilters.value = { ...currentFilters.value, ...filters };

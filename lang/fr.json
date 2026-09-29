@@ -120,6 +120,7 @@
     "Apply standard transaction items": "Appliquer les éléments de transaction standard",
     "Apply standard transaction items based on past statistics": "Appliquer les éléments de transaction standard en fonction des statistiques passées",
     "Are you looking for any of these payees?": "Recherchez-vous l'un de ces bénéficiaires?",
+    "Click the payee to view and activate.": "Cliquez sur le bénéficiaire pour l'afficher et l'activer.",
     "Are you sure to abandon this form?": "Êtes-vous sûr de vouloir abandonner ce formulaire?",
     "Are you sure to want to delete this item?": "Êtes-vous sûr de vouloir supprimer cet élément?",
     "Are you sure you want to delete this configuration?": "Êtes-vous sûr de vouloir supprimer cette configuration?",
@@ -264,6 +265,9 @@
     "Controls the language used in YAFFA.": "Contrôle la langue utilisée dans YAFFA.",
     "Controls whether AI prioritizes best semantic match, parent categories, or child categories when assigning document items.": "Contrôle si l'IA privilégie la meilleure correspondance sémantique, les catégories parentes ou les catégories enfants lors de l'attribution des éléments de document.",
     "Could not access Google Drive. Ensure the service account credentials are valid.": "Impossible d'accéder à Google Drive. Vérifiez que les identifiants du compte de service sont valides.",
+    "Could not load preselected filter item #:id for :filter. The search runs without it.": "Impossible de charger l'élément présélectionné #:id pour :filter. La recherche s'effectue sans lui.",
+    "Invalid value \":value\" for :param. The search runs without it.": "Valeur invalide \":value\" pour :param. La recherche s'effectue sans elle.",
+    "Start date :from is later than end date :to. The search runs without a date range.": "La date de début :from est postérieure à la date de fin :to. La recherche s'effectue sans plage de dates.",
     "Count": "Compter",
     "Create": "Créer",
     "Create a new category learning entry or merge two entries when they represent the same meaning.": "Créez une nouvelle entrée d'apprentissage de catégorie ou fusionnez deux entrées lorsqu'elles représentent la même signification.",
@@ -1613,5 +1617,8 @@
     "No account": "Aucun compte",
     "No account (base currency, account-agnostic)": "Aucun compte (devise de base, indépendant du compte)",
     "This pattern spans too many periods (:count) to save. Pick a more recent start date or a less frequent recurrence.": "Ce modèle couvre trop de périodes (:count) pour être enregistré. Choisissez une date de début plus récente ou une récurrence moins fréquente.",
-    "Failed to load categories": "Échec du chargement des catégories"
+    "Failed to load categories": "Échec du chargement des catégories",
+    "No results found": "Aucun résultat trouvé",
+    "Searching...": "Recherche en cours...",
+    "(new)": "(nouveau)"
 }

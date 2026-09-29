@@ -144,14 +144,17 @@
 </template>
 
 <script>
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
-
+  import { markRaw } from 'vue';
   import Form from 'vform';
 
   import FormModal from '@/shared/ui/FormModal.vue';
   import TransactionSchedule from '@/transactions/components/form/TransactionSchedule.vue';
   import { __ } from '@/shared/lib/i18n';
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
   import {
     toIsoDateString,
     toDateInputValue,
@@ -266,6 +269,11 @@
       this.initializeAccountSelect();
     },
 
+    beforeUnmount() {
+      this.categorySelect?.destroy();
+      this.accountSelect?.destroy();
+    },
+
     methods: {
       show(budgetId = null) {
         this.resetForm();
@@ -278,105 +286,45 @@
       },
 
       initializeCategorySelect() {
-        this.categorySelect = $(this.$el).find(`#${this.categorySelectId}`);
-
-        this.categorySelect
-          .select2({
-            language: window.YAFFA.userSettings.language,
-            theme: 'bootstrap-5',
-            ajax: {
+        this.categorySelect = markRaw(
+          createRemoteSelect(
+            this.$el.querySelector(`#${this.categorySelectId}`),
+            {
               url: '/api/v1/categories',
-              dataType: 'json',
-              delay: 150,
-              data: function (params) {
-                return {
-                  _token: csrfToken,
-                  q: params.term || '*',
-                  withInactive: true,
-                };
+              params: (term) => ({ q: term || '*', withInactive: true }),
+              mapResult: (item) => ({ id: item.id, text: item.full_name }),
+              placeholder: __('Select category'),
+              onChange: (value) => {
+                this.form.category_id = value ? Number(value) : null;
               },
-              processResults: function (data) {
-                const results = Array.isArray(data) ? data : data.data || [];
-
-                return {
-                  results: results.map(function (item) {
-                    return {
-                      id: item.id,
-                      text: item.full_name,
-                    };
-                  }),
-                };
-              },
-              cache: true,
             },
-            selectOnClose: false,
-            placeholder: __('Select category'),
-            allowClear: true,
-            dropdownParent: $('#' + this.id),
-          })
-          .on('select2:select select2:unselect', () => {
-            const selectedValue = this.categorySelect.val();
-
-            this.form.category_id =
-              selectedValue === null || selectedValue === ''
-                ? null
-                : Number(selectedValue);
-          });
+          ),
+        );
       },
 
       initializeAccountSelect() {
-        this.accountSelect = $(this.$el).find(`#${this.accountSelectId}`);
-
-        this.accountSelect
-          .select2({
-            language: window.YAFFA.userSettings.language,
-            theme: 'bootstrap-5',
-            ajax: {
+        this.accountSelect = markRaw(
+          createRemoteSelect(
+            this.$el.querySelector(`#${this.accountSelectId}`),
+            {
               url: '/api/v1/accounts',
-              dataType: 'json',
-              delay: 150,
-              data: function (params) {
-                return {
-                  _token: csrfToken,
-                  q: params.term || '',
-                  limit: 0,
-                };
+              // Always send q, so the endpoint searches instead of returning most-used accounts
+              params: (term) => ({ q: term || '', limit: 0 }),
+              mapResult: (item) => ({ id: item.id, text: item.name }),
+              placeholder: __('No account (base currency, account-agnostic)'),
+              onChange: (value) => {
+                this.form.account_id = value ? Number(value) : null;
+                this.updateAccountCurrency(this.form.account_id);
               },
-              processResults: function (data) {
-                const results = Array.isArray(data) ? data : data.data || [];
-
-                return {
-                  results: results.map(function (item) {
-                    return {
-                      id: item.id,
-                      text: item.name,
-                    };
-                  }),
-                };
-              },
-              cache: true,
             },
-            selectOnClose: false,
-            placeholder: __('No account (base currency, account-agnostic)'),
-            allowClear: true,
-            dropdownParent: $('#' + this.id),
-          })
-          .on('select2:select select2:unselect', () => {
-            const selectedValue = this.accountSelect.val();
-
-            this.form.account_id =
-              selectedValue === null || selectedValue === ''
-                ? null
-                : Number(selectedValue);
-
-            this.updateAccountCurrency(this.form.account_id);
-          });
+          ),
+        );
       },
 
       // Reflects the selected account's own currency in the amount field's suffix (FR-4: a
       // budget's currency is never stored, always derived from its account, or the base
       // currency when account-agnostic) - fetched on demand rather than carried on the
-      // lightweight select2 search results, which don't include the account's currency.
+      // lightweight search results, which don't include the account's currency.
       updateAccountCurrency(accountId) {
         if (!accountId) {
           this.accountCurrencyCode = null;
@@ -402,15 +350,6 @@
             this.accountCurrencyCode = null;
             this.accountCurrencyPending = true;
           });
-      },
-
-      setSelectValue(selectElement, item, textField = 'name') {
-        if (!selectElement || !item) {
-          return;
-        }
-
-        const option = new Option(item[textField], item.id, true, true);
-        selectElement.append(option).trigger('change');
       },
 
       loadBudgetData(budgetId) {
@@ -451,18 +390,22 @@
             this.form.count = data.count;
             this.form.inflation = data.inflation;
 
-            this.categorySelect.empty();
+            clearSelect(this.categorySelect, { silent: true });
             if (data.category) {
-              this.setSelectValue(
+              setSelected(
                 this.categorySelect,
-                data.category,
-                'full_name',
+                { id: data.category.id, text: data.category.full_name },
+                { silent: true },
               );
             }
 
-            this.accountSelect.empty();
+            clearSelect(this.accountSelect, { silent: true });
             if (data.account) {
-              this.setSelectValue(this.accountSelect, data.account, 'name');
+              setSelected(
+                this.accountSelect,
+                { id: data.account.id, text: data.account.name },
+                { silent: true },
+              );
             }
 
             this.accountCurrencyCode =
@@ -540,10 +483,10 @@
         this.accountCurrencyPending = false;
 
         if (this.categorySelect) {
-          this.categorySelect.empty().val(null).trigger('change');
+          clearSelect(this.categorySelect, { silent: true });
         }
         if (this.accountSelect) {
-          this.accountSelect.empty().val(null).trigger('change');
+          clearSelect(this.accountSelect, { silent: true });
         }
 
         this.budgetId = null;

@@ -51,7 +51,7 @@ class CategoryLearningManagementService
                     'category_id' => (int) $data['category_id'],
                     'usage_count' => 0,
                     'active' => (bool) $data['active'],
-                ]),
+                ])->load('category'),
                 'created' => true,
             ];
         }
@@ -61,7 +61,7 @@ class CategoryLearningManagementService
         $learning->save();
 
         return [
-            'learning' => $learning,
+            'learning' => $learning->load('category'),
             'created' => false,
         ];
     }
@@ -75,7 +75,7 @@ class CategoryLearningManagementService
         $categoryLearning->active = (bool) $data['active'];
         $categoryLearning->save();
 
-        return $categoryLearning;
+        return $categoryLearning->load('category');
     }
 
     public function deactivate(CategoryLearning $categoryLearning): CategoryLearning
@@ -85,7 +85,7 @@ class CategoryLearningManagementService
             $categoryLearning->save();
         }
 
-        return $categoryLearning;
+        return $categoryLearning->load('category');
     }
 
     public function activate(CategoryLearning $categoryLearning): CategoryLearning
@@ -95,7 +95,7 @@ class CategoryLearningManagementService
             $categoryLearning->save();
         }
 
-        return $categoryLearning;
+        return $categoryLearning->load('category');
     }
 
     public function destroy(CategoryLearning $categoryLearning): void

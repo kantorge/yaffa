@@ -605,7 +605,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             'folder_id' => 'real-folder-id',
         ]);
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('getFolderName')->willReturn('My Import Folder');
         $this->instance(GoogleDriveService::class, $mock);
 
@@ -626,7 +626,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             'folder_id' => 'bad-folder-id',
         ]);
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('getFolderName')->willThrowException(new Exception('Drive API error'));
         $this->instance(GoogleDriveService::class, $mock);
 
@@ -684,7 +684,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     public function test_folder_name_by_credentials_returns_name_from_service(): void
     {
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('getFolderName')->willReturn('My Import Folder');
         $this->instance(GoogleDriveService::class, $mock);
 
@@ -742,7 +742,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ['id' => 'folder-2', 'name' => 'Invoices'],
         ];
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('listFolders')->willReturn([
             'folders' => $folders,
             'truncated' => false,
@@ -772,7 +772,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ['id' => 'folder-1', 'name' => 'Receipts'],
         ];
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('listFolders')->willReturn([
             'folders' => $folders,
             'truncated' => true,
@@ -799,7 +799,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
         $googleException = new \Google\Service\Exception('Forbidden', 403);
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('listFolders')->willThrowException($googleException);
         $this->instance(GoogleDriveService::class, $mock);
 
@@ -818,7 +818,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
 
         $capturedParentId = null;
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('listFolders')
             ->willReturnCallback(function ($cfg, $parentId) use (&$capturedParentId) {
                 $capturedParentId = $parentId;
@@ -848,7 +848,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             ['id' => 'folder-2', 'name' => 'Invoices'],
         ];
 
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('listFoldersByCredentials')->willReturn([
             'folders' => $folders,
             'truncated' => false,
@@ -938,7 +938,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     public function test_test_connection_response_includes_folder_name(): void
     {
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('testConnection')->willReturn([
             'success' => true,
             'message' => 'Connection successful',
@@ -966,7 +966,7 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     public function test_test_connection_response_includes_capabilities(): void
     {
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
         $mock->method('testConnection')->willReturn([
             'success' => true,
             'message' => 'Connection successful',

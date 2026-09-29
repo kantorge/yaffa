@@ -95,7 +95,6 @@
             :currency-symbol="currencySymbol"
             :remaining-amount="remainingAmount"
             :payee="payee"
-            :dropdown-parent-selector="dropdownParentSelector"
             @remove-item="removeItem(index)"
             @update:amount="updateItemAmount(index, $event)"
             @update:category_id="updateItemCategory(index, $event)"
@@ -278,7 +277,12 @@
               .val() != '' ||
             $(this)
               .find('div.transaction_detail_container select')
-              .select2('data').length > 0
+              .toArray()
+              .some((select) =>
+                [...select.selectedOptions].some(
+                  (option) => option.value !== '',
+                ),
+              )
           ) {
             $(this)
               .find('.transaction_detail_container')
