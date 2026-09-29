@@ -26,7 +26,7 @@
         "kantorge/laravel-currency-exchange-rates": "^2.0",
         "laracasts/utilities": "^3.2",
         "laragear/two-factor": "^4.0",
-        "laravel/framework": "^13.29",
+        "laravel/framework": "^13.34",
         "laravel/sanctum": "^4.3",
         "laravel/telescope": "^5.18",
         "laravel/ui": "^4.6",
