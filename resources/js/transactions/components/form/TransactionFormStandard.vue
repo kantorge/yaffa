@@ -228,6 +228,7 @@
             :is-schedule="form.schedule"
             :schedule="form.schedule_config"
             :form="form"
+            @update:schedule="Object.assign(form.schedule_config, $event)"
           ></transaction-schedule>
         </div>
         <div class="col-12">
@@ -242,6 +243,9 @@
             :schedule="form.original_schedule_config"
             :form="form"
             field-prefix="original_schedule_config"
+            @update:schedule="
+              Object.assign(form.original_schedule_config, $event)
+            "
           ></transaction-schedule>
         </div>
       </div>
@@ -473,6 +477,9 @@
             :enabled="!transactionTypeIsTransfer"
             :dropdown-parent-selector="dropdownParentSelector"
             @add-transaction-item="addTransactionItem"
+            @remove-transaction-item="removeTransactionItem"
+            @update-transaction-item="updateTransactionItem"
+            @replace-transaction-items="replaceTransactionItems"
           ></transaction-item-container>
         </div>
       </div>
@@ -1320,6 +1327,22 @@
           id: this.itemCounter++,
           learnRecommendation: true,
         });
+      },
+
+      removeTransactionItem(index) {
+        this.form.items.splice(index, 1);
+      },
+
+      updateTransactionItem({ index, field, value }) {
+        this.form.items[index][field] = value;
+      },
+
+      replaceTransactionItems(items) {
+        this.itemCounter = Math.max(
+          this.itemCounter,
+          ...items.map((item) => Number(item.id) + 1 || 0),
+        );
+        this.form.items = items;
       },
 
       // Check if TO or FROM is account or payee
