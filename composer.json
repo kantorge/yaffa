@@ -32,7 +32,6 @@
         "laravel/ui": "^4.6",
         "league/csv": "^9.28",
         "prism-php/prism": "^0.100",
-        "sentry/sentry-laravel": "^4.27",
         "simshaun/recurr": "^5.0",
         "smalot/pdfparser": "^2.12",
         "spatie/laravel-model-flags": "^1.5",
