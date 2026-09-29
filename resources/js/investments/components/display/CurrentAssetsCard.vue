@@ -12,15 +12,23 @@
           {{ formatQuantity(investment.current_quantity) }}
         </dd>
         <dt class="col-8">{{ __('Latest price') }}</dt>
-        <dd class="col-4">
-          {{
-            toFormattedCurrency(
-              investment.latest_price,
-              locale,
-              investment.currency,
-              'detailed',
-            )
-          }}
+        <dd
+          class="col-4"
+          :class="{ 'text-muted fst-italic': investment.latest_price == null }"
+        >
+          <template v-if="investment.latest_price == null">
+            {{ __('Not available') }}
+          </template>
+          <template v-else>
+            {{
+              toFormattedCurrency(
+                investment.latest_price,
+                locale,
+                investment.currency,
+                'detailed',
+              )
+            }}
+          </template>
         </dd>
         <dt class="col-8">{{ __('Latest owned value') }}</dt>
         <dd class="col-4">

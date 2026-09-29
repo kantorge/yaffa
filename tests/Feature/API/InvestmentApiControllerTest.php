@@ -246,7 +246,8 @@ class InvestmentApiControllerTest extends TestCase
         $response = $this->getJson(route('api.v1.investments.display-data', $investment));
 
         $response->assertOk()
-            ->assertJsonPath('investment.id', $investment->id);
+            ->assertJsonPath('investment.id', $investment->id)
+            ->assertJsonStructure(['investment' => ['current_quantity', 'latest_price']]);
 
         $prices = $response->json('prices');
         $this->assertCount(1, $prices);
