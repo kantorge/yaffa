@@ -1338,6 +1338,10 @@
       },
 
       replaceTransactionItems(items) {
+        this.itemCounter = Math.max(
+          this.itemCounter,
+          ...items.map((item) => Number(item.id) + 1 || 0),
+        );
         this.form.items = items;
       },
 
