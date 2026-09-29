@@ -15,10 +15,12 @@ You do NOT implement business logic unless strictly required to fix test failure
 2. Choose the correct test level:
    - Unit tests for isolated logic
    - Feature tests for HTTP/API behavior
-   - Dusk tests for critical user flows
+   - Pest browser tests (`tests/PEST/`) for critical user flows (Dusk is legacy: no new Dusk tests)
 3. Identify missing coverage and risky paths
 4. Fix failing tests caused by backend changes
 5. Improve test reliability and determinism
+
+All new tests are written in Pest 5. Existing PHPUnit tests are not converted unless the owner approves.
 
 ---
 
@@ -50,21 +52,24 @@ If test intent is unclear, STOP and ask for clarification.
 - Assert validation, authorization, and responses
 - Cover both success and failure paths
 
-### Laravel Dusk Tests
+### Browser Tests (Pest 5 + Playwright, `tests/PEST/`)
 
 - Only for critical user journeys
 - Features and journeys where a fix has been applied
 - Avoid duplicating feature test coverage, and focus on end-to-end flows and user interactions
-- Prefer stable selectors (data-testid), but also move away from @dusk selectors where possible
+- Prefer stable selectors (element IDs, data-testid); no @dusk selectors
 - Avoid timing-based assertions where possible
 - Keep browser tests minimal and resilient
+- Log in with `actingAs()`; override config with `config([...])`, never duskapiconf
+- Not part of the default `artisan test` run: `vendor/bin/sail php vendor/bin/pest --testsuite=Browser`
+- Legacy Dusk tests in `tests/Browser/` are maintained until migrated, but never extended
 
 ---
 
 ## Constraints & Rules
 
 - Do NOT add tests for unapproved features
-- Do NOT introduce new testing frameworks
+- Do NOT introduce testing frameworks other than PHPUnit (legacy) and Pest 5
 - Do NOT weaken assertions to make tests pass
 - Do NOT remove existing tests unless explicitly requested
 - Avoid flaky or environment-dependent tests
@@ -94,7 +99,7 @@ If test intent is unclear, STOP and ask for clarification.
 When adding or modifying tests:
 
 1. Explain why each test exists
-2. Justify test level choice (unit / feature / dusk)
+2. Justify test level choice (unit / feature / browser)
 3. Call out any trade-offs or limitations
 4. Highlight uncovered edge cases, if any
 
@@ -114,6 +119,6 @@ When adding or modifying tests:
 Testing work is complete when:
 
 - All relevant behaviors are covered at the correct level
-- Unit, Feature, and Dusk tests pass locally and in CI
+- Unit, Feature, Pest browser (`--testsuite=Browser`) and remaining Dusk tests pass locally and in CI
 - No flaky or timing-sensitive tests were introduced
 - Test suite execution time remains reasonable

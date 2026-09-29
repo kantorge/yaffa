@@ -95,7 +95,6 @@
             :currency-symbol="currencySymbol"
             :remaining-amount="remainingAmount"
             :payee="payee"
-            :dropdown-parent-selector="dropdownParentSelector"
             @remove-item="removeItem(index)"
             @update:amount="updateItemAmount(index, $event)"
             @update:category_id="updateItemCategory(index, $event)"
@@ -199,7 +198,12 @@
       },
     },
 
-    emits: ['addTransactionItem'],
+    emits: [
+      'addTransactionItem',
+      'removeTransactionItem',
+      'updateTransactionItem',
+      'replaceTransactionItems',
+    ],
 
     data() {
       return {
@@ -230,35 +234,40 @@
     },
 
     methods: {
-      // Remove the provided item from transaction items
+      // The parent owns the items array; changes are requested via events
+
+      // Ask the parent to remove the provided item
       removeItem(index) {
-        this.transactionItems.splice(index, 1);
+        this.$emit('removeTransactionItem', index);
       },
 
-      // Update transaction item amount with value received from child component
+      // Ask the parent to update one field of an item with a value received from the child component
       updateItemAmount(index, value) {
-        this.transactionItems[index].amount = value;
+        this.$emit('updateTransactionItem', { index, field: 'amount', value });
       },
 
-      // Update transaction item category with value received from child component
       updateItemCategory(index, value) {
-        this.transactionItems[index].category_id = value;
+        this.$emit('updateTransactionItem', {
+          index,
+          field: 'category_id',
+          value,
+        });
       },
 
-      // Update transaction item tags with value received from child component
       updateItemTag(index, value) {
-        this.transactionItems[index].tags = value;
+        this.$emit('updateTransactionItem', { index, field: 'tags', value });
       },
 
-      // Update transaction item comment with value received from child component
       updateItemComment(index, value) {
-        this.transactionItems[index].comment = value;
+        this.$emit('updateTransactionItem', { index, field: 'comment', value });
       },
 
-      // Update transaction item learn recommendation flag with value received from child component
       updateItemLearnRecommendation(index, value) {
-        this.transactionItems[index].learnRecommendation =
-          value.learnRecommendation;
+        this.$emit('updateTransactionItem', {
+          index,
+          field: 'learnRecommendation',
+          value: value.learnRecommendation,
+        });
       },
 
       // Item list collapse and expand functionality
@@ -278,7 +287,12 @@
               .val() != '' ||
             $(this)
               .find('div.transaction_detail_container select')
-              .select2('data').length > 0
+              .toArray()
+              .some((select) =>
+                [...select.selectedOptions].some(
+                  (option) => option.value !== '',
+                ),
+              )
           ) {
             $(this)
               .find('.transaction_detail_container')
@@ -342,11 +356,7 @@
             return;
           }
 
-          this.transactionItems.splice(
-            0,
-            this.transactionItems.length,
-            ...newItems,
-          );
+          this.$emit('replaceTransactionItems', newItems);
 
           toastHelpers.showSuccessToast(
             __('Standard transaction items applied successfully.'),

@@ -76,8 +76,6 @@
             :id="preferredCategoriesSelectId"
             class="form-select preferred"
             style="width: 100%"
-            multiple="multiple"
-            :data-other-select="`#${notPreferredCategoriesSelectId}`"
           ></select>
         </div>
       </div>
@@ -94,8 +92,6 @@
             :id="notPreferredCategoriesSelectId"
             class="form-select not-preferred"
             style="width: 100%"
-            multiple="multiple"
-            :data-other-select="`#${preferredCategoriesSelectId}`"
           ></select>
         </div>
       </div>
@@ -105,6 +101,9 @@
       <hr />
       <span class="form-label col-sm-3">
         {{ __('Are you looking for any of these payees?') }}
+        <small class="d-block text-muted">
+          {{ __('Click the payee to view and activate.') }}
+        </small>
       </span>
       <div class="col-sm-9">
         <ul id="similar-payee-list" class="list-unstyled">
@@ -114,10 +113,12 @@
             class="mt-2"
             :data-id="similarPayee.id"
           >
-            <a href="#" @click.prevent="onSelectPayee(similarPayee)">
-              {{ similarPayee.name }}
-              <span v-if="!similarPayee.active">({{ __('inactive') }})</span>
-            </a>
+            <a href="#" @click.prevent="onSelectPayee(similarPayee)">{{
+              similarPayee.name
+            }}</a>
+            <span v-if="!similarPayee.active" class="text-muted">
+              ({{ __('inactive') }})
+            </span>
           </li>
         </ul>
       </div>
@@ -126,13 +127,17 @@
 </template>
 
 <script>
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
-
+  import { markRaw } from 'vue';
   import Form from 'vform';
 
   import FormModal from '@/shared/ui/FormModal.vue';
   import { __ } from '@/shared/lib/i18n';
+  import { showErrorToast } from '@/shared/lib/toast';
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
 
   export default {
     components: {
@@ -182,6 +187,7 @@
       data.notPreferredSelect = null;
       data.similarPayeesDebounceTimeout = null;
       data.similarPayeesRequestId = 0;
+      data.payeeRequestId = 0;
 
       return data;
     },
@@ -228,6 +234,10 @@
     },
 
     beforeUnmount() {
+      this.categorySelect?.destroy();
+      this.preferredSelect?.destroy();
+      this.notPreferredSelect?.destroy();
+
       if (this.similarPayeesDebounceTimeout) {
         clearTimeout(this.similarPayeesDebounceTimeout);
       }
@@ -237,165 +247,97 @@
       show(payeeId = null) {
         this.resetForm();
 
-        if (payeeId !== null) {
-          // Load payee data for editing
-          this.loadPayeeData(payeeId);
+        if (payeeId === null) {
+          this.$refs.formModal.show();
+          return;
         }
 
-        this.$refs.formModal.show();
+        // Open the edit modal only once the payee has loaded, so an unknown or
+        // inaccessible ID never leaves a half-filled modal behind.
+        // resetForm() above invalidated any earlier load, so only this request may act.
+        const requestId = this.payeeRequestId;
+
+        this.loadPayeeData(payeeId, requestId)
+          .then(() => {
+            if (requestId === this.payeeRequestId) {
+              this.$refs.formModal.show();
+            }
+          })
+          .catch((error) => {
+            if (requestId !== this.payeeRequestId) {
+              return;
+            }
+
+            console.error('Error loading payee:', error);
+            this.resetForm();
+            showErrorToast(__('Failed to load payee data'));
+          });
       },
 
       initializeCategorySelect() {
-        this.categorySelect = $(this.$el).find(`#${this.categorySelectId}`);
-
-        this.categorySelect
-          .select2({
-            language: window.YAFFA.userSettings.language,
-            theme: 'bootstrap-5',
-            ajax: {
+        this.categorySelect = markRaw(
+          createRemoteSelect(
+            this.$el.querySelector(`#${this.categorySelectId}`),
+            {
               url: '/api/v1/categories',
-              dataType: 'json',
-              delay: 150,
-              data: function (params) {
-                return {
-                  _token: csrfToken,
-                  q: params.term || '*',
-                  withInactive: true,
-                };
+              params: (term) => ({ q: term || '*', withInactive: true }),
+              mapResult: (item) => ({ id: item.id, text: item.full_name }),
+              placeholder: __('Select category'),
+              onChange: (value) => {
+                this.form.config.category_id = value ? Number(value) : null;
               },
-              processResults: function (data) {
-                const results = Array.isArray(data) ? data : data.data || [];
-
-                return {
-                  results: results.map(function (item) {
-                    return {
-                      id: item.id,
-                      text: item.full_name,
-                    };
-                  }),
-                };
-              },
-              cache: true,
             },
-            selectOnClose: false,
-            placeholder: __('Select category'),
-            allowClear: true,
-            dropdownParent: $('#' + this.id),
-          })
-          .on('select2:select select2:unselect', () => {
-            const selectedValue = this.categorySelect.val();
-
-            this.form.config.category_id =
-              selectedValue === null || selectedValue === ''
-                ? null
-                : Number(selectedValue);
-          });
+          ),
+        );
       },
 
       initializeCategoryPreferenceSelects() {
-        this.preferredSelect = $(this.$el).find(
-          `#${this.preferredCategoriesSelectId}`,
-        );
-        this.notPreferredSelect = $(this.$el).find(
-          `#${this.notPreferredCategoriesSelectId}`,
-        );
+        // A category can't be both preferred and excluded: each select hides the other's values
+        const createPreferenceSelect = (selectId, otherSelect, field) =>
+          markRaw(
+            createRemoteSelect(this.$el.querySelector(`#${selectId}`), {
+              url: '/api/v1/categories',
+              params: (term) => ({ q: term || '*', withInactive: true }),
+              mapResult: (item) => ({ id: item.id, text: item.full_name }),
+              filterResults: (results) => {
+                const otherValues = this[otherSelect].getValue();
 
-        const baseConfig = {
-          theme: 'bootstrap-5',
-          multiple: true,
-          language: window.YAFFA.userSettings.language,
-          ajax: {
-            url: '/api/v1/categories',
-            dataType: 'json',
-            delay: 150,
-            data: function (params) {
-              return {
-                _token: csrfToken,
-                q: params.term || '*',
-                withInactive: true,
-              };
-            },
-            processResults: function (data) {
-              const thisSelect = $(this.$element[0]);
-              const otherSelect = thisSelect
-                .closest('.modal')
-                .find(thisSelect.data('other-select'));
-              const otherItems = otherSelect.select2('val') || [];
-              const results = Array.isArray(data) ? data : data.data || [];
-
-              return {
-                results: results
-                  .filter(function (item) {
-                    return !otherItems.includes(item.id.toString());
-                  })
-                  .map(function (item) {
-                    return {
-                      id: item.id,
-                      text: item.full_name,
-                    };
-                  }),
-              };
-            },
-            cache: true,
-          },
-          selectOnClose: false,
-          placeholder: __('Select category'),
-          allowClear: true,
-          width: '100%',
-          dropdownParent: $('#' + this.id),
-        };
-
-        this.preferredSelect
-          .select2(baseConfig)
-          .on('select2:select select2:unselect', () => {
-            this.form.config.preferred = (this.preferredSelect.val() || []).map(
-              (item) => Number(item),
-            );
-          });
-
-        this.notPreferredSelect
-          .select2(baseConfig)
-          .on('select2:select select2:unselect', () => {
-            this.form.config.not_preferred = (
-              this.notPreferredSelect.val() || []
-            ).map((item) => Number(item));
-          });
-      },
-
-      setSelectValue(selectElement, category) {
-        if (!selectElement || !category) {
-          return;
-        }
-
-        const option = new Option(category.full_name, category.id, true, true);
-        selectElement.append(option).trigger('change');
-      },
-
-      setMultiSelectValues(selectElement, categories) {
-        if (!selectElement) {
-          return;
-        }
-
-        selectElement.empty();
-
-        categories.forEach((category) => {
-          const option = new Option(
-            category.full_name,
-            category.id,
-            true,
-            true,
+                return results.filter(
+                  (item) => !otherValues.includes(String(item.id)),
+                );
+              },
+              multiple: true,
+              placeholder: __('Select category'),
+              onChange: (values) => {
+                this.form.config[field] = values.map(Number);
+              },
+            }),
           );
-          selectElement.append(option);
-        });
 
-        selectElement.trigger('change');
+        this.preferredSelect = createPreferenceSelect(
+          this.preferredCategoriesSelectId,
+          'notPreferredSelect',
+          'preferred',
+        );
+        this.notPreferredSelect = createPreferenceSelect(
+          this.notPreferredCategoriesSelectId,
+          'preferredSelect',
+          'not_preferred',
+        );
       },
 
-      loadPayeeData(payeeId) {
+      toSelectItems(categories) {
+        return categories.map((category) => ({
+          id: category.id,
+          text: category.full_name,
+        }));
+      },
+
+      loadPayeeData(payeeId, requestId) {
         this.payeeId = payeeId;
 
         // Fetch payee data from API
-        fetch(route('api.v1.payees.show', { accountEntity: payeeId }))
+        return fetch(route('api.v1.payees.show', { accountEntity: payeeId }))
           .then((response) => {
             if (!response.ok) {
               throw new Error('Failed to load payee data');
@@ -403,6 +345,11 @@
             return response.json();
           })
           .then((data) => {
+            // A newer show() or a reset superseded this request
+            if (requestId !== this.payeeRequestId) {
+              return;
+            }
+
             this.form.name = data.name;
             this.form.active = Boolean(data.active);
             this.form.alias = data.alias || '';
@@ -414,23 +361,28 @@
               data.deferred_categories || []
             ).map((category) => Number(category.id));
 
-            // Update Select2 with the current category
-            this.categorySelect.empty();
-
+            // The form fields are set above, so the selects are updated silently
+            clearSelect(this.categorySelect, { silent: true });
             if (data.config?.category) {
-              this.setSelectValue(this.categorySelect, data.config.category);
-            } else {
-              this.categorySelect.val(null).trigger('change');
+              setSelected(
+                this.categorySelect,
+                this.toSelectItems([data.config.category]),
+                { silent: true },
+              );
             }
 
             if (!this.simplified) {
-              this.setMultiSelectValues(
+              clearSelect(this.preferredSelect, { silent: true });
+              setSelected(
                 this.preferredSelect,
-                data.preferred_categories || [],
+                this.toSelectItems(data.preferred_categories || []),
+                { silent: true },
               );
-              this.setMultiSelectValues(
+              clearSelect(this.notPreferredSelect, { silent: true });
+              setSelected(
                 this.notPreferredSelect,
-                data.deferred_categories || [],
+                this.toSelectItems(data.deferred_categories || []),
+                { silent: true },
               );
             }
 
@@ -440,12 +392,6 @@
             this.form.originalData = JSON.parse(
               JSON.stringify(this.form.data()),
             );
-          })
-          .catch((error) => {
-            console.error('Error loading payee:', error);
-            this.form.errors.set({
-              general: __('Failed to load payee data'),
-            });
           });
       },
 
@@ -461,15 +407,15 @@
         this.form.config.not_preferred = [];
 
         if (this.categorySelect) {
-          this.categorySelect.empty().val(null).trigger('change');
+          clearSelect(this.categorySelect, { silent: true });
         }
 
         if (!this.simplified) {
           if (this.preferredSelect) {
-            this.preferredSelect.empty().trigger('change');
+            clearSelect(this.preferredSelect, { silent: true });
           }
           if (this.notPreferredSelect) {
-            this.notPreferredSelect.empty().trigger('change');
+            clearSelect(this.notPreferredSelect, { silent: true });
           }
         }
 
@@ -477,8 +423,9 @@
         // FormModal's dirty check would compare against whatever payee was last edited.
         this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
 
-        // Reset payee ID
+        // Reset payee ID, and drop any payee load still in flight
         this.payeeId = null;
+        this.payeeRequestId++;
 
         // Reset list of similar payees
         this.similarPayees = [];

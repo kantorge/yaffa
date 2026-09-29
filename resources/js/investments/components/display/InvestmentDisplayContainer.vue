@@ -3,13 +3,13 @@
     <div class="col-md-8">
       <div class="row">
         <div class="col-md-5">
-          <investment-details-card :investment="investment" />
-          <current-assets-card :investment="investment" />
+          <investment-details-card :investment="localInvestment" />
+          <current-assets-card :investment="localInvestment" />
         </div>
 
         <div class="col-md-7">
           <results-card
-            :investment="investment"
+            :investment="localInvestment"
             :transactions="processedTransactions"
             :prices="processedPrices"
             :date-from="dateFrom"
@@ -21,7 +21,7 @@
       </div>
       <transaction-history-card
         :transactions="processedTransactions"
-        :investment="investment"
+        :investment="localInvestment"
         @set-date-range="onSetDateRange"
         @delete-transaction="onDeleteTransaction"
       />
@@ -29,7 +29,7 @@
     <div class="col-md-4">
       <price-history-card
         :prices="processedPrices"
-        :investment="investment"
+        :investment="localInvestment"
         :date-from="dateFrom"
         :date-to="dateTo"
         @update:date-from="(val) => (dateFrom = val)"
@@ -37,7 +37,7 @@
       />
       <quantity-history-card
         :quantities="processedQuantities"
-        :investment="investment"
+        :investment="localInvestment"
         :date-from="dateFrom"
         :date-to="dateTo"
         @update:date-from="(val) => (dateFrom = val)"
@@ -72,6 +72,8 @@
     },
     data() {
       return {
+        // Local copy: the post-delete refresh must not mutate the prop
+        localInvestment: { ...this.investment },
         dateFrom: null,
         dateTo: null,
         processedTransactions: [],
@@ -96,7 +98,7 @@
       // Initialize processed prices from prop
       this.processedPrices = this.prices || [];
 
-      this.processedQuantities = this.investment.quantities.map((qty) => ({
+      this.processedQuantities = this.localInvestment.quantities.map((qty) => ({
         ...qty,
         date: qty.date ? new Date(qty.date) : null,
       }));
@@ -146,12 +148,12 @@
           // Fetch fresh investment display data from API endpoint
           // This includes recalculated quantities, transactions, and prices
           const response = await window.axios.get(
-            `/api/v1/investments/${this.investment.id}/display-data`,
+            `/api/v1/investments/${this.localInvestment.id}/display-data`,
           );
 
           if (response.data) {
             // Update investment with fresh data (includes recalculated quantities)
-            Object.assign(this.investment, response.data.investment);
+            Object.assign(this.localInvestment, response.data.investment);
 
             // Update transactions with fresh data and convert dates to Date objects
             if (
@@ -186,17 +188,19 @@
         // Recalculate processedQuantities from investment data
         // This ensures quantity history updates when transactions change
         if (
-          !this.investment.quantities ||
-          this.investment.quantities.length === 0
+          !this.localInvestment.quantities ||
+          this.localInvestment.quantities.length === 0
         ) {
           this.processedQuantities = [];
           return;
         }
 
-        this.processedQuantities = this.investment.quantities.map((qty) => ({
-          ...qty,
-          date: qty.date ? new Date(qty.date) : null,
-        }));
+        this.processedQuantities = this.localInvestment.quantities.map(
+          (qty) => ({
+            ...qty,
+            date: qty.date ? new Date(qty.date) : null,
+          }),
+        );
 
         if (this.processedQuantities.length > 0) {
           // Add a dummy value to quantities to draw beyond the last value. Set the date to two months ahead. Values are copied from last value.

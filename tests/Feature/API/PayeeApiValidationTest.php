@@ -1,27 +1,50 @@
 <?php
 
-namespace Tests\Feature\API;
-
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Response;
-use Tests\TestCase;
 
-class PayeeApiValidationTest extends TestCase
-{
-    use RefreshDatabase;
+uses(RefreshDatabase::class);
 
-    public function test_cannot_create_payee_with_category_both_preferred_and_not_preferred(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
+it('rejects creating a payee without a name', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create();
 
-        /** @var Category $category */
-        $category = Category::factory()->for($user)->create();
+    $this->actingAs($user)
+        ->postJson(route('api.v1.payees.store'), [
+            'name' => '',
+            'active' => 1,
+            'config_type' => 'payee',
+            'config' => ['category_id' => $category->id],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['name']);
 
-        $response = $this->actingAs($user)->postJson(route('api.v1.payees.store'), [
+    expect($user->payees()->count())->toBe(0);
+});
+
+it('rejects updating a payee with an empty name', function () {
+    $user = User::factory()->create();
+    $payee = AccountEntity::factory()->asPayee($user)->create();
+
+    $this->actingAs($user)
+        ->patchJson(route('api.v1.payees.update', ['accountEntity' => $payee->id]), [
+            'name' => '',
+            'config_type' => 'payee',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['name']);
+
+    expect($payee->fresh()->name)->toBe($payee->name);
+});
+
+it('rejects creating a payee with a category both preferred and not preferred', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.payees.store'), [
             'name' => 'Conflicting Payee',
             'active' => true,
             'config_type' => 'payee',
@@ -30,51 +53,41 @@ class PayeeApiValidationTest extends TestCase
                 'preferred' => [$category->id],
                 'not_preferred' => [$category->id],
             ],
-        ]);
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['config.preferred.0', 'config.not_preferred.0']);
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        $response->assertJsonValidationErrors(['config.preferred.0', 'config.not_preferred.0']);
+    $this->assertDatabaseMissing('account_entities', ['name' => 'Conflicting Payee']);
+    $this->assertDatabaseEmpty('account_entity_category_preference');
+});
 
-        $this->assertDatabaseMissing('account_entities', ['name' => 'Conflicting Payee']);
-        $this->assertDatabaseEmpty('account_entity_category_preference');
-    }
+it('rejects updating a payee with a category both preferred and not preferred', function () {
+    $user = User::factory()->create();
+    $existingCategory = Category::factory()->for($user)->create();
+    $conflictingCategory = Category::factory()->for($user)->create();
 
-    public function test_cannot_update_payee_with_category_both_preferred_and_not_preferred(): void
-    {
-        /** @var User $user */
-        $user = User::factory()->create();
+    $payee = AccountEntity::factory()->asPayee($user)->create(['name' => 'Existing Payee']);
+    $payee->categoryPreference()->sync([
+        $existingCategory->id => ['preferred' => true],
+    ]);
 
-        /** @var Category $existingCategory */
-        $existingCategory = Category::factory()->for($user)->create();
+    $this->actingAs($user)
+        ->patchJson(route('api.v1.payees.update', ['accountEntity' => $payee->id]), [
+            'name' => 'Existing Payee',
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => null,
+                'preferred' => [$conflictingCategory->id],
+                'not_preferred' => [(string) $conflictingCategory->id],
+            ],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['config.preferred.0', 'config.not_preferred.0']);
 
-        /** @var Category $conflictingCategory */
-        $conflictingCategory = Category::factory()->for($user)->create();
-
-        /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->asPayee($user)->create(['name' => 'Existing Payee']);
-        $payee->categoryPreference()->sync([
-            $existingCategory->id => ['preferred' => true],
-        ]);
-
-        $response = $this->actingAs($user)
-            ->patchJson(route('api.v1.payees.update', ['accountEntity' => $payee->id]), [
-                'name' => 'Existing Payee',
-                'config_type' => 'payee',
-                'config' => [
-                    'category_id' => null,
-                    'preferred' => [$conflictingCategory->id],
-                    'not_preferred' => [(string) $conflictingCategory->id],
-                ],
-            ]);
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        $response->assertJsonValidationErrors(['config.preferred.0', 'config.not_preferred.0']);
-
-        $this->assertDatabaseCount('account_entity_category_preference', 1);
-        $this->assertDatabaseHas('account_entity_category_preference', [
-            'account_entity_id' => $payee->id,
-            'category_id' => $existingCategory->id,
-            'preferred' => true,
-        ]);
-    }
-}
+    $this->assertDatabaseCount('account_entity_category_preference', 1);
+    $this->assertDatabaseHas('account_entity_category_preference', [
+        'account_entity_id' => $payee->id,
+        'category_id' => $existingCategory->id,
+        'preferred' => true,
+    ]);
+});

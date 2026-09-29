@@ -34,9 +34,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
-            $this->createMock(CategoryLearningService::class),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(TextExtractionService::class),
+            $this->createStub(CategoryLearningService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
         ) extends ProcessDocumentService {
@@ -65,9 +65,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
-            $this->createMock(CategoryLearningService::class),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(TextExtractionService::class),
+            $this->createStub(CategoryLearningService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
         ) extends ProcessDocumentService {
@@ -105,9 +105,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
-            $this->createMock(CategoryLearningService::class),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(TextExtractionService::class),
+            $this->createStub(CategoryLearningService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
         ) extends ProcessDocumentService {
@@ -159,9 +159,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
-            $this->createMock(CategoryLearningService::class),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(TextExtractionService::class),
+            $this->createStub(CategoryLearningService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
             $category->id
@@ -231,9 +231,9 @@ class ProcessDocumentServiceTest extends TestCase
         ]);
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
+            $this->createStub(TextExtractionService::class),
             $categoryLearningService,
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
         ) extends ProcessDocumentService {
@@ -302,9 +302,9 @@ class ProcessDocumentServiceTest extends TestCase
         ]);
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
+            $this->createStub(TextExtractionService::class),
             $categoryLearningService,
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
             $aiCategory->id
@@ -370,9 +370,9 @@ class ProcessDocumentServiceTest extends TestCase
         ]);
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
+            $this->createStub(TextExtractionService::class),
             $categoryLearningService,
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
             $aiCategory->id
@@ -436,9 +436,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
+            $this->createStub(TextExtractionService::class),
             new CategoryLearningService(),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
         ) extends ProcessDocumentService {
@@ -649,7 +649,7 @@ class ProcessDocumentServiceTest extends TestCase
         $service = new class (
             $textExtractor,
             new CategoryLearningService(),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
         ) extends ProcessDocumentService {
@@ -708,8 +708,8 @@ class ProcessDocumentServiceTest extends TestCase
 
         $service = new class (
             $textExtractor,
-            $this->createMock(CategoryLearningService::class),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(CategoryLearningService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
         ) extends ProcessDocumentService {
@@ -763,8 +763,8 @@ class ProcessDocumentServiceTest extends TestCase
         $this->createTransactionWithCategory($user, $account->id, $payee->id, $category->id, now()->subMonths(2));
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
-            $this->createMock(CategoryLearningService::class),
+            $this->createStub(TextExtractionService::class),
+            $this->createStub(CategoryLearningService::class),
             new PayeeCategoryStatsService(),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder()
@@ -813,9 +813,9 @@ class ProcessDocumentServiceTest extends TestCase
         $config = AiProviderConfig::factory()->for($user)->create();
 
         $service = new class (
-            $this->createMock(TextExtractionService::class),
+            $this->createStub(TextExtractionService::class),
             new CategoryLearningService(),
-            $this->createMock(PayeeCategoryStatsService::class),
+            $this->createStub(PayeeCategoryStatsService::class),
             new AiExtractionSchemaValidator(),
             new AiPromptBuilder(),
             $category->id,

@@ -14,6 +14,7 @@
                 class="btn btn-outline-secondary"
                 type="button"
                 id="table_filter_search_text_clear"
+                data-table-search-clear
                 title="{{ __('Clear search') }}"
         >
             <i class="fa fa-times"></i>

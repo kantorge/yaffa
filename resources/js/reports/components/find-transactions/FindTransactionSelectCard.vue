@@ -22,9 +22,14 @@
 </template>
 
 <script>
+  import { markRaw } from 'vue';
   import { __ } from '@/shared/lib/i18n';
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
+  import * as toastHelpers from '@/shared/lib/toast';
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
 
   export default {
     name: 'FindTransactionSelectCard',
@@ -72,7 +77,7 @@
         itemsToPreset: this.presetItemIds.map((id) => id),
         selectedValues: [],
         elementId: `select_${this.property}`,
-        elementSelector: `#select_${this.property}`,
+        select: null,
       };
     },
 
@@ -83,95 +88,74 @@
     },
 
     mounted() {
-      const vue = this;
-
-      // Initialize the select2 plugin
-      $(this.elementSelector)
-        .select2({
-          theme: 'bootstrap-5',
+      this.select = markRaw(
+        createRemoteSelect(this.$el.querySelector(`#${this.elementId}`), {
+          url: this.searchApiPath,
+          params: (term) => ({ q: term || undefined, withInactive: true }),
+          mapResult: (data) => ({
+            id: data.id,
+            text:
+              data[this.search_label_field] ??
+              data.full_name ??
+              data.text ??
+              data.name,
+          }),
           multiple: true,
-          ajax: {
-            url: this.searchApiPath,
-            dataType: 'json',
-            delay: 150,
-            data: function (params) {
-              return {
-                q: params.term,
-                withInactive: true,
-              };
-            },
-            processResults: function (data) {
-              return {
-                results: data.map(function (data) {
-                  return {
-                    id: data.id,
-                    text:
-                      data[vue.search_label_field] ??
-                      data.full_name ??
-                      data.text ??
-                      data.name,
-                  };
-                }),
-              };
-            },
-            cache: true,
-          },
-          selectOnClose: false,
           placeholder: __(this.placeholder),
-          allowClear: true,
-        })
-        // Attach select2 event listeners, emit events for parent component
-        .on('select2:select select2:unselect', function (e) {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          vue.selectedValues = $(e.target).select2('val');
-
-          vue.$emit(`update`, $(e.target).select2('val'));
-        });
+          onChange: (values) => {
+            this.selectedValues = values;
+            this.$emit('update', values);
+          },
+        }),
+      );
 
       // Append preset items, if any
-      if (this.presetItemIds.length > 0) {
-        this.presetItemIds.forEach(function (item) {
-          $.ajax({
-            url: vue.detailsApiPath.replace('#id#', item),
-            data: {},
-            success: function (data) {
-              $(vue.elementSelector)
-                .append(
-                  new Option(data[vue.detailsLabelField], data.id, true, true),
-                )
-                .trigger('change')
-                .trigger({
-                  type: 'select2:select',
-                  params: {
-                    data: {
-                      id: data.id,
-                      name: data[vue.detailsLabelField],
-                    },
-                  },
-                });
-
-              // Remove item from itemsToPreset
-              vue.itemsToPreset = vue.itemsToPreset.filter((id) => id !== item);
-
-              if (vue.itemsToPreset.length === 0) {
-                vue.$emit('preset-ready', vue.property);
-              }
-            },
-          });
-        });
-      } else {
+      if (this.presetItemIds.length === 0) {
         this.$emit('preset-ready', this.property);
+        return;
       }
+
+      this.presetItemIds.forEach((item) => {
+        window.axios
+          .get(this.detailsApiPath.replace('#id#', item))
+          .then(({ data }) => {
+            setSelected(this.select, {
+              id: data.id,
+              text: data[this.detailsLabelField],
+            });
+          })
+          // A failed lookup still settles (below), so the card doesn't stay not-ready forever,
+          // but the user must know the requested filter was dropped from the search
+          .catch(() => {
+            // The parent still holds the unresolved id from the URL; sync it to what's actually selected
+            this.$emit('update', this.select.getValue());
+            toastHelpers.showErrorToast(
+              __(
+                'Could not load preselected filter item #:id for :filter. The search runs without it.',
+                {
+                  id: item,
+                  filter: __(this.title),
+                },
+              ),
+            );
+          })
+          .finally(() => {
+            this.itemsToPreset = this.itemsToPreset.filter((id) => id !== item);
+
+            if (this.itemsToPreset.length === 0) {
+              this.$emit('preset-ready', this.property);
+            }
+          });
+      });
+    },
+
+    beforeUnmount() {
+      this.select?.destroy();
     },
 
     methods: {
       clearSelection: function () {
-        $(this.elementSelector).val(null).trigger('change');
+        clearSelect(this.select, { silent: true });
 
         this.selectedValues = [];
 

@@ -1,5 +1,5 @@
 <template>
-  <div id="transactionFormInvestment">
+  <div id="transactionFormInvestment" :data-loaded="formLoaded">
     <AlertErrors
       :form="form"
       :message="__('There were some problems with your input.')"
@@ -223,7 +223,6 @@
                     </label>
                     <select
                       id="account"
-                      v-model="form.config.account_id"
                       class="form-select"
                       style="width: 100% !important"
                     ></select>
@@ -236,7 +235,6 @@
                     </label>
                     <select
                       id="investment"
-                      v-model="form.config.investment_id"
                       class="form-control"
                       style="width: 100% !important"
                     ></select>
@@ -420,6 +418,7 @@
         :is-schedule="form.schedule"
         :schedule="form.schedule_config"
         :form="form"
+        @update:schedule="Object.assign(form.schedule_config, $event)"
       ></transaction-schedule>
 
       <transaction-schedule
@@ -432,6 +431,7 @@
         :schedule="form.original_schedule_config"
         :form="form"
         field-prefix="original_schedule_config"
+        @update:schedule="Object.assign(form.original_schedule_config, $event)"
       ></transaction-schedule>
 
       <div class="card mb-3">
@@ -542,8 +542,12 @@
     getCurrencySymbol,
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
-  import { initializeSelect2 } from '@/shared/lib/select2';
-  initializeSelect2(window.YAFFA.userSettings.language);
+  import { markRaw } from 'vue';
+  import {
+    createRemoteSelect,
+    setSelected,
+    clearSelect,
+  } from '@/shared/lib/tom-select';
 
   export default {
     components: {
@@ -590,6 +594,9 @@
     data() {
       let data = {};
 
+      // True once the presets have settled and the isDirty() baseline is taken (see markFormClean())
+      data.formLoaded = false;
+
       // Main form data
       data.form = new Form({
         transaction_type: 'buy',
@@ -619,7 +626,6 @@
       data.account_currency = null;
       data.investment_currency = null;
 
-      data.csrfToken = window.csrfToken;
       data.callback = this.initialCallback;
 
       // Store price feature related data
@@ -801,6 +807,8 @@
       },
 
       transaction(transaction) {
+        this.formLoaded = false;
+
         // TODO: consider using form.update()
         this.form.reset();
 
@@ -823,10 +831,9 @@
         }
 
         // Snapshot the settled post-load state as the isDirty() baseline - see
-        // markFormClean(). The async select2 population above resets config.account_id/
-        // investment_id via a native <select>'s 'change' event, which coerces the value
-        // to a string, so this must wait for both to settle rather than snapshotting
-        // right after initializeTransaction().
+        // markFormClean(). The async presets above set config.account_id/investment_id
+        // and the currencies that depend on them, so this must wait for both to settle
+        // rather than snapshotting right after initializeTransaction().
         Promise.all([accountReady, investmentReady]).then(() => {
           this.$nextTick(() => this.markFormClean());
         });
@@ -877,155 +884,74 @@
     },
 
     mounted() {
-      // Account dropdown functionality
-      $('#account')
-        .select2({
-          ajax: {
-            url: '/api/v1/accounts/investment',
-            dataType: 'json',
-            delay: 150,
-            data: (params) => {
-              return {
-                q: params.term,
-                transaction_type: this.form.transaction_type,
-                currency_id: this.investment_currency?.id,
-                _token: this.csrfToken,
-              };
-            },
-            processResults: (data) => {
-              return {
-                results: data,
-              };
-            },
-            cache: true,
-          },
-          selectOnClose: false,
+      this.accountSelect = markRaw(
+        createRemoteSelect(document.getElementById('account'), {
+          url: '/api/v1/accounts/investment',
+          // Only accounts in the selected investment's currency; read on every request (no cache)
+          params: (term) => ({
+            q: term || undefined,
+            transaction_type: this.form.transaction_type,
+            currency_id: this.investment_currency?.id,
+          }),
           placeholder: __('Select account'),
-          searchInputPlaceholder: __('Type to search...'),
-          allowClear: true,
-          width: 'resolve',
-          theme: 'bootstrap-5',
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
-
-          $.ajax({
-            url: '/api/v1/accounts/' + e.params.data.id,
-            data: {
-              _token: this.csrfToken,
-            },
-          }).done((data) => {
-            this.account_currency = data.config.currency;
-          });
-        })
-        .on('select2:unselect', () => {
-          this.form.config.account_id = null;
-          this.account_currency = null;
-        })
-        .on('select2:clear', () => {
-          this.form.config.account_id = null;
-          this.account_currency = null;
-        });
+          onSelect: (item) => this.onAccountSelected(item.id),
+          onClear: () => {
+            this.form.config.account_id = null;
+            this.account_currency = null;
+          },
+        }),
+      );
 
       // Load default value for account
       const accountReady = this.getDefaultAccountDetails(
         this.form.config.account_id,
       );
 
-      // Investment dropdown functionality
-      $('#investment')
-        .select2({
-          ajax: {
-            url: '/api/v1/investments',
-            data: (params) => {
-              return {
-                query: params.term,
-                active: 1,
-                currency_id: this.account_currency?.id,
-                limit: 10,
-                // We rely on server-side sorting, so let's set it here
-                sort_by: 'name',
-                sort_order: 'asc',
-                _token: this.csrfToken,
-              };
-            },
-            dataType: 'json',
-            delay: 150,
-            processResults: (data) => {
-              // Let's format the results to a format used by Select2
-              return {
-                results: data.map((item) => ({
-                  id: item.id,
-                  text: item.name,
-                  currency_id: item.currency_id,
-                  html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
-                  title: item.name,
-                })),
-              };
-            },
-            cache: true,
-          },
-          escapeMarkup: function (markup) {
-            return markup;
-          },
-          templateResult: function (data) {
-            return data.html;
-          },
-          templateSelection: function (data) {
-            return data.text;
-          },
-          selectOnClose: false,
+      this.investmentSelect = markRaw(
+        createRemoteSelect(document.getElementById('investment'), {
+          url: '/api/v1/investments',
+          params: (term) => ({
+            query: term || undefined,
+            active: 1,
+            currency_id: this.account_currency?.id,
+            limit: 10,
+            // We rely on server-side sorting, so let's set it here
+            sort_by: 'name',
+            sort_order: 'asc',
+          }),
+          mapResult: (item) => ({
+            id: item.id,
+            text: item.name,
+            symbol: item.symbol,
+            currency_id: item.currency_id,
+          }),
+          // Investment names and symbols are user data: always escaped
+          renderOption: (data, escape) =>
+            `<div>${escape(data.text)} <span class="text-muted">(${escape(data.symbol)})</span></div>`,
           placeholder: __('Select investment'),
-          searchInputPlaceholder: __('Type to search...'),
-          allowClear: true,
-          width: 'resolve',
-          theme: 'bootstrap-5',
-          dropdownParent: $(this.dropdownParentSelector),
-        })
-        .on('select2:select', (e) => {
-          const event = new Event('change', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.target.dispatchEvent(event);
+          onSelect: (item) => {
+            this.form.config.investment_id = Number(item.id);
 
-          // Set currency id immediately to avoid a race condition in account filtering.
-          if (e.params.data.currency_id) {
-            this.investment_currency = {
-              id: e.params.data.currency_id,
-            };
-          }
+            // Set currency id immediately to avoid a race condition in account filtering.
+            if (item.currency_id) {
+              this.investment_currency = { id: item.currency_id };
+            }
 
-          $.ajax({
-            url: route('api.v1.investments.show', {
-              investment: e.params.data.id,
-            }),
-            data: {
-              _token: this.csrfToken,
-            },
-          }).done((data) => {
-            this.investment_currency = data.currency;
-          });
-        })
-        .on('select2:unselect', () => {
-          this.investment_currency = null;
-          this.form.config.investment_id = null;
-          // Reset price-related data when investment is cleared
-          this.existingPriceForDate = null;
-          this.storePriceEnabled = false;
-        })
-        .on('select2:clear', () => {
-          this.investment_currency = null;
-          this.form.config.investment_id = null;
-          // Reset price-related data when investment is cleared
-          this.existingPriceForDate = null;
-          this.storePriceEnabled = false;
-        });
+            window.axios
+              .get(route('api.v1.investments.show', { investment: item.id }))
+              .then(({ data }) => {
+                this.investment_currency = data.currency;
+              });
+          },
+          onClear: () => {
+            this.investment_currency = null;
+            this.form.config.investment_id = null;
+            // Reset price-related data when investment is cleared
+            this.existingPriceForDate = null;
+            this.storePriceEnabled = false;
+          },
+        }),
+      );
 
       // Load default value for investment
       const investmentReady = this.getDefaultInvestmentDetails(
@@ -1046,36 +972,39 @@
     },
 
     beforeUnmount() {
-      $('#account').off().select2('destroy');
-      $('#investment').off().select2('destroy');
+      this.accountSelect?.destroy();
+      this.investmentSelect?.destroy();
     },
 
     methods: {
+      // Store the selected account and load its currency. Returns the request, so presets can
+      // wait for it before the form is treated as loaded.
+      onAccountSelected(id) {
+        this.form.config.account_id = Number(id);
+
+        return window.axios.get('/api/v1/accounts/' + id).then(({ data }) => {
+          this.account_currency = data.config.currency;
+        });
+      },
+
       getDefaultAccountDetails(account_id) {
         if (!account_id) {
           return;
         }
 
-        // Returned so callers can wait for the select2 population (and the
-        // form field sync it triggers via a dispatched 'change' event) to
+        // Returned so callers can wait for the preset and its currency request to
         // settle before treating the form as loaded.
-        return $.ajax({
-          url: '/api/v1/accounts/' + this.form.config.account_id,
-          data: {
-            _token: this.csrfToken,
-          },
-        }).done((data) => {
-          // Create the option and append to Select2
-          $('#account')
-            .append(new Option(data.name, data.id, true, true))
-            .trigger('change')
-            .trigger({
-              type: 'select2:select',
-              params: {
-                data: data,
-              },
-            });
-        });
+        return window.axios
+          .get('/api/v1/accounts/' + account_id)
+          .then(({ data }) => {
+            setSelected(
+              this.accountSelect,
+              { id: data.id, text: data.name },
+              { silent: true },
+            );
+
+            return this.onAccountSelected(data.id);
+          });
       },
 
       getDefaultInvestmentDetails(investment_id) {
@@ -1083,28 +1012,19 @@
           return;
         }
 
-        // Returned so callers can wait for the select2 population (and the
-        // form field sync it triggers via a dispatched 'change' event) to
-        // settle before treating the form as loaded.
-        return $.ajax({
-          url: route('api.v1.investments.show', {
-            investment: investment_id,
-          }),
-          data: {
-            _token: this.csrfToken,
-          },
-        }).done((data) => {
-          // Create the option and append to Select2
-          $('#investment')
-            .append(new Option(data.name, data.id, true, true))
-            .trigger('change')
-            .trigger({
-              type: 'select2:select',
-              params: {
-                data: data,
-              },
-            });
-        });
+        // Returned so callers can wait for the preset to settle before treating
+        // the form as loaded. The details response already has the full currency.
+        return window.axios
+          .get(route('api.v1.investments.show', { investment: investment_id }))
+          .then(({ data }) => {
+            setSelected(
+              this.investmentSelect,
+              { id: data.id, text: data.name, symbol: data.symbol },
+              { silent: true },
+            );
+            this.form.config.investment_id = data.id;
+            this.investment_currency = data.currency;
+          });
       },
 
       initializeTransaction() {
@@ -1230,14 +1150,13 @@
         // requested by the caller (mounted()/the transaction watcher) have finished
         // loading - see markFormClean() and its call sites. Assigning config.account_id
         // above doesn't keep form.originalData in sync the way form.update() does, and
-        // the async select2 population that follows resets it via a native <select>'s
-        // 'change' event, which coerces the value to a string - even when nothing about
-        // it semantically changed, so snapshotting here would capture a mistyped value.
+        // the async presets that follow set it again, together with the currencies.
       },
 
       // Snapshot the current state as the "clean" baseline isDirty() compares against.
       markFormClean() {
         this.form.update(this.form.data());
+        this.formLoaded = true;
       },
 
       transactionTypeChanged() {
@@ -1388,7 +1307,8 @@
 
       // Clear the investment dropdown (used when resetting the form in modal context)
       clearInvestmentDropdown() {
-        $('#investment').val(null).trigger('change');
+        clearSelect(this.investmentSelect, { silent: true });
+        this.form.config.investment_id = null;
         this.investment_currency = null;
       },
 

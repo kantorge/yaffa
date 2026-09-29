@@ -11,7 +11,11 @@ import 'datatables.net-bs5';
 import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import * as dataTableHelpers from '@/shared/lib/datatable';
-import { initializeSelect2 } from '@/shared/lib/select2';
+import {
+  createRemoteSelect,
+  setSelected,
+  clearSelect,
+} from '@/shared/lib/tom-select';
 import {
   initializeBootstrapTooltips,
   scheduleCadenceText,
@@ -32,10 +36,7 @@ import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 import 'jstree';
 import 'jstree/src/themes/default/style.css';
 
-// Select2 for account selection
-initializeSelect2(window.YAFFA.userSettings.language);
-
-const accountSelector = '#accountList';
+const accountElement = document.getElementById('accountList');
 const treeSelector = '#categoryTree';
 
 const getSelectedCategoryIds = () =>
@@ -360,7 +361,7 @@ let reloadData = function () {
       accountSelection: $(
         'input[name=table_filter_account_scope]:checked',
       ).val(),
-      accountEntity: $(accountSelector).val(),
+      accountEntity: accountElement.value,
     },
   })
     .fail(function (jqXHR, textStatus) {
@@ -950,8 +951,8 @@ let rebuildUrl = function () {
   let url = new URL(window.location.origin + window.location.pathname);
 
   // Accounts
-  if ($(accountSelector).val()) {
-    url.searchParams.append('accountEntity', $(accountSelector).val());
+  if (accountElement.value) {
+    url.searchParams.append('accountEntity', accountElement.value);
   }
 
   // Categories
@@ -968,7 +969,7 @@ let rebuildUrl = function () {
     $('input[name=table_filter_account_scope]:checked').val() === 'selected';
   elementRefreshButton.disabled =
     $(treeSelector).jstree('get_checked').length === 0 ||
-    (accountScopeRequiresSelection && !$(accountSelector).val());
+    (accountScopeRequiresSelection && !accountElement.value);
 };
 
 // Initialize category tree view
@@ -1034,58 +1035,19 @@ $(treeSelector)
   });
 
 // Account filter
-$(accountSelector)
-  .select2({
-    theme: 'bootstrap-5',
-    ajax: {
-      url: '/api/v1/accounts',
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          q: params.term,
-          withInactive: true,
-        };
-      },
-      processResults: function (data) {
-        return {
-          results: data.map(function (account) {
-            return {
-              id: account.id,
-              text: account.name,
-            };
-          }),
-        };
-      },
-      cache: true,
-    },
-    placeholder: __('Select account'),
-    allowClear: true,
-  })
-  .on('select2:select', rebuildUrl)
-  .on('select2:unselect', rebuildUrl);
+const accountSelect = createRemoteSelect(accountElement, {
+  url: '/api/v1/accounts',
+  params: (term) => ({ q: term || undefined, withInactive: true }),
+  mapResult: (account) => ({ id: account.id, text: account.name }),
+  placeholder: __('Select account'),
+  onSelect: rebuildUrl,
+  onClear: rebuildUrl,
+});
 
 // Default account
 if (typeof presetAccount !== 'undefined') {
-  $.ajax({
-    url: '/api/v1/accounts/' + presetAccount,
-    data: {
-      _token: window.csrfToken,
-    },
-  }).done((data) => {
-    // Create the option and append to Select2
-    $(accountSelector)
-      .append(new Option(data.name, data.id, true, true))
-      .trigger('change')
-      .trigger({
-        type: 'select2:select',
-        params: {
-          data: {
-            id: data.id,
-            name: data.name,
-          },
-        },
-      });
+  window.axios.get('/api/v1/accounts/' + presetAccount).then(({ data }) => {
+    setSelected(accountSelect, { id: data.id, text: data.name });
 
     presetFilters.account = true;
 
@@ -1122,21 +1084,21 @@ document.getElementById('clear').addEventListener('click', function () {
 // Account type switch
 $('input[name=table_filter_account_scope]').on('change', function () {
   // Only selected items are needed, so we need to enable the account selector
-  $(accountSelector).prop('disabled', this.value !== 'selected');
-
   // If the account selector is disabled, we need to clear the account filter
-  if (this.value !== 'selected') {
-    $(accountSelector).val(null).trigger('change');
+  if (this.value === 'selected') {
+    accountSelect.enable();
+  } else {
+    accountSelect.disable();
+    clearSelect(accountSelect, { silent: true });
   }
 
   rebuildUrl();
 });
 
 // Set initial state of account selector
-$(accountSelector).prop(
-  'disabled',
-  $('input[name=table_filter_account_scope]:checked').val() !== 'selected',
-);
+if ($('input[name=table_filter_account_scope]:checked').val() !== 'selected') {
+  accountSelect.disable();
+}
 
 document.addEventListener(COLOR_MODE_EVENT, () => {
   initChart();
