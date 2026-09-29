@@ -125,6 +125,7 @@
       :form="form"
       field-prefix=""
       bare
+      @update:schedule="Object.assign(form, $event)"
     ></transaction-schedule>
 
     <transaction-schedule
@@ -139,6 +140,7 @@
       :schedule="form.original_schedule_config"
       :form="form"
       field-prefix="original_schedule_config"
+      @update:schedule="Object.assign(form.original_schedule_config, $event)"
     ></transaction-schedule>
   </FormModal>
 </template>

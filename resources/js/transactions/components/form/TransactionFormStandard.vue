@@ -228,6 +228,7 @@
             :is-schedule="form.schedule"
             :schedule="form.schedule_config"
             :form="form"
+            @update:schedule="Object.assign(form.schedule_config, $event)"
           ></transaction-schedule>
         </div>
         <div class="col-12">
@@ -242,6 +243,9 @@
             :schedule="form.original_schedule_config"
             :form="form"
             field-prefix="original_schedule_config"
+            @update:schedule="
+              Object.assign(form.original_schedule_config, $event)
+            "
           ></transaction-schedule>
         </div>
       </div>

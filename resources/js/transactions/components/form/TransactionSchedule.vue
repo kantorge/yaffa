@@ -39,7 +39,7 @@
               />
               <select
                 :id="'schedule_frequency_' + $.vnode.key"
-                v-model="schedule.frequency"
+                v-model="frequencyInput"
                 class="form-select"
                 :disabled="!allowCustomizationData"
               >
@@ -153,7 +153,7 @@
                 <span class="text-muted">{{ __('of') }}</span>
                 <select
                   :id="'schedule_by_month_' + $.vnode.key"
-                  v-model.number="schedule.by_month"
+                  v-model.number="byMonthInput"
                   class="form-select schedule-month-select"
                   dusk="select-schedule-by-month"
                   :disabled="!allowCustomizationData"
@@ -210,7 +210,7 @@
                 <span class="text-muted">{{ __('of') }}</span>
                 <select
                   :id="'schedule_days_before_month_end_by_month_' + $.vnode.key"
-                  v-model.number="schedule.by_month"
+                  v-model.number="byMonthInput"
                   class="form-select schedule-month-select"
                   :disabled="!allowCustomizationData"
                 >
@@ -258,7 +258,7 @@
               <span class="text-muted">{{ __('of') }}</span>
               <select
                 :id="'schedule_last_business_day_by_month_' + $.vnode.key"
-                v-model.number="schedule.by_month"
+                v-model.number="byMonthInput"
                 class="form-select schedule-month-select"
                 :disabled="!allowCustomizationData"
               >
@@ -436,7 +436,7 @@
               <div class="form-check">
                 <input
                   :id="'schedule_automatic_recording_' + $.vnode.key"
-                  v-model="schedule.automatic_recording"
+                  v-model="automaticRecordingInput"
                   class="form-check-input"
                   dusk="checkbox-schedule-automatic-recording"
                   type="checkbox"
@@ -469,7 +469,7 @@
               <div class="input-group">
                 <input
                   :id="'schedule_inflation_' + $.vnode.key"
-                  v-model="schedule.inflation"
+                  v-model="inflationInput"
                   class="form-control"
                   type="number"
                   step=".01"
@@ -564,6 +564,11 @@
       },
     },
 
+    // The parent owns the schedule object. Every change is emitted as a partial
+    // update (only the changed fields), so multi-field changes stay atomic and
+    // parents just merge it: Object.assign(schedule, $event).
+    emits: ['update:schedule'],
+
     data() {
       let data = {};
 
@@ -653,26 +658,67 @@
           return 'dayOfMonth';
         },
         set(value) {
-          this.schedule.by_day = null;
-          this.schedule.days_before_month_end = null;
-          this.schedule.last_business_day_of_month = false;
+          const changes = {
+            by_day: null,
+            days_before_month_end: null,
+            last_business_day_of_month: false,
+          };
 
           if (value === 'dayOfMonth') {
-            this.schedule.by_month = null;
+            changes.by_month = null;
+            this.patch(changes);
             return;
           }
 
           if (value === 'weekday') {
-            this.schedule.by_day = '1MO';
+            changes.by_day = '1MO';
           } else if (value === 'daysBeforeMonthEnd') {
-            this.schedule.days_before_month_end = 0;
+            changes.days_before_month_end = 0;
           } else if (value === 'lastBusinessDayOfMonth') {
-            this.schedule.last_business_day_of_month = true;
+            changes.last_business_day_of_month = true;
           }
 
           if (this.schedule.frequency === 'YEARLY' && !this.schedule.by_month) {
-            this.schedule.by_month = this.startDateMonth;
+            changes.by_month = this.startDateMonth;
           }
+
+          this.patch(changes);
+        },
+      },
+
+      frequencyInput: {
+        get() {
+          return this.schedule.frequency;
+        },
+        set(value) {
+          this.patch({ frequency: value });
+        },
+      },
+
+      byMonthInput: {
+        get() {
+          return this.schedule.by_month;
+        },
+        set(value) {
+          this.patch({ by_month: value });
+        },
+      },
+
+      automaticRecordingInput: {
+        get() {
+          return this.schedule.automatic_recording;
+        },
+        set(value) {
+          this.patch({ automatic_recording: value });
+        },
+      },
+
+      inflationInput: {
+        get() {
+          return this.schedule.inflation;
+        },
+        set(value) {
+          this.patch({ inflation: value });
         },
       },
 
@@ -683,8 +729,9 @@
           return this.schedule.days_before_month_end ?? '';
         },
         set(value) {
-          this.schedule.days_before_month_end =
-            value === '' ? null : Number(value);
+          this.patch({
+            days_before_month_end: value === '' ? null : Number(value),
+          });
         },
       },
 
@@ -695,7 +742,7 @@
           return this.schedule.by_day ? this.schedule.by_day.slice(0, -2) : '1';
         },
         set(value) {
-          this.schedule.by_day = value + this.byDayWeekday;
+          this.patch({ by_day: value + this.byDayWeekday });
         },
       },
 
@@ -704,7 +751,7 @@
           return this.schedule.by_day ? this.schedule.by_day.slice(-2) : 'MO';
         },
         set(value) {
-          this.schedule.by_day = this.byDayOrdinal + value;
+          this.patch({ by_day: this.byDayOrdinal + value });
         },
       },
 
@@ -717,7 +764,7 @@
           return toDateInputValue(this.schedule.start_date);
         },
         set(value) {
-          this.schedule.start_date = value || null;
+          this.patch({ start_date: value || null });
         },
       },
 
@@ -726,7 +773,7 @@
           return toDateInputValue(this.schedule.next_date);
         },
         set(value) {
-          this.schedule.next_date = value || null;
+          this.patch({ next_date: value || null });
         },
       },
 
@@ -735,7 +782,7 @@
           return toDateInputValue(this.schedule.end_date);
         },
         set(value) {
-          this.schedule.end_date = value || null;
+          this.patch({ end_date: value || null });
         },
       },
 
@@ -747,7 +794,7 @@
           return this.schedule.interval ?? '';
         },
         set(value) {
-          this.schedule.interval = value === '' ? null : Number(value);
+          this.patch({ interval: value === '' ? null : Number(value) });
         },
       },
 
@@ -756,7 +803,7 @@
           return this.schedule.count ?? '';
         },
         set(value) {
-          this.schedule.count = value === '' ? null : Number(value);
+          this.patch({ count: value === '' ? null : Number(value) });
         },
       },
 
@@ -920,12 +967,14 @@
       // require MONTHLY/YEARLY, month only applies to YEARLY).
       'schedule.frequency'(newFrequency) {
         if (!['MONTHLY', 'YEARLY'].includes(newFrequency)) {
-          this.schedule.by_day = null;
-          this.schedule.by_month = null;
-          this.schedule.days_before_month_end = null;
-          this.schedule.last_business_day_of_month = false;
+          this.patch({
+            by_day: null,
+            by_month: null,
+            days_before_month_end: null,
+            last_business_day_of_month: false,
+          });
         } else if (newFrequency === 'MONTHLY') {
-          this.schedule.by_month = null;
+          this.patch({ by_month: null });
         }
       },
 
@@ -934,13 +983,13 @@
       // field is ever disabled - see the template comment above the Count field.
       'schedule.count'(newCount) {
         if (newCount) {
-          this.schedule.end_date = null;
+          this.patch({ end_date: null });
         }
       },
 
       'schedule.end_date'(newEndDate) {
         if (newEndDate) {
-          this.schedule.count = null;
+          this.patch({ count: null });
         }
       },
     },
@@ -952,14 +1001,18 @@
 
         return this.form.errors.has(key);
       },
+      // Ask the parent to apply a partial update to the schedule it owns
+      patch(changes) {
+        this.$emit('update:schedule', changes);
+      },
       clearDate(field) {
-        this.schedule[field] = null;
+        this.patch({ [field]: null });
       },
       stepNextDate(direction) {
         const target =
           direction === 'back' ? this.previousOccurrence : this.nextOccurrence;
         if (target) {
-          this.schedule.next_date = fromRRuleDate(target);
+          this.patch({ next_date: fromRRuleDate(target) });
         }
       },
     },
