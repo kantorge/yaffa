@@ -121,8 +121,9 @@
   const hasExplicitDateFilter = Boolean(
     initialDateFrom.value || initialDateTo.value,
   );
+  // Explicit dates win over a preset; the default applies only when neither is given
   const initialPreset = ref(
-    receivedDates.preset || (hasExplicitDateFilter ? null : 'previous90Days'),
+    hasExplicitDateFilter ? null : receivedDates.preset || 'previous90Days',
   );
   const initialDetectedDateFrom = ref(detectedDates.dateFrom);
   const initialDetectedDateTo = ref(detectedDates.dateTo);
