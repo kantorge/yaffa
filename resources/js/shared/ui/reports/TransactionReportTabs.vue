@@ -37,6 +37,9 @@
           <transaction-summary
             :transactions="transactions"
             :busy="busy"
+            :matching-items-only="matchingItemsOnly"
+            :category-ids="categoryIds"
+            :tag-ids="tagIds"
           ></transaction-summary>
         </div>
         <div
@@ -96,6 +99,9 @@
           <transaction-timeline
             :transactions="transactions"
             :busy="busy"
+            :matching-items-only="matchingItemsOnly"
+            :category-ids="categoryIds"
+            :tag-ids="tagIds"
           ></transaction-timeline>
         </div>
         <div

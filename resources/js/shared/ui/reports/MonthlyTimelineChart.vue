@@ -16,6 +16,7 @@
 
 <script>
   import Decimal from 'decimal.js';
+  import { applyMatchingItemsOnly } from '@/shared/lib/reports';
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
@@ -43,6 +44,18 @@
         type: Boolean,
         required: true,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
     data() {
       return {
@@ -52,8 +65,17 @@
         baseCurrency: window.YAFFA.userSettings.baseCurrency,
       };
     },
+    computed: {
+      effectiveTransactions() {
+        return applyMatchingItemsOnly(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
+      },
+    },
     watch: {
-      transactions: {
+      effectiveTransactions: {
         handler(newTransactions) {
           this.updateChartData(newTransactions);
         },

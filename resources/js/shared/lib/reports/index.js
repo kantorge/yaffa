@@ -78,6 +78,55 @@ export function itemMatchesActiveFilters(
 }
 
 /**
+ * Restrict the cash flow of split transactions to their matching items, for widgets that
+ * sum `cashflow_value` (Summary, Timeline). Returns the input array untouched unless
+ * `matchingItemsOnly` is set and a category or tag filter is active.
+ *
+ * Only deposits and withdrawals with items are adjusted (the item amounts are unsigned, so
+ * the sign of the original cash flow is kept). A transaction without any matching item is dropped.
+ *
+ * @param {Array} transactions
+ * @param {Object} [options]
+ * @param {boolean} [options.matchingItemsOnly]
+ * @param {string[]} [options.categoryIds]
+ * @param {string[]} [options.tagIds]
+ * @returns {Array}
+ */
+export function applyMatchingItemsOnly(
+  transactions,
+  { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = {},
+) {
+  if (!matchingItemsOnly || (categoryIds.length === 0 && tagIds.length === 0)) {
+    return transactions;
+  }
+
+  return transactions.flatMap((transaction) => {
+    const { isDeposit, isWithdrawal } = getTransactionTypeFlags(transaction);
+    if (
+      !(isDeposit || isWithdrawal) ||
+      !transaction.transaction_items?.length
+    ) {
+      return [transaction];
+    }
+
+    const matching = transaction.transaction_items.filter((item) =>
+      itemMatchesActiveFilters(item, { categoryIds, tagIds }),
+    );
+    if (matching.length === 0) {
+      return [];
+    }
+
+    const sum = matching.reduce(
+      (total, item) => total.plus(item.amount || 0),
+      new Decimal(0),
+    );
+    const sign = Math.sign(transaction.cashflow_value) || 1;
+
+    return [{ ...transaction, cashflow_value: sum.times(sign).toNumber() }];
+  });
+}
+
+/**
  * Aggregate transactions into a category data map.
  * Groups transactions by full category name, separates deposits/withdrawals,
  * and calculates monthly values per category.

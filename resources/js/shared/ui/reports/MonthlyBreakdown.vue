@@ -496,7 +496,7 @@
 
     methods: {
       getCategoryLink(categoryId) {
-        return this.route('categories.edit', {
+        return this.route('categories.show', {
           category: categoryId,
         });
       },

@@ -4,6 +4,9 @@
       <monthly-timeline
         :transactions="transactions"
         :busy="busy"
+        :matching-items-only="matchingItemsOnly"
+        :category-ids="categoryIds"
+        :tag-ids="tagIds"
       ></monthly-timeline>
     </div>
   </div>
@@ -28,6 +31,18 @@
       busy: {
         type: Boolean,
         required: true,
+      },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
       },
     },
     mounted() {},

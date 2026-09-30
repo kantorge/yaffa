@@ -120,6 +120,7 @@
 
 <script>
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import { applyMatchingItemsOnly } from '@/shared/lib/reports';
 
   export default {
     name: 'TransactionSummary',
@@ -133,6 +134,18 @@
         type: Boolean,
         required: true,
       },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
     },
     data() {
       return {
@@ -141,6 +154,14 @@
       };
     },
     computed: {
+      // Sums and counts use only the matching items of split transactions when requested
+      effectiveTransactions() {
+        return applyMatchingItemsOnly(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
+      },
       /**
        * This computed property returns a summary of the withdrawal transactions.
        * The result is an array of objects, each object representing a currency (id, name), the count of transactions, and the sum of the transactions.
@@ -153,7 +174,7 @@
         const summary = [];
         const currencies = [];
         let total = 0;
-        this.transactions
+        this.effectiveTransactions
           .filter(
             (transaction) => transaction.transaction_type === 'withdrawal',
           )
@@ -195,7 +216,7 @@
         return summary;
       },
       countWithdrawals() {
-        return this.transactions.filter(
+        return this.effectiveTransactions.filter(
           (transaction) => transaction.transaction_type === 'withdrawal',
         ).length;
       },
@@ -203,7 +224,7 @@
         const summary = [];
         const currencies = [];
         let total = 0;
-        this.transactions
+        this.effectiveTransactions
           .filter((transaction) => transaction.transaction_type === 'deposit')
           .forEach((transaction) => {
             if (!currencies.includes(transaction.currency_id)) {
@@ -243,25 +264,25 @@
         return summary;
       },
       countDeposits() {
-        return this.transactions.filter(
+        return this.effectiveTransactions.filter(
           (transaction) => transaction.transaction_type === 'deposit',
         ).length;
       },
       countTransfers() {
-        return this.transactions.filter(
+        return this.effectiveTransactions.filter(
           (transaction) => transaction.transaction_type === 'transfer',
         ).length;
       },
       countInvestments() {
-        return this.transactions.filter(
+        return this.effectiveTransactions.filter(
           (transaction) => transaction.config_type === 'investment',
         ).length;
       },
       minDate() {
-        return this.transactions.length
-          ? this.transactions.reduce((acc, transaction) => {
+        return this.effectiveTransactions.length
+          ? this.effectiveTransactions.reduce((acc, transaction) => {
               return acc < transaction.date ? acc : transaction.date;
-            }, this.transactions[0].date)
+            }, this.effectiveTransactions[0].date)
           : null;
       },
       minDateFormatted() {
@@ -272,10 +293,10 @@
         );
       },
       maxDate() {
-        return this.transactions.length
-          ? this.transactions.reduce((acc, transaction) => {
+        return this.effectiveTransactions.length
+          ? this.effectiveTransactions.reduce((acc, transaction) => {
               return acc > transaction.date ? acc : transaction.date;
-            }, this.transactions[0].date)
+            }, this.effectiveTransactions[0].date)
           : null;
       },
       maxDateFormatted() {
