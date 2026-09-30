@@ -95,7 +95,7 @@ class AssetOverviewService
     public function categoryBudgets(Category $category): EloquentCollection
     {
         /** @var EloquentCollection<int, Budget> $budgets */
-        $budgets = $category->budgets()->with('account')->get();
+        $budgets = $category->budgets()->with('account.config.currency')->get();
 
         return $budgets->each(
             fn (Budget $budget) => $budget->setAttribute('next_occurrence', $this->nextOccurrence($budget))

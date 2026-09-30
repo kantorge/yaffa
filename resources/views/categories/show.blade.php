@@ -9,6 +9,6 @@
 @stop
 
 @section('content')
-    {{-- Vue page island is added in the frontend step; data is available as window.category, window.overview, window.budgets --}}
+    {{-- Data is passed to the Vue island via window.category, overview, budgets, learningEntries, baseCurrency --}}
     <div id="categoryShow"></div>
 @stop
