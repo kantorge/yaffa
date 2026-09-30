@@ -8,6 +8,8 @@ use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use App\Models\CategoryLearning;
+use App\Services\AssetOverviewService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -19,12 +21,17 @@ use Throwable;
 
 class CategoryController extends Controller implements HasMiddleware
 {
+    public function __construct(private readonly AssetOverviewService $assetOverviewService)
+    {
+    }
+
     public static function middleware(): array
     {
         return [
             'auth',
             'verified',
             new Middleware('can:viewAny,' . Category::class, only: ['index']),
+            new Middleware('can:view,category', only: ['show']),
             new Middleware('can:create,' . Category::class, only: ['create', 'store']),
             new Middleware('can:update,category', only: ['edit', 'update']),
         ];
@@ -77,6 +84,38 @@ class CategoryController extends Controller implements HasMiddleware
         ]);
 
         return view('categories.index');
+    }
+
+    /**
+     * Display the details page of a category.
+     */
+    public function show(Request $request, Category $category): View
+    {
+        /**
+         * @get("/categories/{category}")
+         * @name("categories.show")
+         * @middlewares("web", "auth", "verified")
+         */
+        $category->load([
+            'parent',
+            'children',
+            'payeesDefaulting',
+            'payeesPreferring',
+            'payeesNotPreferring',
+        ]);
+
+        JavaScriptFacade::put([
+            'category' => $category,
+            'overview' => $this->assetOverviewService->categoryOverview($request->user(), $category),
+            'budgets' => $this->assetOverviewService->categoryBudgets($category),
+            'learningEntries' => CategoryLearning::query()
+                ->where('category_id', $category->id)
+                ->orderByDesc('usage_count')
+                ->get(['id', 'item_description', 'usage_count', 'active']),
+            'baseCurrency' => $request->user()->baseCurrency(),
+        ]);
+
+        return view('categories.show', ['category' => $category]);
     }
 
     /**

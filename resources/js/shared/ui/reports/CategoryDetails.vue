@@ -31,7 +31,7 @@
   import DepositsByParentCategory from './DepositsByParentCategory.vue';
 
   export default {
-    name: 'ReportingCanvasFindTransactionsCategoryDetails',
+    name: 'CategoryDetails',
     components: {
       'reporting-withdrawals-by-parent-category': WithdrawalsByParentCategory,
       'reporting-deposits-by-parent-category': DepositsByParentCategory,

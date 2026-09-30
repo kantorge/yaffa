@@ -294,14 +294,14 @@
     toFormattedCurrency,
     getCachedDateTimeFormatter,
   } from '@/shared/lib/i18n';
+  import { buildBreakdownCacheKey } from '@/reports/components/find-transactions/helpers';
   import {
-    buildBreakdownCacheKey,
     round2,
     aggregateTransactionsByCategory,
     calculateDeviationClass,
     buildSectionHierarchy,
     calculateMonthlyTotalsByType,
-  } from '../find-transactions/helpers';
+  } from '@/shared/lib/reports';
 
   const SECTION_CSS_CLASSES = [
     's-section-0',
@@ -315,7 +315,7 @@
   ];
 
   export default {
-    name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
+    name: 'MonthlyBreakdown',
     props: {
       transactions: {
         type: Array,
@@ -639,7 +639,6 @@
 </script>
 
 <style scoped lang="scss">
-  //@import './ReportingCanvas-FindTransactions-MonthlyBreakdown';
   @import '@coreui/coreui/scss/functions';
   @import '../../../../sass/_variables';
 

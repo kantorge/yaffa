@@ -28,7 +28,7 @@ Route::view('/terms', 'pages.sandbox-terms')->name('terms');
 /*********************
  * Account and payee related routes
  ********************/
-Route::resource('account-groups', AccountGroupController::class)->except(['show', 'destroy']);
+Route::resource('account-groups', AccountGroupController::class)->except(['destroy']);
 
 Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
@@ -45,11 +45,11 @@ Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->n
 /*********************
  * Category related routes
  ********************/
-Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
-// Routes to display form to merge two categories
+// Routes to display form to merge two categories (before the resource, so 'merge' isn't taken as {category})
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
     ->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+Route::resource('categories', CategoryController::class)->except(['destroy']);
 
 // Category learning route
 Route::get('/category-learning', [CategoryLearningController::class, 'index'])
@@ -58,7 +58,7 @@ Route::get('/category-learning', [CategoryLearningController::class, 'index'])
 /*********************
  * Currency and currency rate related routes
  ********************/
-Route::resource('currencies', CurrencyController::class)->except(['show', 'destroy']);
+Route::resource('currencies', CurrencyController::class)->except(['destroy']);
 Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currencies.setDefault');
 
@@ -68,7 +68,7 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 /*********************
  * Investment related routes
  ********************/
-Route::resource('investment-groups', InvestmentGroupController::class)->except(['show', 'destroy']);
+Route::resource('investment-groups', InvestmentGroupController::class)->except(['destroy']);
 Route::resource('investments', InvestmentController::class)->except(['destroy']);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
@@ -78,7 +78,7 @@ Route::get('/investment-price/list/{investment}', [InvestmentPriceController::cl
  * Tag related routes
  ********************/
 Route::resource('tags', TagController::class)
-    ->except(['show', 'destroy']);
+    ->except(['destroy']);
 
 /*******************
  * Transaction related routes

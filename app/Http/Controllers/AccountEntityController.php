@@ -15,6 +15,7 @@ use App\Models\FileImportProfile;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Services\AssetOverviewService;
 use App\Services\PayeeCategoryStatsService;
 use Closure;
 use Exception;
@@ -39,6 +40,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
+        private readonly AssetOverviewService $assetOverviewService,
     ) {
     }
 
@@ -117,8 +119,21 @@ class AccountEntityController extends Controller implements HasMiddleware
             );
         }
 
-        // Currently no function for Payees, redirect back
-        return redirect()->back();
+        $accountEntity->load([
+            'config',
+            'config.category',
+            'config.category.parent',
+            'preferredCategories',
+            'deferredCategories',
+        ]);
+
+        JavaScriptFacade::put([
+            'payee' => $accountEntity,
+            'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
+            'baseCurrency' => $request->user()->baseCurrency(),
+        ]);
+
+        return view('payees.show', ['payee' => $accountEntity]);
     }
 
     /**

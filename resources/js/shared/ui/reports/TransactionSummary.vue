@@ -122,7 +122,7 @@
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
 
   export default {
-    name: 'ReportingCanvasFindTransactionsSummary',
+    name: 'TransactionSummary',
     props: {
       transactions: {
         type: Array,

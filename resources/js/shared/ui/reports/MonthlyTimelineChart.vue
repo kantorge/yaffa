@@ -28,7 +28,7 @@
   am4core.useTheme(am4themes_animated);
 
   export default {
-    name: 'MonthlyTimeline',
+    name: 'MonthlyTimelineChart',
     props: {
       transactions: {
         type: Array,

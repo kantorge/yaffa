@@ -46,7 +46,7 @@
   import 'datatables.net-bs5';
 
   export default {
-    name: 'ReportingCanvasFindTransactionsTransactionList',
+    name: 'TransactionTable',
     props: {
       transactions: {
         type: Array,

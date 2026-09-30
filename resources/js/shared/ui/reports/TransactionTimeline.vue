@@ -13,11 +13,11 @@
   import { __ } from '@/shared/lib/i18n';
 
   // Import all required reporting widgets
-  import MonthlyTimeline from './MonthlyTimeline.vue';
+  import MonthlyTimelineChart from './MonthlyTimelineChart.vue';
   export default {
-    name: 'ReportingCanvasFindTransactionsTimeline',
+    name: 'TransactionTimeline',
     components: {
-      'monthly-timeline': MonthlyTimeline,
+      'monthly-timeline': MonthlyTimelineChart,
     },
     props: {
       transactions: {

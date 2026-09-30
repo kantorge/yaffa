@@ -354,12 +354,12 @@
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
   import TransactionTypeFilterCard from './TransactionTypeFilterCard.vue';
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
-  import ReportingCanvasFindTransactionsCategoryDetails from '../widgets/ReportingCanvas-FindTransactions-CategoryDetails.vue';
-  import ReportingCanvasFindTransactionsSummary from '../widgets/ReportingCanvas-FindTransactions-Summary.vue';
-  import ReportingCanvasFindTransactionsTimeline from '../widgets/ReportingCanvas-FindTransactions-Timeline.vue';
-  import ReportingCanvasFindTransactionsMonthlyBreakdown from '../widgets/ReportingCanvas-FindTransactions-MonthlyBreakdown.vue';
-  import ReportingCanvasFindTransactionsTransactionList from '../widgets/ReportingCanvas-FindTransactions-TransactionList.vue';
-  import ReportingCanvasFindTransactionsWaterfall from '../widgets/ReportingCanvas-FindTransactions-Waterfall.vue';
+  import CategoryDetails from '@/shared/ui/reports/CategoryDetails.vue';
+  import TransactionSummary from '@/shared/ui/reports/TransactionSummary.vue';
+  import TransactionTimeline from '@/shared/ui/reports/TransactionTimeline.vue';
+  import MonthlyBreakdown from '@/shared/ui/reports/MonthlyBreakdown.vue';
+  import TransactionTable from '@/shared/ui/datatable/TransactionTable.vue';
+  import TransactionWaterfall from '@/shared/ui/reports/TransactionWaterfall.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
   import presetCalculators from '@/shared/lib/date/presetDates';
@@ -384,15 +384,12 @@
       'transaction-type-filter-card': TransactionTypeFilterCard,
       'transaction-show-modal': TransactionShowModal,
       'date-range-filter-card': DateRangeFilterCard,
-      'reporting-canvas-categories':
-        ReportingCanvasFindTransactionsCategoryDetails,
-      'reporting-canvas-summary': ReportingCanvasFindTransactionsSummary,
-      'reporting-canvas-timeline': ReportingCanvasFindTransactionsTimeline,
-      'reporting-canvas-monthly-breakdown':
-        ReportingCanvasFindTransactionsMonthlyBreakdown,
-      'reporting-canvas-transaction-list':
-        ReportingCanvasFindTransactionsTransactionList,
-      'reporting-canvas-waterfall': ReportingCanvasFindTransactionsWaterfall,
+      'reporting-canvas-categories': CategoryDetails,
+      'reporting-canvas-summary': TransactionSummary,
+      'reporting-canvas-timeline': TransactionTimeline,
+      'reporting-canvas-monthly-breakdown': MonthlyBreakdown,
+      'reporting-canvas-transaction-list': TransactionTable,
+      'reporting-canvas-waterfall': TransactionWaterfall,
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
