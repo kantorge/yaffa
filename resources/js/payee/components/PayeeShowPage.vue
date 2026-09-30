@@ -92,10 +92,12 @@
         </div>
 
         <div v-if="suggestion" id="payeeSuggestionCard" class="card mb-3">
-          <div class="card-body">
-            <p class="mb-2">
+          <div class="card-header">
+            <div class="card-title">
               💡 {{ __('Suggested default category available') }}
-            </p>
+            </div>
+          </div>
+          <div class="card-body">
             <p class="mb-3">{{ suggestion.category }}</p>
             <button
               type="button"
