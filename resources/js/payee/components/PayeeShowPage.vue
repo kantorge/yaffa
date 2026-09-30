@@ -10,50 +10,96 @@
 
         <div id="payeeActionsCard" class="card mb-3">
           <div class="card-header">
-            <div class="card-title">{{ __('Actions') }}</div>
+            <div
+              class="card-title collapse-control"
+              data-coreui-toggle="collapse"
+              data-coreui-target="#payeeActions"
+            >
+              <i class="fa fa-angle-down"></i>
+              {{ __('Actions') }}
+            </div>
           </div>
-          <div class="card-body d-flex flex-wrap gap-2">
-            <button
-              id="payeeEditButton"
-              type="button"
-              class="btn btn-sm btn-primary"
-              @click="$refs.payeeForm.show(payee.id)"
+          <ul
+            id="payeeActions"
+            class="list-group list-group-flush collapse show"
+          >
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <i class="fa fa-edit me-1"></i>{{ __('Edit') }}
-            </button>
-            <a class="btn btn-sm btn-success" :href="newTransactionUrl">
-              <i class="fa fa-cart-plus me-1"></i>{{ __('New transaction') }}
-            </a>
-            <a
-              class="btn btn-sm btn-outline-primary"
-              :href="findTransactionsUrl"
+              {{ __('Edit payee') }}
+              <button
+                id="payeeEditButton"
+                type="button"
+                class="btn btn-sm btn-primary"
+                :title="__('Edit payee')"
+                @click="$refs.payeeForm.show(payee.id)"
+              >
+                <i class="fa fa-edit"></i>
+              </button>
+            </li>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <i class="fa fa-search me-1"></i>{{ __('Find transactions') }}
-            </a>
-            <a class="btn btn-sm btn-outline-primary" :href="mergeUrl">
-              <i class="fa fa-random me-1"></i>{{ __('Merge') }}
-            </a>
-            <button
+              {{ __('New transaction') }}
+              <a
+                class="btn btn-sm btn-success"
+                :href="newTransactionUrl"
+                :title="__('New transaction')"
+              >
+                <i class="fa fa-cart-plus"></i>
+              </a>
+            </li>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {{ __('Find transactions') }}
+              <a
+                class="btn btn-sm btn-primary"
+                :href="findTransactionsUrl"
+                :title="__('Find transactions')"
+              >
+                <i class="fa fa-search"></i>
+              </a>
+            </li>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {{ __('Merge into an other payee') }}
+              <a
+                class="btn btn-sm btn-primary"
+                :href="mergeUrl"
+                :title="__('Merge into an other payee')"
+              >
+                <i class="fa fa-random"></i>
+              </a>
+            </li>
+            <li
               v-if="overview.count === 0"
-              id="payeeDeleteButton"
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="deletePayee"
+              class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <i class="fa fa-trash me-1"></i>{{ __('Delete') }}
-            </button>
-          </div>
+              {{ __('Delete payee') }}
+              <button
+                id="payeeDeleteButton"
+                type="button"
+                class="btn btn-sm btn-danger"
+                :title="__('Delete payee')"
+                @click="deletePayee"
+              >
+                <i class="fa fa-trash"></i>
+              </button>
+            </li>
+          </ul>
         </div>
 
         <div v-if="suggestion" id="payeeSuggestionCard" class="card mb-3">
           <div class="card-body">
             <p class="mb-2">
-              💡
-              {{
-                __('Suggested default category: :category', {
-                  category: suggestion.category,
-                })
-              }}
+              💡 {{ __('Suggested default category available') }}
+            </p>
+            <p class="mb-3">
+              <span class="badge text-bg-info fs-6">
+                {{ suggestion.category }}
+              </span>
             </p>
             <button
               type="button"
@@ -76,32 +122,9 @@
 
         <date-range-filter-card
           ref="dateRange"
-          initial-preset="previous365Days"
+          :initial-preset="defaultDatePreset"
           @update="onUpdateDateRange"
         ></date-range-filter-card>
-
-        <div class="mb-3">
-          <button
-            v-if="!isAllTime"
-            id="loadAllTransactionsButton"
-            type="button"
-            class="btn btn-outline-primary w-100"
-            :disabled="busy"
-            @click="$refs.dateRange.clearDates()"
-          >
-            {{ __('Load all transactions') }}
-          </button>
-          <div v-else class="alert alert-info mb-0">
-            {{ __('Showing all transactions. Large histories can be slow.') }}
-            <button
-              type="button"
-              class="btn btn-sm btn-link p-0 align-baseline"
-              @click="showLastYear"
-            >
-              {{ __('Back to the last 12 months') }}
-            </button>
-          </div>
-        </div>
 
         <payee-schedules-card :payee-id="payee.id"></payee-schedules-card>
         <similar-payees-card
@@ -170,8 +193,9 @@
       };
     },
     computed: {
-      isAllTime() {
-        return !this.dateFrom && !this.dateTo;
+      // "none" means: don't load data until the user picks a range
+      defaultDatePreset() {
+        return window.YAFFA.userSettings.account_details_date_range || 'none';
       },
       findTransactionsUrl() {
         return this.route('reports.transactions', { payees: [this.payee.id] });
@@ -192,11 +216,6 @@
         this.dateFrom = event.dateFrom;
         this.dateTo = event.dateTo;
         this.getTransactions();
-      },
-      showLastYear() {
-        const card = this.$refs.dateRange;
-        card.selectedPreset = 'previous365Days';
-        card.onPresetChange();
       },
       getTransactions() {
         const requestId = ++this.requestCounter;

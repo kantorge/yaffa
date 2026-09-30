@@ -145,15 +145,17 @@ insufficient (§10).
 
 ### 5.3 Period selection
 
-Both pages default to the **last 12 months** (owner decision, based on the step 0 performance
-check, see §9 R2). Reuse `shared/ui/date/DateRangeFilterCard.vue` so the user can adjust the range,
-and add a clear, prominent **"Load all transactions"** action (shown next to the range, e.g. a
-button; when active, the range is cleared and a hint offers to go back to the last 12 months).
+Both pages load transactions for the date range in the user's **"Default date range for
+transaction history"** setting (`account_details_date_range`; the label was previously "for account
+details"), the same setting the account page uses. Reuse `shared/ui/date/DateRangeFilterCard.vue`
+with that preset as its initial value, so the user can adjust or clear the range like elsewhere.
+With the value "Don't load data by default" nothing is requested until a range is picked. There is
+no dedicated "load all" control: clearing the range does that.
 The overview card (P1/C1) always shows lifetime figures from the server and doesn't depend on the
 selected range.
 
-Because the widgets aggregate in the browser, loading all transactions is slow for large histories
-(§9 R2). The "all" action stays available, but is never the default.
+Because the widgets aggregate in the browser, loading a very long range is slow for large
+histories (§9 R2); that is the user's choice through the setting or the range card.
 
 ## 6. Backend Scope
 
@@ -304,7 +306,7 @@ changes). Keep them as separate commits.
 
 Resolved decisions (owner, 2026-09-29):
 
-- **Q1. Default period:** last 12 months, with a clear "Load all transactions" option (§5.3).
+- **Q1. Default period:** the user's "Default date range for transaction history" setting (§5.3).
 - **Q2. Drill-down on the new pages:** none in-page; it links to *Find transactions* with the
   payee or category prefilled (§7.2).
 - **Q3. Links in transaction tables:** not added automatically (§7.5).
@@ -317,9 +319,8 @@ Risks:
   ~1.4 ms and ~3.6 KB per transaction; Find transactions took ~5 s to load at 1,000 rows and
   ~16-18 s at 3,000 (10 MB payload, ~10 s of it browser rendering); at 10,000 rows the API call
   failed/timed out and the page never rendered. All widgets render eagerly on load (later tab
-  switches are cheap), so lazy tab rendering would not help. **Decision:** default to the last 12
-  months, with an explicit "Load all transactions" action (§5.3). The overview aggregates stay
-  server-side and lifetime. Server-side chart aggregation or a row cap remain options if "all" proves
+  switches are cheap), so lazy tab rendering would not help. **Decision:** load only the user's default date range (§5.3), so history size is bounded by a
+choice the user controls. The overview aggregates stay server-side and lifetime. Server-side chart aggregation or a row cap remain options if "all" proves
   too slow for real users; the 10,000-row API failure cause (probably a PHP memory/time limit) was
   not identified.
 - **R3. Move churn.** Phase 1 touches many import paths. Keep it a pure move so review is easy.
@@ -372,7 +373,7 @@ New tests are **Pest 5** (CLAUDE.md). Browser tests only for the critical flows,
 ## 12. Acceptance Criteria
 
 - Given a payee I own, when I open `account-entity.show` for it, then I see its overview,
-  report tabs covering the last 12 months by default (with an option to load all transactions), and its upcoming schedules.
+  report tabs covering my default transaction-history date range, and its upcoming schedules.
 - Given the monthly breakdown on a payee or category page, when I click a month/category cell,
   then *Find transactions* opens with that payee or category, the month's date range and the
   clicked categories prefilled.

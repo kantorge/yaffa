@@ -75,9 +75,8 @@
     },
 
     computed: {
-      editlink() {
-        return this.route('account-entity.edit', {
-          type: 'payee',
+      payeePageLink() {
+        return this.route('account-entity.show', {
           account_entity: this.payeeSuggestion.payee_id,
         });
       },
@@ -96,7 +95,7 @@
       },
 
       payeeLink() {
-        return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
+        return `<strong><a href="${this.payeePageLink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
       },
 
       categoryText() {

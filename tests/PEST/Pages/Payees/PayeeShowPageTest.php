@@ -28,13 +28,12 @@ it('shows the overview and the report tabs', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('lists only this payee\'s transactions once all transactions are loaded', function () {
+it('lists only this payee\'s transactions once the date range is cleared', function () {
     $page = visit(route('account-entity.show', $this->payee));
-    $this->waitUntil($page, "document.querySelector('#loadAllTransactionsButton')");
+    $this->waitUntil($page, "document.querySelector('#dateRangeFilterClear')");
 
-    $page->click('#loadAllTransactionsButton')
+    $page->click('#dateRangeFilterClear')
         ->click('#nav-transaction-list');
-    $this->waitUntil($page, "!document.querySelector('#loadAllTransactionsButton')");
     $this->waitUntil($page, PAYEE_LIST_ROWS . ' === window.overview.count');
 
     $page->assertNoJavaScriptErrors();
