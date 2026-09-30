@@ -6,7 +6,14 @@
     <div class="card-body">
       <dl class="row mb-0">
         <dt class="col-6">{{ __('Active') }}</dt>
-        <dd class="col-6">{{ payee.active ? __('Yes') : __('No') }}</dd>
+        <dd class="col-6">
+          <i
+            v-if="payee.active"
+            class="fa fa-check-square text-success"
+            :title="__('Yes')"
+          ></i>
+          <i v-else class="fa fa-square text-danger" :title="__('No')"></i>
+        </dd>
 
         <dt class="col-6">{{ __('Default category') }}</dt>
         <dd class="col-6">

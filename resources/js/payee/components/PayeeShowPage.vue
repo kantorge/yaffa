@@ -91,38 +91,17 @@
           </ul>
         </div>
 
-        <div v-if="suggestion" id="payeeSuggestionCard" class="card mb-3">
-          <div class="card-header">
-            <div class="card-title">
-              💡 {{ __('Suggested default category available') }}
-            </div>
-          </div>
-          <div class="card-body">
-            <p class="mb-3">{{ suggestion.category }}</p>
-            <button
-              type="button"
-              class="btn btn-sm btn-success me-2"
-              :disabled="suggestionBusy"
-              @click="acceptSuggestion"
-            >
-              {{ __('Accept suggestion') }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              :disabled="suggestionBusy"
-              @click="dismissSuggestion"
-            >
-              {{ __('Dismiss') }}
-            </button>
-          </div>
-        </div>
-
         <date-range-filter-card
           ref="dateRange"
           :initial-preset="defaultDatePreset"
           @update="onUpdateDateRange"
         ></date-range-filter-card>
+
+        <payee-category-recommendation
+          v-if="suggestion"
+          :suggestion="suggestion"
+          @accepted="onSuggestionAccepted"
+        ></payee-category-recommendation>
 
         <payee-schedules-card :payee-id="payee.id"></payee-schedules-card>
         <similar-payees-card
@@ -160,6 +139,7 @@
   import DateRangeFilterCard from '@/shared/ui/date/DateRangeFilterCard.vue';
   import TransactionReportTabs from '@/shared/ui/reports/TransactionReportTabs.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+  import PayeeCategoryRecommendation from '@/dashboard/components/widgets/PayeeCategoryRecommendation.vue';
   import PayeeForm from './PayeeForm.vue';
   import PayeeOverviewCard from './PayeeOverviewCard.vue';
   import PayeeSchedulesCard from './PayeeSchedulesCard.vue';
@@ -169,6 +149,7 @@
     name: 'PayeeShowPage',
     components: {
       DateRangeFilterCard,
+      PayeeCategoryRecommendation,
       PayeeForm,
       PayeeOverviewCard,
       PayeeSchedulesCard,
@@ -182,7 +163,6 @@
         overview: window.overview,
         baseCurrency: window.baseCurrency,
         suggestion: window.categorySuggestion || null,
-        suggestionBusy: false,
         dateFrom: null,
         dateTo: null,
         busy: false,
@@ -280,51 +260,11 @@
         // Name, default category and preferences are shown in several places
         window.location.reload();
       },
-      acceptSuggestion() {
-        this.suggestionBusy = true;
-        window.axios
-          .post(
-            this.route('api.v1.payees.category-suggestions.accept', {
-              accountEntity: this.payee.id,
-              category: this.suggestion.max_category_id,
-            }),
-          )
-          .then(() => {
-            this.payee.config.category = {
-              id: this.suggestion.max_category_id,
-              full_name: this.suggestion.category,
-            };
-            this.suggestion = null;
-            toastHelpers.showSuccessToast(__('Default category updated'));
-          })
-          .catch(() => {
-            toastHelpers.showErrorToast(
-              __('Error while updating default category'),
-            );
-          })
-          .finally(() => {
-            this.suggestionBusy = false;
-          });
-      },
-      dismissSuggestion() {
-        this.suggestionBusy = true;
-        window.axios
-          .post(
-            this.route('api.v1.payees.category-suggestions.dismiss', {
-              accountEntity: this.payee.id,
-            }),
-          )
-          .then(() => {
-            this.suggestion = null;
-          })
-          .catch(() => {
-            toastHelpers.showErrorToast(
-              __('Error while dismissing suggestion'),
-            );
-          })
-          .finally(() => {
-            this.suggestionBusy = false;
-          });
+      onSuggestionAccepted(suggestion) {
+        this.payee.config.category = {
+          id: suggestion.max_category_id,
+          full_name: suggestion.category,
+        };
       },
       deletePayee() {
         confirmDelete(__('Are you sure to want to delete this item?')).then(

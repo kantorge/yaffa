@@ -143,7 +143,7 @@ class AccountEntityController extends Controller implements HasMiddleware
      * Pending default category suggestion of one payee, unless it has a default category or the
      * suggestion was dismissed.
      *
-     * @return array{max_category_id: int, category: string}|null
+     * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
      */
     private function payeeCategorySuggestion(User $user, AccountEntity $payee): ?array
     {
@@ -152,14 +152,10 @@ class AccountEntityController extends Controller implements HasMiddleware
             return null;
         }
 
-        $suggestion = $this->payeeCategoryStatsService
+        // Same shape the dashboard widget gets from the API
+        return $this->payeeCategoryStatsService
             ->getDefaultSuggestionsForAllPayees($user)
             ->firstWhere('payee_id', $payee->id);
-
-        return $suggestion === null ? null : [
-            'max_category_id' => (int) $suggestion['max_category_id'],
-            'category' => (string) $suggestion['category'],
-        ];
     }
 
     /**
