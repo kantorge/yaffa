@@ -9,6 +9,6 @@
 @stop
 
 @section('content')
-    {{-- Vue page island is added in the frontend step; data is available as window.payee, window.overview --}}
+    {{-- Data is passed to the Vue island via window.payee, window.overview, window.categorySuggestion, window.baseCurrency --}}
     <div id="payeeShow"></div>
 @stop

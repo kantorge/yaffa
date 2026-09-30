@@ -342,6 +342,12 @@
         type: Array,
         default: () => [],
       },
+      // The cache is keyed by the URL filters only (Find transactions); pages without
+      // such filters must opt out, or they'd read and overwrite each other's data
+      useBreakdownCache: {
+        type: Boolean,
+        default: true,
+      },
     },
     emits: ['drill-down'],
     data() {
@@ -491,7 +497,9 @@
       },
     },
     mounted() {
-      this.loadBreakdownCache();
+      if (this.useBreakdownCache) {
+        this.loadBreakdownCache();
+      }
     },
 
     methods: {
@@ -519,7 +527,12 @@
           // Don't overwrite cache on drill-down pages, or with a narrowed
           // aggregate that a differently-scoped load couldn't detect as stale
           // (the cache key doesn't encode matchingItemsOnly).
-          if (this.isDrillDown || this.matchingItemsOnly) return;
+          if (
+            !this.useBreakdownCache ||
+            this.isDrillDown ||
+            this.matchingItemsOnly
+          )
+            return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};

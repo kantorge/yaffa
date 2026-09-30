@@ -12,9 +12,11 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Models\User;
 use App\Services\AssetOverviewService;
 use App\Services\PayeeCategoryStatsService;
 use Closure;
@@ -130,10 +132,34 @@ class AccountEntityController extends Controller implements HasMiddleware
         JavaScriptFacade::put([
             'payee' => $accountEntity,
             'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
+            'categorySuggestion' => $this->payeeCategorySuggestion($request->user(), $accountEntity),
             'baseCurrency' => $request->user()->baseCurrency(),
         ]);
 
         return view('payees.show', ['payee' => $accountEntity]);
+    }
+
+    /**
+     * Pending default category suggestion of one payee, unless it has a default category or the
+     * suggestion was dismissed.
+     *
+     * @return array{max_category_id: int, category: string}|null
+     */
+    private function payeeCategorySuggestion(User $user, AccountEntity $payee): ?array
+    {
+        $config = $payee->config;
+        if (! $config instanceof Payee || $config->category_id !== null || $config->category_suggestion_dismissed !== null) {
+            return null;
+        }
+
+        $suggestion = $this->payeeCategoryStatsService
+            ->getDefaultSuggestionsForAllPayees($user)
+            ->firstWhere('payee_id', $payee->id);
+
+        return $suggestion === null ? null : [
+            'max_category_id' => (int) $suggestion['max_category_id'],
+            'category' => (string) $suggestion['category'],
+        ];
     }
 
     /**

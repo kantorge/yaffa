@@ -134,6 +134,7 @@
             :transactions="transactions"
             :busy="busy"
             :is-drill-down="!!drillDownFilter"
+            :use-breakdown-cache="useBreakdownCache"
             :matching-items-only="matchingItemsOnly"
             :category-ids="categoryIds"
             :tag-ids="tagIds"
@@ -198,6 +199,8 @@
       tagIds: { type: Array, default: () => [] },
       // Which tabs to show, in the fixed order of TAB_IDS
       tabs: { type: Array, default: () => TAB_IDS },
+      // Find transactions only: the monthly breakdown cache is keyed by its URL filters
+      useBreakdownCache: { type: Boolean, default: true },
       // Find transactions only: monthly breakdown drill-down, filters the list in memory
       drillDownFilter: { type: Object, default: null },
     },

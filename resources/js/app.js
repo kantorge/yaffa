@@ -100,7 +100,9 @@ if (
 }
 
 if (current === 'account-entity.show') {
-  loadModule('account/show');
+  loadModule(
+    document.getElementById('payeeShow') ? 'payee/show' : 'account/show',
+  );
 }
 
 if (
