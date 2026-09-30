@@ -5,9 +5,6 @@
     </div>
     <div class="card-body">
       <dl class="row mb-0">
-        <dt class="col-6">{{ __('Name') }}</dt>
-        <dd class="col-6 text-break">{{ category.full_name }}</dd>
-
         <dt class="col-6">{{ __('Active') }}</dt>
         <dd class="col-6">
           <i
@@ -18,10 +15,8 @@
           <i v-else class="fa fa-square text-danger" :title="__('No')"></i>
         </dd>
 
-        <template v-if="category.description">
-          <dt class="col-6">{{ __('Description') }}</dt>
-          <dd class="col-6 text-break">{{ category.description }}</dd>
-        </template>
+        <dt class="col-6">{{ __('Name') }}</dt>
+        <dd class="col-6 text-break">{{ category.name }}</dd>
 
         <dt class="col-6">{{ __('Parent category') }}</dt>
         <dd class="col-6">
@@ -49,6 +44,11 @@
           </dd>
         </template>
 
+        <template v-if="category.description">
+          <dt class="col-6">{{ __('Description') }}</dt>
+          <dd class="col-6 text-break">{{ category.description }}</dd>
+        </template>
+
         <dt class="col-6">{{ __('Default aggregation') }}</dt>
         <dd class="col-6">{{ __(aggregationLabel) }}</dd>
 
@@ -59,7 +59,12 @@
         <dd class="col-6">{{ formatDate(overview.first_date) }}</dd>
 
         <dt class="col-6">{{ __('Last transaction') }}</dt>
-        <dd class="col-6">{{ formatDate(overview.last_date) }}</dd>
+        <dd class="col-6">
+          {{ formatDate(overview.last_date) }}
+          <span v-if="daysSinceLast !== null" class="text-muted">
+            ({{ __(':days days ago', { days: daysSinceLast }) }})
+          </span>
+        </dd>
 
         <dt class="col-6">{{ __('Total paid') }}</dt>
         <dd class="col-6">{{ formatMoney(overview.withdrawal_total) }}</dd>
@@ -91,6 +96,17 @@
       return { locale: window.YAFFA.userSettings.locale };
     },
     computed: {
+      daysSinceLast() {
+        if (!this.overview.last_date) {
+          return null;
+        }
+
+        const last = new Date(this.overview.last_date + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return Math.max(0, Math.round((today - last) / 86400000));
+      },
       aggregationLabel() {
         return AGGREGATION_LABELS[this.category.default_aggregation] || 'Month';
       },

@@ -44,3 +44,14 @@ it('links the category list names to the show page', function () {
 
     $page->assertPresent('#table a[href="' . route('categories.show', $this->category) . '"]');
 });
+
+it('fills the summary and hides the category split tab', function () {
+    $page = visit(route('categories.show', $this->category));
+    $this->waitUntil($page, "document.querySelector('#dateRangeFilterClear')");
+
+    $page->click('#dateRangeFilterClear')
+        ->assertNotPresent('#nav-category-charts');
+    $this->waitUntil($page, "document.querySelector('#tab-summary tbody td.text-end, #tab-summary tbody td:nth-child(3)')?.textContent.trim() !== '0'");
+
+    $page->assertNoJavaScriptErrors();
+});

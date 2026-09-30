@@ -64,6 +64,7 @@
         <transaction-report-tabs
           :transactions="transactions"
           :busy="busy"
+          :tabs="tabs"
           :matching-items-only="true"
           :category-ids="categoryIds"
           :use-breakdown-cache="false"
@@ -115,13 +116,27 @@
       };
     },
     computed: {
+      // The category split is meaningless for a single category
+      tabs() {
+        return [
+          'summary',
+          'transaction-list',
+          'timeline-charts',
+          'monthly-breakdown',
+          'waterfall',
+        ];
+      },
       // "none" means: don't load data until the user picks a range
       defaultDatePreset() {
         return window.YAFFA.userSettings.account_details_date_range || 'none';
       },
       // The API already includes the children of a requested parent
       categoryIds() {
-        return [this.category.id, ...this.category.children.map((c) => c.id)];
+        // The widgets compare ids as strings
+        return [
+          this.category.id,
+          ...this.category.children.map((c) => c.id),
+        ].map(String);
       },
       actions() {
         return [
