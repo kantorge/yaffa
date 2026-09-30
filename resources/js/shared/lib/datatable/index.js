@@ -23,7 +23,7 @@ if ($.fn.dataTable) {
   };
 }
 
-export function dataTablesActionButton(id, action) {
+export function dataTablesActionButton(id, action, params = {}) {
   const functions = {
     delete: function () {
       return `
@@ -56,6 +56,7 @@ export function dataTablesActionButton(id, action) {
                     href="${route('transaction.open', {
                       transaction: id,
                       action: 'show',
+                      ...params,
                     })}"
                     class="btn btn-xs btn-success"
                     title="${__('View details')}"
@@ -69,6 +70,7 @@ export function dataTablesActionButton(id, action) {
         route('transaction.open', {
           transaction: id,
           action: 'edit',
+          ...params,
         }) +
         '" class="btn btn-xs btn-primary" title="' +
         __('Edit') +
@@ -81,6 +83,7 @@ export function dataTablesActionButton(id, action) {
         route('transaction.open', {
           transaction: id,
           action: 'clone',
+          ...params,
         }) +
         '" class="btn btn-xs btn-primary" title="' +
         __('Clone') +
@@ -93,6 +96,7 @@ export function dataTablesActionButton(id, action) {
         route('transaction.open', {
           transaction: id,
           action: 'replace',
+          ...params,
         }) +
         '" class="btn btn-xs btn-primary" title="' +
         __('Edit and create new schedule') +
@@ -114,6 +118,7 @@ export function dataTablesActionButton(id, action) {
                     href="${route('transaction.open', {
                       transaction: id,
                       action: 'enter',
+                      ...params,
                     })}"
                     class="btn btn-xs btn-success"
                     title="${__('Edit and insert instance')}"

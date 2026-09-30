@@ -1,49 +1,43 @@
 <template>
-  <div>
-    <div
-      v-if="drillDownFilter"
-      class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2"
-      role="alert"
-    >
-      <span>
-        {{
-          __(
-            'Showing a filtered subset of transactions from monthly breakdown drill-down.',
-          )
-        }}
-      </span>
-      <div class="d-flex gap-2">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          @click="$emit('return-to-monthly-breakdown')"
-        >
-          {{ __('Return to monthly breakdown') }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-warning"
-          @click="$emit('clear-drill-down-filter')"
-        >
-          {{ __('Clear additional filtering') }}
-        </button>
-      </div>
-    </div>
-
-    <table
-      ref="dataTable"
-      class="table table-bordered table-hover no-footer"
-    ></table>
-  </div>
+  <table
+    ref="dataTable"
+    class="table table-bordered table-hover no-footer"
+    width="100%"
+  ></table>
 </template>
 
 <script>
-  import Swal from 'sweetalert2';
   import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
+  import { confirmDelete, confirmAction } from '@/shared/lib/confirm';
+  import { toIsoDateString } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import * as dataTableHelpers from '@/shared/lib/datatable';
 
   import 'datatables.net-bs5';
+
+  const definitions = dataTableHelpers.transactionColumnDefinition;
+
+  // Column keys that expand to one or more DataTables column definitions.
+  const COLUMN_KEYS = {
+    date: () =>
+      definitions.dateFromCustomField(
+        'date',
+        __('Date'),
+        window.YAFFA.userSettings.locale,
+      ),
+    type: () => definitions.type(true),
+    fromTo: () => [
+      {
+        title: __('From'),
+        defaultContent: '',
+        data: 'config.account_from.name',
+      },
+      { title: __('To'), defaultContent: '', data: 'config.account_to.name' },
+    ],
+    category: () => definitions.category,
+    amount: () => definitions.amount,
+    extra: () => definitions.extra,
+  };
 
   export default {
     name: 'TransactionTable',
@@ -57,54 +51,43 @@
         type: Boolean,
         required: true,
       },
-      drillDownFilter: {
-        type: Object,
-        required: false,
-        default: null,
-      },
       isActive: {
         type: Boolean,
         required: true,
       },
+      // Keys of COLUMN_KEYS, or ready-made DataTables column objects
+      columns: {
+        type: Array,
+        default: () => [
+          'date',
+          'type',
+          'fromTo',
+          'category',
+          'amount',
+          'extra',
+        ],
+      },
+      // Keys of dataTablesActionButton(), plus 'setDateFrom' / 'setDateTo'.
+      // A function receives the row and returns the keys for it.
+      actions: {
+        type: [Array, Function],
+        default: () => ['quickView', 'show', 'edit', 'clone', 'delete'],
+      },
+      // Extra route parameters for the link actions, as a function of the row
+      actionParams: {
+        type: Function,
+        default: () => ({}),
+      },
     },
-    emits: [
-      'return-to-monthly-breakdown',
-      'clear-drill-down-filter',
-      'transaction-deleted',
-    ],
+    emits: ['transaction-deleted', 'transaction-skipped', 'set-date-range'],
     data() {
       return {
         dataTable: null,
-        ajaxDeleteBusy: false,
+        ajaxBusy: false,
       };
     },
-    computed: {
-      listTransactions() {
-        if (!this.drillDownFilter) {
-          return this.transactions;
-        }
-
-        const month = this.drillDownFilter.month;
-        const categorySet = new Set(this.drillDownFilter.categories);
-
-        return this.transactions.filter((transaction) => {
-          if (!(transaction.date instanceof Date)) {
-            return false;
-          }
-
-          if (transaction.year_month !== month) {
-            return false;
-          }
-
-          const transactionCategories = transaction.categories || [];
-          return transactionCategories.some(
-            (category) => category && categorySet.has(String(category.id)),
-          );
-        });
-      },
-    },
     watch: {
-      listTransactions() {
+      transactions() {
         this.redrawDataTable();
       },
       busy(newBusy) {
@@ -122,12 +105,12 @@
       this.initializeDataTable();
       dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
 
-      this._onDeleteClick = (event) => this.handleDeleteClick(event);
-      this.$refs.dataTable.addEventListener('click', this._onDeleteClick);
+      this._onClick = (event) => this.handleClick(event);
+      this.$refs.dataTable.addEventListener('click', this._onClick);
     },
     beforeUnmount() {
-      if (this.$refs.dataTable && this._onDeleteClick) {
-        this.$refs.dataTable.removeEventListener('click', this._onDeleteClick);
+      if (this.$refs.dataTable && this._onClick) {
+        this.$refs.dataTable.removeEventListener('click', this._onClick);
       }
 
       if (this.dataTable) {
@@ -136,49 +119,66 @@
       }
     },
     methods: {
+      columnDefinitions() {
+        const columns = this.columns.flatMap((column) =>
+          typeof column === 'string' ? COLUMN_KEYS[column]() : [column],
+        );
+
+        if (this.actions.length === 0) {
+          return columns;
+        }
+
+        return [
+          ...columns,
+          {
+            data: 'id',
+            defaultContent: '',
+            title: __('Actions'),
+            render: (data, _type, row) => this.renderActions(data, row),
+            className: 'dt-nowrap',
+            orderable: false,
+            searchable: false,
+          },
+        ];
+      },
+
+      renderActions(id, row) {
+        const keys =
+          typeof this.actions === 'function' ? this.actions(row) : this.actions;
+        // Schedule instances are acted on through their parent transaction
+        const targetId = row.schedule ? row.originalId || id : id;
+        const params = this.actionParams(row);
+
+        return keys
+          .map((key) => {
+            if (key === 'setDateFrom' || key === 'setDateTo') {
+              const isFrom = key === 'setDateFrom';
+              return `<button class="btn btn-xs btn-outline-dark set-date" data-type="${
+                isFrom ? 'from' : 'to'
+              }" data-date="${toIsoDateString(row.date)}" type="button" title="${
+                isFrom
+                  ? __('Make this the start date')
+                  : __('Make this the end date')
+              }"><i class="fa fa-fw fa-caret-${
+                isFrom ? 'left' : 'right'
+              }"></i></button> `;
+            }
+
+            return dataTableHelpers.dataTablesActionButton(
+              targetId,
+              key,
+              params,
+            );
+          })
+          .join('');
+      },
+
       initializeDataTable() {
         this.dataTable = window.$(this.$refs.dataTable).DataTable({
           language: getDataTablesLanguageOptions() || undefined,
-          data: this.listTransactions,
+          data: this.transactions,
           processing: true,
-          columns: [
-            dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
-              'date',
-              __('Date'),
-              window.YAFFA.userSettings.locale,
-            ),
-            dataTableHelpers.transactionColumnDefinition.type(true),
-            {
-              title: __('From'),
-              defaultContent: '',
-              data: 'config.account_from.name',
-            },
-            {
-              title: __('To'),
-              defaultContent: '',
-              data: 'config.account_to.name',
-            },
-            dataTableHelpers.transactionColumnDefinition.category,
-            dataTableHelpers.transactionColumnDefinition.amount,
-            dataTableHelpers.transactionColumnDefinition.extra,
-            {
-              data: 'id',
-              defaultContent: '',
-              title: __('Actions'),
-              render: function (data) {
-                return (
-                  dataTableHelpers.dataTablesActionButton(data, 'quickView') +
-                  dataTableHelpers.dataTablesActionButton(data, 'show') +
-                  dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                  dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                  dataTableHelpers.dataTablesActionButton(data, 'delete')
-                );
-              },
-              className: 'dt-nowrap',
-              orderable: false,
-              searchable: false,
-            },
-          ],
+          columns: this.columnDefinitions(),
           order: [[0, 'asc']],
         });
 
@@ -193,7 +193,7 @@
         }
 
         this.dataTable.clear();
-        this.dataTable.rows.add(this.listTransactions);
+        this.dataTable.rows.add(this.transactions);
         this.dataTable.draw(false);
       },
 
@@ -211,71 +211,109 @@
         this.dataTable.draw(false);
       },
 
-      handleDeleteClick(event) {
-        const button = event.target.closest('[data-delete]');
-        if (!button || this.ajaxDeleteBusy) {
+      handleClick(event) {
+        const setDate = event.target.closest('.set-date');
+        if (setDate) {
+          this.$emit('set-date-range', {
+            type: setDate.dataset.type,
+            date: setDate.dataset.date,
+          });
           return;
         }
 
+        const deleteButton = event.target.closest('[data-delete]');
+        if (deleteButton) {
+          this.runAction(
+            deleteButton,
+            confirmDelete(
+              __('Are you sure you want to delete this transaction?'),
+              { confirmButtonText: __('Delete') },
+            ),
+            (id) =>
+              window.axios.delete(
+                window.route('api.v1.transactions.destroy', {
+                  transaction: id,
+                }),
+              ),
+            'transaction-deleted',
+            __('Transaction deleted (#:transactionId)'),
+            __('Error deleting transaction (#:transactionId): :error'),
+          );
+          return;
+        }
+
+        const skipButton = event.target.closest('[data-skip]');
+        if (skipButton) {
+          this.runAction(
+            skipButton,
+            confirmAction(
+              __('Are you sure you want to skip this scheduled instance?'),
+              { icon: 'warning' },
+            ),
+            (id) =>
+              window.axios.patch(
+                window.route('api.v1.transactions.skip', { transaction: id }),
+              ),
+            'transaction-skipped',
+            __('Scheduled instance skipped (#:transactionId)'),
+            __('Error skipping scheduled instance (#:transactionId): :error'),
+          );
+        }
+      },
+
+      // Shared flow of the delete and skip buttons: confirm, call the API, report, emit
+      runAction(
+        button,
+        confirmation,
+        request,
+        eventName,
+        successText,
+        errorText,
+      ) {
         const transactionId = Number(button.dataset.id);
-        if (!Number.isFinite(transactionId) || transactionId <= 0) {
+        if (
+          this.ajaxBusy ||
+          !Number.isFinite(transactionId) ||
+          transactionId <= 0
+        ) {
           return;
         }
 
-        this.ajaxDeleteBusy = true;
+        this.ajaxBusy = true;
 
-        Swal.fire({
-          text: __('Are you sure you want to delete this transaction?'),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: __('Cancel'),
-          confirmButtonText: __('Delete'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
+        confirmation.then((result) => {
           if (!result.isConfirmed) {
-            this.ajaxDeleteBusy = false;
+            this.ajaxBusy = false;
             return;
           }
 
           button.classList.add('busy');
 
-          window.axios
-            .delete(
-              window.route('api.v1.transactions.destroy', {
-                transaction: transactionId,
-              }),
-            )
+          request(transactionId)
             .then(() => {
-              this.$emit('transaction-deleted', transactionId);
+              this.$emit(eventName, transactionId);
               toastHelpers.showSuccessToast(
-                __('Transaction deleted (#:transactionId)', {
-                  transactionId,
-                }),
+                successText.replace(':transactionId', transactionId),
               );
             })
             .catch((error) => {
               toastHelpers.showErrorToast(
-                __('Error deleting transaction (#:transactionId): :error', {
-                  transactionId,
-                  error:
+                errorText
+                  .replace(':transactionId', transactionId)
+                  .replace(
+                    ':error',
                     error.response?.data?.message ||
-                    error.message ||
-                    __('Unknown error'),
-                }),
+                      error.message ||
+                      __('Unknown error'),
+                  ),
               );
             })
             .finally(() => {
               button.classList.remove('busy');
-              this.ajaxDeleteBusy = false;
+              this.ajaxBusy = false;
             });
         });
       },
-
-      __,
     },
   };
 </script>
