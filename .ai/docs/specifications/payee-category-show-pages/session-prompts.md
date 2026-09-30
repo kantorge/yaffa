@@ -13,7 +13,9 @@ suite; commit on the branch, never push.
 
 ---
 
-## Step 0 — Full-history performance check
+## Step 0 — Full-history performance check — ✅ DONE
+
+Outcome: full history is too slow for large payees/categories. Owner decision: default to the last 12 months with a clear "Load all transactions" option (spec §5.3, §9 R2).
 
 ```text
 Branch: feat/payee-category-show-pages. Read .ai/docs/specifications/payee-category-show-pages/specification.md, especially §5.3 and risk R2 in §9.
@@ -79,7 +81,7 @@ Tests: Pest 5 feature tests from spec §11 (owner 200 / other user 403, accounts
 Branch: feat/payee-category-show-pages (steps 2a and 2b merged). Read .ai/agents/frontend.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§5.1, §5.3, §7.2, §7.5).
 
 Task: build the payee show page Vue island on top of the Blade view from step 2b:
-- P1 overview card from server data, P2 actions (reuse the existing PayeeForm modal, merge link, new transaction, open in Find transactions, delete only when unused), P3 pending category suggestion accept/dismiss (existing endpoints), P4 TransactionReportTabs over GET /api/v1/transactions?payees[]=<id> with FULL history by default plus optional DateRangeFilterCard, P5 upcoming schedules (scheduled-items with accountSelection=selected&accountEntity=<id>), P6 similar payees with merge link.
+- P1 overview card from server data, P2 actions (reuse the existing PayeeForm modal, merge link, new transaction, open in Find transactions, delete only when unused), P3 pending category suggestion accept/dismiss (existing endpoints), P4 TransactionReportTabs over GET /api/v1/transactions?payees[]=<id> defaulting to the last 12 months via DateRangeFilterCard, with a clear "Load all transactions" button (spec §5.3), P5 upcoming schedules (scheduled-items with accountSelection=selected&accountEntity=<id>), P6 similar payees with merge link.
 - Drill-down: no in-page drill-down. Navigate to reports.transactions with payees[]=<id> plus the payload's date_from/date_to/categories[] (§7.2).
 - Payee list: make the name link to account-entity.show (§7.5). Do not add links to the shared transaction column definitions.
 - Use existing i18n/format helpers only; reuse RecordOverviewCard or the account show overview pattern where it fits.
@@ -95,7 +97,7 @@ Checkpoint: stop and tell me how to open the page for review. The category page 
 Branch: feat/payee-category-show-pages. Read .ai/agents/frontend.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§5.2, §5.3, §7.2, §7.5). Use the payee page from step 3 (and my review feedback on it) as the layout reference.
 
 Task: build the category show page Vue island:
-- C1 overview (parent/children links), C2 actions (edit, merge, open in Find transactions, open reports.budgetchart?categories[]=<id>), C3 TransactionReportTabs over GET /api/v1/transactions?categories[]=<id> with matchingItemsOnly: true and categoryIds = the category + its children, full history by default, C4 budgets, C5 scheduled transactions (scheduled-items?type=schedule&categories[]=<id>), C6 payee links to their show pages, C7 AI learning entries with a link to /category-learning.
+- C1 overview (parent/children links), C2 actions (edit, merge, open in Find transactions, open reports.budgetchart?categories[]=<id>), C3 TransactionReportTabs over GET /api/v1/transactions?categories[]=<id> with matchingItemsOnly: true and categoryIds = the category + its children, defaulting to the last 12 months with a clear "Load all transactions" option (§5.3), C4 budgets, C5 scheduled transactions (scheduled-items?type=schedule&categories[]=<id>), C6 payee links to their show pages, C7 AI learning entries with a link to /category-learning.
 - Drill-down: navigate to reports.transactions with categories prefilled plus the payload's dates (§7.2).
 - Category list: make the name link to categories.show.
 
