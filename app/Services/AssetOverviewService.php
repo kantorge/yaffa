@@ -13,7 +13,8 @@ use Brick\Math\RoundingMode;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Carbon as SupportCarbon;
 use Illuminate\Support\Facades\DB;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
@@ -89,22 +90,23 @@ class AssetOverviewService
     /**
      * Budgets of the category itself, each with its next occurrence (on or after today).
      *
-     * @return Collection<int, Budget>
+     * @return EloquentCollection<int, Budget>
      */
-    public function categoryBudgets(Category $category): Collection
+    public function categoryBudgets(Category $category): EloquentCollection
     {
-        return $category->budgets()
-            ->with('account')
-            ->get()
-            ->each(fn (Budget $budget) => $budget->setAttribute('next_occurrence', $this->nextOccurrence($budget)))
-            ->values();
+        /** @var EloquentCollection<int, Budget> $budgets */
+        $budgets = $category->budgets()->with('account')->get();
+
+        return $budgets->each(
+            fn (Budget $budget) => $budget->setAttribute('next_occurrence', $this->nextOccurrence($budget))
+        );
     }
 
     private function nextOccurrence(Budget $budget): ?string
     {
         // getOccurrencesAfter() looks a short window past its anchor, so a future-dated budget
         // must be anchored on its own start date, not today.
-        $anchor = Carbon::today()->subDay()->max($budget->start_date->copy()->subDay());
+        $anchor = SupportCarbon::today()->subDay()->max($budget->start_date->copy()->subDay());
 
         try {
             $recurrence = $this->recurrenceRuleService->getOccurrencesAfter(
