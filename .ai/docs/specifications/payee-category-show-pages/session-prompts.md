@@ -45,7 +45,7 @@ Task: the upcoming frontend refactor (moving the reporting widgets to shared/, e
 4. Commit the tests.
 ```
 
-## Step 2a — Frontend refactor (can run alongside 2b)
+## Step 2a — Frontend refactor (can run alongside 2b) — ✅ DONE
 
 ```text
 Branch: feat/payee-category-show-pages. Read .ai/agents/frontend.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§2.2, §2.3, §7.1–§7.4, §8 phases 1–3).
@@ -60,7 +60,7 @@ After each phase: rebuild assets, run ESLint on the touched files, run the step 
 Checkpoint: after phase 3, stop and give me a short click-through checklist for Find transactions. Expected result: nothing changes except Summary/Timeline totals when "matching items only" is on.
 ```
 
-## Step 2b — Backend (can run alongside 2a)
+## Step 2b — Backend (can run alongside 2a) — ✅ DONE
 
 ```text
 Branch: feat/payee-category-show-pages. If step 2a is running at the same time, work in a separate git worktree on a branch off it (e.g. feat/payee-category-show-pages-backend) and merge back when done. Read .ai/agents/laravel-backend.agent.md, app/CLAUDE.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§4, §5, §6, §11 backend part).
@@ -77,7 +77,7 @@ No new API endpoints unless unavoidable; if you add one, follow the abilities mi
 Tests: Pest 5 feature tests from spec §11 (owner 200 / other user 403, accounts still render, withdrawal/deposit split, schedules excluded, split transaction counts only the matching item, parent totals include children, base-currency sums). Run Pint and PHPStan. Commit.
 ```
 
-## Step 3 — Payee page
+## Step 3 — Payee page — ✅ DONE
 
 ```text
 Branch: feat/payee-category-show-pages (steps 2a and 2b merged). Read .ai/agents/frontend.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§5.1, §5.3, §7.2, §7.5).
@@ -93,7 +93,7 @@ Rebuild assets, lint, add the Pest browser tests for the payee page from spec §
 Checkpoint: stop and tell me how to open the page for review. The category page will copy this layout, so I want to review the UX first.
 ```
 
-## Step 4 — Category page
+## Step 4 — Category page — ✅ DONE
 
 ```text
 Branch: feat/payee-category-show-pages. Read .ai/agents/frontend.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§5.2, §5.3, §7.2, §7.5). Use the payee page from step 3 (and my review feedback on it) as the layout reference.

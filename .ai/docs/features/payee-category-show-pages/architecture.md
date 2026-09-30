@@ -70,7 +70,6 @@ Summary and Timeline now honour `matchingItemsOnly` / `categoryIds` / `tagIds`; 
 | §7.2: banner in `FindTransactions.vue` or the tabs component | Lives in `TransactionReportTabs`, only rendered when `drillDownFilter` is passed |
 | §5.1 P3: accept / dismiss via a new block | Reuses the dashboard `PayeeCategoryRecommendation` widget (changed to be reusable) |
 | §6.1: "budgets, learning entries eager-loaded in the controller" | Budgets through `AssetOverviewService::categoryBudgets()` |
-| Not in spec | `routes/web.php` also dropped `show` from `except` for account-groups, currencies, investment-groups and tags (see code-review finding: those controllers have no `show()`) |
 
 ## Permissions
 
