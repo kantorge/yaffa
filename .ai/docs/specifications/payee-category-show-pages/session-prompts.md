@@ -30,7 +30,9 @@ Task: before any implementation, check whether loading a payee's or category's F
 Checkpoint: stop after the report; I decide whether the design stands.
 ```
 
-## Step 1 — Tests that lock in current behaviour
+## Step 1 — Tests that lock in current behaviour — ✅ DONE
+
+Outcome: 5 Pest browser tests added (`FindTransactionsReportTabsTest.php`, `InvestmentTransactionHistoryTest.php`), passing on current code. Not covered: pie charts and waterfall totals (canvas), Summary/Timeline "matching items only" (not honoured today; step 2a §7.4).
 
 ```text
 Branch: feat/payee-category-show-pages. Read .ai/agents/testing.agent.md and .ai/docs/specifications/payee-category-show-pages/specification.md (§7, §8, §11).
