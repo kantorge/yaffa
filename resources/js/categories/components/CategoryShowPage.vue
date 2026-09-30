@@ -116,14 +116,13 @@
       };
     },
     computed: {
-      // The category split is meaningless for a single category
+      // The category split and waterfall are meaningless for a single category
       tabs() {
         return [
           'summary',
           'transaction-list',
           'timeline-charts',
           'monthly-breakdown',
-          'waterfall',
         ];
       },
       // "none" means: don't load data until the user picks a range
