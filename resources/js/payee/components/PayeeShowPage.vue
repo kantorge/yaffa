@@ -96,11 +96,7 @@
             <p class="mb-2">
               💡 {{ __('Suggested default category available') }}
             </p>
-            <p class="mb-3">
-              <span class="badge text-bg-info fs-6">
-                {{ suggestion.category }}
-              </span>
-            </p>
+            <p class="mb-3">{{ suggestion.category }}</p>
             <button
               type="button"
               class="btn btn-sm btn-success me-2"
@@ -250,6 +246,24 @@
         this.transactions = this.transactions.filter(
           (transaction) => Number(transaction.id) !== Number(transactionId),
         );
+        this.refreshOverview();
+      },
+      // The lifetime figures come from the server, so a deletion needs a fresh copy
+      refreshOverview() {
+        window.axios
+          .get(
+            this.route('api.v1.payees.overview', {
+              accountEntity: this.payee.id,
+            }),
+          )
+          .then((response) => {
+            this.overview = response.data;
+          })
+          .catch(() => {
+            toastHelpers.showErrorToast(
+              __('Error while refreshing the overview'),
+            );
+          });
       },
       // No in-page drill-down here: hand over to Find transactions
       onDrillDown(event) {
