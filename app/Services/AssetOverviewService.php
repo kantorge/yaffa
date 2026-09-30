@@ -41,7 +41,7 @@ class AssetOverviewService
      * Payee totals are transaction-level: what was paid to (withdrawals) and received from
      * (deposits) the payee. Schedules are excluded.
      *
-     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string}
+     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string, rates_missing: bool}
      */
     public function payeeOverview(User $user, AccountEntity $payee): array
     {
@@ -63,14 +63,13 @@ class AssetOverviewService
             $user,
             $query,
             'CASE WHEN transactions.transaction_type = \'withdrawal\' THEN d.amount_to ELSE d.amount_from END',
-            'transactions.id',
         );
     }
 
     /**
      * Category totals are item-level, over the category and its children. Schedules are excluded.
      *
-     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string}
+     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string, rates_missing: bool}
      */
     public function categoryOverview(User $user, Category $category): array
     {
@@ -84,7 +83,7 @@ class AssetOverviewService
                 TransactionType::DEPOSIT->value,
             ]);
 
-        return $this->aggregate($user, $query, 'i.amount', 'i.id');
+        return $this->aggregate($user, $query, 'i.amount');
     }
 
     /**
@@ -122,9 +121,9 @@ class AssetOverviewService
     }
 
     /**
-     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string}
+     * @return array{count: int, first_date: string|null, last_date: string|null, withdrawal_total: string, deposit_total: string, rates_missing: bool}
      */
-    private function aggregate(User $user, Builder $query, string $amountSql, string $countColumn): array
+    private function aggregate(User $user, Builder $query, string $amountSql): array
     {
         $rows = $query
             ->where('transactions.user_id', $user->id)
@@ -132,7 +131,7 @@ class AssetOverviewService
             ->groupBy('transactions.currency_id', 'transactions.transaction_type', DB::raw('DATE_FORMAT(transactions.date, \'%Y-%m-01\')'))
             ->selectRaw(
                 "transactions.currency_id, transactions.transaction_type, DATE_FORMAT(transactions.date, '%Y-%m-01') as month,"
-                . " COUNT(DISTINCT {$countColumn}) as cnt, MIN(transactions.date) as first_date,"
+                . " COUNT(DISTINCT transactions.id) as cnt, MIN(transactions.date) as first_date,"
                 . " MAX(transactions.date) as last_date, SUM({$amountSql}) as total"
             )
             ->get();
@@ -144,10 +143,15 @@ class AssetOverviewService
             TransactionType::WITHDRAWAL->value => BigDecimal::zero(),
             TransactionType::DEPOSIT->value => BigDecimal::zero(),
         ];
+        $ratesMissing = false;
         foreach ($rows as $row) {
             $rate = $baseCurrency
                 ? $this->getLatestRateFromMap((int) $row->currency_id, Carbon::parse($row->month), $ratesMap, $baseCurrency->id)
                 : null;
+            // No rate for a foreign currency: the amount is added unconverted, so flag the total
+            if ($baseCurrency && $rate === null && (int) $row->currency_id !== $baseCurrency->id) {
+                $ratesMissing = true;
+            }
             $totals[$row->transaction_type] = $totals[$row->transaction_type]
                 ->plus(BigDecimal::of($row->total)->multipliedBy($rate ?? '1'));
         }
@@ -160,6 +164,7 @@ class AssetOverviewService
                 ->toScale(self::SCALE, RoundingMode::HalfUp),
             'deposit_total' => (string) $totals[TransactionType::DEPOSIT->value]
                 ->toScale(self::SCALE, RoundingMode::HalfUp),
+            'rates_missing' => $ratesMissing,
         ];
     }
 

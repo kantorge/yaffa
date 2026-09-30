@@ -124,7 +124,7 @@
           typeof column === 'string' ? COLUMN_KEYS[column]() : [column],
         );
 
-        if (this.actions.length === 0) {
+        if (Array.isArray(this.actions) && this.actions.length === 0) {
           return columns;
         }
 

@@ -76,10 +76,32 @@
         </dd>
 
         <dt class="col-6">{{ __('Total paid') }}</dt>
-        <dd class="col-6">{{ formatMoney(overview.withdrawal_total) }}</dd>
+        <dd class="col-6">
+          {{ formatMoney(overview.withdrawal_total) }}
+          <i
+            v-if="overview.rates_missing"
+            class="fa fa-exclamation-triangle text-warning"
+            :title="
+              __(
+                'Some amounts could not be converted to the base currency, as exchange rates are missing.',
+              )
+            "
+          ></i>
+        </dd>
 
         <dt class="col-6">{{ __('Total received') }}</dt>
-        <dd class="col-6">{{ formatMoney(overview.deposit_total) }}</dd>
+        <dd class="col-6">
+          {{ formatMoney(overview.deposit_total) }}
+          <i
+            v-if="overview.rates_missing"
+            class="fa fa-exclamation-triangle text-warning"
+            :title="
+              __(
+                'Some amounts could not be converted to the base currency, as exchange rates are missing.',
+              )
+            "
+          ></i>
+        </dd>
       </dl>
     </div>
   </div>

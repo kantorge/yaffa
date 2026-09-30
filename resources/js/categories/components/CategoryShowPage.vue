@@ -211,6 +211,24 @@
         this.transactions = this.transactions.filter(
           (transaction) => Number(transaction.id) !== Number(transactionId),
         );
+        this.refreshOverview();
+      },
+      // The lifetime figures come from the server, so a deletion needs a fresh copy
+      refreshOverview() {
+        window.axios
+          .get(
+            this.route('api.v1.categories.overview', {
+              category: this.category.id,
+            }),
+          )
+          .then((response) => {
+            this.overview = response.data;
+          })
+          .catch(() => {
+            toastHelpers.showErrorToast(
+              __('Error while refreshing the overview'),
+            );
+          });
       },
       // No in-page drill-down here: hand over to Find transactions
       onDrillDown(event) {

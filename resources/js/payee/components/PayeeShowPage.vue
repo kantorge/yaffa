@@ -282,9 +282,11 @@
                   type: 'payee',
                 });
               })
-              .catch(() => {
+              .catch((error) => {
+                // E.g. "Payee is in use": the overview doesn't count schedules
                 toastHelpers.showErrorToast(
-                  __('Error while trying to delete payee'),
+                  error.response?.data?.error ||
+                    __('Error while trying to delete payee'),
                 );
               });
           },

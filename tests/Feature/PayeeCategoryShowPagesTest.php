@@ -207,3 +207,36 @@ it('lists category budgets with their next occurrence', function () {
         ->and($budgets->first()->id)->toBe($budget->id)
         ->and($budgets->first()->next_occurrence)->toBe($budget->start_date->toDateString());
 });
+
+it('counts a transaction once even if several of its items are in the category', function () {
+    [$user] = userWithBaseCurrency();
+    $payee = AccountEntity::factory()->asPayee($user)->create();
+    $category = Category::factory()->for($user)->create();
+
+    makeStandardTransaction($user, $payee, TransactionType::WITHDRAWAL, '2024-01-10', [[$category->id, 10], [$category->id, 20]]);
+
+    $this->actingAs($user);
+
+    expect(app(AssetOverviewService::class)->categoryOverview($user, $category))
+        ->toMatchArray(['count' => 1, 'withdrawal_total' => '30.0000']);
+});
+
+it('flags totals that include a foreign currency without an exchange rate', function () {
+    [$user] = userWithBaseCurrency();
+    $foreign = Currency::factory()->for($user)->create(['base' => null]);
+    $payee = AccountEntity::factory()->asPayee($user)->create();
+    $category = Category::factory()->for($user)->create();
+
+    makeStandardTransaction($user, $payee, TransactionType::WITHDRAWAL, '2024-01-20', [[$category->id, 10]], $foreign);
+
+    $this->actingAs($user);
+
+    expect(app(AssetOverviewService::class)->payeeOverview($user, $payee)['rates_missing'])->toBeTrue();
+});
+
+it('does not expose show routes for resources without a show page', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/tags/1')->assertMethodNotAllowed();
+    $this->actingAs($user)->get('/currencies/1')->assertMethodNotAllowed();
+});
