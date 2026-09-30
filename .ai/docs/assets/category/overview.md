@@ -112,6 +112,15 @@ Across YAFFA, categories influence how money is entered, suggested, reviewed, co
 - The category structure is intentionally modest rather than deeply hierarchical, which keeps it understandable for everyday personal finance use.
 - CategoryLearning is related but separate; it should not be treated as part of the core Category concept itself.
 
+## Category Detail Page
+
+- Reached from the category name in the categories list, the monthly breakdown report, and payee pages. Answers: _how does this part of my life behave over time?_
+- Overview card: full name, parent and children (linked), description, active flag, default aggregation, number of transaction items, first and last use, lifetime totals in the base currency (including subcategories).
+- Actions: edit, merge into another category, open in Find transactions, open the budget chart preset to this category.
+- Side cards: budgets of this category with next occurrence, scheduled transactions using it, payees that default to / prefer / exclude it, and its AI learning entries (link to the learning page).
+- Report tabs (summary, list, timeline, monthly breakdown) over the user's "Default date range for transaction history" setting. All figures are **item-level**: for a split transaction only the items in this category (or its children) count. The category split and waterfall tabs are not offered, as they are meaningless for a single category.
+- See [`.ai/docs/features/payee-category-show-pages/`](../../features/payee-category-show-pages/architecture.md).
+
 ## Related Product Behaviors
 
 - Transaction entry uses categories to turn raw money movement into meaningful financial records.
@@ -145,7 +154,7 @@ CategoryLearning is a separate derived concept used for AI-assisted suggestion b
 ## Known Limitations / Open Questions
 
 1. The structure appears intentionally shallow, which favors clarity but limits more complex multi-level taxonomy.
-2. Category behavior is strong around classification and review, but category-specific budgeting rules are not clearly expressed as part of this core concept.
+2. Category behavior is strong around classification and review. Budgets are a separate entity that points at a category; the category page only lists them.
 3. Some category-related intelligence is experienced indirectly through suggestions, which may blur the boundary between core category behavior and CategoryLearning in the product experience.
 
 ## Completeness Assessment
