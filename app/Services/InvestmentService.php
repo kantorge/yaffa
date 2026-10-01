@@ -55,7 +55,8 @@ class InvestmentService
             ->orderByDesc('id')
             ->limit(1);
 
-        return $user->investments()
+        return Investment::query()
+            ->where('user_id', $user->id)
             ->when($active !== null, fn ($query) => $query->where('active', $active))
             ->select('investments.*')
             ->selectSub((clone $transactions)->selectRaw(
@@ -71,15 +72,16 @@ class InvestmentService
             ->orderBy('name')
             ->get()
             ->each(function (Investment $investment): void {
-                $price = $investment->transaction_price;
-                if ($investment->stored_price_date !== null
-                    && ($investment->transaction_price_date === null
-                        || $investment->stored_price_date > $investment->transaction_price_date)) {
-                    $price = $investment->stored_price;
+                $price = $investment->getAttribute('transaction_price');
+                $storedPriceDate = $investment->getAttribute('stored_price_date');
+                $transactionPriceDate = $investment->getAttribute('transaction_price_date');
+                if ($storedPriceDate !== null
+                    && ($transactionPriceDate === null || $storedPriceDate > $transactionPriceDate)) {
+                    $price = $investment->getAttribute('stored_price');
                 }
 
-                $investment->price = $price === null ? null : (float) $price;
-                $investment->quantity = (float) $investment->quantity;
+                $investment->setAttribute('price', $price === null ? null : (float) $price);
+                $investment->setAttribute('quantity', (float) $investment->getAttribute('quantity'));
                 $investment->makeHidden(['stored_price', 'stored_price_date', 'transaction_price', 'transaction_price_date']);
             });
     }
