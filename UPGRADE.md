@@ -5,6 +5,7 @@ This document describes the breaking changes of major versions, and also include
 Table of contents:
 
 - [Upgrade from YAFFA 3.x to 4.x](#upgrade-from-yaffa-3x-to-4x)
+- [Upgrade within YAFFA 4.x](#upgrade-within-yaffa-4x)
 - [Upgrade within YAFFA 3.x](#upgrade-within-yaffa-3x)
 - [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
@@ -177,6 +178,18 @@ The migration step will:
 #### 5. Review your converted Budgets (recommended)
 
 After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
+
+## Upgrade within YAFFA 4.x
+
+Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
+
+### Sentry support removed
+
+The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.
+
+- If you used Sentry, error monitoring stops after the upgrade. Errors are now only written to the configured Laravel log channel (see `LOG_CHANNEL`/`LOG_STACK`).
+- `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read; you can delete them from your `.env`.
+- Source code users: run `composer install` as usual, so the package is removed from `vendor/`.
 
 ## Upgrade within YAFFA 3.x
 
