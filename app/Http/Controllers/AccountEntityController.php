@@ -153,9 +153,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         }
 
         // Same shape the dashboard widget gets from the API
-        return $this->payeeCategoryStatsService
-            ->getDefaultSuggestionsForAllPayees($user)
-            ->firstWhere('payee_id', $payee->id);
+        return $this->payeeCategoryStatsService->getDefaultSuggestionForPayee($user, $payee);
     }
 
     /**

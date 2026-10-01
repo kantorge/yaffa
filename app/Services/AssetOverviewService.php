@@ -145,11 +145,13 @@ class AssetOverviewService
         ];
         $ratesMissing = false;
         foreach ($rows as $row) {
+            // A transaction without a currency is in the base currency
+            $currencyId = (int) ($row->currency_id ?? $baseCurrency?->id);
             $rate = $baseCurrency
-                ? $this->getLatestRateFromMap((int) $row->currency_id, Carbon::parse($row->month), $ratesMap, $baseCurrency->id)
+                ? $this->getLatestRateFromMap($currencyId, Carbon::parse($row->month), $ratesMap, $baseCurrency->id)
                 : null;
             // No rate for a foreign currency: the amount is added unconverted, so flag the total
-            if ($baseCurrency && $rate === null && (int) $row->currency_id !== $baseCurrency->id) {
+            if ($baseCurrency && $rate === null && $currencyId !== $baseCurrency->id) {
                 $ratesMissing = true;
             }
             $totals[$row->transaction_type] = $totals[$row->transaction_type]

@@ -172,7 +172,7 @@
                 data-coreui-placement="top"
                 :title="
                   __(
-                    'The default date range to load transactions from when opening account or payee details. This can be changed on the fly in the details view.',
+                    'The default date range to load transactions from when opening account, payee or category details. This can be changed on the fly in the details view.',
                   )
                 "
               >
