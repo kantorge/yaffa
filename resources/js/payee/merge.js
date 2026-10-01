@@ -48,7 +48,7 @@ $('#merge-payees-form').on('submit', function (e) {
 
   if (!source || !target) {
     e.preventDefault();
-    alert(__('Please select payees to be merged'));
+    alert(__('Select payees to be merged'));
     return;
   }
 

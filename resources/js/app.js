@@ -41,6 +41,7 @@ const routeMap = new Map([
   ['payees.merge.form', 'payee/merge'],
   ['account.history', 'account/history'],
   ['categories.index', 'categories/index'],
+  ['categories.show', 'categories/show'],
   ['category-learning.index', 'category-learning/index'],
   ['categories.create', 'categories/form'],
   ['categories.edit', 'categories/form'],
@@ -100,7 +101,9 @@ if (
 }
 
 if (current === 'account-entity.show') {
-  loadModule('account/show');
+  loadModule(
+    document.getElementById('payeeShow') ? 'payee/show' : 'account/show',
+  );
 }
 
 if (

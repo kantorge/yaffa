@@ -71,7 +71,7 @@ Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->push(__('Merge'), route('payees.merge.form'));
 });
 
-// Category resource (index, create, edit)
+// Category resource (index, create, show, edit)
 Breadcrumbs::for('categories.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Categories'), route('categories.index'));
@@ -79,6 +79,10 @@ Breadcrumbs::for('categories.index', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('categories.create', function (BreadcrumbTrail $trail) {
     $trail->parent('categories.index');
     $trail->push(__('Create'), route('categories.create'));
+});
+Breadcrumbs::for('categories.show', function (BreadcrumbTrail $trail, $category) {
+    $trail->parent('categories.index');
+    $trail->push($category->full_name, route('categories.show', $category));
 });
 Breadcrumbs::for('categories.edit', function (BreadcrumbTrail $trail, $category) {
     $trail->parent('categories.index');

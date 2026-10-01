@@ -173,7 +173,7 @@
 
             <div class="row mb-3">
                 <label for="default_date_range" class="col-form-label col-sm-3">
-                    {{ __('Default date range for account details') }}
+                    {{ __('Default date range for transaction history') }}
                 </label>
                 <div class="col-sm-9">
                     <select

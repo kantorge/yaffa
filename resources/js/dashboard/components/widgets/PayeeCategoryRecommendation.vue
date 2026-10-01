@@ -65,9 +65,18 @@
   import { __ } from '@/shared/lib/i18n';
 
   export default {
+    props: {
+      // A ready suggestion of one payee (payee page). Without it, the widget asks the
+      // API for a random pending suggestion (dashboard).
+      suggestion: {
+        type: Object,
+        default: null,
+      },
+    },
+    emits: ['accepted'],
     data() {
       return {
-        payeeSuggestion: null,
+        payeeSuggestion: this.suggestion,
         error: false,
         busy: false,
         success: false,
@@ -75,9 +84,8 @@
     },
 
     computed: {
-      editlink() {
-        return this.route('account-entity.edit', {
-          type: 'payee',
+      payeePageLink() {
+        return this.route('account-entity.show', {
           account_entity: this.payeeSuggestion.payee_id,
         });
       },
@@ -96,7 +104,7 @@
       },
 
       payeeLink() {
-        return `<strong><a href="${this.editlink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
+        return `<strong><a href="${this.payeePageLink}">${this.escapeHtml(this.payeeSuggestion.payee)}</a></strong>`;
       },
 
       categoryText() {
@@ -105,6 +113,10 @@
     },
 
     created() {
+      if (this.suggestion) {
+        return;
+      }
+
       axios
         .get('/api/v1/payees/category-suggestions/default')
         .then((response) => (this.payeeSuggestion = response.data));
@@ -125,6 +137,7 @@
           .then(function () {
             vue.success = true;
             vue.error = false;
+            vue.$emit('accepted', vue.payeeSuggestion);
           })
           .catch(function () {
             vue.success = false;

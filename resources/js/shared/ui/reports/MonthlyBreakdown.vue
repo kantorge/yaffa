@@ -305,14 +305,14 @@
     toFormattedCurrency,
     getCachedDateTimeFormatter,
   } from '@/shared/lib/i18n';
+  import { buildBreakdownCacheKey } from '@/reports/components/find-transactions/helpers';
   import {
-    buildBreakdownCacheKey,
     round2,
     aggregateTransactionsByCategory,
     calculateDeviationClass,
     buildSectionHierarchy,
     calculateMonthlyTotalsByType,
-  } from '../find-transactions/helpers';
+  } from '@/shared/lib/reports';
 
   const SECTION_CSS_CLASSES = [
     's-section-0',
@@ -326,7 +326,7 @@
   ];
 
   export default {
-    name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
+    name: 'MonthlyBreakdown',
     props: {
       transactions: {
         type: Array,
@@ -352,6 +352,12 @@
       tagIds: {
         type: Array,
         default: () => [],
+      },
+      // The cache is keyed by the URL filters only (Find transactions); pages without
+      // such filters must opt out, or they'd read and overwrite each other's data
+      useBreakdownCache: {
+        type: Boolean,
+        default: true,
       },
     },
     emits: ['drill-down'],
@@ -537,12 +543,14 @@
       },
     },
     mounted() {
-      this.loadBreakdownCache();
+      if (this.useBreakdownCache) {
+        this.loadBreakdownCache();
+      }
     },
 
     methods: {
       getCategoryLink(categoryId) {
-        return this.route('categories.edit', {
+        return this.route('categories.show', {
           category: categoryId,
         });
       },
@@ -571,7 +579,12 @@
           // Don't overwrite cache on drill-down pages, or with a narrowed
           // aggregate that a differently-scoped load couldn't detect as stale
           // (the cache key doesn't encode matchingItemsOnly).
-          if (this.isDrillDown || this.matchingItemsOnly) return;
+          if (
+            !this.useBreakdownCache ||
+            this.isDrillDown ||
+            this.matchingItemsOnly
+          )
+            return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};
@@ -695,7 +708,6 @@
 </script>
 
 <style scoped lang="scss">
-  //@import './ReportingCanvas-FindTransactions-MonthlyBreakdown';
   @import '@coreui/coreui/scss/functions';
   @import '../../../../sass/_variables';
 

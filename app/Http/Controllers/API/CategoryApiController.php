@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use App\Services\AssetOverviewService;
 use App\Services\CategoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'getList', 'getItem',
+    'getList', 'getItem', 'overview',
 ])]
 #[Middleware('abilities:write', only: [
     'store', 'patchActive', 'destroy',
@@ -140,6 +141,24 @@ class CategoryApiController extends Controller
                 $category,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Get category lifetime overview
+     *
+     * Returns the number of transactions, first and last transaction date, and the total
+     * withdrawn and deposited (in the base currency) for the category and its children.
+     * Schedules are excluded.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    #[Authorize('view', 'category')]
+    public function overview(Request $request, Category $category, AssetOverviewService $assetOverviewService): JsonResponse
+    {
+        return response()->json(
+            $assetOverviewService->categoryOverview($request->user(), $category),
+            Response::HTTP_OK
+        );
     }
 
     /**

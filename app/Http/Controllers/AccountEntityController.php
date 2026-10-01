@@ -12,9 +12,12 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Models\User;
+use App\Services\AssetOverviewService;
 use App\Services\PayeeCategoryStatsService;
 use Closure;
 use Exception;
@@ -39,6 +42,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
+        private readonly AssetOverviewService $assetOverviewService,
     ) {
     }
 
@@ -117,8 +121,39 @@ class AccountEntityController extends Controller implements HasMiddleware
             );
         }
 
-        // Currently no function for Payees, redirect back
-        return redirect()->back();
+        $accountEntity->load([
+            'config',
+            'config.category',
+            'config.category.parent',
+            'preferredCategories',
+            'deferredCategories',
+        ]);
+
+        JavaScriptFacade::put([
+            'payee' => $accountEntity,
+            'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
+            'categorySuggestion' => $this->payeeCategorySuggestion($request->user(), $accountEntity),
+            'baseCurrency' => $request->user()->baseCurrency(),
+        ]);
+
+        return view('payees.show', ['payee' => $accountEntity]);
+    }
+
+    /**
+     * Pending default category suggestion of one payee, unless it has a default category or the
+     * suggestion was dismissed.
+     *
+     * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
+     */
+    private function payeeCategorySuggestion(User $user, AccountEntity $payee): ?array
+    {
+        $config = $payee->config;
+        if (! $config instanceof Payee || $config->category_id !== null || $config->category_suggestion_dismissed !== null) {
+            return null;
+        }
+
+        // Same shape the dashboard widget gets from the API
+        return $this->payeeCategoryStatsService->getDefaultSuggestionForPayee($user, $payee);
     }
 
     /**
