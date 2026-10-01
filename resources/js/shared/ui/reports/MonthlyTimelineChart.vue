@@ -123,8 +123,20 @@
 
         let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
         dateAxis.renderer.minGridDistance = 50;
+        // Data is monthly: align columns and labels to month slots, and centre
+        // each label under its column instead of on the grid line
+        dateAxis.baseInterval = { count: 1, timeUnit: 'month' };
+        dateAxis.renderer.labels.template.location = 0.5;
+        dateAxis.renderer.labels.template.horizontalCenter = 'middle';
+        dateAxis.renderer.labels.template.verticalCenter = 'top';
+        dateAxis.renderer.labels.template.dy = 5;
 
-        chart.yAxes.push(new am4charts.ValueAxis());
+        // Keep the value labels outside the plot area, right-aligned against it
+        let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+        valueAxis.renderer.inside = false;
+        valueAxis.renderer.labels.template.horizontalCenter = 'right';
+        valueAxis.renderer.labels.template.textAlign = 'end';
+        valueAxis.renderer.labels.template.dx = -5;
 
         let seriesDeposit = chart.series.push(new am4charts.ColumnSeries());
         seriesDeposit.dataFields.valueY = 'deposits';
