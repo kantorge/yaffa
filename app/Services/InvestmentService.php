@@ -13,6 +13,7 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
+use App\Models\User;
 use App\Support\ScheduleInstance;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
@@ -28,6 +29,59 @@ class InvestmentService
     public function __construct(
         private InvestmentPriceProviderContextResolver $contextResolver
     ) {
+    }
+
+    /**
+     * Load current holdings without hydrating price or transaction histories.
+     *
+     * @return Collection<int, Investment>
+     */
+    public function getSummary(User $user, ?bool $active = true): Collection
+    {
+        $transactions = DB::table('transaction_details_investment')
+            ->join('transactions', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->where('transactions.config_type', 'investment')
+            ->where('transactions.schedule', false)
+            ->whereColumn('transaction_details_investment.investment_id', 'investments.id');
+
+        $transactionPrice = (clone $transactions)
+            ->whereNotNull('transaction_details_investment.price')
+            ->orderByDesc('transactions.date')
+            ->orderByDesc('transactions.id')
+            ->limit(1);
+        $storedPrice = DB::table('investment_prices')
+            ->whereColumn('investment_id', 'investments.id')
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(1);
+
+        return $user->investments()
+            ->when($active !== null, fn ($query) => $query->where('active', $active))
+            ->select('investments.*')
+            ->selectSub((clone $transactions)->selectRaw(
+                'COALESCE(SUM(' . TransactionTypeEnum::getQuantityMultiplierSqlCase('transactions.transaction_type')
+                . ' * COALESCE(transaction_details_investment.quantity, 0)), 0)'
+            ), 'quantity')
+            ->selectSub((clone $storedPrice)->select('price'), 'stored_price')
+            ->selectSub((clone $storedPrice)->select('date'), 'stored_price_date')
+            ->selectSub((clone $transactionPrice)->select('transaction_details_investment.price'), 'transaction_price')
+            ->selectSub((clone $transactionPrice)->select('transactions.date'), 'transaction_price_date')
+            ->withCount('transactions')
+            ->with(['currency', 'investmentGroup'])
+            ->orderBy('name')
+            ->get()
+            ->each(function (Investment $investment): void {
+                $price = $investment->transaction_price;
+                if ($investment->stored_price_date !== null
+                    && ($investment->transaction_price_date === null
+                        || $investment->stored_price_date > $investment->transaction_price_date)) {
+                    $price = $investment->stored_price;
+                }
+
+                $investment->price = $price === null ? null : (float) $price;
+                $investment->quantity = (float) $investment->quantity;
+                $investment->makeHidden(['stored_price', 'stored_price_date', 'transaction_price', 'transaction_price_date']);
+            });
     }
 
     public function delete(Investment $investment): array

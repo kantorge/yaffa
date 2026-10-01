@@ -13,6 +13,10 @@ import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
 
 let ajaxIsBusy = false;
+let summaryRequest;
+let summaryRequestId = 0;
+window.investments = [];
+document.getElementById('table_filter_active_yes').checked = true;
 
 let table = $('#investmentSummary').DataTable({
   language: getDataTablesLanguageOptions() || undefined,
@@ -139,18 +143,12 @@ let table = $('#investmentSummary').DataTable({
           }),
           contentType: 'application/json',
           context: this,
-          success: function (data) {
-            // Update row in table data source
-            window.investments.filter(
-              (investment) => investment.id === data.id,
-            )[0].active = data.active;
+          success: function () {
+            loadInvestments();
           },
           error: function (_data) {
             alert(__('Error changing investment active state'));
-          },
-          complete: function (_data) {
-            // Re-render row
-            row.invalidate().draw(false);
+            loadInvestments();
           },
         });
       },
@@ -397,7 +395,10 @@ dataTableHelpers.investmentGroupTree(
 );
 
 // Listeners for filters
-dataTableHelpers.initializeFilterToggle(table, 1, 'table_filter_active');
+$('input[name="table_filter_active"]').on('change', loadInvestments);
+document
+  .getElementById('investment-summary-retry')
+  .addEventListener('click', loadInvestments);
 dataTableHelpers.initializeStandardExternalSearch(table);
 function filterInvestmentGroup() {
   const selectedNodes = $(selectorTreeContainer).jstree().get_checked(true);
@@ -410,8 +411,48 @@ function filterInvestmentGroup() {
     .draw();
 }
 
-// Set the active toggle to active by default
-document.getElementById('table_filter_active_yes').click();
+function loadInvestments() {
+  const requestId = ++summaryRequestId;
+  summaryRequest?.abort();
+  const selected = document.querySelector(
+    'input[name="table_filter_active"]:checked',
+  ).id;
+  const active = selected.endsWith('_yes')
+    ? '1'
+    : selected.endsWith('_no')
+      ? '0'
+      : 'all';
+  const errorMessage = document.getElementById('investment-summary-error');
+  errorMessage.hidden = true;
+  window.investments = [];
+  table.clear().draw();
+  table.processing(true);
+
+  summaryRequest = $.ajax({
+    url: window.route('api.v1.investments.summary'),
+    data: { active },
+    dataType: 'json',
+  })
+    .done((response) => {
+      if (requestId !== summaryRequestId) {
+        return;
+      }
+      window.investments = response.data;
+      table.clear().rows.add(response.data).draw();
+    })
+    .fail((_xhr, status) => {
+      if (requestId === summaryRequestId && status !== 'abort') {
+        errorMessage.hidden = false;
+      }
+    })
+    .always(() => {
+      if (requestId === summaryRequestId) {
+        table.processing(false);
+      }
+    });
+}
+
+loadInvestments();
 
 // Define the steps for the onboarding widget
 window.onboardingTourSteps = [

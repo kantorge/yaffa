@@ -228,6 +228,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('investments.index');
     Route::get('/investments/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline'])
         ->name('investments.timeline');
+    Route::get('/investments/summary', [InvestmentApiController::class, 'summary'])
+        ->name('investments.summary');
     Route::get('/investments/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])
         ->name('investments.show');
     Route::patch('/investments/{investment}', [InvestmentApiController::class, 'patchActive'])
