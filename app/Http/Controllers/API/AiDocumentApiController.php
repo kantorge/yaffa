@@ -350,10 +350,9 @@ class AiDocumentApiController extends Controller
             return response()->json([], Response::HTTP_BAD_REQUEST);
         }
 
-        $processedData = $aiDocument->processed_transaction_data;
-        $extractedData = $processedData['raw'] ?? [];
+        $extractedData = $duplicateService->matchDataFromDraft($aiDocument->processed_transaction_data);
 
-        if (! is_array($extractedData) || ! array_key_exists('date', $extractedData)) {
+        if (! isset($extractedData['date'])) {
             return response()->json([
                 'duplicates' => [],
             ], Response::HTTP_OK);
