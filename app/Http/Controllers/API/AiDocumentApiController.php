@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\AiDocumentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
@@ -103,13 +104,20 @@ class AiDocumentApiController extends Controller
     /**
      * Update a document
      *
-     * Updates the custom prompt or status of an AI document.
+     * Updates the custom prompt or status of an AI document. Setting the status (back to
+     * ready_for_processing) is only allowed from ready_for_review or processing_failed.
      *
      * @throws AuthorizationException
      */
     #[Authorize('update', 'aiDocument')]
     public function update(UpdateAiDocumentRequest $request, AiDocument $aiDocument): JsonResponse
     {
+        if ($request->filled('status') && ! AiDocumentStatus::isReprocessable($aiDocument->status)) {
+            return response()->json([
+                'error' => __('Document cannot be reprocessed from current status'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         if ($request->filled('custom_prompt')) {
             $aiDocument->custom_prompt = $request->input('custom_prompt');
         }
@@ -274,7 +282,7 @@ class AiDocumentApiController extends Controller
      * Reprocess a document
      *
      * Resets a document to ready_for_processing and re-queues it for AI processing. Only
-     * allowed from a terminal or failed status.
+     * allowed from ready_for_review or processing_failed; a finalized document already created a transaction.
      *
      * @throws AuthorizationException
      */
@@ -285,15 +293,14 @@ class AiDocumentApiController extends Controller
             return $response;
         }
 
-        // Only allow reprocessing if document is in a terminal or failed state
-        if (! in_array($aiDocument->status, ['ready_for_review', 'processing_failed', 'finalized'])) {
+        if (! AiDocumentStatus::isReprocessable($aiDocument->status)) {
             return response()->json([
                 'error' => __('Document cannot be reprocessed from current status'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // Reset document to ready_for_processing
-        $aiDocument->status = 'ready_for_processing';
+        $aiDocument->status = AiDocumentStatus::ReadyForProcessing->value;
         $aiDocument->processed_transaction_data = null;
         $aiDocument->ai_chat_history = null;
         $aiDocument->processed_at = null;
