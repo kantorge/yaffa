@@ -120,8 +120,8 @@ class DuplicateDetectionService
      * into the shape findDuplicates() expects. A legacy draft holding only `raw` falls back to
      * its date and amount.
      *
-     * @param  array<array-key, mixed>  $draft
-     * @return array<string, mixed>
+     * @param  array<array-key, mixed>  $draft  Stored JSON, so every field is untrusted: reads `raw.date`, `raw.amount`, `date`, `config_type`, `transaction_type`, and from `config` the amount and ID fields.
+     * @return array{date?: string, config_type?: string, transaction_type?: string, amount?: float, account_from_id?: int, account_to_id?: int, account_id?: int, investment_id?: int}
      */
     public function matchDataFromDraft(array $draft): array
     {

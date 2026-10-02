@@ -338,7 +338,7 @@ A few notes on the statuses
   - Standard: `account_from_id`, `account_to_id` from `config`; `amount` from `config.amount_from`, falling back to `raw.amount`. A `0` amount (stored when the AI found none) is treated as unknown and left out.
   - Investment: `account_id`, `investment_id` from `config`; no `amount` (see scoring below).
   - IDs are cast to int (scoring compares with `===`); null/missing keys are dropped. A legacy draft holding only `raw` still works via the fallbacks.
-- Candidates: the user's transactions dated within ±`duplicate_date_window_days` (default 3) of the draft date, of the same `config_type` as the draft.
+- Candidates: the user's transactions dated within ±`duplicate_date_window_days` (default 3) of the draft date. When the draft has a `config_type`, only transactions of that type are considered; a draft without one (e.g. a legacy `raw`-only draft) is matched against all configuration types.
 - Scoring (`calculateSimilarity()`): points earned divided by the maximum possible points.
   - Date within the window: 1 point (out of 1).
   - Amount, only if the draft has one (out of 2): 2 points for an exact match, 1 point within `duplicate_amount_tolerance_percent` (default 10%) of the candidate's amount. The candidate's amount is the sum of its transaction items; investments (and any candidate without items) yield `0` and never score on amount.
