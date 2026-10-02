@@ -438,7 +438,7 @@
   };
 
   const canReprocess = (status) =>
-    ['ready_for_review', 'processing_failed', 'finalized'].includes(status);
+    ['ready_for_review', 'processing_failed'].includes(status);
 
   const recalculateTableLayout = () => {
     if (!table.value) {
