@@ -383,6 +383,7 @@
     "dividend": "dywidenda",
     "Do you have an account?": "Czy masz konto?",
     "Document #:id": "Numer dokumentu:id",
+    "Document cannot be finalized from current status": "Nie można sfinalizować dokumentu z bieżącego statusu",
     "Document cannot be reprocessed from current status": "Nie można przetworzyć dokumentu z bieżącego statusu",
     "Document deleted": "Dokument został usunięty",
     "Document Language": "Język dokumentu",

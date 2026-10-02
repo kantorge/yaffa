@@ -383,6 +383,7 @@
     "dividend": "dividende",
     "Do you have an account?": "Avez-vous un compte?",
     "Document #:id": "Document n° : id",
+    "Document cannot be finalized from current status": "Le document ne peut pas être finalisé à partir de son état actuel.",
     "Document cannot be reprocessed from current status": "Le document ne peut pas être retraité à partir de son état actuel.",
     "Document deleted": "Document supprimé",
     "Document Language": "Langue du document",

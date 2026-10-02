@@ -383,6 +383,7 @@
     "dividend": "osztalék",
     "Do you have an account?": "Van már fiókod?",
     "Document #:id": "Dokumentum #:id",
+    "Document cannot be finalized from current status": "A dokumentum jelenlegi állapotából nem véglegesíthető",
     "Document cannot be reprocessed from current status": "A dokumentum jelenlegi állapotából nem dolgozható fel újra",
     "Document deleted": "Dokumentum törölve",
     "Document Language": "Dokumentum nyelve",

@@ -21,6 +21,22 @@ enum AiDocumentStatus: string
         };
     }
 
+    /**
+     * Statuses a document may be sent back to processing from. A finalized document already
+     * created a transaction, so reprocessing it would allow finalizing a duplicate.
+     *
+     * @return list<self>
+     */
+    public static function reprocessable(): array
+    {
+        return [self::ReadyForReview, self::ProcessingFailed];
+    }
+
+    public static function isReprocessable(string $status): bool
+    {
+        return in_array(self::tryFrom($status), self::reprocessable(), true);
+    }
+
     public static function labels(): array
     {
         $labels = [];
