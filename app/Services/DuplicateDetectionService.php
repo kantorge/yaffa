@@ -116,6 +116,44 @@ class DuplicateDetectionService
     }
 
     /**
+     * Flatten a stored AI document draft (see ProcessDocumentService::buildTransactionData())
+     * into the shape findDuplicates() expects. A legacy draft holding only `raw` falls back to
+     * its date and amount.
+     *
+     * @param  array<array-key, mixed>  $draft
+     * @return array<string, mixed>
+     */
+    public function matchDataFromDraft(array $draft): array
+    {
+        $raw = is_array($draft['raw'] ?? null) ? $draft['raw'] : [];
+        $config = is_array($draft['config'] ?? null) ? $draft['config'] : [];
+
+        $data = [
+            'date' => $draft['date'] ?? $raw['date'] ?? null,
+            'config_type' => $draft['config_type'] ?? null,
+            'transaction_type' => $draft['transaction_type'] ?? null,
+        ];
+
+        if ($data['config_type'] === 'investment') {
+            // No amount: getTransactionAmount() yields 0 for investments, so it could never score.
+            $idKeys = ['account_id', 'investment_id'];
+        } else {
+            $idKeys = ['account_from_id', 'account_to_id'];
+            // buildTransactionData() stores 0 when the AI found no amount; treat that as unknown.
+            $data['amount'] = (float) ($config['amount_from'] ?? $raw['amount'] ?? 0) ?: null;
+        }
+
+        // countAssetMatches() compares with ===, and JSON may hand IDs back as strings.
+        foreach ($idKeys as $key) {
+            if (isset($config[$key])) {
+                $data[$key] = (int) $config[$key];
+            }
+        }
+
+        return array_filter($data, fn ($value) => $value !== null);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function resolveSettingsForUser(User $user): array
