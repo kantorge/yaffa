@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -112,21 +113,31 @@ class AiDocumentApiController extends Controller
     #[Authorize('update', 'aiDocument')]
     public function update(UpdateAiDocumentRequest $request, AiDocument $aiDocument): JsonResponse
     {
-        if ($request->filled('status') && ! AiDocumentStatus::isReprocessable($aiDocument->status)) {
+        $aiDocument = DB::transaction(function () use ($request, $aiDocument): ?AiDocument {
+            $document = $request->filled('status') ? $this->lockReprocessable($aiDocument) : $aiDocument;
+
+            if (! $document) {
+                return null;
+            }
+
+            if ($request->filled('custom_prompt')) {
+                $document->custom_prompt = $request->input('custom_prompt');
+            }
+
+            if ($request->filled('status')) {
+                $document->status = $request->input('status');
+            }
+
+            $document->save();
+
+            return $document;
+        });
+
+        if (! $aiDocument) {
             return response()->json([
                 'error' => __('Document cannot be reprocessed from current status'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        if ($request->filled('custom_prompt')) {
-            $aiDocument->custom_prompt = $request->input('custom_prompt');
-        }
-
-        if ($request->filled('status')) {
-            $aiDocument->status = $request->input('status');
-        }
-
-        $aiDocument->save();
 
         return response()->json([
             'id' => $aiDocument->id,
@@ -293,20 +304,30 @@ class AiDocumentApiController extends Controller
             return $response;
         }
 
-        if (! AiDocumentStatus::isReprocessable($aiDocument->status)) {
+        $aiDocument = DB::transaction(function () use ($aiDocument): ?AiDocument {
+            $document = $this->lockReprocessable($aiDocument);
+
+            if (! $document) {
+                return null;
+            }
+
+            // Reset document to ready_for_processing
+            $document->status = AiDocumentStatus::ReadyForProcessing->value;
+            $document->processed_transaction_data = null;
+            $document->ai_chat_history = null;
+            $document->processed_at = null;
+            $document->save();
+
+            return $document;
+        });
+
+        if (! $aiDocument) {
             return response()->json([
                 'error' => __('Document cannot be reprocessed from current status'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Reset document to ready_for_processing
-        $aiDocument->status = AiDocumentStatus::ReadyForProcessing->value;
-        $aiDocument->processed_transaction_data = null;
-        $aiDocument->ai_chat_history = null;
-        $aiDocument->processed_at = null;
-        $aiDocument->save();
-
-        // Dispatch processing job
+        // Dispatch processing job (after the commit, so the job sees the reset document)
         AiProcessingJob::dispatch($aiDocument);
 
         return response()->json([
@@ -446,6 +467,17 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => 'txt',
         ]);
+    }
+
+    /**
+     * Re-read the document with a row lock and return it only if it can still be reprocessed. Must be
+     * called inside a DB transaction, so the status cannot change between this check and the reset.
+     */
+    private function lockReprocessable(AiDocument $aiDocument): ?AiDocument
+    {
+        $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
+
+        return AiDocumentStatus::isReprocessable($document->status) ? $document : null;
     }
 
     private function ensureAiProcessingEnabled(User $user): ?JsonResponse

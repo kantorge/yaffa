@@ -383,6 +383,7 @@
     "dividend": "dividend",
     "Do you have an account?": "Do you have an account?",
     "Document #:id": "Document #:id",
+    "Document cannot be finalized from current status": "Document cannot be finalized from current status",
     "Document cannot be reprocessed from current status": "Document cannot be reprocessed from current status",
     "Document deleted": "Document deleted",
     "Document Language": "Document Language",

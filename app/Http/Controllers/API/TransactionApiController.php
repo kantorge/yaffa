@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Casts\MoneyCast;
+use App\Enums\AiDocumentStatus;
 use App\Enums\TransactionType;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
@@ -40,6 +41,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Recurr\Exception\InvalidArgument;
 use Recurr\Exception\InvalidWeekday;
 use RuntimeException;
@@ -541,6 +543,9 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
+            // Claim the AI document first, so its row lock is held until the transaction is committed
+            $this->markAiDocumentFinalized($validated, $request->user());
+
             // Create the configuration first
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
 
@@ -605,6 +610,9 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
+            // Claim the AI document first, so its row lock is held until the transaction is committed
+            $this->markAiDocumentFinalized($validated, $request->user());
+
             // Create the configuration first
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
 
@@ -939,7 +947,46 @@ class TransactionApiController extends Controller
     }
 
     /**
-     * Finalize an AI document after transaction creation.
+     * Lock the AI document being finalized and mark it finalized. Must run inside the DB transaction
+     * that creates the transaction: a concurrent finalize or reprocess of the same document waits for
+     * the lock, and a document that is no longer ready for review rolls the whole creation back, so it
+     * can never produce a second transaction or end up finalized after being reset for reprocessing.
+     *
+     * @throws ValidationException
+     */
+    private function markAiDocumentFinalized(array $validated, User $user): void
+    {
+        if (($validated['action'] ?? null) !== 'finalize' || empty($validated['ai_document_id'] ?? null)) {
+            return;
+        }
+
+        $aiDocument = AiDocument::query()
+            ->whereKey($validated['ai_document_id'])
+            ->where('user_id', $user->id)
+            ->lockForUpdate()
+            ->first();
+
+        // Deleted since validation; finalizeAiDocument() skips it the same way
+        if (! $aiDocument) {
+            return;
+        }
+
+        if ($aiDocument->status !== AiDocumentStatus::ReadyForReview->value) {
+            throw ValidationException::withMessages([
+                'ai_document_id' => __('Document cannot be finalized from current status'),
+            ]);
+        }
+
+        $aiDocument->status = AiDocumentStatus::Finalized->value;
+        if (! $aiDocument->processed_at) {
+            $aiDocument->processed_at = now();
+        }
+        $aiDocument->save();
+    }
+
+    /**
+     * Link the AI document finalized by markAiDocumentFinalized() to the created transaction, and
+     * update category learning from the accepted recommendations.
      */
     private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): ?array
     {
@@ -964,12 +1011,6 @@ class TransactionApiController extends Controller
             ]);
             return null;
         }
-
-        $aiDocument->status = 'finalized';
-        if (! $aiDocument->processed_at) {
-            $aiDocument->processed_at = now();
-        }
-        $aiDocument->save();
 
         if ($transaction->ai_document_id !== $aiDocument->id) {
             $transaction->ai_document_id = $aiDocument->id;
