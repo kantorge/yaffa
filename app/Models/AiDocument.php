@@ -25,6 +25,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $google_drive_file_id
  * @property int|null $received_mail_id
  * @property string|null $custom_prompt
+ * @property Carbon|null $captured_at
+ * @property string|null $note
  * @property Carbon|null $processed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -52,7 +54,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiDocument whereUserId($value)
  * @mixin \Eloquent
  */
-#[Fillable('status', 'source_type', 'processed_transaction_data', 'ai_chat_history', 'google_drive_file_id', 'received_mail_id', 'custom_prompt', 'processed_at')]
+#[Fillable('status', 'source_type', 'processed_transaction_data', 'ai_chat_history', 'google_drive_file_id', 'received_mail_id', 'custom_prompt', 'captured_at', 'note', 'processed_at')]
 class AiDocument extends Model
 {
     use HasFactory;
@@ -64,6 +66,7 @@ class AiDocument extends Model
             'processed_transaction_data' => 'array',
             'ai_chat_history' => 'array',
             'processed_at' => 'datetime',
+            'captured_at' => 'datetime',
         ];
     }
 

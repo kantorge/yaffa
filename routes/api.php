@@ -20,6 +20,7 @@ use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
 use App\Http\Controllers\API\InvestmentPriceProviderApiController;
 use App\Http\Controllers\API\InvestmentProviderConfigApiController;
+use App\Http\Controllers\API\MetaApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\PayeeStatsApiController;
@@ -34,6 +35,9 @@ use Illuminate\Support\Facades\Route;
 // API V1 - Versioned, resource-oriented routes
 // ============================================================
 Route::prefix('v1')->name('api.v1.')->group(function () {
+    // Server info; intentionally public (a token only adds user context)
+    Route::get('/meta', [MetaApiController::class, 'show'])->name('meta');
+
     // Currency endpoints
     Route::delete('/currencies/{currency}', [CurrencyApiController::class, 'destroy'])
         ->name('currencies.destroy');
@@ -341,6 +345,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('users.me.tokens.index');
     Route::post('/users/me/tokens', [ApiTokenApiController::class, 'store'])
         ->name('users.me.tokens.store');
+    Route::post('/users/me/tokens/pairing', [ApiTokenApiController::class, 'storePairing'])
+        ->name('users.me.tokens.pairing');
     Route::delete('/users/me/tokens/{id}', [ApiTokenApiController::class, 'destroy'])
         ->whereNumber('id')
         ->name('users.me.tokens.destroy');

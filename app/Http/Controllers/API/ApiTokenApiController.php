@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApiTokenRequest;
+use App\Http\Requests\PairDeviceRequest;
 use App\Models\User;
 use App\Services\ApiTokenService;
 use Closure;
@@ -101,6 +102,29 @@ class ApiTokenApiController extends Controller implements HasMiddleware
             'expires_at' => $newToken->accessToken->expires_at,
             'token' => $newToken->plainTextToken,
         ], 201);
+    }
+
+    /**
+     * Pair a mobile device
+     *
+     * Creates a named full-access token and returns it once, as a `yaffa://pair` deep link and QR code,
+     * together with warnings about the instance URL (`not_https`, `localhost`). Session requests only.
+     */
+    public function storePairing(PairDeviceRequest $request): JsonResponse
+    {
+        if (config('yaffa.sandbox_mode')) {
+            return response()->json([
+                'message' => __('This action is not allowed in sandbox mode.'),
+            ], 403);
+        }
+
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json(
+            $this->apiTokenService->createPairing($user, $request->validated('name')),
+            201
+        );
     }
 
     /**

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -118,6 +119,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(
             $this->app->environment('testing') ? 6000 : 120
         )->by($request->user()?->id ?: $request->ip()));
+
+        // Basic-auth proxies occupy the Authorization header, so prefer a dedicated header for tokens.
+        Sanctum::getAccessTokenFromRequestUsing(
+            fn (Request $request) => $request->header('X-Yaffa-Token') ?: $request->bearerToken()
+        );
 
         $this->bootEvent();
     }

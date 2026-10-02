@@ -33,6 +33,10 @@ return [
     'import_max_file_size_mb' => (int) env('IMPORT_MAX_FILE_SIZE_MB', 2),
     'import_max_rows' => (int) env('IMPORT_MAX_ROWS', 5000),
     'api_token_max_lifetime_days' => (int) env('API_TOKEN_MAX_LIFETIME_DAYS', 365),
+    'mobile' => [
+        'min_app_version' => env('MOBILE_APP_MIN_VERSION', '1.0.0'),
+    ],
+    'idempotency_retention_days' => (int) env('IDEMPOTENCY_RETENTION_DAYS', 7),
     'scramble_prod_auth' => env('SCRAMBLE_PROD_AUTH', 'none'),
 
     // Optional settings, used primarily for the public facing Sandbox environment

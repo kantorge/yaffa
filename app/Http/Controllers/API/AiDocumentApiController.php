@@ -37,6 +37,7 @@ use Throwable;
 #[Middleware('abilities:settings', only: [
     'cleanupOldFiles',
 ])]
+#[Middleware('idempotent', only: ['store'])]
 class AiDocumentApiController extends Controller
 {
     private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
@@ -66,15 +67,17 @@ class AiDocumentApiController extends Controller
         // Create the document
         $document = AiDocument::create([
             'status' => 'ready_for_processing',
-            'source_type' => 'manual_upload',
+            'source_type' => $request->input('source') ?: 'manual_upload',
             'custom_prompt' => $request->input('custom_prompt'),
+            'captured_at' => $request->input('captured_at'),
+            'note' => $request->input('note'),
         ]);
 
         try {
             // Store uploaded files
             if ($request->hasFile('files')) {
-                foreach ($request->file('files') as $file) {
-                    $this->storeFile($document, $file);
+                foreach (array_values($request->file('files')) as $index => $file) {
+                    $this->storeFile($document, $file, $index);
                 }
             }
 
@@ -209,6 +212,12 @@ class AiDocumentApiController extends Controller
             $query->where('created_at', '<=', $dateTo);
         }
 
+        // Incremental polling: only documents changed since the given timestamp
+        if ($request->filled('updated_since')) {
+            $request->validate(['updated_since' => 'date']);
+            $query->where('updated_at', '>', Carbon::parse((string) $request->input('updated_since')));
+        }
+
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -228,7 +237,7 @@ class AiDocumentApiController extends Controller
             });
         }
 
-        $perPage = (int) $request->input('per_page', 15);
+        $perPage = max(1, min(100, (int) $request->input('per_page', 15)));
         $documents = $query->latest()->paginate($perPage);
 
         $documents->getCollection()->each(function (AiDocument $document): void {
@@ -393,7 +402,7 @@ class AiDocumentApiController extends Controller
     /**
      * Store an uploaded file for the document
      */
-    private function storeFile(AiDocument $aiDocument, $file): void
+    private function storeFile(AiDocument $aiDocument, $file, int $index): void
     {
         $filename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -402,7 +411,7 @@ class AiDocumentApiController extends Controller
         // Store file
         $path = $file->storeAs(
             "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}",
-            $filename,
+            "{$index}_{$filename}", // index prefix keeps same-named files from overwriting each other
             'local'
         );
 

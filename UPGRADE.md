@@ -176,6 +176,15 @@ After upgrading, open **Reports → Schedules and Budgets** and filter to "Budge
 
 Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
+### Mobile app support
+
+- New migrations add `idempotency_keys` and two columns on `ai_documents` (`captured_at`, `note`); they run with the usual migration step.
+- The Docker image now sets PHP `upload_max_filesize=20M` and `post_max_size=100M` (`docker/php-uploads.ini`). If you do not use the image, raise these PHP settings yourself, together with any change to `AI_DOCUMENT_MAX_FILE_SIZE_MB`. Reverse proxies need their own limit too (nginx: `client_max_body_size`).
+- Phone uploads need `AI_DOCUMENT_ALLOWED_TYPES=jpg,jpeg,png,pdf` (the default is `txt`).
+- `/api/v1` validation errors (422) and other HTTP errors now also carry an `error.code`/`error.message` envelope; the existing `message` and `errors` keys are unchanged.
+- Optional new env values: `MOBILE_APP_MIN_VERSION`, `IDEMPOTENCY_RETENTION_DAYS` (default 7).
+- File-only uploads to `POST /api/v1/documents` were previously rejected with "You must provide either files or text input"; this is fixed.
+
 ### Sentry support removed
 
 The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.

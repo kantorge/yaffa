@@ -2,12 +2,16 @@
 
 namespace App\Http\Requests;
 
+use App\Services\UploadLimitService;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
 class StoreAiDocumentRequest extends FormRequest
 {
     public function rules(): array
     {
         $maxFilesPerSubmission = config('ai-documents.file_upload.max_files_per_submission');
-        $maxFileSize = config('ai-documents.file_upload.max_file_size_mb');
+        $maxFileSize = UploadLimitService::maxFileMb();
         $allowedTypes = config('ai-documents.file_upload.allowed_types');
 
         return [
@@ -34,6 +38,9 @@ class StoreAiDocumentRequest extends FormRequest
                 'string',
                 'max:5000',
             ],
+            'captured_at' => ['nullable', 'date'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'source' => ['nullable', 'in:mobile_scan,mobile_share'],
         ];
     }
 
@@ -43,15 +50,39 @@ class StoreAiDocumentRequest extends FormRequest
             'files.required_without' => 'You must provide either files or text input.',
             'files.max' => 'You can upload a maximum of ' . config('ai-documents.file_upload.max_files_per_submission') . ' files.',
             'files.*.file' => 'Each file must be a valid file.',
-            'files.*.max' => 'Each file must not exceed ' . config('ai-documents.file_upload.max_file_size_mb') . 'MB.',
+            'files.*.max' => 'Each file must not exceed ' . UploadLimitService::maxFileMb() . 'MB.',
+            'files.*.uploaded' => 'A file could not be uploaded. Each file must not exceed ' . UploadLimitService::maxFileMb() . 'MB.',
             'files.*.mimes' => 'Files must be of type: ' . implode(', ', config('ai-documents.file_upload.allowed_types')),
         ];
+    }
+
+    /**
+     * Oversize files get a dedicated error code and the limit, so clients can react precisely.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        foreach ($validator->failed() as $field => $rules) {
+            if (str_starts_with($field, 'files.') && (isset($rules['Max']) || isset($rules['Uploaded']))) {
+                throw new HttpResponseException(response()->json([
+                    'message' => $validator->errors()->first(),
+                    'error' => [
+                        'code' => 'FILE_TOO_LARGE',
+                        'message' => $validator->errors()->first($field),
+                        'limit_mb' => UploadLimitService::maxFileMb(),
+                    ],
+                    'errors' => $validator->errors()->messages(),
+                ], 422));
+            }
+        }
+
+        parent::failedValidation($validator);
     }
 
     protected function prepareForValidation(): void
     {
         // Ensure either files or text_input is provided
-        if ((! $this->has('files') || empty($this->input('files'))) && ! $this->filled('text_input')) {
+        // input() never contains uploads, so they must be checked separately or they get nulled out below
+        if (! $this->hasFile('files') && ! $this->filled('text_input')) {
             $this->merge(['files' => null]);
         }
     }

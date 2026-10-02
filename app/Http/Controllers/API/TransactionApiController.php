@@ -53,6 +53,7 @@ use RuntimeException;
     'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
     'updateInvestment', 'skipScheduleInstance', 'destroy',
 ])]
+#[Middleware('idempotent', only: ['storeStandard'])]
 class TransactionApiController extends Controller
 {
     use CurrencyTrait;

@@ -300,7 +300,8 @@ CSV;
             ]);
 
         $response->assertUnprocessable();
-        $response->assertJsonMissingPath('error');
+        // A plain validation failure: must not reveal that the profile exists (no NOT_FOUND/FORBIDDEN code)
+        $response->assertJsonPath('error.code', 'VALIDATION_ERROR');
     }
 
     public function test_csv_parse_returns_422_for_nonexistent_profile_id(): void

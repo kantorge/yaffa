@@ -64,6 +64,11 @@ if (config('yaffa.runs_scheduler')) {
     // Prune expired personal access tokens
     Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();
 
+    // Forget idempotency keys once retries are no longer expected
+    Schedule::call(fn () => App\Models\IdempotencyKey::query()
+        ->where('created_at', '<', now()->subDays(config('yaffa.idempotency_retention_days')))
+        ->delete())->daily()->name('prune-idempotency-keys');
+
     // Keep the Laravel Telescope entries clean, if enabled
     if (config('telescope.enabled')) {
         Schedule::command('telescope:prune --hours=168')->daily();
