@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
+    'index', 'summary', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
 ])]
 #[Middleware('abilities:write', only: [
     'patchActive', 'updateProviderSettings', 'destroy',
@@ -34,6 +34,18 @@ class InvestmentApiController extends Controller
         protected InvestmentService $investmentService,
         protected InvestmentProviderSettingsResolver $providerSettingsResolver
     ) {
+    }
+
+    #[Authorize('viewAny', Investment::class)]
+    public function summary(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['active' => ['sometimes', 'required', 'in:0,1,all']]);
+        $active = $validated['active'] ?? '1';
+
+        return response()->json(['data' => $this->investmentService->getSummary(
+            $request->user(),
+            $active === 'all' ? null : (bool) $active,
+        )]);
     }
 
     /**
