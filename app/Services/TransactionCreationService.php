@@ -7,7 +7,6 @@ use App\Enums\AiDocumentStatus;
 use App\Events\TransactionCreated;
 use App\Events\TransactionUpdated;
 use App\Models\AiDocument;
-use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -62,7 +61,7 @@ class TransactionCreationService
             $transaction->push();
 
             if ($configType === 'standard') {
-                $transactionItems = $this->createItems($validated, $transaction->id);
+                $transactionItems = $this->createItems($validated, $transaction->id, $user);
                 $transaction->transactionItems()->saveMany($transactionItems);
                 $transaction->push();
             }
@@ -98,11 +97,12 @@ class TransactionCreationService
 
     /**
      * Create the items of a standard transaction from validated `items`, plus the remaining payee
-     * default amount as an extra item, if present. Shared with the update path.
+     * default amount as an extra item, if present. Shared with the update path. Tags are looked up and
+     * created among the owner's own tags only, so another user's tag ID can never be attached.
      *
      * @return TransactionItem[]
      */
-    public function createItems(array $validated, int $transactionId): array
+    public function createItems(array $validated, int $transactionId, User $owner): array
     {
         $transactionItems = [];
         foreach ($validated['items'] as $item) {
@@ -121,7 +121,7 @@ class TransactionCreationService
             // Create new tags and attach any tags
             if (array_key_exists('tags', $item)) {
                 foreach ($item['tags'] as $tag) {
-                    $newTag = Tag::firstOrCreate(
+                    $newTag = $owner->tags()->firstOrCreate(
                         ['id' => $tag],
                         ['name' => $tag]
                     );

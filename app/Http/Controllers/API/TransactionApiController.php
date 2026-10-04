@@ -596,7 +596,7 @@ class TransactionApiController extends Controller
         // Replace exising transaction items with new array
         $transaction->transactionItems()->delete();
 
-        $transactionItems = $this->creationService->createItems($validated, $transaction->id);
+        $transactionItems = $this->creationService->createItems($validated, $transaction->id, $request->user());
 
         $transaction->transactionItems()->saveMany($transactionItems);
         // Transaction items are not stored as changes, as they are not triggering updates to monthly summaries

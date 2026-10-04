@@ -174,7 +174,7 @@ class TransactionDraftService
             if ($payee) {
                 $matchedEntities['payee'] = $this->matchedEntity($payee, null);
             }
-        } elseif (in_array($transactionType, ['buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares'], true)) {
+        } elseif (in_array($transactionType, TransactionTypeEnum::investmentTypeValues(), true)) {
             $account = $accountsById->get($config['account_id'] ?? null);
             $investment = $investmentsById->get($config['investment_id'] ?? null);
 

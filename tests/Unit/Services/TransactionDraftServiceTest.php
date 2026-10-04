@@ -176,6 +176,7 @@ it('round-trips an investment transaction without the date', function () {
     $currency = $this->account->config->currency;
     $investment = Investment::factory()->create([
         'user_id' => $this->user->id,
+        'active' => true,
         'currency_id' => $currency->id,
         'investment_group_id' => InvestmentGroup::factory()->for($this->user)->create()->id,
     ]);
@@ -204,4 +205,22 @@ it('round-trips an investment transaction without the date', function () {
     expect($unsaved->date)->toBeNull()
         ->and($unsaved->config->investment_id)->toBe($investment->id)
         ->and($unsaved->config->quantity->isEqualTo($transaction->config->quantity))->toBeTrue();
+});
+
+it('enriches the matched account and investment of an interest yield draft', function () {
+    $investment = Investment::factory()->create([
+        'user_id' => $this->user->id,
+        'active' => true,
+        'currency_id' => $this->account->config->currency_id,
+        'investment_group_id' => InvestmentGroup::factory()->for($this->user)->create()->id,
+    ]);
+
+    $enriched = $this->service->enrich([
+        'config_type' => 'investment',
+        'transaction_type' => 'interest_yield',
+        'config' => ['account_id' => $this->account->id, 'investment_id' => $investment->id],
+    ], $this->user);
+
+    expect($enriched['matched_entities']['account']['id'])->toBe($this->account->id)
+        ->and($enriched['matched_entities']['investment']['id'])->toBe($investment->id);
 });
