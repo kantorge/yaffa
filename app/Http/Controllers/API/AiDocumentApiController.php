@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
 use App\Models\AccountEntity;
+use App\Enums\AiDocumentSource;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\Category;
@@ -14,6 +15,7 @@ use App\Models\Investment;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
+use App\Support\SourceTextFormatter;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -69,7 +71,7 @@ class AiDocumentApiController extends Controller
             'status' => 'ready_for_processing',
             'source_type' => $request->input('source') ?: 'manual_upload',
             'custom_prompt' => $request->input('custom_prompt'),
-            'captured_at' => $request->input('captured_at'),
+            'captured_at' => $request->input('posted_at') ?: $request->input('captured_at'),
             'note' => $request->input('note'),
         ]);
 
@@ -81,8 +83,16 @@ class AiDocumentApiController extends Controller
                 }
             }
 
-            // Store text input if provided
-            if ($request->input('text_input')) {
+            if ($request->input('source') === AiDocumentSource::MobileNotification->value) {
+                // Same plain-text layout as a forwarded email, so it takes the same processing path
+                $this->storeTextFile($document, SourceTextFormatter::format(
+                    $request->input('title') ?: __('(No title)'),
+                    $request->input('source_app'),
+                    Carbon::parse($request->input('posted_at') ?: now()),
+                    $request->input('text'),
+                ), 'notification');
+            } elseif ($request->input('text_input')) {
+                // Store text input if provided
                 $this->storeTextFile($document, $request->input('text_input'));
             }
         } catch (Throwable $e) {
@@ -365,6 +375,7 @@ class AiDocumentApiController extends Controller
         if (! is_array($extractedData) || ! array_key_exists('date', $extractedData)) {
             return response()->json([
                 'duplicates' => [],
+                'document_duplicates' => [],
             ], Response::HTTP_OK);
         }
 
@@ -396,6 +407,7 @@ class AiDocumentApiController extends Controller
 
         return response()->json([
             'duplicates' => $enrichedDuplicates,
+            'document_duplicates' => $duplicateService->findDocumentDuplicates($user, $aiDocument),
         ], Response::HTTP_OK);
     }
 
@@ -431,9 +443,9 @@ class AiDocumentApiController extends Controller
     /**
      * Store text input as a file
      */
-    private function storeTextFile(AiDocument $aiDocument, string $textInput): void
+    private function storeTextFile(AiDocument $aiDocument, string $textInput, string $prefix = 'text_input'): void
     {
-        $filename = 'text_input_' . now()->timestamp . '.txt';
+        $filename = $prefix . '_' . now()->timestamp . '.txt';
 
         // Storage::put() returns a bool, not the path
         $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";

@@ -110,6 +110,12 @@ class EnsureIdempotent
      */
     private function requestHash(Request $request): string
     {
+        // A bank app updates and re-posts the same notification with changed content. The key identifies
+        // the notification, so a repeat must replay the original document rather than be seen as a conflict.
+        if ($request->input('source') === 'mobile_notification') {
+            return hash('sha256', 'mobile_notification');
+        }
+
         $files = [];
         $uploads = $request->allFiles();
         array_walk_recursive($uploads, function ($file) use (&$files) {

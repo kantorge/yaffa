@@ -7,6 +7,7 @@ use App\Events\EmailReceived;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Services\AiUserSettingsResolver;
+use App\Support\SourceTextFormatter;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Storage;
@@ -86,26 +87,17 @@ class CreateAiDocumentFromSource implements ShouldQueue
      */
     private function formatEmailContent($receivedMail): string
     {
-        $parts = [];
-
-        $parts[] = "Subject: {$receivedMail->subject}";
-        $from = $receivedMail->from ?? 'Unknown';
-        $parts[] = "From: {$from}";
-        $parts[] = "Date: {$receivedMail->created_at->format('Y-m-d H:i:s')}";
-        $parts[] = '';
-        $parts[] = '---';
-        $parts[] = '';
-
         // Prefer HTML over text, but clean it up
-        if ($receivedMail->html) {
-            $content = $this->cleanHtmlContent($receivedMail->html);
-        } else {
-            $content = $receivedMail->text ?? '';
-        }
+        $content = $receivedMail->html
+            ? $this->cleanHtmlContent($receivedMail->html)
+            : ($receivedMail->text ?? '');
 
-        $parts[] = $content;
-
-        return implode("\n", $parts);
+        return SourceTextFormatter::format(
+            $receivedMail->subject,
+            $receivedMail->from ?? 'Unknown',
+            $receivedMail->created_at,
+            $content
+        );
     }
 
     /**

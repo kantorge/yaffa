@@ -25,7 +25,7 @@ class MetaApiController extends Controller
             'token_header' => 'X-Yaffa-Token',
             'features' => [
                 'ai_documents' => true,
-                'notifications' => false,
+                'notifications' => true,
                 'push' => false,
             ],
         ];

@@ -6,6 +6,7 @@ use App\Events\AiDocumentProcessedEvent;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Models\AiDocument;
 use App\Services\AiUserSettingsResolver;
+use App\Services\DuplicateDetectionService;
 use App\Services\ProcessDocumentService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -47,8 +48,11 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
     /**
      * Execute the job
      */
-    public function handle(ProcessDocumentService $service, AiUserSettingsResolver $settingsResolver): void
-    {
+    public function handle(
+        ProcessDocumentService $service,
+        AiUserSettingsResolver $settingsResolver,
+        ?DuplicateDetectionService $duplicateService = null,
+    ): void {
         $document = $this->document->fresh(['user']);
 
         if (! $document) {
@@ -73,6 +77,8 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
             // Success - document status already updated to ready_for_review by service
             Log::info("Document {$document->id} processed successfully");
 
+            $this->flagDuplicates($document, $duplicateService ?? app(DuplicateDetectionService::class));
+
             // Dispatch success event
             AiDocumentProcessedEvent::dispatch($document);
         } catch (Exception $e) {
@@ -87,6 +93,28 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
 
             // Otherwise, allow automatic retry
             throw $e;
+        }
+    }
+
+    /**
+     * Store likely duplicates on the document, for the reviewer. Advisory only, so a failure here
+     * must never fail the processing itself.
+     */
+    private function flagDuplicates(AiDocument $document, DuplicateDetectionService $duplicateService): void
+    {
+        try {
+            $document = $document->fresh();
+            $data = $document?->processed_transaction_data;
+
+            if (! is_array($data)) {
+                return;
+            }
+
+            $data['duplicate_candidates'] = $duplicateService->findForDocument($document);
+            $document->processed_transaction_data = $data;
+            $document->save();
+        } catch (Throwable $e) {
+            Log::warning("Duplicate check failed for document {$document->id}: {$e->getMessage()}");
         }
     }
 

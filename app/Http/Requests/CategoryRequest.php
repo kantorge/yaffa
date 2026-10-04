@@ -37,7 +37,7 @@ class CategoryRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 Rule::exists('categories', 'id')
-                    ->where('user_id', $this->user()->id)
+                    ->where('user_id', $this->user()?->id)
                     ->whereNull('parent_id'),
             ],
             'default_aggregation' => [

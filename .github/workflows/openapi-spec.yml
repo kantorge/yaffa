@@ -1,0 +1,71 @@
+name: OpenAPI Spec
+
+# Generates the OpenAPI document from the Laravel code. Every run proves the spec still generates
+# (so a broken route or request class fails the PR), and each published release gets the spec attached,
+# versioned with that release, for generating API clients.
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - 'app/Http/**'
+      - 'app/Providers/AppServiceProvider.php'
+      - 'bootstrap/app.php'
+      - 'routes/api.php'
+      - 'config/scramble.php'
+      - 'composer.lock'
+
+  release:
+    types: [published]
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  openapi:
+    runs-on: ubuntu-latest
+    name: Export OpenAPI spec
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, mysql
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+
+      - name: Prepare Laravel Application
+        run: ln -f -s .env.ci .env
+
+      - name: Clear Config
+        run: php artisan config:clear
+
+      - name: Export spec
+        run: php artisan scramble:export --path=openapi.json
+
+      - name: Check the spec is valid JSON with paths
+        run: php -r '$d = json_decode(file_get_contents("openapi.json"), true, 512, JSON_THROW_ON_ERROR); if (empty($d["paths"])) { exit(1); } echo count($d["paths"]) . " paths, version " . $d["info"]["version"] . PHP_EOL;'
+
+      - name: Upload spec artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: openapi.json
+
+      - name: Attach spec to the release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" openapi.json --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

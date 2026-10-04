@@ -1,9 +1,8 @@
 # Mobile app support (server side)
 
 The Android companion app talks only to the user's own instance through `api/v1`, with one full-access
-Sanctum token per device. This documents what the server provides for it. Not yet built: notifications
-and push (`/notifications`, `/devices`), OpenAPI CI export, `updated_since` on reference-data lists, a combined
-summary endpoint (existing balance/budget-chart/cashflow endpoints are enough for the MVP).
+Sanctum token per device. This documents what the server provides for it. Not yet built: the push
+sender itself (UnifiedPush channel, optional FCM relay); endpoints and notifications are in place for it.
 
 ## Authentication
 
@@ -62,3 +61,44 @@ Records live in `idempotency_keys` (unique per user + route + key), pruned daily
 other HTTP errors `HTTP_ERROR`/`BAD_REQUEST`/`METHOD_NOT_ALLOWED`/`CONFLICT`. Laravel's `message` (and, for 422,
 the `errors` map with dotted keys such as `items.0.category_id`) stay alongside it for backward compatibility. An
 oversize upload is 422 `FILE_TOO_LARGE` with `limit_mb`.
+
+## Mobile payment notifications (text-only documents)
+
+`POST /documents` with `source=mobile_notification`, `source_app`, `text` (required), `title`, `posted_at`, and no file.
+`posted_at` is stored as `captured_at`. The text is written in the same `Subject/From/Date/---/body` layout a forwarded
+email gets (`App\Support\SourceTextFormatter`, shared with `CreateAiDocumentFromSource`), as a `.txt` document file, and
+processed by the normal `AiProcessingJob`. For this source `EnsureIdempotent` matches on the key alone, so the bank
+app updating and re-posting a notification with changed text replays the original document instead of failing or
+creating a second one.
+
+**Duplicates.** After successful processing the job stores `processed_transaction_data.duplicate_candidates =
+{transactions, documents}` (`DuplicateDetectionService::findForDocument`). Documents are compared on date window,
+amount (two documents with clearly different amounts are never duplicates) and matched accounts, within the user's
+duplicate settings. `POST /documents/{id}/check-duplicates` also returns `document_duplicates`. Detection only reads:
+it never modifies a transaction or another document. A later receipt scan is flagged against the earlier notification;
+the earlier notification is not re-flagged retroactively.
+
+## Notifications and devices
+
+`AiDocumentProcessedEvent` / `AiDocumentProcessingFailedEvent` are turned into database notifications by
+`NotifyAiDocumentStatus` (`ai_document.ready_for_review`, `ai_document.processing_failed`; "processed" and "needs
+review" are the same transition today). Payload: `type`, `entity_type`, `entity_id`, generic `title`; no amounts, payees
+or account names. `GET /notifications?since=&unread=&limit=` (read), `POST /notifications/{id}/read` and
+`/notifications/read-all` (write). `POST/DELETE /devices` registers a UnifiedPush URL or FCM token bound to the calling
+API token (`devices.personal_access_token_id`, cascade on revoke); session callers get 422 `TOKEN_REQUIRED`. Before a
+sender is built, endpoints must pass `PublicEndpointUrlValidator` (SSRF).
+`/meta` reports `features.notifications=true`, `features.push=false` until a sender exists.
+
+## Reference data and summary
+
+- `GET /reference-data[?updated_since=]` (read): accounts, payees, categories, tags, currencies. With `updated_since`
+  only changed rows plus `ids` (all current ids) so deletions can be detected; accounts are always full (their settings
+  table has no timestamps). `ETag` / `If-None-Match` gives 304; `server_time` is the next cursor.
+- `GET /summary` (read): base-currency balances (reuses `AccountApiController::getAccountBalance`), current-month
+  income and expense (non-scheduled standard withdrawals/deposits, `cashflow_value`), and budget status (active
+  withdrawal budgets' occurrences this month vs spending in their categories and direct children). Decimal strings.
+  Returns `{"result":"busy"}` while summaries recalculate.
+
+## OpenAPI
+
+See `.ai/docs/features/api-access-and-2fa/api-versioning.md` (spec generation, error envelope, breaking-change policy).

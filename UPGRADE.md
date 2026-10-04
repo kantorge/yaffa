@@ -183,6 +183,9 @@ Most 4.x upgrades do not require any special manual steps beyond the usual appli
 - Phone uploads need `AI_DOCUMENT_ALLOWED_TYPES=jpg,jpeg,png,pdf` (the default is `txt`).
 - `/api/v1` validation errors (422) and other HTTP errors now also carry an `error.code`/`error.message` envelope; the existing `message` and `errors` keys are unchanged.
 - Optional new env values: `MOBILE_APP_MIN_VERSION`, `IDEMPOTENCY_RETENTION_DAYS` (default 7).
+- New migrations: `notifications` and `devices` tables. New endpoints: `/api/v1/notifications`, `/devices`, `/reference-data`, `/summary`.
+- `POST /api/v1/documents` accepts `source=mobile_notification` for text-only payment notifications; processed documents now carry `duplicate_candidates` in `processed_transaction_data`.
+- The OpenAPI spec (`php artisan scramble:export`) is generated in CI and attached to releases.
 - File-only uploads to `POST /api/v1/documents` were previously rejected with "You must provide either files or text input"; this is fixed.
 
 ### Sentry support removed

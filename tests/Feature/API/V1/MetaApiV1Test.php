@@ -11,6 +11,8 @@ it('returns public server info to anonymous clients', function () {
         ->assertJsonPath('api_version', 1)
         ->assertJsonPath('token_header', 'X-Yaffa-Token')
         ->assertJsonPath('features.ai_documents', true)
+        ->assertJsonPath('features.notifications', true)
+        ->assertJsonPath('features.push', false)
         ->assertJsonStructure(['yaffa_version', 'min_app_version', 'features' => ['notifications', 'push']])
         ->assertJsonMissingPath('user');
 });

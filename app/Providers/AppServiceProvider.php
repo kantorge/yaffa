@@ -20,6 +20,11 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Schema as OpenApiSchema;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
@@ -125,7 +130,35 @@ class AppServiceProvider extends ServiceProvider
             fn (Request $request) => $request->header('X-Yaffa-Token') ?: $request->bearerToken()
         );
 
+        $this->bootOpenApi();
+
         $this->bootEvent();
+    }
+
+    /**
+     * Version the published spec with the release, and describe the shared error envelope once.
+     */
+    private function bootOpenApi(): void
+    {
+        Scramble::afterOpenApiGenerated(function (OpenApi $openApi) {
+            $openApi->info->version = (string) config('yaffa.version');
+            $openApi->info->description = <<<'MD'
+Every error response uses one envelope: `{"error": {"code": "UPPER_SNAKE_CODE", "message": "..."}}` (schema `Error`).
+Validation errors (422) additionally keep Laravel's `message` and an `errors` map keyed by field, with dotted keys for
+rows such as `items.0.category_id`. Authenticate with a personal access token in the `X-Yaffa-Token` header (or as a
+Bearer token). Retry-safe writes accept an `Idempotency-Key` header. The `v1` breaking-change policy is in
+`.ai/docs/features/api-access-and-2fa/api-versioning.md`.
+MD;
+
+            $error = (new ObjectType())
+                ->addProperty('code', new StringType())
+                ->addProperty('message', new StringType())
+                ->setRequired(['code', 'message']);
+
+            $openApi->components->addSchema('Error', OpenApiSchema::fromType(
+                (new ObjectType())->addProperty('error', $error)->setRequired(['error'])
+            ));
+        });
     }
 
     public function bootEvent(): void

@@ -17,6 +17,7 @@ class StoreAiDocumentRequest extends FormRequest
         return [
             'files' => [
                 'required_without:text_input',
+                'prohibited_if:source,mobile_notification',
                 'nullable',
                 'array',
                 'max:' . $maxFilesPerSubmission,
@@ -40,7 +41,12 @@ class StoreAiDocumentRequest extends FormRequest
             ],
             'captured_at' => ['nullable', 'date'],
             'note' => ['nullable', 'string', 'max:1000'],
-            'source' => ['nullable', 'in:mobile_scan,mobile_share'],
+            'source' => ['nullable', 'in:mobile_scan,mobile_share,mobile_notification'],
+            // Text-only payment notification captured on the phone
+            'source_app' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:191'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'text' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:10000'],
+            'posted_at' => ['nullable', 'date'],
         ];
     }
 
@@ -81,6 +87,11 @@ class StoreAiDocumentRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Ensure either files or text_input is provided
+        // A notification is text-only: its body travels as the regular text input
+        if ($this->input('source') === 'mobile_notification' && $this->filled('text')) {
+            $this->merge(['text_input' => $this->input('text')]);
+        }
+
         // input() never contains uploads, so they must be checked separately or they get nulled out below
         if (! $this->hasFile('files') && ! $this->filled('text_input')) {
             $this->merge(['files' => null]);

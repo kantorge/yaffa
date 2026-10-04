@@ -9,6 +9,7 @@ enum AiDocumentSource: string
     case GoogleDrive = 'google_drive';
     case MobileScan = 'mobile_scan';
     case MobileShare = 'mobile_share';
+    case MobileNotification = 'mobile_notification';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum AiDocumentSource: string
             self::GoogleDrive => __('Google Drive'),
             self::MobileScan => __('Mobile scan'),
             self::MobileShare => __('Mobile share'),
+            self::MobileNotification => __('Mobile notification'),
         };
     }
 
