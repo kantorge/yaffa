@@ -1,6 +1,6 @@
 # Fast Transaction Entry — Specification
 
-As of 2026-10-02 · Status: approved for implementation, no code yet
+As of 2026-10-02 · Status: approved for implementation; Phase 0 implemented
 
 ## 1. Purpose
 
@@ -65,6 +65,8 @@ D1–D4 are owner decisions (2026-10-02). D5–D15 are defaults chosen while wri
   ```
   - Every key except `schema_version` and `config_type` is optional.
   - Amounts are decimal strings, following the MoneyCast/DecimalCast wire format.
+    - Exception: stored AI drafts (`ai_documents.processed_transaction_data`) may contain JSON number amounts. `buildTransactionData()` still writes `floatval()` results, and documents created before v2 have them too. `normalize()` converts them to decimal strings.
+    - **Every Phase 2–4 reader of a stored draft goes through `normalize()`.** Examples: `SameEventClassifier`, `GateEvaluator`, `AutoRecorder`, the itemization merge. Never read amounts or IDs from `processed_transaction_data` directly. Floats must never reach `BigDecimal::of()`/`Money::of()`: brick/math 0.20 only takes `int|string`, and PHP silently truncates `12.5` to `12`.
   - A draft without `schema_version` is v1 and is upgraded on read. v1 → v2 only adds the key; nothing is renamed.
   - One `App\Services\TransactionDraftService` owns the draft. It validates, upgrades, enriches (it absorbs both `enrichProcessedData()` copies), and blanks stale references.
   - A stale reference is an ID that is deleted, inactive, or not owned by the user. Blanking it removes the key and adds a notice, for example `{field: "config.account_from_id", reason: "inactive"}`.

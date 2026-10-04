@@ -183,6 +183,9 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
         return $this->hasMany(AccountEntity::class)->payees();
     }
 
+    /**
+     * @return HasMany<Tag, $this>
+     */
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);

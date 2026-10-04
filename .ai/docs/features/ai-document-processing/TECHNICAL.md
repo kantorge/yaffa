@@ -26,7 +26,7 @@ This file contains the implementation-oriented material extracted from the main 
       - `ready_for_review` - Processing complete, awaiting user review
       - `finalized` - Transaction created from draft
     - `source_type` (enum: `manual_upload`, `received_email`, `google_drive`)
-    - `processed_transaction_data` (JSON, nullable)
+    - `processed_transaction_data` (JSON, nullable) - the transaction draft. New drafts carry `schema_version: 2`; a draft without it is v1 (same shape, upgraded on read). `App\Services\TransactionDraftService` owns the format: `normalize()` (validate, upgrade, blank stale references), `enrich()` (display data for the viewer and the API), `fromTransaction()` and `toUnsavedTransaction()` (draft → form). See `.ai/docs/specifications/fast-transaction-entry/specification.md` D5
     - `google_drive_file_id` (nullable)
     - `received_mail_id` (nullable, FK to existing received_mails table)
     - `custom_prompt` (nullable)
@@ -273,7 +273,7 @@ This file contains the implementation-oriented material extracted from the main 
      - Identify account(s)/payee/investment matches from user's database using local exact match or AI-assisted matching
      - For withdrawals and deposits, if items are detected, try to identify line item level category mappings. Either use local exact match or AI-assisted matching based on item description.
    - Validates output schema
-   - Stores JSON draft in `processed_transaction_data`
+   - Stores JSON draft in `processed_transaction_data` (`schema_version: 2`)
 4. Status set to `ready_for_review` and email notification sent.
 5. User opens document review (`/ai-documents/{id}`) and can view extracted details.
    - "Extracted details" tab displays all transaction data comprehensively

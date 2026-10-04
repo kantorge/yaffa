@@ -524,6 +524,7 @@ class ProcessDocumentService
         $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypeValues());
 
         $data = [
+            'schema_version' => TransactionDraftService::SCHEMA_VERSION,
             'raw' => $rawData,
             'date' => $rawData['date'] ?? now()->format('Y-m-d'),
             'config_type' => $isInvestment ? 'investment' : 'standard',
