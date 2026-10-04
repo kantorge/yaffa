@@ -95,7 +95,7 @@ class TransactionDraftService
     {
         if (isset($draft['transaction_items']) && is_array($draft['transaction_items'])) {
             $categoryIds = collect($draft['transaction_items'])
-                ->map(fn ($item) => $item['recommended_category_id'] ?? null)
+                ->flatMap(fn ($item) => [$item['recommended_category_id'] ?? null, $item['category_id'] ?? null])
                 ->filter()
                 ->unique()
                 ->values()
@@ -113,9 +113,26 @@ class TransactionDraftService
                     if (isset($item['recommended_category_id']) && $categories->has($item['recommended_category_id'])) {
                         $item['recommended_category_full_name'] = $categories->get($item['recommended_category_id'])->full_name;
                     }
+                    if (isset($item['category_id']) && $categories->has($item['category_id'])) {
+                        $item['category_full_name'] = $categories->get($item['category_id'])->full_name;
+                    }
                 }
                 unset($item);
             }
+        }
+
+        // Tags of the items, in the shape of a saved item's tags
+        $tagIds = collect($draft['transaction_items'] ?? [])->flatMap(fn ($item) => $item['tag_ids'] ?? [])->unique()->values();
+        if ($tagIds->isNotEmpty()) {
+            $tags = Tag::query()->where('user_id', $user->id)->whereIn('id', $tagIds)->pluck('name', 'id');
+            foreach ($draft['transaction_items'] as &$item) {
+                $item['tags'] = collect($item['tag_ids'] ?? [])
+                    ->filter(fn ($id) => $tags->has($id))
+                    ->map(fn ($id) => ['id' => $id, 'name' => $tags->get($id)])
+                    ->values()
+                    ->all();
+            }
+            unset($item);
         }
 
         $config = $draft['config'] ?? [];
@@ -228,6 +245,30 @@ class TransactionDraftService
         }
 
         return $draft;
+    }
+
+    /**
+     * The payee a draft refers to: the `to` side of a withdrawal or the `from` side of a deposit. Null for
+     * any other type, or when that side is not one of the user's payees. Call on a normalized draft.
+     */
+    public function payeeIdFromDraft(array $draft, User $user): ?int
+    {
+        $key = match ($draft['transaction_type'] ?? null) {
+            'withdrawal' => 'account_to_id',
+            'deposit' => 'account_from_id',
+            default => null,
+        };
+        $id = $key === null ? null : ($draft['config'][$key] ?? null);
+
+        if ($id === null) {
+            return null;
+        }
+
+        return AccountEntity::query()
+            ->where('user_id', $user->id)
+            ->where('config_type', 'payee')
+            ->whereKey($id)
+            ->value('id');
     }
 
     /**
@@ -433,7 +474,13 @@ class TransactionDraftService
             ->get()
             ->keyBy('id');
 
-        return $items->map(function (array $itemData) use ($categoriesById): TransactionItem {
+        $tagsById = Tag::query()
+            ->where('user_id', $userId)
+            ->whereIn('id', $items->flatMap(fn (array $item): array => $item['tag_ids'] ?? [])->unique()->values())
+            ->get()
+            ->keyBy('id');
+
+        return $items->map(function (array $itemData) use ($categoriesById, $tagsById): TransactionItem {
             $categoryId = $itemData['category_id'] ?? null;
             $recommendedCategoryId = $itemData['recommended_category_id'] ?? null;
 
@@ -454,6 +501,12 @@ class TransactionDraftService
                 'amount' => $itemData['amount'] ?? 0,
                 'comment' => $itemData['comment'] ?? null,
             ]);
+
+            // Same shape as a saved item's tags, so the form can preselect them
+            $transactionItem->setRelation('tags', collect($itemData['tag_ids'] ?? [])
+                ->map(fn ($id) => $tagsById->get($id))
+                ->filter()
+                ->values());
 
             // Preserve AI-context attributes so the standalone finalize form can render AI recommendation controls.
             $transactionItem->setAttribute('category_full_name', $itemData['category_full_name'] ?? null);

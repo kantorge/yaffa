@@ -29,6 +29,10 @@
         @case('finalize')
             {{ __('Finalize draft transaction') }}
             @break
+
+        @case('template')
+            {{ ($template['id'] ?? null) ? __('Modify transaction template') : __('New transaction template') }}
+            @break
     @endswitch
 @endsection
 
@@ -44,6 +48,12 @@
                 @isset($ai_document_id)
                     :ai-document-id = "{{ $ai_document_id }}"
                 @endisset
+                @isset($template)
+                    :template-info = "{{ json_encode($template) }}"
+                @endisset
+                @if (! empty($transaction_template_id))
+                    :transaction-template-id = "{{ $transaction_template_id }}"
+                @endif
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')
@@ -56,6 +66,12 @@
                 @isset($ai_document_id)
                     :ai-document-id = "{{ $ai_document_id }}"
                 @endisset
+                @isset($template)
+                    :template-info = "{{ json_encode($template) }}"
+                @endisset
+                @if (! empty($transaction_template_id))
+                    :transaction-template-id = "{{ $transaction_template_id }}"
+                @endif
             ></transaction-container-investment>
         </div>
     @endif

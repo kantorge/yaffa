@@ -77,7 +77,7 @@ class TransactionController extends Controller
 
         // Authorize user for transaction
         // Validate if action is supported
-        $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
+        $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show', 'template'];
         if (!in_array($action, $availableActions)) {
             abort(404);
         }
@@ -101,6 +101,14 @@ class TransactionController extends Controller
 
             // Date is next schedule date
             $transaction->date = $transaction->transactionSchedule->next_date;
+        }
+
+        // Saving as a template: a template has no date and cannot be a schedule
+        if ($action === 'template') {
+            $transaction->date = null;
+            $transaction->schedule = false;
+            $transaction->reconciled = false;
+            $transaction->setRelation('transactionSchedule', null);
         }
 
         // Pass transaction data to view as JavaScript object
@@ -143,12 +151,14 @@ class TransactionController extends Controller
         $transaction = $draftService->toUnsavedTransaction($transactionData, $request->user());
 
         $aiDocumentId = $request->input('ai_document_id');
+        $templateId = $request->user()->transactionTemplates()->whereKey($request->input('transaction_template_id'))->value('id');
 
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
             'type' => $configType === 'investment' ? 'investment' : 'standard',
             'ai_document_id' => $aiDocumentId,
+            'transaction_template_id' => $templateId,
         ]);
     }
 

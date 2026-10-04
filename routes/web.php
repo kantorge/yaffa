@@ -15,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionTemplateController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Route;
@@ -88,13 +89,24 @@ Route::get('/transactions/create/{type}', [TransactionController::class, 'create
     ->name('transaction.create');
 
 Route::get('/transactions/{transaction}/{action}', [TransactionController::class, 'openTransaction'])
-    ->where('action', 'edit|clone|enter|show|replace')
+    ->where('action', 'edit|clone|enter|show|replace|template')
     ->name('transaction.open');
 
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])
     ->name('transactions.skipScheduleInstance');
 Route::post('/transactions/create-from-draft', [TransactionController::class, 'createFromDraft'])
     ->name('transactions.createFromDraft');
+
+/*******************
+ * Transaction template related routes
+ ******************/
+Route::get('/transaction-templates', [TransactionTemplateController::class, 'index'])
+    ->name('transaction-templates.index');
+Route::get('/transaction-templates/create/{type}', [TransactionTemplateController::class, 'create'])
+    ->where('type', 'standard|investment')
+    ->name('transaction-templates.create');
+Route::get('/transaction-templates/{template}/edit', [TransactionTemplateController::class, 'edit'])
+    ->name('transaction-templates.edit');
 
 /*******************
  * Report related routes

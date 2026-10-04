@@ -71,7 +71,14 @@
       // A function receives the row and returns the keys for it.
       actions: {
         type: [Array, Function],
-        default: () => ['quickView', 'show', 'edit', 'clone', 'delete'],
+        default: () => [
+          'quickView',
+          'show',
+          'edit',
+          'clone',
+          'template',
+          'delete',
+        ],
       },
       // Extra route parameters for the link actions, as a function of the row
       actionParams: {

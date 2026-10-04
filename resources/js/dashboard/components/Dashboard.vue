@@ -15,6 +15,7 @@
       ></onboarding-card>
       <account-balance></account-balance>
       <payee-category-recommendation></payee-category-recommendation>
+      <transaction-templates></transaction-templates>
       <ai-document-summary></ai-document-summary>
     </div>
     <!-- /.col -->
@@ -35,6 +36,7 @@
   import PayeeCategoryRecommendation from './widgets/PayeeCategoryRecommendation.vue';
   import OnboardingCard from './widgets/OnboardingCard.vue';
   import AiDocumentSummary from './widgets/AiDocumentSummary.vue';
+  import TransactionTemplates from './widgets/TransactionTemplates.vue';
 
   export default {
     components: {
@@ -44,6 +46,7 @@
       'payee-category-recommendation': PayeeCategoryRecommendation,
       'onboarding-card': OnboardingCard,
       'ai-document-summary': AiDocumentSummary,
+      'transaction-templates': TransactionTemplates,
     },
   };
 </script>

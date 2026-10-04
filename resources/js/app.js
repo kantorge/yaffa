@@ -66,6 +66,7 @@ const routeMap = new Map([
   ['register', 'auth/register'],
   ['login', 'auth/login'],
   ['tags.index', 'tags/index'],
+  ['transaction-templates.index', 'transaction-templates/index'],
   ['user.settings', 'user/settings'],
   ['user.ai-settings', 'user/settings'],
   ['user.investment-provider-settings', 'user/settings'],
@@ -122,8 +123,21 @@ if (
 
 if (
   current === 'transaction.open' &&
-  ['edit', 'clone', 'enter', 'replace'].includes(route().params.action)
+  ['edit', 'clone', 'enter', 'replace', 'template'].includes(
+    route().params.action,
+  )
 ) {
+  loadModule(`transactions/${window.transaction.config_type}`);
+}
+
+if (
+  current === 'transaction-templates.create' &&
+  ['standard', 'investment'].includes(route().params.type)
+) {
+  loadModule(`transactions/${route().params.type}`);
+}
+
+if (current === 'transaction-templates.edit') {
   loadModule(`transactions/${window.transaction.config_type}`);
 }
 

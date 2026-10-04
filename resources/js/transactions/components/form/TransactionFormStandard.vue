@@ -15,6 +15,13 @@
     ></payee-form>
 
     <form accept-charset="UTF-8" autocomplete="off" @submit.prevent="onSubmit">
+      <template-fields
+        v-if="isTemplate"
+        v-model:name="templateName"
+        v-model:is-featured="templateIsFeatured"
+        :notices="templateInfo?.notices || []"
+        :errors="form.errors"
+      ></template-fields>
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
@@ -117,6 +124,7 @@
             <div class="card-body">
               <div class="row">
                 <div
+                  v-if="!isTemplate"
                   class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
@@ -137,6 +145,7 @@
                   </label>
                 </div>
                 <div
+                  v-if="!isTemplate"
                   :class="[
                     action === 'enter'
                       ? 'col-8 col-sm-2 col-md-4 col-lg-2'
@@ -488,7 +497,7 @@
         <div class="card-body">
           <div class="row justify-content-end">
             <div
-              v-if="!fromModal"
+              v-if="!fromModal && !isTemplate"
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               dusk="action-after-save-desktop-button-group"
             >
@@ -514,7 +523,7 @@
               </div>
             </div>
             <div
-              v-if="!fromModal"
+              v-if="!fromModal && !isTemplate"
               class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
             >
               <label class="form-label" for="callback-selector-mobile-standard">
@@ -586,6 +595,8 @@
   import MathInput from '@/shared/ui/form/MathInput.vue';
 
   import Form from 'vform';
+  import templateForm from '@/transaction-templates/templateForm';
+  import TemplateFields from '@/transaction-templates/components/TemplateFields.vue';
   import {
     Button as SubmitButton,
     AlertErrors,
@@ -598,6 +609,7 @@
 
   export default {
     components: {
+      TemplateFields,
       TransactionItemContainer,
       TransactionSchedule,
       PayeeForm,
@@ -605,6 +617,8 @@
       AlertErrors,
       MathInput,
     },
+
+    mixins: [templateForm],
 
     props: {
       action: String,
@@ -684,6 +698,7 @@
         remaining_payee_default_amount: 0,
         remaining_payee_default_category_id: null,
         ai_document_id: null,
+        transaction_template_id: null,
       });
 
       // Id counter for items
@@ -933,7 +948,7 @@
 
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
-        return ['create', 'finalize'].includes(this.action);
+        return ['create', 'finalize', 'template'].includes(this.action);
       },
 
       // Check if any items have AI recommendations
@@ -1193,6 +1208,7 @@
 
         // Assign AI document ID passed to the form for future reference when saving the transaction
         this.form.ai_document_id = this.aiDocumentId;
+        this.form.transaction_template_id = this.transactionTemplateId;
 
         // Set form action
         this.form.action = this.action;
@@ -1220,7 +1236,9 @@
         const item = { ...rawItem };
 
         item.id = this.itemCounter++;
-        item.amount = Number(item.amount);
+        // A template item may have no amount yet
+        item.amount =
+          this.draftDecimal(item.amount) === null ? null : Number(item.amount);
         item.learnRecommendation = true;
 
         item.category_full_name =
@@ -1509,6 +1527,11 @@
           this.form.config.amount_to = this.form.config.amount_from;
         }
 
+        if (this.isTemplate) {
+          this.saveTemplate(this.buildTemplateDraft());
+          return;
+        }
+
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form
@@ -1546,6 +1569,41 @@
               },
             );
           });
+      },
+
+      // Only the filled fields, in the draft format shared with AI documents (schema v2)
+      buildTemplateDraft() {
+        const config = this.compactDraftPart({
+          account_from_id: this.draftId(this.form.config.account_from_id),
+          account_to_id: this.draftId(this.form.config.account_to_id),
+          amount_from: this.draftDecimal(this.form.config.amount_from),
+          amount_to: this.draftDecimal(this.form.config.amount_to),
+        });
+
+        const items = this.form.items
+          .map((item) => {
+            // Existing tags are objects or IDs; a tag typed in as new text cannot be stored yet
+            const tagIds = (item.tags || [])
+              .map((tag) => this.draftId(tag?.id ?? tag))
+              .filter((id) => Number.isInteger(id));
+
+            return this.compactDraftPart({
+              category_id: this.draftId(item.category_id),
+              amount: this.draftDecimal(item.amount),
+              comment: item.comment,
+              tag_ids: tagIds.length > 0 ? tagIds : null,
+            });
+          })
+          .filter((item) => Object.keys(item).length > 0);
+
+        return {
+          schema_version: 2,
+          config_type: 'standard',
+          transaction_type: this.form.transaction_type,
+          ...this.compactDraftPart({ comment: this.form.comment }),
+          config,
+          ...(items.length > 0 ? { transaction_items: items } : {}),
+        };
       },
 
       setPayee(payee) {

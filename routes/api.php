@@ -26,6 +26,7 @@ use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TransactionTemplateApiController;
 use App\Http\Controllers\API\TwoFactorApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
@@ -278,6 +279,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('tags.patch-active');
     Route::delete('/tags/{tag}', [TagApiController::class, 'destroy'])
         ->name('tags.destroy');
+
+    // Transaction template endpoints
+    Route::get('/transaction-templates', [TransactionTemplateApiController::class, 'index'])
+        ->name('transaction-templates.index');
+    Route::post('/transaction-templates', [TransactionTemplateApiController::class, 'store'])
+        ->name('transaction-templates.store');
+    Route::get('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'show'])
+        ->name('transaction-templates.show');
+    Route::patch('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'update'])
+        ->name('transaction-templates.update');
+    Route::delete('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'destroy'])
+        ->name('transaction-templates.destroy');
 
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])

@@ -1,6 +1,6 @@
 # Fast Transaction Entry — Specification
 
-As of 2026-10-02 · Status: approved for implementation; Phase 0 implemented
+As of 2026-10-02 · Status: approved for implementation; Phase 0 and Phase 1 implemented
 
 ## 1. Purpose
 
