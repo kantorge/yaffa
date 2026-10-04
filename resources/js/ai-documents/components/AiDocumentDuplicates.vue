@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="canFinalize && duplicates.length > 0"
+    v-if="canFinalize && (duplicates.length > 0 || documents.length > 0)"
     ref="duplicatesCard"
     class="card mb-3"
   >
@@ -52,6 +52,18 @@
             </div>
           </div>
         </button>
+        <a
+          v-for="document in documents"
+          :key="'document-' + document.id"
+          :href="document.url"
+          class="list-group-item list-group-item-action"
+        >
+          {{
+            __('Open document #:id describing the same purchase', {
+              id: document.id,
+            })
+          }}
+        </a>
       </div>
     </div>
   </div>
@@ -77,6 +89,7 @@
   });
 
   const duplicates = ref([]);
+  const documents = ref([]);
   const duplicatesLoading = ref(false);
   const duplicatesCard = ref(null);
   const route = window.route;
@@ -102,10 +115,12 @@
       )
       .then((response) => {
         duplicates.value = response.data.duplicates || [];
+        documents.value = response.data.documents || [];
       })
       .catch((error) => {
         console.error('Failed to load duplicates:', error);
         duplicates.value = [];
+        documents.value = [];
       })
       .finally(() => {
         duplicatesLoading.value = false;

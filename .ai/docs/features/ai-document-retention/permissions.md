@@ -33,7 +33,7 @@ Sanctum token abilities apply (see [`../api-access-and-2fa/permissions.md`](../a
 | Rule | Enforced by |
 |---|---|
 | Only own documents are deleted | `where('user_id', …)` in the job; no DB-level tenancy |
-| Only finalized documents are deleted | `where('status', 'finalized')` in the job |
+| Only terminal-status documents are deleted | `whereIn('status', AiDocumentStatus::terminal())` in the job |
 | Only files under the owner's directory are deleted | `isOwnedPath()` in the job |
 | Transaction survives document deletion | DB FK `ON DELETE SET NULL` |
 | Files/rows deleted together | DB cascade (`ai_document_files`), explicit delete (`received_mails`), DB transaction |

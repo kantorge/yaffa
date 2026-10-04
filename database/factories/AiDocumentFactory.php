@@ -16,6 +16,7 @@ class AiDocumentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'status' => $this->faker->randomElement(['ready_for_processing', 'processing', 'processing_failed', 'ready_for_review', 'finalized']),
+            'status_changed_at' => now(),
             'source_type' => $this->faker->randomElement(['manual_upload', 'received_email', 'google_drive']),
             'processed_transaction_data' => null,
             'ai_chat_history' => null,
@@ -38,6 +39,38 @@ class AiDocumentFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => AiDocumentStatus::Finalized->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function autoRecorded(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::AutoRecorded->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function duplicate(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::Duplicate->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function awaitingItemization(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::AwaitingItemization->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function dismissed(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::Dismissed->value,
             'processed_at' => now(),
         ]);
     }

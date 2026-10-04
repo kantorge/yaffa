@@ -30,6 +30,8 @@ class AiUserSettingsResolver
 
     private const float DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD = 0.5;
 
+    private const int DEFAULT_SAME_EVENT_MINUTES = 10;
+
     public const array CATEGORY_MATCHING_MODES = [
         'best_match',
         'parent_only',
@@ -93,6 +95,7 @@ class AiUserSettingsResolver
             'duplicate_date_window_days' => (int) $this->resolveSettingValue($settings->duplicate_date_window_days, self::DEFAULT_DUPLICATE_DATE_WINDOW_DAYS),
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue($settings->duplicate_amount_tolerance_percent, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue($settings->duplicate_similarity_threshold, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
+            'same_event_minutes' => (int) $this->resolveSettingValue($settings->same_event_minutes, self::DEFAULT_SAME_EVENT_MINUTES),
             'category_matching_mode' => $categoryMatchingMode,
             // null = finalized documents are kept forever
             'document_retention_days' => $this->resolveSettingValue($settings->document_retention_days, null),
@@ -172,6 +175,7 @@ class AiUserSettingsResolver
             'duplicate_date_window_days' => (int) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_DATE_WINDOW_DAYS),
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
+            'same_event_minutes' => (int) $this->resolveSettingValue(null, self::DEFAULT_SAME_EVENT_MINUTES),
             'category_matching_mode' => (string) $this->resolveSettingValue(null, self::DEFAULT_CATEGORY_MATCHING_MODE),
             'document_retention_days' => $this->resolveSettingValue(null, null),
         ];

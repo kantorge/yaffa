@@ -29,11 +29,17 @@
         >
           <option value="">{{ __('Any') }}</option>
           <option value="unprocessed">
-            {{ __('Unprocessed (not finalized)') }}
+            {{ __('Any open') }}
           </option>
-          <option v-for="(label, key) in statusOptions" :key="key" :value="key">
-            {{ label }}
-          </option>
+          <optgroup :label="__('Specific status')">
+            <option
+              v-for="(label, key) in statusOptions"
+              :key="key"
+              :value="key"
+            >
+              {{ label }}
+            </option>
+          </optgroup>
         </select>
       </li>
       <li

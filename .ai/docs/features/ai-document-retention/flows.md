@@ -24,8 +24,8 @@ Only flows that change data, delete files, send email, or cross a permission bou
 2. Command selects `ai_user_settings.document_retention_days > 0` → `pluck('user_id')` → `CleanupOldAiDocuments::dispatch($id)` per user. Users with `NULL` are never dispatched.
 3. Queue worker runs the job (crosses scheduler → queue boundary; the payload is only an int user id).
 4. Job re-reads the setting via `AiUserSettingsResolver`; user missing or value ≤ 0 → return (**fail closed**, nothing deleted).
-5. `cutoff = now() - N days`; finalized + `olderThan(cutoff)` + `user_id` → chunk(100) → F4 per document (per-document `try/catch` + `report()`).
-6. Old **non-finalized** documents → counted; if > 0 → F5.
+5. `cutoff = now() - N days`; terminal status (`finalized`, `auto_recorded`, `duplicate`, `dismissed`) + `olderThan(cutoff)` + `user_id` → chunk(100) → F4 per document (per-document `try/catch` + `report()`).
+6. Old **non-terminal** documents → counted; if > 0 → F5.
 
 ## F3. Manual "Run cleanup"
 
@@ -56,3 +56,5 @@ After F2 step 6, `Mail::to($user->email)->locale($user->language)->send(new AiDo
 ## F6. Manual document delete (existing; behaviour changed by the FK migration)
 
 `DELETE /api/v1/documents/{aiDocument}` → `AiDocumentApiController::destroy` (`abilities:write`, `Authorize('delete')`). Deletes files (no path guard), the received mail, then the row. **Changed:** the linked transaction is now kept (`SET NULL`) instead of cascade-deleted. Clients or users that relied on "delete document ⇒ delete transaction" are affected (called out in `UPGRADE.md`).
+
+**Origin rows on delete (Fast Transaction Entry, phase 2):** `AiDocument::booted()` has a `deleting` hook, so it applies to the cleanup and to the manual delete alike. It deletes the document's `transaction_origins` rows with relation `duplicate_of` or `conflicts_with`, and sets `origin_id = NULL` on the `created` rows, which keep their reason and review state. The transaction itself is never touched.

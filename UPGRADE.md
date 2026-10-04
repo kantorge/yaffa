@@ -183,6 +183,17 @@ After upgrading, open **Reports → Schedules and Budgets** and filter to "Budge
 
 Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
+### Document lifecycle and duplicate detection (Fast Transaction Entry, phase 2)
+
+AI documents now close themselves when they repeat something already known, and manual entry warns about matching purchases. Nothing is recorded automatically yet.
+
+- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. Clients that switch over the status must handle them. Today's processing produces `duplicate` (the same content or the same purchase as a recorded transaction, closed silently without an email); `dismissed` is set by the user. `auto_recorded` and `awaiting_itemization` are reserved for the next phase.
+- **New field `document_kind`** (`bank_notification`, `receipt`, `invoice`, `other`, or `null`) on documents. The AI extraction also reads `transaction_time`, `bank_reference` and `card_last_digits` into the stored `raw` data. Documents processed before this upgrade have none of them.
+- **New endpoints:** `POST /api/v1/documents/{id}/dismiss` (`write`; from `ready_for_review` or `processing_failed`) and `POST /api/v1/transactions/duplicate-check` (`read`). The transaction store endpoints accept an optional `close_ai_document_id`, which closes an open document as a duplicate of the new transaction.
+- **Reprocessing is restricted:** it is allowed only from `ready_for_review`, `processing_failed` and `dismissed`. Documents closed against a transaction (`finalized`, `auto_recorded`, `duplicate`) cannot be reprocessed.
+- **Retention covers every terminal status:** with a retention period set, `finalized`, `auto_recorded`, `duplicate` and `dismissed` documents are all deleted after it. The reminder email now concerns the other, still open statuses.
+- New migrations add `ai_documents.content_hash`, `document_kind`, `status_changed_at`, `ai_user_settings.same_event_minutes` and the `transaction_origins` table. They are additive and reversible.
+
 ### Sentry support removed
 
 The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.

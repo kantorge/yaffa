@@ -58,6 +58,8 @@ class CreateAiDocumentFromSource implements ShouldQueue
                 'file_type' => 'txt',
             ]);
 
+            $document->update(['content_hash' => AiDocument::hashFiles([hash('sha256', $emailContent)])]);
+
             Log::info("Created AI document {$document->id} from received email {$receivedMail->id}");
         } catch (Exception $e) {
             Log::error("Failed to create AI document from email: {$e->getMessage()}");

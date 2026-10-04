@@ -73,13 +73,22 @@
       case 'processing_failed':
         return 'bg-danger';
       case 'ready_for_review':
+      case 'awaiting_itemization':
         return 'bg-warning';
       case 'finalized':
+      case 'auto_recorded':
         return 'bg-success';
       default:
         return 'bg-secondary';
     }
   };
+
+  // The transaction the document created, or the one it was closed against as a duplicate
+  const getLinkedTransactionId = (document) =>
+    document?.transaction?.id ??
+    document?.origins?.find((origin) => origin.relation === 'duplicate_of')
+      ?.transaction_id ??
+    null;
 
   const getTitle = (document) => {
     if (document.received_mail?.subject) {
@@ -438,7 +447,7 @@
   };
 
   const canReprocess = (status) =>
-    ['ready_for_review', 'processing_failed'].includes(status);
+    ['ready_for_review', 'processing_failed', 'dismissed'].includes(status);
 
   const recalculateTableLayout = () => {
     if (!table.value) {
@@ -596,14 +605,18 @@
         {
           data: 'transaction',
           title: __('Linked transaction'),
-          render: (value, _type) => {
-            if (!value) {
+          render: (_value, _type, row) => {
+            const transactionId = getLinkedTransactionId(row);
+
+            if (!transactionId) {
               return __('Not available');
             }
 
             return (
-              dataTableHelpers.dataTablesActionButton(value.id, 'quickView') +
-              dataTableHelpers.dataTablesActionButton(value.id, 'show')
+              dataTableHelpers.dataTablesActionButton(
+                transactionId,
+                'quickView',
+              ) + dataTableHelpers.dataTablesActionButton(transactionId, 'show')
             );
           },
           className: 'dt-nowrap',
@@ -640,7 +653,7 @@
         style: 'os',
       },
       createdRow: (row, data) => {
-        if (!data.transaction) {
+        if (!getLinkedTransactionId(data)) {
           window
             .$('td:eq(' + COLUMN_INDEX.linkedTransaction + ')', row)
             .addClass('text-muted text-italic');
@@ -679,14 +692,16 @@
           title: __('Open linked transaction'),
           iconClass: 'fa fa-fw fa-external-link',
           contextMenuClasses: ['text-info fw-bold'],
-          isHidden: (row) => !row.transaction,
+          isHidden: (row) => !getLinkedTransactionId(row),
           action: (selectedRows) => {
-            if (!selectedRows[0].transaction) {
+            const transactionId = getLinkedTransactionId(selectedRows[0]);
+
+            if (!transactionId) {
               return;
             }
 
             window.location.href = route('transaction.open', {
-              transaction: selectedRows[0].transaction.id,
+              transaction: transactionId,
               action: 'show',
             });
           },
@@ -745,7 +760,15 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  // 'unprocessed' is a pseudo status matching every status except finalized
+  // Statuses nothing is waiting on any more, see App\Enums\AiDocumentStatus::terminal()
+  const TERMINAL_STATUSES = [
+    'finalized',
+    'auto_recorded',
+    'duplicate',
+    'dismissed',
+  ];
+
+  // 'unprocessed' is a pseudo status matching every status that is not terminal
   const statusFilterPattern = (status) => {
     if (!status) {
       return '';
@@ -754,7 +777,7 @@
     const labels =
       status === 'unprocessed'
         ? Object.entries(props.statusLabels)
-            .filter(([key]) => key !== 'finalized')
+            .filter(([key]) => !TERMINAL_STATUSES.includes(key))
             .map(([, label]) => label)
         : [props.statusLabels[status] || status];
 

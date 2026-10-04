@@ -160,6 +160,11 @@ class Transaction extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function origins(): HasMany
+    {
+        return $this->hasMany(TransactionOrigin::class);
+    }
+
     public function aiDocument(): BelongsTo
     {
         return $this->belongsTo(AiDocument::class);

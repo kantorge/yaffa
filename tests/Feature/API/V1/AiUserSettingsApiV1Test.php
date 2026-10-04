@@ -73,6 +73,7 @@ class AiUserSettingsApiV1Test extends TestCase
                 'duplicate_date_window_days',
                 'duplicate_amount_tolerance_percent',
                 'duplicate_similarity_threshold',
+                'same_event_minutes',
                 'category_matching_mode',
                 'document_retention_days',
                 'warnings',

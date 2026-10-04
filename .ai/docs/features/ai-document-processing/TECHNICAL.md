@@ -19,7 +19,7 @@ This file contains the implementation-oriented material extracted from the main 
 
 - Models and their most important fields:
   - `AiDocument`
-    - `status` (enum: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`)
+    - `status` (enum `App\Enums\AiDocumentStatus`: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`, `auto_recorded`, `duplicate`, `awaiting_itemization`, `dismissed`; changed only through `AiDocument::transitionTo()`, which also sets `status_changed_at`), `content_hash`, `document_kind`
       - `ready_for_processing` - Initial state after document submission/import, queued for AI processing, all minimum required data present
       - `processing` - Currently being processed by AI
       - `processing_failed` - AI processing failed after configured retries
@@ -301,6 +301,8 @@ This file contains the implementation-oriented material extracted from the main 
 
 A few notes on the statuses
 
+- Since Fast Transaction Entry phase 2, `ProcessDocumentService::process()` ends in `decideOutcome()` (under a per-user `Cache::lock("ai-decide:{userId}")`): the same `content_hash` as another document, or the same purchase as a recorded transaction (`SameEventClassifier`), closes the document as `duplicate`; everything else becomes `ready_for_review`. See `.ai/docs/features/fast-transaction-entry/lifecycle-and-duplicates.md`.
+
 - The user cannot directly change the status, except some activities performed by them, triggering status changes. E.g. finalize a transaction.
 - This means, that `processing_failed` status cannot be forced into transaction creation, but a reprocessing can be requested. This means, that the general processing transaction should be restarted by the responsible jobs.
 
@@ -372,7 +374,7 @@ A few notes on the statuses
   - "Old" means both `created_at` **and** `updated_at` are older than the retention period (`AiDocument::olderThan()` scope), so a document touched recently (e.g. reprocessed) is never old
   - **Finalized old documents are deleted**, together with their `ai_document_files` rows, the files on the `local` disk, and the linked `ReceivedMail` (which holds the stored email body, the main source of database growth). The user is not notified about these deletions
   - The transaction created from a deleted document is **kept**: `transactions.ai_document_id` is a loose reference (`nullOnDelete`; the transaction only loses its "source document" link). This holds for every way of deleting a document, the retention cleanup and the manual delete action alike
-  - **Old documents in any other status** (`ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`) are never deleted. Instead, the job sends the owner one `App\Mail\AiDocumentsAwaitingAction` email per run (not per document) with the number of such documents and a link to `ai-documents.index?status=unprocessed&date_to=<cutoff date>`. This repeats on every daily run until the user finalizes or deletes them. `unprocessed` is a UI-only pseudo status of the list's status filter (every status except `finalized`, applied client-side in `AiDocumentTable.vue`); the API `status` parameter does not accept it
+  - **Old documents in any non-terminal status** (`ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `awaiting_itemization`) are never deleted. Instead, the job sends the owner one `App\Mail\AiDocumentsAwaitingAction` email per run (not per document) with the number of such documents and a link to `ai-documents.index?status=unprocessed&date_to=<cutoff date>`. This repeats on every daily run until the user finalizes or deletes them. `unprocessed` is a UI-only pseudo status of the list's status filter (every non-terminal status, applied client-side in `AiDocumentTable.vue`); the API `status` parameter does not accept it
   - "Processed" deliberately means finalized. A `ready_for_review` draft still needs the user's decision, so it is treated as unprocessed
   - The deleted documents' Google Drive files are not touched. A Drive-sourced document whose file is still in the monitored folder can be re-imported as a duplicate by a manual (full) sync, as the deduplication relies on `google_drive_file_id` (see "Deleted AiDocument handling" below). This can only happen when the post-import actions don't remove/rename the file. Therefore a SweetAlert warning is shown when the user enables or changes the retention period in the settings form, and in the maintenance page's cleanup confirmation, if they have an enabled Google Drive config with no post-import action (`User::googleDriveKeepsImportedFiles()`; the settings page receives it as `aiSettingsPageMeta.drive_keeps_imported_files`). Scheduled runs cannot ask for confirmation
   - Only paths recorded in `ai_document_files.file_path` are removed from disk. Afterwards the document's own directory (`ai_documents/{user_id}/{document id or uuid}`) is removed if it is empty; any other directory level, and a directory still containing untracked files, is left alone
