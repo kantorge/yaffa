@@ -190,7 +190,7 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
     - created_at, updated_at
 
 - Existing model changes:
-  - AccountEntity (account type only)
+  - Account (the `accounts` config table; moved from `account_entities` after MVP)
     - preferred_file_import_profile_id nullable
 
 - Relationships:
@@ -678,7 +678,7 @@ Minimal profile behavior:
 4. Delete user profile
 
 - when the profile is set as the default for one or more accounts, the user is shown a warning listing those accounts before confirming deletion
-- upon confirmation, the profile is deleted; the database automatically clears `preferred_file_import_profile_id` on affected accounts (`nullOnDelete` FK behaviour)
+- upon confirmation, the profile is deleted; deletion is blocked while any account references the profile: the FK is `restrictOnDelete` and the API returns 422 (the client disables the delete button and lists the accounts)
 - manual profile selection will be required for those accounts on future imports
 
 No user CRUD is needed for system profiles in MVP.
@@ -754,7 +754,7 @@ Recommended endpoints:
 - `PATCH /api/v1/imports/file-profiles/{profile}`
   - update user profile
 - `DELETE /api/v1/imports/file-profiles/{profile}`
-  - delete user profile; database automatically clears `preferred_file_import_profile_id` on affected accounts via `nullOnDelete` FK behaviour
+  - delete user profile; rejected with 422 if an account uses it as its default (`restrictOnDelete` FK + controller guard)
 
 Note: `preferred_file_import_profile_id` is not managed through this API. It is set via the account add/edit web form.
 

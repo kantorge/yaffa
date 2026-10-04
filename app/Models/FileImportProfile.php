@@ -53,9 +53,9 @@ class FileImportProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function accountEntities(): HasMany
+    public function accounts(): HasMany
     {
-        return $this->hasMany(AccountEntity::class, 'preferred_file_import_profile_id');
+        return $this->hasMany(Account::class, 'preferred_file_import_profile_id');
     }
 
     #[Scope]

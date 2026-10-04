@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Account query()
  * @method static Builder|Account whereAccountGroupId($value)
  * @method static Builder|Account whereCurrencyId($value)
+ * @property int|null $preferred_file_import_profile_id
  * @method static Builder|Account whereId($value)
  * @method static Builder|Account whereOpeningBalance($value)
  * @mixin Eloquent
@@ -66,7 +67,7 @@ use Illuminate\Support\Facades\DB;
 #[Table(key: 'id')]
 #[WithoutTimestamps]
 #[Unguarded]
-#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range')]
+#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range', 'preferred_file_import_profile_id')]
 class Account extends Model
 {
     use HasFactory;
@@ -91,6 +92,11 @@ class Account extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function preferredFileImportProfile(): BelongsTo
+    {
+        return $this->belongsTo(FileImportProfile::class, 'preferred_file_import_profile_id');
     }
 
     public function resolveOpeningBalanceCurrency(): Currency

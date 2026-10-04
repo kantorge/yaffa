@@ -439,7 +439,7 @@
               >
                 <i class="fa fa-edit"></i>
               </button>
-              <template v-if="profile.account_entities?.length > 0">
+              <template v-if="profile.accounts?.length > 0">
                 <span
                   class="d-inline-block"
                   tabindex="0"
@@ -583,8 +583,8 @@
         };
       },
       deleteDisabledTooltip(profile) {
-        const names = (profile.account_entities || [])
-          .map((a) => a.name)
+        const names = (profile.accounts || [])
+          .map((a) => a.config?.name)
           .join(', ');
         return __('Used as default profile by: :accounts', {
           accounts: names,
@@ -720,8 +720,8 @@
         }
       },
       async deleteProfile(profile) {
-        const affectedAccounts = Array.isArray(profile.account_entities)
-          ? profile.account_entities
+        const affectedAccounts = Array.isArray(profile.accounts)
+          ? profile.accounts
           : [];
 
         const escapedName = escapeHtml(profile.name);
@@ -734,7 +734,7 @@
 
         if (affectedAccounts.length > 0) {
           const accountList = affectedAccounts
-            .map((a) => `<strong>${escapeHtml(a.name)}</strong>`)
+            .map((a) => `<strong>${escapeHtml(a.config?.name)}</strong>`)
             .join(', ');
           html +=
             `<p class="small mt-2">` +
