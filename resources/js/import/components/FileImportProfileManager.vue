@@ -720,33 +720,13 @@
         }
       },
       async deleteProfile(profile) {
-        const affectedAccounts = Array.isArray(profile.accounts)
-          ? profile.accounts
-          : [];
-
         const escapedName = escapeHtml(profile.name);
-        let html =
+        const html =
           `<p>` +
           __('Delete profile ":name"? This cannot be undone.', {
             name: escapedName,
           }) +
           `</p>`;
-
-        if (affectedAccounts.length > 0) {
-          const accountList = affectedAccounts
-            .map((a) => `<strong>${escapeHtml(a.config?.name)}</strong>`)
-            .join(', ');
-          html +=
-            `<p class="small mt-2">` +
-            __(
-              'This profile is set as the default for :count account(s): :accounts. Deleting it will require manual profile selection for these accounts on future imports.',
-              {
-                count: affectedAccounts.length,
-                accounts: accountList,
-              },
-            ) +
-            `</p>`;
-        }
 
         const result = await Swal.fire({
           html,
