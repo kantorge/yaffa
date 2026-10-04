@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function templateFixtures(User $user): array
+function templateTestFixtures(User $user): array
 {
     return [
         'account' => AccountEntity::factory()->asAccount($user)->create(['active' => true]),
@@ -18,7 +18,7 @@ function templateFixtures(User $user): array
     ];
 }
 
-function withdrawalDraft(array $fixtures, array $overrides = []): array
+function templateWithdrawalDraft(array $fixtures, array $overrides = []): array
 {
     return array_replace_recursive([
         'config_type' => 'standard',
@@ -35,13 +35,13 @@ function withdrawalDraft(array $fixtures, array $overrides = []): array
 
 it('creates, reads, updates and deletes a template', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     $this->actingAs($user);
 
     $id = $this->postJson(route('api.v1.transaction-templates.store'), [
         'name' => 'Parking',
         'is_featured' => true,
-        'draft' => withdrawalDraft($fixtures),
+        'draft' => templateWithdrawalDraft($fixtures),
     ])->assertCreated()
         ->assertJsonPath('template.name', 'Parking')
         ->assertJsonPath('template.payee_id', $fixtures['payee']->id)
@@ -75,20 +75,20 @@ it('does not expose or change another user\'s template', function () {
 
 it('rejects a date or raw data in the draft, and a duplicate name', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     TransactionTemplate::factory()->for($user)->create(['name' => 'Parking']);
     $this->actingAs($user);
 
     $this->postJson(route('api.v1.transaction-templates.store'), [
-        'name' => 'With date', 'draft' => withdrawalDraft($fixtures, ['date' => '2026-10-01']),
+        'name' => 'With date', 'draft' => templateWithdrawalDraft($fixtures, ['date' => '2026-10-01']),
     ])->assertUnprocessable()->assertJsonValidationErrors('draft.date');
 
     $this->postJson(route('api.v1.transaction-templates.store'), [
-        'name' => 'With raw', 'draft' => withdrawalDraft($fixtures, ['raw' => ['a' => 1]]),
+        'name' => 'With raw', 'draft' => templateWithdrawalDraft($fixtures, ['raw' => ['a' => 1]]),
     ])->assertUnprocessable()->assertJsonValidationErrors('draft.raw');
 
     $this->postJson(route('api.v1.transaction-templates.store'), [
-        'name' => 'Parking', 'draft' => withdrawalDraft($fixtures),
+        'name' => 'Parking', 'draft' => templateWithdrawalDraft($fixtures),
     ])->assertUnprocessable()->assertJsonValidationErrors('name');
 });
 
@@ -103,7 +103,7 @@ it('allows the same template name for different users', function () {
 
 it('derives the payee from the draft and ignores a client-sent payee_id', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     $otherPayee = AccountEntity::factory()->asPayee($user)->create();
     $this->actingAs($user);
 
@@ -132,11 +132,11 @@ it('derives the payee from the draft and ignores a client-sent payee_id', functi
 
 it('keeps the template when its payee is deleted', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     $this->actingAs($user);
 
     $id = $this->postJson(route('api.v1.transaction-templates.store'), [
-        'name' => 'Parking', 'draft' => withdrawalDraft($fixtures),
+        'name' => 'Parking', 'draft' => templateWithdrawalDraft($fixtures),
     ])->json('template.id');
 
     // Force a hard delete of the payee row, bypassing application-level guards
@@ -147,11 +147,11 @@ it('keeps the template when its payee is deleted', function () {
 
 it('blanks stale references and returns notices', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     $this->actingAs($user);
 
     $id = $this->postJson(route('api.v1.transaction-templates.store'), [
-        'name' => 'Parking', 'draft' => withdrawalDraft($fixtures),
+        'name' => 'Parking', 'draft' => templateWithdrawalDraft($fixtures),
     ])->json('template.id');
 
     $fixtures['account']->update(['active' => false]);
@@ -177,7 +177,7 @@ it('lists featured templates, most used first, with a limit', function () {
 
 it('bumps the usage statistics when a transaction is stored from a template', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
+    $fixtures = templateTestFixtures($user);
     $template = TransactionTemplate::factory()->for($user)->create();
     $this->actingAs($user);
 
@@ -228,8 +228,8 @@ it('does not render the save-as-template page for another user', function () {
 
 it('renders the template pages for the owner', function () {
     $user = User::factory()->create();
-    $fixtures = templateFixtures($user);
-    $template = TransactionTemplate::factory()->for($user)->create(['draft' => withdrawalDraft($fixtures) + ['schema_version' => 2]]);
+    $fixtures = templateTestFixtures($user);
+    $template = TransactionTemplate::factory()->for($user)->create(['draft' => templateWithdrawalDraft($fixtures) + ['schema_version' => 2]]);
 
     $this->actingAs($user);
     $this->get(route('transaction-templates.index'))->assertOk();
