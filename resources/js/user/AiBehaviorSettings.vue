@@ -501,6 +501,57 @@
 
           <hr class="my-3" />
 
+          <!-- Auto-recording groundwork -->
+          <h6 class="text-muted mb-3">
+            {{ __('Auto-recording') }}
+          </h6>
+
+          <p class="text-muted small">
+            {{
+              __(
+                'These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.',
+              )
+            }}
+            <a :href="route('payees.auto-record-candidates')">
+              {{ __('Auto-record candidates') }}
+            </a>
+          </p>
+
+          <div
+            v-for="field in autoRecordFields"
+            :key="field.name"
+            class="row mb-3"
+          >
+            <label :for="field.name" class="col-form-label col-sm-4">
+              {{ field.label }}
+            </label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <input
+                  :id="field.name"
+                  v-model.number="form[field.name]"
+                  type="number"
+                  class="form-control"
+                  :name="field.name"
+                  :step="field.step"
+                  :min="field.min"
+                  :max="field.max"
+                />
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="field.help"
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
+              </div>
+              <HasError :field="field.name" :form="form" />
+            </div>
+          </div>
+
+          <hr class="my-3" />
+
           <!-- OCR & Vision -->
           <h6 class="text-muted mb-3">
             {{ __('OCR & Image Processing') }}
@@ -784,6 +835,11 @@
         duplicate_amount_tolerance_percent: null,
         duplicate_similarity_threshold: null,
         same_event_minutes: null,
+        auto_record_min_history: null,
+        auto_record_wilson_min: null,
+        auto_record_amount_tolerance_percent: null,
+        payee_similarity_min: null,
+        payee_similarity_margin: null,
         category_matching_mode: 'child_preferred',
         document_retention_days: null,
       }),
@@ -793,6 +849,58 @@
       sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
+      autoRecordFields() {
+        return [
+          {
+            name: 'auto_record_min_history',
+            label: __('Minimum History'),
+            step: 1,
+            min: 1,
+            max: 255,
+            help: __(
+              'A payee needs at least this many past transactions before it can qualify.',
+            ),
+          },
+          {
+            name: 'auto_record_wilson_min',
+            label: __('Minimum Consistency'),
+            step: 0.01,
+            min: 0,
+            max: 1,
+            help: __(
+              'Lower confidence bound (0-1) of how often the payee has a single item in its usual category. 0.8 needs about 11 consistent transactions in a row.',
+            ),
+          },
+          {
+            name: 'auto_record_amount_tolerance_percent',
+            label: __('Usual Amount Tolerance (%)'),
+            step: 0.01,
+            min: 0,
+            max: 100,
+            help: __('How far an amount may be from the payee’s usual amount.'),
+          },
+          {
+            name: 'payee_similarity_min',
+            label: __('Payee Name Similarity'),
+            step: 0.01,
+            min: 0,
+            max: 1,
+            help: __(
+              'Minimum similarity (0-1) for a payee name to be trusted without an exact or alias match.',
+            ),
+          },
+          {
+            name: 'payee_similarity_margin',
+            label: __('Payee Name Margin'),
+            step: 0.01,
+            min: 0,
+            max: 1,
+            help: __(
+              'The best payee match has to beat the second best by this much.',
+            ),
+          },
+        ];
+      },
       categoryWarning() {
         return this.warnings.length > 0 ? this.warnings[0] : null;
       },
@@ -840,6 +948,9 @@
             this.form.duplicate_similarity_threshold =
               data.duplicate_similarity_threshold ?? null;
             this.form.same_event_minutes = data.same_event_minutes ?? null;
+            this.autoRecordFields.forEach(({ name }) => {
+              this.form[name] = data[name] ?? null;
+            });
             this.form.category_matching_mode =
               data.category_matching_mode ?? 'child_preferred';
             this.form.document_retention_days =

@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property \Illuminate\Support\Carbon|null $category_suggestion_dismissed
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $auto_record_policy
+ * @property bool $itemization_expected
  * @property-read Category|null $category
  * @property-read AccountEntity|null $config
  * @property-read mixed $first_transaction_date
@@ -57,10 +59,18 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 #[Table(key: 'id')]
 #[WithoutTimestamps]
 #[Unguarded]
-#[Fillable('category_id', 'category_suggestion_dismissed')]
+#[Fillable('category_id', 'category_suggestion_dismissed', 'auto_record_policy', 'itemization_expected')]
 class Payee extends Model
 {
     use HasFactory;
+
+    public const string POLICY_FOLLOW_GLOBAL = 'follow_global';
+
+    public const string POLICY_ALWAYS = 'always';
+
+    public const string POLICY_NEVER = 'never';
+
+    public const array AUTO_RECORD_POLICIES = [self::POLICY_FOLLOW_GLOBAL, self::POLICY_ALWAYS, self::POLICY_NEVER];
 
     /**
      * Get the attributes that should be cast.
@@ -71,6 +81,7 @@ class Payee extends Model
     {
         return [
             'category_suggestion_dismissed' => 'datetime',
+            'itemization_expected' => 'boolean',
         ];
     }
 

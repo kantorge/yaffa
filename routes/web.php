@@ -38,6 +38,10 @@ Route::resource('account-entity', AccountEntityController::class)
 Route::get('/account/history/{account}/{withForecast?}', [AccountEntityController::class, 'history'])
     ->name('account.history');
 
+Route::view('/payees/auto-record-candidates', 'payees.auto-record-candidates')
+    ->middleware(['auth', 'verified'])
+    ->name('payees.auto-record-candidates');
+
 // Routes to display form to merge two payees
 Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
     ->name('payees.merge.form');

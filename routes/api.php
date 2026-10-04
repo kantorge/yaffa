@@ -259,6 +259,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('payees.similar');
     Route::get('/payees/category-suggestions/default', [PayeeApiController::class, 'getPayeeDefaultSuggestion'])
         ->name('payees.category-suggestions.default');
+    Route::get('/payees/auto-record-candidates', [PayeeApiController::class, 'getAutoRecordCandidates'])
+        ->name('payees.auto-record-candidates');
     Route::get('/payees/{accountEntity}', [PayeeApiController::class, 'getItem'])
         ->name('payees.show');
     Route::patch('/payees/{accountEntity}', [PayeeApiController::class, 'updatePayee'])

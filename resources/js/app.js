@@ -39,6 +39,7 @@ const routeMap = new Map([
   ['home', 'dashboard/index'],
   ['account-groups.index', 'account-groups/index'],
   ['payees.merge.form', 'payee/merge'],
+  ['payees.auto-record-candidates', 'payee/candidates'],
   ['account.history', 'account/history'],
   ['categories.index', 'categories/index'],
   ['categories.show', 'categories/show'],

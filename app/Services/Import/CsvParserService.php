@@ -6,6 +6,7 @@ use App\Enums\ImportCanonicalField;
 use App\Enums\TransactionType;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
+use App\Services\PayeeMatcher;
 use Illuminate\Http\UploadedFile;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
@@ -695,9 +696,9 @@ class CsvParserService
                 $this->payeeLookup[$lowerName] = (int) $payee->id;
             }
 
-            $alias = $payee->alias;
-            if (is_string($alias) && $alias !== '') {
-                $lowerAlias = mb_strtolower($alias);
+            // The alias holds one entry per line
+            foreach (PayeeMatcher::aliasLines($payee->alias) as $aliasLine) {
+                $lowerAlias = mb_strtolower($aliasLine);
                 if (! isset($this->payeeLookup[$lowerAlias])) {
                     $this->payeeLookup[$lowerAlias] = (int) $payee->id;
                 }

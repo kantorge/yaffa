@@ -41,6 +41,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'categories.overview' => ['api.v1.categories.overview', 'get', 'read', ['category' => 1]],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
+            'payees.auto-record-candidates' => ['api.v1.payees.auto-record-candidates', 'get', 'read', []],
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
             'payees.overview' => ['api.v1.payees.overview', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
