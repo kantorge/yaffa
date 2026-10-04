@@ -220,7 +220,7 @@ class AiDocumentApiController extends Controller
 
         $query = AiDocument::query()
             ->where('user_id', $user->id)
-            ->with(['aiDocumentFiles', 'receivedMail', 'transaction']);
+            ->with(['aiDocumentFiles', 'receivedMail', 'transaction', 'origins']);
 
         if ($request->filled('date_from')) {
             $dateFrom = Carbon::parse((string) $request->input('date_from'))->startOfDay();

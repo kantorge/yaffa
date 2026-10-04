@@ -83,6 +83,13 @@
     }
   };
 
+  // The transaction the document created, or the one it was closed against as a duplicate
+  const getLinkedTransactionId = (document) =>
+    document?.transaction?.id ??
+    document?.origins?.find((origin) => origin.relation === 'duplicate_of')
+      ?.transaction_id ??
+    null;
+
   const getTitle = (document) => {
     if (document.received_mail?.subject) {
       return document.received_mail.subject;
@@ -598,14 +605,18 @@
         {
           data: 'transaction',
           title: __('Linked transaction'),
-          render: (value, _type) => {
-            if (!value) {
+          render: (_value, _type, row) => {
+            const transactionId = getLinkedTransactionId(row);
+
+            if (!transactionId) {
               return __('Not available');
             }
 
             return (
-              dataTableHelpers.dataTablesActionButton(value.id, 'quickView') +
-              dataTableHelpers.dataTablesActionButton(value.id, 'show')
+              dataTableHelpers.dataTablesActionButton(
+                transactionId,
+                'quickView',
+              ) + dataTableHelpers.dataTablesActionButton(transactionId, 'show')
             );
           },
           className: 'dt-nowrap',
@@ -642,7 +653,7 @@
         style: 'os',
       },
       createdRow: (row, data) => {
-        if (!data.transaction) {
+        if (!getLinkedTransactionId(data)) {
           window
             .$('td:eq(' + COLUMN_INDEX.linkedTransaction + ')', row)
             .addClass('text-muted text-italic');
@@ -681,14 +692,16 @@
           title: __('Open linked transaction'),
           iconClass: 'fa fa-fw fa-external-link',
           contextMenuClasses: ['text-info fw-bold'],
-          isHidden: (row) => !row.transaction,
+          isHidden: (row) => !getLinkedTransactionId(row),
           action: (selectedRows) => {
-            if (!selectedRows[0].transaction) {
+            const transactionId = getLinkedTransactionId(selectedRows[0]);
+
+            if (!transactionId) {
               return;
             }
 
             window.location.href = route('transaction.open', {
-              transaction: selectedRows[0].transaction.id,
+              transaction: transactionId,
               action: 'show',
             });
           },

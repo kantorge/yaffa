@@ -75,7 +75,7 @@ class AiDocumentController extends Controller implements HasMiddleware
          * @name("ai-documents.show")
          * @middlewares("web", "auth", "verified")
          */
-        $aiDocument->load(['files', 'receivedMail', 'transaction']);
+        $aiDocument->load(['files', 'receivedMail', 'transaction', 'origins']);
 
         // Enrich processed transaction data with category full names and matched entities
         if ($aiDocument->processed_transaction_data) {
