@@ -204,7 +204,6 @@ Frontend remains responsible for interactive review UX, not financial parsing lo
   - CSV import profile endpoints:
     - GET /api/v1/imports/file-profiles
     - POST /api/v1/imports/file-profiles
-    - GET /api/v1/imports/file-profiles/{profile}/affected-accounts — returns accounts that have this profile set as their default; used to warn the user before deletion
     - PATCH /api/v1/imports/file-profiles/{profile}
     - DELETE /api/v1/imports/file-profiles/{profile}
   - AI-assisted profile suggestion endpoint:
@@ -677,9 +676,8 @@ Minimal profile behavior:
 
 4. Delete user profile
 
-- when the profile is set as the default for one or more accounts, the user is shown a warning listing those accounts before confirming deletion
-- upon confirmation, the profile is deleted; deletion is blocked while any account references the profile: the FK is `restrictOnDelete` and the API returns 422 (the client disables the delete button and lists the accounts)
-- manual profile selection will be required for those accounts on future imports
+- deletion is blocked while any account uses the profile as its default: the FK is `restrictOnDelete` and the API returns 422; the client disables the delete button and lists the accounts in a tooltip
+- otherwise the user confirms and the profile is deleted
 
 No user CRUD is needed for system profiles in MVP.
 Those are read-only to users.
@@ -748,9 +746,6 @@ Recommended endpoints:
   - returns system profiles plus current user's user profiles
 - `POST /api/v1/imports/file-profiles`
   - create user profile
-- `GET /api/v1/imports/file-profiles/{profile}/affected-accounts`
-  - returns accounts that have this profile set as their preferred import profile
-  - used by the frontend to warn the user before confirming deletion
 - `PATCH /api/v1/imports/file-profiles/{profile}`
   - update user profile
 - `DELETE /api/v1/imports/file-profiles/{profile}`
