@@ -2,21 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Investment;
 use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
+use App\Services\TransactionDraftService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
-use Illuminate\Support\Collection;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 #[Middleware('auth')]
@@ -132,7 +129,7 @@ class TransactionController extends Controller
         return redirect()->back();
     }
 
-    public function createFromDraft(Request $request): View
+    public function createFromDraft(Request $request, TransactionDraftService $draftService): View
     {
         /**
          * @post("/transactions/create-from-draft")
@@ -143,58 +140,7 @@ class TransactionController extends Controller
         $transactionData = json_decode($request->input('transaction'), true) ?? [];
         $configType = $transactionData['config_type'] ?? 'standard';
 
-        // Make a new transaction from the draft
-        $transaction = new Transaction($transactionData);
-
-        // Set the transaction type enum value
-        $transaction->transaction_type = TransactionTypeEnum::tryFrom($transactionData['transaction_type']) ?? ($configType === 'investment' ? TransactionTypeEnum::BUY : TransactionTypeEnum::WITHDRAWAL);
-
-        // Ensure that a config relation exists, even if it's empty
-        if (! array_key_exists('config', $transactionData)) {
-            $transactionData['config'] = [];
-        }
-        if ($configType === 'investment') {
-            $transaction->setRelation('config', new TransactionDetailInvestment($transactionData['config']));
-        } else {
-            $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
-            // Inverse relation, so TransactionDetailStandard::resolveStandardCurrency()'s
-            // fallback (when neither account side resolves) can reach the owning
-            // transaction's currency instead of lazily querying for a non-existent row.
-            $transaction->config->setRelation('transaction', $transaction);
-
-            $draftTransactionItems = $this->buildDraftTransactionItems($transactionData, $request->user()->id);
-
-            // These items are manually attached rather than eager-loaded, so chaperone()
-            // never fires - set the inverse relation by hand so TransactionItem::amount
-            // (MoneyCast) can resolve its currency via the parent transaction instead of
-            // issuing a lazy lookup for a transaction_id that doesn't exist yet (draft/unsaved).
-            $draftTransactionItems->each(fn (TransactionItem $item) => $item->setRelation('transaction', $transaction));
-
-            $transaction->setRelation('transactionItems', $draftTransactionItems);
-
-            // Try to add relation for account and payee, if they exist.
-            // Use the real (camelCase) relation names, matching TransactionDetailStandard::
-            // accountFrom()/accountTo() - not just so Eloquent's snake-casing still produces
-            // the same "account_from"/"account_to" JSON keys, but so relationLoaded() sees
-            // these as already resolved. Otherwise resolveAmountFromCurrency() (MoneyCast)
-            // would lazy-load them again with no user scope at all, undoing this scoping.
-            if (($transactionData['config']['account_from_id'] ?? null) !== null) {
-                $transaction->config->setRelation(
-                    'accountFrom',
-                    AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_from_id'])
-                );
-            }
-            if (($transactionData['config']['account_to_id'] ?? null) !== null) {
-                $transaction->config->setRelation(
-                    'accountTo',
-                    AccountEntity::where('user_id', $request->user()->id)->find($transactionData['config']['account_to_id'])
-                );
-            }
-        }
-
-        // Ensure that the transaction is basic
-        $transaction->schedule = false;
-        $transaction->reconciled = false;
+        $transaction = $draftService->toUnsavedTransaction($transactionData, $request->user());
 
         $aiDocumentId = $request->input('ai_document_id');
 
@@ -232,71 +178,6 @@ class TransactionController extends Controller
         $transaction->transactionItems->each(function (TransactionItem $item) use ($categoriesById): void {
             $category = $categoriesById->get($item->category_id);
             $item->setAttribute('category_full_name', $category?->full_name);
-        });
-    }
-
-    /**
-     * @param array<string, mixed> $transactionData
-     *
-     * @return Collection<int, TransactionItem>
-     */
-    private function buildDraftTransactionItems(array $transactionData, int $userId): Collection
-    {
-        $items = collect($transactionData['transaction_items'] ?? [])
-            ->filter(fn ($item) => is_array($item))
-            ->values();
-
-        if ($items->isEmpty()) {
-            return collect();
-        }
-
-        $categoryIds = $items
-            ->flatMap(fn (array $item): array => [
-                $item['category_id'] ?? null,
-                $item['recommended_category_id'] ?? null,
-            ])
-            ->filter()
-            ->unique()
-            ->values();
-
-        $categoriesById = Category::query()
-            ->with('parent')
-            ->where('user_id', $userId)
-            ->whereIn('id', $categoryIds)
-            ->get()
-            ->keyBy('id');
-
-        return $items->map(function (array $itemData) use ($categoriesById): TransactionItem {
-            $categoryId = $itemData['category_id'] ?? null;
-            $recommendedCategoryId = $itemData['recommended_category_id'] ?? null;
-
-            if (! array_key_exists('category_full_name', $itemData) || empty($itemData['category_full_name'])) {
-                $itemData['category_full_name'] = $categoryId
-                    ? $categoriesById->get($categoryId)?->full_name
-                    : null;
-            }
-
-            if (! array_key_exists('recommended_category_full_name', $itemData) || empty($itemData['recommended_category_full_name'])) {
-                $itemData['recommended_category_full_name'] = $recommendedCategoryId
-                    ? $categoriesById->get($recommendedCategoryId)?->full_name
-                    : null;
-            }
-
-            $transactionItem = new TransactionItem([
-                'category_id' => $categoryId,
-                'amount' => $itemData['amount'] ?? 0,
-                'comment' => $itemData['comment'] ?? null,
-            ]);
-
-            // Preserve AI-context attributes so the standalone finalize form can render AI recommendation controls.
-            $transactionItem->setAttribute('category_full_name', $itemData['category_full_name'] ?? null);
-            $transactionItem->setAttribute('recommended_category_id', $recommendedCategoryId);
-            $transactionItem->setAttribute('recommended_category_full_name', $itemData['recommended_category_full_name'] ?? null);
-            $transactionItem->setAttribute('description', $itemData['description'] ?? null);
-            $transactionItem->setAttribute('match_type', $itemData['match_type'] ?? null);
-            $transactionItem->setAttribute('confidence_score', $itemData['confidence_score'] ?? null);
-
-            return $transactionItem;
         });
     }
 }

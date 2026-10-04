@@ -674,6 +674,7 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertTrue($result['success']);
         $document->refresh();
         $this->assertSame('ready_for_review', $document->status);
+        $this->assertSame(2, $document->processed_transaction_data['schema_version']);
     }
 
     public function test_process_uses_generic_document_language_in_main_extraction_prompt(): void

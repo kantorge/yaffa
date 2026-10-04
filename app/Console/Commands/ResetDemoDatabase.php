@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\SandboxDemoDataExporter;
+use App\Services\TransactionDraftService;
 use Carbon\Carbon;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -334,6 +335,7 @@ class ResetDemoDatabase extends Command
         $firstItem = $transaction->transactionItems->first();
 
         $processedData = [
+            'schema_version' => TransactionDraftService::SCHEMA_VERSION,
             'raw' => $rawData,
             'date' => $rawData['date'],
             'config_type' => $rawData['config_type'],

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\AiDocumentStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,5 +24,28 @@ class AiDocumentFactory extends Factory
             'custom_prompt' => null,
             'processed_at' => null,
         ];
+    }
+
+    public function readyForReview(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::ReadyForReview->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function finalized(): static
+    {
+        return $this->state(fn () => [
+            'status' => AiDocumentStatus::Finalized->value,
+            'processed_at' => now(),
+        ]);
+    }
+
+    public function withDraft(array $draft): static
+    {
+        return $this->state(fn () => [
+            'processed_transaction_data' => $draft,
+        ]);
     }
 }
