@@ -204,6 +204,20 @@ Breadcrumbs::for('transaction.open', function (BreadcrumbTrail $trail, $transact
     $trail->push(__(ucfirst($action)), route('transaction.open', ['transaction' => $transaction, 'action' => $action]));
 });
 
+// Transaction template views
+Breadcrumbs::for('transaction-templates.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Transaction templates'), route('transaction-templates.index'));
+});
+Breadcrumbs::for('transaction-templates.create', function (BreadcrumbTrail $trail, $type) {
+    $trail->parent('transaction-templates.index');
+    $trail->push(__('Create'), route('transaction-templates.create', $type));
+});
+Breadcrumbs::for('transaction-templates.edit', function (BreadcrumbTrail $trail, $template) {
+    $trail->parent('transaction-templates.index');
+    $trail->push(__('Edit'), route('transaction-templates.edit', $template));
+});
+
 /* Reports */
 
 Breadcrumbs::for('reports.cashflow', function (BreadcrumbTrail $trail) {

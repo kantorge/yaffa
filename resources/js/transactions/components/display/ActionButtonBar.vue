@@ -56,6 +56,15 @@
       <i class="fa me-1 fa-clone"></i>{{ __('Clone') }}
     </a>
 
+    <a
+      v-if="controls.clone"
+      :href="getRoute('template')"
+      class="btn btn-primary ms-2"
+      :title="__('Save as template')"
+    >
+      <i class="fa me-1 fa-bookmark"></i>{{ __('Save as template') }}
+    </a>
+
     <button
       v-if="isModal"
       class="btn btn-secondary ms-2"

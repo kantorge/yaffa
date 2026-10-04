@@ -87,6 +87,10 @@ class TransactionCreationService
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $user);
 
+        if (! empty($validated['transaction_template_id'])) {
+            $user->transactionTemplates()->find($validated['transaction_template_id'])?->recordUse();
+        }
+
         event(new TransactionCreated($transaction));
 
         return [

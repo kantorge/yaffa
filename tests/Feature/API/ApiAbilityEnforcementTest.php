@@ -10,6 +10,7 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\Tag;
+use App\Models\TransactionTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -57,9 +58,14 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.show' => ['api.v1.budgets.show', 'get', 'read', ['budget' => 1]],
             'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
             'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
+            'transaction-templates.index' => ['api.v1.transaction-templates.index', 'get', 'read', []],
+            'transaction-templates.show' => ['api.v1.transaction-templates.show', 'get', 'read', ['template' => 1]],
 
             // write
             'transactions.store-standard' => ['api.v1.transactions.store-standard', 'post', 'write', []],
+            'transaction-templates.store' => ['api.v1.transaction-templates.store', 'post', 'write', []],
+            'transaction-templates.update' => ['api.v1.transaction-templates.update', 'patch', 'write', ['template' => 1]],
+            'transaction-templates.destroy' => ['api.v1.transaction-templates.destroy', 'delete', 'write', ['template' => 1]],
             'budgets.store' => ['api.v1.budgets.store', 'post', 'write', []],
             'budgets.update' => ['api.v1.budgets.update', 'patch', 'write', ['budget' => 1]],
             'budgets.destroy' => ['api.v1.budgets.destroy', 'delete', 'write', ['budget' => 1]],
@@ -162,6 +168,9 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.tags.show', 'api.v1.tags.patch-active', 'api.v1.tags.destroy' => [
                 'tag' => Tag::factory()->for($user)->create()->id,
+            ],
+            'api.v1.transaction-templates.show', 'api.v1.transaction-templates.update', 'api.v1.transaction-templates.destroy' => [
+                'template' => TransactionTemplate::factory()->for($user)->create()->id,
             ],
             'api.v1.currencies.destroy' => [
                 'currency' => Currency::factory()->for($user)->create()->id,

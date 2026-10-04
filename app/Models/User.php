@@ -191,6 +191,14 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
         return $this->hasMany(Tag::class);
     }
 
+    /**
+     * @return HasMany<TransactionTemplate, $this>
+     */
+    public function transactionTemplates(): HasMany
+    {
+        return $this->hasMany(TransactionTemplate::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
