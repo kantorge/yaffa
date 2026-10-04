@@ -60,7 +60,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
  * @property string|null $alias
- * @property int|null $preferred_file_import_profile_id
  * @property-read Collection<int, Transaction> $transactionsInvestment
  * @property-read int|null $transactions_investment_count
  * @property-read Collection<int, Transaction> $transactionsStandardFrom
@@ -72,7 +71,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|AccountEntity wherePreferredFileImportProfileId($value)
  * @mixin Eloquent
  */
-#[Fillable('name', 'active', 'config_type', 'config_id', 'preferred_file_import_profile_id', 'user_id', 'alias')]
+#[Fillable('name', 'active', 'config_type', 'config_id', 'user_id', 'alias')]
 #[Hidden('config_id')]
 class AccountEntity extends Model
 {
@@ -199,11 +198,6 @@ class AccountEntity extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function preferredFileImportProfile(): BelongsTo
-    {
-        return $this->belongsTo(FileImportProfile::class, 'preferred_file_import_profile_id');
     }
 
     public function isAccount(): bool

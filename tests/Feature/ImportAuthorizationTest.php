@@ -126,8 +126,8 @@ class ImportAuthorizationTest extends TestCase
                 'opening_balance' => MoneyCast::toFloat($accountEntity->config->opening_balance),
                 'account_group_id' => $accountEntity->config->account_group_id,
                 'currency_id' => $accountEntity->config->currency_id,
+                'preferred_file_import_profile_id' => $ownProfile->id,
             ],
-            'preferred_file_import_profile_id' => $ownProfile->id,
         ];
 
         // User can set their own profile
@@ -135,17 +135,17 @@ class ImportAuthorizationTest extends TestCase
             ->patch(route('account-entity.update', $accountEntity), $formData)
             ->assertRedirect(route('account-entity.index', ['type' => 'account']));
 
-        $this->assertSame($ownProfile->id, $accountEntity->fresh()->preferred_file_import_profile_id);
+        $this->assertSame($ownProfile->id, $accountEntity->fresh()->config->preferred_file_import_profile_id);
 
         // User cannot set a foreign (inaccessible) profile
         $this->actingAs($user)
-            ->patch(route('account-entity.update', $accountEntity), array_merge($formData, [
-                'preferred_file_import_profile_id' => $foreignProfile->id,
+            ->patch(route('account-entity.update', $accountEntity), array_replace_recursive($formData, [
+                'config' => ['preferred_file_import_profile_id' => $foreignProfile->id],
             ]))
-            ->assertSessionHasErrors('preferred_file_import_profile_id');
+            ->assertSessionHasErrors('config.preferred_file_import_profile_id');
     }
 
-    public function test_index_includes_account_entities_for_current_user(): void
+    public function test_index_includes_accounts_for_current_user(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -156,12 +156,12 @@ class ImportAuthorizationTest extends TestCase
         ]);
 
         $ownAccount = $this->createAccountEntity($user);
-        $ownAccount->preferred_file_import_profile_id = $profile->id;
-        $ownAccount->save();
+        $ownAccount->config->preferred_file_import_profile_id = $profile->id;
+        $ownAccount->config->save();
 
         $otherAccount = $this->createAccountEntity($otherUser);
-        $otherAccount->preferred_file_import_profile_id = $profile->id;
-        $otherAccount->save();
+        $otherAccount->config->preferred_file_import_profile_id = $profile->id;
+        $otherAccount->config->save();
 
         Sanctum::actingAs($user, ['*']);
 
@@ -174,11 +174,11 @@ class ImportAuthorizationTest extends TestCase
         $profileData = collect($response->json('data'))->firstWhere('id', $profile->id);
         $this->assertNotNull($profileData);
 
-        $accountEntities = $profileData['account_entities'] ?? null;
-        $this->assertIsArray($accountEntities);
-        $this->assertCount(1, $accountEntities);
-        $this->assertSame($ownAccount->id, $accountEntities[0]['id']);
-        $this->assertNotContains($otherAccount->id, array_column($accountEntities, 'id'));
+        $accounts = $profileData['accounts'] ?? null;
+        $this->assertIsArray($accounts);
+        $this->assertCount(1, $accounts);
+        $this->assertSame($ownAccount->id, $accounts[0]['config']['id']);
+        $this->assertNotContains($otherAccount->id, array_column(array_column($accounts, 'config'), 'id'));
     }
 
     public function test_cannot_delete_profile_in_use_by_an_account(): void
@@ -191,8 +191,8 @@ class ImportAuthorizationTest extends TestCase
         ]);
 
         $account = $this->createAccountEntity($user);
-        $account->preferred_file_import_profile_id = $profile->id;
-        $account->save();
+        $account->config->preferred_file_import_profile_id = $profile->id;
+        $account->config->save();
 
         Sanctum::actingAs($user, ['*']);
 
