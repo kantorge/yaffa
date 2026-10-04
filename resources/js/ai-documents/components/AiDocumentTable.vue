@@ -73,8 +73,10 @@
       case 'processing_failed':
         return 'bg-danger';
       case 'ready_for_review':
+      case 'awaiting_itemization':
         return 'bg-warning';
       case 'finalized':
+      case 'auto_recorded':
         return 'bg-success';
       default:
         return 'bg-secondary';
@@ -438,7 +440,7 @@
   };
 
   const canReprocess = (status) =>
-    ['ready_for_review', 'processing_failed'].includes(status);
+    ['ready_for_review', 'processing_failed', 'dismissed'].includes(status);
 
   const recalculateTableLayout = () => {
     if (!table.value) {
@@ -745,7 +747,15 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  // 'unprocessed' is a pseudo status matching every status except finalized
+  // Statuses nothing is waiting on any more, see App\Enums\AiDocumentStatus::terminal()
+  const TERMINAL_STATUSES = [
+    'finalized',
+    'auto_recorded',
+    'duplicate',
+    'dismissed',
+  ];
+
+  // 'unprocessed' is a pseudo status matching every status that is not terminal
   const statusFilterPattern = (status) => {
     if (!status) {
       return '';
@@ -754,7 +764,7 @@
     const labels =
       status === 'unprocessed'
         ? Object.entries(props.statusLabels)
-            .filter(([key]) => key !== 'finalized')
+            .filter(([key]) => !TERMINAL_STATUSES.includes(key))
             .map(([, label]) => label)
         : [props.statusLabels[status] || status];
 

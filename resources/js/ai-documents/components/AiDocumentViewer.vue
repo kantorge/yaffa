@@ -44,11 +44,11 @@
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
-                v-if="aiDocument.transaction"
+                v-if="linkedTransactionId"
                 :href="transactionLink"
                 :title="__('View transaction')"
               >
-                {{ aiDocument.transaction.id }}
+                {{ linkedTransactionId }}
               </a>
               <span v-else class="text-muted">{{ __('Not available') }}</span>
             </dd>
@@ -387,6 +387,21 @@
             </button>
           </li>
           <li
+            v-if="canDismiss"
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            {{ __('Dismiss document') }}
+            <button
+              class="btn btn-xs btn-secondary"
+              type="button"
+              :disabled="isBusy"
+              :title="__('Dismiss document')"
+              @click="dismissDocument"
+            >
+              <i class="fa fa-fw fa-ban"></i>
+            </button>
+          </li>
+          <li
             class="list-group-item d-flex justify-content-between align-items-center"
           >
             {{ __('Delete document') }}
@@ -606,8 +621,10 @@
       case 'processing_failed':
         return 'bg-danger';
       case 'ready_for_review':
+      case 'awaiting_itemization':
         return 'bg-warning';
       case 'finalized':
+      case 'auto_recorded':
         return 'bg-success';
       default:
         return 'bg-secondary';
@@ -668,14 +685,31 @@
       processingHistory.value.length > 0,
   );
 
+  // Documents linked to a transaction cannot be reprocessed, see App\Enums\AiDocumentStatus::reprocessable()
   const canReprocess = computed(() =>
+    ['ready_for_review', 'processing_failed', 'dismissed'].includes(
+      aiDocument.value.status,
+    ),
+  );
+
+  const canDismiss = computed(() =>
     ['ready_for_review', 'processing_failed'].includes(aiDocument.value.status),
   );
 
+  // The transaction the document created, or the one it was closed against as a duplicate
+  const linkedTransactionId = computed(
+    () =>
+      aiDocument.value.transaction?.id ??
+      aiDocument.value.origins?.find(
+        (origin) => origin.relation === 'duplicate_of',
+      )?.transaction_id ??
+      null,
+  );
+
   const transactionLink = computed(() =>
-    aiDocument.value.transaction
+    linkedTransactionId.value
       ? route('transaction.open', {
-          transaction: aiDocument.value.transaction.id,
+          transaction: linkedTransactionId.value,
           action: 'show',
         })
       : '#',
@@ -835,6 +869,35 @@
           isBusy.value = false;
         });
     });
+  };
+
+  const dismissDocument = () => {
+    if (isBusy.value) {
+      return;
+    }
+
+    isBusy.value = true;
+
+    window.axios
+      .post(
+        window.route('api.v1.documents.dismiss', {
+          aiDocument: aiDocument.value.id,
+        }),
+      )
+      .then((response) => {
+        aiDocument.value.status = response.data.status;
+        toastHelpers.showSuccessToast(response.data.message);
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while dismissing document: :errorMessage', {
+            errorMessage: error.response?.data?.error || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        isBusy.value = false;
+      });
   };
 
   const deleteDocument = () => {

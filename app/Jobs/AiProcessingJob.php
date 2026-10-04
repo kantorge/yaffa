@@ -56,10 +56,10 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // A finalized document already created a transaction; processing (or resetting) it again
-        // would let it go through review and be finalized into a duplicate transaction.
-        if ($document->status === AiDocumentStatus::Finalized->value) {
-            Log::info("Skipping document {$document->id} processing because it is already finalized");
+        // A document linked to a transaction already created (or matched) one; processing (or resetting) it
+        // again would let it go through review and be finalized into a duplicate transaction.
+        if (AiDocumentStatus::tryFrom($document->status)?->isLinkedToTransaction()) {
+            Log::info("Skipping document {$document->id} processing because it is already {$document->status}");
 
             return;
         }
@@ -67,9 +67,8 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
         if (! $settingsResolver->isEnabledForUser($document->user)) {
             Log::info("Skipping document {$document->id} processing because AI is disabled for user {$document->user_id}");
 
-            if ($document->status !== 'ready_for_processing') {
-                $document->status = 'ready_for_processing';
-                $document->save();
+            if ($document->status !== AiDocumentStatus::ReadyForProcessing->value) {
+                $document->transitionTo(AiDocumentStatus::ReadyForProcessing);
             }
 
             return;

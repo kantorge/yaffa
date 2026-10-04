@@ -136,6 +136,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('documents.update');
     Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
         ->name('documents.reprocess');
+    Route::post('/documents/{aiDocument}/dismiss', [AiDocumentApiController::class, 'dismiss'])
+        ->name('documents.dismiss');
     Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
         ->name('documents.checkDuplicates');
     Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
@@ -297,6 +299,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('transactions.index');
     Route::get('/transactions/scheduled-items', [TransactionApiController::class, 'getScheduledItems'])
         ->name('transactions.scheduled-items');
+    Route::post('/transactions/duplicate-check', [TransactionApiController::class, 'duplicateCheck'])
+        ->name('transactions.duplicate-check');
     Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
         ->name('transactions.store-standard');
     Route::post('/transactions/investment', [TransactionApiController::class, 'storeInvestment'])

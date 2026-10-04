@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
+use App\Models\TransactionOrigin;
 use App\Models\TransactionSchedule;
 use App\Models\User;
 use Exception;
@@ -86,6 +87,8 @@ class TransactionCreationService
         }
 
         $categoryLearningSummary = $this->finalizeAiDocument($validated, $transaction, $user);
+
+        $this->closeAiDocument($validated, $transaction, $user);
 
         if (! empty($validated['transaction_template_id'])) {
             $user->transactionTemplates()->find($validated['transaction_template_id'])?->recordUse();
@@ -260,11 +263,43 @@ class TransactionCreationService
             ]);
         }
 
-        $aiDocument->status = AiDocumentStatus::Finalized->value;
         if (! $aiDocument->processed_at) {
             $aiDocument->processed_at = now();
         }
-        $aiDocument->save();
+        $aiDocument->transitionTo(AiDocumentStatus::Finalized);
+    }
+
+    /**
+     * Close the open AI document the user marked as describing this very purchase: it becomes a duplicate of
+     * the new transaction. Saving is never blocked, so a document that is no longer open (processed,
+     * dismissed or closed in the meantime) is left alone.
+     */
+    private function closeAiDocument(array $validated, Transaction $transaction, User $user): void
+    {
+        if (empty($validated['close_ai_document_id'] ?? null)) {
+            return;
+        }
+
+        DB::transaction(function () use ($validated, $transaction, $user): void {
+            $document = AiDocument::query()
+                ->whereKey($validated['close_ai_document_id'])
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $document || ! in_array($document->status, AiDocumentStatus::values(AiDocumentStatus::open()), true)) {
+                return;
+            }
+
+            TransactionOrigin::record(
+                $user,
+                $transaction,
+                TransactionOrigin::RELATION_DUPLICATE_OF,
+                $document,
+                'Closed by the user while entering the same purchase manually.'
+            );
+            $document->transitionTo(AiDocumentStatus::Duplicate);
+        });
     }
 
     /**

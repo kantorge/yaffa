@@ -467,6 +467,38 @@
             </div>
           </div>
 
+          <div class="row mb-3">
+            <label for="same_event_minutes" class="col-form-label col-sm-4">
+              {{ __('Same Event Window (minutes)') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <input
+                  id="same_event_minutes"
+                  v-model.number="form.same_event_minutes"
+                  type="number"
+                  class="form-control"
+                  name="same_event_minutes"
+                  min="1"
+                  max="255"
+                />
+                <span
+                  class="input-group-text btn btn-outline-input-info"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="
+                    __(
+                      'Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.',
+                    )
+                  "
+                >
+                  <i class="fa fa-info-circle"></i>
+                </span>
+              </div>
+              <HasError field="same_event_minutes" :form="form" />
+            </div>
+          </div>
+
           <hr class="my-3" />
 
           <!-- OCR & Vision -->
@@ -751,6 +783,7 @@
         duplicate_date_window_days: null,
         duplicate_amount_tolerance_percent: null,
         duplicate_similarity_threshold: null,
+        same_event_minutes: null,
         category_matching_mode: 'child_preferred',
         document_retention_days: null,
       }),
@@ -806,6 +839,7 @@
               data.duplicate_amount_tolerance_percent ?? null;
             this.form.duplicate_similarity_threshold =
               data.duplicate_similarity_threshold ?? null;
+            this.form.same_event_minutes = data.same_event_minutes ?? null;
             this.form.category_matching_mode =
               data.category_matching_mode ?? 'child_preferred';
             this.form.document_retention_days =

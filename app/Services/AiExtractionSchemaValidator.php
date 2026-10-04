@@ -8,6 +8,11 @@ use Illuminate\Support\Str;
 
 class AiExtractionSchemaValidator
 {
+    public const array DOCUMENT_KINDS = ['bank_notification', 'receipt', 'invoice', 'other'];
+
+    /** Optional on every document: they identify the purchase, but are not part of the transaction itself. */
+    public const array OPTIONAL_KEYS = ['document_kind', 'transaction_time', 'bank_reference', 'card_last_digits'];
+
     /**
      * @throws InvalidAiResponseSchemaException
      */
@@ -64,7 +69,8 @@ class AiExtractionSchemaValidator
             'transaction_items',
         ];
 
-        $this->assertSchemaRequiredAndAllowedKeys($data, $requiredKeys, $requiredKeys);
+        $this->assertSchemaRequiredAndAllowedKeys($data, $requiredKeys, [...$requiredKeys, ...self::OPTIONAL_KEYS]);
+        $this->assertOptionalKeys($data);
 
         $this->assertNullableString($data, 'account');
         $this->assertNullableString($data, 'account_from');
@@ -114,7 +120,8 @@ class AiExtractionSchemaValidator
             'currency',
         ];
 
-        $this->assertSchemaRequiredAndAllowedKeys($data, $requiredKeys, $requiredKeys);
+        $this->assertSchemaRequiredAndAllowedKeys($data, $requiredKeys, [...$requiredKeys, ...self::OPTIONAL_KEYS]);
+        $this->assertOptionalKeys($data);
 
         $this->assertNullableString($data, 'account');
         $this->assertNullableString($data, 'investment');
@@ -126,6 +133,26 @@ class AiExtractionSchemaValidator
         $this->assertNullableNumber($data, 'tax');
         $this->assertNullableNumber($data, 'dividend');
         $this->assertNullableString($data, 'currency');
+    }
+
+    /**
+     * @throws InvalidAiResponseSchemaException
+     */
+    private function assertOptionalKeys(array $data): void
+    {
+        foreach (['document_kind', 'transaction_time', 'bank_reference', 'card_last_digits'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $this->assertNullableString($data, $key);
+            }
+        }
+
+        if (($data['document_kind'] ?? null) !== null && ! in_array($data['document_kind'], self::DOCUMENT_KINDS, true)) {
+            throw InvalidAiResponseSchemaException::invalidValue('document_kind', 'must be one of ' . implode(', ', self::DOCUMENT_KINDS));
+        }
+
+        if (($data['transaction_time'] ?? null) !== null && ! preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $data['transaction_time'])) {
+            throw InvalidAiResponseSchemaException::invalidValue('transaction_time', 'must match HH:MM');
+        }
     }
 
     /**

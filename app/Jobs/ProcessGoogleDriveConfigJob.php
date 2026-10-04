@@ -116,6 +116,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                     'status' => 'ready_for_processing',
                     'source_type' => 'google_drive',
                     'google_drive_file_id' => $file['id'],
+                    'content_hash' => AiDocument::hashFiles([hash_file('sha256', $fullPath)]),
                 ]);
 
                 /** @var AiDocument $aiDocument */

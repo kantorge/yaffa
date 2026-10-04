@@ -320,7 +320,11 @@ FOR STANDARD TRANSACTIONS (spend, purchase, gain money, transfer between account
       "description": "item description extracted from the document",
       "amount": "item monetary amount as number"
     }
-  ]
+  ],
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other, or null",
+  "transaction_time": "HH:MM (24 hour) time of the purchase, or null",
+  "bank_reference": "bank transaction reference or authorization code, or null",
+  "card_last_digits": "last digits of the card or account used (for example 1234), digits only, or null"
 }
 
 FOR INVESTMENT TRANSACTIONS (stock/bond buy, sell, gain dividends or other interest yield):
@@ -335,7 +339,11 @@ FOR INVESTMENT TRANSACTIONS (stock/bond buy, sell, gain dividends or other inter
   "commission": "total commission/fee amount as number, if available",
   "tax": "total tax amount as number, if available",
   "dividend": "dividend amount as number (for dividend/interest)",
-  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing"
+  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing",
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other, or null",
+  "transaction_time": "HH:MM (24 hour) time of the transaction, or null",
+  "bank_reference": "bank transaction reference or authorization code, or null",
+  "card_last_digits": "last digits of the account used, digits only, or null"
 }
 
 RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
@@ -348,6 +356,12 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
   * You must extract at most one transaction from the document. If there are multiple transactions mentioned, extract only the first one that appears, that can be identified as a transaction qualifying the above schemas.
   * If you see multiple transactions, DON'T combine them into one transaction, and DON'T convert the output JSON to an array of transactions.
   * If you cannot find any transaction data in the document, return the standard JSON with all keys set to null (except transaction_type which can be set to "withdrawal" as default, and transaction_items as an empty array).
+
+* Rules for identifying the document and the purchase:
+  * document_kind: "bank_notification" for a short message from a bank or card issuer about a card payment or account movement (for example an SMS, push notification or email alert, typically in Hungarian such as "Vásárlás ... kártyával", "Terhelés", "Jóváírás"); "receipt" for a shop or service receipt; "invoice" for an invoice; "other" for anything else. Use null if you cannot tell.
+  * transaction_time is the time of the purchase itself, as printed in the document, converted to 24 hour HH:MM. Do not use the time an email was sent. Set to null if the document has no time.
+  * bank_reference is a bank reference, authorization or transaction ID, if one is printed. Do not use receipt numbers, tax numbers or order numbers. Set to null if there is none.
+  * card_last_digits is the last digits of the card or account number as printed (for example "1234" from "****1234"). Digits only. Set to null if there is none.
 
 * Rules for localization
   * {$documentLanguageLine}

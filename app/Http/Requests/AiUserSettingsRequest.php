@@ -25,6 +25,7 @@ class AiUserSettingsRequest extends FormRequest
             'duplicate_date_window_days' => ['sometimes', 'integer', 'min:1', 'max:255'],
             'duplicate_amount_tolerance_percent' => ['sometimes', 'numeric', 'between:0,100'],
             'duplicate_similarity_threshold' => ['sometimes', 'numeric', 'between:0,1'],
+            'same_event_minutes' => ['sometimes', 'integer', 'min:1', 'max:255'],
             'category_matching_mode' => ['sometimes', 'string', Rule::in(AiUserSettingsResolver::CATEGORY_MATCHING_MODES)],
             'document_retention_days' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:3650'],
         ];

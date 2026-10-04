@@ -493,6 +493,59 @@
         </div>
       </div>
 
+      <div
+        v-if="hasDuplicateMatches"
+        class="alert alert-warning mb-3"
+        role="alert"
+        dusk="duplicate-warning"
+      >
+        <h6 class="alert-heading">
+          <i class="fa fa-triangle-exclamation me-1"></i>
+          {{ __('This purchase may already be recorded') }}
+        </h6>
+        <p class="small mb-2">
+          {{
+            __(
+              'Repeated purchases are normal, so you can still save this transaction.',
+            )
+          }}
+        </p>
+        <ul v-if="duplicateMatches.transactions.length" class="small mb-2">
+          <li v-for="match in duplicateMatches.transactions" :key="match.id">
+            {{ __('Transaction on :date', { date: match.date }) }}
+            <a :href="match.url" target="_blank" rel="noopener">
+              #{{ match.id }}
+            </a>
+          </li>
+        </ul>
+        <div
+          v-for="document in duplicateMatches.documents"
+          :key="document.id"
+          class="form-check small"
+        >
+          <input
+            :id="'close-ai-document-' + document.id"
+            class="form-check-input"
+            type="checkbox"
+            :checked="form.close_ai_document_id === document.id"
+            :disabled="!canCloseDocuments"
+            @change="toggleCloseDocument(document.id, $event.target.checked)"
+          />
+          <label
+            class="form-check-label"
+            :for="'close-ai-document-' + document.id"
+          >
+            {{ __('Document:') }}
+            <a :href="document.url" target="_blank" rel="noopener">
+              {{ document.title }}
+            </a>
+            <span v-if="canCloseDocuments">
+              — {{ __('close this document when saving') }}
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div class="card mb-3">
         <div class="card-body">
           <div class="row justify-content-end">
@@ -699,7 +752,13 @@
         remaining_payee_default_category_id: null,
         ai_document_id: null,
         transaction_template_id: null,
+        close_ai_document_id: null,
       });
+
+      // Recorded transactions and open documents matching the purchase being entered
+      data.duplicateMatches = { transactions: [], documents: [] };
+      data.duplicateCheckTimer = null;
+      data.duplicateCheckRequestId = 0;
 
       // Id counter for items
       data.itemCounter = 0;
@@ -753,6 +812,54 @@
     },
 
     computed: {
+      // What identifies the purchase for the duplicate check, or null while it is incomplete or not checkable
+      // (templates, schedules, transfers)
+      duplicateCheckPayload() {
+        const { transaction_type: type, config, date, schedule } = this.form;
+        const amount = parseFloat(config.amount_from);
+
+        if (
+          this.isTemplate ||
+          schedule ||
+          !['withdrawal', 'deposit'].includes(type) ||
+          !config.account_from_id ||
+          !config.account_to_id ||
+          !date ||
+          !(amount > 0)
+        ) {
+          return null;
+        }
+
+        const isWithdrawal = type === 'withdrawal';
+
+        return {
+          config_type: 'standard',
+          transaction_type: type,
+          account_id: isWithdrawal
+            ? config.account_from_id
+            : config.account_to_id,
+          payee_id: isWithdrawal
+            ? config.account_to_id
+            : config.account_from_id,
+          date,
+          amount: config.amount_from,
+          exclude_transaction_id:
+            this.action === 'edit' ? this.form.id || null : null,
+        };
+      },
+
+      hasDuplicateMatches() {
+        return (
+          this.duplicateMatches.transactions.length > 0 ||
+          this.duplicateMatches.documents.length > 0
+        );
+      },
+
+      // Closing a document is done by saving a new transaction; editing one cannot do it
+      canCloseDocuments() {
+        return this.action !== 'edit';
+      },
+
       // Account TO and FROM labels based on transaction type
       accountFromFieldLabel() {
         return ['withdrawal', 'transfer'].includes(this.form.transaction_type)
@@ -961,6 +1068,11 @@
     },
 
     watch: {
+      // Re-run the duplicate check whenever the purchase's identifying fields change
+      duplicateCheckPayload(payload) {
+        this.scheduleDuplicateCheck(payload);
+      },
+
       remainingAmountToPayeeDefault(newAmount) {
         this.form.remaining_payee_default_amount = newAmount;
       },
@@ -1062,6 +1174,7 @@
     },
 
     beforeUnmount() {
+      clearTimeout(this.duplicateCheckTimer);
       this.accountSelects.from?.destroy();
       this.accountSelects.to?.destroy();
     },
@@ -1069,6 +1182,52 @@
     methods: {
       getCurrencySymbol,
       toFormattedCurrency,
+
+      // Debounced, and only the latest response is used. The check is informational, so a failure is ignored.
+      scheduleDuplicateCheck(payload) {
+        clearTimeout(this.duplicateCheckTimer);
+        const requestId = ++this.duplicateCheckRequestId;
+
+        if (!payload) {
+          this.applyDuplicateMatches({ transactions: [], documents: [] });
+          return;
+        }
+
+        this.duplicateCheckTimer = setTimeout(() => {
+          window.axios
+            .post(window.route('api.v1.transactions.duplicate-check'), payload)
+            .then((response) => {
+              if (requestId === this.duplicateCheckRequestId) {
+                this.applyDuplicateMatches(response.data);
+              }
+            })
+            .catch(() => {
+              if (requestId === this.duplicateCheckRequestId) {
+                this.applyDuplicateMatches({ transactions: [], documents: [] });
+              }
+            });
+        }, 500);
+      },
+
+      applyDuplicateMatches(matches) {
+        this.duplicateMatches = matches;
+
+        // A document that no longer matches cannot be closed by this transaction
+        if (
+          this.form.close_ai_document_id !== null &&
+          !matches.documents.some(
+            (d) => d.id === this.form.close_ai_document_id,
+          )
+        ) {
+          this.form.close_ai_document_id = null;
+        }
+      },
+
+      // One document can be closed per saved transaction
+      toggleCloseDocument(documentId, checked) {
+        this.form.close_ai_document_id = checked ? documentId : null;
+      },
+
       initializeTransaction() {
         this.initializingTransaction = true;
 

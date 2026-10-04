@@ -34,7 +34,7 @@ Stack: PHPUnit only (no Pest), Feature tests preferred, Dusk only for critical E
 | 24 | Reminder repeats until handled | cron idempotency | Sent on every run; stops once finalized | `CleanupOldAiDocumentFilesCommandTest::test_the_reminder_is_sent_on_every_run_until_the_document_is_handled` | integration | existing |
 | 25 | Drive filename cannot escape `ai_documents/{user}/{uuid}/` on import | architecture boundary (upstream) | `../`, `..\` and `/` in names are reduced to the last segment; nothing is written elsewhere | `ProcessGoogleDriveConfigJobTest::test_job_keeps_path_like_drive_file_names_inside_the_documents_own_directory` (fails against the unfixed job) | integration | existing |
 | 26 | FK is `SET NULL` | architecture "Data changes" | Deleting a document keeps its transaction with `ai_document_id = null` | `AiDocumentStorageAndDeletionTest::test_deleting_a_document_keeps_its_transaction` (behavioural, uses the real FK). The migration's `down()` is not exercised: DDL implicitly commits inside the `RefreshDatabase` transaction | integration | existing (up only) |
-| 27 | `unprocessed` pseudo-status filter in the table | flows F5 link target | Matches every non-finalized status | none (no JS test) | manual / JS unit | **none** |
+| 27 | `unprocessed` pseudo-status filter in the table | flows F5 link target | Matches every non-terminal status | none (no JS test) | manual / JS unit | **none** |
 | 28 | Settings-form Drive confirmation dialog | flows F1.5 | Shown only on change and when Drive keeps files | none | manual | **none** |
 | 29 | Manual delete path guard | flows F6 | Not present in code — rule does not exist | n/a | — | gap (see below) |
 

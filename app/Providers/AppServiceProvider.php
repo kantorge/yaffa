@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Components\MailHandler;
 use App\Jobs\GetInvestmentPrices;
 use App\Models\Account;
+use App\Models\AiDocument;
 use App\Models\Payee;
 use App\Models\User;
 use App\Policies\ImportPolicy;
@@ -71,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
             'payee' => Payee::class,
             'standard' => TransactionDetailStandard::class,
             'investment' => TransactionDetailInvestment::class,
+            'ai_document' => AiDocument::class,
         ]);
 
         // Setup Mailbox to handle incoming emails sent to specified address, if this email address is configured

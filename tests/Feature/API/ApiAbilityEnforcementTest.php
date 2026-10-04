@@ -4,6 +4,7 @@ namespace Tests\Feature\API;
 
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
+use App\Models\AiDocument;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Currency;
@@ -58,6 +59,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.show' => ['api.v1.budgets.show', 'get', 'read', ['budget' => 1]],
             'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
             'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
+            'transactions.duplicate-check' => ['api.v1.transactions.duplicate-check', 'post', 'read', []],
             'transaction-templates.index' => ['api.v1.transaction-templates.index', 'get', 'read', []],
             'transaction-templates.show' => ['api.v1.transaction-templates.show', 'get', 'read', ['template' => 1]],
 
@@ -82,6 +84,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'imports.parse' => ['api.v1.imports.parse', 'post', 'write', []],
             'imports.file-profiles.store' => ['api.v1.imports.file-profiles.store', 'post', 'write', []],
             'documents.store' => ['api.v1.documents.store', 'post', 'write', []],
+            'documents.dismiss' => ['api.v1.documents.dismiss', 'post', 'write', ['aiDocument' => 1]],
             'category-learning.store' => ['api.v1.category-learning.store', 'post', 'write', []],
             'currency-rates.store' => ['api.v1.currency-rates.store', 'post', 'write', []],
             'investment-prices.store' => ['api.v1.investment-prices.store', 'post', 'write', []],
@@ -171,6 +174,9 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.transaction-templates.show', 'api.v1.transaction-templates.update', 'api.v1.transaction-templates.destroy' => [
                 'template' => TransactionTemplate::factory()->for($user)->create()->id,
+            ],
+            'api.v1.documents.dismiss' => [
+                'aiDocument' => AiDocument::factory()->for($user)->readyForReview()->create()->id,
             ],
             'api.v1.currencies.destroy' => [
                 'currency' => Currency::factory()->for($user)->create()->id,

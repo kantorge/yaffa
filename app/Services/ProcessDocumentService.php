@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\AiDocumentStatus;
+use App\Enums\SameEventOutcome;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\AiResponseParseException;
 use App\Exceptions\InvalidAiResponseSchemaException;
@@ -10,8 +12,12 @@ use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
 use App\Models\AccountEntity;
 use App\Models\CategoryLearning;
+use App\Models\Transaction;
+use App\Models\TransactionOrigin;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -25,6 +31,8 @@ class ProcessDocumentService
 
     private ProcessingHistoryRecorder $processingHistoryRecorder;
 
+    private SameEventClassifier $sameEventClassifier;
+
     private bool $promptChatHistoryEnabled = true;
 
     public function __construct(
@@ -36,10 +44,12 @@ class ProcessDocumentService
         ?AiUserSettingsResolver $aiUserSettingsResolver = null,
         ?AiStepGateway $aiStepGateway = null,
         ?ProcessingHistoryRecorder $processingHistoryRecorder = null,
+        ?SameEventClassifier $sameEventClassifier = null,
     ) {
         $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
         $this->processingHistoryRecorder = $processingHistoryRecorder ?? app(ProcessingHistoryRecorder::class);
         $this->aiStepGateway = $aiStepGateway ?? app(AiStepGateway::class);
+        $this->sameEventClassifier = $sameEventClassifier ?? app(SameEventClassifier::class);
     }
 
     /**
@@ -63,8 +73,7 @@ class ProcessDocumentService
             $autoAcceptThreshold = (float) ($resolvedSettings['match_auto_accept_threshold'] ?? self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH);
 
             // Update status to processing
-            $document->status = 'processing';
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::Processing);
 
             // Step 1: Extract text from all files
             $extractedText = $this->extractTextFromFiles($document, $config, $resolvedSettings);
@@ -155,10 +164,11 @@ class ProcessDocumentService
             // Step 5: Store processed data and update document
             $document->processed_transaction_data = $transactionData;
             $document->processed_at = now();
-            $document->status = 'ready_for_review';
-            $document->save();
+            $document->document_kind = $this->documentKind($rawData);
 
-            Log::info("Document {$document->id} processed successfully");
+            $this->decideOutcome($document);
+
+            Log::info("Document {$document->id} processed successfully, status {$document->status}");
 
             return [
                 'success' => true,
@@ -167,11 +177,53 @@ class ProcessDocumentService
         } catch (Exception $e) {
             Log::error("Document {$document->id} processing failed: {$e->getMessage()}");
 
-            $document->status = 'processing_failed';
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::ProcessingFailed);
 
             throw $e;
         }
+    }
+
+    /**
+     * Decide what happens to the freshly processed document: it is closed when it repeats a document or a
+     * recorded purchase, and waits for review otherwise. Runs under a per-user lock, so two documents of the
+     * same purchase that finish processing in parallel cannot both miss each other.
+     */
+    private function decideOutcome(AiDocument $document): void
+    {
+        Cache::lock("ai-decide:{$document->user_id}", 60)->block(30, function () use ($document): void {
+            $result = $this->sameEventClassifier->classify($document);
+
+            DB::transaction(function () use ($document, $result): void {
+                match ($result->outcome) {
+                    // The same content again: closed silently, nothing to link it to
+                    SameEventOutcome::ExactRepeat => $document->transitionTo(AiDocumentStatus::Duplicate),
+                    SameEventOutcome::SameEventTransaction => $this->closeAsDuplicateOf($document, $result->transaction),
+                    default => $document->transitionTo(AiDocumentStatus::ReadyForReview),
+                };
+            });
+        });
+    }
+
+    private function closeAsDuplicateOf(AiDocument $document, Transaction $transaction): void
+    {
+        TransactionOrigin::record(
+            $document->user,
+            $transaction,
+            TransactionOrigin::RELATION_DUPLICATE_OF,
+            $document,
+            'Same purchase as an already recorded transaction (same amount, payee and date window).'
+        );
+        $document->transitionTo(AiDocumentStatus::Duplicate);
+    }
+
+    /**
+     * @param  array<string, mixed>  $rawData
+     */
+    private function documentKind(array $rawData): ?string
+    {
+        $kind = $rawData['document_kind'] ?? null;
+
+        return in_array($kind, AiExtractionSchemaValidator::DOCUMENT_KINDS, true) ? $kind : null;
     }
 
     /**
@@ -278,6 +330,11 @@ class ProcessDocumentService
             ? $investmentKeys
             : $standardKeys;
 
+        // The optional identifying fields are a best effort of the model: an unusable value is dropped
+        // rather than failing the whole extraction
+        $keys = [...$keys, ...AiExtractionSchemaValidator::OPTIONAL_KEYS];
+        $data = $this->sanitizeOptionalFields($data);
+
         $normalized = [];
 
         foreach ($keys as $key) {
@@ -289,6 +346,32 @@ class ProcessDocumentService
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function sanitizeOptionalFields(array $data): array
+    {
+        foreach (['bank_reference', 'card_last_digits'] as $key) {
+            $value = $data[$key] ?? null;
+            $value = is_int($value) ? (string) $value : $value;
+            $data[$key] = is_string($value) && mb_trim($value) !== '' ? mb_trim($value) : null;
+        }
+
+        $kind = $data['document_kind'] ?? null;
+        $data['document_kind'] = is_string($kind) && in_array(Str::lower($kind), AiExtractionSchemaValidator::DOCUMENT_KINDS, true)
+            ? Str::lower($kind)
+            : null;
+
+        // Accept HH:MM, and cut off seconds the model may add
+        $time = $data['transaction_time'] ?? null;
+        $data['transaction_time'] = is_string($time) && preg_match('/^([01]\d|2[0-3]):[0-5]\d/', mb_trim($time), $matches)
+            ? $matches[0]
+            : null;
+
+        return $data;
     }
 
     /**

@@ -30,6 +30,7 @@ class AiUserSettingsResource extends JsonResource
             'duplicate_date_window_days' => data_get($this->resource, 'duplicate_date_window_days'),
             'duplicate_amount_tolerance_percent' => data_get($this->resource, 'duplicate_amount_tolerance_percent'),
             'duplicate_similarity_threshold' => data_get($this->resource, 'duplicate_similarity_threshold'),
+            'same_event_minutes' => data_get($this->resource, 'same_event_minutes'),
             'category_matching_mode' => data_get($this->resource, 'category_matching_mode'),
             'document_retention_days' => data_get($this->resource, 'document_retention_days'),
             'warnings' => data_get($this->resource, 'warnings', []),

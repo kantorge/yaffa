@@ -12,6 +12,7 @@ use App\Models\AiDocumentFile;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
+use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -32,7 +33,7 @@ use Throwable;
     'index', 'show', 'summary',
 ])]
 #[Middleware('abilities:write', only: [
-    'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+    'store', 'update', 'reprocess', 'dismiss', 'checkDuplicates', 'destroy',
 ])]
 #[Middleware('abilities:settings', only: [
     'cleanupOldFiles',
@@ -72,17 +73,21 @@ class AiDocumentApiController extends Controller
         ]);
 
         try {
+            $fileHashes = [];
+
             // Store uploaded files
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
-                    $this->storeFile($document, $file);
+                    $fileHashes[] = $this->storeFile($document, $file);
                 }
             }
 
             // Store text input if provided
             if ($request->input('text_input')) {
-                $this->storeTextFile($document, $request->input('text_input'));
+                $fileHashes[] = $this->storeTextFile($document, $request->input('text_input'));
             }
+
+            $document->update(['content_hash' => AiDocument::hashFiles($fileHashes)]);
         } catch (Throwable $e) {
             // Don't leave a half-stored document (or its files) behind; cascades to the file records.
             Storage::disk('local')->deleteDirectory("ai_documents/{$document->user_id}/{$document->id}");
@@ -124,10 +129,10 @@ class AiDocumentApiController extends Controller
             }
 
             if ($request->filled('status')) {
-                $document->status = $request->input('status');
+                $document->transitionTo(AiDocumentStatus::from($request->input('status')));
+            } else {
+                $document->save();
             }
-
-            $document->save();
 
             return $document;
         });
@@ -149,7 +154,7 @@ class AiDocumentApiController extends Controller
      * Get document processing summary
      *
      * Returns aggregate counts (ready for review, processing failed, oldest pending) for the
-     * user's non-finalized AI documents.
+     * user's AI documents that are not in a terminal status.
      */
     public function summary(Request $request): JsonResponse
     {
@@ -163,7 +168,7 @@ class AiDocumentApiController extends Controller
 
         $stats = AiDocument::query()
             ->where('user_id', $user->id)
-            ->where('status', '!=', 'finalized')
+            ->whereNotIn('status', AiDocumentStatus::values(AiDocumentStatus::terminal()))
             ->selectRaw(
                 "COUNT(*) as total, "
                 . "COUNT(CASE WHEN status = 'ready_for_review' THEN 1 END) as ready_for_review, "
@@ -280,7 +285,7 @@ class AiDocumentApiController extends Controller
     #[Authorize('view', 'aiDocument')]
     public function show(Request $request, AiDocument $aiDocument): JsonResponse
     {
-        $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
+        $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction', 'origins');
         $this->enrichProcessedData($aiDocument, $request->user());
 
         return response()->json([
@@ -311,11 +316,11 @@ class AiDocumentApiController extends Controller
             }
 
             // Reset document to ready_for_processing
-            $document->status = AiDocumentStatus::ReadyForProcessing->value;
             $document->processed_transaction_data = null;
             $document->ai_chat_history = null;
+            $document->document_kind = null;
             $document->processed_at = null;
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::ReadyForProcessing);
 
             return $document;
         });
@@ -332,6 +337,41 @@ class AiDocumentApiController extends Controller
         return response()->json([
             'status' => $aiDocument->status,
             'message' => __('Document reprocessing queued'),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Dismiss a document
+     *
+     * Closes a document the user does not want to record, for example because it is insufficient. Only
+     * allowed from ready_for_review or processing_failed. A dismissed document can still be reprocessed.
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'aiDocument')]
+    public function dismiss(AiDocument $aiDocument): JsonResponse
+    {
+        $dismissed = DB::transaction(function () use ($aiDocument): bool {
+            $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! in_array($document->status, [AiDocumentStatus::ReadyForReview->value, AiDocumentStatus::ProcessingFailed->value], true)) {
+                return false;
+            }
+
+            $document->transitionTo(AiDocumentStatus::Dismissed);
+
+            return true;
+        });
+
+        if (! $dismissed) {
+            return response()->json([
+                'error' => __('Document cannot be dismissed from current status'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return response()->json([
+            'status' => AiDocumentStatus::Dismissed->value,
+            'message' => __('Document dismissed'),
         ], Response::HTTP_OK);
     }
 
@@ -370,8 +410,11 @@ class AiDocumentApiController extends Controller
      * @throws AuthorizationException
      */
     #[Authorize('view', 'aiDocument')]
-    public function checkDuplicates(AiDocument $aiDocument, DuplicateDetectionService $duplicateService): JsonResponse
-    {
+    public function checkDuplicates(
+        AiDocument $aiDocument,
+        DuplicateDetectionService $duplicateService,
+        SameEventClassifier $classifier,
+    ): JsonResponse {
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
             return response()->json([], Response::HTTP_BAD_REQUEST);
@@ -382,6 +425,7 @@ class AiDocumentApiController extends Controller
         if (! isset($extractedData['date'])) {
             return response()->json([
                 'duplicates' => [],
+                'documents' => [],
             ], Response::HTTP_OK);
         }
 
@@ -411,15 +455,30 @@ class AiDocumentApiController extends Controller
             ];
         }, $duplicates);
 
+        // Other open documents describing the same purchase
+        $key = $classifier->keyFromDocument($aiDocument);
+        $documents = $key === null
+            ? []
+            : $classifier->openDocumentMatches($user, $key, $aiDocument->id)
+                ->map(fn (AiDocument $other) => [
+                    'id' => $other->id,
+                    'status' => $other->status,
+                    'url' => route('ai-documents.show', $other),
+                ])
+                ->values();
+
         return response()->json([
             'duplicates' => $enrichedDuplicates,
+            'documents' => $documents,
         ], Response::HTTP_OK);
     }
 
     /**
      * Store an uploaded file for the document
+     *
+     * @return string sha256 of the file's content
      */
-    private function storeFile(AiDocument $aiDocument, $file): void
+    private function storeFile(AiDocument $aiDocument, $file): string
     {
         $filename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -443,12 +502,14 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => $fileType,
         ]);
+
+        return hash_file('sha256', $file->getRealPath());
     }
 
     /**
      * Store text input as a file
      */
-    private function storeTextFile(AiDocument $aiDocument, string $textInput): void
+    private function storeTextFile(AiDocument $aiDocument, string $textInput): string
     {
         $filename = 'text_input_' . now()->timestamp . '.txt';
 
@@ -465,6 +526,8 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => 'txt',
         ]);
+
+        return hash('sha256', $textInput);
     }
 
     /**

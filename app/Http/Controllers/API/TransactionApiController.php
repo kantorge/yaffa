@@ -7,6 +7,7 @@ use App\Enums\TransactionType;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\DuplicateCheckRequest;
 use App\Http\Requests\API\FindTransactionsRequest;
 use App\Http\Requests\API\GetScheduledItemsRequest;
 use App\Http\Requests\TransactionRequest;
@@ -18,6 +19,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Services\CategoryService;
+use App\Services\SameEventClassifier;
 use App\Services\TransactionCreationService;
 use App\Services\TransactionItemMergeService;
 use Brick\Math\RoundingMode;
@@ -34,7 +36,7 @@ use Illuminate\Support\Collection;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'getItem', 'getScheduledItems', 'findTransactions',
+    'getItem', 'getScheduledItems', 'findTransactions', 'duplicateCheck',
 ])]
 #[Middleware('abilities:write', only: [
     'reconcile', 'storeStandard', 'storeInvestment', 'updateStandard',
@@ -51,6 +53,55 @@ class TransactionApiController extends Controller
         private TransactionCreationService $creationService,
     ) {
         $this->categoryService = new CategoryService();
+    }
+
+    /**
+     * Check a transaction being entered for known matches
+     *
+     * Looks for recorded transactions and for open AI documents (waiting for review or a receipt) that match
+     * the purchase's amount, date window, payee and account. Only informational: saving is never blocked.
+     * Only withdrawals and deposits can be matched; anything else returns empty lists.
+     */
+    public function duplicateCheck(DuplicateCheckRequest $request, SameEventClassifier $classifier): JsonResponse
+    {
+        $user = $request->user();
+        $empty = ['transactions' => [], 'documents' => []];
+
+        $key = $request->input('config_type') === 'standard'
+            ? $classifier->keyFromEntry(
+                $request->input('transaction_type'),
+                $request->integer('account_id') ?: null,
+                $request->integer('payee_id') ?: null,
+                $request->input('date'),
+                (string) $request->input('amount'),
+            )
+            : null;
+
+        if ($key === null) {
+            return response()->json($empty, Response::HTTP_OK);
+        }
+
+        $transactions = $classifier->transactionMatches($user, $key, $request->integer('exclude_transaction_id') ?: null)
+            ->map(fn (array $match) => [
+                'id' => $match['transaction']->id,
+                'date' => $match['transaction']->date->toDateString(),
+                'amount' => (string) $key['amount'],
+                'url' => route('transaction.open', ['transaction' => $match['transaction']->id, 'action' => 'show']),
+            ])
+            ->values();
+
+        $documents = $classifier->openDocumentMatches($user, $key)
+            ->map(fn ($document) => [
+                'id' => $document->id,
+                'status' => $document->status,
+                'title' => $document->receivedMail->subject
+                    ?? $document->aiDocumentFiles->first()->file_name
+                    ?? __('Document #:id', ['id' => $document->id]),
+                'url' => route('ai-documents.show', $document),
+            ])
+            ->values();
+
+        return response()->json(['transactions' => $transactions, 'documents' => $documents], Response::HTTP_OK);
     }
 
     /**
