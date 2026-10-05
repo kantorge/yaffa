@@ -151,3 +151,16 @@ it('recalculates every payee of a user with the nightly command', function () {
         ->and(PayeeProfile::where('account_entity_id', $other->id)->exists())->toBeTrue()
         ->and(PayeeProfile::where('account_entity_id', $foreign->id)->exists())->toBeFalse();
 });
+
+it('recalculates the previous payee when a transaction stops being a standard one', function () {
+    $transaction = $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 10, now());
+    $transaction->forceFill(['config_type' => 'investment']);
+    Queue::fake();
+
+    event(new TransactionUpdated($transaction, [
+        'transaction' => ['config_type' => 'standard'],
+        'previous_standard_config' => ['account_from_id' => $this->account->id, 'account_to_id' => $this->payee->id],
+    ]));
+
+    Queue::assertPushed(RecalculatePayeeProfile::class, fn ($job) => $job->payeeId === $this->payee->id);
+});

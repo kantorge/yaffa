@@ -128,3 +128,15 @@ it('resolves and saves the auto-recording thresholds', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['auto_record_wilson_min']);
 });
+
+it('does not treat a case-only edit of a name or alias as a change', function () {
+    AccountEntity::factory()->asPayee($this->user)->create(['name' => 'omv', 'alias' => 'shell']);
+    $second = AccountEntity::factory()->asPayee($this->user)->create(['name' => 'Fuel', 'alias' => 'OMV']);
+
+    // "Fuel" -> "FUEL" and "OMV" -> "Omv": same normalized values as before, so legacy collisions do not block
+    $this->patchJson(route('api.v1.payees.update', $second->id), [
+        'name' => 'FUEL',
+        'config_type' => 'payee',
+        'alias' => 'Omv',
+    ])->assertOk();
+});

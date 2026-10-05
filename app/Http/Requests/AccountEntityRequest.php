@@ -118,14 +118,14 @@ class AccountEntityRequest extends FormRequest
             // Only a changed value is checked, so existing data never blocks an unrelated edit.
             $rules['name'][] = fn (string $attribute, mixed $value, Closure $fail) => $this->failOnPayeeConflict(
                 [(string) $value],
-                $accountEntity?->name === $value ? [] : [(string) $value],
+                $accountEntity !== null && PayeeMatcher::normalize($accountEntity->name) === PayeeMatcher::normalize((string) $value) ? [] : [(string) $value],
                 $accountEntity,
                 $attribute,
                 $fail,
             );
             $rules['alias'][] = fn (string $attribute, mixed $value, Closure $fail) => $this->failOnPayeeConflict(
                 PayeeMatcher::aliasLines($value),
-                array_diff(PayeeMatcher::aliasLines($value), PayeeMatcher::aliasLines($accountEntity?->alias)),
+                $this->changedAliasLines($value, $accountEntity),
                 $accountEntity,
                 $attribute,
                 $fail,
@@ -185,6 +185,21 @@ class AccountEntityRequest extends FormRequest
         if ($attribute === 'alias' && count($normalized) !== count(array_unique($normalized))) {
             $fail(__('The alias lines must be different from each other.'));
         }
+    }
+
+    /**
+     * The alias lines that are new, comparing by normalized value so a case-only edit is not a change.
+     *
+     * @return array<int, string>
+     */
+    private function changedAliasLines(?string $alias, ?AccountEntity $accountEntity): array
+    {
+        $existing = array_map(PayeeMatcher::normalize(...), PayeeMatcher::aliasLines($accountEntity?->alias));
+
+        return array_values(array_filter(
+            PayeeMatcher::aliasLines($alias),
+            fn (string $line) => ! in_array(PayeeMatcher::normalize($line), $existing, true),
+        ));
     }
 
     /**

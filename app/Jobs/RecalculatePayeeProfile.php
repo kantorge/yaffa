@@ -38,32 +38,27 @@ class RecalculatePayeeProfile implements ShouldQueue, ShouldBeUnique
 
     /**
      * Queue a recalculation for each payee a standard transaction touches. `$previousConfig` carries the
-     * pre-update account IDs, so a payee that was swapped out is recalculated too.
+     * pre-update account IDs, so a payee that was swapped out, or whose transaction stopped being a
+     * recorded standard one, is recalculated too.
      *
      * @param  array<string, mixed>  $previousConfig
      */
     public static function dispatchForTransaction(Transaction $transaction, array $previousConfig = []): void
     {
-        if (! $transaction->isStandard() || $transaction->schedule) {
-            return;
+        $entityIds = [$previousConfig['account_from_id'] ?? null, $previousConfig['account_to_id'] ?? null];
+
+        if ($transaction->isStandard() && ! $transaction->schedule) {
+            $transaction->loadMissing('config');
+
+            if ($transaction->config instanceof TransactionDetailStandard) {
+                $entityIds[] = $transaction->config->account_from_id;
+                $entityIds[] = $transaction->config->account_to_id;
+            }
         }
-
-        $transaction->loadMissing('config');
-
-        if (! $transaction->config instanceof TransactionDetailStandard) {
-            return;
-        }
-
-        $entityIds = array_filter([
-            $transaction->config->account_from_id,
-            $transaction->config->account_to_id,
-            $previousConfig['account_from_id'] ?? null,
-            $previousConfig['account_to_id'] ?? null,
-        ]);
 
         AccountEntity::query()
             ->payees()
-            ->whereIn('id', array_unique($entityIds))
+            ->whereIn('id', array_unique(array_filter($entityIds)))
             ->pluck('id')
             ->each(fn (int $id) => self::dispatch($id));
     }
