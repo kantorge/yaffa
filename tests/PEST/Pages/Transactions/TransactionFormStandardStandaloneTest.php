@@ -46,8 +46,20 @@ function standardStandaloneSave(object $page, string $callback): void
 
 function standardStandaloneSwitchType(object $page, string $type): void
 {
+    // A type change recreates the account/payee select of every side whose kind changes (account <-> payee).
+    // Wait for the new instances, or a following search could hit the old, soon-destroyed one.
+    $oldType = $page->script("() => document.querySelector('[dusk^=\"transaction-type-\"].active').getAttribute('dusk').replace('transaction-type-', '')");
+    $kinds = ['withdrawal' => ['account', 'payee'], 'deposit' => ['payee', 'account'], 'transfer' => ['account', 'account']];
+    $page->script('() => { window.__oldSelects = { from: account_from.tomselect, to: account_to.tomselect }; }');
+
     $page->click("[dusk=\"transaction-type-{$type}\"]");
     test()->confirmSwal($page);
+
+    foreach (['from', 'to'] as $i => $side) {
+        if ($kinds[$oldType][$i] !== $kinds[$type][$i]) {
+            test()->waitUntil($page, "document.querySelector('#account_{$side}').tomselect && document.querySelector('#account_{$side}').tomselect !== window.__oldSelects.{$side}");
+        }
+    }
 }
 
 const STANDARD_FORM_SAVED = "document.querySelector('#BootstrapNotificationContainer')?.textContent.includes('Transaction added')";
