@@ -18,7 +18,9 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Services\AssetOverviewService;
+use App\Services\AiUserSettingsResolver;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeeProfileService;
 use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,6 +45,8 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
         private readonly AssetOverviewService $assetOverviewService,
+        private readonly PayeeProfileService $payeeProfileService,
+        private readonly AiUserSettingsResolver $aiUserSettingsResolver,
     ) {
     }
 
@@ -133,10 +137,43 @@ class AccountEntityController extends Controller implements HasMiddleware
             'payee' => $accountEntity,
             'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
             'categorySuggestion' => $this->payeeCategorySuggestion($request->user(), $accountEntity),
+            'payeeProfile' => $this->payeeProfileData($request->user(), $accountEntity),
             'baseCurrency' => $request->user()->baseCurrency(),
         ]);
 
         return view('payees.show', ['payee' => $accountEntity]);
+    }
+
+    /**
+     * Stored history profile of one payee, with the auto-recording qualification. Null until first calculated.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function payeeProfileData(User $user, AccountEntity $payee): ?array
+    {
+        $profile = $payee->payeeProfile()->with('dominantCategory.parent')->first();
+        $config = $payee->config;
+
+        if ($profile === null || ! $config instanceof Payee) {
+            return null;
+        }
+
+        return [
+            'sample_size' => $profile->sample_size,
+            'dominant_category' => $profile->dominantCategory?->full_name,
+            'dominant_share' => $profile->dominant_share,
+            'single_item_dominant_count' => $profile->single_item_dominant_count,
+            'wilson_lower' => $profile->wilson_lower,
+            'amount_median' => $profile->amount_median,
+            'amount_min' => $profile->amount_min,
+            'amount_max' => $profile->amount_max,
+            'calculated_at' => $profile->calculated_at->toIso8601String(),
+            'currency' => $this->payeeProfileService->currencyOf($profile),
+        ] + $this->payeeProfileService->qualification(
+            $profile,
+            $config->auto_record_policy,
+            $this->aiUserSettingsResolver->resolveForUser($user),
+        );
     }
 
     /**

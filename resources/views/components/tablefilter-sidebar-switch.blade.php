@@ -1,4 +1,4 @@
-@props(['label' => '', 'property' => ''])
+@props(['label' => '', 'property' => '', 'default' => 'any'])
 
 <li class="list-group-item d-flex justify-content-between align-items-center">
     {{ $label }}
@@ -8,17 +8,17 @@
             dusk="button-group-table-filter-{{ $property }}"
             role="group"
     >
-        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_yes" value="{{ __('Yes') }}">
+        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_yes" value="{{ __('Yes') }}" @checked($default === 'yes')>
         <label class="btn btn-outline-primary btn-xs" for="table_filter_{{ $property }}_yes" title="{{ __('Yes') }}">
             <span class="fa fa-fw fa-check"></span>
         </label>
 
-        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_any" value="" checked>
+        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_any" value="" @checked($default === 'any')>
         <label class="btn btn-outline-primary btn-xs" for="table_filter_{{ $property }}_any" title="{{ __('Any') }}">
             <span class="fa fa-fw fa-circle"></span>
         </label>
 
-        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_no" value="{{ __('No') }}">
+        <input type="radio" class="btn-check" name="table_filter_{{ $property }}" id="table_filter_{{ $property }}_no" value="{{ __('No') }}" @checked($default === 'no')>
         <label class="btn btn-outline-primary btn-xs" for="table_filter_{{ $property }}_no" title="{{ __('No') }}">
             <span class="fa fa-fw fa-close"></span>
         </label>

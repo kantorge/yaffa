@@ -986,7 +986,100 @@
       return;
     }
 
+    // Read the draft's payee before the refresh replaces the document
+    const aliasOffer = getPayeeAliasOffer(transaction);
+
     refreshDocument();
+
+    if (aliasOffer) {
+      offerPayeeAlias(aliasOffer);
+    }
+  };
+
+  // The leading words of the extracted payee text, up to the first word with a digit (store numbers, cities
+  // and the like follow it), at most three words
+  const leadingWords = (text) => {
+    const words = String(text || '')
+      .trim()
+      .split(/\s+/);
+    const firstNumbered = words.findIndex((word) => /\d/.test(word));
+
+    return words
+      .slice(0, firstNumbered === -1 ? words.length : firstNumbered)
+      .slice(0, 3)
+      .join(' ');
+  };
+
+  // When the person picked another payee than the one the document was matched to, the extracted text is
+  // worth remembering as an alias of the chosen payee
+  const getPayeeAliasOffer = (transaction) => {
+    const payeeId =
+      {
+        withdrawal: transaction.config?.account_to_id,
+        deposit: transaction.config?.account_from_id,
+      }[transaction.transaction_type] ?? null;
+    const alias = leadingWords(rawData.value.payee);
+
+    if (!payeeId || !alias || payeeId === matchedEntities.value.payee?.id) {
+      return null;
+    }
+
+    return { payeeId, alias };
+  };
+
+  const offerPayeeAlias = ({ payeeId, alias }) => {
+    window.axios
+      .get(route('api.v1.payees.show', { accountEntity: payeeId }))
+      .then(({ data: payee }) => {
+        const knownNames = [payee.name, ...(payee.alias || '').split(/\r?\n/)];
+
+        if (
+          knownNames.some(
+            (name) => name.trim().toLowerCase() === alias.toLowerCase(),
+          )
+        ) {
+          return null;
+        }
+
+        return Swal.fire({
+          text: __(
+            'Add ":alias" as an alias of :payee? Documents with this payee text will then be matched to it.',
+            { alias, payee: payee.name },
+          ),
+          icon: 'question',
+          showCancelButton: true,
+          cancelButtonText: __('No'),
+          confirmButtonText: __('Add alias'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-primary',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return null;
+          }
+
+          return window.axios
+            .patch(route('api.v1.payees.update', { accountEntity: payeeId }), {
+              config_type: 'payee',
+              name: payee.name,
+              active: payee.active,
+              alias: [payee.alias, alias].filter(Boolean).join('\n'),
+              simplified: true,
+              config: { category_id: payee.config?.category_id ?? null },
+            })
+            .then(() => {
+              toastHelpers.showSuccessToast(__('Alias added'));
+            });
+        });
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          error.response?.data?.errors?.alias?.[0] ||
+            __('Unable to add the alias.'),
+        );
+      });
   };
 
   onMounted(() => {

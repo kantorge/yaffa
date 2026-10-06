@@ -9,6 +9,7 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeeProfileService;
 use App\Services\PayeePersistenceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +24,7 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem',
+    'getList', 'getPayeeDefaultSuggestion', 'getSimilarPayees', 'getItem', 'getAutoRecordCandidates',
 ])]
 #[Middleware('abilities:write', only: [
     'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
@@ -34,6 +35,7 @@ class PayeeApiController extends Controller
     public function __construct(
         private PayeeCategoryStatsService $payeeCategoryStatsService,
         private PayeePersistenceService $payeePersistenceService,
+        private PayeeProfileService $payeeProfileService,
     ) {
     }
 
@@ -226,6 +228,19 @@ class PayeeApiController extends Controller
                 $payees,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Get auto-record candidates
+     *
+     * Sorts the user's payees by how their transaction history fits auto-recording: `qualifying` (passes the
+     * history gate), `near` (a few transactions short), `itemization_mismatch` (the itemization setting does
+     * not match how the payee is recorded) and `template_candidates` (a repeating transaction without a
+     * template). A payee can be in several groups. Nothing is recorded by this endpoint.
+     */
+    public function getAutoRecordCandidates(Request $request): JsonResponse
+    {
+        return response()->json($this->payeeProfileService->candidates($request->user()), Response::HTTP_OK);
     }
 
     /**

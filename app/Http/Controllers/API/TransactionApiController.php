@@ -679,6 +679,15 @@ class TransactionApiController extends Controller
         // Define a variable to keep track of changes
         $attributeChanges = [];
 
+        // A request can turn a standard transaction into an investment one; the payees it leaves need their
+        // profiles recalculated, so remember them before the type changes
+        if ($transaction->isStandard() && $transaction->config instanceof TransactionDetailStandard) {
+            $attributeChanges['previous_standard_config'] = [
+                'account_from_id' => $transaction->config->account_from_id,
+                'account_to_id' => $transaction->config->account_to_id,
+            ];
+        }
+
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 

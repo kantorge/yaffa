@@ -274,3 +274,14 @@ All core behaviors are directly verified in source code. The suggestion threshol
 - A payee has a detail page (`account-entity.show`, owner-only); see [Payee Detail Page](#payee-detail-page) and [`.ai/docs/features/payee-category-show-pages/`](../../features/payee-category-show-pages/architecture.md). (Earlier versions redirected back for payees.)
 - The "un-dismiss suggestion" workflow has no UI implementation found in the codebase. Once a suggestion is dismissed, the only way to restore it would be through a direct database change.
 - The `simplified` form mode appears to be used when `PayeeForm` is embedded in other contexts (e.g., inline creation during transaction entry), based on prop naming and behavior, though no specific host components were found in the reviewed files.
+
+---
+
+## Recording profile, auto-recording settings and aliases
+
+- Every payee has a calculated **profile** (50 newest transactions: usual category, consistency, usual amount) shown on the payee page. It is the basis for the upcoming auto-recording and is rebuilt in the background.
+- A payee has an **auto-recording** policy (follow the global setting, always allow, never) and an **itemization** setting (summary sufficient, or itemization expected, for payees such as a grocery store where receipts are recorded item by item).
+- The **auto-record candidates** page lists which payees would qualify, which are close, where the itemization setting does not match the history, and where a template would help.
+- **Names and aliases are unique per user once normalized** (accents, punctuation, numbers and company suffixes ignored), so a payee text can be matched to one payee only. An alias holds one entry per line.
+
+See [`.ai/docs/features/fast-transaction-entry/payee-profile.md`](../../features/fast-transaction-entry/payee-profile.md).

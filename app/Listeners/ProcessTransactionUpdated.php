@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Events\TransactionUpdated;
 use App\Jobs\CalculateAccountMonthlySummary;
+use App\Jobs\RecalculatePayeeProfile;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -42,6 +43,11 @@ class ProcessTransactionUpdated
         // Based on the type of the transaction, dispatch a job to update the relevant monthly summaries
         // We also need to determine, if the change actually requires an update to the monthly summaries
         $changedAttributes = $event->changedAttributes;
+
+        RecalculatePayeeProfile::dispatchForTransaction(
+            $transaction,
+            ($event->changedAttributes['config'] ?? []) + ($event->changedAttributes['previous_standard_config'] ?? []),
+        );
 
         CategoryWaterfallCacheService::forgetForDate($transaction->user_id, $transaction->date);
         if (isset($changedAttributes['transaction']['date'])) {

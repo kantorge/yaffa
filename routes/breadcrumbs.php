@@ -71,6 +71,13 @@ Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->push(__('Merge'), route('payees.merge.form'));
 });
 
+// Payee > auto-record candidates
+Breadcrumbs::for('payees.auto-record-candidates', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Payees'), route('account-entity.index', ['type' => 'payee']));
+    $trail->push(__('Auto-record candidates'), route('payees.auto-record-candidates'));
+});
+
 // Category resource (index, create, show, edit)
 Breadcrumbs::for('categories.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');

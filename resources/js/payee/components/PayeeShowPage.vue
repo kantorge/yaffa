@@ -103,6 +103,8 @@
           @accepted="onSuggestionAccepted"
         ></payee-category-recommendation>
 
+        <payee-profile-card :profile="profile"></payee-profile-card>
+
         <payee-schedules-card :payee-id="payee.id"></payee-schedules-card>
         <similar-payees-card
           :payee-id="payee.id"
@@ -142,6 +144,7 @@
   import PayeeCategoryRecommendation from '@/dashboard/components/widgets/PayeeCategoryRecommendation.vue';
   import PayeeForm from './PayeeForm.vue';
   import PayeeOverviewCard from './PayeeOverviewCard.vue';
+  import PayeeProfileCard from './PayeeProfileCard.vue';
   import PayeeSchedulesCard from './PayeeSchedulesCard.vue';
   import SimilarPayeesCard from './SimilarPayeesCard.vue';
 
@@ -152,6 +155,7 @@
       PayeeCategoryRecommendation,
       PayeeForm,
       PayeeOverviewCard,
+      PayeeProfileCard,
       PayeeSchedulesCard,
       SimilarPayeesCard,
       TransactionReportTabs,
@@ -163,6 +167,7 @@
         overview: window.overview,
         baseCurrency: window.baseCurrency,
         suggestion: window.categorySuggestion || null,
+        profile: window.payeeProfile || null,
         dateFrom: null,
         dateTo: null,
         busy: false,

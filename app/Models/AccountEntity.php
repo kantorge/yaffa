@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
@@ -83,6 +84,14 @@ class AccountEntity extends Model
         return [
             'active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return HasOne<PayeeProfile, $this>
+     */
+    public function payeeProfile(): HasOne
+    {
+        return $this->hasOne(PayeeProfile::class);
     }
 
     public function config(): MorphTo

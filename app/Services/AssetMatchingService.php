@@ -208,10 +208,10 @@ class AssetMatchingService
 
         /** @var array<string, array{id: int, description: string, category_id: int, similarity: float, usage_count: int}> $bestMatchesByCategory */
         $bestMatchesByCategory = [];
-        $normalizedSearch = $this->normalizeForMatching($description);
+        $normalizedSearch = self::normalizeForMatching($description);
 
         foreach ($learningRecords as $learning) {
-            $normalizedItem = $this->normalizeForMatching($learning->item_description);
+            $normalizedItem = self::normalizeForMatching($learning->item_description);
             $similarity = $this->computeSimilarity($normalizedSearch, $normalizedItem);
 
             if ($similarity < $similarityThreshold) {
@@ -406,10 +406,10 @@ class AssetMatchingService
      */
     private function calculatePartialSimilarity(string $searchText, string $primary, ?array $secondary = null): float
     {
-        $normalizedSearch = $this->normalizeForMatching($searchText);
+        $normalizedSearch = self::normalizeForMatching($searchText);
 
         // Compare against primary part
-        $normalizedPrimary = $this->normalizeForMatching($primary);
+        $normalizedPrimary = self::normalizeForMatching($primary);
         $primarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedPrimary);
 
         // If no secondary parts, return primary score
@@ -424,7 +424,7 @@ class AssetMatchingService
                 continue;
             }
 
-            $normalizedSecondary = $this->normalizeForMatching($secondaryPart);
+            $normalizedSecondary = self::normalizeForMatching($secondaryPart);
             $secondarySimilarity = $this->computeSimilarity($normalizedSearch, $normalizedSecondary);
 
             $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
@@ -449,7 +449,7 @@ class AssetMatchingService
     /**
      * Normalize text for robust fuzzy matching.
      */
-    private function normalizeForMatching(string $value): string
+    public static function normalizeForMatching(string $value): string
     {
         if (class_exists(Normalizer::class)) {
             $value = Normalizer::normalize($value, Normalizer::FORM_C) ?: $value;
