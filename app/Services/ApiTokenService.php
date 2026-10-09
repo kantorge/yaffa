@@ -8,6 +8,7 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -42,8 +43,38 @@ class ApiTokenService
      */
     public function createPairing(User $user, string $name): array
     {
-        $newToken = $this->create($user, $name, ApiTokenAbility::values(), null);
+        return $this->packagePairing($this->create($user, $name, ApiTokenAbility::values(), null));
+    }
 
+    /**
+     * Replaces the secret of an existing token (same row, name, abilities, expiry and device) and returns
+     * it packaged for pairing. The previous secret stops working immediately.
+     *
+     * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
+     *
+     * @throws ModelNotFoundException
+     * @throws InvalidArgumentException when the token lacks read or write ability
+     */
+    public function rotateForPairing(User $user, int $tokenId): array
+    {
+        /** @var PersonalAccessToken $token */
+        $token = $user->tokens()->findOrFail($tokenId);
+
+        if (! $token->can('read') || ! $token->can('write')) {
+            throw new InvalidArgumentException('Only tokens with read and write access can be paired with the app.');
+        }
+
+        $secret = $user->generateTokenString();
+        $token->forceFill(['token' => hash('sha256', $secret)])->save();
+
+        return $this->packagePairing(new NewAccessToken($token, $token->getKey() . '|' . $secret));
+    }
+
+    /**
+     * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
+     */
+    private function packagePairing(NewAccessToken $newToken): array
+    {
         $baseUrl = mb_rtrim((string) config('app.url'), '/');
         $deepLink = 'yaffa://pair?' . http_build_query([
             'v' => 1,

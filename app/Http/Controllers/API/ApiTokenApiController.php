@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiTokenApiController extends Controller implements HasMiddleware
@@ -125,6 +126,33 @@ class ApiTokenApiController extends Controller implements HasMiddleware
             $this->apiTokenService->createPairing($user, $request->validated('name')),
             201
         );
+    }
+
+    /**
+     * Re-show a pairing code
+     *
+     * The plain-text token is never stored, so this replaces the token's secret and returns a fresh
+     * `yaffa://pair` deep link and QR code, as `POST /users/me/tokens/pairing` does. The previous secret
+     * stops working immediately; name, abilities and expiry are kept. Session requests only.
+     *
+     * @throws ModelNotFoundException
+     */
+    public function rotatePairing(Request $request, int $id): JsonResponse
+    {
+        if (config('yaffa.sandbox_mode')) {
+            return response()->json([
+                'message' => __('This action is not allowed in sandbox mode.'),
+            ], 403);
+        }
+
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            return response()->json($this->apiTokenService->rotateForPairing($user, $id));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     /**

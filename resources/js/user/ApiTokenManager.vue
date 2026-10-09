@@ -73,7 +73,23 @@
               <td>{{ formatDate(token.created_at) }}</td>
               <td>{{ formatDate(token.last_used_at) }}</td>
               <td>{{ formatDate(token.expires_at) }}</td>
-              <td class="text-end">
+              <td class="text-end text-nowrap">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm me-1"
+                  :disabled="pairingBusy || !canShowQr(token)"
+                  :title="
+                    canShowQr(token)
+                      ? null
+                      : __(
+                          'Only tokens with read and write access can be paired with the app.',
+                        )
+                  "
+                  dusk="button-show-token-qr"
+                  @click="showTokenQr(token)"
+                >
+                  <i class="fa me-1 fa-qrcode"></i>{{ __('Show QR code') }}
+                </button>
                 <button
                   type="button"
                   class="btn btn-danger btn-sm"
@@ -566,6 +582,47 @@
               __('Unable to create the pairing code.'),
             );
           }
+        } finally {
+          this.pairingBusy = false;
+        }
+      },
+      canShowQr(token) {
+        return ['read', 'write'].every((a) => token.abilities.includes(a));
+      },
+      async showTokenQr(token) {
+        const result = await Swal.fire({
+          animation: false,
+          text: __(
+            'A token cannot be displayed again, so showing its QR code replaces it with a new secret. The current secret stops working immediately, and any app or script using this token must be paired again with the new code.',
+          ),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: __('Cancel'),
+          confirmButtonText: __('Show QR code'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        });
+
+        if (!result.isConfirmed || this.pairingBusy) {
+          return;
+        }
+
+        this.pairingBusy = true;
+
+        try {
+          const response = await axios.post(
+            this.route('api.v1.users.me.tokens.pairing.rotate', {
+              id: token.id,
+            }),
+          );
+          this.pairing = response.data;
+          this.pairModal?.show();
+        } catch (error) {
+          console.error(error);
+          toastHelpers.showErrorToast(__('Unable to create the pairing code.'));
         } finally {
           this.pairingBusy = false;
         }

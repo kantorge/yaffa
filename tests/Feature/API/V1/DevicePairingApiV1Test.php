@@ -65,3 +65,47 @@ it('revokes a device so its next call fails', function () {
     $this->app['auth']->forgetGuards();
     $this->withToken($token->plainTextToken)->getJson(route('api.v1.meta'))->assertJsonMissingPath('user');
 });
+
+it('replaces the secret of an existing token and returns a fresh pairing code', function () {
+    config(['app.url' => 'https://yaffa.example.com']);
+    $user = User::factory()->create();
+    $old = $user->createToken('Pixel', ['read', 'write'], now()->addDays(30));
+
+    $response = $this->actingAs($user)
+        ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $old->accessToken->id))
+        ->assertOk();
+
+    $new = $response->json('token');
+    expect($new)->not->toBe($old->plainTextToken);
+    expect($response->json('qr_svg'))->toContain('<svg');
+    expect($user->tokens()->count())->toBe(1);
+    expect($user->tokens()->first()->abilities)->toEqualCanonicalizing(['read', 'write']);
+
+    $this->app['auth']->forgetGuards();
+    $this->withToken($old->plainTextToken)->getJson(route('api.v1.meta'))->assertJsonMissingPath('user');
+    $this->app['auth']->forgetGuards();
+    $this->withToken($new)->getJson(route('api.v1.meta'))->assertJsonPath('user.locale', $user->locale);
+});
+
+it('cannot rotate another user\'s token or be used by a token', function () {
+    $other = User::factory()->create()->createToken('theirs', ['*']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $other->accessToken->id))
+        ->assertNotFound();
+
+    $this->app['auth']->forgetGuards();
+    $this->withToken($other->plainTextToken)
+        ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $other->accessToken->id))
+        ->assertForbidden();
+});
+
+it('refuses to show a pairing code for a read-only token', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken('script', ['read']);
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $token->accessToken->id))
+        ->assertUnprocessable();
+});

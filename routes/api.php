@@ -371,6 +371,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('users.me.tokens.store');
     Route::post('/users/me/tokens/pairing', [ApiTokenApiController::class, 'storePairing'])
         ->name('users.me.tokens.pairing');
+    Route::post('/users/me/tokens/{id}/pairing', [ApiTokenApiController::class, 'rotatePairing'])
+        ->whereNumber('id')
+        ->name('users.me.tokens.pairing.rotate');
     Route::delete('/users/me/tokens/{id}', [ApiTokenApiController::class, 'destroy'])
         ->whereNumber('id')
         ->name('users.me.tokens.destroy');
