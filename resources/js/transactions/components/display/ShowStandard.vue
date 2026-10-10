@@ -198,6 +198,33 @@
                   )
                 }}
               </dd>
+
+              <dt v-if="createdOrigin" class="col-6">
+                {{ __('Origin') }}
+              </dt>
+              <dd v-if="createdOrigin" class="col-6" dusk="label-origin">
+                <span class="badge bg-info">
+                  {{ __('Recorded automatically') }}
+                </span>
+                <span
+                  class="badge ms-1"
+                  :class="
+                    createdOrigin.reviewed_at ? 'bg-success' : 'bg-warning'
+                  "
+                >
+                  {{
+                    createdOrigin.reviewed_at
+                      ? __('Reviewed')
+                      : __('Not reviewed')
+                  }}
+                </span>
+                <div
+                  v-if="createdOrigin.decision_reason"
+                  class="small text-muted"
+                >
+                  {{ createdOrigin.decision_reason }}
+                </div>
+              </dd>
             </dl>
           </div>
         </div>
@@ -243,6 +270,15 @@
     },
 
     computed: {
+      // Set when the transaction was recorded automatically from an AI document
+      createdOrigin() {
+        return (
+          this.transaction.origins?.find(
+            (origin) => origin.relation === 'created',
+          ) ?? null
+        );
+      },
+
       // Account TO and FROM labels based on transaction type
       accountFromFieldLabel() {
         if (

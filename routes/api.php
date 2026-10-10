@@ -26,6 +26,7 @@ use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TransactionOriginApiController;
 use App\Http\Controllers\API\TransactionTemplateApiController;
 use App\Http\Controllers\API\TwoFactorApiController;
 use App\Http\Controllers\API\UserApiController;
@@ -295,6 +296,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('transaction-templates.update');
     Route::delete('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'destroy'])
         ->name('transaction-templates.destroy');
+
+    // Transaction origin endpoints (auto-recorded review)
+    Route::get('/transaction-origins', [TransactionOriginApiController::class, 'index'])
+        ->name('transaction-origins.index');
+    Route::post('/transaction-origins/review', [TransactionOriginApiController::class, 'reviewMany'])
+        ->name('transaction-origins.review-many');
+    Route::post('/transaction-origins/{origin}/review', [TransactionOriginApiController::class, 'review'])
+        ->name('transaction-origins.review');
 
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])

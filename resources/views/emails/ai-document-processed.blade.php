@@ -2,7 +2,11 @@
 
 {{ __('mail.common.greeting', ['name' => $document->user->name]) }}
 
+@if($document->status === 'auto_recorded')
+{{ __('mail.ai_document_processed.intro_auto_recorded') }}
+@else
 {{ __('mail.ai_document_processed.intro') }}
+@endif
 
 **{{ __('mail.ai_document_processed.what_happened') }}**
 - {{ __('mail.labels.document_id') }}: #{{ $document->id }}
@@ -18,7 +22,11 @@
 @endif
 
 **{{ __('mail.ai_document_processed.next_action_title') }}**
+@if($document->status === 'auto_recorded')
+{{ __('mail.ai_document_processed.next_action_text_auto_recorded') }}
+@else
 {{ __('mail.ai_document_processed.next_action_text') }}
+@endif
 
 @component('mail::button', ['url' => route('ai-documents.show', $document->id), 'color' => 'success'])
 {{ __('mail.ai_document_processed.button_review_document') }}

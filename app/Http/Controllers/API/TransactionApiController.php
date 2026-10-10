@@ -134,6 +134,7 @@ class TransactionApiController extends Controller
     public function getItem(Transaction $transaction): JsonResponse
     {
         $transaction->loadDetails();
+        $transaction->loadMissing('origins');
 
         return response()->json(
             [

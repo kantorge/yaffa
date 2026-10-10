@@ -7,7 +7,7 @@ As built. Design intent: [specification](../../specifications/fast-transaction-e
 `App\Enums\AiDocumentStatus` gains `auto_recorded`, `duplicate`, `awaiting_itemization`, `dismissed`. Helpers: `terminal()` (`finalized`, `auto_recorded`, `duplicate`, `dismissed`), `linkedToTransaction()` (`finalized`, `auto_recorded`, `duplicate`), `open()` (`ready_for_review`, `awaiting_itemization`), `reprocessable()` (`ready_for_review`, `processing_failed`, `dismissed`).
 
 - **Every status write after creation goes through `AiDocument::transitionTo()`**, which also sets `status_changed_at` (new documents get it from a `creating` hook). The one exception is the bulk claim in `ProcessAiDocuments`, which sets `status_changed_at` in its own `update()`.
-- Only today's processing reaches `duplicate`; `dismissed` is user-set; `auto_recorded` and `awaiting_itemization` are reached in Phase 4.
+- Processing reaches `duplicate`, `auto_recorded` and `awaiting_itemization` (see [auto-recording](auto-recording.md)); `dismissed` is user-set.
 - `AiProcessingJob` skips documents linked to a transaction; `SendAiDocumentProcessedNotification` sends nothing for `duplicate` and `awaiting_itemization`.
 
 ## Extraction and content hash

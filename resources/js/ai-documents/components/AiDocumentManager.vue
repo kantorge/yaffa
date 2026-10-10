@@ -1,6 +1,42 @@
 <template>
   <div class="row">
-    <div class="col-12 col-lg-3">
+    <div class="col-12">
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            :class="{ active: tab === 'documents' }"
+            href="#"
+            @click.prevent="setTab('documents')"
+          >
+            {{ __('Documents') }}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            :class="{ active: tab === 'auto-recorded' }"
+            href="#"
+            dusk="tab-auto-recorded"
+            @click.prevent="setTab('auto-recorded')"
+          >
+            {{ __('Auto-recorded') }}
+            <span
+              v-if="unreviewedCount > 0"
+              class="badge bg-info rounded-pill ms-1"
+            >
+              {{ unreviewedCount }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div v-if="tab === 'auto-recorded'" class="col-12">
+      <ai-document-auto-recorded
+        @changed="unreviewedCount = $event"
+      ></ai-document-auto-recorded>
+    </div>
+    <div v-show="tab === 'documents'" class="col-12 col-lg-3">
       <onboarding-card
         :card-title="__('Guided tour')"
         :completed-message="
@@ -46,7 +82,7 @@
         @update="onDetectedDateRangeUpdated"
       ></date-range-filter-card>
     </div>
-    <div class="col-12 col-lg-9">
+    <div v-show="tab === 'documents'" class="col-12 col-lg-9">
       <div
         v-if="!aiProcessingEnabled"
         class="alert alert-warning d-flex justify-content-between align-items-center"
@@ -89,6 +125,7 @@
   import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import AiDocumentActions from './AiDocumentActions.vue';
+  import AiDocumentAutoRecorded from './AiDocumentAutoRecorded.vue';
   import AiDocumentFilters from './AiDocumentFilters.vue';
   import AiDocumentTable from './AiDocumentTable.vue';
   import AiDocumentUploadForm from './AiDocumentUploadForm.vue';
@@ -97,6 +134,13 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
 
+  // Documents or the auto-recorded review list (?tab=auto-recorded)
+  const tab = ref(
+    new URLSearchParams(window.location.search).get('tab') === 'auto-recorded'
+      ? 'auto-recorded'
+      : 'documents',
+  );
+  const unreviewedCount = ref(0);
   const documents = ref([]);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
   const sourceLabels = ref(window.aiDocumentSourceLabels || {});
@@ -183,12 +227,30 @@
       }
     }
 
+    if (tab.value === 'auto-recorded') {
+      params.set('tab', 'auto-recorded');
+    }
+
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
     window.history.replaceState('', '', nextUrl);
   };
 
+  const setTab = (name) => {
+    tab.value = name;
+    rebuildUrl();
+  };
+
   onMounted(() => {
+    window.axios
+      .get(window.route('api.v1.transaction-origins.index'), {
+        params: { relation: 'created', reviewed: 0 },
+      })
+      .then((response) => {
+        unreviewedCount.value = response.data.length;
+      })
+      .catch(() => {});
+
     const warnings = [...receivedDates.warnings, ...detectedDates.warnings];
     if (warnings.length > 0) {
       warnings.forEach((message) => toastHelpers.showErrorToast(message));

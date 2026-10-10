@@ -88,6 +88,8 @@ class TransactionController extends Controller
 
         // Show is routed to special view
         if ($action === 'show') {
+            $transaction->load('origins');
+
             JavaScript::put([
                 'transaction' => $transaction,
             ]);

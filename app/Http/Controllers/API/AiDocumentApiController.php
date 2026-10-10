@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\TransactionOrigin;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
@@ -183,6 +184,11 @@ class AiDocumentApiController extends Controller
             'total' => (int) ($stats->total ?? 0),
             'ready_for_review' => (int) ($stats->ready_for_review ?? 0),
             'processing_failed' => (int) ($stats->processing_failed ?? 0),
+            'auto_recorded_to_review' => TransactionOrigin::query()
+                ->where('user_id', $user->id)
+                ->where('relation', TransactionOrigin::RELATION_CREATED)
+                ->whereNull('reviewed_at')
+                ->count(),
             'oldest_created_at' => $stats->oldest_created_at
                 ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
                 : null,

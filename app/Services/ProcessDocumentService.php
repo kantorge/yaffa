@@ -13,9 +13,14 @@ use App\Models\AiProviderConfig;
 use App\Models\AccountEntity;
 use App\Models\CategoryLearning;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\TransactionOrigin;
 use App\Models\User;
+use App\Services\AutoRecord\AutoRecorder;
+use App\Services\AutoRecord\GateEvaluator;
+use App\Services\AutoRecord\GateResult;
 use Exception;
+use Brick\Math\BigDecimal;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +38,10 @@ class ProcessDocumentService
 
     private SameEventClassifier $sameEventClassifier;
 
+    private GateEvaluator $gateEvaluator;
+
+    private AutoRecorder $autoRecorder;
+
     private bool $promptChatHistoryEnabled = true;
 
     public function __construct(
@@ -45,11 +54,15 @@ class ProcessDocumentService
         ?AiStepGateway $aiStepGateway = null,
         ?ProcessingHistoryRecorder $processingHistoryRecorder = null,
         ?SameEventClassifier $sameEventClassifier = null,
+        ?GateEvaluator $gateEvaluator = null,
+        ?AutoRecorder $autoRecorder = null,
     ) {
         $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
         $this->processingHistoryRecorder = $processingHistoryRecorder ?? app(ProcessingHistoryRecorder::class);
         $this->aiStepGateway = $aiStepGateway ?? app(AiStepGateway::class);
         $this->sameEventClassifier = $sameEventClassifier ?? app(SameEventClassifier::class);
+        $this->gateEvaluator = $gateEvaluator ?? app(GateEvaluator::class);
+        $this->autoRecorder = $autoRecorder ?? app(AutoRecorder::class);
     }
 
     /**
@@ -185,8 +198,9 @@ class ProcessDocumentService
 
     /**
      * Decide what happens to the freshly processed document: it is closed when it repeats a document or a
-     * recorded purchase, and waits for review otherwise. Runs under a per-user lock, so two documents of the
-     * same purchase that finish processing in parallel cannot both miss each other.
+     * recorded purchase, merged into the notification it completes, recorded automatically when every gate
+     * passes, and waits for review otherwise. Runs under a per-user lock, so two documents of the same
+     * purchase that finish processing in parallel cannot both miss each other.
      */
     private function decideOutcome(AiDocument $document): void
     {
@@ -197,23 +211,142 @@ class ProcessDocumentService
                 match ($result->outcome) {
                     // The same content again: closed silently, nothing to link it to
                     SameEventOutcome::ExactRepeat => $document->transitionTo(AiDocumentStatus::Duplicate),
-                    SameEventOutcome::SameEventTransaction => $this->closeAsDuplicateOf($document, $result->transaction),
+                    SameEventOutcome::SameEventTransaction => $this->closeOrFlagConflict($document, $result->transaction),
+                    SameEventOutcome::SameEventDocument => $document->isItemized() && $result->document->status === AiDocumentStatus::AwaitingItemization->value
+                        ? $this->mergeIntoHeldDocument($document, $result->document)
+                        : $document->transitionTo(AiDocumentStatus::ReadyForReview),
+                    SameEventOutcome::None => $this->runGates($document),
                     default => $document->transitionTo(AiDocumentStatus::ReadyForReview),
                 };
             });
         });
     }
 
-    private function closeAsDuplicateOf(AiDocument $document, Transaction $transaction): void
+    /**
+     * Run the auto-record gates: record, hold for the receipt, or send to review with the reason.
+     */
+    private function runGates(AiDocument $document): ?Transaction
     {
-        TransactionOrigin::record(
-            $document->user,
-            $transaction,
-            TransactionOrigin::RELATION_DUPLICATE_OF,
-            $document,
-            'Same purchase as an already recorded transaction (same amount, payee and date window).'
-        );
+        $gates = $this->gateEvaluator->evaluate($document);
+
+        if ($gates->passed) {
+            return $this->autoRecorder->record($document, $gates);
+        }
+
+        $this->saveGateFailure($document, $gates);
+        $document->transitionTo($gates->hold ? AiDocumentStatus::AwaitingItemization : AiDocumentStatus::ReadyForReview);
+
+        return null;
+    }
+
+    /**
+     * Keep the failed gate and its reason in the draft for the document viewer. A switched-off feature is not
+     * a failure worth showing on every document.
+     */
+    private function saveGateFailure(AiDocument $document, GateResult $gates): void
+    {
+        if ($gates->failedGate === GateEvaluator::GATE_SWITCH) {
+            return;
+        }
+
+        $autoRecord = ['failed_gate' => $gates->failedGate, 'reason' => $gates->reason()];
+
+        if ($gates->hold) {
+            $days = (int) $this->aiUserSettingsResolver->resolveForUser($document->user)['itemization_timeout_days'];
+            $autoRecord['hold_until'] = now()->addDays($days)->toDateString();
+        }
+
+        $document->processed_transaction_data = ($document->processed_transaction_data ?? []) + ['auto_record' => $autoRecord];
+    }
+
+    /**
+     * An itemized receipt for a notification that waits for it: the receipt takes over as the main document
+     * with the notification's account, card ending, time and bank reference, and the notification is closed.
+     * The gates then run on the merged draft; the notification is linked to the transaction when one is created.
+     */
+    private function mergeIntoHeldDocument(AiDocument $receipt, AiDocument $held): void
+    {
+        $draft = $receipt->processed_transaction_data;
+        $heldDraft = $held->processed_transaction_data ?? [];
+
+        $accountKey = ($draft['transaction_type'] ?? null) === 'withdrawal' ? 'account_from_id' : 'account_to_id';
+        if (! empty($heldDraft['config'][$accountKey])) {
+            $draft['config'][$accountKey] = $heldDraft['config'][$accountKey];
+        }
+
+        foreach (['card_last_digits', 'transaction_time', 'bank_reference'] as $key) {
+            if (! empty($heldDraft['raw'][$key])) {
+                $draft['raw'][$key] = $heldDraft['raw'][$key];
+            }
+        }
+
+        $receipt->processed_transaction_data = $draft;
+        $held->transitionTo(AiDocumentStatus::Duplicate);
+
+        $transaction = $this->runGates($receipt);
+
+        if ($transaction !== null) {
+            $this->recordDuplicateOrigin($held, $transaction, 'The receipt for this notification arrived and was recorded.');
+        }
+    }
+
+    /**
+     * A same-event match with a committed transaction closes the document, unless it is an itemized document
+     * whose items contradict an automatically recorded transaction: then the person decides, and the
+     * transaction stays untouched.
+     */
+    private function closeOrFlagConflict(AiDocument $document, Transaction $transaction): void
+    {
+        $autoRecorded = $transaction->origins()->where('relation', TransactionOrigin::RELATION_CREATED)->exists();
+
+        if ($autoRecorded && $document->isItemized() && $this->itemsConflict($document, $transaction)) {
+            $this->recordDuplicateOrigin(
+                $document,
+                $transaction,
+                'The items of this document differ from the automatically recorded transaction.',
+                TransactionOrigin::RELATION_CONFLICTS_WITH,
+            );
+            $document->transitionTo(AiDocumentStatus::ReadyForReview);
+
+            return;
+        }
+
+        $this->recordDuplicateOrigin($document, $transaction, 'Same purchase as an already recorded transaction (same amount, payee and date window).');
         $document->transitionTo(AiDocumentStatus::Duplicate);
+    }
+
+    private function recordDuplicateOrigin(AiDocument $document, Transaction $transaction, string $reason, string $relation = TransactionOrigin::RELATION_DUPLICATE_OF): void
+    {
+        TransactionOrigin::record($document->user, $transaction, $relation, $document, $reason);
+    }
+
+    /**
+     * Whether the document's items disagree with the transaction's: another number of items, another amount,
+     * or (where the document knows it) another category.
+     */
+    private function itemsConflict(AiDocument $document, Transaction $transaction): bool
+    {
+        $draft = app(TransactionDraftService::class)->normalize($document->processed_transaction_data, $document->user)['draft'];
+
+        $documentItems = collect($draft['transaction_items'] ?? [])
+            ->map(fn (array $item) => [
+                'amount' => BigDecimal::of($item['amount'] ?? '0'),
+                'category' => ($item['match_type'] ?? null) === 'exact' ? ($item['recommended_category_id'] ?? null) : ($item['category_id'] ?? null),
+            ])
+            ->sortBy(fn (array $item) => (string) $item['amount'])
+            ->values();
+
+        $transactionItems = $transaction->transactionItems
+            ->map(fn (TransactionItem $item) => ['amount' => $item->amount->getAmount(), 'category' => $item->category_id])
+            ->sortBy(fn (array $item) => (string) $item['amount'])
+            ->values();
+
+        if ($documentItems->count() !== $transactionItems->count()) {
+            return true;
+        }
+
+        return $documentItems->contains(fn (array $item, int $index) => ! $item['amount']->isEqualTo($transactionItems[$index]['amount'])
+            || ($item['category'] !== null && (int) $item['category'] !== (int) $transactionItems[$index]['category']));
     }
 
     /**

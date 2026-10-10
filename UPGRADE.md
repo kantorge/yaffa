@@ -206,6 +206,17 @@ Every payee now has a stored history profile, and users can set how a payee is t
 - **New AI settings** on `/api/v1/ai/settings`: `auto_record_min_history`, `auto_record_wilson_min`, `auto_record_amount_tolerance_percent`, `payee_similarity_min`, `payee_similarity_margin`. They always resolve to a value (the default when unset).
 - New migrations add the `payee_profiles` table, two columns on `payees` and five columns on `ai_user_settings`. They are additive and reversible.
 
+### Auto-recording (Fast Transaction Entry, phase 4)
+
+AI documents can now be recorded as normal transactions without a review. It is **off by default and opt-in per user**; nothing changes until a user turns on "Record automatically" in their AI settings (which also needs AI processing on).
+
+- **New AI settings** on `/api/v1/ai/settings`: `auto_record_enabled` (boolean, default `false`) and `itemization_timeout_days` (default 14). Both always resolve to a value.
+- **`auto_recorded` and `awaiting_itemization` are now produced** in `GET /api/v1/documents`. An auto-recorded document is linked to its transaction (`ai_document_id`) and has a `created` origin with a `decision_reason`. A document for a payee set to expect itemization waits as `awaiting_itemization` until its receipt arrives, then moves to `ready_for_review` after `itemization_timeout_days`. The processed-document email has a "recorded automatically" variant.
+- **New endpoints:** `GET /api/v1/transaction-origins` (`read`; filters `relation=created|duplicate_of|conflicts_with` and `reviewed=0|1`), `POST /api/v1/transaction-origins/{origin}/review` and `POST /api/v1/transaction-origins/review` with `ids[]` (`write`). `GET /api/v1/documents/summary` gains `auto_recorded_to_review`, and the transaction show/get endpoints include the transaction's `origins`.
+- Reconciling a transaction (the reconcile endpoint or any save that flips `reconciled` to true) marks its `created` origin as reviewed.
+- A new scheduled command `ai-documents:expire-itemization` runs daily at 03:45 (needs the scheduler).
+- New migration adds two columns to `ai_user_settings`. It is additive and reversible. Account identifiers for card endings are alias lines on accounts: all digits, optionally prefixed with `*` (for example `*1234`).
+
 ### Sentry support removed
 
 The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.

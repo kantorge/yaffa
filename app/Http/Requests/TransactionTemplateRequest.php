@@ -30,6 +30,7 @@ class TransactionTemplateRequest extends FormRequest
             'draft' => [$required, 'array'],
             'draft.date' => ['prohibited'],
             'draft.raw' => ['prohibited'],
+            'draft.auto_record' => ['prohibited'],
         ];
     }
 }
