@@ -477,7 +477,7 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         Notification::assertSentTo($user, GoogleDriveImportFailed::class);
     }
 
-    public function test_job_skips_import_when_ai_processing_is_disabled(): void
+    public function test_job_imports_files_when_ai_processing_is_disabled(): void
     {
         $user = User::factory()->create();
         AiUserSettings::factory()->create(['user_id' => $user->id, 'ai_enabled' => false]);
@@ -488,15 +488,26 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
         ]);
 
         $mock = $this->createMockService([
-            'listNewFiles' => fn () => throw new Exception('Should not be called'),
+            'listNewFiles' => [
+                ['id' => 'file-off', 'name' => 'receipt.pdf', 'mimeType' => 'application/pdf', 'modifiedTime' => '2026-02-06T10:00:00Z'],
+            ],
+            'downloadFile' => function ($fileId, $creds, $dest) {
+                if (! file_exists(dirname($dest))) {
+                    mkdir(dirname($dest), 0755, true);
+                }
+                file_put_contents($dest, 'fake pdf content');
+            },
         ]);
         $this->instance(GoogleDriveService::class, $mock);
 
         $this->runJob($config->id);
 
-        $this->assertSame(0, AiDocument::count());
-        Event::assertNotDispatched(DocumentImported::class);
-        Notification::assertNotSentTo($user, GoogleDriveImportSuccess::class);
+        $this->assertDatabaseHas('ai_documents', [
+            'user_id' => $user->id,
+            'google_drive_file_id' => 'file-off',
+            'status' => 'ready_for_processing',
+        ]);
+        Event::assertDispatched(DocumentImported::class);
     }
 
     public function test_job_keeps_path_like_drive_file_names_inside_the_documents_own_directory(): void

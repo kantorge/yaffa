@@ -8,7 +8,6 @@ use App\Models\AiDocumentFile;
 use App\Models\GoogleDriveConfig;
 use App\Notifications\GoogleDriveImportFailed;
 use App\Notifications\GoogleDriveImportSuccess;
-use App\Services\AiUserSettingsResolver;
 use App\Services\GoogleDriveService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -38,7 +37,7 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
     ) {
     }
 
-    public function handle(GoogleDriveService $driveService, AiUserSettingsResolver $settingsResolver): void
+    public function handle(GoogleDriveService $driveService): void
     {
         $config = GoogleDriveConfig::find($this->configId);
 
@@ -47,15 +46,6 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
         }
 
         $user = $config->user;
-
-        if (! $settingsResolver->isEnabledForUser($user)) {
-            Log::info('Skipping Google Drive import because AI processing is disabled for user', [
-                'config_id' => $config->id,
-                'user_id' => $user->id,
-            ]);
-
-            return;
-        }
 
         $credentials = json_decode($config->service_account_json, true);
         $allowedTypes = config('ai-documents.file_upload.allowed_types', []);
