@@ -47,12 +47,4 @@ class StoreAiDocumentRequest extends FormRequest
             'files.*.mimes' => 'Files must be of type: ' . implode(', ', config('ai-documents.file_upload.allowed_types')),
         ];
     }
-
-    protected function prepareForValidation(): void
-    {
-        // Ensure either files or text_input is provided
-        if ((! $this->has('files') || empty($this->input('files'))) && ! $this->filled('text_input')) {
-            $this->merge(['files' => null]);
-        }
-    }
 }
