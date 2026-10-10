@@ -8,14 +8,14 @@ use App\Models\AiUserSettings;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use Tests\TestCase;
 use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
 
 class AiDocumentApiAiEnabledGuardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_store_returns_forbidden_when_ai_processing_is_disabled(): void
+    public function test_store_accepts_and_queues_document_when_ai_processing_is_disabled(): void
     {
         Queue::fake();
 
@@ -24,19 +24,17 @@ class AiDocumentApiAiEnabledGuardTest extends TestCase
 
         Sanctum::actingAs($user, ['*']);
 
-
         $this
             ->postJson(route('api.v1.documents.store'), [
                 'text_input' => 'Coffee 4.50 USD',
             ])
-            ->assertForbidden()
-            ->assertJsonPath('error.code', 'AI_DISABLED');
+            ->assertCreated();
 
-        $this->assertSame(0, AiDocument::count());
-        Queue::assertNotPushed(AiProcessingJob::class);
+        $this->assertSame(1, AiDocument::count());
+        Queue::assertPushed(AiProcessingJob::class);
     }
 
-    public function test_reprocess_returns_forbidden_when_ai_processing_is_disabled(): void
+    public function test_reprocess_resets_and_queues_document_when_ai_processing_is_disabled(): void
     {
         Queue::fake();
 
@@ -50,13 +48,11 @@ class AiDocumentApiAiEnabledGuardTest extends TestCase
 
         Sanctum::actingAs($user, ['*']);
 
-
         $this
             ->postJson(route('api.v1.documents.reprocess', ['aiDocument' => $document]))
-            ->assertForbidden()
-            ->assertJsonPath('error.code', 'AI_DISABLED');
+            ->assertOk();
 
-        $this->assertSame('ready_for_review', $document->fresh()->status);
-        Queue::assertNotPushed(AiProcessingJob::class);
+        $this->assertSame('ready_for_processing', $document->fresh()->status);
+        Queue::assertPushed(AiProcessingJob::class);
     }
 }
