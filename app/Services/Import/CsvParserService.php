@@ -35,7 +35,7 @@ class CsvParserService
         [$normalizedContent, $encodingWarning] = $this->normalizeContentToUtf8($content);
         unset($content);
 
-        $reader = Reader::createFromString($normalizedContent);
+        $reader = Reader::fromString($normalizedContent);
         unset($normalizedContent);
         $reader->setDelimiter((string) ($profile->delimiter ?: ','));
 
