@@ -54,7 +54,11 @@ class AiProviderConfig extends Model
      */
     public function isModelAvailable(): bool
     {
-        return array_key_exists($this->model, config('ai-documents.providers.' . $this->provider . '.models', []));
+        $models = config('ai-documents.providers.' . $this->provider . '.models', []);
+
+        return array_is_list($models)
+            ? in_array($this->model, $models, true)
+            : array_key_exists($this->model, $models);
     }
 
     public function unavailableModelMessage(): string
