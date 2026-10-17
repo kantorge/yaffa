@@ -27,9 +27,16 @@ it('flags an unreviewed auto-recorded transaction and confirms it from the revie
 })->group('critical');
 
 it('confirms every shown auto-recorded transaction with the Confirm all shown action', function () {
-    $transaction = Transaction::where('user_id', $this->user->id)->where('config_type', 'standard')->firstOrFail();
-    $document = AiDocument::factory()->for($this->user)->autoRecorded()->create();
-    $origin = TransactionOrigin::record($this->user, $transaction, TransactionOrigin::RELATION_CREATED, $document, 'Browser test reason');
+    $origins = Transaction::where('user_id', $this->user->id)->where('config_type', 'standard')->limit(2)->get()
+        ->map(fn (Transaction $transaction) => TransactionOrigin::record(
+            $this->user,
+            $transaction,
+            TransactionOrigin::RELATION_CREATED,
+            AiDocument::factory()->for($this->user)->autoRecorded()->create(),
+            'Browser test reason',
+        ));
+
+    expect($origins)->toHaveCount(2);
 
     $page = visit(route('ai-documents.index', ['review' => 'auto-recorded']));
     $this->waitUntil($page, "document.querySelector('[dusk=\"confirm-all\"]')");
@@ -38,5 +45,5 @@ it('confirms every shown auto-recorded transaction with the Confirm all shown ac
 
     $this->waitUntil($page, "!document.querySelector('#ai-document-table button.confirm-origin')");
 
-    expect($origin->fresh()->reviewed_at)->not->toBeNull();
+    $origins->each(fn (TransactionOrigin $origin) => expect($origin->fresh()->reviewed_at)->not->toBeNull());
 })->group('critical');

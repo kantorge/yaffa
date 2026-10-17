@@ -8,6 +8,8 @@ use App\Services\AiUserSettingsResolver;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 #[Signature('ai-documents:expire-itemization')]
 #[Description('Move documents that waited too long for their receipt to review')]
@@ -20,21 +22,34 @@ class ExpireAiDocumentItemization extends Command
         AiDocument::query()
             ->with('user')
             ->where('status', AiDocumentStatus::AwaitingItemization->value)
-            ->each(function (AiDocument $document) use ($settingsResolver, &$count): void {
-                $days = (int) $settingsResolver->resolveForUser($document->user)['itemization_timeout_days'];
+            ->chunkById(100, function ($documents) use ($settingsResolver, &$count): void {
+                foreach ($documents as $document) {
+                    $days = (int) $settingsResolver->resolveForUser($document->user)['itemization_timeout_days'];
 
-                if ($document->status_changed_at->gt(now()->subDays($days))) {
-                    return;
+                    // Same per-user lock as ProcessDocumentService::decideOutcome(), so a merge cannot race the expiry
+                    Cache::lock("ai-decide:{$document->user_id}", 60)->block(30, function () use ($document, $days, &$count): void {
+                        DB::transaction(function () use ($document, $days, &$count): void {
+                            $locked = AiDocument::query()->lockForUpdate()->find($document->id);
+
+                            if (
+                                $locked === null
+                                || $locked->status !== AiDocumentStatus::AwaitingItemization->value
+                                || $locked->status_changed_at->gt(now()->subDays($days))
+                            ) {
+                                return;
+                            }
+
+                            $draft = $locked->processed_transaction_data ?? [];
+                            $draft['auto_record'] = [
+                                'failed_gate' => 'completeness',
+                                'reason' => __('No receipt within :days days.', ['days' => $days]),
+                            ];
+                            $locked->processed_transaction_data = $draft;
+                            $locked->transitionTo(AiDocumentStatus::ReadyForReview);
+                            $count++;
+                        });
+                    });
                 }
-
-                $draft = $document->processed_transaction_data ?? [];
-                $draft['auto_record'] = [
-                    'failed_gate' => 'completeness',
-                    'reason' => __('No receipt within :days days.', ['days' => $days]),
-                ];
-                $document->processed_transaction_data = $draft;
-                $document->transitionTo(AiDocumentStatus::ReadyForReview);
-                $count++;
             });
 
         $this->info("Moved {$count} document(s) to review.");

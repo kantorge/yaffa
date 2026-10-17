@@ -9,7 +9,7 @@ return [
         "next_action_text" => "Vérifiez les valeurs extraites, ajustez si nécessaire, puis finalisez la transaction.",
         "next_action_title" => "Action suivante",
         "intro_auto_recorded" => "Votre document IA a été enregistré automatiquement comme transaction.",
-        "next_action_text_auto_recorded" => "Vérifiez la transaction dans l'onglet Enregistrés automatiquement de vos documents IA, puis confirmez-la ou modifiez-la si nécessaire.",
+        "next_action_text_auto_recorded" => "Vérifiez la transaction avec le filtre Vérification de vos documents IA, puis confirmez-la ou modifiez-la si nécessaire.",
         "subject_auto_recorded" => "Document enregistré automatiquement",
         "subject" => "Document traité - prêt pour révision",
         "what_happened" => "Ce qui s'est passé"

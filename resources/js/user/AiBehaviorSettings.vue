@@ -52,7 +52,7 @@
               <small class="form-text text-muted">
                 {{
                   __(
-                    'When disabled, no new documents will be created or processed by AI.',
+                    'When disabled, new documents are still accepted but stay unprocessed until AI processing is enabled.',
                   )
                 }}
               </small>

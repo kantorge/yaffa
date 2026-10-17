@@ -9,7 +9,7 @@ return [
         "next_action_text" => "Ellenőrizd a kinyert adatokat, szükség esetén módosítsd, majd véglegesítsd a tranzakciót.",
         "next_action_title" => "Következő lépés",
         "intro_auto_recorded" => "Az AI dokumentumodat automatikusan tranzakcióként rögzítettük.",
-        "next_action_text_auto_recorded" => "Ellenőrizd a tranzakciót az AI dokumentumok Automatikusan rögzített fülén, és erősítsd meg, vagy módosítsd, ha valami nem stimmel.",
+        "next_action_text_auto_recorded" => "Ellenőrizd a tranzakciót az AI dokumentumok Ellenőrzés szűrőjével, és erősítsd meg, vagy módosítsd, ha valami nem stimmel.",
         "subject_auto_recorded" => "Dokumentum automatikusan rögzítve",
         "subject" => "Dokumentum feldolgozva - ellenőrzésre kész",
         "what_happened" => "Mi történt"
