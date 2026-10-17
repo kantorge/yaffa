@@ -202,28 +202,34 @@
               <dt v-if="createdOrigin" class="col-6">
                 {{ __('Origin') }}
               </dt>
-              <dd v-if="createdOrigin" class="col-6" dusk="label-origin">
-                <span class="badge bg-info">
-                  {{ __('Recorded automatically') }}
+              <dd v-if="createdOrigin" class="col-6">
+                <span class="badge bg-success">
+                  {{ __('Auto-recorded') }}
                 </span>
                 <span
-                  class="badge ms-1"
-                  :class="
-                    createdOrigin.reviewed_at ? 'bg-success' : 'bg-warning'
-                  "
+                  v-if="createdOrigin.reviewed_at"
+                  class="badge bg-success ms-1"
                 >
-                  {{
-                    createdOrigin.reviewed_at
-                      ? __('Reviewed')
-                      : __('Not reviewed')
-                  }}
+                  {{ __('Confirmed') }}
                 </span>
-                <div
-                  v-if="createdOrigin.decision_reason"
-                  class="small text-muted"
+                <button
+                  v-else
+                  type="button"
+                  class="badge bg-warning border-0 ms-1"
+                  dusk="confirm-origin"
+                  :title="__('Click to confirm this transaction')"
+                  :disabled="confirming"
+                  @click="confirmOrigin"
                 >
-                  {{ createdOrigin.decision_reason }}
-                </div>
+                  {{ __('Awaiting confirmation') }}
+                </button>
+                <i
+                  v-if="createdOrigin.decision_reason"
+                  class="fa fa-info-circle text-info ms-1"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="createdOrigin.decision_reason"
+                ></i>
               </dd>
             </dl>
           </div>
@@ -251,6 +257,8 @@
   import TransactionItemContainer from './ItemContainer.vue';
   import TransactionSchedule from './Schedule.vue';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
 
   export default {
     components: {
@@ -267,6 +275,10 @@
         type: String,
         default: window.YAFFA.userSettings.locale,
       },
+    },
+
+    data() {
+      return { confirming: false };
     },
 
     computed: {
@@ -354,7 +366,46 @@
         return this.transaction?.transaction_type === 'transfer';
       },
     },
+
+    mounted() {
+      initializeBootstrapTooltips(this.$el);
+    },
+
+    updated() {
+      initializeBootstrapTooltips(this.$el);
+    },
     methods: {
+      confirmOrigin() {
+        this.confirming = true;
+
+        window.axios
+          .post(
+            window.route('api.v1.transaction-origins.review', {
+              origin: this.createdOrigin.id,
+            }),
+          )
+          .then(() => {
+            this.createdOrigin.reviewed_at = new Date().toISOString();
+            toastHelpers.showSuccessToast(__('Transaction confirmed'));
+            // Lists showing the same transaction (e.g. the AI documents table) update themselves
+            window.dispatchEvent(
+              new CustomEvent('transactionOriginReviewed', {
+                detail: { id: this.createdOrigin.id },
+              }),
+            );
+          })
+          .catch((error) => {
+            toastHelpers.showErrorToast(
+              __('Error while reviewing document: :errorMessage', {
+                errorMessage: error.response?.data?.message || error.message,
+              }),
+            );
+          })
+          .finally(() => {
+            this.confirming = false;
+          });
+      },
+
       entityHasLink(entity, entityId) {
         return Boolean(entityId && entity?.name);
       },

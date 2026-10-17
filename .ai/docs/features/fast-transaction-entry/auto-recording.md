@@ -46,7 +46,7 @@ On a failed gate the document goes to `ready_for_review` with `processed_transac
 
 - `GET /api/v1/transaction-origins` (`read`), `POST /api/v1/transaction-origins/{origin}/review` and `POST /api/v1/transaction-origins/review` (`write`); `TransactionOriginPolicy`.
 - `Transaction::booted()` marks the unreviewed `created` origins reviewed whenever `reconciled` flips to true (covers the reconcile endpoint and edits).
-- UI: AI documents page, tab `?tab=auto-recorded` (`AiDocumentAutoRecorded.vue`: confirm, bulk confirm, conflicts); dashboard `AiDocumentSummary` count; origin badge on the transaction show page; `AiDocumentViewer` note (reason / failed gate / hold date); settings switch in `AiBehaviorSettings.vue`.
+- UI: AI documents page, "Review auto-recorded transactions" / "Review conflicts" actions (`?review=auto-recorded|conflicts`, `AiDocumentTable.vue`: status badges, row context-menu confirm / resolve conflict, "Confirm all shown"); dashboard `AiDocumentSummary` count; origin badge on the transaction show page; `AiDocumentViewer` note (reason / failed gate / hold date); settings switch in `AiBehaviorSettings.vue`.
 - `SendAiDocumentProcessedNotification` sends the "recorded automatically" mail variant for `auto_recorded`.
 
 ## Tests

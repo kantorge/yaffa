@@ -1,42 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-12">
-      <ul class="nav nav-tabs mb-3">
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            :class="{ active: tab === 'documents' }"
-            href="#"
-            @click.prevent="setTab('documents')"
-          >
-            {{ __('Documents') }}
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            :class="{ active: tab === 'auto-recorded' }"
-            href="#"
-            dusk="tab-auto-recorded"
-            @click.prevent="setTab('auto-recorded')"
-          >
-            {{ __('Auto-recorded') }}
-            <span
-              v-if="unreviewedCount > 0"
-              class="badge bg-info rounded-pill ms-1"
-            >
-              {{ unreviewedCount }}
-            </span>
-          </a>
-        </li>
-      </ul>
-    </div>
-    <div v-if="tab === 'auto-recorded'" class="col-12">
-      <ai-document-auto-recorded
-        @changed="unreviewedCount = $event"
-      ></ai-document-auto-recorded>
-    </div>
-    <div v-show="tab === 'documents'" class="col-12 col-lg-3">
+    <div class="col-12 col-lg-3">
       <onboarding-card
         :card-title="__('Guided tour')"
         :completed-message="
@@ -46,13 +10,20 @@
       ></onboarding-card>
 
       <ai-document-actions
+        :can-confirm-all="
+          currentFilters.review === 'auto-recorded' &&
+          reviewCounts.autoRecorded > 0
+        "
         @open-upload-form="openUploadForm"
+        @confirm-all="tableRef?.confirmAllShown()"
       ></ai-document-actions>
 
       <ai-document-filters
         :initial-status="initialStatus"
         :initial-source="initialSource"
         :initial-search="initialSearch"
+        :initial-review="initialReview"
+        :review-counts="reviewCounts"
         :status-options="statusLabels"
         :source-options="sourceLabels"
         @update="onFiltersUpdated"
@@ -82,7 +53,7 @@
         @update="onDetectedDateRangeUpdated"
       ></date-range-filter-card>
     </div>
-    <div v-show="tab === 'documents'" class="col-12 col-lg-9">
+    <div class="col-12 col-lg-9">
       <div
         v-if="!aiProcessingEnabled"
         class="alert alert-warning d-flex justify-content-between align-items-center"
@@ -107,6 +78,7 @@
         :loading="isLoading"
         :status-labels="statusLabels"
         :source-labels="sourceLabels"
+        @review-counts="reviewCounts = $event"
       ></ai-document-table>
 
       <transaction-show-modal></transaction-show-modal>
@@ -125,7 +97,6 @@
   import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import AiDocumentActions from './AiDocumentActions.vue';
-  import AiDocumentAutoRecorded from './AiDocumentAutoRecorded.vue';
   import AiDocumentFilters from './AiDocumentFilters.vue';
   import AiDocumentTable from './AiDocumentTable.vue';
   import AiDocumentUploadForm from './AiDocumentUploadForm.vue';
@@ -134,13 +105,7 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
 
-  // Documents or the auto-recorded review list (?tab=auto-recorded)
-  const tab = ref(
-    new URLSearchParams(window.location.search).get('tab') === 'auto-recorded'
-      ? 'auto-recorded'
-      : 'documents',
-  );
-  const unreviewedCount = ref(0);
+  const reviewCounts = ref({ autoRecorded: 0, conflicts: 0 });
   const documents = ref([]);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
   const sourceLabels = ref(window.aiDocumentSourceLabels || {});
@@ -159,7 +124,16 @@
   const detectedDates = readDateRangeParams(urlParams, 'detected_');
   const initialDateFrom = ref(receivedDates.dateFrom);
   const initialDateTo = ref(receivedDates.dateTo);
-  const initialStatus = ref(urlParams.get('status') || 'ready_for_review');
+  // Narrows the table to documents awaiting review (?review=auto-recorded|conflicts)
+  const initialReview = ref(
+    ['auto-recorded', 'conflicts'].includes(urlParams.get('review'))
+      ? urlParams.get('review')
+      : '',
+  );
+  // Auto-recorded documents are not in an open status, so a review filter starts without a status filter
+  const initialStatus = ref(
+    urlParams.get('status') ?? (initialReview.value ? '' : 'ready_for_review'),
+  );
   const initialSource = ref(urlParams.get('source') || '');
   const initialSearch = ref(urlParams.get('search') || '');
   const hasExplicitDateFilter = Boolean(
@@ -175,6 +149,7 @@
 
   const currentFilters = ref({
     status: initialStatus.value,
+    review: initialReview.value,
     source: initialSource.value,
     search: initialSearch.value,
     dateFrom: initialDateFrom.value,
@@ -227,8 +202,8 @@
       }
     }
 
-    if (tab.value === 'auto-recorded') {
-      params.set('tab', 'auto-recorded');
+    if (currentFilters.value.review) {
+      params.set('review', currentFilters.value.review);
     }
 
     const query = params.toString();
@@ -236,21 +211,7 @@
     window.history.replaceState('', '', nextUrl);
   };
 
-  const setTab = (name) => {
-    tab.value = name;
-    rebuildUrl();
-  };
-
   onMounted(() => {
-    window.axios
-      .get(window.route('api.v1.transaction-origins.index'), {
-        params: { relation: 'created', reviewed: 0 },
-      })
-      .then((response) => {
-        unreviewedCount.value = response.data.length;
-      })
-      .catch(() => {});
-
     const warnings = [...receivedDates.warnings, ...detectedDates.warnings];
     if (warnings.length > 0) {
       warnings.forEach((message) => toastHelpers.showErrorToast(message));
@@ -258,15 +219,20 @@
     }
   });
 
-  const onFiltersUpdated = (filters) => {
-    currentFilters.value = { ...currentFilters.value, ...filters };
+  const applyTableFilters = () => {
     tableRef.value?.applyFilters({
       status: currentFilters.value.status,
       source: currentFilters.value.source,
       search: currentFilters.value.search,
       detectedDateFrom: currentFilters.value.detectedDateFrom,
       detectedDateTo: currentFilters.value.detectedDateTo,
+      review: currentFilters.value.review,
     });
+  };
+
+  const onFiltersUpdated = (filters) => {
+    currentFilters.value = { ...currentFilters.value, ...filters };
+    applyTableFilters();
     rebuildUrl();
   };
 
@@ -310,13 +276,7 @@
       documents.value = normalizeDocuments(allDocuments);
 
       await nextTick();
-      tableRef.value?.applyFilters({
-        status: currentFilters.value.status,
-        source: currentFilters.value.source,
-        search: currentFilters.value.search,
-        detectedDateFrom: currentFilters.value.detectedDateFrom,
-        detectedDateTo: currentFilters.value.detectedDateTo,
-      });
+      applyTableFilters();
     } catch (error) {
       documents.value = [];
       toastHelpers.showErrorToast(
@@ -343,13 +303,7 @@
     currentFilters.value.detectedDateTo = dateTo;
     currentFilters.value.detectedDatePreset = preset || null;
 
-    tableRef.value?.applyFilters({
-      status: currentFilters.value.status,
-      source: currentFilters.value.source,
-      search: currentFilters.value.search,
-      detectedDateFrom: currentFilters.value.detectedDateFrom,
-      detectedDateTo: currentFilters.value.detectedDateTo,
-    });
+    applyTableFilters();
 
     rebuildUrl();
   };

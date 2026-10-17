@@ -525,7 +525,7 @@
               <small class="form-text text-muted">
                 {{
                   __(
-                    'When enabled, a document from a payee with a consistent history is recorded as a normal transaction right away. You can review and confirm what was recorded on the Auto-recorded tab of your AI documents. Payees can be set to always or never record automatically. Nothing is recorded unless AI processing is on.',
+                    'When enabled, a document from a payee with a consistent history is recorded as a normal transaction right away. You can review and confirm what was recorded with the Review filter of your AI documents. Payees can be set to always or never record automatically. Nothing is recorded unless AI processing is on.',
                   )
                 }}
                 <a :href="route('payees.auto-record-candidates')">

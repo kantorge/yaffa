@@ -127,7 +127,7 @@
 
     computed: {
       autoRecordedUrl() {
-        return `${window.route('ai-documents.index')}?tab=auto-recorded`;
+        return `${window.route('ai-documents.index')}?review=auto-recorded`;
       },
 
       oldestDateString() {
