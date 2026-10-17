@@ -43,6 +43,7 @@
     "require-dev": {
         "albertoarena/laravel-truss": "^1.9",
         "alebatistella/duskapiconf": "^1.2",
+        "baer-software/larabeacon": "^3.1",
         "barryvdh/laravel-ide-helper": "^3.7",
         "deployer/deployer": "^7.5",
         "fakerphp/faker": "^1.23",

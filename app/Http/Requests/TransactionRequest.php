@@ -197,7 +197,7 @@ class TransactionRequest extends FormRequest
         ];
 
         // Set date and schedule related rules
-        if ($this->get('schedule')) {
+        if ($this->input('schedule')) {
             $rules = array_merge($rules, [
                 'reconciled' => [
                     'boolean',
@@ -318,7 +318,7 @@ class TransactionRequest extends FormRequest
         }
 
         // Adjustments based on transaction type
-        if ($this->get('config_type') === 'standard') {
+        if ($this->input('config_type') === 'standard') {
             //any standard transactions have common rules for items
             $rules = array_merge($rules, [
                 'items' => 'array',
@@ -346,7 +346,7 @@ class TransactionRequest extends FormRequest
             ]);
 
             // Adjust detail related rules, based on transaction type
-            if ($this->get('transaction_type') === 'withdrawal') {
+            if ($this->input('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
@@ -379,7 +379,7 @@ class TransactionRequest extends FormRequest
                     'remaining_payee_default_category_id' => ['nullable', $ownedCategoryRule],
 
                 ]);
-            } elseif ($this->get('transaction_type') === 'deposit') {
+            } elseif ($this->input('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
@@ -412,7 +412,7 @@ class TransactionRequest extends FormRequest
                     'remaining_payee_default_category_id' => ['nullable', $ownedCategoryRule],
 
                 ]);
-            } elseif ($this->get('transaction_type') === 'transfer') {
+            } elseif ($this->input('transaction_type') === 'transfer') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
@@ -440,7 +440,7 @@ class TransactionRequest extends FormRequest
                     ],
                 ]);
             }
-        } elseif ($this->get('config_type') === 'investment') {
+        } elseif ($this->input('config_type') === 'investment') {
             // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
                 'config.account_id' => [
