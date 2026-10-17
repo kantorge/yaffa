@@ -47,6 +47,7 @@
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
                     :disabled="!isBaseSettingsEditsAllowed"
+                    dusk="transaction-type-withdrawal"
                     type="button"
                     value="withdrawal"
                     @click="changeTransactionType"

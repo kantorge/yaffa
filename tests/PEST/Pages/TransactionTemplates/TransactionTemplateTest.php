@@ -62,7 +62,10 @@ it('saves an existing transaction as a template without its date', function () {
         ->where('transaction_type', 'withdrawal')
         ->where('schedule', false)
         ->orderByDesc('id')
-        ->firstOrFail();
+        ->with('config.accountFrom')
+        ->get()
+        // Inactive accounts are blanked out of a draft, so pick a withdrawal from an active one
+        ->first(fn (Transaction $transaction) => $transaction->config->accountFrom?->active);
 
     $page = visit(route('transaction.open', ['transaction' => $transaction->id, 'action' => 'template']));
 
