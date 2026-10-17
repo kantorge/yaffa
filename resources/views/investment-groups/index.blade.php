@@ -22,7 +22,7 @@
                     <a href="{{ route('investment-groups.create') }}">
                         {{ __('New investment group') }}
                     </a>
-                    <a class="btn btn-sm btn-success" dusk="button-new-investment-group"
+                    <a class="btn btn-sm btn-success"
                         href="{{ route('investment-groups.create') }}" title="{{ __('New investment group') }}">
                         <i class="fa fa-plus"></i>
                     </a>
@@ -30,7 +30,7 @@
 
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a href="{{  route('investments.index') }}">{{ __('Manage investments') }}</a>
-                    <a class="btn btn-sm btn-outline-primary" dusk="button-manage-investments"
+                    <a class="btn btn-sm btn-outline-primary"
                         href="{{  route('investments.index') }}" title="{{ __('Manage investments') }}">
                         <i class="fa fa-line-chart"></i>
                     </a>

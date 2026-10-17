@@ -53,11 +53,7 @@
               <span v-else class="text-muted">{{ __('Not available') }}</span>
             </dd>
           </dl>
-          <div
-            v-if="autoRecordNote"
-            class="alert alert-info small mt-3 mb-0"
-            dusk="auto-record-note"
-          >
+          <div v-if="autoRecordNote" class="alert alert-info small mt-3 mb-0">
             {{ autoRecordNote }}
           </div>
         </div>

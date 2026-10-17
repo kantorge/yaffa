@@ -47,7 +47,6 @@
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
                     :disabled="!isBaseSettingsEditsAllowed"
-                    dusk="transaction-type-withdrawal"
                     type="button"
                     value="withdrawal"
                     @click="changeTransactionType"
@@ -176,7 +175,6 @@
                       id="checkbox-standard-catch-up-schedule"
                       v-model="form.catch_up_schedule"
                       class="form-check-input"
-                      dusk="checkbox-standard-catch-up-schedule"
                       type="checkbox"
                       value="1"
                     />

@@ -72,7 +72,6 @@
                   type="file"
                   class="form-control"
                   accept=".json"
-                  dusk="json-key-file-input"
                   @change="onJsonFileSelect"
                 />
                 <span
@@ -86,11 +85,7 @@
                   <i class="fa fa-info-circle"></i>
                 </span>
               </div>
-              <div
-                v-if="jsonFileError"
-                class="text-danger mt-1"
-                dusk="json-file-error"
-              >
+              <div v-if="jsonFileError" class="text-danger mt-1">
                 <small>{{ jsonFileError }}</small>
               </div>
             </div>
@@ -218,7 +213,6 @@
                           'user.googleDriveSettings.fields.folderId.browseDisabledTitle',
                         )
                   "
-                  dusk="button-browse-folder"
                   @click="openFolderBrowser('import')"
                 >
                   <i class="fa fa-folder-open"></i>
@@ -275,7 +269,6 @@
                       'user.googleDriveSettings.fields.folderName.refetchTitle',
                     )
                   "
-                  dusk="button-fetch-folder-name"
                   @click="fetchFolderName('import')"
                 >
                   <i
@@ -332,7 +325,6 @@
               <div
                 v-if="capabilitiesSource === 'estimated'"
                 class="alert alert-warning py-2 mb-3"
-                dusk="capabilities-estimated-banner"
               >
                 <i class="fa fa-exclamation-triangle me-1"></i>
                 {{
@@ -343,11 +335,7 @@
               </div>
 
               <!-- Test file deleted notice -->
-              <div
-                v-if="testNotice"
-                class="alert alert-info py-2 mb-3"
-                dusk="test-notice"
-              >
+              <div v-if="testNotice" class="alert alert-info py-2 mb-3">
                 <i class="fa fa-info-circle me-1"></i>
                 {{ testNotice }}
               </div>
@@ -379,7 +367,6 @@
                   <span
                     v-if="getCapability(action.key) === true"
                     class="badge bg-success ms-1 align-self-center"
-                    dusk="capability-verified"
                   >
                     <i class="fa fa-check me-1"></i
                     >{{ __('user.googleDriveSettings.badges.verified') }}
@@ -392,7 +379,6 @@
                     :title="
                       __('user.googleDriveSettings.badges.mayFailTooltip')
                     "
-                    dusk="capability-may-fail"
                   >
                     <i class="fa fa-exclamation-triangle me-1"></i
                     >{{ __('user.googleDriveSettings.badges.mayFail') }}
@@ -406,7 +392,6 @@
                     data-coreui-toggle="tooltip"
                     data-coreui-placement="top"
                     :title="getCapabilityNullReason(action.key)"
-                    dusk="capability-not-tested"
                   >
                     {{ __('user.googleDriveSettings.badges.notTested') }}
                   </span>
@@ -417,7 +402,6 @@
               <div
                 v-if="moveToProcessedSelected"
                 class="mt-3 p-3 border rounded"
-                dusk="processed-folder-section"
               >
                 <!-- Processed folder ID -->
                 <div class="mb-2">
@@ -462,7 +446,6 @@
                               'user.googleDriveSettings.fields.folderId.browseDisabledTitle',
                             )
                       "
-                      dusk="button-browse-processed-folder"
                       @click="openFolderBrowser('processed')"
                     >
                       <i class="fa fa-folder-open"></i>
@@ -479,11 +462,7 @@
                     >
                       <i class="fa fa-info-circle"></i>
                     </span>
-                    <div
-                      v-if="processedFolderIdError"
-                      class="invalid-feedback"
-                      dusk="processed-folder-id-error"
-                    >
+                    <div v-if="processedFolderIdError" class="invalid-feedback">
                       {{ processedFolderIdError }}
                     </div>
                   </div>
@@ -511,7 +490,6 @@
                           'user.googleDriveSettings.fields.processedFolderName.placeholder',
                         )
                       "
-                      dusk="processed-folder-name"
                     />
                     <button
                       type="button"
@@ -528,7 +506,6 @@
                           'user.googleDriveSettings.fields.folderName.refetchTitle',
                         )
                       "
-                      dusk="button-fetch-processed-folder-name"
                       @click="fetchFolderName('processed')"
                     >
                       <i
@@ -592,7 +569,6 @@
                   name="sync_interval_minutes"
                   min="1"
                   max="1440"
-                  dusk="sync-interval-minutes"
                 />
                 <span
                   class="input-group-text btn btn-outline-input-info"
@@ -767,19 +743,11 @@
             ></button>
           </div>
           <div class="modal-body">
-            <div
-              v-if="folderBrowserError"
-              class="alert alert-danger"
-              dusk="folder-browser-error"
-            >
+            <div v-if="folderBrowserError" class="alert alert-danger">
               <i class="fa fa-times-circle me-1"></i>
               {{ folderBrowserError }}
             </div>
-            <div
-              v-else-if="folderBrowserLoading"
-              class="text-center py-4"
-              dusk="folder-browser-loading"
-            >
+            <div v-else-if="folderBrowserLoading" class="text-center py-4">
               <i class="fa fa-spinner fa-spin fa-2x"></i>
               <p class="mt-2 text-muted">
                 {{ __('user.googleDriveSettings.folderBrowser.loading') }}
@@ -793,7 +761,6 @@
               <div
                 v-if="folderBrowserNotice"
                 class="alert alert-warning py-2 mb-3"
-                dusk="folder-browser-notice"
               >
                 <i class="fa fa-exclamation-triangle me-1"></i>
                 {{ folderBrowserNotice }}
@@ -805,12 +772,10 @@
                 :placeholder="
                   __('user.googleDriveSettings.folderBrowser.searchPlaceholder')
                 "
-                dusk="folder-browser-search"
               />
               <div
                 v-if="filteredBrowserFolders.length === 0"
                 class="text-muted text-center py-3"
-                dusk="folder-browser-empty"
               >
                 {{ __('user.googleDriveSettings.folderBrowser.empty') }}
               </div>
@@ -827,7 +792,6 @@
                   :class="{
                     active: folderBrowserSelectedId === folder.id,
                   }"
-                  dusk="folder-browser-item"
                   @click="selectBrowserFolder(folder)"
                 >
                   <i class="fa fa-folder me-2"></i>
@@ -850,7 +814,6 @@
               type="button"
               class="btn btn-secondary"
               data-coreui-dismiss="modal"
-              dusk="button-folder-browser-cancel"
             >
               {{ __('user.googleDriveSettings.buttons.cancel') }}
             </button>
@@ -858,7 +821,6 @@
               type="button"
               class="btn btn-primary"
               :disabled="!folderBrowserSelectedId"
-              dusk="button-folder-browser-confirm"
               @click="confirmFolderSelection"
             >
               {{ __('user.googleDriveSettings.folderBrowser.useFolderButton') }}

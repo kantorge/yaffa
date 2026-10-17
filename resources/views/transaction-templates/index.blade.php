@@ -40,7 +40,6 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-transaction-templates"
                             id="table"
                             role="grid"
                     ></table>

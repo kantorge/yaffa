@@ -28,7 +28,6 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New account group') }}
                         <a class="btn btn-sm btn-success"
-                           dusk="button-new-account-group"
                            href="{{ route('account-groups.create') }}"
                            title="{{ __('New account group') }}"
                         >
