@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 #[Middleware('auth:sanctum')]
@@ -38,7 +39,16 @@ class TransactionOriginApiController extends Controller
 
         $origins = TransactionOrigin::query()
             ->where('user_id', $request->user()->id)
-            ->with('transaction')
+            // Origins only exist for standard transactions, so their details can be eager-loaded in bulk
+            // (the loadDetails() call below then finds everything loaded)
+            ->with([
+                'transaction.config.accountFrom.config.currency',
+                'transaction.config.accountTo.config',
+                'transaction.currency',
+                'transaction.transactionSchedule',
+                'transaction.transactionItems.tags',
+                'transaction.transactionItems.category',
+            ])
             ->when(isset($validated['relation']), fn ($query) => $query->where('relation', $validated['relation']))
             ->when($request->has('reviewed'), fn ($query) => $request->boolean('reviewed')
                 ? $query->whereNotNull('reviewed_at')
@@ -102,11 +112,16 @@ class TransactionOriginApiController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        $count = TransactionOrigin::query()
+        // Scoped to the user's own origins, and each one is authorized too, so the policy stays the final word
+        $origins = TransactionOrigin::query()
             ->where('user_id', $request->user()->id)
             ->whereIn('id', $validated['ids'])
             ->whereNull('reviewed_at')
-            ->update(['reviewed_at' => now()]);
+            ->get();
+
+        $origins->each(fn (TransactionOrigin $origin) => Gate::authorize('update', $origin));
+
+        $count = TransactionOrigin::query()->whereKey($origins->modelKeys())->update(['reviewed_at' => now()]);
 
         return response()->json(['reviewed' => $count]);
     }

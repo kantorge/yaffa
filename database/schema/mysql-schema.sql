@@ -15,15 +15,12 @@ CREATE TABLE `account_entities` (
   `active` tinyint(1) NOT NULL DEFAULT '1',
   `config_type` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `config_id` bigint unsigned NOT NULL,
-  `preferred_file_import_profile_id` bigint unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `account_entities_config_type_name_user_id_unique` (`config_type`,`name`,`user_id`),
   KEY `account_entities_config_type_config_id_index` (`config_type`,`config_id`),
   KEY `account_entities_user_type_active_index` (`user_id`,`config_type`,`active`),
-  KEY `account_entities_preferred_file_import_profile_id_index` (`preferred_file_import_profile_id`),
-  CONSTRAINT `account_entities_preferred_file_import_profile_id_foreign` FOREIGN KEY (`preferred_file_import_profile_id`) REFERENCES `file_import_profiles` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `account_entities_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -86,11 +83,14 @@ CREATE TABLE `accounts` (
   `account_group_id` bigint unsigned NOT NULL,
   `currency_id` bigint unsigned NOT NULL,
   `default_date_range` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `preferred_file_import_profile_id` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `accounts_account_group_id_foreign` (`account_group_id`),
   KEY `accounts_currency_id_foreign` (`currency_id`),
+  KEY `accounts_preferred_file_import_profile_id_foreign` (`preferred_file_import_profile_id`),
   CONSTRAINT `accounts_account_group_id_foreign` FOREIGN KEY (`account_group_id`) REFERENCES `account_groups` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `accounts_currency_id_foreign` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`) ON DELETE RESTRICT
+  CONSTRAINT `accounts_currency_id_foreign` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `accounts_preferred_file_import_profile_id_foreign` FOREIGN KEY (`preferred_file_import_profile_id`) REFERENCES `file_import_profiles` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `ai_document_files`;
@@ -120,7 +120,10 @@ CREATE TABLE `ai_documents` (
   `google_drive_file_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `received_mail_id` bigint unsigned DEFAULT NULL,
   `custom_prompt` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `content_hash` char(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `document_kind` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `processed_at` timestamp NULL DEFAULT NULL,
+  `status_changed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -129,6 +132,7 @@ CREATE TABLE `ai_documents` (
   KEY `ai_documents_user_id_index` (`user_id`),
   KEY `ai_documents_status_index` (`status`),
   KEY `ai_documents_source_type_index` (`source_type`),
+  KEY `ai_documents_user_id_content_hash_index` (`user_id`,`content_hash`),
   CONSTRAINT `ai_documents_received_mail_id_foreign` FOREIGN KEY (`received_mail_id`) REFERENCES `received_mails` (`id`) ON DELETE CASCADE,
   CONSTRAINT `ai_documents_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -171,10 +175,18 @@ CREATE TABLE `ai_user_settings` (
   `duplicate_date_window_days` tinyint unsigned NOT NULL DEFAULT '3',
   `duplicate_amount_tolerance_percent` decimal(5,2) NOT NULL DEFAULT '10.00',
   `duplicate_similarity_threshold` decimal(4,3) NOT NULL DEFAULT '0.500',
+  `same_event_minutes` tinyint unsigned DEFAULT NULL,
   `category_matching_mode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'best_match',
   `document_retention_days` smallint unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `auto_record_wilson_min` decimal(4,3) DEFAULT NULL,
+  `auto_record_min_history` tinyint unsigned DEFAULT NULL,
+  `auto_record_amount_tolerance_percent` decimal(5,2) DEFAULT NULL,
+  `payee_similarity_min` decimal(4,3) DEFAULT NULL,
+  `payee_similarity_margin` decimal(4,3) DEFAULT NULL,
+  `auto_record_enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `itemization_timeout_days` tinyint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ai_user_settings_user_id_unique` (`user_id`),
   CONSTRAINT `ai_user_settings_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -507,6 +519,32 @@ CREATE TABLE `password_reset_tokens` (
   KEY `password_resets_email_index` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `payee_profiles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payee_profiles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `account_entity_id` bigint unsigned NOT NULL,
+  `sample_size` int unsigned NOT NULL DEFAULT '0',
+  `dominant_category_id` bigint unsigned DEFAULT NULL,
+  `dominant_share` decimal(5,4) NOT NULL DEFAULT '0.0000',
+  `single_item_dominant_count` int unsigned NOT NULL DEFAULT '0',
+  `wilson_lower` decimal(5,4) NOT NULL DEFAULT '0.0000',
+  `amount_median` decimal(20,4) DEFAULT NULL,
+  `amount_min` decimal(20,4) DEFAULT NULL,
+  `amount_max` decimal(20,4) DEFAULT NULL,
+  `amount_mode_share` decimal(5,4) DEFAULT NULL,
+  `known_amounts` json NOT NULL,
+  `typical_account_ids` json NOT NULL,
+  `multi_item_share` decimal(5,4) NOT NULL DEFAULT '0.0000',
+  `calculated_at` timestamp NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payee_profiles_account_entity_id_unique` (`account_entity_id`),
+  KEY `payee_profiles_dominant_category_id_foreign` (`dominant_category_id`),
+  CONSTRAINT `payee_profiles_account_entity_id_foreign` FOREIGN KEY (`account_entity_id`) REFERENCES `account_entities` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `payee_profiles_dominant_category_id_foreign` FOREIGN KEY (`dominant_category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `payees`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -514,6 +552,8 @@ CREATE TABLE `payees` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `category_id` bigint unsigned DEFAULT NULL,
   `category_suggestion_dismissed` timestamp NULL DEFAULT NULL,
+  `auto_record_policy` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'follow_global',
+  `itemization_expected` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `payees_category_id_foreign` (`category_id`),
   CONSTRAINT `payees_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
@@ -675,6 +715,28 @@ CREATE TABLE `transaction_items_tags` (
   CONSTRAINT `transaction_items_tags_transaction_item_id_foreign` FOREIGN KEY (`transaction_item_id`) REFERENCES `transaction_items` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `transaction_origins`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `transaction_origins` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `transaction_id` bigint unsigned NOT NULL,
+  `origin_type` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `origin_id` bigint unsigned DEFAULT NULL,
+  `relation` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `decision_reason` text COLLATE utf8mb4_unicode_ci,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `transaction_origins_transaction_id_foreign` (`transaction_id`),
+  KEY `transaction_origins_origin_type_origin_id_index` (`origin_type`,`origin_id`),
+  KEY `transaction_origins_user_id_relation_reviewed_at_index` (`user_id`,`relation`,`reviewed_at`),
+  CONSTRAINT `transaction_origins_transaction_id_foreign` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `transaction_origins_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transaction_schedules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -693,6 +755,28 @@ CREATE TABLE `transaction_schedules` (
   KEY `transaction_schedules_transaction_id_foreign` (`transaction_id`),
   KEY `transaction_schedules_active_next_date_index` (`active`,`next_date`),
   CONSTRAINT `transaction_schedules_transaction_id_foreign` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `transaction_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `transaction_templates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `name` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payee_id` bigint unsigned DEFAULT NULL,
+  `draft` json NOT NULL,
+  `is_featured` tinyint(1) NOT NULL DEFAULT '0',
+  `use_count` int unsigned NOT NULL DEFAULT '0',
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `transaction_templates_user_id_name_unique` (`user_id`,`name`),
+  KEY `transaction_templates_payee_id_foreign` (`payee_id`),
+  KEY `transaction_templates_user_id_is_featured_index` (`user_id`,`is_featured`),
+  CONSTRAINT `transaction_templates_payee_id_foreign` FOREIGN KEY (`payee_id`) REFERENCES `account_entities` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transaction_templates_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transactions`;
@@ -865,3 +949,12 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (90,'2026_08_04_000
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (91,'2026_09_19_000001_make_transactions_ai_document_id_nullable_on_delete',8);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (92,'2026_09_19_000002_fix_text_input_ai_document_file_paths',8);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (93,'2026_09_19_000003_add_document_retention_days_to_ai_user_settings_table',8);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (94,'2026_10_04_000001_move_preferred_file_import_profile_id_to_accounts_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (95,'2026_10_05_000001_create_transaction_templates_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (96,'2026_10_06_000001_add_lifecycle_columns_to_ai_documents_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (97,'2026_10_06_000002_create_transaction_origins_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (98,'2026_10_06_000003_add_same_event_minutes_to_ai_user_settings_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (99,'2026_10_07_000001_create_payee_profiles_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (100,'2026_10_07_000002_add_auto_record_settings_to_payees_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (101,'2026_10_07_000003_add_auto_record_thresholds_to_ai_user_settings_table',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (102,'2026_10_08_000001_add_auto_record_switch_to_ai_user_settings_table',9);

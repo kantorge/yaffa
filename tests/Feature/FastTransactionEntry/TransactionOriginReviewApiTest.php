@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionOrigin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreatesTestTransactions;
 
 uses(RefreshDatabase::class, CreatesTestTransactions::class);
@@ -82,4 +83,34 @@ it('marks the created origin reviewed when the transaction is reconciled, from t
     // Unreconciling does not un-review
     $this->patchJson(route('api.v1.transactions.reconcile', $viaEndpoint->transaction_id), ['reconciled' => false])->assertOk();
     expect($viaEndpoint->fresh()->reviewed_at)->not->toBeNull();
+});
+
+it('denies reviewing an origin through the policy when the user does not own it', function () {
+    $foreign = ($this->origin)('created', User::factory()->create());
+
+    expect($this->user->can('update', $foreign))->toBeFalse()
+        ->and($this->user->can('update', ($this->origin)()))->toBeTrue();
+
+    // Even when only foreign IDs are sent, nothing is reviewed
+    $this->postJson(route('api.v1.transaction-origins.review-many'), ['ids' => [$foreign->id]])
+        ->assertOk()->assertJson(['reviewed' => 0]);
+    expect($foreign->fresh()->reviewed_at)->toBeNull();
+});
+
+it('lists origins with a query count that stays flat as the number of origins', function () {
+    // Two to begin with, as an eager load of an empty relation costs no query
+    ($this->origin)();
+    ($this->origin)();
+    DB::enableQueryLog();
+    $this->getJson(route('api.v1.transaction-origins.index'))->assertOk();
+    $one = count(DB::getQueryLog());
+
+    foreach (range(1, 3) as $_) {
+        ($this->origin)();
+    }
+    DB::flushQueryLog();
+    $this->getJson(route('api.v1.transaction-origins.index'))->assertOk()->assertJsonCount(5);
+
+    // An eager load of a relation that is empty for the first rows may add one query; an N+1 adds several per row
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual($one + 1);
 });
