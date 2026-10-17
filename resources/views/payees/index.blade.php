@@ -39,7 +39,6 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             {{ __('Merge payees') }}
                             <a class="btn btn-sm btn-primary"
-                               dusk="button-merge-payees"
                                href="{{ route('payees.merge.form') }}"
                                title="{{ __('Merge payees') }}"
                             >

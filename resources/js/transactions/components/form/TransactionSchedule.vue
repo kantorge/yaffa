@@ -2,7 +2,6 @@
   <div
     :id="'transaction_schedule_' + $.vnode.key"
     :class="bare ? null : 'card mb-3'"
-    dusk="card-transaction-schedule"
   >
     <div v-if="!bare" class="card-header d-flex justify-content-between">
       <div class="card-title">
@@ -102,7 +101,6 @@
                   class="form-check-input"
                   type="radio"
                   value="weekday"
-                  dusk="radio-schedule-pattern-weekday"
                   :disabled="!allowCustomizationData || !showPatternPicker"
                   :title="
                     !showPatternPicker
@@ -122,7 +120,6 @@
                   :id="'schedule_by_day_ordinal_' + $.vnode.key"
                   v-model="byDayOrdinal"
                   class="form-select schedule-ordinal-select"
-                  dusk="select-schedule-by-day-ordinal"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -137,7 +134,6 @@
                   :id="'schedule_by_day_weekday_' + $.vnode.key"
                   v-model="byDayWeekday"
                   class="form-select schedule-weekday-select"
-                  dusk="select-schedule-by-day-weekday"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -155,7 +151,6 @@
                   :id="'schedule_by_month_' + $.vnode.key"
                   v-model.number="byMonthInput"
                   class="form-select schedule-month-select"
-                  dusk="select-schedule-by-month"
                   :disabled="!allowCustomizationData"
                 >
                   <option
@@ -176,7 +171,6 @@
                 class="form-check-input"
                 type="radio"
                 value="daysBeforeMonthEnd"
-                dusk="radio-schedule-pattern-days-before-month-end"
                 :disabled="!allowCustomizationData || !showPatternPicker"
                 :title="
                   !showPatternPicker
@@ -200,7 +194,6 @@
                 v-model="daysBeforeMonthEndInput"
                 type="number"
                 class="form-control schedule-days-before-month-end-input"
-                dusk="input-schedule-days-before-month-end"
                 :disabled="!allowCustomizationData"
                 min="0"
                 max="27"
@@ -232,7 +225,6 @@
                 class="form-check-input"
                 type="radio"
                 value="lastBusinessDayOfMonth"
-                dusk="radio-schedule-pattern-last-business-day"
                 :disabled="!allowCustomizationData || !showPatternPicker"
                 :title="
                   !showPatternPicker
@@ -438,7 +430,6 @@
                   :id="'schedule_automatic_recording_' + $.vnode.key"
                   v-model="automaticRecordingInput"
                   class="form-check-input"
-                  dusk="checkbox-schedule-automatic-recording"
                   type="checkbox"
                   value="1"
                   :disabled="!allowCustomizationData"

@@ -221,11 +221,7 @@
         </div>
       </div>
       <div class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-update-settings"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           {{ __('Save') }}
         </SubmitButton>
       </div>
