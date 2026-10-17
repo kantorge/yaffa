@@ -223,7 +223,7 @@
 </script>
 
 <style scoped>
-  .schedule-card {
+  :deep(.schedule-card) {
     font-size: 0.875rem;
   }
 

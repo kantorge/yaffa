@@ -6,12 +6,14 @@ import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
 
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import { escapeHtml } from '@/shared/lib/helpers';
-import { initializeSelect2 } from '@/shared/lib/select2';
+import {
+  createRemoteSelect,
+  setSelected,
+  clearSelect,
+} from '@/shared/lib/tom-select';
 import { booleanToTableIcon } from '@/shared/lib/datatable';
 import * as toastHelpers from '@/shared/lib/toast';
 import { confirmDelete } from '@/shared/lib/confirm';
-
-initializeSelect2(window.YAFFA.userSettings.language);
 
 const dataTableSelector = '#table';
 
@@ -130,61 +132,63 @@ window.onboardingTourSteps = [
 const mergeModalElement = document.getElementById('mergeCategoryLearningModal');
 const mergeModal = new coreui.Modal(mergeModalElement);
 
-const mergeSourceSelector = '#merge_source_learning';
-const mergeTargetSelector = '#merge_target_learning';
+const learningLabel = (description, categoryName) =>
+  `${description} (${categoryName})`;
 
-const initializeMergeSelect = (selector, otherSelector) => {
-  $(selector).select2({
-    theme: 'bootstrap-5',
-    placeholder: __('Select category learning entry'),
-    allowClear: true,
-    selectOnClose: false,
-    dropdownParent: $(mergeModalElement),
-    ajax: {
-      url: route('api.v1.category-learning.index'),
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          search: params.term,
-          status: 'all',
-        };
-      },
-      processResults: function (data) {
-        const selectedOther = $(otherSelector).select2('data');
-        const selectedOtherId =
-          selectedOther.length > 0 ? Number(selectedOther[0].id) : null;
-        const rows = Array.isArray(data) ? data : [];
+const createMergeSelect = (element, otherElement) =>
+  createRemoteSelect(element, {
+    url: () => route('api.v1.category-learning.index'),
+    params: (term) => ({ search: term || undefined, status: 'all' }),
+    mapResult: (item) => ({
+      id: item.id,
+      category_id: item.category?.id,
+      text: learningLabel(
+        item.item_description,
+        item.category?.full_name || item.category?.name || __('Not set'),
+      ),
+    }),
+    // Exclude the entry selected on the other side, and entries of other categories (only same-category
+    // entries can be merged)
+    filterResults: (results) => {
+      const other = otherElement.tomselect.options[otherElement.value];
 
-        return {
-          results: rows
-            .filter((item) => Number(item.id) !== selectedOtherId)
-            .map((item) => ({
-              id: item.id,
-              text: `${item.item_description} (${item.category?.full_name || item.category?.name || __('Not set')})`,
-            })),
-        };
-      },
-      cache: true,
+      return results.filter(
+        (item) =>
+          String(item.id) !== otherElement.value &&
+          (!other || String(item.category_id) === String(other.category_id)),
+      );
     },
+    placeholder: __('Select category learning entry'),
   });
-};
 
-initializeMergeSelect(mergeSourceSelector, mergeTargetSelector);
-initializeMergeSelect(mergeTargetSelector, mergeSourceSelector);
+const mergeSourceElement = document.getElementById('merge_source_learning');
+const mergeTargetElement = document.getElementById('merge_target_learning');
+const mergeSourceSelect = createMergeSelect(
+  mergeSourceElement,
+  mergeTargetElement,
+);
+const mergeTargetSelect = createMergeSelect(
+  mergeTargetElement,
+  mergeSourceElement,
+);
 
 const openMergeModal = (sourceLearning = null) => {
-  $(mergeSourceSelector).empty().trigger('change');
-  $(mergeTargetSelector).empty().trigger('change');
+  clearSelect(mergeSourceSelect, { silent: true });
+  clearSelect(mergeTargetSelect, { silent: true });
 
   if (sourceLearning) {
-    const option = new Option(
-      `${sourceLearning.item_description} (${sourceLearning.category_name})`,
-      sourceLearning.id,
-      true,
-      true,
+    setSelected(
+      mergeSourceSelect,
+      {
+        id: sourceLearning.id,
+        category_id: sourceLearning.category_id,
+        text: learningLabel(
+          sourceLearning.item_description,
+          sourceLearning.category_name,
+        ),
+      },
+      { silent: true },
     );
-    $(mergeSourceSelector).append(option).trigger('change');
   }
 
   mergeModal.show();
@@ -358,49 +362,19 @@ const buildTable = (rows) => {
     window.table.search($(this).val()).draw();
   });
 
-  $('#table_filter_search_text_clear').on('click', function () {
-    $('#table_filter_search_text').val('');
-    window.table.search('').draw();
-  });
-
-  const categoryFilterSelect = $('#table_filter_category');
-  categoryFilterSelect.select2({
-    theme: 'bootstrap-5',
+  createRemoteSelect('#table_filter_category', {
+    url: '/api/v1/categories',
+    params: (term) => ({ q: term || '*', withInactive: true }),
+    mapResult: (item) => ({ id: item.id, text: item.full_name }),
     placeholder: __('Any'),
-    allowClear: true,
-    ajax: {
-      url: '/api/v1/categories',
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          q: params.term || '*',
-          withInactive: true,
-        };
-      },
-      processResults: function (data) {
-        const rows = Array.isArray(data) ? data : [];
+    onChange: (value) => {
+      if (!value) {
+        window.table.column(5).search('').draw();
+        return;
+      }
 
-        return {
-          results: rows.map((item) => ({
-            id: item.id,
-            text: item.full_name,
-          })),
-        };
-      },
-      cache: true,
+      window.table.column(5).search(`^${value}$`, true, false).draw();
     },
-  });
-
-  categoryFilterSelect.on('change', function () {
-    const selectedValue = $(this).val();
-
-    if (!selectedValue) {
-      window.table.column(5).search('').draw();
-      return;
-    }
-
-    window.table.column(5).search(`^${selectedValue}$`, true, false).draw();
   });
 
   $('#button-new-learning').on('click', function () {
@@ -430,17 +404,17 @@ window.axios
   });
 
 $('#button-submit-merge-learning').on('click', function () {
-  const source = $(mergeSourceSelector).select2('data');
-  const target = $(mergeTargetSelector).select2('data');
+  const sourceId = mergeSourceElement.value;
+  const targetId = mergeTargetElement.value;
 
-  if (source.length === 0 || target.length === 0) {
+  if (!sourceId || !targetId) {
     toastHelpers.showErrorToast(
       __('Please select both source and target category learning entries'),
     );
     return;
   }
 
-  if (String(source[0].id) === String(target[0].id)) {
+  if (sourceId === targetId) {
     toastHelpers.showErrorToast(
       __('Please select different category learning entries'),
     );
@@ -449,23 +423,24 @@ $('#button-submit-merge-learning').on('click', function () {
 
   window.axios
     .post(route('api.v1.category-learning.merge'), {
-      source_id: source[0].id,
-      target_id: target[0].id,
+      source_id: sourceId,
+      target_id: targetId,
     })
     .then((response) => {
       const merged = normalizeLearning(response.data);
       const mergedId = Number(merged.id);
-      const sourceId = Number(source[0].id);
 
       window.categoryLearnings = window.categoryLearnings.filter(
-        (item) => Number(item.id) !== sourceId && Number(item.id) !== mergedId,
+        (item) =>
+          Number(item.id) !== Number(sourceId) && Number(item.id) !== mergedId,
       );
       window.categoryLearnings.push(merged);
 
       window.table
         .rows(
           (_, data) =>
-            Number(data.id) === sourceId || Number(data.id) === mergedId,
+            Number(data.id) === Number(sourceId) ||
+            Number(data.id) === mergedId,
         )
         .remove();
       window.table.row.add(merged).draw(false);

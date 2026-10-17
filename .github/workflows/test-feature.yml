@@ -13,6 +13,7 @@ on:
       - 'composer.json'
       - 'composer.lock'
       - 'phpunit.xml'
+      - 'tests/Pest.php'
 
   workflow_dispatch:
 
@@ -44,6 +45,7 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, dom, fileinfo, mysql
           coverage: xdebug
+          ini-values: xdebug.max_nesting_level=8192
         env:
           fail-fast: true
 
@@ -85,13 +87,16 @@ jobs:
       - name: Clear Config
         run: php artisan config:clear
 
+      - name: Grant Parallel Test Databases
+        run: mysql --host=127.0.0.1 --port=${{ job.services.mysql.ports['3306'] }} --user=root --password=secretroot -e "GRANT ALL PRIVILEGES ON \`testing%\`.* TO 'default'@'%';"
+
       - name: Run Migration
         run: php artisan migrate -v
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
       - name: Run Feature Tests
-        run: vendor/bin/phpunit --colors=never --coverage-clover=coverage.xml --testsuite Feature
+        run: vendor/bin/pest --parallel --colors=never --coverage-clover=coverage.xml --testsuite Feature
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 

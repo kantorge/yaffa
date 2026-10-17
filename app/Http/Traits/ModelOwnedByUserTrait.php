@@ -19,15 +19,13 @@ trait ModelOwnedByUserTrait
 {
     public static function bootModelOwnedByUserTrait(): void
     {
-        if (! auth()->check()) {
-            return;
-        }
-
+        // Checked per create, not at boot: a model boots once per process, which may be before any user is
+        // authenticated (seeders, queue workers, in-process browser tests)
         static::creating(function ($model) {
             // Only default to the authenticated user - never override a user_id the
             // caller already set explicitly (e.g. via a relation like $user->currencies()
             // ->create(...), or a factory building data for a specific, non-acting user).
-            if ($model->user_id === null) {
+            if ($model->user_id === null && auth()->check()) {
                 $model->user_id = auth()->id();
             }
         });

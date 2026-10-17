@@ -5,6 +5,7 @@ This document describes the breaking changes of major versions, and also include
 Table of contents:
 
 - [Upgrade from YAFFA 3.x to 4.x](#upgrade-from-yaffa-3x-to-4x)
+- [Upgrade within YAFFA 4.x](#upgrade-within-yaffa-4x)
 - [Upgrade within YAFFA 3.x](#upgrade-within-yaffa-3x)
 - [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
@@ -74,6 +75,13 @@ Two more precision-related changes, transparent to a normal upgrade:
 - `ext-bcmath` is now a required PHP extension (declared in `composer.json`). It's already present in the Sail dev image; if you run PHP outside Sail/Docker, confirm it's compiled in before upgrading (`php -m | grep bcmath`) — it wasn't previously listed among YAFFA's required extensions.
 
 **Action required if you have investment transactions predating a currency change on an account or investment**: an investment transaction's `price` (in the investment's currency) and its `commission`/`tax`/`dividend` (in the account's currency) are now combined with exact `Brick\Money\Money` arithmetic, which requires both sides to share a currency. New transactions are already prevented from mismatching (`TransactionRequest`'s account/investment currency check, and the currency-change confirmation now shown in the account/investment edit forms), but a transaction recorded _before_ either guard existed — back when the account or investment's currency was later changed — may still have a mismatched pair. For such a row, `cashflow_value` is now computed as `null` instead of throwing, and a `warning`-level log entry ("Investment transaction cash flow spans mismatched currencies (legacy data)") is written with the transaction ID. Search your logs for that message after upgrading, and manually correct the identified transactions (or the account/investment currency) to restore their cash-flow value.
+
+### Payee and Category Detail Pages, Find Transactions Summary Change
+
+Payees and categories now have detail pages (click a name in the payee or category list). No action is needed, but two things are visible to existing users:
+
+- **Find transactions: "matching items only" now also applies to the Summary and Timeline tabs.** Previously only the category-aware tabs honoured it, so for split transactions the Summary and Timeline totals counted the whole transaction amount even with the option on. With the option on, they now count only the matching items, so these totals can be lower than before. Reports without the option, or without split transactions, are unchanged.
+- **The setting "Default date range for account details" is now "Default date range for transaction history"** and also sets the initial date range on the payee and category pages. The stored value is unchanged. With "Don't load data by default", those pages load no transactions until a range is picked.
 
 ### Step-by-step Guide
 
@@ -170,6 +178,18 @@ The migration step will:
 #### 5. Review your converted Budgets (recommended)
 
 After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
+
+## Upgrade within YAFFA 4.x
+
+Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
+
+### Sentry support removed
+
+The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.
+
+- If you used Sentry, error monitoring stops after the upgrade. Errors are now only written to the configured Laravel log channel (see `LOG_CHANNEL`/`LOG_STACK`).
+- `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read; you can delete them from your `.env`.
+- Source code users: run `composer install` as usual, so the package is removed from `vendor/`.
 
 ## Upgrade within YAFFA 3.x
 

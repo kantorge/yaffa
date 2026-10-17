@@ -1,149 +1,66 @@
 import { __ } from '@/shared/lib/i18n';
-import { initializeSelect2 } from '@/shared/lib/select2';
+import { createRemoteSelect, setSelected } from '@/shared/lib/tom-select';
 import { confirmAction } from '@/shared/lib/confirm';
-initializeSelect2(window.YAFFA.userSettings.language);
 
-// Add select2 functionality to payee_source select
-const selectorSourceCategory = '#category_source';
-const selectorTargetCategory = '#category_target';
+const sourceElement = document.getElementById('category_source');
+const targetElement = document.getElementById('category_target');
 
-$(selectorSourceCategory)
-  .select2({
-    placeholder: () => __('Select category to be merged'),
-    theme: 'bootstrap-5',
-    allowClear: true,
-    selectOnClose: false,
-    ajax: {
-      url: '/api/v1/categories',
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          _token: csrfToken,
-          q: params.term,
-          withInactive: true,
-        };
-      },
-      processResults: function (data) {
-        // Exclude category in target select
-        let targetCategory = $(selectorTargetCategory).select2('data');
-        if (targetCategory.length > 0) {
-          const targetCategoryId = Number(targetCategory[0].id);
-          data = data.filter(function (item) {
-            return item.id !== targetCategoryId;
-          });
-        }
+// Whether the selected category is a parent (null: nothing selected), read by the submit handler
+const isParent = new Map([
+  [sourceElement, null],
+  [targetElement, null],
+]);
 
-        return {
-          results: data.map(function (item) {
-            return {
-              id: item.id,
-              text: item.full_name,
-            };
-          }),
-        };
-      },
-      cache: true,
+const createCategorySelect = (element, otherElement, placeholder) =>
+  createRemoteSelect(element, {
+    url: '/api/v1/categories',
+    params: (term) => ({ q: term || undefined, withInactive: true }),
+    mapResult: (item) => ({ id: item.id, text: item.full_name }),
+    // Exclude the category selected on the other side
+    filterResults: (results) =>
+      results.filter((item) => String(item.id) !== otherElement.value),
+    placeholder,
+    onSelect: (item) => {
+      window.axios
+        .get('/api/v1/categories/' + item.id)
+        .then(({ data }) => isParent.set(element, !data.parent));
     },
-  })
-  .on('select2:select', function (e) {
-    // When a category is selected, get all its details and mark if it is a parent category
-    $.ajax({
-      url: '/api/v1/categories/' + e.params.data.id,
-      data: {
-        _token: csrfToken,
-      },
-    }).done((data) => {
-      $(selectorSourceCategory).data('parent', !data.parent);
-    });
-  })
-  .on('select2:unselect', function () {
-    $(selectorSourceCategory).data('parent', null);
+    onClear: () => isParent.set(element, null),
   });
 
-// Load default value for source category if provided in query parameter
-let categorySource = window.categorySource || null;
-if (categorySource.id) {
-  $(selectorSourceCategory)
-    .append(new Option(categorySource.full_name, categorySource.id, true, true))
-    .trigger({
-      type: 'select2:select',
-      params: {
-        data: categorySource,
-      },
-    })
-    .trigger('change');
+const sourceSelect = createCategorySelect(
+  sourceElement,
+  targetElement,
+  __('Select category to be merged'),
+);
+createCategorySelect(
+  targetElement,
+  sourceElement,
+  __('Select category to be merged into'),
+);
+
+// Preset the source category if provided in the URL
+if (window.categorySource?.id) {
+  setSelected(sourceSelect, {
+    id: window.categorySource.id,
+    text: window.categorySource.full_name,
+  });
 }
-
-// Add select2 functionality to category_target select
-$(selectorTargetCategory)
-  .select2({
-    placeholder: () => __('Select category to be merged into'),
-    theme: 'bootstrap-5',
-    allowClear: true,
-    selectOnClose: false,
-    ajax: {
-      url: '/api/v1/categories',
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          _token: csrfToken,
-          q: params.term, // search term
-          withInactive: true,
-        };
-      },
-      processResults: function (data) {
-        //Exclude caegory in source select
-        let sourceCategory = $(selectorSourceCategory).select2('data');
-        if (sourceCategory.length > 0) {
-          const sourceCategoryId = Number(sourceCategory[0].id);
-          data = data.filter(function (item) {
-            return item.id !== sourceCategoryId;
-          });
-        }
-
-        return {
-          results: data.map(function (item) {
-            return {
-              id: item.id,
-              text: item.full_name,
-            };
-          }),
-        };
-      },
-      cache: true,
-    },
-  })
-  .on('select2:select', function (e) {
-    // When a category is selected, get all its details and mark if it is a parent category
-    $.ajax({
-      url: '/api/v1/categories/' + e.params.data.id,
-      data: {
-        _token: csrfToken,
-      },
-    }).done((data) => {
-      $(selectorTargetCategory).data('parent', !data.parent);
-    });
-  })
-  .on('select2:unselect', function () {
-    $(selectorTargetCategory).data('parent', null);
-  });
 
 // Add confirm dialog to submit button
 $('#merge-categories-form').on('submit', function (e) {
-  // Validate if both select2 inputs are not empty
-  let source = $(selectorSourceCategory).select2('data');
-  let target = $(selectorTargetCategory).select2('data');
+  // Validate if both selects have a value
+  const source = sourceElement.value;
+  const target = targetElement.value;
 
-  if (source.length === 0 || target.length === 0) {
+  if (!source || !target) {
     e.preventDefault();
     alert(__('Please select categories to be merged'));
     return;
   }
 
-  // Validate if both select2 inputs are not the same
-  if (source[0].id === target[0].id) {
+  // Validate if both selects are not the same
+  if (source === target) {
     e.preventDefault();
     alert(__('Please select different categories to be merged'));
     return;
@@ -159,8 +76,8 @@ $('#merge-categories-form').on('submit', function (e) {
 
   // Validate invalid combination where source category is a parent, and target category is a child
   if (
-    $(selectorSourceCategory).data('parent') === true &&
-    $(selectorTargetCategory).data('parent') === false
+    isParent.get(sourceElement) === true &&
+    isParent.get(targetElement) === false
   ) {
     e.preventDefault();
     alert(__('You cannot merge a parent category into a child category.'));

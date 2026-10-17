@@ -121,12 +121,12 @@
 </script>
 
 <style scoped>
-  .ai-doc-card {
+  :deep(.ai-doc-card) {
     font-size: 0.875rem;
     transition: box-shadow 0.15s ease;
     background-color: rgba(var(--cui-info-rgb, 13, 202, 240), 0.08);
   }
-  .ai-doc-card:hover {
+  :deep(.ai-doc-card:hover) {
     box-shadow: 0 0 0 2px rgba(var(--cui-info-rgb, 13, 202, 240), 0.4);
   }
 </style>

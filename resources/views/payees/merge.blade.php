@@ -23,7 +23,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="row mb-3">
+                        <div class="mb-3">
                             <label class="form-label" for="payee_source">
                                 {{ __('Payee to be merged') }}
                             </label>
@@ -35,7 +35,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="row mb-3">
+                        <div class="mb-3">
                             <label class="form-label" for="payee_target">
                                 {{ __('Where to merge payee') }}
                             </label>
@@ -49,7 +49,7 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="row mb-3">
+                        <div class="mb-3">
                             <label>
                                 {{ __('After merging') }}
                             </label>

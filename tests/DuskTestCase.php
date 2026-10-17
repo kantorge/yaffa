@@ -124,65 +124,6 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * @param Browser $browser
-     * @param string $selectSelector
-     * @return array<int, string>
-     */
-    protected function getSelect2Values(Browser $browser, string $selectSelector): array
-    {
-        $selectedValues = $browser->script(
-            'return $(' . json_encode($selectSelector) . ').select2("val") ?? [];'
-        )[0];
-
-        if (!is_array($selectedValues)) {
-            return [];
-        }
-
-        return array_map('strval', $selectedValues);
-    }
-
-    protected function getSelect2ValueCount(Browser $browser, string $selectSelector): int
-    {
-        return count($this->getSelect2Values($browser, $selectSelector));
-    }
-
-    protected function waitForSelect2ValueCount(
-        Browser $browser,
-        string $selectSelector,
-        int $expectedCount,
-        int $seconds = 10,
-        int $milliseconds = 100,
-    ): void {
-        $browser->waitUsing(
-            $seconds,
-            $milliseconds,
-            fn () => $this->getSelect2ValueCount($browser, $selectSelector) === $expectedCount
-        );
-    }
-
-    /**
-     * @param Browser $browser
-     * @param string $selectSelector
-     * @param array<int, int|string> $expectedValues
-     */
-    protected function assertSelect2Values(Browser $browser, string $selectSelector, array $expectedValues): void
-    {
-        $selectedValues = $this->getSelect2Values($browser, $selectSelector);
-        $expectedValues = array_map('strval', $expectedValues);
-
-        $this->assertCount(count($expectedValues), $selectedValues);
-
-        foreach ($expectedValues as $expectedValue) {
-            $this->assertContains($expectedValue, $selectedValues);
-        }
-    }
-
-    protected function assertSelect2HasNoSelection(Browser $browser, string $selectSelector): void
-    {
-        $this->assertSame([], $this->getSelect2Values($browser, $selectSelector));
-    }
-
-    /**
      * Setting a native <input type="date"> via ->type() sends keys to the browser's
      * segmented date widget, which is unreliable across locales and can produce
      * garbled values (e.g. typed digits landing in the wrong segment). Setting the

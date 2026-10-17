@@ -200,6 +200,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('categories.store');
     Route::get('/categories/{category}', [CategoryApiController::class, 'getItem'])
         ->name('categories.show');
+    Route::get('/categories/{category}/overview', [CategoryApiController::class, 'overview'])
+        ->name('categories.overview');
     Route::patch('/categories/{category}', [CategoryApiController::class, 'patchActive'])
         ->name('categories.patch-active');
     Route::delete('/categories/{category}', [CategoryApiController::class, 'destroy'])
@@ -264,6 +266,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('payees.category-suggestions.dismiss');
     Route::get('/payees/{accountEntity}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
         ->name('payees.category-stats');
+    Route::get('/payees/{accountEntity}/overview', [PayeeStatsApiController::class, 'overview'])
+        ->name('payees.overview');
 
     // Tag endpoints
     Route::get('/tags', [TagApiController::class, 'getList'])

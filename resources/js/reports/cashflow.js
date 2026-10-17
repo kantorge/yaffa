@@ -5,10 +5,8 @@ import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
 
-// Select2 for account selection
 import { __ } from '@/shared/lib/i18n';
-import { initializeSelect2 } from '@/shared/lib/select2';
-initializeSelect2(window.YAFFA.userSettings.language);
+import { createRemoteSelect, setSelected } from '@/shared/lib/tom-select';
 
 import * as toastHelpers from '@/shared/lib/toast';
 import {
@@ -137,9 +135,7 @@ initChart();
 function reloadData() {
   const url = window.route('api.v1.reports.cashflow', {
     withForecast: document.getElementById('withForecast').checked,
-    accountEntity: $(elementAccountSelector).val()
-      ? $(elementAccountSelector).val()
-      : undefined,
+    accountEntity: accountElement.value || undefined,
   });
 
   document.getElementById('btnReload').disabled = true;
@@ -229,14 +225,14 @@ function onCashflowDataReady(data) {
   document.getElementById('btnReload').disabled = false;
 }
 
-const elementAccountSelector = '#cashflowAccount';
+const accountElement = document.getElementById('cashflowAccount');
 
 function rebuildUrl() {
   let params = [];
 
   // Accounts
-  if ($(elementAccountSelector).val()) {
-    params.push('accountEntity=' + $(elementAccountSelector).val());
+  if (accountElement.value) {
+    params.push('accountEntity=' + accountElement.value);
   }
 
   // With forecast
@@ -252,36 +248,14 @@ function rebuildUrl() {
 }
 
 // Account filter
-$(elementAccountSelector)
-  .select2({
-    theme: 'bootstrap-5',
-    ajax: {
-      url: '/api/v1/accounts',
-      dataType: 'json',
-      delay: 150,
-      data: function (params) {
-        return {
-          q: params.term,
-          withInactive: true,
-        };
-      },
-      processResults: function (data) {
-        return {
-          results: data.map(function (account) {
-            return {
-              id: account.id,
-              text: account.name,
-            };
-          }),
-        };
-      },
-      cache: true,
-    },
-    placeholder: __('Select account'),
-    allowClear: true,
-  })
-  .on('select2:select', rebuildUrl)
-  .on('select2:unselect', rebuildUrl);
+const accountSelect = createRemoteSelect(accountElement, {
+  url: '/api/v1/accounts',
+  params: (term) => ({ q: term || undefined, withInactive: true }),
+  mapResult: (account) => ({ id: account.id, text: account.name }),
+  placeholder: __('Select account'),
+  onSelect: rebuildUrl,
+  onClear: rebuildUrl,
+});
 
 // Input event listeners
 document.getElementById('singleAxis').addEventListener('change', function () {
@@ -300,29 +274,14 @@ document.getElementById('btnReload').addEventListener('click', reloadData);
 
 // Default account
 if (window.presetAccount) {
-  $.ajax({
-    url: '/api/v1/accounts/' + window.presetAccount,
-    data: {
-      _token: window.csrfToken,
-    },
-  }).done((data) => {
-    // Create the option and append to Select2
-    $(elementAccountSelector)
-      .append(new Option(data.name, data.id, true, true))
-      .trigger('change')
-      .trigger({
-        type: 'select2:select',
-        params: {
-          data: {
-            id: data.id,
-            name: data.name,
-          },
-        },
-      });
+  window.axios
+    .get('/api/v1/accounts/' + window.presetAccount)
+    .then(({ data }) => {
+      setSelected(accountSelect, { id: data.id, text: data.name });
 
-    // Initial data for the preset account
-    reloadData();
-  });
+      // Initial data for the preset account
+      reloadData();
+    });
 } else {
   // Initial data for all accounts
   reloadData();

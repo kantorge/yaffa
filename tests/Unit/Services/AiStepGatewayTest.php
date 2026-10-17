@@ -24,7 +24,7 @@ class AiStepGatewayTest extends TestCase
         $user = User::factory()->create();
         $config = AiProviderConfig::factory()->for($user)->create([
             'provider' => 'openai',
-            'model' => 'gpt-4.1-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
         $document = AiDocument::factory()->for($user)->create();
 
@@ -74,7 +74,7 @@ class AiStepGatewayTest extends TestCase
         $user = User::factory()->create();
         $config = AiProviderConfig::factory()->for($user)->create([
             'provider' => 'openai',
-            'model' => 'gpt-4.1-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
         $document = AiDocument::factory()->for($user)->create();
 
@@ -117,7 +117,7 @@ class AiStepGatewayTest extends TestCase
         $user = User::factory()->create();
         $config = AiProviderConfig::factory()->for($user)->create([
             'provider' => 'openai',
-            'model' => 'gpt-4.1-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
         $document = AiDocument::factory()->for($user)->create();
 
@@ -138,7 +138,7 @@ class AiStepGatewayTest extends TestCase
         } catch (AiProviderFailureException $exception) {
             $this->assertSame('account_matching', $exception->step());
             $this->assertSame('openai', $exception->provider());
-            $this->assertSame('gpt-4.1-mini', $exception->model());
+            $this->assertSame('gpt-5.6-luna', $exception->model());
             $this->assertTrue($exception->isTimeout());
             $this->assertStringContainsString('AI provider error', $exception->getMessage());
         }
@@ -149,7 +149,7 @@ class AiStepGatewayTest extends TestCase
         $user = User::factory()->create();
         $config = AiProviderConfig::factory()->for($user)->create([
             'provider' => 'openai',
-            'model' => 'gpt-4.1-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
         $document = AiDocument::factory()->for($user)->create();
 

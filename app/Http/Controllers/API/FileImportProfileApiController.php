@@ -44,9 +44,10 @@ class FileImportProfileApiController extends Controller
 
         $query = FileImportProfile::query()
             ->selectableForUser($user)
-            ->with(['accountEntities' => fn ($q) => $q
-                ->where('user_id', $user->id)
-                ->select(['id', 'name', 'preferred_file_import_profile_id']),
+            ->with(['accounts' => fn ($q) => $q
+                ->whereHas('config', fn ($c) => $c->where('user_id', $user->id))
+                ->with('config:id,name,config_id,config_type')
+                ->select(['id', 'preferred_file_import_profile_id']),
             ])
             ->orderByDesc('type')
             ->orderBy('name');
@@ -116,7 +117,7 @@ class FileImportProfileApiController extends Controller
     #[Authorize('delete', 'profile')]
     public function destroy(FileImportProfile $profile): JsonResponse
     {
-        if ($profile->accountEntities()->exists()) {
+        if ($profile->accounts()->exists()) {
             return response()->json([
                 'message' => __('This profile cannot be deleted because it is set as the default for one or more accounts.'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -143,6 +144,12 @@ class FileImportProfileApiController extends Controller
         if (! $aiConfig instanceof AiProviderConfig) {
             return response()->json([
                 'message' => 'No AI provider is configured for your account. Please configure an AI provider in your settings before using this feature.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (! $aiConfig->isModelAvailable()) {
+            return response()->json([
+                'message' => $aiConfig->unavailableModelMessage(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 

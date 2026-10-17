@@ -207,7 +207,7 @@ This file contains the implementation-oriented material extracted from the main 
         - Error type: `ocr_unavailable`
         - Suggested actions:
           - Enable Tesseract OCR (see Docker setup instructions)
-          - Enable Vision AI in AI Provider settings (requires vision-capable model like gpt-4o or gemini-1.5-pro)
+          - Enable Vision AI in AI Provider settings (requires vision-capable model like gpt-5.6-terra or gemini-1.5-pro)
           - Upload text-based PDF instead of images
     - **Old unprocessed documents reminder (retention cleanup)**
       - Mailable: `App\Mail\AiDocumentsAwaitingAction`, sent from `CleanupOldAiDocuments` (not via an event)
@@ -331,13 +331,20 @@ A few notes on the statuses
 
 ## Duplicate Transaction Detection
 
-- Returns multiple matches above threshold.
-- Threshold rules:
-  - Date within 3 days.
-  - Amount difference within 10%.
-  - Asset match (account + payee OR account + investment OR both accounts for transfers).
-- Matches sorted by similarity score.
-- This is not part of the AI processing, but performed before transaction finalization.
+- This is not part of the AI processing, but performed before transaction finalization: `POST /api/v1/documents/{aiDocument}/check-duplicates` → `AiDocumentApiController::checkDuplicates()` → `DuplicateDetectionService::findDuplicates()`.
+  - Unprocessed document (no `processed_transaction_data`): `400`. Draft without a date: `200` with an empty `duplicates` list.
+- Match data: `DuplicateDetectionService::matchDataFromDraft()` flattens the stored draft (see `ProcessDocumentService::buildTransactionData()`), so matching uses the resolved IDs, not the AI's unresolved `raw` payload:
+  - `date` (top-level, falling back to `raw.date`), `config_type`, `transaction_type`.
+  - Standard: `account_from_id`, `account_to_id` from `config`; `amount` from `config.amount_from`, falling back to `raw.amount`. A `0` amount (stored when the AI found none) is treated as unknown and left out.
+  - Investment: `account_id`, `investment_id` from `config`; no `amount` (see scoring below).
+  - IDs are cast to int (scoring compares with `===`); null/missing keys are dropped. A legacy draft holding only `raw` still works via the fallbacks.
+- Candidates: the user's transactions dated within ±`duplicate_date_window_days` (default 3) of the draft date. When the draft has a `config_type`, only transactions of that type are considered; a draft without one (e.g. a legacy `raw`-only draft) is matched against all configuration types.
+- Scoring (`calculateSimilarity()`): points earned divided by the maximum possible points.
+  - Date within the window: 1 point (out of 1).
+  - Amount, only if the draft has one (out of 2): 2 points for an exact match, 1 point within `duplicate_amount_tolerance_percent` (default 10%) of the candidate's amount. The candidate's amount is the sum of its transaction items; investments (and any candidate without items) yield `0` and never score on amount.
+  - Assets (out of 2): 1 point per matching ID — `account_from_id`/`account_to_id` for standard transactions (the payee is `account_to` for withdrawals), `account_id`/`investment_id` for investments.
+- A candidate is returned when its similarity is strictly above `duplicate_similarity_threshold` (default 0.5). Date and exact amount alone score 3/5 = 0.6.
+- Matches are sorted by similarity, highest first. All three settings are per user (`ai_user_settings`).
 
 ## Retry Strategy (Hybrid)
 
@@ -625,7 +632,7 @@ TESSERACT_LANGUAGE=eng              # OCR language (eng, fra, deu, etc.)
 **User Workflow:**
 
 1. User configures AI provider (OpenAI/Gemini) in settings
-2. User selects model (gpt-4o, gemini-1.5-pro for vision support)
+2. User selects model (gpt-5.6-terra, gemini-1.5-pro for vision support)
 3. User chooses deployment mode: binary (local), http (Docker), or cloud-only
 4. If images uploaded without OCR, clear error message with remediation steps
 
@@ -644,8 +651,8 @@ Added to `docker/docker-compose.yml` with smart profile-based activation
 
 **OpenAI:**
 
-- `gpt-4o` - GPT-4 Omni
-- `gpt-4o-mini` - GPT-4 Omni Mini
+- `gpt-5.6-terra` - GPT-5.6 Terra
+- `gpt-5.6-luna` - GPT-5.6 Luna
 
 **Gemini:**
 

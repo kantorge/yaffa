@@ -203,7 +203,7 @@ class AccountTest extends TestCase
         $response->assertViewIs('accounts.form');
         // Plain decimal only; Money's string form ("HUF 0.00") would fail validation on save
         $response->assertSee(
-            'value="' . $account->config->opening_balance->getAmount()->stripTrailingZeros() . '"',
+            'value="' . $account->config->opening_balance->getAmount()->strippedOfTrailingZeros() . '"',
             false
         );
     }

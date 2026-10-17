@@ -36,9 +36,11 @@ class ApiAbilityEnforcementTest extends TestCase
             // read
             'accounts.index' => ['api.v1.accounts.index', 'get', 'read', []],
             'categories.index' => ['api.v1.categories.index', 'get', 'read', []],
+            'categories.overview' => ['api.v1.categories.overview', 'get', 'read', ['category' => 1]],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
+            'payees.overview' => ['api.v1.payees.overview', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
             'tags.show' => ['api.v1.tags.show', 'get', 'read', ['tag' => 1]],
             'investments.index' => ['api.v1.investments.index', 'get', 'read', []],
@@ -164,7 +166,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.currencies.destroy' => [
                 'currency' => Currency::factory()->for($user)->create()->id,
             ],
-            'api.v1.categories.destroy' => [
+            'api.v1.categories.destroy', 'api.v1.categories.overview' => [
                 'category' => Category::factory()->for($user)->create()->id,
             ],
             'api.v1.investments.destroy' => [
@@ -173,7 +175,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.account-entities.destroy' => [
                 'accountEntity' => $this->createOwnedAccountEntity($user)->id,
             ],
-            'api.v1.payees.category-stats' => [
+            'api.v1.payees.category-stats', 'api.v1.payees.overview' => [
                 'accountEntity' => $this->createOwnedPayee($user)->id,
             ],
             'api.v1.account-groups.destroy' => [

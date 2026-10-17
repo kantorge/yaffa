@@ -1,0 +1,278 @@
+<template>
+  <div>
+    <ul v-if="busy" class="list-group list-group-flush">
+      <li
+        v-for="i in 5"
+        :key="i"
+        aria-hidden="true"
+        class="list-group-item placeholder-glow"
+      >
+        <span class="placeholder placeholder-lg col-12"></span>
+      </li>
+    </ul>
+    <div v-show="!busy" ref="chartContainer" class="chartContainer"></div>
+  </div>
+</template>
+
+<script>
+  import Decimal from 'decimal.js';
+  import { applyMatchingItemsOnly } from '@/shared/lib/reports';
+  import * as am4core from '@amcharts/amcharts4/core';
+  import * as am4charts from '@amcharts/amcharts4/charts';
+  import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+  import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import {
+    applyAmChartsColorTheme,
+    COLOR_MODE_EVENT,
+  } from '@/shared/lib/ui/amchartsColorTheme';
+
+  am4core.useTheme(am4themes_animated);
+
+  export default {
+    name: 'MonthlyTimelineChart',
+    props: {
+      transactions: {
+        type: Array,
+        required: false,
+        default: () => [],
+      },
+      title: {
+        type: String,
+        default: __('Monthly spending and income'),
+      },
+      busy: {
+        type: Boolean,
+        required: true,
+      },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
+      },
+    },
+    data() {
+      return {
+        filteredTransactions: [],
+        chartData: {},
+        locale: window.YAFFA.userSettings.locale,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
+      };
+    },
+    computed: {
+      effectiveTransactions() {
+        return applyMatchingItemsOnly(this.transactions, {
+          matchingItemsOnly: this.matchingItemsOnly,
+          categoryIds: this.categoryIds,
+          tagIds: this.tagIds,
+        });
+      },
+    },
+    watch: {
+      effectiveTransactions: {
+        handler(newTransactions) {
+          this.updateChartData(newTransactions);
+        },
+        immediate: true,
+      },
+    },
+    mounted() {
+      this.createChart();
+      this.chart.data = this.chartData;
+      this._colorModeHandler = () => {
+        if (this.chart) this.chart.dispose();
+        this.createChart();
+        if (this.chart) this.chart.data = this.chartData;
+      };
+      document.addEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+    },
+    beforeUnmount() {
+      document.removeEventListener(COLOR_MODE_EVENT, this._colorModeHandler);
+      if (this.chart) {
+        this.chart.dispose();
+      }
+    },
+    methods: {
+      createChart() {
+        applyAmChartsColorTheme(am4core);
+
+        let chart = am4core.create(
+          this.$refs.chartContainer,
+          am4charts.XYChart,
+        );
+        applyAmChartsLocalization(
+          chart,
+          this.locale,
+          window.YAFFA.userSettings.language,
+        );
+
+        chart.data = null;
+
+        chart.numberFormatter.intlLocales = this.locale;
+        chart.numberFormatter.numberFormat = {
+          style: 'currency',
+          currency: this.baseCurrency.iso_code,
+          minimumFractionDigits: 0,
+        };
+
+        let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+        dateAxis.renderer.minGridDistance = 50;
+        // Data is monthly: align columns and labels to month slots, and centre
+        // each label under its column instead of on the grid line
+        dateAxis.baseInterval = { count: 1, timeUnit: 'month' };
+        dateAxis.renderer.labels.template.location = 0.5;
+        dateAxis.renderer.labels.template.horizontalCenter = 'middle';
+        dateAxis.renderer.labels.template.verticalCenter = 'top';
+        dateAxis.renderer.labels.template.dy = 5;
+
+        // Keep the value labels outside the plot area, right-aligned against it
+        let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+        valueAxis.renderer.inside = false;
+        valueAxis.renderer.labels.template.horizontalCenter = 'right';
+        valueAxis.renderer.labels.template.textAlign = 'end';
+        valueAxis.renderer.labels.template.dx = -5;
+
+        let seriesDeposit = chart.series.push(new am4charts.ColumnSeries());
+        seriesDeposit.dataFields.valueY = 'deposits';
+        seriesDeposit.dataFields.dateX = 'date';
+        seriesDeposit.name = 'Deposits';
+        seriesDeposit.tooltipText = '{name}: [bold]{valueY}[/]';
+        seriesDeposit.columns.template.fill = am4core.color('green');
+        seriesDeposit.strokeOpacity = 0;
+        seriesDeposit.clustered = false;
+
+        let seriesWithdrawal = chart.series.push(new am4charts.ColumnSeries());
+        seriesWithdrawal.dataFields.valueY = 'withdrawals';
+        seriesWithdrawal.dataFields.dateX = 'date';
+        seriesWithdrawal.name = 'Withdrawals';
+        seriesWithdrawal.tooltipText = '{name}: [bold]{valueY}[/]';
+        seriesWithdrawal.columns.template.fill = am4core.color('red');
+        seriesWithdrawal.strokeOpacity = 0;
+        seriesWithdrawal.clustered = false;
+
+        let seriesCashFlow = chart.series.push(new am4charts.LineSeries());
+        seriesCashFlow.dataFields.valueY = 'cashFlow';
+        seriesCashFlow.dataFields.dateX = 'date';
+        seriesCashFlow.name = 'Monthly cash flow';
+        seriesCashFlow.tooltipText = '{name}: [bold]{valueY}[/]';
+
+        let bullet = seriesCashFlow.bullets.push(new am4charts.CircleBullet());
+        bullet.circle.fill = am4core.color('#fff');
+        bullet.circle.strokeWidth = 2;
+
+        chart.cursor = new am4charts.XYCursor();
+
+        let title = chart.titles.create();
+        title.text = this.title;
+        title.fontSize = 20;
+        title.marginBottom = 20;
+
+        this.chart = chart;
+      },
+
+      /**
+       * Update the chart data based on the current set of transactions.
+       *
+       * @param {Array} transactions
+       * @property {String} transactions.transaction_type
+       * @returns {void}
+       */
+      updateChartData(transactions) {
+        const filteredTransactions = [];
+        transactions.forEach((transaction) => {
+          // Take only deposits and withdrawals
+          if (
+            transaction.transaction_type === 'deposit' ||
+            transaction.transaction_type === 'withdrawal'
+          ) {
+            filteredTransactions.push(transaction);
+          }
+        });
+
+        if (!filteredTransactions.length) {
+          this.filteredTransactions = [];
+          this.chartData = [];
+        } else {
+          // Process the actual transactions
+          this.filteredTransactions = filteredTransactions;
+
+          // Create the chart data by aggregating the transactions into months
+          // The withdrawals and deposits are separated into two separate series, with the withdrawals being negative
+          const chartData = [];
+          const months = {};
+          /**
+           * @var {Object} transaction
+           * @property {Date} transaction.date
+           * @property {Number|String} transaction.cashflow_value
+           * @property {Number} transaction.currencyRateToBase
+           */
+          filteredTransactions.forEach((transaction) => {
+            const date = new Date(transaction.date);
+            const month = date.getFullYear() * 100 + date.getMonth() + 1;
+            if (!months[month]) {
+              months[month] = {
+                month: month,
+                // Truncate the date to the first day of the month
+                date: new Date(date.getFullYear(), date.getMonth(), 1),
+                // Kept as Decimal while accumulating (cashflow_value arrives from the
+                // API as a decimal string) and converted to Number only when handed
+                // to the chart below.
+                deposits: new Decimal(0),
+                withdrawals: new Decimal(0),
+              };
+            }
+
+            const monthlyValue = new Decimal(
+              transaction.cashflow_value || 0,
+            ).times(transaction.currencyRateToBase || 0);
+
+            if (transaction.transaction_type === 'deposit') {
+              months[month].deposits =
+                months[month].deposits.plus(monthlyValue);
+            } else if (transaction.transaction_type === 'withdrawal') {
+              months[month].withdrawals =
+                months[month].withdrawals.plus(monthlyValue);
+            }
+          });
+
+          Object.values(months).forEach((month) => {
+            chartData.push({
+              month: month.month,
+              date: month.date,
+              deposits: month.deposits.toNumber(),
+              withdrawals: month.withdrawals.toNumber(),
+              // Deposits are positive, withdrawals are negative
+              cashFlow: month.deposits.plus(month.withdrawals).toNumber(),
+            });
+          });
+
+          this.chartData = chartData;
+        }
+
+        if (this.chart) {
+          this.chart.data = this.chartData;
+        }
+      },
+      getDistinctParentIds() {
+        return this.filteredTransactions
+          .flatMap((transaction) => transaction.transaction_items)
+          .filter((item) => item.category)
+          .map((item) => item.category.parent_id)
+          .filter((value, index, self) => self.indexOf(value) === index);
+      },
+    },
+  };
+</script>
+
+<style scoped>
+  .chartContainer {
+    width: 100%;
+    height: 500px;
+  }
+</style>

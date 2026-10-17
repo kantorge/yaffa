@@ -8,7 +8,7 @@
       @click.stop.prevent="$emit('dismiss')"
     ></button>
 
-    <component :is="tag" v-bind="$attrs">
+    <component :is="tag" class="d-block" v-bind="$attrs">
       <slot></slot>
     </component>
   </div>

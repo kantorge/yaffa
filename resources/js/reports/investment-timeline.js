@@ -161,14 +161,6 @@ document
   .getElementById('table_filter_search_text')
   .addEventListener('keyup', filterData);
 
-// Search box clear button
-document
-  .getElementById('table_filter_search_text_clear')
-  .addEventListener('click', function () {
-    document.getElementById('table_filter_search_text').value = '';
-    filterData();
-  });
-
 // Initialize the "tree" for the investment group filter list
 const selectorTreeContainer = '#investment-group-tree-container';
 investmentGroupTree(selectorTreeContainer, window.investmentGroups, filterData);

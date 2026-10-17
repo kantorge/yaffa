@@ -45,11 +45,11 @@ Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->n
 /*********************
  * Category related routes
  ********************/
-Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
-// Routes to display form to merge two categories
+// Routes to display form to merge two categories (before the resource, so 'merge' isn't taken as {category})
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
     ->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+Route::resource('categories', CategoryController::class)->except(['destroy']);
 
 // Category learning route
 Route::get('/category-learning', [CategoryLearningController::class, 'index'])

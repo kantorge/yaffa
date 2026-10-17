@@ -200,7 +200,7 @@
 </script>
 
 <style scoped>
-  .duplicate-card {
+  :deep(.duplicate-card) {
     font-size: 0.875rem;
   }
 

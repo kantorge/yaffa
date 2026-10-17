@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Http\View\Composers\AccountGroupListComposer;
 use App\Http\View\Composers\AccountListComposer;
-use App\Http\View\Composers\CategoryListComposer;
 use App\Http\View\Composers\CategoryParentListComposer;
 use App\Http\View\Composers\CurrencyListComposer;
 use App\Http\View\Composers\DataLayerEventComposer;
@@ -54,8 +53,5 @@ class ViewServiceProvider extends ServiceProvider
 
         // Category parent list for category forms
         View::composer('categories.form', CategoryParentListComposer::class);
-
-        // All categories for payee form
-        View::composer('payees.form', CategoryListComposer::class);
     }
 }

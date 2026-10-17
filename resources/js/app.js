@@ -41,6 +41,7 @@ const routeMap = new Map([
   ['payees.merge.form', 'payee/merge'],
   ['account.history', 'account/history'],
   ['categories.index', 'categories/index'],
+  ['categories.show', 'categories/show'],
   ['category-learning.index', 'category-learning/index'],
   ['categories.create', 'categories/form'],
   ['categories.edit', 'categories/form'],
@@ -100,7 +101,9 @@ if (
 }
 
 if (current === 'account-entity.show') {
-  loadModule('account/show');
+  loadModule(
+    document.getElementById('payeeShow') ? 'payee/show' : 'account/show',
+  );
 }
 
 if (
@@ -108,13 +111,6 @@ if (
   route().params.type === 'account'
 ) {
   loadModule('account/form');
-}
-
-if (
-  (current === 'account-entity.create' || current === 'account-entity.edit') &&
-  route().params.type === 'payee'
-) {
-  loadModule('payee/form');
 }
 
 if (
@@ -148,6 +144,23 @@ if (document.readyState === 'loading') {
   initializeSidebarVisibilityPersistence();
   initializeColorMode();
 }
+
+// Clear button of the shared sidebar table search (tablefilter-sidebar-search.blade.php).
+// Firing input/keyup lets whatever search listener the page registered redraw its table.
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('[data-table-search-clear]')) {
+    return;
+  }
+
+  const input = document.getElementById('table_filter_search_text');
+  if (!input) {
+    return;
+  }
+
+  input.value = '';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+});
 
 // The "pre-render" class (see master.blade.php and _layout.scss) disables the sidebar/
 // wrapper layout transition for the very first style/layout pass, since geometry other CSS

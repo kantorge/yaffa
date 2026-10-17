@@ -1,551 +1,176 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Laravel\Sanctum\Sanctum;
 
-class GoogleDriveConfigRequestTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected User $user;
-
-    private const VALID_SERVICE_ACCOUNT_JSON = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}';
-
-    public function setUp(): void
-    {
-        parent::setUp();
-        $this->user = User::factory()->create([
-            'email_verified_at' => now(),
-        ]);
-    }
-
-    // ===== CREATE (POST /api/v1/google-drive/config) =====
-
-    public function test_create_requires_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_requires_folder_id(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['folder_id']);
-    }
-
-    public function test_create_rejects_short_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => 'too short',
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_rejects_very_long_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => str_repeat('x', 5001),
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_rejects_invalid_json_format(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => '{"invalid": "json", missing bracket',
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_rejects_json_missing_required_keys(): void
-    {
-        $invalidJson = '{"type":"service_account","project_id":"test"}'; // Missing most required keys
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => $invalidJson,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_rejects_untrusted_token_uri(): void
-    {
-        $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"http://169.254.169.254/latest/meta-data/"}';
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => $maliciousJson,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_rejects_untrusted_auth_uri(): void
-    {
-        $maliciousJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"http://internal.attacker.example/oauth","token_uri":"https://oauth2.googleapis.com/token"}';
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => $maliciousJson,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_create_accepts_valid_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(201);
-    }
-
-    public function test_create_prevents_multiple_configs_per_user(): void
-    {
-        GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'another-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['folder_id']);
-    }
-
-    public function test_create_accepts_post_import_actions_array(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'test-folder-id',
-                'post_import_actions' => ['delete', 'trash'],
-            ]);
-
-        $response->assertStatus(201);
-    }
-
-    public function test_create_accepts_enabled_boolean(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'test-folder-id',
-                'enabled' => false,
-            ]);
-
-        $response->assertStatus(201);
-    }
-
-    // ===== UPDATE (PATCH /api/v1/google-drive/config/{id}) =====
-
-    public function test_update_allows_missing_folder_id(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'folder_id' => 'original-folder-id',
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'enabled' => true,
-            ]);
-
-        $response->assertStatus(200);
-
-        // Verify folder_id was not changed
-        $config->refresh();
-        $this->assertEquals('original-folder-id', $config->folder_id);
-    }
-
-    /**
-     * This and the following two tests (empty/replaced service_account_json) assert only that
-     * the request passes validation (200) for each shape update accepts. The resulting
-     * persisted value for each case is asserted with DB checks in GoogleDriveConfigApiControllerTest
-     * (test_update_preserves_service_account_json_when_not_provided,
-     * test_update_preserves_service_account_json_when_empty,
-     * test_update_changes_service_account_json_when_provided) - not repeated here.
-     */
-    public function test_update_allows_missing_service_account_json(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => 'new-folder-id',
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    public function test_update_allows_empty_service_account_json(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => 'new-folder-id',
-                'service_account_json' => '',
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    public function test_update_allows_new_service_account_json(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-        $newJson = '{"type":"service_account","project_id":"new-project","private_key_id":"newkey","private_key":"-----BEGIN PRIVATE KEY-----\nnewtest\n-----END PRIVATE KEY-----","client_email":"new@new-project.iam.gserviceaccount.com","client_id":"987654321","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}';
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => 'new-folder-id',
-                'service_account_json' => $newJson,
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    public function test_update_rejects_invalid_service_account_json(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => 'new-folder-id',
-                'service_account_json' => '{"invalid": json}',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    /**
-     * Persisted-value assertion for the __existing__ placeholder lives in
-     * GoogleDriveConfigApiControllerTest::test_update_preserves_service_account_json_with_existing_placeholder.
-     */
-    public function test_update_allows_existing_placeholder(): void
-    {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => 'new-folder-id',
-                'service_account_json' => '__existing__',
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    /**
-     * Persisted-value assertion lives in
-     * GoogleDriveConfigApiControllerTest::test_update_changes_post_import_actions.
-     */
-    public function test_update_allows_changing_post_import_actions(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'post_import_actions' => null,
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => $config->folder_id,
-                'post_import_actions' => ['delete'],
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    /**
-     * Persisted-value assertion lives in
-     * GoogleDriveConfigApiControllerTest::test_update_changes_enabled_status.
-     */
-    public function test_update_allows_changing_enabled(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'enabled' => true,
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', $config), [
-                'folder_id' => $config->folder_id,
-                'enabled' => false,
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    // ===== TEST CONNECTION (POST /api/v1/google-drive/config/test) =====
-
-    public function test_test_connection_requires_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_test_connection_requires_folder_id(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['folder_id']);
-    }
-
-    public function test_test_connection_allows_existing_placeholder(): void
-    {
-        GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => '__existing__',
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        // Will fail due to invalid credentials, but validation should pass
-        $this->assertNotEquals(422, $response->status());
-    }
-
-    public function test_test_connection_allows_new_service_account_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        // Will fail due to invalid credentials, but validation should pass
-        $this->assertNotEquals(422, $response->status());
-    }
-
-    public function test_test_connection_rejects_invalid_json(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => 'not valid json',
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    public function test_test_connection_rejects_json_missing_required_keys(): void
-    {
-        $invalidJson = '{"type":"service_account","project_id":"test"}';
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.test'), [
-                'service_account_json' => $invalidJson,
-                'folder_id' => 'test-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['service_account_json']);
-    }
-
-    // ===== PROCESSED FOLDER VALIDATION =====
-
-    public function test_update_rejects_processed_folder_id_equal_to_folder_id(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'folder_id' => 'same-folder-id',
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
-                'folder_id' => 'same-folder-id',
-                'post_import_actions' => ['move_to_processed'],
-                'processed_folder_id' => 'same-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['processed_folder_id']);
-    }
-
-    public function test_update_accepts_processed_folder_id_different_from_folder_id(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'folder_id' => 'import-folder-id',
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
-                'folder_id' => 'import-folder-id',
-                'post_import_actions' => ['move_to_processed'],
-                'processed_folder_id' => 'processed-folder-id',
-            ]);
-
-        $response->assertStatus(200);
-    }
-
-    public function test_update_rejects_processed_folder_id_equal_to_existing_folder_id_when_folder_id_omitted(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'folder_id' => 'import-folder-id',
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
-                'post_import_actions' => ['move_to_processed'],
-                'processed_folder_id' => 'import-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['processed_folder_id']);
-    }
-
-    public function test_update_requires_processed_folder_id_when_move_to_processed_selected(): void
-    {
-        $config = GoogleDriveConfig::factory()->create([
-            'user_id' => $this->user->id,
-            'folder_id' => 'import-folder-id',
-        ]);
-
-        Sanctum::actingAs($this->user, ['*']);
-
-
-        $response = $this
-            ->patchJson(route('api.v1.google-drive.config.update', ['googleDriveConfig' => $config->id]), [
-                'post_import_actions' => ['move_to_processed'],
-                'processed_folder_id' => null,
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['processed_folder_id']);
-    }
-
-    public function test_create_rejects_processed_folder_id_equal_to_folder_id(): void
-    {
-        Sanctum::actingAs($this->user, ['*']);
-
-        $response = $this
-            ->postJson(route('api.v1.google-drive.config.store'), [
-                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
-                'folder_id' => 'same-folder-id',
-                'post_import_actions' => ['move_to_processed'],
-                'processed_folder_id' => 'same-folder-id',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['processed_folder_id']);
-    }
-}
+uses(RefreshDatabase::class);
+
+$validJson = '{"type":"service_account","project_id":"test-project","private_key_id":"key123","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----","client_email":"test@test-project.iam.gserviceaccount.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}';
+$missingKeysJson = '{"type":"service_account","project_id":"test"}';
+
+beforeEach(function () {
+    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    Sanctum::actingAs($this->user, ['*']);
+});
+
+// ===== CREATE (POST /api/v1/google-drive/config) =====
+
+it('rejects an invalid create request', function (array $payload, string $field) {
+    $this->postJson(route('api.v1.google-drive.config.store'), $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([$field]);
+})->with([
+    'missing service_account_json' => [['folder_id' => 'test-folder-id'], 'service_account_json'],
+    'missing folder_id' => [['service_account_json' => $validJson], 'folder_id'],
+    'short service_account_json' => [['service_account_json' => 'too short', 'folder_id' => 'test-folder-id'], 'service_account_json'],
+    'very long service_account_json' => [['service_account_json' => str_repeat('x', 5001), 'folder_id' => 'test-folder-id'], 'service_account_json'],
+    'invalid JSON' => [['service_account_json' => '{"invalid": "json", missing bracket', 'folder_id' => 'test-folder-id'], 'service_account_json'],
+    'JSON missing required keys' => [['service_account_json' => $missingKeysJson, 'folder_id' => 'test-folder-id'], 'service_account_json'],
+    'untrusted token_uri' => [[
+        'service_account_json' => str_replace('https://oauth2.googleapis.com/token', 'http://169.254.169.254/latest/meta-data/', $validJson),
+        'folder_id' => 'test-folder-id',
+    ], 'service_account_json'],
+    'untrusted auth_uri' => [[
+        'service_account_json' => str_replace('https://accounts.google.com/o/oauth2/auth', 'http://internal.attacker.example/oauth', $validJson),
+        'folder_id' => 'test-folder-id',
+    ], 'service_account_json'],
+    'processed_folder_id equal to folder_id' => [[
+        'service_account_json' => $validJson,
+        'folder_id' => 'same-folder-id',
+        'post_import_actions' => ['move_to_processed'],
+        'processed_folder_id' => 'same-folder-id',
+    ], 'processed_folder_id'],
+]);
+
+it('accepts a valid create request', function (array $extra) use ($validJson) {
+    $this->postJson(route('api.v1.google-drive.config.store'), [
+        'service_account_json' => $validJson,
+        'folder_id' => 'test-folder-id',
+        ...$extra,
+    ])->assertCreated();
+})->with([
+    'minimal' => [[]],
+    'post_import_actions array' => [['post_import_actions' => ['delete', 'trash']]],
+    'enabled boolean' => [['enabled' => false]],
+]);
+
+it('prevents multiple configs per user', function () use ($validJson) {
+    GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+
+    $this->postJson(route('api.v1.google-drive.config.store'), [
+        'service_account_json' => $validJson,
+        'folder_id' => 'another-folder-id',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['folder_id']);
+});
+
+// ===== UPDATE (PATCH /api/v1/google-drive/config/{id}) =====
+
+it('keeps the folder_id when an update omits it', function () {
+    $config = GoogleDriveConfig::factory()->create([
+        'user_id' => $this->user->id,
+        'folder_id' => 'original-folder-id',
+    ]);
+
+    $this->patchJson(route('api.v1.google-drive.config.update', $config), ['enabled' => true])
+        ->assertOk();
+
+    expect($config->refresh()->folder_id)->toBe('original-folder-id');
+});
+
+/*
+ * These cases assert only that the request passes validation (200). The resulting persisted
+ * values are asserted with DB checks in GoogleDriveConfigApiControllerTest
+ * (test_update_preserves_service_account_json_when_not_provided / _when_empty /
+ * _with_existing_placeholder, test_update_changes_service_account_json_when_provided,
+ * test_update_changes_post_import_actions, test_update_changes_enabled_status) - not repeated here.
+ */
+it('accepts a valid update request', function (array $payload) {
+    $config = GoogleDriveConfig::factory()->create([
+        'user_id' => $this->user->id,
+        'folder_id' => 'original-folder-id',
+        'post_import_actions' => null,
+        'enabled' => true,
+    ]);
+
+    $this->patchJson(route('api.v1.google-drive.config.update', $config), $payload)
+        ->assertOk();
+})->with([
+    'missing service_account_json' => [['folder_id' => 'new-folder-id']],
+    'empty service_account_json' => [['folder_id' => 'new-folder-id', 'service_account_json' => '']],
+    'new service_account_json' => [[
+        'folder_id' => 'new-folder-id',
+        'service_account_json' => str_replace('"project_id":"test-project"', '"project_id":"new-project"', $validJson),
+    ]],
+    'existing placeholder' => [['folder_id' => 'new-folder-id', 'service_account_json' => '__existing__']],
+    'changed post_import_actions' => [['folder_id' => 'original-folder-id', 'post_import_actions' => ['delete']]],
+    'changed enabled' => [['folder_id' => 'original-folder-id', 'enabled' => false]],
+    'processed_folder_id different from folder_id' => [[
+        'folder_id' => 'original-folder-id',
+        'post_import_actions' => ['move_to_processed'],
+        'processed_folder_id' => 'processed-folder-id',
+    ]],
+]);
+
+it('rejects an invalid update request', function (array $payload, string $field) {
+    $config = GoogleDriveConfig::factory()->create([
+        'user_id' => $this->user->id,
+        'folder_id' => 'original-folder-id',
+    ]);
+
+    $this->patchJson(route('api.v1.google-drive.config.update', $config), $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([$field]);
+})->with([
+    'invalid service_account_json' => [['folder_id' => 'new-folder-id', 'service_account_json' => '{"invalid": json}'], 'service_account_json'],
+    'processed_folder_id equal to folder_id' => [[
+        'folder_id' => 'original-folder-id',
+        'post_import_actions' => ['move_to_processed'],
+        'processed_folder_id' => 'original-folder-id',
+    ], 'processed_folder_id'],
+    'processed_folder_id equal to the stored folder_id when folder_id is omitted' => [[
+        'post_import_actions' => ['move_to_processed'],
+        'processed_folder_id' => 'original-folder-id',
+    ], 'processed_folder_id'],
+    'move_to_processed without processed_folder_id' => [[
+        'post_import_actions' => ['move_to_processed'],
+        'processed_folder_id' => null,
+    ], 'processed_folder_id'],
+]);
+
+// ===== TEST CONNECTION (POST /api/v1/google-drive/config/test) =====
+
+it('rejects an invalid test connection request', function (array $payload, string $field) {
+    $this->postJson(route('api.v1.google-drive.config.test'), $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([$field]);
+})->with([
+    'missing service_account_json' => [['folder_id' => 'test-folder-id'], 'service_account_json'],
+    'missing folder_id' => [['service_account_json' => $validJson], 'folder_id'],
+    'invalid JSON' => [['service_account_json' => 'not valid json', 'folder_id' => 'test-folder-id'], 'service_account_json'],
+    'JSON missing required keys' => [['service_account_json' => $missingKeysJson, 'folder_id' => 'test-folder-id'], 'service_account_json'],
+]);
+
+// The connection attempt itself fails (the credentials aren't real); only validation passing is asserted.
+it('passes test connection validation with the existing placeholder', function () {
+    GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+
+    $response = $this->postJson(route('api.v1.google-drive.config.test'), [
+        'service_account_json' => '__existing__',
+        'folder_id' => 'test-folder-id',
+    ]);
+
+    expect($response->status())->not->toBe(422);
+});
+
+it('passes test connection validation with a new service_account_json', function () use ($validJson) {
+    $response = $this->postJson(route('api.v1.google-drive.config.test'), [
+        'service_account_json' => $validJson,
+        'folder_id' => 'test-folder-id',
+    ]);
+
+    expect($response->status())->not->toBe(422);
+});

@@ -155,6 +155,10 @@ class InvestmentApiController extends Controller
         // Load investment with related data
         $investment->load(['investmentGroup', 'currency']);
 
+        // Same dynamic properties as the initial page load, used by the "Current assets" card
+        $investment->current_quantity = $this->investmentService->getCurrentQuantity($investment);
+        $investment->latest_price = $this->investmentService->getLatestPrice($investment);
+
         // Enrich investment with calculated quantity history
         $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
 

@@ -157,11 +157,15 @@ The category suggestion engine analyses transaction history per payee: when a si
 
 ## User Flow (if applicable)
 
-### Creating a Payee (full form, dedicated page)
+### Opening the Payee Form from Other Pages (deep links)
 
-1. User navigates to Payees list → clicks "New payee" (full-page form)
-2. Fills in name, active flag, default category, import alias, preferred/excluded categories
-3. Submits → redirected to payees list with success message
+There is no separate payee create/edit page; the modal on the payees list is the only payee form.
+
+1. Links elsewhere in the app (quick actions "New payee", onboarding "Add a payee", the payee name on the transaction details view, the dashboard payee category recommendation widget) still point to `account-entity.create?type=payee` / `account-entity.edit`
+2. The web controller redirects them to the payees list with `?create=1` or `?edit={id}` (authorization runs first, so another user's payee still gets 403)
+3. The list page opens the matching modal, then removes the parameter from the URL (`history.replaceState`) so a reload or Back doesn't reopen it
+4. For edit, the modal only opens once the payee data has loaded; an unknown or inaccessible ID shows an error toast instead
+5. Saving or cancelling behaves exactly as when the modal is opened from the list
 
 ### Creating a Payee (modal, from payees list)
 
@@ -207,7 +211,7 @@ The category suggestion engine analyses transaction history per payee: when a si
 - **Services:** `PayeeCategoryStatsService`, `PayeePersistenceService`, `AssetMatchingService` (AI pipeline), `ProcessDocumentService` (AI pipeline)
 - **Form Requests:** `AccountEntityRequest`, `MergePayeesRequest`
 - **API Controllers:** `PayeeApiController`, `PayeeStatsApiController`
-- **Web Controller:** `AccountEntityController` (payee-related actions: index, create, store, edit, update, mergePayeesForm, mergePayees)
+- **Web Controller:** `AccountEntityController` (payee-related actions: index, mergePayeesForm, mergePayees; create/edit only redirect to the list modal, and web store/update return 404 for payees, since the API is the only payee write path)
 - **External systems:** AI provider (optional, for payee name matching during document processing)
 
 ---
@@ -224,16 +228,19 @@ The category suggestion engine analyses transaction history per payee: when a si
 
 ### Payee Form Modal
 
-- Used for both creating and editing payees directly from the payees list (no page reload)
+- Used for both creating and editing payees directly from the payees list (no page reload), including the `?create=1` / `?edit={id}` deep links
 - Searchable dropdowns for default category, preferred categories, and excluded categories
 - Preferred and excluded category lists are mutually exclusive
 - While typing a name (creation only), similar existing payees are shown below the input to help the user avoid duplicates
 - In simplified mode, category preferences are hidden; only name, active flag, and default category are shown
 
-### Payee Form Page (full-page)
+### Payee Detail Page
 
-- Standalone create/edit page (accessible via direct URL routing)
-- Same fields as the modal form, including category preferences; preferred and excluded lists are mutually exclusive
+- Reached from the payee name in the payees list and the search results. Answers: _what is my relationship with this counterparty?_
+- Overview card: active flag, default / preferred / excluded categories (linked to category pages), import alias, transaction count, first and last transaction date (with days since last), lifetime total paid and received in the base currency. These are lifetime figures, independent of the selected date range; schedules are excluded.
+- Actions: edit (the same `PayeeForm` modal), new transaction, open in Find transactions, merge into another payee, delete (only offered when the payee has no transactions).
+- Pending category suggestion (accept / dismiss), upcoming scheduled transactions, and similar payees (possible duplicates, with a merge link).
+- Report tabs (summary, list, timeline, category charts, monthly breakdown, waterfall) over the user's "Default date range for transaction history" setting, adjustable on the page. Payee figures are transaction-level amounts, not item sums.
 
 ### Merge Form Page
 
@@ -264,6 +271,6 @@ All core behaviors are directly verified in source code. The suggestion threshol
 
 ## Assumptions
 
-- There is currently no dedicated "show" page for a payee — `AccountEntityController::show()` explicitly redirects back for payees. A payee's transactions are accessible via the reports page but not through a payee-specific detail view.
+- A payee has a detail page (`account-entity.show`, owner-only); see [Payee Detail Page](#payee-detail-page) and [`.ai/docs/features/payee-category-show-pages/`](../../features/payee-category-show-pages/architecture.md). (Earlier versions redirected back for payees.)
 - The "un-dismiss suggestion" workflow has no UI implementation found in the codebase. Once a suggestion is dismissed, the only way to restore it would be through a direct database change.
 - The `simplified` form mode appears to be used when `PayeeForm` is embedded in other contexts (e.g., inline creation during transaction entry), based on prop naming and behavior, though no specific host components were found in the reviewed files.

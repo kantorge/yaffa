@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use Tests\TestCase;
 use Exception;
 
@@ -548,9 +548,9 @@ class ProcessGoogleDriveConfigJobTest extends TestCase
     /**
      * Helper to create a mock service with expected method returns/behaviors
      */
-    private function createMockService(array $methods): MockObject
+    private function createMockService(array $methods): Stub
     {
-        $mock = $this->createMock(GoogleDriveService::class);
+        $mock = $this->createStub(GoogleDriveService::class);
 
         foreach ($methods as $method => $behavior) {
             if (is_callable($behavior)) {
