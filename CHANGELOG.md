@@ -1,5 +1,38 @@
 # Changelog
 
+## [4.1.0](https://github.com/kantorge/yaffa/compare/v4.0.0...v4.1.0) (2026-10-17)
+
+
+### 🛠️ Chores
+
+* composer update ([fbaeb6b](https://github.com/kantorge/yaffa/commit/fbaeb6bcf6bee909b89dd784d4093305173ef382))
+* deprecate retired OpenAI models (gpt-4o, gpt-4o-mini) ([#569](https://github.com/kantorge/yaffa/issues/569)) ([67dc30e](https://github.com/kantorge/yaffa/commit/67dc30ec5cbce357a0df7ab4520a8f033e183770))
+* **deps:** remove sentry/sentry-laravel ([5531023](https://github.com/kantorge/yaffa/commit/55310231db282d620ec41deff5c5fd4b1aa167ae))
+* npm install ([2f33224](https://github.com/kantorge/yaffa/commit/2f33224a953f697db6d1fce2634e95e4075c5c8f))
+* Security upgrade axios from 1.18.1 to 1.20.0 ([2984f03](https://github.com/kantorge/yaffa/commit/2984f03eecdfc1b708e1c077fba2ed729ce8ef2f))
+* **ui:** replace Select2 with Tom Select and add Pest 5 browser tests ([#554](https://github.com/kantorge/yaffa/issues/554)) ([9164bfc](https://github.com/kantorge/yaffa/commit/9164bfc5ee119c78dfa289d95b00fa6b972156b7))
+
+
+### ✨ Features
+
+* payee and category show pages ([#558](https://github.com/kantorge/yaffa/issues/558)) ([a53b3c1](https://github.com/kantorge/yaffa/commit/a53b3c1a01e9d9cb5cfae01189ad655a6fe453cc))
+
+
+### 🐛 Bug Fixes
+
+* add warning if import returned no drafts ([c8323bf](https://github.com/kantorge/yaffa/commit/c8323bf65be1d55e330d68c45e90aa11c6e3dcd0))
+* AI document duplicate detection ([a1cf208](https://github.com/kantorge/yaffa/commit/a1cf2084e1d26b74316c222f1f37a96b27bdc8e7))
+* broken layout for related AI documents ([5a9a4b8](https://github.com/kantorge/yaffa/commit/5a9a4b85b8e625315128618347f9b3606b4c6c12))
+* monthly breakdown report layout ([f43b015](https://github.com/kantorge/yaffa/commit/f43b0153230334da61303411369fba083258f89a))
+* package.json to reduce vulnerabilities ([fbba180](https://github.com/kantorge/yaffa/commit/fbba1805e020a85ce4d63a46b8cd8a51f79a003e))
+* payee category preference validation rule ([5b29203](https://github.com/kantorge/yaffa/commit/5b292031b1f861c128fa45e9d1b983e69eb80bc5))
+
+
+### 🔨 Code Refactoring
+
+* move preferred import profile from account_entities to accounts ([#565](https://github.com/kantorge/yaffa/issues/565)) ([54564d2](https://github.com/kantorge/yaffa/commit/54564d2a3ef57fb7728b7064d1a180510a366e6a))
+* Vue components for robust data flow ([#557](https://github.com/kantorge/yaffa/issues/557)) ([d89b27a](https://github.com/kantorge/yaffa/commit/d89b27a07e965fa665496d3765a07e153f968dfd))
+
 ## [4.0.0](https://github.com/kantorge/yaffa/compare/v3.6.2...v4.0.0) (2026-09-26)
 
 <<<<<<< Updated upstream
