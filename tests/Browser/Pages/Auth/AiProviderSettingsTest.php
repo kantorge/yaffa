@@ -94,7 +94,11 @@ class AiProviderSettingsTest extends DuskTestCase
             // Get the first provider's models and assert model dropdown behavior
             $firstProviderKey = $providers[0];
             $modelsConfig = config("ai-documents.providers.{$firstProviderKey}.models");
-            $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
+            // Models flagged as unsupported are hidden from the picker for new configurations
+            $selectableModelsConfig = array_is_list($modelsConfig)
+                ? $modelsConfig
+                : array_filter($modelsConfig, fn ($meta) => $meta['supported'] ?? true);
+            $models = array_is_list($selectableModelsConfig) ? $selectableModelsConfig : array_keys($selectableModelsConfig);
 
             // Model dropdown is not visible until provider selected
             $browser->assertMissing('#model')
@@ -108,8 +112,8 @@ class AiProviderSettingsTest extends DuskTestCase
             }
 
             $visionModel = null;
-            if (!array_is_list($modelsConfig)) {
-                foreach ($modelsConfig as $modelName => $meta) {
+            if (!array_is_list($selectableModelsConfig)) {
+                foreach ($selectableModelsConfig as $modelName => $meta) {
                     if (!empty($meta['vision'])) {
                         $visionModel = $modelName;
                         break;
