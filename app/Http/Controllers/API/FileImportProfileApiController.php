@@ -147,6 +147,12 @@ class FileImportProfileApiController extends Controller
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        if (! $aiConfig->isModelAvailable()) {
+            return response()->json([
+                'message' => $aiConfig->unavailableModelMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $file = $request->file('file');
         $csvContent = $file !== null ? (string) file_get_contents((string) $file->getRealPath()) : '';
 

@@ -35,7 +35,7 @@ class AiProcessingJobTest extends TestCase
         Event::fake([AiDocumentProcessingFailedEvent::class]);
 
         /** @var AiDocument $document */
-        $document = AiDocument::factory()->create();
+        $document = AiDocument::factory()->create(['status' => 'ready_for_processing']);
         AiUserSettings::factory()->enabled()->create(['user_id' => $document->user_id]);
 
         $service = Mockery::mock(ProcessDocumentService::class);
