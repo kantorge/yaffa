@@ -698,11 +698,7 @@
       </div>
 
       <div v-if="!loading && !sandbox_mode" class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-save-ai-behavior-settings"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           <i v-show="!form.busy" class="fa me-1 fa-save"></i>{{ __('Save') }}
         </SubmitButton>
       </div>

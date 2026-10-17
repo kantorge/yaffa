@@ -70,11 +70,7 @@
         </div>
       </div>
       <div v-if="!sandbox_mode" class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-change-password"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           {{ __('Change Password') }}
         </SubmitButton>
       </div>

@@ -143,7 +143,6 @@
                       id="checkbox-investment-catch-up-schedule"
                       v-model="form.catch_up_schedule"
                       class="form-check-input"
-                      dusk="checkbox-investment-catch-up-schedule"
                       type="checkbox"
                       value="1"
                     />
