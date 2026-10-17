@@ -142,7 +142,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')
@@ -151,7 +151,7 @@ class AiProviderSettingsTest extends DuskTestCase
                 // Verify that the form shows the saved config (except API key)
                 ->waitFor('#provider', 10)
                 ->assertSelected('#provider', 'openai')
-                ->assertSelected('#model', 'gpt-4o-mini')
+                ->assertSelected('#model', 'gpt-5.6-luna')
                 // API key field should be empty after save, with hint shown
                 ->assertInputValue('#api_key', '')
                 ->assertPresent('@api-key-hint');
@@ -165,7 +165,7 @@ class AiProviderSettingsTest extends DuskTestCase
         AiProviderConfig::factory()->create([
             'user_id' => $user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
@@ -173,7 +173,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $this->visitSettings($browser)
                 ->waitFor('#provider', 10);
 
-            $browser->select('#model', 'gpt-4o')
+            $browser->select('#model', 'gpt-5.6-terra')
                 ->click('@button-save-ai-config')
                 ->waitForTextIn('div.toast-container div.toast.bg-success.show', 'AI provider configuration updated', 30);
         });
@@ -187,7 +187,7 @@ class AiProviderSettingsTest extends DuskTestCase
         AiProviderConfig::factory()->create([
             'user_id' => $user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'api_key' => 'sk-old-key-1234567890abcdefghij',
         ]);
 
@@ -216,7 +216,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')
@@ -232,7 +232,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-invalid-12345')
@@ -249,7 +249,7 @@ class AiProviderSettingsTest extends DuskTestCase
         AiProviderConfig::factory()->create([
             'user_id' => $user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
@@ -298,7 +298,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')
@@ -320,7 +320,7 @@ class AiProviderSettingsTest extends DuskTestCase
             // Create
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')
@@ -332,7 +332,7 @@ class AiProviderSettingsTest extends DuskTestCase
             // Update
             $browser
                 ->select('#provider', 'openai')
-                ->select('#model', 'gpt-4o')
+                ->select('#model', 'gpt-5.6-terra')
                 ->click('@button-save-ai-config')
                 ->waitFor('.toast-container div.toast.bg-success.show', 10)
                 ->assertSee('AI provider configuration updated')
@@ -360,7 +360,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'short')
@@ -377,7 +377,7 @@ class AiProviderSettingsTest extends DuskTestCase
             $browser->loginAs($user);
             $this->visitSettings($browser);
             $this->openAddProviderForm($browser);
-            $this->selectProviderAndModel($browser, 'openai', 'gpt-4o-mini');
+            $this->selectProviderAndModel($browser, 'openai', 'gpt-5.6-luna');
 
             $browser
                 ->type('#api_key', 'sk-test-1234567890abcdefghij')

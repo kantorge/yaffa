@@ -48,6 +48,20 @@ class AiProviderConfig extends Model
         ];
     }
 
+    /**
+     * Whether the configured model is still listed in config/ai-documents.php.
+     * Models flagged `supported => false` are still listed, so they keep working until removed.
+     */
+    public function isModelAvailable(): bool
+    {
+        return array_key_exists($this->model, config('ai-documents.providers.' . $this->provider . '.models', []));
+    }
+
+    public function unavailableModelMessage(): string
+    {
+        return "The AI model \"{$this->model}\" is no longer available. Please select a different model in your AI provider settings.";
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

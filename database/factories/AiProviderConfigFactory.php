@@ -15,7 +15,9 @@ class AiProviderConfigFactory extends Factory
         $providers = array_keys(config('ai-documents.providers', []));
         $provider = $this->faker->randomElement($providers);
         $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
-        $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
+        $models = array_is_list($modelsConfig)
+            ? $modelsConfig
+            : array_keys(array_filter($modelsConfig, fn ($m) => $m['supported'] ?? true));
         $model = $this->faker->randomElement($models);
         $supportsVision = !array_is_list($modelsConfig)
             && (bool) ($modelsConfig[$model]['vision'] ?? false);
