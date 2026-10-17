@@ -47,7 +47,7 @@ TextExtractionService (Main Orchestrator)
         ↓
 5. Vision API Fallback (if configured)
     ├─ ImagePreprocessingService::resizeForVisionApi() if >2048px
-    ├─ Send to gpt-4o / gemini-1.5
+    ├─ Send to gpt-5.6-terra / gemini-1.5
     └─ Return extracted text
         ↓
 6. All methods failed → throw OcrUnavailableException

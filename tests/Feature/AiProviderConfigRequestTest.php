@@ -5,18 +5,20 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
 use Laravel\Sanctum\Sanctum;
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Testing\TextResponseFake;
 
 uses(RefreshDatabase::class);
 
 $validCreatePayload = [
     'provider' => 'openai',
-    'model' => 'gpt-4o-mini',
+    'model' => 'gpt-5.6-luna',
     'api_key' => 'sk-test-1234567890abcdefghij',
 ];
 
 $validUpdatePayload = [
     'provider' => 'openai',
-    'model' => 'gpt-4o',
+    'model' => 'gpt-5.6-terra',
 ];
 
 beforeEach(function () {
@@ -82,7 +84,7 @@ it('rejects an invalid update request', function (array $payload, string $field)
         ->assertUnprocessable()
         ->assertJsonValidationErrors([$field]);
 })->with([
-    'missing provider' => [['model' => 'gpt-4o-mini'], 'provider'],
+    'missing provider' => [['model' => 'gpt-5.6-luna'], 'provider'],
     'missing model' => [['provider' => 'openai'], 'model'],
     'short api_key' => [[...$validUpdatePayload, 'api_key' => 'short'], 'api_key'],
     'invalid vision_enabled' => [[...$validUpdatePayload, 'vision_enabled' => 'invalid'], 'vision_enabled'],
@@ -149,17 +151,18 @@ it('rejects a test connection request with a missing field', function (string $f
         ->assertJsonValidationErrors([$field]);
 })->with(['provider', 'model', 'api_key']);
 
-// The connection attempt itself fails (the key isn't real); only validation passing is asserted.
+// The provider call is faked, so no live AI endpoint is contacted.
 it('passes test connection validation with the existing placeholder', function () use ($validCreatePayload) {
+    Prism::fake([TextResponseFake::make()->withText('OK')]);
     AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
 
-    $response = $this->postJson(route('api.v1.ai.config.test'), [...$validCreatePayload, 'api_key' => '__existing__']);
-
-    expect($response->status())->not->toBe(422);
+    $this->postJson(route('api.v1.ai.config.test'), [...$validCreatePayload, 'api_key' => '__existing__'])
+        ->assertOk();
 });
 
 it('passes test connection validation with a new api_key', function () use ($validCreatePayload) {
-    $response = $this->postJson(route('api.v1.ai.config.test'), $validCreatePayload);
+    Prism::fake([TextResponseFake::make()->withText('OK')]);
 
-    expect($response->status())->not->toBe(422);
+    $this->postJson(route('api.v1.ai.config.test'), $validCreatePayload)
+        ->assertOk();
 });

@@ -81,6 +81,10 @@ class ProcessDocumentService
                 throw new Exception('No AI provider configured for user');
             }
 
+            if (! $config->isModelAvailable()) {
+                throw new Exception($config->unavailableModelMessage());
+            }
+
             $resolvedSettings = $this->resolveAiUserSettings($user);
             $this->promptChatHistoryEnabled = (bool) ($resolvedSettings['prompt_chat_history_enabled'] ?? true);
             $autoAcceptThreshold = (float) ($resolvedSettings['match_auto_accept_threshold'] ?? self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH);

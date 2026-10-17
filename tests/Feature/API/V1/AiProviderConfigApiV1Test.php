@@ -35,7 +35,7 @@ class AiProviderConfigApiV1Test extends TestCase
     {
         $response = $this->postJson(route('api.v1.ai.config.store'), [
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'api_key' => 'sk-test-1234567890abcdefghij',
         ]);
         $this->assertUserNotAuthorized($response);
@@ -59,7 +59,7 @@ class AiProviderConfigApiV1Test extends TestCase
         AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
 
         $response = $this->actingAs($this->user)
@@ -75,7 +75,7 @@ class AiProviderConfigApiV1Test extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]);
 
@@ -86,7 +86,7 @@ class AiProviderConfigApiV1Test extends TestCase
         $this->assertDatabaseHas('ai_provider_configs', [
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
     }
 
@@ -124,23 +124,23 @@ class AiProviderConfigApiV1Test extends TestCase
         $config = AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
 
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
             ]);
 
         $response->assertOk()
             ->assertJsonMissing(['api_key'])
-            ->assertJson(['model' => 'gpt-4o']);
+            ->assertJson(['model' => 'gpt-5.6-terra']);
 
         $this->assertDatabaseHas('ai_provider_configs', [
             'id' => $config->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o',
+            'model' => 'gpt-5.6-terra',
         ]);
     }
 
@@ -209,7 +209,7 @@ class AiProviderConfigApiV1Test extends TestCase
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
             ]);
 
         $response->assertForbidden()
@@ -236,7 +236,7 @@ class AiProviderConfigApiV1Test extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => '__existing__',
             ]);
 

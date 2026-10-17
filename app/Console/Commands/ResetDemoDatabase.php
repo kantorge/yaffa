@@ -111,7 +111,7 @@ class ResetDemoDatabase extends Command
             $demoUser->aiProviderConfigs()->delete();
             $demoUser->aiProviderConfigs()->create([
                 'provider' => config('demo.ai_provider', 'openai'),
-                'model' => config('demo.ai_model', 'gpt-4o-mini'),
+                'model' => config('demo.ai_model', 'gpt-5.6-luna'),
                 'api_key' => config('demo.ai_api_key'),
                 'vision_enabled' => true,
             ]);

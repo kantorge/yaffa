@@ -141,8 +141,8 @@ CSV;
         $systemProfile = $this->createSystemProfile();
         $accountEntity = $this->createAccountEntity($user);
 
-        $accountEntity->preferred_file_import_profile_id = $systemProfile->id;
-        $accountEntity->save();
+        $accountEntity->config->preferred_file_import_profile_id = $systemProfile->id;
+        $accountEntity->config->save();
 
         $csv = <<<'CSV'
 Értéknap;Összeg;Típus;Közlemény/1;Közlemény/2;Közlemény/3

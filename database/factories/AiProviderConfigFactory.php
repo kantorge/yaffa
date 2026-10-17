@@ -12,20 +12,12 @@ class AiProviderConfigFactory extends Factory
 {
     public function definition(): array
     {
-        $providers = array_keys(config('ai-documents.providers', []));
-        $provider = $this->faker->randomElement($providers);
-        $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
-        $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
-        $model = $this->faker->randomElement($models);
-        $supportsVision = !array_is_list($modelsConfig)
-            && (bool) ($modelsConfig[$model]['vision'] ?? false);
-
         return [
             'user_id' => User::factory(),
-            'provider' => $provider,
-            'model' => $model,
+            'provider' => 'openai',
+            'model' => 'gpt-5.6-luna',
             'api_key' => 'sk-' . fake()->sha256(),
-            'vision_enabled' => $supportsVision ? $this->faker->boolean() : false,
+            'vision_enabled' => false,
         ];
     }
 }

@@ -439,7 +439,7 @@
               >
                 <i class="fa fa-edit"></i>
               </button>
-              <template v-if="profile.account_entities?.length > 0">
+              <template v-if="profile.accounts?.length > 0">
                 <span
                   class="d-inline-block"
                   tabindex="0"
@@ -583,8 +583,8 @@
         };
       },
       deleteDisabledTooltip(profile) {
-        const names = (profile.account_entities || [])
-          .map((a) => a.name)
+        const names = (profile.accounts || [])
+          .map((a) => a.config?.name)
           .join(', ');
         return __('Used as default profile by: :accounts', {
           accounts: names,
@@ -720,33 +720,13 @@
         }
       },
       async deleteProfile(profile) {
-        const affectedAccounts = Array.isArray(profile.account_entities)
-          ? profile.account_entities
-          : [];
-
         const escapedName = escapeHtml(profile.name);
-        let html =
+        const html =
           `<p>` +
           __('Delete profile ":name"? This cannot be undone.', {
             name: escapedName,
           }) +
           `</p>`;
-
-        if (affectedAccounts.length > 0) {
-          const accountList = affectedAccounts
-            .map((a) => `<strong>${escapeHtml(a.name)}</strong>`)
-            .join(', ');
-          html +=
-            `<p class="small mt-2">` +
-            __(
-              'This profile is set as the default for :count account(s): :accounts. Deleting it will require manual profile selection for these accounts on future imports.',
-              {
-                count: affectedAccounts.length,
-                accounts: accountList,
-              },
-            ) +
-            `</p>`;
-        }
 
         const result = await Swal.fire({
           html,
