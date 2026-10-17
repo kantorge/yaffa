@@ -148,7 +148,7 @@ class ImportProfileSuggestTest extends TestCase
             ->andThrow(new AiProviderFailureException(
                 step: 'import_profile_suggestion',
                 provider: 'openai',
-                model: 'gpt-4o',
+                model: 'gpt-5.6-terra',
                 timeout: false,
                 message: 'AI provider error: connection refused',
             ));
