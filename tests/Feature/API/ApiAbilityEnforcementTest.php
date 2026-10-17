@@ -11,6 +11,8 @@ use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\Tag;
+use App\Models\Transaction;
+use App\Models\TransactionOrigin;
 use App\Models\TransactionTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,11 +64,14 @@ class ApiAbilityEnforcementTest extends TestCase
             'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
             'transactions.duplicate-check' => ['api.v1.transactions.duplicate-check', 'post', 'read', []],
             'transaction-templates.index' => ['api.v1.transaction-templates.index', 'get', 'read', []],
+            'transaction-origins.index' => ['api.v1.transaction-origins.index', 'get', 'read', []],
             'transaction-templates.show' => ['api.v1.transaction-templates.show', 'get', 'read', ['template' => 1]],
 
             // write
             'transactions.store-standard' => ['api.v1.transactions.store-standard', 'post', 'write', []],
             'transaction-templates.store' => ['api.v1.transaction-templates.store', 'post', 'write', []],
+            'transaction-origins.review' => ['api.v1.transaction-origins.review', 'post', 'write', ['origin' => 1]],
+            'transaction-origins.review-many' => ['api.v1.transaction-origins.review-many', 'post', 'write', []],
             'transaction-templates.update' => ['api.v1.transaction-templates.update', 'patch', 'write', ['template' => 1]],
             'transaction-templates.destroy' => ['api.v1.transaction-templates.destroy', 'delete', 'write', ['template' => 1]],
             'budgets.store' => ['api.v1.budgets.store', 'post', 'write', []],
@@ -175,6 +180,14 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.transaction-templates.show', 'api.v1.transaction-templates.update', 'api.v1.transaction-templates.destroy' => [
                 'template' => TransactionTemplate::factory()->for($user)->create()->id,
+            ],
+            'api.v1.transaction-origins.review' => [
+                'origin' => TransactionOrigin::record(
+                    $user,
+                    Transaction::factory()->withdrawal($user)->create(),
+                    TransactionOrigin::RELATION_CREATED,
+                    null,
+                )->id,
             ],
             'api.v1.documents.dismiss' => [
                 'aiDocument' => AiDocument::factory()->for($user)->readyForReview()->create()->id,

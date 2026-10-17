@@ -53,6 +53,9 @@
               <span v-else class="text-muted">{{ __('Not available') }}</span>
             </dd>
           </dl>
+          <div v-if="autoRecordNote" class="alert alert-info small mt-3 mb-0">
+            {{ autoRecordNote }}
+          </div>
         </div>
       </div>
 
@@ -564,7 +567,7 @@
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
-  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
+  import { __, toFormattedDate, toFormattedDateTime } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
@@ -714,6 +717,41 @@
         })
       : '#',
   );
+
+  // Why the document was (not) recorded automatically, see App\Services\AutoRecord\GateEvaluator
+  const autoRecordNote = computed(() => {
+    const document = aiDocument.value;
+
+    if (document.status === 'auto_recorded') {
+      const reason = document.origins?.find(
+        (origin) => origin.relation === 'created',
+      )?.decision_reason;
+
+      return reason || __('Recorded automatically.');
+    }
+
+    const autoRecord = document.processed_transaction_data?.auto_record;
+
+    if (document.status === 'awaiting_itemization') {
+      return autoRecord?.hold_until
+        ? __('Waiting for the receipt until :date.', {
+            date: toFormattedDate(
+              new Date(autoRecord.hold_until),
+              locale,
+              null,
+            ),
+          })
+        : __('Waiting for the receipt.');
+    }
+
+    if (document.status === 'ready_for_review' && autoRecord?.reason) {
+      return __('Not recorded automatically: :reason', {
+        reason: autoRecord.reason,
+      });
+    }
+
+    return null;
+  });
 
   const isUnidentified = (value) => {
     return value === null || typeof value === 'undefined' || value === '';

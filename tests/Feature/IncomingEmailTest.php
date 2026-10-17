@@ -149,7 +149,7 @@ class IncomingEmailTest extends TestCase
                 'text' => 'Hello',
             ]);
 
-        $listener = new CreateAiDocumentFromSource(app(\App\Services\AiUserSettingsResolver::class));
+        $listener = new CreateAiDocumentFromSource();
         $listener->handleEmailReceived(new EmailReceived($mail));
 
         $document = AiDocument::first();
@@ -167,7 +167,7 @@ class IncomingEmailTest extends TestCase
         $this->assertSame('txt', $file->file_type);
     }
 
-    public function test_received_email_does_not_create_ai_document_when_ai_is_disabled(): void
+    public function test_received_email_creates_ai_document_when_ai_is_disabled(): void
     {
         Storage::fake('local');
 
@@ -182,11 +182,12 @@ class IncomingEmailTest extends TestCase
                 'text' => 'Hello',
             ]);
 
-        $listener = new CreateAiDocumentFromSource(app(\App\Services\AiUserSettingsResolver::class));
+        $listener = new CreateAiDocumentFromSource();
         $listener->handleEmailReceived(new EmailReceived($mail));
 
-        $this->assertSame(0, AiDocument::count());
-        $this->assertSame(0, AiDocumentFile::count());
+        $this->assertSame(1, AiDocument::count());
+        $this->assertSame(1, AiDocumentFile::count());
+        $this->assertSame('ready_for_processing', AiDocument::first()->status);
     }
 
     public function test_email_without_subject_is_stored_with_default_subject(): void

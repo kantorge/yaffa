@@ -32,6 +32,10 @@ class AiUserSettingsResolver
 
     private const int DEFAULT_SAME_EVENT_MINUTES = 10;
 
+    private const bool DEFAULT_AUTO_RECORD_ENABLED = false;
+
+    private const int DEFAULT_ITEMIZATION_TIMEOUT_DAYS = 14;
+
     private const float DEFAULT_AUTO_RECORD_WILSON_MIN = 0.8;
 
     private const int DEFAULT_AUTO_RECORD_MIN_HISTORY = 10;
@@ -106,6 +110,8 @@ class AiUserSettingsResolver
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue($settings->duplicate_amount_tolerance_percent, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue($settings->duplicate_similarity_threshold, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
             'same_event_minutes' => (int) $this->resolveSettingValue($settings->same_event_minutes, self::DEFAULT_SAME_EVENT_MINUTES),
+            'auto_record_enabled' => (bool) $this->resolveSettingValue($settings->auto_record_enabled, self::DEFAULT_AUTO_RECORD_ENABLED),
+            'itemization_timeout_days' => (int) $this->resolveSettingValue($settings->itemization_timeout_days, self::DEFAULT_ITEMIZATION_TIMEOUT_DAYS),
             'auto_record_wilson_min' => (float) $this->resolveSettingValue($settings->auto_record_wilson_min, self::DEFAULT_AUTO_RECORD_WILSON_MIN),
             'auto_record_min_history' => (int) $this->resolveSettingValue($settings->auto_record_min_history, self::DEFAULT_AUTO_RECORD_MIN_HISTORY),
             'auto_record_amount_tolerance_percent' => (float) $this->resolveSettingValue($settings->auto_record_amount_tolerance_percent, self::DEFAULT_AUTO_RECORD_AMOUNT_TOLERANCE_PERCENT),
@@ -191,6 +197,8 @@ class AiUserSettingsResolver
             'duplicate_amount_tolerance_percent' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_AMOUNT_TOLERANCE_PERCENT),
             'duplicate_similarity_threshold' => (float) $this->resolveSettingValue(null, self::DEFAULT_DUPLICATE_SIMILARITY_THRESHOLD),
             'same_event_minutes' => (int) $this->resolveSettingValue(null, self::DEFAULT_SAME_EVENT_MINUTES),
+            'auto_record_enabled' => self::DEFAULT_AUTO_RECORD_ENABLED,
+            'itemization_timeout_days' => self::DEFAULT_ITEMIZATION_TIMEOUT_DAYS,
             'auto_record_wilson_min' => self::DEFAULT_AUTO_RECORD_WILSON_MIN,
             'auto_record_min_history' => self::DEFAULT_AUTO_RECORD_MIN_HISTORY,
             'auto_record_amount_tolerance_percent' => self::DEFAULT_AUTO_RECORD_AMOUNT_TOLERANCE_PERCENT,

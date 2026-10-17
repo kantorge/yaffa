@@ -31,6 +31,8 @@ class AiUserSettingsResource extends JsonResource
             'duplicate_amount_tolerance_percent' => data_get($this->resource, 'duplicate_amount_tolerance_percent'),
             'duplicate_similarity_threshold' => data_get($this->resource, 'duplicate_similarity_threshold'),
             'same_event_minutes' => data_get($this->resource, 'same_event_minutes'),
+            'auto_record_enabled' => (bool) data_get($this->resource, 'auto_record_enabled', false),
+            'itemization_timeout_days' => data_get($this->resource, 'itemization_timeout_days'),
             'auto_record_wilson_min' => data_get($this->resource, 'auto_record_wilson_min'),
             'auto_record_min_history' => data_get($this->resource, 'auto_record_min_history'),
             'auto_record_amount_tolerance_percent' => data_get($this->resource, 'auto_record_amount_tolerance_percent'),

@@ -13,7 +13,7 @@ This file contains the implementation-oriented material extracted from the main 
 - PDF text extraction using smalot/pdfparser is always available (no OCR required for text-based PDFs).
 - OCR for images is optional and requires either Tesseract (self-hosted) or Vision AI (cloud-based) to be enabled and available.
 - If a document contains images but no OCR method is available/enabled, processing fails with clear user notification.
-- Per-user AI behavior settings override global config values; null DB values fall back to global config, then safe hardcoded defaults. `ai_enabled = false` hard-blocks all new AI processing while letting in-flight jobs complete.
+- Per-user AI behavior settings override global config values; null DB values fall back to global config, then safe hardcoded defaults. `ai_enabled = false` blocks AI processing only: uploads, incoming emails and Google Drive imports are still accepted and held in `ready_for_processing` until AI is enabled.
 
 ## Backend Scope (Laravel)
 

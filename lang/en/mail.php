@@ -8,6 +8,9 @@ return [
         "intro" => "Your AI document is ready for review.",
         "next_action_text" => "Review the extracted values, adjust anything needed, then finalize the transaction.",
         "next_action_title" => "Next action",
+        "intro_auto_recorded" => "Your AI document was recorded automatically as a transaction.",
+        "next_action_text_auto_recorded" => "Check the transaction with the Review filter of your AI documents and confirm it, or edit it if something is off.",
+        "subject_auto_recorded" => "Document recorded automatically",
         "subject" => "Document Processed - Ready for Review",
         "what_happened" => "What happened"
     ],

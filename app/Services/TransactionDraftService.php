@@ -346,7 +346,7 @@ class TransactionDraftService
         $configKeys = implode(',', $isInvestment ? self::INVESTMENT_CONFIG_KEYS : self::STANDARD_CONFIG_KEYS);
 
         $rules = [
-            'draft' => 'required|array:schema_version,config_type,transaction_type,date,comment,config,transaction_items,raw',
+            'draft' => 'required|array:schema_version,config_type,transaction_type,date,comment,config,transaction_items,raw,auto_record',
             'draft.schema_version' => 'sometimes|integer|in:' . self::SCHEMA_VERSION,
             'draft.config_type' => 'required|in:standard,investment',
             'draft.transaction_type' => 'sometimes|in:' . $transactionTypes,
@@ -369,6 +369,7 @@ class TransactionDraftService
             'draft.transaction_items.*.match_type' => 'nullable|string',
             'draft.transaction_items.*.confidence_score' => 'nullable|numeric',
             'draft.raw' => 'sometimes|nullable|array',
+            'draft.auto_record' => 'sometimes|nullable|array',
         ];
 
         foreach (self::CONFIG_AMOUNT_KEYS as $key) {

@@ -45,8 +45,11 @@ class SameEventClassifier
 
     /**
      * Classify a processed document against the user's transactions and other open documents.
+     *
+     * @param  Key|null  $key  Matching key to use instead of the one in the draft, for a caller that resolved the
+     *                         payee and account itself (see keyFromEntry())
      */
-    public function classify(AiDocument $document): SameEventResult
+    public function classify(AiDocument $document, ?array $key = null): SameEventResult
     {
         $user = $document->user;
 
@@ -64,7 +67,7 @@ class SameEventClassifier
             }
         }
 
-        $key = $this->keyFromDocument($document);
+        $key ??= $this->keyFromDocument($document);
 
         if ($key === null) {
             return new SameEventResult(SameEventOutcome::None);

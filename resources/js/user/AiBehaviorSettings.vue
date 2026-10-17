@@ -52,7 +52,7 @@
               <small class="form-text text-muted">
                 {{
                   __(
-                    'When disabled, no new documents will be created or processed by AI.',
+                    'When disabled, new documents are still accepted but stay unprocessed until AI processing is enabled.',
                   )
                 }}
               </small>
@@ -506,15 +506,42 @@
             {{ __('Auto-recording') }}
           </h6>
 
+          <div class="row mb-3">
+            <label class="col-form-label col-sm-4">
+              {{ __('Record Automatically') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="form-check form-switch">
+                <input
+                  id="auto_record_enabled"
+                  v-model="form.auto_record_enabled"
+                  class="form-check-input"
+                  type="checkbox"
+                />
+                <label class="form-check-label" for="auto_record_enabled">
+                  {{ __('Record transactions without review when it is safe') }}
+                </label>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'When enabled, a document from a payee with a consistent history is recorded as a normal transaction right away. You can review and confirm what was recorded with the Review filter of your AI documents. Payees can be set to always or never record automatically. Nothing is recorded unless AI processing is on.',
+                  )
+                }}
+                <a :href="route('payees.auto-record-candidates')">
+                  {{ __('Auto-record candidates') }}
+                </a>
+              </small>
+              <HasError field="auto_record_enabled" :form="form" />
+            </div>
+          </div>
+
           <p class="text-muted small">
             {{
               __(
-                'These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.',
+                'These thresholds decide which payees qualify for automatic recording and how payee names are matched.',
               )
             }}
-            <a :href="route('payees.auto-record-candidates')">
-              {{ __('Auto-record candidates') }}
-            </a>
           </p>
 
           <div
@@ -781,11 +808,7 @@
       </div>
 
       <div v-if="!loading && !sandbox_mode" class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-save-ai-behavior-settings"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           <i v-show="!form.busy" class="fa me-1 fa-save"></i>{{ __('Save') }}
         </SubmitButton>
       </div>
@@ -835,6 +858,8 @@
         duplicate_amount_tolerance_percent: null,
         duplicate_similarity_threshold: null,
         same_event_minutes: null,
+        auto_record_enabled: false,
+        itemization_timeout_days: null,
         auto_record_min_history: null,
         auto_record_wilson_min: null,
         auto_record_amount_tolerance_percent: null,
@@ -878,6 +903,16 @@
             min: 0,
             max: 100,
             help: __('How far an amount may be from the payee’s usual amount.'),
+          },
+          {
+            name: 'itemization_timeout_days',
+            label: __('Receipt Wait (days)'),
+            step: 1,
+            min: 1,
+            max: 255,
+            help: __(
+              'How long a bank notification of a payee that expects itemization waits for its receipt before it goes to review.',
+            ),
           },
           {
             name: 'payee_similarity_min',
@@ -948,6 +983,7 @@
             this.form.duplicate_similarity_threshold =
               data.duplicate_similarity_threshold ?? null;
             this.form.same_event_minutes = data.same_event_minutes ?? null;
+            this.form.auto_record_enabled = data.auto_record_enabled ?? false;
             this.autoRecordFields.forEach(({ name }) => {
               this.form[name] = data[name] ?? null;
             });

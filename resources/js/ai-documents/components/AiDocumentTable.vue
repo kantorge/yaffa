@@ -47,9 +47,13 @@
     },
   });
 
+  const emit = defineEmits(['review-counts']);
+
   const tableElement = ref(null);
   const table = ref(null);
   const ajaxIsBusy = ref(false);
+  // '', 'auto-recorded' (transactions awaiting confirmation) or 'conflicts'
+  const reviewFilter = ref('');
   const detectedDateRange = ref({ from: null, to: null });
   const route = window.route;
   const RESIZE_RECALC_DELAY_MS = 100;
@@ -83,12 +87,20 @@
     }
   };
 
-  // The transaction the document created, or the one it was closed against as a duplicate
+  // The transaction the document created, or the one it was closed against as a duplicate or conflict
   const getLinkedTransactionId = (document) =>
     document?.transaction?.id ??
-    document?.origins?.find((origin) => origin.relation === 'duplicate_of')
-      ?.transaction_id ??
+    document?.origins?.find((origin) =>
+      ['duplicate_of', 'conflicts_with'].includes(origin.relation),
+    )?.transaction_id ??
     null;
+
+  // The not yet reviewed origin of a given relation: an auto-recorded transaction awaiting confirmation
+  // ('created') or a receipt contradicting one ('conflicts_with')
+  const getUnreviewedOrigin = (document, relation) =>
+    document?.origins?.find(
+      (origin) => origin.relation === relation && !origin.reviewed_at,
+    ) ?? null;
 
   const getTitle = (document) => {
     if (document.received_mail?.subject) {
@@ -338,6 +350,8 @@
       ...document,
       created_at: document.created_at ? new Date(document.created_at) : null,
       display_title: getTitle(document),
+      needs_confirmation: Boolean(getUnreviewedOrigin(document, 'created')),
+      has_conflict: Boolean(getUnreviewedOrigin(document, 'conflicts_with')),
       detected_transaction_date: detectedDate,
       detected_payee_search: getDetectedPayeeForSearch(document),
       detected_amount_search: getDetectedAmountForSearch(document),
@@ -351,6 +365,125 @@
   const updateRow = (row, updates) => {
     const data = row.data();
     row.data({ ...data, ...updates }).invalidate();
+  };
+
+  const emitReviewCounts = () => {
+    const rows = table.value.rows().data().toArray();
+
+    emit('review-counts', {
+      autoRecorded: rows.filter((row) => row.needs_confirmation).length,
+      conflicts: rows.filter((row) => row.has_conflict).length,
+    });
+  };
+
+  const withReviewedOrigins = (document, originIds, status = document.status) =>
+    prepareDocument({
+      ...document,
+      status,
+      origins: document.origins.map((origin) =>
+        originIds.includes(origin.id)
+          ? { ...origin, reviewed_at: new Date().toISOString() }
+          : origin,
+      ),
+    });
+
+  const showReviewError = (error) =>
+    toastHelpers.showErrorToast(
+      __('Error while reviewing document: :errorMessage', {
+        errorMessage: error.response?.data?.message || error.message,
+      }),
+    );
+
+  // Closes the unreviewed origin of the given relation; optionally dismisses the receipt first
+  const reviewOrigin = async (row, relation, dismiss = false) => {
+    if (ajaxIsBusy.value) {
+      return;
+    }
+
+    const document = row.data();
+    const origin = getUnreviewedOrigin(document, relation);
+
+    if (!origin) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    try {
+      if (dismiss) {
+        await window.axios.post(
+          route('api.v1.documents.dismiss', { aiDocument: document.id }),
+        );
+      }
+
+      await window.axios.post(
+        route('api.v1.transaction-origins.review', { origin: origin.id }),
+      );
+
+      row
+        .data(
+          withReviewedOrigins(
+            document,
+            [origin.id],
+            dismiss ? 'dismissed' : document.status,
+          ),
+        )
+        .invalidate();
+      table.value.draw(false);
+      emitReviewCounts();
+      toastHelpers.showSuccessToast(
+        relation === 'created'
+          ? __('Transaction confirmed')
+          : __('Conflict resolved'),
+      );
+    } catch (error) {
+      showReviewError(error);
+    } finally {
+      ajaxIsBusy.value = false;
+    }
+  };
+
+  // Confirms every auto-recorded transaction the current filters leave visible
+  const confirmAllShown = async () => {
+    if (ajaxIsBusy.value || !table.value) {
+      return;
+    }
+
+    const originIds = table.value
+      .rows({ search: 'applied' })
+      .data()
+      .toArray()
+      .map((document) => getUnreviewedOrigin(document, 'created')?.id)
+      .filter(Boolean);
+
+    if (originIds.length === 0) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    try {
+      await window.axios.post(route('api.v1.transaction-origins.review-many'), {
+        ids: originIds,
+      });
+
+      table.value
+        .rows((_index, document) =>
+          originIds.includes(getUnreviewedOrigin(document, 'created')?.id),
+        )
+        .every(function () {
+          this.data(withReviewedOrigins(this.data(), originIds)).invalidate();
+        });
+      table.value.draw(false);
+      emitReviewCounts();
+      toastHelpers.showSuccessToast(
+        __(':count transactions confirmed', { count: originIds.length }),
+      );
+    } catch (error) {
+      showReviewError(error);
+    } finally {
+      ajaxIsBusy.value = false;
+    }
   };
 
   const reprocessDocument = (documentId, row) => {
@@ -472,6 +605,7 @@
     table.value.clear();
     table.value.rows.add(data);
     table.value.draw(false);
+    emitReviewCounts();
 
     window.requestAnimationFrame(() => {
       recalculateTableLayout();
@@ -511,6 +645,22 @@
     return true;
   };
 
+  const reviewFilterFn = (settings, _searchData, _dataIndex, rowData) => {
+    if (!tableElement.value || settings.table !== tableElement.value) {
+      return true;
+    }
+
+    if (reviewFilter.value === 'auto-recorded') {
+      return Boolean(rowData?.needs_confirmation);
+    }
+
+    if (reviewFilter.value === 'conflicts') {
+      return Boolean(rowData?.has_conflict);
+    }
+
+    return true;
+  };
+
   onMounted(() => {
     const data = prepareDocuments(props.documents);
 
@@ -535,13 +685,23 @@
         {
           data: 'status',
           title: __('Status'),
-          render: (value, type) => {
+          render: (value, type, row) => {
             if (type === 'filter') {
               return props.statusLabels[value] || value;
             }
 
             const label = props.statusLabels[value] || value;
-            return `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
+            let html = `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
+
+            if (type === 'display' && row.needs_confirmation) {
+              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__('Click to confirm this transaction'))}">${escapeHtml(__('Awaiting confirmation'))}</button>`;
+            }
+
+            if (type === 'display' && row.has_conflict) {
+              html += ` <span class="badge bg-danger" title="${escapeHtml(__('The items of this document differ from the automatically recorded transaction.'))}">${escapeHtml(__('Conflict'))}</span>`;
+            }
+
+            return html;
           },
         },
         {
@@ -662,6 +822,8 @@
     });
 
     window.$.fn.dataTable.ext.search.push(detectedDateRangeFilterFn);
+    window.$.fn.dataTable.ext.search.push(reviewFilterFn);
+    emitReviewCounts();
 
     table.value.contextualActions({
       contextMenuClasses: ['text-primary'],
@@ -690,20 +852,58 @@
         {
           type: 'option',
           title: __('Open linked transaction'),
-          iconClass: 'fa fa-fw fa-external-link',
+          iconClass: 'fa fa-fw fa-eye',
           contextMenuClasses: ['text-info fw-bold'],
           isHidden: (row) => !getLinkedTransactionId(row),
           action: (selectedRows) => {
             const transactionId = getLinkedTransactionId(selectedRows[0]);
 
-            if (!transactionId) {
-              return;
+            if (transactionId) {
+              dataTableHelpers.triggerTransactionQuickView(transactionId);
             }
-
-            window.location.href = route('transaction.open', {
-              transaction: transactionId,
-              action: 'show',
-            });
+          },
+        },
+        {
+          type: 'option',
+          title: __('Confirm transaction'),
+          iconClass: 'fa fa-fw fa-check',
+          contextMenuClasses: ['text-success fw-bold'],
+          isHidden: (row) => !row.needs_confirmation,
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'created');
+          },
+        },
+        {
+          type: 'option',
+          title: __('Keep transaction, discard receipt'),
+          iconClass: 'fa fa-fw fa-ban',
+          contextMenuClasses: ['text-danger fw-bold'],
+          isHidden: (row) =>
+            !row.has_conflict || row.status !== 'ready_for_review',
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'conflicts_with', true);
+          },
+        },
+        {
+          type: 'option',
+          title: __('Keep both, decide on the receipt later'),
+          iconClass: 'fa fa-fw fa-check-double',
+          contextMenuClasses: ['text-success fw-bold'],
+          isHidden: (row) => !row.has_conflict,
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'conflicts_with');
           },
         },
         {
@@ -743,12 +943,37 @@
 
     dataTableHelpers.initializeQuickViewButton('#ai-document-table');
 
+    window
+      .$('#ai-document-table')
+      .on('click', 'button.confirm-origin', (event) => {
+        reviewOrigin(
+          table.value.row(event.currentTarget.closest('tr')),
+          'created',
+        );
+      });
+    window.addEventListener('transactionOriginReviewed', onOriginReviewed);
+
     window.requestAnimationFrame(() => {
       recalculateTableLayout();
     });
 
     window.addEventListener('resize', handleWindowResize);
   });
+
+  // The transaction was confirmed elsewhere (e.g. in the transaction modal)
+  const onOriginReviewed = (event) => {
+    table.value
+      .rows((_index, document) =>
+        document.origins?.some((origin) => origin.id === event.detail.id),
+      )
+      .every(function () {
+        this.data(
+          withReviewedOrigins(this.data(), [event.detail.id]),
+        ).invalidate();
+      });
+    table.value.draw(false);
+    emitReviewCounts();
+  };
 
   const handleWindowResize = () => {
     window.setTimeout(() => {
@@ -790,10 +1015,13 @@
     search,
     detectedDateFrom,
     detectedDateTo,
+    review,
   }) => {
     if (!table.value) {
       return;
     }
+
+    reviewFilter.value = review || '';
 
     const sourceValue = source ? props.sourceLabels[source] || source : '';
 
@@ -844,6 +1072,7 @@
 
   onUnmounted(() => {
     window.removeEventListener('resize', handleWindowResize);
+    window.removeEventListener('transactionOriginReviewed', onOriginReviewed);
 
     const dateFilterIndex = window.$.fn.dataTable.ext.search.indexOf(
       detectedDateRangeFilterFn,
@@ -852,9 +1081,16 @@
     if (dateFilterIndex > -1) {
       window.$.fn.dataTable.ext.search.splice(dateFilterIndex, 1);
     }
+
+    const reviewFilterIndex =
+      window.$.fn.dataTable.ext.search.indexOf(reviewFilterFn);
+
+    if (reviewFilterIndex > -1) {
+      window.$.fn.dataTable.ext.search.splice(reviewFilterIndex, 1);
+    }
   });
 
-  defineExpose({ applyFilters });
+  defineExpose({ applyFilters, confirmAllShown });
 </script>
 
 <style scoped>

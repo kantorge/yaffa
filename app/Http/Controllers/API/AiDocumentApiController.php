@@ -9,8 +9,8 @@ use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\TransactionOrigin;
 use App\Models\User;
-use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
@@ -40,10 +40,7 @@ use Throwable;
 ])]
 class AiDocumentApiController extends Controller
 {
-    private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
-
     public function __construct(
-        private AiUserSettingsResolver $aiUserSettingsResolver,
         private TransactionDraftService $transactionDraftService,
     ) {
     }
@@ -58,13 +55,6 @@ class AiDocumentApiController extends Controller
     #[Authorize('create', AiDocument::class)]
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
-        /** @var User $user */
-        $user = $request->user();
-
-        if ($response = $this->ensureAiProcessingEnabled($user)) {
-            return $response;
-        }
-
         // Create the document
         $document = AiDocument::create([
             'status' => 'ready_for_processing',
@@ -183,6 +173,11 @@ class AiDocumentApiController extends Controller
             'total' => (int) ($stats->total ?? 0),
             'ready_for_review' => (int) ($stats->ready_for_review ?? 0),
             'processing_failed' => (int) ($stats->processing_failed ?? 0),
+            'auto_recorded_to_review' => TransactionOrigin::query()
+                ->where('user_id', $user->id)
+                ->where('relation', TransactionOrigin::RELATION_CREATED)
+                ->whereNull('reviewed_at')
+                ->count(),
             'oldest_created_at' => $stats->oldest_created_at
                 ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
                 : null,
@@ -304,10 +299,6 @@ class AiDocumentApiController extends Controller
     #[Authorize('reprocess', 'aiDocument')]
     public function reprocess(AiDocument $aiDocument): JsonResponse
     {
-        if ($response = $this->ensureAiProcessingEnabled($aiDocument->user)) {
-            return $response;
-        }
-
         $aiDocument = DB::transaction(function () use ($aiDocument): ?AiDocument {
             $document = $this->lockReprocessable($aiDocument);
 
@@ -539,20 +530,6 @@ class AiDocumentApiController extends Controller
         $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
 
         return AiDocumentStatus::isReprocessable($document->status) ? $document : null;
-    }
-
-    private function ensureAiProcessingEnabled(User $user): ?JsonResponse
-    {
-        if ($this->aiUserSettingsResolver->isEnabledForUser($user)) {
-            return null;
-        }
-
-        return response()->json([
-            'error' => [
-                'code' => 'AI_DISABLED',
-                'message' => __(self::AI_DISABLED_MESSAGE),
-            ],
-        ], Response::HTTP_FORBIDDEN);
     }
 
     /**
