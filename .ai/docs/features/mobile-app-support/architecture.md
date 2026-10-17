@@ -1,6 +1,6 @@
 # Mobile app support (server side)
 
-The Android companion app talks only to the user's own instance through `api/v1`, with one full-access
+The Android companion app talks only to the user's own instance through `api/v1`, with one read+write
 Sanctum token per device. This documents what the server provides for it. Not yet built: the push
 sender itself (UnifiedPush channel, optional FCM relay); endpoints and notifications are in place for it.
 
@@ -12,13 +12,12 @@ sender itself (UnifiedPush channel, optional FCM relay); endpoints and notificat
   `#[Middleware('auth:sanctum')]` is open. `tests/Feature/API/V1/ApiRouteAuthTest.php` walks every `api/v1` route:
   anonymous = 401 `UNAUTHENTICATED`, token without a session = not 401. Deliberately public routes are listed in
   `PUBLIC_API_ROUTES` in that test (currently `api.v1.meta`).
-- **`/maintenance/*`.** Reachable by a full-access device token by decision (they keep their `write`/`settings`
-  gates). That includes `cleanup-ai-document-old-files`, which irreversibly deletes finalized documents.
+- **`/maintenance/*`.** `settings`-gated, so unreachable by a paired device token (which holds `read,write` only).
 
 ## Pairing
 
-`POST /api/v1/users/me/tokens/pairing {name}` (session only, blocked in sandbox mode) creates a `read,write,settings`
-token via `ApiTokenService::createPairing()` and returns, once: `token`, `deep_link`
+`POST /api/v1/users/me/tokens/pairing {name}` (session only, blocked in sandbox mode) creates a `read,write`
+token (deliberately no `settings`: a lost phone must not reach credential/config controllers or `/maintenance/*`) via `ApiTokenService::createPairing()` and returns, once: `token`, `deep_link`
 (`yaffa://pair?v=1&url=<APP_URL>&token=<token>`), `qr_svg` (`bacon/bacon-qr-code`), and `warnings`
 (`not_https`, `localhost`, computed from `APP_URL`). UI: "Connect mobile app" in `ApiTokenManager.vue`.
 Any existing token can be re-shown as a QR code via `POST /api/v1/users/me/tokens/{id}/pairing` (session only, sandbox-blocked):
@@ -28,8 +27,8 @@ Revoking the token (existing endpoint) makes the app's next call return 401.
 
 ## Server info
 
-`GET /api/v1/meta` is public. Anonymous: `yaffa_version`, `api_version`, `min_app_version`
-(`MOBILE_APP_MIN_VERSION`), `token_header`, `features`. With a valid token it adds `user`: `base_currency`, `locale`,
+`GET /api/v1/meta` is public. Anonymous: `api_version`, `min_app_version`
+(`MOBILE_APP_MIN_VERSION`), `token_header`, `features`. With a valid token it adds `yaffa_version` and `user`: `base_currency`, `locale`,
 `max_upload_mb`, `max_files_per_submission`. Date format is not sent: it is derived from `locale` client-side.
 
 ## Retry safety
@@ -83,13 +82,13 @@ the earlier notification is not re-flagged retroactively.
 
 ## Notifications and devices
 
-`AiDocumentProcessedEvent` / `AiDocumentProcessingFailedEvent` are turned into database notifications by
-`NotifyAiDocumentStatus` (`ai_document.ready_for_review`, `ai_document.processing_failed`; "processed" and "needs
+`AiDocumentProcessedEvent` / `AiDocumentProcessingFailedEvent` are turned into database notifications by the queued
+`NotifyAiDocumentStatus` listener (`ai_document.ready_for_review`, `ai_document.processing_failed`; "processed" and "needs
 review" are the same transition today). Payload: `type`, `entity_type`, `entity_id`, generic `title`; no amounts, payees
 or account names. `GET /notifications?since=&unread=&limit=` (read), `POST /notifications/{id}/read` and
 `/notifications/read-all` (write). `POST/DELETE /devices` registers a UnifiedPush URL or FCM token bound to the calling
 API token (`devices.personal_access_token_id`, cascade on revoke); session callers get 422 `TOKEN_REQUIRED`. Before a
-sender is built, endpoints must pass `PublicEndpointUrlValidator` (SSRF).
+sender is built, endpoints must pass `PublicEndpointUrlValidator` (SSRF) at send time, not only at registration (DNS rebinding).
 `/meta` reports `features.notifications=true`, `features.push=false` until a sender exists.
 
 ## Reference data and summary

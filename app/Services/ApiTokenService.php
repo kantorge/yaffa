@@ -36,14 +36,22 @@ class ApiTokenService
     }
 
     /**
-     * Creates a full-access token for the mobile app, packaged as a versioned deep link and QR code.
+     * Creates a read+write token for the mobile app, packaged as a versioned deep link and QR code.
      * The plain-text token is only available here, at creation time.
      *
      * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
      */
     public function createPairing(User $user, string $name): array
     {
-        return $this->packagePairing($this->create($user, $name, ApiTokenAbility::values(), null));
+        $this->assertSecureInstanceUrl();
+
+        // No 'settings': a lost phone must not be able to read or change credentials and account security.
+        return $this->packagePairing($this->create(
+            $user,
+            $name,
+            [ApiTokenAbility::Read->value, ApiTokenAbility::Write->value],
+            null
+        ));
     }
 
     /**
@@ -53,10 +61,12 @@ class ApiTokenService
      * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
      *
      * @throws ModelNotFoundException
-     * @throws InvalidArgumentException when the token lacks read or write ability
+     * @throws InvalidArgumentException when the token lacks read or write ability, or APP_URL is not https in production
      */
     public function rotateForPairing(User $user, int $tokenId): array
     {
+        $this->assertSecureInstanceUrl();
+
         /** @var PersonalAccessToken $token */
         $token = $user->tokens()->findOrFail($tokenId);
 
@@ -68,6 +78,18 @@ class ApiTokenService
         $token->forceFill(['token' => hash('sha256', $secret)])->save();
 
         return $this->packagePairing(new NewAccessToken($token, $token->getKey() . '|' . $secret));
+    }
+
+    /**
+     * The token travels in the deep link and is then sent on every call, so production must not pair over plain HTTP.
+     *
+     * @throws InvalidArgumentException
+     */
+    private function assertSecureInstanceUrl(): void
+    {
+        if (app()->isProduction() && ! str_starts_with((string) config('app.url'), 'https://')) {
+            throw new InvalidArgumentException('Pairing the app requires APP_URL to use https.');
+        }
     }
 
     /**

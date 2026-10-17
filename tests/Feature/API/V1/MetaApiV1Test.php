@@ -13,7 +13,8 @@ it('returns public server info to anonymous clients', function () {
         ->assertJsonPath('features.ai_documents', true)
         ->assertJsonPath('features.notifications', true)
         ->assertJsonPath('features.push', false)
-        ->assertJsonStructure(['yaffa_version', 'min_app_version', 'features' => ['notifications', 'push']])
+        ->assertJsonStructure(['min_app_version', 'features' => ['notifications', 'push']])
+        ->assertJsonMissingPath('yaffa_version')
         ->assertJsonMissingPath('user');
 });
 
@@ -24,7 +25,7 @@ it('adds user context when a valid token is sent', function () {
     $this->withToken($token)->getJson(route('api.v1.meta'))
         ->assertOk()
         ->assertJsonPath('user.locale', $user->locale)
-        ->assertJsonStructure(['user' => ['base_currency', 'max_upload_mb', 'max_files_per_submission']]);
+        ->assertJsonStructure(['yaffa_version', 'user' => ['base_currency', 'max_upload_mb', 'max_files_per_submission']]);
 });
 
 it('reads the token from X-Yaffa-Token next to Basic credentials', function () {

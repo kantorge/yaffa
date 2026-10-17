@@ -108,7 +108,7 @@ class ApiTokenApiController extends Controller implements HasMiddleware
     /**
      * Pair a mobile device
      *
-     * Creates a named full-access token and returns it once, as a `yaffa://pair` deep link and QR code,
+     * Creates a named `read`+`write` token (no `settings`) and returns it once, as a `yaffa://pair` deep link and QR code,
      * together with warnings about the instance URL (`not_https`, `localhost`). Session requests only.
      */
     public function storePairing(PairDeviceRequest $request): JsonResponse
@@ -122,10 +122,14 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         /** @var User $user */
         $user = $request->user();
 
-        return response()->json(
-            $this->apiTokenService->createPairing($user, $request->validated('name')),
-            201
-        );
+        try {
+            return response()->json(
+                $this->apiTokenService->createPairing($user, $request->validated('name')),
+                201
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     /**

@@ -328,7 +328,7 @@
               <p>
                 {{
                   __(
-                    'Scan this code with the YAFFA app. It is shown only once and gives the app full access to your account.',
+                    'Scan this code with the YAFFA app. It is shown only once and lets the app read and change your financial data (not your account and security settings).',
                   )
                 }}
               </p>

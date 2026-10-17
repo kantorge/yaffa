@@ -13,13 +13,12 @@ class MetaApiController extends Controller
     /**
      * Get server information
      *
-     * Public: reports versions, the token header name and feature flags, so a client can check
+     * Public: reports the API version, the token header name and feature flags, so a client can check
      * compatibility before it holds a token. When a valid token is sent, a `user` context is added.
      */
     public function show(Request $request): JsonResponse
     {
         $data = [
-            'yaffa_version' => config('yaffa.version'),
             'api_version' => 1,
             'min_app_version' => config('yaffa.mobile.min_app_version'),
             'token_header' => 'X-Yaffa-Token',
@@ -36,6 +35,8 @@ class MetaApiController extends Controller
         if ($user !== null) {
             $baseCurrency = $user->baseCurrency();
 
+            // The exact version is only shown to authenticated callers, to limit fingerprinting.
+            $data['yaffa_version'] = config('yaffa.version');
             $data['user'] = [
                 'base_currency' => $baseCurrency ? [
                     'id' => $baseCurrency->id,

@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('creates a named full-access token and returns it once as a deep link and QR', function () {
+it('creates a named read+write token and returns it once as a deep link and QR', function () {
     config(['app.url' => 'https://yaffa.example.com']);
     $user = User::factory()->create();
 
@@ -22,7 +22,7 @@ it('creates a named full-access token and returns it once as a deep link and QR'
 
     $stored = $user->tokens()->first();
     expect($stored->name)->toBe('Pixel 8 – YAFFA app');
-    expect($stored->abilities)->toEqualCanonicalizing(['read', 'write', 'settings']);
+    expect($stored->abilities)->toEqualCanonicalizing(['read', 'write']);
 
     // The token really works for the app, through the dedicated header
     $this->app['auth']->forgetGuards();
@@ -108,4 +108,16 @@ it('refuses to show a pairing code for a read-only token', function () {
     $this->actingAs($user)
         ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $token->accessToken->id))
         ->assertUnprocessable();
+});
+
+it('refuses to pair over plain HTTP in production', function () {
+    config(['app.url' => 'http://yaffa.example.com']);
+    $this->app['env'] = 'production';
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.users.me.tokens.pairing'), ['name' => 'Phone'])
+        ->assertUnprocessable();
+
+    expect($user->tokens()->count())->toBe(0);
 });
