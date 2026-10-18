@@ -179,7 +179,7 @@
                   role="status"
                   aria-hidden="true"
                 ></i>
-                {{ __('Uploading...') }}
+                {{ __('Uploading') + '...' }}
               </span>
               <span v-else>
                 <i class="fa fa-upload me-2"></i>
@@ -437,7 +437,9 @@
                 );
               });
             } else if (data.error?.message || data.error || data.message) {
-              this.errors.push(data.error?.message || data.error || data.message);
+              this.errors.push(
+                data.error?.message || data.error || data.message,
+              );
             } else {
               this.errors.push(
                 __('An error occurred while uploading the document'),

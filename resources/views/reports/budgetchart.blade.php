@@ -122,7 +122,7 @@
                     style="z-index: 10;"
                 >
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                        <span class="visually-hidden">{{ __('Loading') + '...' }}</span>
                     </div>
                 </div>
             </div>

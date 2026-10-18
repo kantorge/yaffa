@@ -33,7 +33,7 @@
         <p class="text-muted">{{ activeDescription }}</p>
 
         <div v-if="loading" class="text-muted">
-          <i class="fa fa-spinner fa-spin"></i> {{ __('Loading...') }}
+          <i class="fa fa-spinner fa-spin"></i> {{ __('Loading') + '...' }}
         </div>
         <div v-else-if="error" class="alert alert-danger mb-0">
           {{ __('Unable to load the candidates.') }}
