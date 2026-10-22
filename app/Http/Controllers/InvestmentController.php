@@ -45,32 +45,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @name("investments.index")
          * @middlewares("web", "auth", "verified")
          */
-        // Show all investments from the database and return to view
-        $investments = $request->user()
-            ->investments()
-            ->withCount('transactions')
-            ->withCount('transactionsBasic')
-            ->withCount('transactionsScheduled')
-            ->with([
-                'currency',
-                'investmentGroup',
-            ])
-            ->get();
-
-        $investments->map(function ($investment) {
-            if (! $investment instanceof Investment) {
-                return $investment;
-            }
-
-            $investment['price'] = $this->investmentService->getLatestPrice($investment);
-            $investment['quantity'] = $this->investmentService->getCurrentQuantity($investment);
-
-            return $investment;
-        });
-
-        // Pass data for DataTables
         JavaScriptFacade::put([
-            'investments' => $investments,
             'investmentGroups' => $request->user()->investmentGroups,
         ]);
 
