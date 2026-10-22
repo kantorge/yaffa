@@ -75,8 +75,8 @@ When upgrading between major versions, please see the details and follow the ins
 
 Thanks to these people for helping improve this project:
 
-- @WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
-- @antmcmullen - Performance improvements for the Investments list
+- [@WMP](https://github.com/WMP) - Polish translation and various features, including the monthly breakdown and drill down functionality.
+- [@antmcmullen](https://github.com/antmcmullen) - Performance improvements for the Investments list
 
 ## License
 
