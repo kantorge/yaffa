@@ -1789,7 +1789,7 @@
     "Extraction: the items do not add up to the total.": "Extraction : la somme des articles ne correspond pas au total.",
     "Amount: the document is in :document, the account in :account.": "Montant : le document est en :document, le compte en :account.",
     "Amount: there is no usual amount to compare with.": "Montant : il n'y a pas de montant habituel de comparaison.",
-    "Amount: :amount is outside the usual range (around :median).": "Montant : :amount est hors de la fourchette habituelle (environ :median).",
+    "Amount: :amount is outside the usual range (around :median, accepted :from - :to).": "Montant : :amount est hors de la fourchette habituelle (environ :median, accepté :from - :to).",
     "Recorded automatically, not yet confirmed": "Enregistrés automatiquement, pas encore confirmés",
     "Confirm selected": "Confirmer la sélection",
     "Confirm all": "Tout confirmer",

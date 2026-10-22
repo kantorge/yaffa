@@ -1791,7 +1791,7 @@
     "Extraction: the items do not add up to the total.": "Extraction: the items do not add up to the total.",
     "Amount: the document is in :document, the account in :account.": "Amount: the document is in :document, the account in :account.",
     "Amount: there is no usual amount to compare with.": "Amount: there is no usual amount to compare with.",
-    "Amount: :amount is outside the usual range (around :median).": "Amount: :amount is outside the usual range (around :median).",
+    "Amount: :amount is outside the usual range (around :median, accepted :from - :to).": "Amount: :amount is outside the usual range (around :median, accepted :from - :to).",
     "Recorded automatically, not yet confirmed": "Recorded automatically, not yet confirmed",
     "Confirm selected": "Confirm selected",
     "Confirm all": "Confirm all",

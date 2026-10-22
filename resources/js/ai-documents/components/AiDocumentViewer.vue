@@ -758,11 +758,18 @@
     }
 
     if (document.status === 'ready_for_review' && autoRecord?.reason) {
-      const { amount, median } = autoRecord.context || {};
+      const { amount, median, from, to } = autoRecord.context || {};
       const currency = rawData.value.currency;
 
       // Show the amounts in the document's currency, rounded as the user's currency (if known) is configured
-      if (autoRecord.failed_gate === 'amount' && amount && median && currency) {
+      if (
+        autoRecord.failed_gate === 'amount' &&
+        amount &&
+        median &&
+        from &&
+        to &&
+        currency
+      ) {
         const currencySettings = {
           generic_decimal_precision: null,
           ...(window.aiDocumentCurrencies || []).find(
@@ -773,10 +780,12 @@
 
         return __('Not recorded automatically: :reason', {
           reason: __(
-            'Amount: :amount is outside the usual range (around :median).',
+            'Amount: :amount is outside the usual range (around :median, accepted :from - :to).',
             {
               amount: toFormattedCurrency(amount, locale, currencySettings),
               median: toFormattedCurrency(median, locale, currencySettings),
+              from: toFormattedCurrency(from, locale, currencySettings),
+              to: toFormattedCurrency(to, locale, currencySettings),
             },
           ),
         });

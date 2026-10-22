@@ -1790,7 +1790,7 @@
     "Extraction: the items do not add up to the total.": "Kinyerés: a tételek összege nem egyezik a végösszeggel.",
     "Amount: the document is in :document, the account in :account.": "Összeg: a dokumentum pénzneme :document, a számláé :account.",
     "Amount: there is no usual amount to compare with.": "Összeg: nincs szokásos összeg, amellyel összehasonlítható.",
-    "Amount: :amount is outside the usual range (around :median).": "Összeg: :amount a szokásos tartományon kívül esik (kb. :median).",
+    "Amount: :amount is outside the usual range (around :median, accepted :from - :to).": "Összeg: :amount a szokásos tartományon kívül esik (kb. :median, elfogadott: :from - :to).",
     "Recorded automatically, not yet confirmed": "Automatikusan rögzítve, még nincs megerősítve",
     "Confirm selected": "Kijelöltek megerősítése",
     "Confirm all": "Összes megerősítése",

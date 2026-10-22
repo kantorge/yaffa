@@ -29,6 +29,19 @@ class PayeeProfileService
 
     private const int MAX_KNOWN_AMOUNTS = 20;
 
+    /** The amount statistics use the larger of the newest N transactions and those of the last M months... */
+    public const int RECENT_MIN_TRANSACTIONS = 10;
+
+    public const int RECENT_MONTHS = 12;
+
+    /** ...unless that is fewer than this many transactions; then the whole window is used. */
+    public const int RECENT_MIN_SAMPLE = 5;
+
+    /** The stored amount_min / amount_max are these percentiles of the recent amounts, not the extremes. */
+    private const int RANGE_LOWER_PERCENTILE = 10;
+
+    private const int RANGE_UPPER_PERCENTILE = 90;
+
     /** Smallest history the template and itemization checks look at; fewer transactions say too little. */
     private const int MIN_SAMPLE_FOR_HINTS = 5;
 
@@ -91,7 +104,14 @@ class PayeeProfileService
             ->filter(fn (object $t) => $itemsByTransaction->get($t->id, collect())->count() > 1)
             ->count();
 
-        $amounts = $transactions->map(fn (object $t) => $this->amountOf($t))->sort(fn (BigDecimal $a, BigDecimal $b) => $a->compareTo($b))->values();
+        // The window is newest first, so the recent subset is a prefix of it
+        $cutoff = now()->subMonths(self::RECENT_MONTHS)->toDateString();
+        $recentCount = max(self::RECENT_MIN_TRANSACTIONS, $transactions->filter(fn (object $t) => $t->date >= $cutoff)->count());
+        $recent = $transactions->take($recentCount);
+        if ($recent->count() < self::RECENT_MIN_SAMPLE) {
+            $recent = $transactions;
+        }
+        $amounts = $recent->map(fn (object $t) => $this->amountOf($t))->sort(fn (BigDecimal $a, BigDecimal $b) => $a->compareTo($b))->values();
         $amountCounts = $amounts->map(fn (BigDecimal $amount) => (string) $amount)->countBy()->sortDesc();
 
         $typicalAccountIds = $transactions
@@ -112,9 +132,9 @@ class PayeeProfileService
                 'single_item_dominant_count' => $singleItemDominant,
                 'wilson_lower' => round(self::wilsonLowerBound($singleItemDominant, $n), 4),
                 'amount_median' => $n === 0 ? null : (string) $this->median($amounts),
-                'amount_min' => $n === 0 ? null : (string) $amounts->first(),
-                'amount_max' => $n === 0 ? null : (string) $amounts->last(),
-                'amount_mode_share' => $n === 0 ? null : $this->share($amountCounts->first(), $n),
+                'amount_min' => $n === 0 ? null : (string) $this->percentile($amounts, self::RANGE_LOWER_PERCENTILE),
+                'amount_max' => $n === 0 ? null : (string) $this->percentile($amounts, self::RANGE_UPPER_PERCENTILE),
+                'amount_mode_share' => $n === 0 ? null : $this->share($amountCounts->first(), $amounts->count()),
                 'known_amounts' => $amountCounts->keys()->take(self::MAX_KNOWN_AMOUNTS)->values()->all(),
                 'typical_account_ids' => $typicalAccountIds,
                 'multi_item_share' => $this->share($multiItem, $n),
@@ -294,6 +314,7 @@ class PayeeProfileService
             ->limit(self::WINDOW)
             ->get([
                 'transactions.id',
+                'transactions.date',
                 'transactions.transaction_type',
                 'transaction_details_standard.account_from_id',
                 'transaction_details_standard.account_to_id',
@@ -329,6 +350,22 @@ class PayeeProfileService
         return $count % 2 === 1
             ? $sortedAmounts[$middle]
             : $sortedAmounts[$middle - 1]->plus($sortedAmounts[$middle])->dividedBy(2, 4, RoundingMode::HalfUp);
+    }
+
+    /**
+     * Percentile with linear interpolation, so a single outlier at either end barely moves it.
+     *
+     * @param  Collection<int, BigDecimal>  $sortedAmounts
+     */
+    private function percentile(Collection $sortedAmounts, int $percent): BigDecimal
+    {
+        $position = BigDecimal::of($sortedAmounts->count() - 1)->multipliedBy($percent)->dividedBy(100, 10, RoundingMode::HalfUp);
+        $lowerIndex = $position->toScale(0, RoundingMode::Down)->toInt();
+        $fraction = $position->minus($lowerIndex);
+        $lower = $sortedAmounts[$lowerIndex];
+        $upper = $sortedAmounts[min($lowerIndex + 1, $sortedAmounts->count() - 1)];
+
+        return $lower->plus($upper->minus($lower)->multipliedBy($fraction))->toScale(4, RoundingMode::HalfUp);
     }
 
     private function share(int $part, int $total): float

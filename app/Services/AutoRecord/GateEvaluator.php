@@ -16,6 +16,7 @@ use App\Services\PayeeProfileService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -44,6 +45,12 @@ class GateEvaluator
     public const string GATE_AMOUNT = 'amount';
 
     public const string GATE_DUPLICATES = 'duplicates';
+
+    /**
+     * The accepted band is at least this many half-widths of the stored (10th to 90th percentile) range
+     * around the median. 1.5 is roughly 2 standard deviations for normal data, like 3 * MAD.
+     */
+    private const string SPREAD_FACTOR = '1.5';
 
     public function __construct(
         private readonly AiUserSettingsResolver $settingsResolver,
@@ -345,16 +352,22 @@ class GateEvaluator
         }
 
         $median = BigDecimal::of($profile->amount_median);
-        $tolerance = BigDecimal::of((string) $settings['auto_record_amount_tolerance_percent']);
+        $tolerance = $median->multipliedBy((string) $settings['auto_record_amount_tolerance_percent'])->dividedBy(100, 4, RoundingMode::HalfUp);
+        $spread = $profile->amount_min === null || $profile->amount_max === null
+            ? BigDecimal::zero()
+            : BigDecimal::of($profile->amount_max)->minus($profile->amount_min)->dividedBy(2, 4, RoundingMode::HalfUp)->multipliedBy(self::SPREAD_FACTOR);
+        $band = $tolerance->isGreaterThan($spread) ? $tolerance : $spread;
 
-        // |amount - median| * 100 <= median * tolerance
-        if ($amount->minus($median)->abs()->multipliedBy(100)->isLessThanOrEqualTo($median->multipliedBy($tolerance))) {
+        if ($amount->minus($median)->abs()->isLessThanOrEqualTo($band)) {
             return null;
         }
 
+        $from = BigDecimal::max($median->minus($band), 0)->toScale(2, RoundingMode::HalfUp);
+        $to = $median->plus($band)->toScale(2, RoundingMode::HalfUp);
+
         return [
-            __('Amount: :amount is outside the usual range (around :median).', ['amount' => (string) $amount, 'median' => (string) $median]),
-            ['amount' => (string) $amount, 'median' => (string) $median],
+            __('Amount: :amount is outside the usual range (around :median, accepted :from–:to).', ['amount' => (string) $amount, 'median' => (string) $median, 'from' => (string) $from, 'to' => (string) $to]),
+            ['amount' => (string) $amount, 'median' => (string) $median, 'from' => (string) $from, 'to' => (string) $to],
         ];
     }
 }

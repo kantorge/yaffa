@@ -35,7 +35,7 @@ it('stores the history metrics of a payee', function () {
         ->and((float) $profile->wilson_lower)->toBe(round(App\Services\PayeeProfileService::wilsonLowerBound(4, 4), 4))
         ->and((float) $profile->amount_median)->toBe(10.0)
         ->and((float) $profile->amount_min)->toBe(10.0)
-        ->and((float) $profile->amount_max)->toBe(20.0)
+        ->and((float) $profile->amount_max)->toBe(17.0) // 90th percentile, interpolated
         ->and((float) $profile->amount_mode_share)->toBe(0.75)
         ->and($profile->known_amounts)->toBe(['10.0000', '20.0000'])
         ->and($profile->typical_account_ids)->toBe([$this->account->id])
@@ -163,4 +163,54 @@ it('recalculates the previous payee when a transaction stops being a standard on
     ]));
 
     Queue::assertPushed(RecalculatePayeeProfile::class, fn ($job) => $job->payeeId === $this->payee->id);
+});
+
+it('takes the amount statistics from the recent transactions only', function () {
+    foreach (range(1, 40) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 1400 + $i, now()->subYears(3)->subDays($i), categoryId: $this->category->id);
+    }
+    foreach (range(1, 10) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 2250 + $i, now()->subDays($i), categoryId: $this->category->id);
+    }
+
+    $profile = app(App\Services\PayeeProfileService::class)->calculate($this->payee);
+
+    expect($profile->sample_size)->toBe(50)
+        ->and($profile->single_item_dominant_count)->toBe(50)
+        ->and((float) $profile->amount_median)->toBe(2255.5)
+        ->and((float) $profile->amount_min)->toBeGreaterThan(2250.0)
+        ->and(count($profile->known_amounts))->toBe(10);
+});
+
+it('uses every transaction of the last 12 months when that is more than the newest 10', function () {
+    foreach (range(1, 15) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 100, now()->subDays($i * 10), categoryId: $this->category->id);
+    }
+    foreach (range(1, 20) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 900, now()->subYears(3)->subDays($i), categoryId: $this->category->id);
+    }
+
+    expect((float) app(App\Services\PayeeProfileService::class)->calculate($this->payee)->amount_max)->toBe(100.0);
+});
+
+it('falls back to the whole window when fewer than 5 transactions are recent', function () {
+    foreach ([1000, 1000, 1000] as $i => $amount) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, $amount, now()->subYears(4)->subDays($i), categoryId: $this->category->id);
+    }
+    $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 2000, now(), categoryId: $this->category->id);
+
+    expect((float) app(App\Services\PayeeProfileService::class)->calculate($this->payee)->amount_median)->toBe(1000.0);
+});
+
+it('keeps a single outlier out of the median and the displayed range', function () {
+    foreach (range(1, 9) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 2250, now()->subDays($i), categoryId: $this->category->id);
+    }
+    $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 500, now()->subDays(10), categoryId: $this->category->id);
+
+    $profile = app(App\Services\PayeeProfileService::class)->calculate($this->payee);
+
+    expect((float) $profile->amount_median)->toBe(2250.0)
+        ->and((float) $profile->amount_min)->toBeGreaterThan(2000.0)
+        ->and((float) $profile->amount_max)->toBe(2250.0);
 });

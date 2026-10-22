@@ -251,6 +251,46 @@ it('fails gate 7 for an amount far from the median, and passes a known amount ou
     expect($known->passed)->toBeTrue();
 });
 
+it('judges the amount against the recent history', function () {
+    $payee = $this->createPayeeEntity($this->user, ['name' => 'Parking Kft', 'active' => true]);
+    foreach (range(1, 40) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 1400 + $i, now()->subYears(3)->subDays($i), categoryId: $this->category->id);
+    }
+    foreach (range(1, 10) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 2250 + $i, now()->subDays($i), categoryId: $this->category->id);
+    }
+    app(PayeeProfileService::class)->calculate($payee);
+    $this->payee = $payee;
+
+    expect(($this->evaluate)(($this->document)(draft: ['config' => ['amount_from' => '2300.00']]))->passed)->toBeTrue();
+
+    $far = ($this->evaluate)(($this->document)(draft: ['config' => ['amount_from' => '6000.00']]));
+    expect($far->failedGate)->toBe('amount')
+        ->and($far->context)->toHaveKeys(['amount', 'median', 'from', 'to']);
+});
+
+it('widens the accepted band for a wide-spread payee but not for identical amounts', function () {
+    $wide = $this->createPayeeEntity($this->user, ['name' => 'Parking Kft', 'active' => true]);
+    foreach ([60, 80, 100, 120, 140, 60, 80, 100, 120, 140, 100, 100] as $i => $amount) {
+        $this->createStandardTransaction($this->user, $this->account->id, $wide->id, $amount, now()->subDays($i + 1), categoryId: $this->category->id);
+    }
+    app(PayeeProfileService::class)->calculate($wide);
+    $this->payee = $wide;
+
+    // 135 is 35% off the median 100: outside 20%, inside the spread band
+    expect(($this->evaluate)(($this->document)(draft: ['config' => ['amount_from' => '135.00']]))->passed)->toBeTrue();
+
+    $tight = $this->createPayeeEntity($this->user, ['name' => 'Taxi Kft', 'active' => true]);
+    foreach (range(1, 12) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $tight->id, 100, now()->subDays($i), categoryId: $this->category->id);
+    }
+    app(PayeeProfileService::class)->calculate($tight);
+    $this->payee = $tight;
+
+    $result = ($this->evaluate)(($this->document)(['payee' => 'Taxi Kft'], ['config' => ['amount_from' => '121.00']]));
+    expect($result->failedGate)->toBe('amount');
+});
+
 it('fails gate 7 when the document is in another currency than the account', function () {
     ($this->payeeWithHistory)();
 

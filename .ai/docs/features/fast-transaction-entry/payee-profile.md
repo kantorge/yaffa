@@ -9,13 +9,23 @@ As built. Design intent: [specification](../../specifications/fast-transaction-e
 - **Window:** the 50 newest non-schedule standard withdrawals (payee in `account_to_id`) and deposits (payee in `account_from_id`), ordered by date then ID, no time limit.
 - **Dominant category:** the category most single-item transactions of the window are in. `single_item_dominant_count` counts those transactions; `dominant_share` is the share of transactions with any item in that category; `multi_item_share` is the share with more than one item.
 - **Wilson bound:** `wilson_lower` = `wilsonLowerBound(single_item_dominant_count, sample_size)`, z = 1.645 (D9). 10/10 → 0.787, 11/11 → 0.803, 20/21 → 0.812, 18/20 → 0.738.
-- **Amounts** are on the account side (withdrawal: `amount_from`, deposit: `amount_to`), so they are in the currency of the payee's typical account: median, min, max, `amount_mode_share` (share of the most common amount), `known_amounts` (distinct, most frequent first, capped at 20). Transactions in several currencies are mixed as-is; Phase 4 gate 7 fails on a currency mismatch (spec R3).
+- **Amounts** are on the account side (withdrawal: `amount_from`, deposit: `amount_to`), so they are in the currency of the payee's typical account. They come from a **recent subset** of the window, not all 50: the larger of the 10 newest transactions and all transactions of the last 12 months (`RECENT_MIN_TRANSACTIONS`, `RECENT_MONTHS`); if that is fewer than 5 (`RECENT_MIN_SAMPLE`), the whole window. This keeps old prices (e.g. 2019–2022 receipts) from skewing the usual amount. Sample size, dominant category, Wilson bound, typical accounts and multi-item share stay on the full window.
+  - `amount_median`: median of the recent subset.
+  - `amount_min` / `amount_max`: **10th / 90th percentile** (linear interpolation) of the recent subset, not the raw extremes, so one outlier does not stretch the range. (Column meaning changed; no schema change. Before, they were the minimum and maximum of all 50.)
+  - `amount_mode_share`: share of the most common amount within the recent subset. `known_amounts`: distinct recent amounts, most frequent first, capped at 20.
+  - Transactions in several currencies are mixed as-is; gate 7 fails on a currency mismatch (spec R3).
 - **`typical_account_ids`:** the account side IDs covering at least 20% of the window, most frequent first.
 
 ### When it is recalculated
 
 - `RecalculatePayeeProfile` (`ShouldBeUnique` per payee) is dispatched by `ProcessTransactionCreated`, `ProcessTransactionUpdated` (current payee and, from `changedAttributes['config']`, the previous one) and `ProcessTransactionDeleted` (before the config is deleted), through `RecalculatePayeeProfile::dispatchForTransaction()`. Schedules, investments and account-only transfers dispatch nothing.
 - `app:payees:recalculate-profiles {userId?}` recalculates every payee; scheduled `dailyAt('02:30')` in the `runs_scheduler` block. It also covers paths that fire no event (schedule recording, reconcile) and is the way to build the first profiles after the upgrade.
+
+### Amount gate (gate 7)
+
+`GateEvaluator::amountFailure()` passes a document amount that is an exact `known_amounts` entry (recent only), or within `max(median × tolerance%, SPREAD_FACTOR × (amount_max − amount_min) / 2)` of `amount_median`. `SPREAD_FACTOR` is 1.5: half the stored p10–p90 range times 1.5 is about two standard deviations for normal data, comparable to 3 × MAD. The tolerance (`auto_record_amount_tolerance_percent`, default 20) is unchanged and is the floor, so identical-amount payees stay strict. The failure reason names the band, e.g. "around 2280, accepted 1824.00–2736.00", and `context` carries `from`/`to` for the document viewer.
+
+The spread is taken from the stored percentiles instead of a median absolute deviation (MAD) because storing a MAD would need a new `payee_profiles` column; it can be swapped in later if the percentile range proves too noisy.
 
 ## Qualification and candidates
 
@@ -35,7 +45,7 @@ The 5-transaction floor of the last two groups is not in the specification; it k
 ## Settings
 
 - `payees.auto_record_policy` (`follow_global` default, `always`, `never`) and `payees.itemization_expected` (default `false`); `Payee::AUTO_RECORD_POLICIES`, validated in `AccountEntityRequest`, persisted by `PayeePersistenceService::CONFIG_FIELDS`.
-- `ai_user_settings`: `auto_record_min_history` (10), `auto_record_wilson_min` (0.8), `auto_record_amount_tolerance_percent` (20), `match_min_margin` (0.1; shared with the asset matching, see below). NULL = default, resolved by `AiUserSettingsResolver`. `auto_record_enabled` and `itemization_timeout_days` arrive with Phase 4. The amount tolerance is stored and edited now but only used from Phase 4.
+- `ai_user_settings`: `auto_record_min_history` (10), `auto_record_wilson_min` (0.8), `auto_record_amount_tolerance_percent` (20), `match_min_margin` (0.1; shared with the asset matching, see below). NULL = default, resolved by `AiUserSettingsResolver`. `auto_record_enabled` and `itemization_timeout_days` arrive with Phase 4. The amount tolerance is the floor of the gate 7 band (see above).
 
 ## Payee matching
 
