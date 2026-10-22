@@ -42,7 +42,7 @@ class AiProviderConfigApiControllerTest extends TestCase
             route('api.v1.ai.config.store'),
             [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => 'sk-test-1234567890abcdefghij',
             ]
         );
@@ -164,7 +164,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => 'sk-test-1234567890abcdefghij',
                 'vision_enabled' => true,
             ]);
@@ -173,14 +173,14 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response->assertJsonStructure(['id', 'provider', 'model', 'vision_enabled']);
         $response->assertJson([
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'vision_enabled' => true,
         ]);
 
         $this->assertDatabaseHas('ai_provider_configs', [
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'vision_enabled' => true,
         ]);
     }
@@ -199,7 +199,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->postJson(route('api.v1.ai.config.store'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => $plainKey,
             ]);
 
@@ -224,7 +224,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config = AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
         ]);
 
         // Verify config was created with correct user_id
@@ -264,7 +264,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config = AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'vision_enabled' => false,
         ]);
 
@@ -274,7 +274,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'vision_enabled' => true,
             ]);
 
@@ -301,7 +301,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
             ]);
 
         $response->assertStatus(Response::HTTP_OK);
@@ -324,7 +324,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
                 'api_key' => '',
             ]);
 
@@ -348,7 +348,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
                 'api_key' => '__existing__',
             ]);
 
@@ -369,7 +369,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => $newKey,
             ]);
 
@@ -389,7 +389,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o',
+                'model' => 'gpt-5.6-terra',
             ]);
 
         $response->assertStatus(Response::HTTP_OK);
@@ -436,7 +436,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => 'sk-invalid-key-12345',
             ]);
 
@@ -451,7 +451,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => '__existing__',
             ]);
 
@@ -470,7 +470,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'openai',
-            'model' => 'gpt-4o-mini',
+            'model' => 'gpt-5.6-luna',
             'api_key' => 'sk-invalid-but-existing-key',
         ]);
 
@@ -480,7 +480,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->postJson(route('api.v1.ai.config.test'), [
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-5.6-luna',
                 'api_key' => '__existing__',
             ]);
 

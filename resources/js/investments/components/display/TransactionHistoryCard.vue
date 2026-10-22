@@ -15,40 +15,32 @@
       </div>
     </div>
     <div class="card-body">
-      <DataTable
-        :data="transactions"
+      <transaction-table
+        :transactions="transactions"
+        :busy="false"
+        :is-active="true"
         :columns="tableColumns"
-        :options="tableOptions"
-        class="table table-bordered table-hover"
-        width="100%"
+        :actions="rowActions"
+        :action-params="rowActionParams"
+        @transaction-deleted="$emit('delete-transaction', $event)"
+        @transaction-skipped="$emit('delete-transaction', $event)"
+        @set-date-range="$emit('set-date-range', $event)"
       />
     </div>
   </div>
 </template>
 
 <script>
-  import DataTable from 'datatables.net-vue3';
-  import DataTablesCore from 'datatables.net';
-  import DataTablesBootstrap5 from 'datatables.net-bs5';
-  import Swal from 'sweetalert2';
-
-  DataTable.use(DataTablesCore);
-  DataTable.use(DataTablesBootstrap5);
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '@/shared/lib/datatable';
-  import {
-    __,
-    getDataTablesLanguageOptions,
-    toFormattedNumber,
-  } from '@/shared/lib/i18n';
-  import { toIsoDateString } from '@/shared/lib/helpers';
-  import * as toastHelpers from '@/shared/lib/toast';
+  import { __, toFormattedNumber } from '@/shared/lib/i18n';
+  import TransactionTable from '@/shared/ui/datatable/TransactionTable.vue';
 
   export default {
     name: 'TransactionHistoryCard',
     components: {
-      DataTable,
+      TransactionTable,
     },
     props: {
       transactions: { type: Array, required: true },
@@ -69,47 +61,6 @@
           type: 'investment',
           callback: 'back',
         });
-      },
-      tableOptions() {
-        return {
-          language: getDataTablesLanguageOptions() || undefined,
-          createdRow: (row, _data) => {
-            // Set date range buttons
-            row.querySelectorAll('.set-date').forEach((btn) => {
-              btn.onclick = (event) => {
-                const type = btn.getAttribute('data-type');
-                const date = btn.getAttribute('data-date');
-                if (type && date) {
-                  this.$emit('set-date-range', {
-                    type,
-                    date,
-                  });
-                }
-                event.stopPropagation();
-              };
-            });
-            // Delete button
-            row.querySelectorAll('.data-delete').forEach((btn) => {
-              btn.onclick = (event) => {
-                const id = btn.getAttribute('data-id');
-                if (id) {
-                  this.confirmDeleteTransaction(id);
-                }
-                event.stopPropagation();
-              };
-            });
-            // Skip button for scheduled transactions
-            row.querySelectorAll('.data-skip').forEach((btn) => {
-              btn.onclick = (event) => {
-                const id = btn.getAttribute('data-id');
-                if (id) {
-                  this.confirmSkipScheduledInstance(id);
-                }
-                event.stopPropagation();
-              };
-            });
-          },
-        };
       },
       tableColumns() {
         const vm = this;
@@ -192,192 +143,21 @@
                   );
             },
           },
-          {
-            data: 'id',
-            defaultContent: '',
-            title: __('Actions'),
-            render: function (_data, _type, row) {
-              let actions =
-                `<button class="btn btn-xs btn-outline-dark set-date" data-type="from" data-date="${toIsoDateString(
-                  row.date,
-                )}" title="${vm.__(
-                  'Make this the start date',
-                )}"><i class="fa fa-fw fa-caret-left"></i></button> ` +
-                `<button class="btn btn-xs btn-outline-dark set-date" data-type="to" data-date="${toIsoDateString(
-                  row.date,
-                )}" title="${vm.__(
-                  'Make this the end date',
-                )}"><i class="fa fa-fw fa-caret-right"></i></button> `;
-              if (!row.schedule) {
-                const id = row.id;
-                actions +=
-                  `<a href="${vm.route('transaction.open', {
-                    transaction: id,
-                    action: 'edit',
-                  })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit',
-                  )}"><i class="fa fa-fw fa-edit"></i></a> ` +
-                  `<a href="${vm.route('transaction.open', {
-                    transaction: id,
-                    action: 'clone',
-                  })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Clone',
-                  )}"><i class="fa fa-fw fa-clone"></i></a> ` +
-                  `<button class="btn btn-xs btn-danger data-delete" data-id="${id}" type="button" title="${vm.__(
-                    'Delete',
-                  )}"><i class="fa fa-fw fa-trash"></i></button> `;
-              } else if (row.schedule_first_instance) {
-                // Scheduled transaction actions
-                // For scheduled instances, use originalId (parent transaction ID)
-                const id = row.originalId || row.id;
-                actions +=
-                  `<a href="${vm.route('transaction.open', {
-                    transaction: id,
-                    action: 'edit',
-                    callback: 'back',
-                  })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit',
-                  )}"><i class="fa fa-fw fa-edit"></i></a> ` +
-                  `<a href="${vm.route('transaction.open', {
-                    transaction: id,
-                    action: 'replace',
-                    callback: 'back',
-                  })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit and create new schedule',
-                  )}"><i class="fa fa-fw fa-calendar"></i></a> ` +
-                  `<a href="${vm.route('transaction.open', {
-                    transaction: id,
-                    action: 'enter',
-                    callback: 'back',
-                  })}" class="btn btn-xs btn-success" title="${vm.__(
-                    'Adjust and enter instance',
-                  )}"><i class="fa fa-fw fa-pencil"></i></a> ` +
-                  `<button class="btn btn-xs btn-warning data-skip" data-id="${id}" type="button" title="${vm.__(
-                    'Skip this instance',
-                  )}"><i class="fa fa-fw fa-forward"></i></button> `;
-              }
-              return actions;
-            },
-            className: 'dt-nowrap',
-            orderable: false,
-            searchable: false,
-          },
         ];
       },
     },
     methods: {
-      toIsoDateString,
-      __,
-      confirmDeleteTransaction(id) {
-        Swal.fire({
-          animation: false,
-          text: this.__('Are you sure to want to delete this item?'),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: this.__('Cancel'),
-          confirmButtonText: this.__('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            return;
-          }
+      rowActions(row) {
+        if (!row.schedule) {
+          return ['setDateFrom', 'setDateTo', 'edit', 'clone', 'delete'];
+        }
 
-          toastHelpers.showLoaderToast(
-            this.__('Deleting transaction #:transactionId', {
-              transactionId: id,
-            }),
-            `toast-transaction-${id}`,
-          );
-
-          window.axios
-            .delete(
-              this.route('api.v1.transactions.destroy', {
-                transaction: id,
-              }),
-            )
-            .then(() => {
-              toastHelpers.showSuccessToast(
-                this.__('Transaction deleted (#:transactionId)', {
-                  transactionId: id,
-                }),
-              );
-
-              // Remove from UI
-              this.$emit('delete-transaction', id);
-            })
-            .catch((error) => {
-              toastHelpers.showErrorToast(
-                this.__(
-                  'Error deleting transaction (#:transactionId): :error',
-                  { transactionId: id, error: error },
-                ),
-              );
-            })
-            .finally(() => {
-              toastHelpers.hideToast(`.toast-transaction-${id}`);
-            });
-        });
+        return row.schedule_first_instance
+          ? ['setDateFrom', 'setDateTo', 'edit', 'replace', 'enter', 'skip']
+          : ['setDateFrom', 'setDateTo'];
       },
-      confirmSkipScheduledInstance(id) {
-        Swal.fire({
-          animation: false,
-          text: this.__(
-            'Are you sure you want to skip this scheduled instance?',
-          ),
-          icon: 'warning',
-          showCancelButton: true,
-          cancelButtonText: this.__('Cancel'),
-          confirmButtonText: this.__('Confirm'),
-          buttonsStyling: false,
-          customClass: {
-            confirmButton: 'btn btn-warning',
-            cancelButton: 'btn btn-secondary ms-3',
-          },
-        }).then((result) => {
-          if (!result.isConfirmed) {
-            return;
-          }
-
-          // Show skipping toast
-          toastHelpers.showLoaderToast(
-            this.__('Skipping scheduled instance #:transactionId', {
-              transactionId: id,
-            }),
-            `toast-transaction-${id}`,
-          );
-
-          window.axios
-            .patch(
-              this.route('api.v1.transactions.skip', {
-                transaction: id,
-              }),
-            )
-            .then(() => {
-              toastHelpers.showSuccessToast(
-                this.__('Scheduled instance skipped (#:transactionId)', {
-                  transactionId: id,
-                }),
-              );
-
-              // Remove from UI
-              this.$emit('delete-transaction', id);
-            })
-            .catch((error) => {
-              toastHelpers.showErrorToast(
-                this.__(
-                  'Error skipping scheduled instance (#:transactionId): :error',
-                  { transactionId: id, error: error },
-                ),
-              );
-            })
-            .finally(() => {
-              toastHelpers.hideToast(`.toast-transaction-${id}`);
-            });
-        });
+      rowActionParams(row) {
+        return row.schedule ? { callback: 'back' } : {};
       },
     },
   };

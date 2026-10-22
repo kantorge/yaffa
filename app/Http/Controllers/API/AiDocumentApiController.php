@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\AiDocumentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
@@ -21,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -103,22 +105,39 @@ class AiDocumentApiController extends Controller
     /**
      * Update a document
      *
-     * Updates the custom prompt or status of an AI document.
+     * Updates the custom prompt or status of an AI document. Setting the status (back to
+     * ready_for_processing) is only allowed from ready_for_review or processing_failed.
      *
      * @throws AuthorizationException
      */
     #[Authorize('update', 'aiDocument')]
     public function update(UpdateAiDocumentRequest $request, AiDocument $aiDocument): JsonResponse
     {
-        if ($request->filled('custom_prompt')) {
-            $aiDocument->custom_prompt = $request->input('custom_prompt');
-        }
+        $aiDocument = DB::transaction(function () use ($request, $aiDocument): ?AiDocument {
+            $document = $request->filled('status') ? $this->lockReprocessable($aiDocument) : $aiDocument;
 
-        if ($request->filled('status')) {
-            $aiDocument->status = $request->input('status');
-        }
+            if (! $document) {
+                return null;
+            }
 
-        $aiDocument->save();
+            if ($request->filled('custom_prompt')) {
+                $document->custom_prompt = $request->input('custom_prompt');
+            }
+
+            if ($request->filled('status')) {
+                $document->status = $request->input('status');
+            }
+
+            $document->save();
+
+            return $document;
+        });
+
+        if (! $aiDocument) {
+            return response()->json([
+                'error' => __('Document cannot be reprocessed from current status'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         return response()->json([
             'id' => $aiDocument->id,
@@ -274,7 +293,7 @@ class AiDocumentApiController extends Controller
      * Reprocess a document
      *
      * Resets a document to ready_for_processing and re-queues it for AI processing. Only
-     * allowed from a terminal or failed status.
+     * allowed from ready_for_review or processing_failed; a finalized document already created a transaction.
      *
      * @throws AuthorizationException
      */
@@ -285,21 +304,30 @@ class AiDocumentApiController extends Controller
             return $response;
         }
 
-        // Only allow reprocessing if document is in a terminal or failed state
-        if (! in_array($aiDocument->status, ['ready_for_review', 'processing_failed', 'finalized'])) {
+        $aiDocument = DB::transaction(function () use ($aiDocument): ?AiDocument {
+            $document = $this->lockReprocessable($aiDocument);
+
+            if (! $document) {
+                return null;
+            }
+
+            // Reset document to ready_for_processing
+            $document->status = AiDocumentStatus::ReadyForProcessing->value;
+            $document->processed_transaction_data = null;
+            $document->ai_chat_history = null;
+            $document->processed_at = null;
+            $document->save();
+
+            return $document;
+        });
+
+        if (! $aiDocument) {
             return response()->json([
                 'error' => __('Document cannot be reprocessed from current status'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Reset document to ready_for_processing
-        $aiDocument->status = 'ready_for_processing';
-        $aiDocument->processed_transaction_data = null;
-        $aiDocument->ai_chat_history = null;
-        $aiDocument->processed_at = null;
-        $aiDocument->save();
-
-        // Dispatch processing job
+        // Dispatch processing job (after the commit, so the job sees the reset document)
         AiProcessingJob::dispatch($aiDocument);
 
         return response()->json([
@@ -350,10 +378,9 @@ class AiDocumentApiController extends Controller
             return response()->json([], Response::HTTP_BAD_REQUEST);
         }
 
-        $processedData = $aiDocument->processed_transaction_data;
-        $extractedData = $processedData['raw'] ?? [];
+        $extractedData = $duplicateService->matchDataFromDraft($aiDocument->processed_transaction_data);
 
-        if (! is_array($extractedData) || ! array_key_exists('date', $extractedData)) {
+        if (! isset($extractedData['date'])) {
             return response()->json([
                 'duplicates' => [],
             ], Response::HTTP_OK);
@@ -439,6 +466,17 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => 'txt',
         ]);
+    }
+
+    /**
+     * Re-read the document with a row lock and return it only if it can still be reprocessed. Must be
+     * called inside a DB transaction, so the status cannot change between this check and the reset.
+     */
+    private function lockReprocessable(AiDocument $aiDocument): ?AiDocument
+    {
+        $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
+
+        return AiDocumentStatus::isReprocessable($document->status) ? $document : null;
     }
 
     private function ensureAiProcessingEnabled(User $user): ?JsonResponse

@@ -4,6 +4,9 @@
       <monthly-timeline
         :transactions="transactions"
         :busy="busy"
+        :matching-items-only="matchingItemsOnly"
+        :category-ids="categoryIds"
+        :tag-ids="tagIds"
       ></monthly-timeline>
     </div>
   </div>
@@ -13,11 +16,11 @@
   import { __ } from '@/shared/lib/i18n';
 
   // Import all required reporting widgets
-  import MonthlyTimeline from './MonthlyTimeline.vue';
+  import MonthlyTimelineChart from './MonthlyTimelineChart.vue';
   export default {
-    name: 'ReportingCanvasFindTransactionsTimeline',
+    name: 'TransactionTimeline',
     components: {
-      'monthly-timeline': MonthlyTimeline,
+      'monthly-timeline': MonthlyTimelineChart,
     },
     props: {
       transactions: {
@@ -28,6 +31,18 @@
       busy: {
         type: Boolean,
         required: true,
+      },
+      matchingItemsOnly: {
+        type: Boolean,
+        default: false,
+      },
+      categoryIds: {
+        type: Array,
+        default: () => [],
+      },
+      tagIds: {
+        type: Array,
+        default: () => [],
       },
     },
     mounted() {},

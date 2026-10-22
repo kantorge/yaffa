@@ -2,16 +2,27 @@
   <div class="reporting-monthly-breakdown">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>{{ __('Monthly breakdown') }}</h2>
-      <div class="form-check form-switch">
-        <input
-          id="percentageToggle"
-          v-model="showPercentages"
-          class="form-check-input"
-          type="checkbox"
-        />
-        <label class="form-check-label" for="percentageToggle">
-          {{ __('Show percentages') }}
-        </label>
+      <div class="d-flex align-items-center gap-3">
+        <select
+          v-model="granularity"
+          class="form-select form-select-sm w-auto"
+          :aria-label="__('Grouping')"
+        >
+          <option :value="null">{{ __('Grouping') }}: {{ __('Auto') }}</option>
+          <option value="month">{{ __('Monthly') }}</option>
+          <option value="year">{{ __('Yearly') }}</option>
+        </select>
+        <div class="form-check form-switch">
+          <input
+            id="percentageToggle"
+            v-model="showPercentages"
+            class="form-check-input"
+            type="checkbox"
+          />
+          <label class="form-check-label" for="percentageToggle">
+            {{ __('Show percentages') }}
+          </label>
+        </div>
       </div>
     </div>
 
@@ -39,7 +50,7 @@
           <tr>
             <th class="sticky-col">{{ __('Category') }}</th>
             <th v-for="month in months" :key="month">
-              {{ formatMonthHeader(month) }}
+              {{ formatPeriodHeader(month) }}
             </th>
             <th>{{ __('Total') }}</th>
             <th>{{ __('Avg/month') }}</th>
@@ -294,14 +305,14 @@
     toFormattedCurrency,
     getCachedDateTimeFormatter,
   } from '@/shared/lib/i18n';
+  import { buildBreakdownCacheKey } from '@/reports/components/find-transactions/helpers';
   import {
-    buildBreakdownCacheKey,
     round2,
     aggregateTransactionsByCategory,
     calculateDeviationClass,
     buildSectionHierarchy,
     calculateMonthlyTotalsByType,
-  } from '../find-transactions/helpers';
+  } from '@/shared/lib/reports';
 
   const SECTION_CSS_CLASSES = [
     's-section-0',
@@ -315,7 +326,7 @@
   ];
 
   export default {
-    name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
+    name: 'MonthlyBreakdown',
     props: {
       transactions: {
         type: Array,
@@ -342,11 +353,18 @@
         type: Array,
         default: () => [],
       },
+      // The cache is keyed by the URL filters only (Find transactions); pages without
+      // such filters must opt out, or they'd read and overwrite each other's data
+      useBreakdownCache: {
+        type: Boolean,
+        default: true,
+      },
     },
     emits: ['drill-down'],
     data() {
       return {
         showPercentages: false,
+        granularity: null, // null = auto
         baseCurrency: window.YAFFA.baseCurrency,
         locale: window.YAFFA.userSettings.locale,
         cachedCategoryData: null,
@@ -354,7 +372,7 @@
     },
     computed: {
       /** @returns {string[]} Sorted unique YYYY-MM month strings extracted from transactions or cached data */
-      months() {
+      rawMonths() {
         // When using cached data, extract months from categoryData values
         if (this.cachedCategoryData) {
           const monthSet = new Set();
@@ -380,7 +398,7 @@
        *
        * @returns {Object<string, {values: Object<string, number>, categoryIds: Set<number>, depositTotal: number, withdrawalTotal: number, rawName: string}>}
        */
-      categoryData() {
+      monthlyCategoryData() {
         if (this.cachedCategoryData) {
           return this.cachedCategoryData;
         }
@@ -390,6 +408,40 @@
           categoryIds: this.categoryIds,
           tagIds: this.tagIds,
         });
+      },
+
+      /** @returns {'month'|'year'} Auto-switches to years above 24 months */
+      effectiveGranularity() {
+        return (
+          this.granularity || (this.rawMonths.length > 24 ? 'year' : 'month')
+        );
+      },
+
+      monthCount() {
+        return this.rawMonths.length || 1;
+      },
+
+      /** @returns {string[]} Column keys: YYYY-MM or YYYY */
+      months() {
+        if (this.effectiveGranularity === 'month') return this.rawMonths;
+        return [...new Set(this.rawMonths.map((m) => m.slice(0, 4)))];
+      },
+
+      /** Monthly category data, re-bucketed by year when grouping yearly. */
+      categoryData() {
+        if (this.effectiveGranularity === 'month') {
+          return this.monthlyCategoryData;
+        }
+        const result = {};
+        Object.entries(this.monthlyCategoryData).forEach(([name, entry]) => {
+          const values = {};
+          Object.entries(entry.values).forEach(([month, v]) => {
+            const year = month.slice(0, 4);
+            values[year] = (values[year] || 0) + v;
+          });
+          result[name] = { ...entry, values };
+        });
+        return result;
       },
 
       /**
@@ -403,7 +455,7 @@
         return buildSectionHierarchy(
           this.categoryData,
           this.months,
-          this.months.length || 1,
+          this.monthCount,
           SECTION_CSS_CLASSES,
           __,
         );
@@ -426,7 +478,7 @@
       },
 
       totalExpensesAvg() {
-        const result = this.months.length || 1;
+        const result = this.monthCount;
         return round2(this.totalExpensesSum / result);
       },
 
@@ -447,7 +499,7 @@
       },
 
       totalIncomeAvg() {
-        const result = this.months.length || 1;
+        const result = this.monthCount;
         return round2(this.totalIncomeSum / result);
       },
 
@@ -467,7 +519,7 @@
       },
 
       balanceAvg() {
-        const result = this.months.length || 1;
+        const result = this.monthCount;
         return round2(this.balanceSum / result);
       },
     },
@@ -491,21 +543,29 @@
       },
     },
     mounted() {
-      this.loadBreakdownCache();
+      if (this.useBreakdownCache) {
+        this.loadBreakdownCache();
+      }
     },
 
     methods: {
       getCategoryLink(categoryId) {
-        return this.route('categories.edit', {
+        return this.route('categories.show', {
           category: categoryId,
         });
       },
 
       emitDrillDown(month, categoryIds) {
-        const [year, mon] = month.split('-').map(Number);
-        const lastDay = new Date(year, mon, 0).getDate();
-        const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
-        const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        let dateFrom, dateTo;
+        if (month.length === 4) {
+          dateFrom = `${month}-01-01`;
+          dateTo = `${month}-12-31`;
+        } else {
+          const [year, mon] = month.split('-').map(Number);
+          const lastDay = new Date(year, mon, 0).getDate();
+          dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
+          dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        }
 
         this.$emit('drill-down', {
           dateFrom,
@@ -519,11 +579,16 @@
           // Don't overwrite cache on drill-down pages, or with a narrowed
           // aggregate that a differently-scoped load couldn't detect as stale
           // (the cache key doesn't encode matchingItemsOnly).
-          if (this.isDrillDown || this.matchingItemsOnly) return;
+          if (
+            !this.useBreakdownCache ||
+            this.isDrillDown ||
+            this.matchingItemsOnly
+          )
+            return;
 
           // Serialize categoryData: convert Sets to Arrays for JSON
           const serializable = {};
-          const catData = this.categoryData;
+          const catData = this.monthlyCategoryData;
           Object.keys(catData).forEach((key) => {
             serializable[key] = {
               values: catData[key].values,
@@ -580,6 +645,10 @@
        * @param {string} month - Month in YYYY-MM format
        * @returns {string} Month in MM.YYYY format
        */
+      formatPeriodHeader(period) {
+        return period.length === 4 ? period : this.formatMonthHeader(period);
+      },
+
       formatMonthHeader(month) {
         const [year, mon] = month.split('-').map(Number);
         const date = new Date(year, mon - 1, 1);
@@ -639,7 +708,6 @@
 </script>
 
 <style scoped lang="scss">
-  //@import './ReportingCanvas-FindTransactions-MonthlyBreakdown';
   @import '@coreui/coreui/scss/functions';
   @import '../../../../sass/_variables';
 
@@ -682,7 +750,6 @@
 
   .breakdown-table {
     font-size: 0.8em;
-    table-layout: fixed;
   }
 
   .breakdown-table th,
@@ -691,6 +758,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .breakdown-table thead th:not(.sticky-col) {
+    min-width: 90px;
   }
 
   .sticky-col {

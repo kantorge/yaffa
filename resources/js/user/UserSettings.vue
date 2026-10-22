@@ -139,7 +139,7 @@
             for="account_details_date_range"
             class="col-form-label col-sm-3"
           >
-            {{ __('Default date range for account details') }}
+            {{ __('Default date range for transaction history') }}
           </label>
           <div class="col-sm-9">
             <div class="input-group">
@@ -172,7 +172,7 @@
                 data-coreui-placement="top"
                 :title="
                   __(
-                    'The default date range to load transactions from when opening account details. This can be changed on the fly in the account details view.',
+                    'The default date range to load transactions from when opening account, payee or category details. This can be changed on the fly in the details view.',
                   )
                 "
               >
@@ -221,11 +221,7 @@
         </div>
       </div>
       <div class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-update-settings"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           {{ __('Save') }}
         </SubmitButton>
       </div>

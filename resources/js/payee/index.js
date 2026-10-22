@@ -429,9 +429,13 @@ window.table = $(dataTableSelector).DataTable({
     {
       data: 'name',
       title: __('Name'),
-      render: function (data, type) {
+      render: function (data, type, row) {
         if (type === 'display') {
-          return escapeHtml(data);
+          const url = window.route('account-entity.show', {
+            account_entity: row.id,
+          });
+
+          return `<a href="${escapeHtml(url)}">${escapeHtml(data)}</a>`;
         }
 
         return data;

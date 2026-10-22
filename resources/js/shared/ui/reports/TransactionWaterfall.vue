@@ -33,10 +33,10 @@
 <script>
   import { __ } from '@/shared/lib/i18n';
   import WaterfallChart from '@/shared/ui/charts/WaterfallChart.vue';
-  import { aggregateTransactionsForWaterfall } from '../find-transactions/helpers';
+  import { aggregateTransactionsForWaterfall } from '@/shared/lib/reports';
 
   export default {
-    name: 'ReportingCanvasFindTransactionsWaterfall',
+    name: 'TransactionWaterfall',
     components: {
       'waterfall-chart': WaterfallChart,
     },

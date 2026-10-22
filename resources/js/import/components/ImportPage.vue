@@ -254,7 +254,8 @@
         const account = this.accounts.find(
           (a) => String(a.id) === String(accountId),
         );
-        const preferredId = account?.preferred_file_import_profile_id ?? null;
+        const preferredId =
+          account?.config?.preferred_file_import_profile_id ?? null;
 
         if (this.sourceType === 'csv') {
           const inCsvProfiles = preferredId

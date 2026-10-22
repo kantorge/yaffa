@@ -15,12 +15,12 @@
     applyAmChartsColorTheme,
     COLOR_MODE_EVENT,
   } from '@/shared/lib/ui/amchartsColorTheme';
-  import { itemMatchesActiveFilters } from '../find-transactions/helpers';
+  import { itemMatchesActiveFilters } from '@/shared/lib/reports';
 
   am4core.useTheme(am4themes_animated);
 
   export default {
-    name: 'DepositsByParentCategory',
+    name: 'WithdrawalsByParentCategory',
     props: {
       transactions: {
         type: Array,
@@ -29,7 +29,7 @@
       },
       title: {
         type: String,
-        default: 'Deposits by category',
+        default: 'Withdrawals by category',
       },
       busy: {
         type: Boolean,
@@ -99,7 +99,7 @@
       updateChartData(transactions) {
         const filteredTransactions = [];
         transactions.forEach((transaction) => {
-          if (transaction.transaction_type === 'deposit') {
+          if (transaction.transaction_type === 'withdrawal') {
             filteredTransactions.push(transaction);
           }
         });

@@ -28,7 +28,6 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New account') }}
                         <a class="btn btn-success btn-sm"
-                           dusk="button-new-account"
                            href="{{ route('account-entity.create', ['type' => 'account']) }}"
                            title="{{ __('New account') }}"
                         >

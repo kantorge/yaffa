@@ -167,7 +167,6 @@
                       id="checkbox-standard-catch-up-schedule"
                       v-model="form.catch_up_schedule"
                       class="form-check-input"
-                      dusk="checkbox-standard-catch-up-schedule"
                       type="checkbox"
                       value="1"
                     />

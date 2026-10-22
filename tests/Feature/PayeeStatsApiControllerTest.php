@@ -39,6 +39,29 @@ class PayeeStatsApiControllerTest extends TestCase
         $response->assertJsonPath('deferred_category_ids.0', $secondaryCategory->id);
     }
 
+    public function test_overview_returns_lifetime_figures_for_own_payee(): void
+    {
+        $user = User::factory()->create();
+        $payee = $this->createPayeeEntity($user, ['active' => true]);
+        $account = $this->createAccountEntity($user);
+        $category = Category::factory()->for($user)->create(['active' => 1]);
+        $this->createTransactionWithCategory($user, $account->id, $payee->id, $category->id, now()->subMonth());
+
+        $this->actingAs($user)
+            ->getJson(route('api.v1.payees.overview', ['accountEntity' => $payee->id]))
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJsonPath('count', 1);
+    }
+
+    public function test_overview_is_not_found_for_another_users_payee(): void
+    {
+        $payee = $this->createPayeeEntity(User::factory()->create(), ['active' => true]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson(route('api.v1.payees.overview', ['accountEntity' => $payee->id]))
+            ->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     public function test_category_stats_filters_by_transaction_type(): void
     {
         $user = User::factory()->create();

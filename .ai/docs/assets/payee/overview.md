@@ -234,6 +234,14 @@ There is no separate payee create/edit page; the modal on the payees list is the
 - While typing a name (creation only), similar existing payees are shown below the input to help the user avoid duplicates
 - In simplified mode, category preferences are hidden; only name, active flag, and default category are shown
 
+### Payee Detail Page
+
+- Reached from the payee name in the payees list and the search results. Answers: _what is my relationship with this counterparty?_
+- Overview card: active flag, default / preferred / excluded categories (linked to category pages), import alias, transaction count, first and last transaction date (with days since last), lifetime total paid and received in the base currency. These are lifetime figures, independent of the selected date range; schedules are excluded.
+- Actions: edit (the same `PayeeForm` modal), new transaction, open in Find transactions, merge into another payee, delete (only offered when the payee has no transactions).
+- Pending category suggestion (accept / dismiss), upcoming scheduled transactions, and similar payees (possible duplicates, with a merge link).
+- Report tabs (summary, list, timeline, category charts, monthly breakdown, waterfall) over the user's "Default date range for transaction history" setting, adjustable on the page. Payee figures are transaction-level amounts, not item sums.
+
 ### Merge Form Page
 
 - Two searchable dropdowns: "payee to be merged" (source) and "where to merge into" (target), each filtering out the other
@@ -263,6 +271,6 @@ All core behaviors are directly verified in source code. The suggestion threshol
 
 ## Assumptions
 
-- There is currently no dedicated "show" page for a payee — `AccountEntityController::show()` explicitly redirects back for payees. A payee's transactions are accessible via the reports page but not through a payee-specific detail view.
+- A payee has a detail page (`account-entity.show`, owner-only); see [Payee Detail Page](#payee-detail-page) and [`.ai/docs/features/payee-category-show-pages/`](../../features/payee-category-show-pages/architecture.md). (Earlier versions redirected back for payees.)
 - The "un-dismiss suggestion" workflow has no UI implementation found in the codebase. Once a suggestion is dismissed, the only way to restore it would be through a direct database change.
 - The `simplified` form mode appears to be used when `PayeeForm` is embedded in other contexts (e.g., inline creation during transaction entry), based on prop naming and behavior, though no specific host components were found in the reviewed files.

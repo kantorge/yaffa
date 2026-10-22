@@ -84,7 +84,6 @@
                     <div class="card-body no-datatable-search">
                         <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-category-learning"
                             id="table"
                             role="grid"
                         ></table>

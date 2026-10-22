@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportParseRequest;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
 use App\Services\Import\CsvParserService;
@@ -155,8 +156,12 @@ class ImportApiController extends Controller
             return $profile;
         }
 
-        if ($accountEntity->preferred_file_import_profile_id) {
-            $profile = FileImportProfile::query()->find($accountEntity->preferred_file_import_profile_id);
+        $preferredProfileId = $accountEntity->config instanceof Account
+            ? $accountEntity->config->preferred_file_import_profile_id
+            : null;
+
+        if ($preferredProfileId) {
+            $profile = FileImportProfile::query()->find($preferredProfileId);
             if ($profile instanceof FileImportProfile) {
                 Gate::authorize('view', $profile);
 

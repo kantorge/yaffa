@@ -120,7 +120,7 @@
                                                 <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
                                             @endif
                                         </td>
-                                        <td class="{{ $payee->active ? '' : 'text-muted text-italic' }}">{{ $payee->name }}</td>
+                                        <td class="{{ $payee->active ? '' : 'text-muted text-italic' }}"><a href="{{ route('account-entity.show', $payee) }}">{{ $payee->name }}</a></td>
                                         <td class="transactionCount" data-id="{{ $payee->id }}" data-type="payee"></td>
                                         <td class="payeeAction">
                                             <a

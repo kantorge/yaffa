@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\AiDocumentStatus;
 use App\Events\AiDocumentProcessedEvent;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Models\AiDocument;
@@ -52,6 +53,14 @@ class AiProcessingJob implements ShouldQueue, ShouldBeUnique
         $document = $this->document->fresh(['user']);
 
         if (! $document) {
+            return;
+        }
+
+        // A finalized document already created a transaction; processing (or resetting) it again
+        // would let it go through review and be finalized into a duplicate transaction.
+        if ($document->status === AiDocumentStatus::Finalized->value) {
+            Log::info("Skipping document {$document->id} processing because it is already finalized");
+
             return;
         }
 
