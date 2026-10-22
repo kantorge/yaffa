@@ -579,6 +579,36 @@
     });
   };
 
+  const canDismiss = (status) =>
+    ['ready_for_review', 'processing_failed'].includes(status);
+
+  const dismissDocument = (documentId, row) => {
+    if (ajaxIsBusy.value) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    window.axios
+      .post(route('api.v1.documents.dismiss', { aiDocument: documentId }))
+      .then((response) => {
+        updateRow(row, { status: response.data.status });
+        table.value.draw(false);
+        emitReviewCounts();
+        toastHelpers.showSuccessToast(response.data.message);
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while dismissing document: :errorMessage', {
+            errorMessage: error.response?.data?.error || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        ajaxIsBusy.value = false;
+      });
+  };
+
   const canReprocess = (status) =>
     ['ready_for_review', 'processing_failed', 'dismissed'].includes(status);
 
@@ -904,6 +934,34 @@
               (idx, data) => data.id === selectedRows[0].id,
             );
             reviewOrigin(row, 'conflicts_with');
+          },
+        },
+        {
+          type: 'option',
+          title: __('Finalize transaction'),
+          iconClass: 'fa fa-fw fa-edit',
+          contextMenuClasses: ['text-primary fw-bold'],
+          isHidden: (row) => row.status !== 'ready_for_review',
+          action: (selectedRows) => {
+            // The draft is built in the viewer, which opens the finalize form on load
+            window.location.href = route('ai-documents.show', {
+              aiDocument: selectedRows[0].id,
+              finalize: 1,
+            });
+          },
+        },
+        {
+          type: 'option',
+          title: __('Dismiss document'),
+          iconClass: 'fa fa-fw fa-ban',
+          contextMenuClasses: ['text-secondary fw-bold'],
+          isHidden: (row) => !canDismiss(row.status),
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            dismissDocument(selectedRows[0].id, row);
           },
         },
         {

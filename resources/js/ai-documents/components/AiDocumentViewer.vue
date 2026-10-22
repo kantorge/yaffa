@@ -1122,6 +1122,14 @@
 
   onMounted(() => {
     window.addEventListener('transaction-created', handleTransactionCreated);
+
+    // Set by the document list's "Finalize transaction" action
+    if (
+      new URLSearchParams(window.location.search).has('finalize') &&
+      canFinalize.value
+    ) {
+      finalizeDocument();
+    }
   });
 
   onBeforeUnmount(() => {
