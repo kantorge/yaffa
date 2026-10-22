@@ -203,8 +203,10 @@ Every payee now has a stored history profile, and users can set how a payee is t
 - **CSV import:** a payee alias with several lines is now matched line by line. Before, the whole multi-line alias was treated as one string.
 - **New payee fields** `config.auto_record_policy` (`follow_global`, `always`, `never`; default `follow_global`) and `config.itemization_expected` (boolean) on `POST /api/v1/payees` and `PATCH /api/v1/payees/{id}`. They are returned inside `config`.
 - **New endpoint** `GET /api/v1/payees/auto-record-candidates` (`read`): the payees grouped into `qualifying`, `near`, `itemization_mismatch` and `template_candidates`.
-- **New AI settings** on `/api/v1/ai/settings`: `auto_record_min_history`, `auto_record_wilson_min`, `auto_record_amount_tolerance_percent`, `payee_similarity_min`, `payee_similarity_margin`. They always resolve to a value (the default when unset).
+- **New AI settings** on `/api/v1/ai/settings`: `auto_record_min_history`, `auto_record_wilson_min`, `auto_record_amount_tolerance_percent`, `match_min_margin`. They always resolve to a value (the default when unset).
 - New migrations add the `payee_profiles` table, two columns on `payees` and five columns on `ai_user_settings`. They are additive and reversible.
+- **Payee and account matching is now one rule** for document processing and auto-recording: a match is _certain_ when it is deterministic (equal name or alias, an alias opening the text, or a card ending) or scores at least `match_auto_accept_threshold` and leads the runner-up by `match_min_margin`. The setting `payee_similarity_min` is gone (a migration drops it); `payee_similarity_margin` is renamed `match_min_margin` and now applies to accounts as well. Certain matches skip the AI call; a stricter rule than before, so a few more documents may ask the AI to pick between candidates. `GET`/`PATCH /api/v1/ai/settings` also return `presets`, the Loose/Balanced/Strict value sets of the settings page.
+- **Card endings:** an account is matched by the closing digits of any alias line (`7393`, `****7393`, `Visa Debit 7393`, `400322******7393`), from `card_last_digits` or a masked account number.
 
 ### Auto-recording (Fast Transaction Entry, phase 4)
 

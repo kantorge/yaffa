@@ -35,15 +35,15 @@ The 5-transaction floor of the last two groups is not in the specification; it k
 ## Settings
 
 - `payees.auto_record_policy` (`follow_global` default, `always`, `never`) and `payees.itemization_expected` (default `false`); `Payee::AUTO_RECORD_POLICIES`, validated in `AccountEntityRequest`, persisted by `PayeePersistenceService::CONFIG_FIELDS`.
-- `ai_user_settings`: `auto_record_min_history` (10), `auto_record_wilson_min` (0.8), `auto_record_amount_tolerance_percent` (20), `payee_similarity_min` (0.92), `payee_similarity_margin` (0.1). NULL = default, resolved by `AiUserSettingsResolver`. `auto_record_enabled` and `itemization_timeout_days` arrive with Phase 4. The amount tolerance is stored and edited now but only used from Phase 4.
+- `ai_user_settings`: `auto_record_min_history` (10), `auto_record_wilson_min` (0.8), `auto_record_amount_tolerance_percent` (20), `match_min_margin` (0.1; shared with the asset matching, see below). NULL = default, resolved by `AiUserSettingsResolver`. `auto_record_enabled` and `itemization_timeout_days` arrive with Phase 4. The amount tolerance is stored and edited now but only used from Phase 4.
 
-## PayeeMatcher
+## Payee matching
 
-`PayeeMatcher::match(text, user): ?PayeeMatch` over the user's **active** payees.
+`AssetMatchingService::matchPayees(text)` over the user's **active** payees; `PayeeMatcher` only keeps the static helpers below. Matching and the "certain match" rule are shared with document processing and the auto-record gates: see [auto-recording.md](auto-recording.md#one-matching-two-questions).
 
-- **Normalization** (`PayeeMatcher::normalize()`): `AssetMatchingService::normalizeForMatching()` (now `public static`: NFC, lowercase, transliterated, punctuation to spaces), then digit-only tokens and the legal suffixes `kft zrt bt nyrt kkt ltd gmbh` are dropped. If nothing is left, the base normalization is used. `OMV 4471 BUDAPEST` → `omv budapest`; `Példa Kft.` → `pelda`.
-- **Tiers:** `exact` (normalized name or alias line equals the text), `leading_token` (an alias line, as whole leading tokens; the longest wins; names do not take part), `similarity` (best Jaro-Winkler over name and alias lines per payee; returned only above the user's existing `asset_similarity_threshold`). `exact` and `leading_token` are always `autoEligible`; `similarity` is when `score ≥ payee_similarity_min`, the lead over the second best payee (`margin`) is `≥ payee_similarity_margin` and the matched string has at least 4 characters.
-- Nothing calls the matcher yet; Phase 4 gate 2 will. The existing AI matching (`AssetMatchingService`) is unchanged.
+- **Normalization** (`PayeeMatcher::normalize()`): `AssetMatchingService::normalizeForMatching()` (`public static`: NFC, lowercase, transliterated, punctuation to spaces), then digit-only tokens and the legal suffixes `kft zrt bt nyrt kkt ltd gmbh` are dropped. If nothing is left, the base normalization is used. `OMV 4471 BUDAPEST` → `omv budapest`; `Példa Kft.` → `pelda`.
+- **Scores:** 1.0 for a payee whose normalized name or alias line equals the text, else for the one with the longest alias line that opens the text as whole tokens (names do not take part); otherwise the best Jaro-Winkler over name and alias lines, kept above `asset_similarity_threshold`.
+- `PayeeMatcher::aliasLines()`/`findConflict()` are used by the payee request and the CSV import.
 
 ## Alias uniqueness (D15)
 
@@ -54,7 +54,7 @@ The 5-transaction floor of the last two groups is not in the specification; it k
 - `PayeeForm.vue`: _Auto-recording_ and _Itemization_ selects (not in the simplified form, but their values are still sent so a simplified save keeps them); name and alias errors show at their field.
 - `PayeeProfileCard.vue` on the payee page; data from `AccountEntityController::payeeProfileData()` through `window.payeeProfile` (`null` until the first calculation).
 - Candidates page: `GET /payees/auto-record-candidates` (`payees.auto-record-candidates`), `resources/js/payee/candidates.js`, `AutoRecordCandidates.vue` with four tabs and an edit button opening `PayeeForm`. The "nothing is recorded yet" notice is static until the Phase 4 switch exists. Linked from the payee list (when an AI provider is configured) and from the settings.
-- `AiBehaviorSettings.vue`: an _Auto-recording_ section with the five thresholds.
+- `AiBehaviorSettings.vue`: the strictness groups (see auto-recording.md); the payee policy select reads _Automatic (based on history)_ / _Always allow_ / _Never_ with a help text per choice.
 - `AiDocumentViewer.vue`: after a transaction is created from the document, when the chosen payee differs from the one the draft was matched to, it offers _Add "<leading words>" as alias of <payee>_ (leading words of the extracted payee text up to the first word with a digit, at most three) and saves it with one PATCH.
 
 ## Tests

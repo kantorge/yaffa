@@ -87,15 +87,16 @@
             class="form-select"
           >
             <option value="follow_global">
-              {{ __('Follow the global setting') }}
+              {{ __('Automatic (based on history)') }}
             </option>
             <option value="always">{{ __('Always allow') }}</option>
             <option value="never">{{ __('Never') }}</option>
           </select>
           <small class="form-text text-muted">
+            {{ autoRecordPolicyHelp }}
             {{
               __(
-                'Whether documents of this payee may be recorded without your review. Nothing is recorded automatically yet.',
+                'Nothing is recorded without your review while automatic recording is turned off in your AI settings.',
               )
             }}
           </small>
@@ -255,6 +256,19 @@
     },
 
     computed: {
+      autoRecordPolicyHelp() {
+        return (
+          {
+            always: __(
+              'Skips the history check. The payee, account, amount and duplicate checks still apply.',
+            ),
+            never: __('Documents of this payee always wait for your review.'),
+          }[this.form.config.auto_record_policy] ??
+          __(
+            'Documents of this payee are recorded without review once it has a consistent transaction history, as set in your AI settings.',
+          )
+        );
+      },
       formInstanceId() {
         return this.instanceId || this.id;
       },

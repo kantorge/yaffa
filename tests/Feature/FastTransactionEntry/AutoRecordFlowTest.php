@@ -42,11 +42,11 @@ beforeEach(function () {
         return $payee;
     };
 
-    $this->notification = fn (array $payload = [], array $attributes = []) => $this->processDocument($this->user, $payload + [
+    $this->notification = fn (array $payload = [], array $attributes = [], ?string $aiMatchResult = null) => $this->processDocument($this->user, $payload + [
         'document_kind' => 'bank_notification',
         'card_last_digits' => '1234',
         'currency' => $this->currency,
-    ], $attributes);
+    ], $attributes, $aiMatchResult);
 
     $this->receipt = fn (array $payload = []) => $this->processDocument($this->user, $payload + [
         'document_kind' => 'receipt',
@@ -81,6 +81,29 @@ it('records a document for a qualifying payee as a normal transaction with an ex
 
     // Nobody confirmed the category, so nothing is learned
     expect(CategoryLearning::count())->toBe(0);
+});
+
+it('leaves a payee that only the AI picked among uncertain candidates to a person', function () {
+    $payee = ($this->payeeWithHistory)();
+
+    // "Parking Garage" resembles "Parking Kft" but is not certain enough, so the AI chooses; the draft shows its choice
+    $document = ($this->notification)(['payee' => 'Parking Garage'], aiMatchResult: (string) $payee->id);
+
+    expect($document->status)->toBe('ready_for_review')
+        ->and($document->processed_transaction_data['config']['account_to_id'])->toBe($payee->id)
+        ->and($document->processed_transaction_data['auto_record']['failed_gate'])->toBe('payee')
+        ->and(Transaction::query()->where('ai_document_id', $document->id)->exists())->toBeFalse();
+});
+
+it('identifies the account by the closing digits of a masked card number in the account text', function () {
+    $payee = ($this->payeeWithHistory)();
+    $card = $this->createAccountEntity($this->user, ['name' => 'Debit card', 'alias' => 'Visa Debit 4321']);
+
+    $document = ($this->notification)(['account' => '400322******4321', 'card_last_digits' => null]);
+
+    expect($document->status)->toBe('auto_recorded')
+        ->and(Transaction::query()->where('ai_document_id', $document->id)->sole()->load('config')->config->account_from_id)->toBe($card->id)
+        ->and($document->processed_transaction_data['config']['account_to_id'])->toBe($payee->id);
 });
 
 it('fires TransactionCreated when auto-recording', function () {

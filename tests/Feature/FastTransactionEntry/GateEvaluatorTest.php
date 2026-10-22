@@ -28,17 +28,19 @@ beforeEach(function () {
             $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 10 + ($i % 3), now()->subDays($i), categoryId: $this->category->id);
         }
         app(PayeeProfileService::class)->calculate($payee);
+        $this->payee = $payee;
 
         return $payee;
     };
 
+    // The draft as document processing leaves it: the payee and the account it matched are already in it
     $this->document = function (array $raw = [], array $draft = [], string $kind = 'bank_notification', ?array $items = null) {
         $payload = array_replace_recursive([
             'schema_version' => 2,
             'config_type' => 'standard',
             'transaction_type' => 'withdrawal',
             'date' => now()->subDays(30)->toDateString(),
-            'config' => ['amount_from' => '11.00', 'amount_to' => '11.00', 'account_from_id' => null, 'account_to_id' => null],
+            'config' => ['amount_from' => '11.00', 'amount_to' => '11.00', 'account_from_id' => $this->account->id, 'account_to_id' => ($this->payee ?? null)?->id],
             'transaction_items' => $items ?? [],
             'raw' => $raw + ['payee' => 'Parking Kft', 'card_last_digits' => '1234', 'currency' => $this->currency],
         ], $draft);
@@ -93,6 +95,33 @@ it('fails gate 2 when no payee matches', function () {
     expect($result->failedGate)->toBe('payee');
 });
 
+it('fails gate 2 when the draft carries no payee', function () {
+    ($this->payeeWithHistory)();
+
+    $result = ($this->evaluate)(($this->document)(draft: ['config' => ['account_to_id' => null]]));
+
+    expect($result->failedGate)->toBe('payee');
+});
+
+it('fails gate 2 when the draft payee is no certain match of the payee text', function () {
+    // The matching suggested this payee, but "Parkinson Clinic" only resembles it: a person decides
+    ($this->payeeWithHistory)(name: ['name' => 'Budapest Parking']);
+
+    $result = ($this->evaluate)(($this->document)(['payee' => 'Budapest Parkinson Clinic']));
+
+    expect($result->failedGate)->toBe('payee')
+        ->and($result->reason())->toContain('Budapest Parkinson Clinic');
+});
+
+it('fails gate 2 when the draft payee differs from the certain match', function () {
+    ($this->payeeWithHistory)();
+    $other = $this->createPayeeEntity($this->user, ['name' => 'Other Kft', 'active' => true]);
+
+    $result = ($this->evaluate)(($this->document)(draft: ['config' => ['account_to_id' => $other->id]]));
+
+    expect($result->failedGate)->toBe('payee');
+});
+
 it('matches the payee by a leading alias', function () {
     $payee = ($this->payeeWithHistory)(name: ['name' => 'OMV', 'alias' => 'OMV Hungary']);
 
@@ -130,6 +159,32 @@ it('fails gate 5 without a matching card ending, or with an ambiguous one', func
     expect(($this->evaluate)(($this->document)())->failedGate)->toBe('account');
 });
 
+it('matches the card ending to the closing digits of any alias line', function (string $alias, array $raw) {
+    ($this->payeeWithHistory)();
+    $account = $this->createAccountEntity($this->user, ['alias' => $alias]);
+
+    $result = ($this->evaluate)(($this->document)($raw, ['config' => ['account_from_id' => $account->id]]));
+
+    expect($result->passed)->toBeTrue()->and($result->accountId)->toBe($account->id);
+})->with([
+    'bare digits' => ['5678', ['card_last_digits' => '5678']],
+    'masked' => ['****5678', ['card_last_digits' => '5678']],
+    'with a label' => ['Visa Debit 5678', ['card_last_digits' => '5678']],
+    'a whole masked number' => ['400322******5678', ['card_last_digits' => '5678']],
+    'a masked number as the account text' => ['Visa Debit 5678', ['card_last_digits' => null, 'account' => '400322******5678']],
+]);
+
+it('does not accept a draft account that no certain match backs, or one that is inactive', function () {
+    ($this->payeeWithHistory)();
+    $other = $this->createAccountEntity($this->user, ['alias' => '9999']);
+
+    // The draft names an account, but the card ending belongs to another one
+    expect(($this->evaluate)(($this->document)(draft: ['config' => ['account_from_id' => $other->id]]))->failedGate)->toBe('account');
+
+    $this->account->update(['active' => false]);
+    expect(($this->evaluate)(($this->document)())->failedGate)->toBe('account');
+});
+
 it('takes the account and category from the single template when no card matches', function () {
     $payee = ($this->payeeWithHistory)();
     $otherAccount = $this->createAccountEntity($this->user);
@@ -150,7 +205,7 @@ it('takes the account and category from the single template when no card matches
     $template->payee_id = $payee->id;
     $template->save();
 
-    $result = ($this->evaluate)(($this->document)(['card_last_digits' => null]));
+    $result = ($this->evaluate)(($this->document)(['card_last_digits' => null], ['config' => ['account_from_id' => null]]));
 
     expect($result->passed)->toBeTrue()
         ->and($result->accountId)->toBe($otherAccount->id)
@@ -160,8 +215,12 @@ it('takes the account and category from the single template when no card matches
 it('holds a summary for a payee that expects itemization, and passes the itemized receipt', function () {
     ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
 
-    $held = ($this->evaluate)(($this->document)());
+    $notification = ($this->document)();
+    $held = ($this->evaluate)($notification);
     expect($held->passed)->toBeFalse()->and($held->hold)->toBeTrue()->and($held->failedGate)->toBe('completeness');
+
+    // The receipt takes the notification over and closes it first, so the duplicates gate does not see it
+    $notification->forceFill(['status' => 'duplicate'])->save();
 
     $items = [['amount' => '11.00', 'description' => 'Parking', 'recommended_category_id' => $this->category->id, 'match_type' => 'exact']];
     $receipt = ($this->evaluate)(($this->document)(kind: 'receipt', items: $items));

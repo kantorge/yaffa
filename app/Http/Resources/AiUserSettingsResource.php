@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\AiUserSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,7 @@ class AiUserSettingsResource extends JsonResource
             'asset_similarity_threshold' => data_get($this->resource, 'asset_similarity_threshold'),
             'asset_max_suggestions' => data_get($this->resource, 'asset_max_suggestions'),
             'match_auto_accept_threshold' => data_get($this->resource, 'match_auto_accept_threshold'),
+            'match_min_margin' => data_get($this->resource, 'match_min_margin'),
             'duplicate_date_window_days' => data_get($this->resource, 'duplicate_date_window_days'),
             'duplicate_amount_tolerance_percent' => data_get($this->resource, 'duplicate_amount_tolerance_percent'),
             'duplicate_similarity_threshold' => data_get($this->resource, 'duplicate_similarity_threshold'),
@@ -36,11 +38,10 @@ class AiUserSettingsResource extends JsonResource
             'auto_record_wilson_min' => data_get($this->resource, 'auto_record_wilson_min'),
             'auto_record_min_history' => data_get($this->resource, 'auto_record_min_history'),
             'auto_record_amount_tolerance_percent' => data_get($this->resource, 'auto_record_amount_tolerance_percent'),
-            'payee_similarity_min' => data_get($this->resource, 'payee_similarity_min'),
-            'payee_similarity_margin' => data_get($this->resource, 'payee_similarity_margin'),
             'category_matching_mode' => data_get($this->resource, 'category_matching_mode'),
             'document_retention_days' => data_get($this->resource, 'document_retention_days'),
             'warnings' => data_get($this->resource, 'warnings', []),
+            'presets' => AiUserSettingsResolver::presets(),
         ];
     }
 }

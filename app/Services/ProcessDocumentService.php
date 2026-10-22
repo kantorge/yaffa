@@ -119,11 +119,12 @@ class ProcessDocumentService
             $accountToId = null;
             $investmentId = null;
             $matchedPayeeId = null;
+            $cardDigits = AssetMatchingService::cardDigits($rawData['card_last_digits'] ?? null, $rawData['account'] ?? null);
 
             if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account']);
                 }
                 if (!empty($rawData['investment'])) {
                     $investmentId = $this->matchInvestment($config, $document, $user, $rawData['investment'], $autoAcceptThreshold);
@@ -131,28 +132,28 @@ class ProcessDocumentService
             } elseif ($transactionType === 'transfer') {
                 // Transfer: match two accounts
                 if (!empty($rawData['account_from'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from'], $autoAcceptThreshold);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from']);
                 }
                 if (!empty($rawData['account_to'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to'], $autoAcceptThreshold);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to']);
                 }
             } elseif ($transactionType === 'withdrawal') {
                 // Withdrawal: match account (from) and payee (to)
-                if (!empty($rawData['account'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                if (!empty($rawData['account']) || $cardDigits !== null) {
+                    $accountFromId = $this->matchAccount($config, $document, $user, (string) ($rawData['account'] ?? ''), $cardDigits);
                 }
                 if (!empty($rawData['payee'])) {
-                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
+                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountToId;
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
-                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
+                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountFromId;
                 }
-                if (!empty($rawData['account'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                if (!empty($rawData['account']) || $cardDigits !== null) {
+                    $accountToId = $this->matchAccount($config, $document, $user, (string) ($rawData['account'] ?? ''), $cardDigits);
                 }
             }
 
@@ -278,7 +279,7 @@ class ProcessDocumentService
             $draft['config'][$accountKey] = $heldDraft['config'][$accountKey];
         }
 
-        foreach (['card_last_digits', 'transaction_time', 'bank_reference'] as $key) {
+        foreach (['account', 'card_last_digits', 'transaction_time', 'bank_reference'] as $key) {
             if (! empty($heldDraft['raw'][$key])) {
                 $draft['raw'][$key] = $heldDraft['raw'][$key];
             }
@@ -512,15 +513,16 @@ class ProcessDocumentService
     }
 
     /**
-     * Match account name to user's accounts
+     * Match account name (and card ending) to user's accounts. A certain match is taken without asking the AI,
+     * and is the only kind the auto-record gates accept: see AssetMatchingService::certainMatch().
      */
-    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName, float $autoAcceptThreshold): ?int
+    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName, ?string $cardDigits = null): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
 
         // Get similar accounts - this already limits to top N matches
-        $similarAccounts = $matchingService->matchAccounts($accountName);
+        $similarAccounts = $matchingService->matchAccounts($accountName, $cardDigits);
 
         if (empty($similarAccounts)) {
             Log::debug('No similar accounts found', ['account_name' => $accountName]);
@@ -540,10 +542,10 @@ class ProcessDocumentService
             return null;
         }
 
-        // If the top match has high confidence, return it immediately to save AI calls
-        $topMatch = reset($similarAccounts);
-        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
-            Log::info('High confidence match found for account name, skipping AI call', [
+        // If the top match is certain, return it immediately to save AI calls
+        $topMatch = $matchingService->certainMatch($similarAccounts);
+        if ($topMatch !== null) {
+            Log::info('Certain match found for account name, skipping AI call', [
                 'account_name' => $accountName,
                 'account_name_in_list' => $topMatch['name'],
                 'matched_id' => $topMatch['id'],
@@ -553,11 +555,16 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'account_matching',
-                "Local account matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$accountName}\".",
+                "Local account matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$accountName}\"" . ($cardDigits !== null ? ", card ending {$cardDigits}." : '.'),
                 "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 
             return $topMatch['id'];
+        }
+
+        // A card ending alone, without an account text, has nothing for the AI to match
+        if ($accountName === '') {
+            return null;
         }
 
         // Format for AI prompt
@@ -581,9 +588,10 @@ class ProcessDocumentService
     }
 
     /**
-     * Match payee name to user's payees
+     * Match payee name to user's payees. A certain match is taken without asking the AI, and is the only kind
+     * the auto-record gates accept: see AssetMatchingService::certainMatch().
      */
-    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName, float $autoAcceptThreshold): ?int
+    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -609,10 +617,10 @@ class ProcessDocumentService
             return null;
         }
 
-        // If the top match has high confidence, return it immediately to save AI calls
-        $topMatch = reset($similarPayees);
-        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
-            Log::info('High confidence match found for payee name, skipping AI call', [
+        // If the top match is certain, return it immediately to save AI calls
+        $topMatch = $matchingService->certainMatch($similarPayees);
+        if ($topMatch !== null) {
+            Log::info('Certain match found for payee name, skipping AI call', [
                 'payee_name' => $payeeName,
                 'payee_name_in_list' => $topMatch['name'],
                 'matched_id' => $topMatch['id'],
@@ -622,7 +630,7 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'payee_matching',
-                "Local payee matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$payeeName}\".",
+                "Local payee matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$payeeName}\".",
                 "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
             );
 

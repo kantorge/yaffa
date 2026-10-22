@@ -89,6 +89,36 @@
           </div>
 
           <div class="row mb-3">
+            <label class="col-form-label col-sm-4">
+              {{ __('Record Automatically') }}
+            </label>
+            <div class="col-sm-8">
+              <div class="form-check form-switch">
+                <input
+                  id="auto_record_enabled"
+                  v-model="form.auto_record_enabled"
+                  class="form-check-input"
+                  type="checkbox"
+                />
+                <label class="form-check-label" for="auto_record_enabled">
+                  {{ __('Record transactions without review when it is safe') }}
+                </label>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'When enabled, a document is recorded as a normal transaction right away if its payee and account are identified for certain and the payee has a consistent history. You can review and confirm what was recorded with the Review filter of your AI documents. Each payee can override the history rule in its own Auto-recording setting. Nothing is recorded unless AI processing is on.',
+                  )
+                }}
+                <a :href="route('payees.auto-record-candidates')">
+                  {{ __('Auto-record candidates') }}
+                </a>
+              </small>
+              <HasError field="auto_record_enabled" :form="form" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
             <label
               for="generic_document_language"
               class="col-form-label col-sm-4"
@@ -243,341 +273,116 @@
 
           <hr class="my-3" />
 
-          <!-- Asset matching -->
-          <h6 class="text-muted mb-3">{{ __('Asset Matching') }}</h6>
+          <!-- Strictness groups: asset matching, duplicate detection, auto-recording -->
+          <template v-for="section in strictnessSections" :key="section.key">
+            <h6 class="text-muted mb-3">{{ section.title }}</h6>
 
-          <div class="row mb-3">
-            <label
-              for="asset_similarity_threshold"
-              class="col-form-label col-sm-4"
-            >
-              {{ __('Similarity Threshold') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="asset_similarity_threshold"
-                  v-model.number="form.asset_similarity_threshold"
-                  type="number"
-                  class="form-control"
-                  name="asset_similarity_threshold"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Minimum similarity score (0-1) to suggest an asset match.',
-                    )
-                  "
+            <div class="row mb-3">
+              <label class="col-form-label col-sm-4">
+                {{ __('Strictness') }}
+              </label>
+              <div class="col-sm-8">
+                <div
+                  class="btn-group flex-wrap"
+                  role="group"
+                  :aria-label="section.title"
                 >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError field="asset_similarity_threshold" :form="form" />
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <label for="asset_max_suggestions" class="col-form-label col-sm-4">
-              {{ __('Max Suggestions') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="asset_max_suggestions"
-                  v-model.number="form.asset_max_suggestions"
-                  type="number"
-                  class="form-control"
-                  name="asset_max_suggestions"
-                  min="1"
-                  max="255"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Maximum number of asset match suggestions to return per document.',
-                    )
-                  "
+                  <button
+                    v-for="name in presetNames"
+                    :key="name"
+                    type="button"
+                    class="btn"
+                    :class="
+                      activePreset(section) === name
+                        ? 'btn-primary'
+                        : 'btn-outline-primary'
+                    "
+                    :data-testid="`${section.key}-${name}`"
+                    @click="applyPreset(section, name)"
+                  >
+                    {{ presetLabels[name] }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn"
+                    :class="
+                      activePreset(section) === 'custom'
+                        ? 'btn-secondary'
+                        : 'btn-outline-secondary'
+                    "
+                    :data-testid="`${section.key}-custom`"
+                    @click="expanded[section.key] = true"
+                  >
+                    {{ presetLabels.custom }}
+                  </button>
+                </div>
+                <div class="form-text text-muted">
+                  {{ section.hint }}
+                  <a v-if="section.link" :href="section.link.href">
+                    {{ section.link.label }}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 mt-1"
+                  :aria-expanded="expanded[section.key]"
+                  :data-testid="`${section.key}-toggle`"
+                  @click="expanded[section.key] = !expanded[section.key]"
                 >
-                  <i class="fa fa-info-circle"></i>
-                </span>
+                  <i
+                    class="fa me-1"
+                    :class="
+                      expanded[section.key]
+                        ? 'fa-chevron-down'
+                        : 'fa-chevron-right'
+                    "
+                  ></i
+                  >{{
+                    expanded[section.key]
+                      ? __('Hide values')
+                      : __('Customize values')
+                  }}
+                </button>
               </div>
-              <HasError field="asset_max_suggestions" :form="form" />
             </div>
-          </div>
 
-          <div class="row mb-3">
-            <label
-              for="match_auto_accept_threshold"
-              class="col-form-label col-sm-4"
-            >
-              {{ __('Auto-accept Threshold') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="match_auto_accept_threshold"
-                  v-model.number="form.match_auto_accept_threshold"
-                  type="number"
-                  class="form-control"
-                  name="match_auto_accept_threshold"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Similarity score above which a match is automatically accepted without review.',
-                    )
-                  "
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError field="match_auto_accept_threshold" :form="form" />
-            </div>
-          </div>
-
-          <hr class="my-3" />
-
-          <!-- Duplicate detection -->
-          <h6 class="text-muted mb-3">
-            {{ __('Duplicate Transaction Detection') }}
-          </h6>
-
-          <div class="row mb-3">
-            <label
-              for="duplicate_date_window_days"
-              class="col-form-label col-sm-4"
-            >
-              {{ __('Date Window (days)') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="duplicate_date_window_days"
-                  v-model.number="form.duplicate_date_window_days"
-                  type="number"
-                  class="form-control"
-                  name="duplicate_date_window_days"
-                  min="1"
-                  max="255"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Number of days within which two documents with similar amounts are considered potential duplicates.',
-                    )
-                  "
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError field="duplicate_date_window_days" :form="form" />
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <label
-              for="duplicate_amount_tolerance_percent"
-              class="col-form-label col-sm-4"
-            >
-              {{ __('Amount Tolerance (%)') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="duplicate_amount_tolerance_percent"
-                  v-model.number="form.duplicate_amount_tolerance_percent"
-                  type="number"
-                  class="form-control"
-                  name="duplicate_amount_tolerance_percent"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Percentage tolerance for amount comparison when detecting duplicates.',
-                    )
-                  "
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError
-                field="duplicate_amount_tolerance_percent"
-                :form="form"
-              />
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <label
-              for="duplicate_similarity_threshold"
-              class="col-form-label col-sm-4"
-            >
-              {{ __('Similarity Threshold') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="duplicate_similarity_threshold"
-                  v-model.number="form.duplicate_similarity_threshold"
-                  type="number"
-                  class="form-control"
-                  name="duplicate_similarity_threshold"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Minimum similarity score (0-1) to flag two documents as duplicates.',
-                    )
-                  "
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError field="duplicate_similarity_threshold" :form="form" />
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <label for="same_event_minutes" class="col-form-label col-sm-4">
-              {{ __('Same Event Window (minutes)') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  id="same_event_minutes"
-                  v-model.number="form.same_event_minutes"
-                  type="number"
-                  class="form-control"
-                  name="same_event_minutes"
-                  min="1"
-                  max="255"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="
-                    __(
-                      'Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.',
-                    )
-                  "
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError field="same_event_minutes" :form="form" />
-            </div>
-          </div>
-
-          <hr class="my-3" />
-
-          <!-- Auto-recording groundwork -->
-          <h6 class="text-muted mb-3">
-            {{ __('Auto-recording') }}
-          </h6>
-
-          <div class="row mb-3">
-            <label class="col-form-label col-sm-4">
-              {{ __('Record Automatically') }}
-            </label>
-            <div class="col-sm-8">
-              <div class="form-check form-switch">
-                <input
-                  id="auto_record_enabled"
-                  v-model="form.auto_record_enabled"
-                  class="form-check-input"
-                  type="checkbox"
-                />
-                <label class="form-check-label" for="auto_record_enabled">
-                  {{ __('Record transactions without review when it is safe') }}
+            <div v-show="expanded[section.key]">
+              <div
+                v-for="field in section.fields"
+                :key="field.name"
+                class="row mb-3"
+              >
+                <label :for="field.name" class="col-form-label col-sm-4">
+                  {{ field.label }}
                 </label>
+                <div class="col-sm-8">
+                  <div class="input-group">
+                    <input
+                      :id="field.name"
+                      v-model.number="form[field.name]"
+                      type="number"
+                      class="form-control"
+                      :name="field.name"
+                      :step="field.step"
+                      :min="field.min"
+                      :max="field.max"
+                    />
+                    <span
+                      class="input-group-text btn btn-outline-input-info"
+                      data-coreui-toggle="tooltip"
+                      data-coreui-placement="top"
+                      :title="field.help"
+                    >
+                      <i class="fa fa-info-circle"></i>
+                    </span>
+                  </div>
+                  <HasError :field="field.name" :form="form" />
+                </div>
               </div>
-              <small class="form-text text-muted">
-                {{
-                  __(
-                    'When enabled, a document from a payee with a consistent history is recorded as a normal transaction right away. You can review and confirm what was recorded with the Review filter of your AI documents. Payees can be set to always or never record automatically. Nothing is recorded unless AI processing is on.',
-                  )
-                }}
-                <a :href="route('payees.auto-record-candidates')">
-                  {{ __('Auto-record candidates') }}
-                </a>
-              </small>
-              <HasError field="auto_record_enabled" :form="form" />
             </div>
-          </div>
 
-          <p class="text-muted small">
-            {{
-              __(
-                'These thresholds decide which payees qualify for automatic recording and how payee names are matched.',
-              )
-            }}
-          </p>
-
-          <div
-            v-for="field in autoRecordFields"
-            :key="field.name"
-            class="row mb-3"
-          >
-            <label :for="field.name" class="col-form-label col-sm-4">
-              {{ field.label }}
-            </label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <input
-                  :id="field.name"
-                  v-model.number="form[field.name]"
-                  type="number"
-                  class="form-control"
-                  :name="field.name"
-                  :step="field.step"
-                  :min="field.min"
-                  :max="field.max"
-                />
-                <span
-                  class="input-group-text btn btn-outline-input-info"
-                  data-coreui-toggle="tooltip"
-                  data-coreui-placement="top"
-                  :title="field.help"
-                >
-                  <i class="fa fa-info-circle"></i>
-                </span>
-              </div>
-              <HasError :field="field.name" :form="form" />
-            </div>
-          </div>
-
-          <hr class="my-3" />
+            <hr class="my-3" />
+          </template>
 
           <!-- OCR & Vision -->
           <h6 class="text-muted mb-3">
@@ -863,76 +668,186 @@
         auto_record_min_history: null,
         auto_record_wilson_min: null,
         auto_record_amount_tolerance_percent: null,
-        payee_similarity_min: null,
-        payee_similarity_margin: null,
+        match_min_margin: null,
         category_matching_mode: 'child_preferred',
         document_retention_days: null,
       }),
       savedRetentionDays: null,
+      // Named value sets of the strictness groups, defined by the server; nothing of them is saved
+      presets: {},
+      expanded: {
+        asset_matching: false,
+        duplicate_detection: false,
+        auto_record: false,
+      },
       loading: true,
       warnings: [],
       sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
-      autoRecordFields() {
+      presetNames() {
+        return ['loose', 'balanced', 'strict'];
+      },
+      presetLabels() {
+        return {
+          loose: __('Loose'),
+          balanced: __('Balanced'),
+          strict: __('Strict'),
+          custom: __('Custom'),
+        };
+      },
+      strictnessSections() {
         return [
           {
-            name: 'auto_record_min_history',
-            label: __('Minimum History'),
-            step: 1,
-            min: 1,
-            max: 255,
-            help: __(
-              'A payee needs at least this many past transactions before it can qualify.',
+            key: 'asset_matching',
+            title: __('Asset Matching'),
+            hint: __(
+              'How sure the app has to be before it picks a payee or an account without asking the AI. Strict trusts only near-certain matches. Automatic recording relies only on matches that are certain by these values.',
             ),
+            fields: [
+              {
+                name: 'asset_similarity_threshold',
+                label: __('Similarity Threshold'),
+                step: 0.01,
+                min: 0,
+                max: 1,
+                help: __(
+                  'Minimum similarity score (0-1) to suggest an asset match.',
+                ),
+              },
+              {
+                name: 'match_auto_accept_threshold',
+                label: __('Auto-accept Threshold'),
+                step: 0.01,
+                min: 0,
+                max: 1,
+                help: __(
+                  'Similarity score (0-1) from which a match is certain: it is taken without asking the AI, and automatic recording accepts it.',
+                ),
+              },
+              {
+                name: 'match_min_margin',
+                label: __('Match Margin'),
+                step: 0.01,
+                min: 0,
+                max: 1,
+                help: __(
+                  'The best match has to beat the second best by this much to be certain.',
+                ),
+              },
+              {
+                name: 'asset_max_suggestions',
+                label: __('Max Suggestions'),
+                step: 1,
+                min: 1,
+                max: 255,
+                help: __(
+                  'Maximum number of asset match suggestions to return per document.',
+                ),
+              },
+            ],
           },
           {
-            name: 'auto_record_wilson_min',
-            label: __('Minimum Consistency'),
-            step: 0.01,
-            min: 0,
-            max: 1,
-            help: __(
-              'Lower confidence bound (0-1) of how often the payee has a single item in its usual category. 0.8 needs about 11 consistent transactions in a row.',
+            key: 'duplicate_detection',
+            title: __('Duplicate Transaction Detection'),
+            hint: __(
+              'How eagerly documents are flagged as possible duplicates of existing transactions. Strict flags more of them.',
             ),
+            fields: [
+              {
+                name: 'duplicate_date_window_days',
+                label: __('Date Window (days)'),
+                step: 1,
+                min: 1,
+                max: 255,
+                help: __(
+                  'Number of days within which two documents with similar amounts are considered potential duplicates.',
+                ),
+              },
+              {
+                name: 'duplicate_amount_tolerance_percent',
+                label: __('Amount Tolerance (%)'),
+                step: 0.01,
+                min: 0,
+                max: 100,
+                help: __(
+                  'Percentage tolerance for amount comparison when detecting duplicates.',
+                ),
+              },
+              {
+                name: 'duplicate_similarity_threshold',
+                label: __('Similarity Threshold'),
+                step: 0.01,
+                min: 0,
+                max: 1,
+                help: __(
+                  'Minimum similarity score (0-1) to flag two documents as duplicates.',
+                ),
+              },
+              {
+                name: 'same_event_minutes',
+                label: __('Same Event Window (minutes)'),
+                step: 1,
+                min: 1,
+                max: 255,
+                help: __(
+                  'Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.',
+                ),
+              },
+            ],
           },
           {
-            name: 'auto_record_amount_tolerance_percent',
-            label: __('Usual Amount Tolerance (%)'),
-            step: 0.01,
-            min: 0,
-            max: 100,
-            help: __('How far an amount may be from the payee’s usual amount.'),
-          },
-          {
-            name: 'itemization_timeout_days',
-            label: __('Receipt Wait (days)'),
-            step: 1,
-            min: 1,
-            max: 255,
-            help: __(
-              'How long a bank notification of a payee that expects itemization waits for its receipt before it goes to review.',
+            key: 'auto_record',
+            title: __('Auto-recording'),
+            hint: __(
+              'How much consistent history a payee needs before its documents are recorded without review. Strict records fewer documents automatically.',
             ),
-          },
-          {
-            name: 'payee_similarity_min',
-            label: __('Payee Name Similarity'),
-            step: 0.01,
-            min: 0,
-            max: 1,
-            help: __(
-              'Minimum similarity (0-1) for a payee name to be trusted without an exact or alias match.',
-            ),
-          },
-          {
-            name: 'payee_similarity_margin',
-            label: __('Payee Name Margin'),
-            step: 0.01,
-            min: 0,
-            max: 1,
-            help: __(
-              'The best payee match has to beat the second best by this much.',
-            ),
+            link: {
+              href: this.route('payees.auto-record-candidates'),
+              label: __('Auto-record candidates'),
+            },
+            fields: [
+              {
+                name: 'auto_record_min_history',
+                label: __('Minimum History'),
+                step: 1,
+                min: 1,
+                max: 255,
+                help: __(
+                  'A payee needs at least this many past transactions before it can qualify.',
+                ),
+              },
+              {
+                name: 'auto_record_wilson_min',
+                label: __('Minimum Consistency'),
+                step: 0.01,
+                min: 0,
+                max: 1,
+                help: __(
+                  'Lower confidence bound (0-1) of how often the payee has a single item in its usual category. 0.8 needs about 11 consistent transactions in a row.',
+                ),
+              },
+              {
+                name: 'auto_record_amount_tolerance_percent',
+                label: __('Usual Amount Tolerance (%)'),
+                step: 0.01,
+                min: 0,
+                max: 100,
+                help: __(
+                  'How far an amount may be from the payee’s usual amount.',
+                ),
+              },
+              {
+                name: 'itemization_timeout_days',
+                label: __('Receipt Wait (days)'),
+                step: 1,
+                min: 1,
+                max: 255,
+                help: __(
+                  'How long a bank notification of a payee that expects itemization waits for its receipt before it goes to review.',
+                ),
+              },
+            ],
           },
         ];
       },
@@ -970,22 +885,12 @@
               data.image_max_width_tesseract ?? null;
             this.form.image_max_height_tesseract =
               data.image_max_height_tesseract ?? null;
-            this.form.asset_similarity_threshold =
-              data.asset_similarity_threshold ?? null;
-            this.form.asset_max_suggestions =
-              data.asset_max_suggestions ?? null;
-            this.form.match_auto_accept_threshold =
-              data.match_auto_accept_threshold ?? null;
-            this.form.duplicate_date_window_days =
-              data.duplicate_date_window_days ?? null;
-            this.form.duplicate_amount_tolerance_percent =
-              data.duplicate_amount_tolerance_percent ?? null;
-            this.form.duplicate_similarity_threshold =
-              data.duplicate_similarity_threshold ?? null;
-            this.form.same_event_minutes = data.same_event_minutes ?? null;
             this.form.auto_record_enabled = data.auto_record_enabled ?? false;
-            this.autoRecordFields.forEach(({ name }) => {
-              this.form[name] = data[name] ?? null;
+            this.presets = data.presets ?? {};
+            this.strictnessSections.forEach((section) => {
+              section.fields.forEach(({ name }) => {
+                this.form[name] = data[name] ?? null;
+              });
             });
             this.form.category_matching_mode =
               data.category_matching_mode ?? 'child_preferred';
@@ -1108,6 +1013,26 @@
         });
 
         return result.isConfirmed;
+      },
+      // The name of the preset whose values the form currently holds, else 'custom'. Never stored.
+      activePreset(section) {
+        const sectionPresets = this.presets[section.key] ?? {};
+
+        return (
+          Object.keys(sectionPresets).find((name) =>
+            Object.entries(sectionPresets[name]).every(
+              ([field, value]) =>
+                Math.abs(Number(this.form[field]) - Number(value)) < 1e-9,
+            ),
+          ) ?? 'custom'
+        );
+      },
+      applyPreset(section, name) {
+        Object.entries(this.presets[section.key]?.[name] ?? {}).forEach(
+          ([field, value]) => {
+            this.form[field] = value;
+          },
+        );
       },
       normalizeWarnings(warnings) {
         if (!Array.isArray(warnings)) {

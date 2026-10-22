@@ -117,12 +117,13 @@ it('requires a login for the candidates page', function () {
 });
 
 it('resolves and saves the auto-recording thresholds', function () {
-    $this->patchJson(route('api.v1.ai.settings.update'), ['auto_record_min_history' => 7, 'payee_similarity_min' => 0.95])
+    $this->patchJson(route('api.v1.ai.settings.update'), ['auto_record_min_history' => 7, 'match_min_margin' => 0.2])
         ->assertOk()
         ->assertJsonPath('auto_record_min_history', 7)
-        ->assertJsonPath('payee_similarity_min', 0.95)
+        ->assertJsonPath('match_min_margin', 0.2)
         ->assertJsonPath('auto_record_wilson_min', 0.8)
-        ->assertJsonPath('payee_similarity_margin', 0.1);
+        ->assertJsonPath('presets.auto_record.balanced.auto_record_min_history', 10)
+        ->assertJsonMissingPath('payee_similarity_min');
 
     $this->patchJson(route('api.v1.ai.settings.update'), ['auto_record_wilson_min' => 1.5])
         ->assertUnprocessable()

@@ -67,7 +67,7 @@ This file contains the implementation-oriented material extracted from the main 
     - `image_max_width_tesseract` / `image_max_height_tesseract` (unsigned smallint, nullable) — optional Tesseract resize cap (`null` = no downscale; use only to cap very large images that cause resource or timeout issues)
     - `asset_similarity_threshold` (decimal(4,3), default 0.5) — minimum score for asset match candidates
     - `asset_max_suggestions` (unsigned tinyint, default 10) — max asset candidates sent to AI
-    - `match_auto_accept_threshold` (decimal(4,3), default 0.95) — score above which an asset match is auto-accepted without AI confirmation
+    - `match_auto_accept_threshold` (decimal(4,3), default 0.95) — score from which a payee/account match is certain (together with `match_min_margin`, default 0.1: the lead over the runner-up): taken without AI confirmation, and the only kind auto-recording accepts. Card endings match accounts too
     - `duplicate_date_window_days` (unsigned tinyint, default 3)
     - `duplicate_amount_tolerance_percent` (decimal(5,2), default 10.0)
     - `duplicate_similarity_threshold` (decimal(4,3), default 0.5)

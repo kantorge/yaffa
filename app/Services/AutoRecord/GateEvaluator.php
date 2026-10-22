@@ -11,8 +11,7 @@ use App\Models\TransactionTemplate;
 use App\Enums\SameEventOutcome;
 use App\Models\User;
 use App\Services\AiUserSettingsResolver;
-use App\Services\PayeeMatch;
-use App\Services\PayeeMatcher;
+use App\Services\AssetMatchingService;
 use App\Services\PayeeProfileService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
@@ -49,7 +48,6 @@ class GateEvaluator
     public function __construct(
         private readonly AiUserSettingsResolver $settingsResolver,
         private readonly TransactionDraftService $draftService,
-        private readonly PayeeMatcher $payeeMatcher,
         private readonly PayeeProfileService $profileService,
         private readonly SameEventClassifier $classifier,
     ) {
@@ -70,19 +68,13 @@ class GateEvaluator
         }
         ['draft' => $draft, 'amount' => $amount, 'payeeText' => $payeeText] = $extracted;
 
-        $match = $this->payeeMatcher->match($payeeText, $user);
-        if ($match === null || ($match->tier === PayeeMatch::TIER_SIMILARITY && ! $match->autoEligible)) {
-            return GateResult::fail(self::GATE_PAYEE, $match === null
-                ? __('Payee: no payee matched ":text".', ['text' => $payeeText])
-                : __('Payee: ":text" only resembles :payee (score :score), which is not certain enough.', [
-                    'text' => $payeeText,
-                    'payee' => $match->payee->name,
-                    'score' => number_format($match->score, 2),
-                ]));
+        $matching = new AssetMatchingService($user);
+
+        $payee = $this->identifiedPayee($draft, $payeeText, $user, $matching);
+        if ($payee instanceof GateResult) {
+            return $payee;
         }
 
-        /** @var AccountEntity $payee */
-        $payee = $match->payee;
         /** @var Payee $payeeConfig */
         $payeeConfig = $payee->config;
 
@@ -98,9 +90,9 @@ class GateEvaluator
         }
         $reasons = [$qualification['reason']];
 
-        $account = $this->resolveAccount($user, $draft, $template);
+        $account = $this->identifiedAccount($user, $draft, $template, $matching);
         if ($account === null) {
-            return GateResult::fail(self::GATE_ACCOUNT, __('Account: no account could be identified (no card ending matched and the payee has no single template with an account).'));
+            return GateResult::fail(self::GATE_ACCOUNT, __('Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).'));
         }
         [$accountId, $accountReason] = $account;
         $reasons[] = $accountReason;
@@ -200,29 +192,63 @@ class GateEvaluator
     }
 
     /**
-     * Gate 5: the account of the purchase. A card ending that matches exactly one active account's identifier
-     * line (digits, optionally prefixed with `*`) wins; otherwise the account of the payee's single template.
+     * Gate 2: the payee the draft carries, when the document processing matched it for certain. The draft's
+     * payee came out of the same matching the gate repeats here, so this only confirms that the match was good
+     * enough to act on (a payee the AI picked among uncertain candidates is left to a person).
+     */
+    private function identifiedPayee(array $draft, string $payeeText, User $user, AssetMatchingService $matching): AccountEntity|GateResult
+    {
+        $payeeId = $this->draftService->payeeIdFromDraft($draft, $user);
+
+        if ($payeeId === null) {
+            return GateResult::fail(self::GATE_PAYEE, __('Payee: no payee matched ":text".', ['text' => $payeeText]));
+        }
+
+        $candidates = $matching->matchPayees($payeeText);
+        $certain = $matching->certainMatch($candidates);
+
+        if ($certain === null || $certain['id'] !== $payeeId) {
+            $payee = AccountEntity::query()->findOrFail($payeeId);
+            $score = collect($candidates)->firstWhere('id', $payeeId)['similarity'] ?? null;
+
+            return GateResult::fail(self::GATE_PAYEE, $score === null
+                ? __('Payee: ":text" is not a certain match for :payee.', ['text' => $payeeText, 'payee' => $payee->name])
+                : __('Payee: ":text" only resembles :payee (score :score), which is not certain enough.', [
+                    'text' => $payeeText,
+                    'payee' => $payee->name,
+                    'score' => number_format($score, 2),
+                ]));
+        }
+
+        return AccountEntity::query()->with('config')->findOrFail($payeeId);
+    }
+
+    /**
+     * Gate 5: the account of the purchase. The draft's account when it is a certain match for the account text
+     * or card ending of the document (the same matching as for the draft); otherwise the account of the
+     * payee's single template.
      *
      * @return array{0: int, 1: string}|null
      */
-    private function resolveAccount(User $user, array $draft, ?TransactionTemplate $template): ?array
+    private function identifiedAccount(User $user, array $draft, ?TransactionTemplate $template, AssetMatchingService $matching): ?array
     {
-        $digits = preg_replace('/\D/', '', (string) ($draft['raw']['card_last_digits'] ?? ''));
+        $key = $draft['transaction_type'] === 'withdrawal' ? 'account_from_id' : 'account_to_id';
+        $draftAccountId = $draft['config'][$key] ?? null;
 
-        if ($digits !== '') {
-            $matches = $user->accounts()->active()->get(['id', 'name', 'alias'])
-                ->filter(fn (AccountEntity $account) => collect(PayeeMatcher::aliasLines($account->alias))
-                    ->contains(fn (string $line) => preg_match('/^\*?(\d+)$/', $line, $found) === 1 && $found[1] === $digits));
+        if ($draftAccountId !== null) {
+            $digits = AssetMatchingService::cardDigits($draft['raw']['card_last_digits'] ?? null, $draft['raw']['account'] ?? null);
+            $certain = $matching->certainMatch($matching->matchAccounts((string) ($draft['raw']['account'] ?? ''), $digits));
+            $account = $user->accounts()->active()->find($draftAccountId);
 
-            if ($matches->count() === 1) {
-                return [$matches->first()->id, __('account from card ending :digits', ['digits' => $digits])];
+            if ($account !== null && $certain !== null && $certain['id'] === (int) $draftAccountId) {
+                return [$account->id, $digits !== null
+                    ? __('account :name from card ending :digits', ['name' => $account->name, 'digits' => $digits])
+                    : __('account :name', ['name' => $account->name])];
             }
         }
 
         if ($template !== null) {
-            $key = $draft['transaction_type'] === 'withdrawal' ? 'account_from_id' : 'account_to_id';
-            $normalized = $this->draftService->normalize($template->draft, $user)['draft'];
-            $accountId = $normalized['config'][$key] ?? null;
+            $accountId = $this->draftService->normalize($template->draft, $user)['draft']['config'][$key] ?? null;
 
             if ($accountId !== null) {
                 return [(int) $accountId, __('account from the template ":name"', ['name' => $template->name])];

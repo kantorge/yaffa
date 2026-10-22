@@ -302,7 +302,7 @@ Phases 1, 2 and 3 are independent of each other and can run in any order or in p
     - It is dispatched from `ProcessTransactionCreated`/`Updated`/`Deleted` for the standard payee side; for an update, both the old and the new payee.
     - Command `app:payees:recalculate-profiles {userId?}`, scheduled `dailyAt('02:30')` inside the `runs_scheduler` block. It also covers paths that fire no event (schedule auto-record, reconcile).
 - Payee settings: columns on `payees` (§4), `Payee` fillable, `PayeePersistenceService` store/update, payee API request rules (`in:follow_global,always,never`, boolean).
-- `App\Services\PayeeMatcher::match(string $text, User $user): ?PayeeMatch{payee, tier: exact|leading_token|similarity, score, margin}` covers concept tiers 1–4:
+- _Superseded:_ matching is done by `AssetMatchingService` for both the draft and the gates, with `payee_similarity_margin` renamed `match_min_margin` and `payee_similarity_min` replaced by `match_auto_accept_threshold` (see the as-built `auto-recording.md`). Originally: `App\Services\PayeeMatcher::match(string $text, User $user): ?PayeeMatch{payee, tier: exact|leading_token|similarity, score, margin}` covers concept tiers 1–4:
     - Normalization helper per D7.
     - Leading-token matching works on whole tokens, and the longest alias wins.
     - A similarity result is returned with `auto_eligible = score ≥ payee_similarity_min && margin ≥ payee_similarity_margin && strlen(alias) ≥ 4`.

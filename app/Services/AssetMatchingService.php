@@ -34,13 +34,14 @@ class AssetMatchingService
     }
 
     /**
-     * Find matching accounts based on similarity
+     * Find matching accounts based on similarity. A card ending (see cardDigits()) that equals the last four
+     * digits closing an alias line of an active account is a deterministic match, scored 1.0.
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
-    public function matchAccounts(string $accountName): array
+    public function matchAccounts(string $accountName, ?string $cardDigits = null): array
     {
-        if (! $accountName || ! $this->user) {
+        if ((! $accountName && ! $cardDigits) || ! $this->user) {
             return [];
         }
 
@@ -48,7 +49,7 @@ class AssetMatchingService
 
         $accounts = $this->user
             ->accounts()
-            ->select('id', 'name', 'alias')
+            ->select('id', 'name', 'alias', 'active')
             ->get();
 
         /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
@@ -63,6 +64,10 @@ class AssetMatchingService
                 $account->name,
                 $secondaryParts ?: null
             );
+
+            if ($cardDigits !== null && $account->active && self::aliasHasCardEnding($account->alias, $cardDigits)) {
+                $similarity = 1.0;
+            }
 
             if ($similarity >= $similarityThreshold) {
                 $matches[] = [
@@ -83,7 +88,68 @@ class AssetMatchingService
     }
 
     /**
-     * Find matching payees based on similarity
+     * The card ending of a document: the digits the extraction found as such, else the closing digits of a
+     * masked card number in the account text (`400322******7393`, `****7393`). Always the last four digits.
+     */
+    public static function cardDigits(?string $cardLastDigits, ?string $accountText = null): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $cardLastDigits) ?? '';
+
+        if ($digits === '' && preg_match('/[*•xX]+[\s-]*(\d{4})\s*$/u', (string) $accountText, $found) === 1) {
+            $digits = $found[1];
+        }
+
+        return mb_strlen($digits) >= 4 ? mb_substr($digits, -4) : null;
+    }
+
+    /**
+     * Whether an alias line ends in the given card ending, whatever precedes it: `7393`, `****7393`,
+     * `Visa Debit 7393` and `400322******7393` all end in 7393.
+     */
+    private static function aliasHasCardEnding(?string $alias, string $cardDigits): bool
+    {
+        foreach (PayeeMatcher::aliasLines($alias) as $line) {
+            if (preg_match('/(\d{4,})\s*$/', $line, $found) === 1 && mb_substr($found[1], -4) === $cardDigits) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The one candidate a person would not need to double check: the best of the given candidates (best
+     * first, as returned by the match methods) when it is a deterministic match nobody else shares, or scores
+     * at least the auto-accept threshold and leads the runner-up by the minimum margin. Both the document
+     * processing and the auto-record gates ask this question, so they cannot disagree.
+     *
+     * @param  array<int, array{id: int, name: string, similarity: float}>  $candidates
+     * @return array{id: int, name: string, similarity: float}|null
+     */
+    public function certainMatch(array $candidates): ?array
+    {
+        $best = $candidates[0] ?? null;
+
+        if ($best === null) {
+            return null;
+        }
+
+        $runnerUp = (float) ($candidates[1]['similarity'] ?? 0.0);
+
+        if ($best['similarity'] >= 1.0) {
+            return $runnerUp >= 1.0 ? null : $best;
+        }
+
+        return $best['similarity'] >= $this->autoAcceptThreshold()
+            && $best['similarity'] - $runnerUp >= $this->resolveMinMargin()
+            ? $best
+            : null;
+    }
+
+    /**
+     * Find matching payees based on similarity. A payee whose normalized name or alias line equals the text,
+     * or (failing that) whose longest alias line opens the text as whole tokens, is a deterministic match,
+     * scored 1.0: `OMV 4472 DEBRECEN` is the payee with the alias `OMV`.
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
@@ -101,6 +167,8 @@ class AssetMatchingService
             ->select('id', 'name', 'alias')
             ->get();
 
+        $deterministic = $this->deterministicPayeeIds($payeeName, $payees);
+
         /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
         $matches = [];
 
@@ -108,11 +176,9 @@ class AssetMatchingService
             // Split alias by newline to handle multiple alias values
             $secondaryParts = $payee->alias ? array_filter(array_map('trim', explode("\n", $payee->alias))) : [];
 
-            $similarity = $this->calculatePartialSimilarity(
-                $payeeName,
-                $payee->name,
-                $secondaryParts ?: null
-            );
+            $similarity = in_array($payee->id, $deterministic, true)
+                ? 1.0
+                : $this->calculatePartialSimilarity($payeeName, $payee->name, $secondaryParts ?: null);
 
             if ($similarity >= $similarityThreshold) {
                 $matches[] = [
@@ -130,6 +196,47 @@ class AssetMatchingService
         $maxSuggestions = $this->resolveMaxSuggestions();
 
         return array_slice($matches, 0, $maxSuggestions);
+    }
+
+    /**
+     * IDs of the payees that match the text without any fuzziness: those with an equal normalized name or
+     * alias line, else those whose alias line is the longest one that opens the text as whole tokens.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \App\Models\AccountEntity>  $payees
+     * @return array<int, int>
+     */
+    private function deterministicPayeeIds(string $text, \Illuminate\Database\Eloquent\Collection $payees): array
+    {
+        $normalizedText = PayeeMatcher::normalize($text);
+
+        if ($normalizedText === '') {
+            return [];
+        }
+
+        $exact = [];
+        $leading = [];
+
+        foreach ($payees as $payee) {
+            foreach ([[$payee->name, false], ...array_map(fn (string $line) => [$line, true], PayeeMatcher::aliasLines($payee->alias))] as [$string, $isAlias]) {
+                $normalized = PayeeMatcher::normalize($string);
+
+                if ($normalized === '') {
+                    continue;
+                }
+
+                if ($normalized === $normalizedText) {
+                    $exact[] = $payee->id;
+                } elseif ($isAlias && str_starts_with($normalizedText . ' ', $normalized . ' ')) {
+                    $leading[$payee->id] = max($leading[$payee->id] ?? 0, mb_strlen($normalized));
+                }
+            }
+        }
+
+        if ($exact !== []) {
+            return array_values(array_unique($exact));
+        }
+
+        return $leading === [] ? [] : array_keys($leading, max($leading), true);
     }
 
     /**
@@ -493,6 +600,16 @@ class AssetMatchingService
     private function resolveSimilarityThreshold(): float
     {
         return (float) $this->resolveUserSetting('asset_similarity_threshold', self::SIMILARITY_THRESHOLD);
+    }
+
+    public function autoAcceptThreshold(): float
+    {
+        return (float) $this->resolveUserSetting('match_auto_accept_threshold', AiUserSettingsResolver::DEFAULT_MATCH_AUTO_ACCEPT_THRESHOLD);
+    }
+
+    private function resolveMinMargin(): float
+    {
+        return (float) $this->resolveUserSetting('match_min_margin', AiUserSettingsResolver::DEFAULT_MATCH_MIN_MARGIN);
     }
 
     private function resolveMaxSuggestions(): int
