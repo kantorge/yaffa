@@ -1687,6 +1687,7 @@
     "Same Event Window (minutes)": "Same Event Window (minutes)",
     "Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.": "Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.",
     "This purchase may already be recorded": "This purchase may already be recorded",
+    "Another document may describe this purchase": "Another document may describe this purchase",
     "Repeated purchases are normal, so you can still save this transaction.": "Repeated purchases are normal, so you can still save this transaction.",
     "Transaction on :date": "Transaction on :date",
     "Document:": "Document:",

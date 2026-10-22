@@ -450,25 +450,94 @@
           </div>
         </div>
         <div class="col-md-8">
-          <!-- AI Recommendations Info Banner -->
+          <!-- AI recommendations and related documents/transactions -->
           <div
-            v-if="hasAiRecommendations"
-            class="alert alert-primary mb-3"
+            v-if="showAiBanner || hasDuplicateMatches"
+            class="alert mb-3"
+            :class="
+              hasDuplicateMatches
+                ? 'alert-warning'
+                : 'alert-primary alert-dismissible'
+            "
             role="alert"
+            :dusk="hasDuplicateMatches ? 'duplicate-warning' : null"
           >
-            <div class="d-flex align-items-center">
-              <i class="fa fa-robot fa-2x me-3"></i>
-              <div>
-                <h6 class="alert-heading mb-2">
-                  ✨ {{ __('AI-Assisted Transaction') }}
-                </h6>
-                <p class="mb-1 small">
-                  {{
-                    __(
-                      'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
-                    )
-                  }}
-                </p>
+            <button
+              v-if="!hasDuplicateMatches"
+              type="button"
+              class="btn-close"
+              :aria-label="__('Close')"
+              @click="aiBannerDismissed = true"
+            ></button>
+            <div v-if="showAiBanner">
+              <h6 class="alert-heading mb-2">
+                ✨ {{ __('AI-Assisted Transaction') }}
+              </h6>
+              <p class="mb-1 small">
+                {{
+                  __(
+                    'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
+                  )
+                }}
+              </p>
+            </div>
+            <div v-if="hasDuplicateMatches" :class="{ 'mt-3': showAiBanner }">
+              <h6 class="alert-heading">
+                <i class="fa fa-triangle-exclamation me-1"></i>
+                {{
+                  duplicateMatches.transactions.length
+                    ? __('This purchase may already be recorded')
+                    : __('Another document may describe this purchase')
+                }}
+              </h6>
+              <p class="small mb-2">
+                {{
+                  __(
+                    'Repeated purchases are normal, so you can still save this transaction.',
+                  )
+                }}
+              </p>
+              <ul
+                v-if="duplicateMatches.transactions.length"
+                class="small mb-2"
+              >
+                <li
+                  v-for="match in duplicateMatches.transactions"
+                  :key="match.id"
+                >
+                  {{ __('Transaction on :date', { date: match.date }) }}
+                  <a :href="match.url" target="_blank" rel="noopener">
+                    #{{ match.id }}
+                  </a>
+                </li>
+              </ul>
+              <div
+                v-for="document in duplicateMatches.documents"
+                :key="document.id"
+                class="form-check small"
+              >
+                <input
+                  :id="'close-ai-document-' + document.id"
+                  class="form-check-input"
+                  type="checkbox"
+                  :checked="form.close_ai_document_id === document.id"
+                  :disabled="!canCloseDocuments"
+                  @change="
+                    toggleCloseDocument(document.id, $event.target.checked)
+                  "
+                />
+                <label
+                  class="form-check-label"
+                  :for="'close-ai-document-' + document.id"
+                >
+                  {{ __('Document:') }}
+                  <a :href="document.url" target="_blank" rel="noopener">
+                    {{ document.title }}
+                  </a>
+                  <span v-if="canCloseDocuments">
+                    — {{ __('close this document when saving') }}
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -489,59 +558,6 @@
             @update-transaction-item="updateTransactionItem"
             @replace-transaction-items="replaceTransactionItems"
           ></transaction-item-container>
-        </div>
-      </div>
-
-      <div
-        v-if="hasDuplicateMatches"
-        class="alert alert-warning mb-3"
-        role="alert"
-        dusk="duplicate-warning"
-      >
-        <h6 class="alert-heading">
-          <i class="fa fa-triangle-exclamation me-1"></i>
-          {{ __('This purchase may already be recorded') }}
-        </h6>
-        <p class="small mb-2">
-          {{
-            __(
-              'Repeated purchases are normal, so you can still save this transaction.',
-            )
-          }}
-        </p>
-        <ul v-if="duplicateMatches.transactions.length" class="small mb-2">
-          <li v-for="match in duplicateMatches.transactions" :key="match.id">
-            {{ __('Transaction on :date', { date: match.date }) }}
-            <a :href="match.url" target="_blank" rel="noopener">
-              #{{ match.id }}
-            </a>
-          </li>
-        </ul>
-        <div
-          v-for="document in duplicateMatches.documents"
-          :key="document.id"
-          class="form-check small"
-        >
-          <input
-            :id="'close-ai-document-' + document.id"
-            class="form-check-input"
-            type="checkbox"
-            :checked="form.close_ai_document_id === document.id"
-            :disabled="!canCloseDocuments"
-            @change="toggleCloseDocument(document.id, $event.target.checked)"
-          />
-          <label
-            class="form-check-label"
-            :for="'close-ai-document-' + document.id"
-          >
-            {{ __('Document:') }}
-            <a :href="document.url" target="_blank" rel="noopener">
-              {{ document.title }}
-            </a>
-            <span v-if="canCloseDocuments">
-              — {{ __('close this document when saving') }}
-            </span>
-          </label>
         </div>
       </div>
 
@@ -756,6 +772,7 @@
 
       // Recorded transactions and open documents matching the purchase being entered
       data.duplicateMatches = { transactions: [], documents: [] };
+      data.aiBannerDismissed = false;
       data.duplicateCheckTimer = null;
       data.duplicateCheckRequestId = 0;
 
@@ -845,6 +862,10 @@
           exclude_transaction_id:
             this.action === 'edit' ? this.form.id || null : null,
         };
+      },
+
+      showAiBanner() {
+        return this.hasAiRecommendations && !this.aiBannerDismissed;
       },
 
       hasDuplicateMatches() {
@@ -1209,7 +1230,14 @@
       },
 
       applyDuplicateMatches(matches) {
-        this.duplicateMatches = matches;
+        // The document being finalized is not a duplicate of its own transaction
+        this.duplicateMatches = {
+          ...matches,
+          documents: matches.documents.filter(
+            (d) => d.id !== this.aiDocumentId,
+          ),
+        };
+        matches = this.duplicateMatches;
 
         // A document that no longer matches cannot be closed by this transaction
         if (

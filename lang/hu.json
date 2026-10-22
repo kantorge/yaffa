@@ -1686,6 +1686,7 @@
     "Same Event Window (minutes)": "Azonos esemény időablaka (perc)",
     "Two documents with the same amount and payee, whose times are within this many minutes, are treated as the same purchase.": "Az azonos összegű és partnerű dokumentumokat, amelyek időpontja ennyi percen belül van, ugyanannak a vásárlásnak tekintjük.",
     "This purchase may already be recorded": "Ez a vásárlás már rögzítve lehet",
+    "Another document may describe this purchase": "Egy másik dokumentum is erre a vásárlásra vonatkozhat",
     "Repeated purchases are normal, so you can still save this transaction.": "Az ismétlődő vásárlások természetesek, ezért a tranzakciót így is mentheted.",
     "Transaction on :date": "Tranzakció: :date",
     "Document:": "Dokumentum:",

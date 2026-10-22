@@ -43,7 +43,7 @@ it('warns about an open document while entering a purchase by hand and closes it
 
     // The warning appears, and saving stays possible
     $this->waitUntil($page, "document.querySelector('[dusk=\"duplicate-warning\"]')");
-    $page->assertSeeIn('[dusk="duplicate-warning"]', 'may already be recorded')
+    $page->assertSeeIn('[dusk="duplicate-warning"]', 'Another document may describe this purchase')
         ->assertEnabled('#transactionFormStandard-Save')
         ->click("#close-ai-document-{$document->id}")
         ->click('#transactionFormStandard-Save');
