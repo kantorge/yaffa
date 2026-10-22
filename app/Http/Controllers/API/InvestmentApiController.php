@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InvestmentSummaryRequest;
 use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -37,10 +38,9 @@ class InvestmentApiController extends Controller
     }
 
     #[Authorize('viewAny', Investment::class)]
-    public function summary(Request $request): JsonResponse
+    public function summary(InvestmentSummaryRequest $request): JsonResponse
     {
-        $validated = $request->validate(['active' => ['sometimes', 'required', 'in:0,1,all']]);
-        $active = $validated['active'] ?? '1';
+        $active = $request->validated('active', '1');
 
         return response()->json(['data' => $this->investmentService->getSummary(
             $request->user(),

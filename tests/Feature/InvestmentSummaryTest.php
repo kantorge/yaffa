@@ -20,7 +20,7 @@ test('summary defaults to active investments and scopes every filter to its owne
 
     $this->getJson(route('api.v1.investments.summary'))->assertOk()
         ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $active->id)
-        ->assertJsonPath('data.0.quantity', 0)->assertJsonPath('data.0.price', null);
+        ->assertJsonPath('data.0.quantity', '0.0000')->assertJsonPath('data.0.price', null);
     $this->getJson(route('api.v1.investments.summary', ['active' => '0']))->assertOk()
         ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $inactive->id);
     $this->getJson(route('api.v1.investments.summary', ['active' => 'all']))->assertOk()
@@ -55,8 +55,8 @@ test('summary preserves holdings and latest price semantics without counting sch
 
     $response = $this->getJson(route('api.v1.investments.summary'))->assertOk();
 
-    expect($response->json('data.0.quantity'))->toEqual(8)
-        ->and($response->json('data.0.price'))->toEqual($expectedPrice)
+    expect($response->json('data.0.quantity'))->toBeString()->toEqual(8)
+        ->and($response->json('data.0.price'))->toBeString()->toEqual($expectedPrice)
         ->and($response->json('data.0.transactions_count'))->toBe(5);
 })->with([
     'newer stored price' => ['2025-01-20', 20.0],
@@ -73,7 +73,8 @@ test('summary uses stored prices for investments without transactions', function
     Sanctum::actingAs($user, ['read']);
 
     $this->getJson(route('api.v1.investments.summary'))->assertOk()
-        ->assertJsonPath('data.0.price', 25)->assertJsonPath('data.0.quantity', 0);
+        ->assertJsonPath('data.0.price', fn ($p) => is_string($p) && (float) $p === 25.0)
+        ->assertJsonPath('data.0.quantity', '0.0000');
 });
 
 test('summary query count stays constant as investments are added', function () {

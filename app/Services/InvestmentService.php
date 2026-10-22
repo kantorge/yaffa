@@ -80,8 +80,9 @@ class InvestmentService
                     $price = $investment->getAttribute('stored_price');
                 }
 
-                $investment->setAttribute('price', $price === null ? null : (float) $price);
-                $investment->setAttribute('quantity', (float) $investment->getAttribute('quantity'));
+                // Decimal strings, like the Money/Decimal casts serialize on every API response
+                $investment->setAttribute('price', $price === null ? null : (string) BigDecimal::of($price));
+                $investment->setAttribute('quantity', (string) BigDecimal::of($investment->getAttribute('quantity')));
                 $investment->makeHidden(['stored_price', 'stored_price_date', 'transaction_price', 'transaction_price_date']);
             });
     }

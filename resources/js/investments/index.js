@@ -60,12 +60,16 @@ let table = $('#investmentSummary').DataTable({
       title: __('Quantity'),
       render: function (data, type) {
         if (type === 'display') {
-          return toFormattedNumber(data, window.YAFFA.userSettings.locale, {
-            maximumFractionDigits: 2,
-            useGrouping: true,
-          });
+          return toFormattedNumber(
+            Number(data),
+            window.YAFFA.userSettings.locale,
+            {
+              maximumFractionDigits: 2,
+              useGrouping: true,
+            },
+          );
         }
-        return data;
+        return Number(data);
       },
       type: 'num',
       className: 'dt-nowrap',
@@ -74,16 +78,16 @@ let table = $('#investmentSummary').DataTable({
       data: 'price',
       title: __('Latest price'),
       render: function (data, type, row) {
-        if (type === 'display' && !isNaN(data) && typeof data === 'number') {
+        if (type === 'display' && data !== null) {
           return toFormattedCurrency(
-            data,
+            Number(data),
             window.YAFFA.userSettings.locale,
             row.currency,
             'detailed',
           );
         }
 
-        return data;
+        return data === null ? null : Number(data);
       },
       type: 'num',
       className: 'dt-nowrap',
