@@ -11,23 +11,23 @@ Read more about YAFFA at https://yaffa.cc
 ## Key features
 
 - Support multiple currencies.
-  - There is a default currency, which is used on dashboards and charts.
-  - Currency rates are automatically updated daily.
-  - YAFFA utilizes the free Frankfurter service, requiring no API key or registration.
+    - There is a default currency, which is used on dashboards and charts.
+    - Currency rates are automatically updated daily.
+    - YAFFA utilizes the free Frankfurter service, requiring no API key or registration.
 - Support multiple accounts and account groups.
 - Track your income and spending by recording transactions.
-  - Yaffa tries to come up with suggestions while entering transactions to speed up transaction recording process.
-  - Transactions can be split into categories. This helps to better understand spending patterns and budget planning.
-  - Yaffa can process documents with AI and prefill transaction details automatically.
-    - Supported sources include manual uploads (text/PDF/images), received emails, and Google Drive imports.
-    - This feature is optional and currently supports OpenAI or Gemini providers. You need to provide your own API key and billing setup.
-    - OCR for images is available via Tesseract (self-hosted) or Vision-capable AI models.
+    - Yaffa tries to come up with suggestions while entering transactions to speed up transaction recording process.
+    - Transactions can be split into categories. This helps to better understand spending patterns and budget planning.
+    - Yaffa can process documents with AI and prefill transaction details automatically.
+        - Supported sources include manual uploads (text/PDF/images), received emails, and Google Drive imports.
+        - This feature is optional and currently supports OpenAI or Gemini providers. You need to provide your own API key and billing setup.
+        - OCR for images is available via Tesseract (self-hosted) or Vision-capable AI models.
 - Scheduled and recurring transactions, and budgets (plans) can be created.
-  - This can be used to calculate forecasted data.
-  - You can enable the automatic recording of recurring transactions.
+    - This can be used to calculate forecasted data.
+    - You can enable the automatic recording of recurring transactions.
 - Add your investments, to calculate gain and loss.
-  - Automatically retrieve investment prices.
-  - This is based on the alphavantage.co service. You need to register and get your free API key.
+    - Automatically retrieve investment prices.
+    - This is based on the alphavantage.co service. You need to register and get your free API key.
 - Import transactions from QIF and CSV files. Customizable import rules to support country and bank specific formats.
 
 There are several features **planned** to be implemented:
@@ -40,11 +40,11 @@ Several features are **not likely to be introduced**, which you might expect fro
 If you are looking to have these in a budget app or expense tracker, then YAFFA might not be the best choice for you.
 
 - Downloading transaction data directly from banks
-  - The philosophy of expense tracking is to be conscious about your spending and financial habits, which requires the review and manual adjustment of transactions.
-    Thus, automatic downloading of transactions from banks would save some time, but would not help to achieve the goal of expense tracking and budgeting.
-  - Also, YAFFA supports automatic creation of scheduled transactions and entry of simple recurring transactions, to speed up the process of recording transactions.
+    - The philosophy of expense tracking is to be conscious about your spending and financial habits, which requires the review and manual adjustment of transactions.
+      Thus, automatic downloading of transactions from banks would save some time, but would not help to achieve the goal of expense tracking and budgeting.
+    - Also, YAFFA supports automatic creation of scheduled transactions and entry of simple recurring transactions, to speed up the process of recording transactions.
 - Native mobile app
-  - YAFFA is optimized for desktop browsers. The interface is responsive to support mobile view, but not fully optimized for mobile devices.
+    - YAFFA is optimized for desktop browsers. The interface is responsive to support mobile view, but not fully optimized for mobile devices.
 - YAFFA is a personal finance application, not an accounting application. The precision of the calculations should be sufficient for personal finance, but it is not guaranteed to be accurate enough for accounting purposes. Similarly, the precision is not designed to be sufficient for cryptocurrency transactions and prices.
 
 Read more about the [features of YAFFA](https://yaffa.cc/features-of-yaffa-personal-finance-application/)
@@ -75,7 +75,8 @@ When upgrading between major versions, please see the details and follow the ins
 
 Thanks to these people for helping improve this project:
 
-- WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
+- @WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
+- @antmcmullen - Performance improvements for the Investments list
 
 ## License
 
