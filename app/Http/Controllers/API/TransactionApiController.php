@@ -856,7 +856,6 @@ class TransactionApiController extends Controller
     #[Authorize('delete', 'transaction')]
     public function destroy(Transaction $transaction): JsonResponse
     {
-        // Authorize the deletion of the transaction for the owner
         // Load the details of the transaction for the event
         $transaction->loadDetails();
 
