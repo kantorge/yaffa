@@ -296,7 +296,15 @@
                   }"
                 >
                   <template v-if="matchedEntities.payee?.matched">
-                    <span>{{ matchedEntities.payee.name }}</span>
+                    <a
+                      v-if="matchedEntities.payee.url"
+                      :href="matchedEntities.payee.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ matchedEntities.payee.name }}
+                    </a>
+                    <span v-else>{{ matchedEntities.payee.name }}</span>
                     <span class="text-muted small ms-1">
                       <i
                         class="fa fa-check-circle text-success"
@@ -567,7 +575,12 @@
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { getTransactionTypeConfig } from '@/shared/lib/helpers';
-  import { __, toFormattedDate, toFormattedDateTime } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedDate,
+    toFormattedDateTime,
+  } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
@@ -745,6 +758,30 @@
     }
 
     if (document.status === 'ready_for_review' && autoRecord?.reason) {
+      const { amount, median } = autoRecord.context || {};
+      const currency = rawData.value.currency;
+
+      // Show the amounts in the document's currency, rounded as the user's currency (if known) is configured
+      if (autoRecord.failed_gate === 'amount' && amount && median && currency) {
+        const currencySettings = {
+          generic_decimal_precision: null,
+          ...(window.aiDocumentCurrencies || []).find(
+            (c) => c.iso_code.toLowerCase() === String(currency).toLowerCase(),
+          ),
+          iso_code: String(currency).toUpperCase(),
+        };
+
+        return __('Not recorded automatically: :reason', {
+          reason: __(
+            'Amount: :amount is outside the usual range (around :median).',
+            {
+              amount: toFormattedCurrency(amount, locale, currencySettings),
+              median: toFormattedCurrency(median, locale, currencySettings),
+            },
+          ),
+        });
+      }
+
       return __('Not recorded automatically: :reason', {
         reason: autoRecord.reason,
       });

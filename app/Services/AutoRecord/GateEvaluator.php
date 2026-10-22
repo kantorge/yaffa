@@ -117,7 +117,7 @@ class GateEvaluator
 
         $amountFailure = $this->amountFailure($amount, $profile, $settings, $draft, $accountId);
         if ($amountFailure !== null) {
-            return GateResult::fail(self::GATE_AMOUNT, $amountFailure);
+            return GateResult::fail(self::GATE_AMOUNT, $amountFailure[0], context: $amountFailure[1]);
         }
         $reasons[] = __('Amount within the usual range.');
 
@@ -324,7 +324,7 @@ class GateEvaluator
      *
      * @param  array<string, mixed>  $settings
      */
-    private function amountFailure(BigDecimal $amount, PayeeProfile $profile, array $settings, array $draft, int $accountId): ?string
+    private function amountFailure(BigDecimal $amount, PayeeProfile $profile, array $settings, array $draft, int $accountId): ?array
     {
         $currency = $draft['raw']['currency'] ?? null;
         if (is_string($currency) && $currency !== '') {
@@ -332,7 +332,7 @@ class GateEvaluator
             $accountConfig = AccountEntity::query()->with('config.currency')->find($accountId)?->config;
             $accountCurrency = $accountConfig?->currency->iso_code;
             if ($accountCurrency !== null && strcasecmp($accountCurrency, $currency) !== 0) {
-                return __('Amount: the document is in :document, the account in :account.', ['document' => $currency, 'account' => $accountCurrency]);
+                return [__('Amount: the document is in :document, the account in :account.', ['document' => $currency, 'account' => $accountCurrency]), []];
             }
         }
 
@@ -341,7 +341,7 @@ class GateEvaluator
         }
 
         if ($profile->amount_median === null) {
-            return __('Amount: there is no usual amount to compare with.');
+            return [__('Amount: there is no usual amount to compare with.'), []];
         }
 
         $median = BigDecimal::of($profile->amount_median);
@@ -352,6 +352,9 @@ class GateEvaluator
             return null;
         }
 
-        return __('Amount: :amount is outside the usual range (around :median).', ['amount' => (string) $amount, 'median' => (string) $median]);
+        return [
+            __('Amount: :amount is outside the usual range (around :median).', ['amount' => (string) $amount, 'median' => (string) $median]),
+            ['amount' => (string) $amount, 'median' => (string) $median],
+        ];
     }
 }

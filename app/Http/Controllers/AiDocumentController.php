@@ -85,7 +85,8 @@ class AiDocumentController extends Controller implements HasMiddleware
         JavaScriptFacade::put([
             'aiDocument' => $aiDocument,
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
-            'aiDocumentSourceLabels' => AiDocument::sourceLabels()
+            'aiDocumentSourceLabels' => AiDocument::sourceLabels(),
+            'aiDocumentCurrencies' => $request->user()->currencies()->get(['iso_code', 'generic_decimal_precision', 'detailed_decimal_precision']),
         ]);
 
         return view('ai-documents.show', [

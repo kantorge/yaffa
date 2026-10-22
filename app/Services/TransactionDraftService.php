@@ -189,7 +189,7 @@ class TransactionDraftService
             }
 
             if ($payee) {
-                $matchedEntities['payee'] = $this->matchedEntity($payee, null);
+                $matchedEntities['payee'] = $this->matchedEntity($payee, route('account-entity.show', $payee->id));
             }
         } elseif (in_array($transactionType, TransactionTypeEnum::investmentTypeValues(), true)) {
             $account = $accountsById->get($config['account_id'] ?? null);

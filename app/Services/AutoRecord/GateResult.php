@@ -29,12 +29,16 @@ final readonly class GateResult
         public ?PayeeProfile $profile = null,
         public ?TransactionTemplate $template = null,
         public array $items = [],
+        public array $context = [],
     ) {
     }
 
-    public static function fail(string $gate, string $reason, bool $hold = false): self
+    /**
+     * @param  array<string, string>  $context  Raw values behind the reason, so the viewer can format them for the person
+     */
+    public static function fail(string $gate, string $reason, bool $hold = false, array $context = []): self
     {
-        return new self(false, $gate, [$reason], $hold);
+        return new self(false, $gate, [$reason], $hold, context: $context);
     }
 
     public function reason(): string

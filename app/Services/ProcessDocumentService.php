@@ -256,6 +256,10 @@ class ProcessDocumentService
 
         $autoRecord = ['failed_gate' => $gates->failedGate, 'reason' => $gates->reason()];
 
+        if ($gates->context !== []) {
+            $autoRecord['context'] = $gates->context;
+        }
+
         if ($gates->hold) {
             $days = (int) $this->aiUserSettingsResolver->resolveForUser($document->user)['itemization_timeout_days'];
             $autoRecord['hold_until'] = now()->addDays($days)->toDateString();
