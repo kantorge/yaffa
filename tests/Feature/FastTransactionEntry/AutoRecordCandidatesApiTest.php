@@ -147,3 +147,19 @@ it('reports the active flag and whether the payee has an active schedule', funct
         ->and($rows[$plain->id]['has_active_schedule'])->toBeFalse()
         ->and($rows[$plain->id]['active'])->toBeFalse();
 });
+
+it('re-evaluates one payee or all payees and returns the refreshed groups', function () {
+    $payee = ($this->payeeWithHistory)(11);
+    App\Models\PayeeProfile::where('account_entity_id', $payee->id)->delete();
+
+    $this->actingAs($this->user)
+        ->postJson(route('api.v1.payees.auto-record-candidates.recalculate'), ['payee_id' => $payee->id])
+        ->assertOk()
+        ->assertJsonPath('qualifying.0.payee_id', $payee->id);
+
+    expect(App\Models\PayeeProfile::where('account_entity_id', $payee->id)->exists())->toBeTrue();
+
+    $this->actingAs($this->user)
+        ->postJson(route('api.v1.payees.auto-record-candidates.recalculate'))
+        ->assertOk();
+});

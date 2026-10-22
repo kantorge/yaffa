@@ -28,7 +28,7 @@ use Illuminate\Support\Str;
 ])]
 #[Middleware('abilities:write', only: [
     'acceptPayeeDefaultCategorySuggestion', 'dismissPayeeDefaultCategorySuggestion',
-    'storePayee', 'updatePayee',
+    'storePayee', 'updatePayee', 'recalculateAutoRecordCandidates',
 ])]
 class PayeeApiController extends Controller
 {
@@ -240,6 +240,23 @@ class PayeeApiController extends Controller
      */
     public function getAutoRecordCandidates(Request $request): JsonResponse
     {
+        return response()->json($this->payeeProfileService->candidates($request->user()), Response::HTTP_OK);
+    }
+
+    /**
+     * Re-evaluate auto-record candidates
+     *
+     * Rebuilds the history profile of one payee (`payee_id`) or of all payees of the user, and returns the
+     * refreshed candidate groups.
+     */
+    public function recalculateAutoRecordCandidates(Request $request): JsonResponse
+    {
+        $payeeId = $request->validate([
+            'payee_id' => ['nullable', 'integer'],
+        ])['payee_id'] ?? null;
+
+        $this->payeeProfileService->recalculateForUser($request->user(), $payeeId);
+
         return response()->json($this->payeeProfileService->candidates($request->user()), Response::HTTP_OK);
     }
 

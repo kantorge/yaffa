@@ -147,10 +147,9 @@ class PayeeProfileService
             return [
                 'qualifies' => true,
                 'missing' => 0,
-                'reason' => __(':count of :total transactions are single item in the usual category (lower bound :bound).', [
+                'reason' => __(':count of :total evaluated transactions are single item in the usual category.', [
                     'count' => $profile->single_item_dominant_count,
                     'total' => $profile->sample_size,
-                    'bound' => number_format($wilson, 2),
                 ]),
             ];
         }
@@ -169,9 +168,21 @@ class PayeeProfileService
             'qualifies' => false,
             'missing' => $missing,
             'reason' => $missing === null
-                ? __('Too few single-item transactions in one category (lower bound :bound, needs :min).', ['bound' => number_format($wilson, 2), 'min' => number_format($wilsonMin, 2)])
-                : __('Needs :missing more matching transactions (lower bound :bound, needs :min).', ['missing' => $missing, 'bound' => number_format($wilson, 2), 'min' => number_format($wilsonMin, 2)]),
+                ? __('Too few single-item transactions in one category.')
+                : __('Needs :missing more matching transactions.', ['missing' => $missing]),
         ];
+    }
+
+    /**
+     * Rebuild the stored profile of one payee of the user, or of all of them when `$payeeId` is null.
+     */
+    public function recalculateForUser(User $user, ?int $payeeId = null): void
+    {
+        AccountEntity::query()
+            ->payees()
+            ->where('user_id', $user->id)
+            ->when($payeeId !== null, fn ($query) => $query->whereKey($payeeId))
+            ->each(fn (AccountEntity $payee) => $this->calculate($payee));
     }
 
     /**

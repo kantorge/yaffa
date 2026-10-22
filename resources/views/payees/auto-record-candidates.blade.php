@@ -21,6 +21,7 @@
                     </div>
                 </div>
                 <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                    @include('template.components.tablefilter-sidebar-search')
                     <x-tablefilter-sidebar-switch
                             label=" {{ __('Active') }}"
                             property="active"
@@ -30,6 +31,16 @@
                             label=" {{ __('Has active schedule') }}"
                             property="has_active_schedule"
                             default="no"
+                    />
+                    <x-tablefilter-sidebar-switch
+                            label=" {{ __('Always allow') }}"
+                            property="policy_always"
+                            default="any"
+                    />
+                    <x-tablefilter-sidebar-switch
+                            label=" {{ __('Never allow') }}"
+                            property="policy_never"
+                            default="any"
                     />
                 </ul>
             </div>
