@@ -187,6 +187,11 @@
               'You record the same transaction here again and again. A template would save the typing.',
             ),
           },
+          {
+            key: 'other',
+            label: __('Other'),
+            description: __('These payees do not fit any of the other groups.'),
+          },
         ];
       },
       activeDescription() {

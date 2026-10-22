@@ -154,11 +154,12 @@ class PayeeProfileService
             ];
         }
 
-        // Count the transactions still needed, assuming every new one matches the usual pattern
+        // Count the transactions still needed, assuming every new one matches the usual pattern and pushes
+        // an older non-matching one out of the window. Null when even a full window of matches is not enough.
         $missing = null;
-        for ($k = 1; $k <= 200; $k++) {
-            $total = $profile->sample_size + $k;
-            if ($total >= $minHistory && self::wilsonLowerBound($profile->single_item_dominant_count + $k, $total) >= $wilsonMin) {
+        for ($k = 1; $k <= self::WINDOW; $k++) {
+            $total = min($profile->sample_size + $k, self::WINDOW);
+            if ($total >= $minHistory && self::wilsonLowerBound(min($profile->single_item_dominant_count + $k, $total), $total) >= $wilsonMin) {
                 $missing = $k;
                 break;
             }
@@ -188,13 +189,13 @@ class PayeeProfileService
     /**
      * The payees of the user sorted into the four candidate groups. A payee can be in several groups.
      *
-     * @return array{qualifying: array, near: array, itemization_mismatch: array, template_candidates: array}
+     * @return array{qualifying: array, near: array, itemization_mismatch: array, template_candidates: array, other: array}
      */
     public function candidates(User $user): array
     {
         $settings = $this->settingsResolver->resolveForUser($user);
         $wilsonMin = (float) $settings['auto_record_wilson_min'];
-        $groups = ['qualifying' => [], 'near' => [], 'itemization_mismatch' => [], 'template_candidates' => []];
+        $groups = ['qualifying' => [], 'near' => [], 'itemization_mismatch' => [], 'template_candidates' => [], 'other' => []];
 
         $payeesWithTemplate = $user->transactionTemplates()->whereNotNull('payee_id')->pluck('payee_id')->all();
 
@@ -207,20 +208,23 @@ class PayeeProfileService
         $payeesWithActiveSchedule = $this->payeeIdsWithActiveSchedule($user);
 
         foreach ($profiles as $profile) {
+            $grouped = false;
             $payee = $profile->payee;
             /** @var Payee $config */
             $config = $payee->config;
-            $qualification = $this->qualification($profile, $config->auto_record_policy, $settings);
+            // Groups reflect the history only; a per-payee policy is shown as a badge, it does not move the payee
+            $qualification = $this->qualification($profile, Payee::POLICY_FOLLOW_GLOBAL, $settings);
             $row = $this->row($profile, $config, $qualification, $currencies->get($profile->typical_account_ids[0] ?? 0), in_array($payee->id, $payeesWithActiveSchedule, true));
 
             if ($qualification['qualifies']) {
                 $groups['qualifying'][] = $row + ['reason' => $qualification['reason']];
-            } elseif ($config->auto_record_policy !== Payee::POLICY_NEVER
-                && $profile->dominant_category_id !== null
+                $grouped = true;
+            } elseif ($profile->dominant_category_id !== null
                 && ((float) $profile->wilson_lower >= $wilsonMin - self::NEAR_WILSON_MARGIN
                     || ($profile->sample_size < $settings['auto_record_min_history'] && $profile->single_item_dominant_count === $profile->sample_size))
             ) {
                 $groups['near'][] = $row + ['reason' => $qualification['reason']];
+                $grouped = true;
             }
 
             if ($profile->sample_size >= self::MIN_SAMPLE_FOR_HINTS) {
@@ -228,8 +232,10 @@ class PayeeProfileService
 
                 if (! $config->itemization_expected && $multi >= self::MULTI_ITEM_SHARE_FOR_MISMATCH) {
                     $groups['itemization_mismatch'][] = $row + ['reason' => __(':percent% of the transactions have several items, but this payee is set to summary sufficient.', ['percent' => round($multi * 100)])];
+                    $grouped = true;
                 } elseif ($config->itemization_expected && $multi <= self::SINGLE_ITEM_SHARE_FOR_MISMATCH) {
                     $groups['itemization_mismatch'][] = $row + ['reason' => __('Almost every transaction has a single item, but this payee is set to itemization expected.')];
+                    $grouped = true;
                 }
 
                 if ((float) $profile->amount_mode_share >= self::TEMPLATE_AMOUNT_MODE_SHARE
@@ -237,7 +243,12 @@ class PayeeProfileService
                     && ! in_array($payee->id, $payeesWithTemplate, true)
                 ) {
                     $groups['template_candidates'][] = $row + ['reason' => __(':percent% of the transactions have the same amount in one category, and there is no template yet.', ['percent' => round((float) $profile->amount_mode_share * 100)])];
+                    $grouped = true;
                 }
+            }
+
+            if (! $grouped) {
+                $groups['other'][] = $row + ['reason' => $qualification['reason']];
             }
         }
 

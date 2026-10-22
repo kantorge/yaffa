@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Category;
+use App\Models\PayeeProfile;
 use App\Models\TransactionTemplate;
 use App\Models\User;
 use App\Services\PayeeProfileService;
@@ -67,19 +68,19 @@ it('lists a young but perfectly consistent payee as near with the transactions i
     expect($row['missing_transactions'])->toBe(8);
 });
 
-it('keeps a payee set to never out of qualifying and near', function () {
+it('keeps a payee set to never in the group its history puts it in', function () {
     $payee = ($this->payeeWithHistory)(11, [], ['auto_record_policy' => 'never']);
 
     $groups = ($this->groups)();
 
-    expect(($this->ids)($groups['qualifying']))->not->toContain($payee->id)
-        ->and(($this->ids)($groups['near']))->not->toContain($payee->id);
+    expect(($this->ids)($groups['qualifying']))->toContain($payee->id)
+        ->and(collect($groups['qualifying'])->firstWhere('payee_id', $payee->id)['auto_record_policy'])->toBe('never');
 });
 
-it('qualifies a payee set to always regardless of history', function () {
+it('does not qualify a payee set to always just because of the setting', function () {
     $payee = ($this->payeeWithHistory)(1, [], ['auto_record_policy' => 'always']);
 
-    expect(($this->ids)(($this->groups)()['qualifying']))->toContain($payee->id);
+    expect(($this->ids)(($this->groups)()['qualifying']))->not->toContain($payee->id);
 });
 
 it('flags a grocery-like payee as an itemization mismatch', function () {
@@ -150,16 +151,45 @@ it('reports the active flag and whether the payee has an active schedule', funct
 
 it('re-evaluates one payee or all payees and returns the refreshed groups', function () {
     $payee = ($this->payeeWithHistory)(11);
-    App\Models\PayeeProfile::where('account_entity_id', $payee->id)->delete();
+    PayeeProfile::where('account_entity_id', $payee->id)->delete();
 
     $this->actingAs($this->user)
         ->postJson(route('api.v1.payees.auto-record-candidates.recalculate'), ['payee_id' => $payee->id])
         ->assertOk()
         ->assertJsonPath('qualifying.0.payee_id', $payee->id);
 
-    expect(App\Models\PayeeProfile::where('account_entity_id', $payee->id)->exists())->toBeTrue();
+    expect(PayeeProfile::where('account_entity_id', $payee->id)->exists())->toBeTrue();
 
     $this->actingAs($this->user)
         ->postJson(route('api.v1.payees.auto-record-candidates.recalculate'))
         ->assertOk();
+});
+
+it('lists a payee that fits no other group under other', function () {
+    $payee = $this->createPayeeEntity($this->user, ['active' => true]);
+    // Every helper call uses a fresh category, so no category dominates
+    foreach (range(1, 3) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 10, now()->subDays($i));
+    }
+    app(PayeeProfileService::class)->calculate($payee);
+
+    $groups = ($this->groups)();
+
+    expect(($this->ids)($groups['other']))->toContain($payee->id);
+    foreach (['qualifying', 'near', 'itemization_mismatch', 'template_candidates'] as $key) {
+        expect(array_intersect(($this->ids)($groups[$key]), ($this->ids)($groups['other'])))->toBeEmpty();
+    }
+});
+
+it('never reports more missing transactions than the evaluation window holds', function () {
+    $payee = $this->createPayeeEntity($this->user, ['active' => true]);
+    foreach (range(1, 50) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 10, now()->subDays($i));
+    }
+    app(PayeeProfileService::class)->calculate($payee);
+    PayeeProfile::where('account_entity_id', $payee->id)->update(['single_item_dominant_count' => 1, 'wilson_lower' => 0.0]);
+
+    $row = collect(($this->groups)()['other'])->firstWhere('payee_id', $payee->id);
+
+    expect($row['missing_transactions'])->toBeInt()->toBeLessThanOrEqual(PayeeProfileService::WINDOW);
 });

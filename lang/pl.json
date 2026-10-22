@@ -1708,6 +1708,8 @@
     "Itemization expected": "Oczekiwane rozbicie na pozycje",
     "Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.": "Wybierz oczekiwane rozbicie na pozycje dla odbiorców, u których rejestrujesz poszczególne pozycje paragonu, np. sklep spożywczy.",
     "These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.": "Te progi określają, którzy odbiorcy kwalifikują się do automatycznego rejestrowania i jak dopasowywane są nazwy odbiorców. Na razie nic nie jest rejestrowane automatycznie; strona kandydatów pokazuje, kto by się kwalifikował.",
+    "Other": "Inne",
+    "These payees do not fit any of the other groups.": "Ci odbiorcy nie pasują do żadnej z pozostałych grup.",
     "Auto-record candidates": "Kandydaci do automatycznego rejestrowania",
     "Minimum History": "Minimalna historia",
     "A payee needs at least this many past transactions before it can qualify.": "Odbiorca musi mieć co najmniej tyle dotychczasowych transakcji, aby się zakwalifikować.",

@@ -1708,6 +1708,8 @@
     "Itemization expected": "Itemization expected",
     "Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.": "Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.",
     "These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.": "These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.",
+    "Other": "Other",
+    "These payees do not fit any of the other groups.": "These payees do not fit any of the other groups.",
     "Auto-record candidates": "Auto-record candidates",
     "Minimum History": "Minimum History",
     "A payee needs at least this many past transactions before it can qualify.": "A payee needs at least this many past transactions before it can qualify.",

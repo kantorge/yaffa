@@ -1707,6 +1707,8 @@
     "Itemization expected": "Détail des articles attendu",
     "Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.": "Choisissez « Détail des articles attendu » pour les bénéficiaires dont vous enregistrez chaque article du ticket, comme une épicerie.",
     "These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.": "Ces seuils déterminent quels bénéficiaires sont éligibles à l’enregistrement automatique et comment leurs noms sont associés. Rien n’est encore enregistré automatiquement ; la page des candidats montre qui serait éligible.",
+    "Other": "Autres",
+    "These payees do not fit any of the other groups.": "Ces bénéficiaires ne correspondent à aucun des autres groupes.",
     "Auto-record candidates": "Candidats à l’enregistrement automatique",
     "Minimum History": "Historique minimal",
     "A payee needs at least this many past transactions before it can qualify.": "Un bénéficiaire doit avoir au moins ce nombre de transactions passées pour être éligible.",

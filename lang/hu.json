@@ -1707,6 +1707,8 @@
     "Itemization expected": "Tételes bontás várt",
     "Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.": "Válaszd a tételes bontást azoknál a partnereknél, ahol a számla egyes tételeit rögzíted, például egy élelmiszerboltnál.",
     "These thresholds decide which payees qualify for automatic recording and how payee names are matched. Nothing is recorded automatically yet; the candidates page shows who would qualify.": "Ezek a küszöbértékek határozzák meg, mely partnerek jogosultak az automatikus rögzítésre, és hogyan történik a partnernevek egyeztetése. Egyelőre semmi sem kerül automatikusan rögzítésre; a jelöltek oldala mutatja, kik felelnének meg.",
+    "Other": "Egyéb",
+    "These payees do not fit any of the other groups.": "Ezek a partnerek egyik másik csoportba sem illenek.",
     "Auto-record candidates": "Automatikus rögzítés jelöltjei",
     "Minimum History": "Minimális előzmény",
     "A payee needs at least this many past transactions before it can qualify.": "A partnernek legalább ennyi korábbi tranzakcióval kell rendelkeznie a jogosultsághoz.",
