@@ -38,7 +38,7 @@ class InvestmentService
      */
     public function getSummary(User $user, ?bool $active = true): Collection
     {
-        $transactions = DB::table('transaction_details_investment')
+        $transactions = TransactionDetailInvestment::query()
             ->join('transactions', 'transactions.config_id', '=', 'transaction_details_investment.id')
             ->where('transactions.config_type', 'investment')
             ->where('transactions.schedule', false)
@@ -49,7 +49,7 @@ class InvestmentService
             ->orderByDesc('transactions.date')
             ->orderByDesc('transactions.id')
             ->limit(1);
-        $storedPrice = DB::table('investment_prices')
+        $storedPrice = InvestmentPrice::query()
             ->whereColumn('investment_id', 'investments.id')
             ->orderByDesc('date')
             ->orderByDesc('id')
