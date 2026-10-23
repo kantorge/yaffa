@@ -61,8 +61,7 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
                 ->assertAttribute(
                     '@label-account-to-name a',
                     'href',
-                    route('account-entity.edit', [
-                        'type' => 'payee',
+                    route('account-entity.show', [
                         'account_entity' => $transaction->config->accountTo->id,
                     ])
                 )
