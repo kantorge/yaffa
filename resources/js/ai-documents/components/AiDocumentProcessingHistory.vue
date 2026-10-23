@@ -1,6 +1,6 @@
 <template>
   <div class="timeline-wrapper">
-    <div v-if="entries.length === 0" class="text-muted">
+    <div v-if="entries.length === 0 && !autoRecordNote" class="text-muted">
       {{ __('No processing history available') }}
     </div>
 
@@ -53,6 +53,21 @@
           </details>
         </div>
       </details>
+
+      <details
+        v-if="autoRecordNote"
+        class="card mb-3 shadow-sm border-0 interaction-card"
+      >
+        <summary
+          class="card-header d-flex justify-content-between align-items-center bg-body-tertiary"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge text-bg-primary">{{ entries.length + 1 }}</span>
+            <strong>{{ __('Automatic recording') }}</strong>
+          </div>
+        </summary>
+        <div class="card-body">{{ autoRecordNote }}</div>
+      </details>
     </div>
   </div>
 </template>
@@ -66,6 +81,10 @@
     entries: {
       type: Array,
       default: () => [],
+    },
+    autoRecordNote: {
+      type: String,
+      default: null,
     },
   });
 

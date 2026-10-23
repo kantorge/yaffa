@@ -53,9 +53,6 @@
               <span v-else class="text-muted">{{ __('Not available') }}</span>
             </dd>
           </dl>
-          <div v-if="autoRecordNote" class="alert alert-info small mt-3 mb-0">
-            {{ autoRecordNote }}
-          </div>
         </div>
       </div>
 
@@ -559,7 +556,10 @@
               aria-labelledby="nav-document-tab-history"
               tabindex="0"
             >
-              <ai-document-processing-history :entries="processingHistory" />
+              <ai-document-processing-history
+                :entries="processingHistory"
+                :auto-record-note="autoRecordNote"
+              />
             </div>
           </div>
         </div>
@@ -696,9 +696,10 @@
 
   const hasProcessingHistory = computed(
     () =>
-      showExtractedDetails.value &&
-      Array.isArray(processingHistory.value) &&
-      processingHistory.value.length > 0,
+      (showExtractedDetails.value &&
+        Array.isArray(processingHistory.value) &&
+        processingHistory.value.length > 0) ||
+      !!autoRecordNote.value,
   );
 
   // Documents linked to a transaction cannot be reprocessed, see App\Enums\AiDocumentStatus::reprocessable()
