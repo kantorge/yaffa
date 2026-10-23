@@ -352,7 +352,7 @@ class ImportDuplicateDetectionService
      * @param  array<string, mixed>  $draft
      * @return list<string>
      */
-    private function buildMatchedOnSignals(array $draft, ?Transaction $transaction): array
+    public function buildMatchedOnSignals(array $draft, ?Transaction $transaction): array
     {
         if (! $transaction instanceof Transaction) {
             return [];

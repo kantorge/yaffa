@@ -51,7 +51,7 @@ window.__ = __;
     // see https://getbootstrap.com/docs/5.2/components/toasts/
     this.props = {
       header: '', // the header text
-      headerSmall: '', // additional text in the header, aligns right
+      headerSmall: '', // additional markup in the header, aligns right; must be trusted (e.g. transactionLink()), never user input
       body: '', // the body text of the toast
       closeButton: true, // show a close button
       closeButtonLabel: 'close', // the label of the close button
@@ -75,7 +75,7 @@ window.__ = __;
     if (showHeader) {
       toastHeader = `<div class="toast-header">
                             <strong class="me-auto">${escapeHtml(this.props.header)}</strong>
-                            ${this.props.headerSmall ? `<small>${escapeHtml(this.props.headerSmall)}</small>` : ''}
+                            ${this.props.headerSmall ? `<small>${this.props.headerSmall}</small>` : ''}
                             ${this.props.closeButton ? `<button type="button" class="btn-close ${this.props.closeButtonClass}" data-bs-dismiss="toast" aria-label="${this.props.closeButtonLabel}"></button>` : ''}
                           </div>`;
     }

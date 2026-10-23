@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\DuplicateDetectionService;
 use Illuminate\Support\Arr;
 use App\Services\Import\ImportDuplicateDetectionService;
+use App\Services\Import\ImportNormalizationService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
 use Carbon\Carbon;
@@ -453,6 +454,7 @@ class AiDocumentApiController extends Controller
         DuplicateDetectionService $duplicateService,
         SameEventClassifier $classifier,
         ImportDuplicateDetectionService $importDuplicateService,
+        ImportNormalizationService $normalizationService,
     ): JsonResponse {
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
@@ -465,6 +467,7 @@ class AiDocumentApiController extends Controller
             return response()->json([
                 'duplicates' => [],
                 'schedules' => [],
+                'related_documents' => [],
                 'documents' => [],
             ], Response::HTTP_OK);
         }
@@ -474,13 +477,29 @@ class AiDocumentApiController extends Controller
 
         $duplicates = $duplicateService->findDuplicates($user, $extractedData);
 
+        // The document's data in the shape of an import draft, so the import's matching can be reused
+        $payload = $aiDocument->processed_transaction_data;
+        $payeeAccountId = ($extractedData['transaction_type'] ?? null) === 'deposit'
+            ? ($extractedData['account_from_id'] ?? null)
+            : ($extractedData['account_to_id'] ?? null);
+        $draft = [
+            'date' => $extractedData['date'],
+            'amount' => $extractedData['amount'] ?? null,
+            'config_type' => $extractedData['config_type'] ?? 'standard',
+            'transaction_type' => $extractedData['transaction_type'] ?? null,
+            'config' => Arr::only($extractedData, ['account_from_id', 'account_to_id']),
+            'payee' => data_get($payload, 'raw.payee'),
+            'matched_payee' => $payeeAccountId !== null ? ['id' => $payeeAccountId] : null,
+        ];
+
         // Load full transaction details for frontend
         $transactionIds = array_column($duplicates, 'id');
         $transactions = \App\Models\Transaction::whereIn('id', $transactionIds)
+            ->with(['config', 'transactionItems'])
             ->get()
             ->keyBy('id');
 
-        $enrichedDuplicates = array_map(function ($duplicate) use ($transactions) {
+        $enrichedDuplicates = array_map(function ($duplicate) use ($transactions, $importDuplicateService, $draft) {
             $transaction = $transactions->get($duplicate['id']);
 
             return [
@@ -492,18 +511,14 @@ class AiDocumentApiController extends Controller
                 // raw array embedding the Money value directly, bypassing that control point.
                 'amount' => $transaction->cashflow_value !== null ? (string) $transaction->cashflow_value->getAmount() : null,
                 'type' => $transaction->config_type,
+                'comment' => $transaction->comment,
+                'matched_on' => $importDuplicateService->buildMatchedOnSignals($draft, $transaction),
             ];
         }, $duplicates);
 
         // Active schedules whose next occurrence could be entered instead of adding a new transaction,
         // found by the same engine as the CSV/QIF import
-        $schedules = $importDuplicateService->enrichDraftsWithScheduleCandidates($user, [[
-            'date' => $extractedData['date'],
-            'amount' => $extractedData['amount'] ?? null,
-            'config_type' => $extractedData['config_type'] ?? 'standard',
-            'transaction_type' => $extractedData['transaction_type'] ?? null,
-            'config' => Arr::only($extractedData, ['account_from_id', 'account_to_id']),
-        ]])[0]['schedule_candidates'];
+        $schedules = $importDuplicateService->enrichDraftsWithScheduleCandidates($user, [$draft])[0]['schedule_candidates'];
 
         // Other open documents describing the same purchase
         $key = $classifier->keyFromDocument($aiDocument);
@@ -517,9 +532,17 @@ class AiDocumentApiController extends Controller
                 ])
                 ->values();
 
+        // Other documents that may describe the same purchase, found as in the CSV/QIF import. Documents
+        // already listed above are not repeated, and the document itself is not its own match.
+        $listedIds = collect($documents)->pluck('id')->push($aiDocument->id);
+        $relatedDocuments = collect($normalizationService->enrichDraftsWithRelatedAiDocuments($user, [$draft])[0]['related_ai_documents'])
+            ->reject(fn (array $candidate) => $listedIds->contains($candidate['ai_document_id']))
+            ->values();
+
         return response()->json([
             'duplicates' => $enrichedDuplicates,
             'schedules' => $schedules,
+            'related_documents' => $relatedDocuments,
             'documents' => $documents,
         ], Response::HTTP_OK);
     }

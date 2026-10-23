@@ -242,7 +242,7 @@ class TransactionCreationService
      */
     private function markAiDocumentFinalized(array $validated, User $user): void
     {
-        if (($validated['action'] ?? null) !== 'finalize' || empty($validated['ai_document_id'] ?? null)) {
+        if (! in_array($validated['action'] ?? null, ['finalize', 'enter'], true) || empty($validated['ai_document_id'] ?? null)) {
             return;
         }
 
@@ -308,7 +308,7 @@ class TransactionCreationService
      */
     private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): ?array
     {
-        if (($validated['action'] ?? null) !== 'finalize' || empty($validated['ai_document_id'] ?? null)) {
+        if (! in_array($validated['action'] ?? null, ['finalize', 'enter'], true) || empty($validated['ai_document_id'] ?? null)) {
             Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
                 'action' => $validated['action'] ?? null,
                 'ai_document_id' => $validated['ai_document_id'] ?? null,

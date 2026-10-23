@@ -5,9 +5,9 @@
       (duplicatesLoading ||
         duplicates.length > 0 ||
         schedules.length > 0 ||
+        relatedDocuments.length > 0 ||
         documents.length > 0)
     "
-    ref="duplicatesCard"
     class="card mb-3"
   >
     <div class="card-header d-flex justify-content-between">
@@ -33,59 +33,48 @@
         ></span>
         {{ __('Checking for duplicates...') }}
       </div>
-      <div v-else class="list-group">
-        <button
-          v-for="duplicate in duplicates"
-          :key="duplicate.id"
-          type="button"
-          class="list-group-item list-group-item-action"
-          @click="openTransactionModal(duplicate.id)"
-        >
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <div class="fw-bold">
-                {{ formatDate(duplicate.date) }}
-              </div>
-            </div>
-            <div class="text-end">
-              <div>{{ duplicate.amount }}</div>
-              <div class="badge bg-warning text-dark">
-                {{ Math.round(duplicate.similarity * 100) }}%
-                {{ __('match') }}
-              </div>
-            </div>
-          </div>
-        </button>
+      <div v-else class="d-flex flex-column gap-3">
+        <DuplicateCandidatesPanel
+          :candidates="duplicateCandidates"
+          :draft-amount="draftAmount"
+          :account-currency="currency"
+          @dismiss="dismissDuplicate"
+        />
         <ScheduleCandidatesPanel
           :candidates="schedules"
           :draft-amount="draftAmount"
           :account-currency="currency"
           @dismiss="dismissSchedule"
         />
-        <a
-          v-for="document in documents"
-          :key="'document-' + document.id"
-          :href="document.url"
-          class="list-group-item list-group-item-action"
-        >
-          {{
-            __('Open document #:id describing the same purchase', {
-              id: document.id,
-            })
-          }}
-        </a>
+        <RelatedAiDocumentsPanel
+          :candidates="relatedDocuments"
+          :account-currency="currency"
+          @dismiss="dismissRelatedDocument"
+        />
+        <div v-if="documents.length" class="list-group">
+          <a
+            v-for="document in documents"
+            :key="'document-' + document.id"
+            :href="document.url"
+            class="list-group-item list-group-item-action"
+          >
+            {{
+              __('Open document #:id describing the same purchase', {
+                id: document.id,
+              })
+            }}
+          </a>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-  import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  import {
-    initializeBootstrapTooltips,
-    parseIsoDate,
-  } from '@/shared/lib/helpers';
-  import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { __ } from '@/shared/lib/i18n';
+  import DuplicateCandidatesPanel from '@/import/components/DuplicateCandidatesPanel.vue';
+  import RelatedAiDocumentsPanel from '@/import/components/RelatedAiDocumentsPanel.vue';
   import ScheduleCandidatesPanel from '@/import/components/ScheduleCandidatesPanel.vue';
 
   const props = defineProps({
@@ -109,18 +98,12 @@
 
   const duplicates = ref([]);
   const schedules = ref([]);
+  const relatedDocuments = ref([]);
   const documents = ref([]);
   const duplicatesLoading = ref(false);
   // Set once the check was rerun after a transaction was created from this document
   const rechecked = ref(false);
-  const duplicatesCard = ref(null);
   const route = window.route;
-  const locale = window.YAFFA?.userSettings?.locale || 'en';
-
-  const initializeTooltips = async () => {
-    await nextTick();
-    initializeBootstrapTooltips(duplicatesCard.value || document);
-  };
 
   const loadDuplicates = () => {
     if (duplicatesLoading.value) {
@@ -138,17 +121,18 @@
       .then((response) => {
         duplicates.value = response.data.duplicates || [];
         schedules.value = response.data.schedules || [];
+        relatedDocuments.value = response.data.related_documents || [];
         documents.value = response.data.documents || [];
       })
       .catch((error) => {
         console.error('Failed to load duplicates:', error);
         duplicates.value = [];
         schedules.value = [];
+        relatedDocuments.value = [];
         documents.value = [];
       })
       .finally(() => {
         duplicatesLoading.value = false;
-        initializeTooltips();
       });
   };
 
@@ -167,63 +151,30 @@
     loadDuplicates();
   };
 
-  const formatDate = (value) => {
-    if (!value) {
-      return __('Not set');
-    }
+  // The legacy duplicate shape, in the one the import's panel displays
+  const duplicateCandidates = computed(() =>
+    duplicates.value.map((duplicate) => ({
+      transaction_id: duplicate.id,
+      confidence_score: duplicate.similarity,
+      matched_on: duplicate.matched_on || [],
+      summary: {
+        date: duplicate.date,
+        comment: duplicate.comment,
+        amount: Number(duplicate.amount),
+      },
+    })),
+  );
 
-    return toFormattedDate(value, locale, value, true);
+  const dismissDuplicate = (transactionId) => {
+    duplicates.value = duplicates.value.filter(
+      (duplicate) => duplicate.id !== transactionId,
+    );
   };
 
-  const openTransactionModal = async (transactionId) => {
-    if (!transactionId) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/v1/transactions/${transactionId}`);
-      const data = await response.json();
-      const transaction = data.transaction;
-
-      if (transaction?.date) {
-        transaction.date = parseIsoDate(transaction.date);
-      }
-      if (transaction?.transaction_schedule) {
-        if (transaction.transaction_schedule.start_date) {
-          transaction.transaction_schedule.start_date = parseIsoDate(
-            transaction.transaction_schedule.start_date,
-          );
-        }
-        if (transaction.transaction_schedule.end_date) {
-          transaction.transaction_schedule.end_date = parseIsoDate(
-            transaction.transaction_schedule.end_date,
-          );
-        }
-        if (transaction.transaction_schedule.next_date) {
-          transaction.transaction_schedule.next_date = parseIsoDate(
-            transaction.transaction_schedule.next_date,
-          );
-        }
-      }
-
-      const event = new CustomEvent('showTransactionQuickViewModal', {
-        detail: {
-          transaction,
-          controls: {
-            show: true,
-            edit: true,
-            clone: true,
-            skip: true,
-            enter: true,
-            delete: true,
-          },
-        },
-      });
-
-      window.dispatchEvent(event);
-    } catch (error) {
-      console.error('Failed to load transaction details:', error);
-    }
+  const dismissRelatedDocument = (documentId) => {
+    relatedDocuments.value = relatedDocuments.value.filter(
+      (document) => document.ai_document_id !== documentId,
+    );
   };
 
   const dismissSchedule = (transactionId) => {
@@ -237,7 +188,6 @@
     if (props.canFinalize) {
       loadDuplicates();
     }
-    initializeTooltips();
   });
 
   onBeforeUnmount(() => {
@@ -252,8 +202,4 @@
       }
     },
   );
-
-  watch(duplicates, () => {
-    initializeTooltips();
-  });
 </script>
