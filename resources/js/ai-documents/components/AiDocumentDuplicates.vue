@@ -1,6 +1,9 @@
 <template>
   <div
-    v-if="canFinalize && (duplicates.length > 0 || documents.length > 0)"
+    v-if="
+      canFinalize &&
+      (duplicates.length > 0 || schedules.length > 0 || documents.length > 0)
+    "
     ref="duplicatesCard"
     class="card mb-3"
   >
@@ -52,6 +55,12 @@
             </div>
           </div>
         </button>
+        <ScheduleCandidatesPanel
+          :candidates="schedules"
+          :draft-amount="draftAmount"
+          :account-currency="currency"
+          @dismiss="dismissSchedule"
+        />
         <a
           v-for="document in documents"
           :key="'document-' + document.id"
@@ -76,6 +85,7 @@
     parseIsoDate,
   } from '@/shared/lib/helpers';
   import { __, toFormattedDate } from '@/shared/lib/i18n';
+  import ScheduleCandidatesPanel from '@/import/components/ScheduleCandidatesPanel.vue';
 
   const props = defineProps({
     aiDocumentId: {
@@ -86,9 +96,18 @@
       type: Boolean,
       required: true,
     },
+    currency: {
+      type: Object,
+      default: null,
+    },
+    draftAmount: {
+      type: [Number, String],
+      default: null,
+    },
   });
 
   const duplicates = ref([]);
+  const schedules = ref([]);
   const documents = ref([]);
   const duplicatesLoading = ref(false);
   const duplicatesCard = ref(null);
@@ -115,11 +134,13 @@
       )
       .then((response) => {
         duplicates.value = response.data.duplicates || [];
+        schedules.value = response.data.schedules || [];
         documents.value = response.data.documents || [];
       })
       .catch((error) => {
         console.error('Failed to load duplicates:', error);
         duplicates.value = [];
+        schedules.value = [];
         documents.value = [];
       })
       .finally(() => {
@@ -185,6 +206,12 @@
     } catch (error) {
       console.error('Failed to load transaction details:', error);
     }
+  };
+
+  const dismissSchedule = (transactionId) => {
+    schedules.value = schedules.value.filter(
+      (schedule) => schedule.transaction_id !== transactionId,
+    );
   };
 
   onMounted(() => {

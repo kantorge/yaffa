@@ -347,6 +347,8 @@
       <AiDocumentDuplicates
         :ai-document-id="aiDocument.id"
         :can-finalize="canFinalize"
+        :currency="draftCurrency"
+        :draft-amount="draftData.config?.amount_from ?? rawData.amount"
       />
 
       <div class="card mb-3">
@@ -731,6 +733,17 @@
         })
       : '#',
   );
+
+  // The document's currency with the user's rounding settings, for formatting candidate amounts
+  const draftCurrency = computed(() => {
+    const iso = String(rawData.value.currency || '').toLowerCase();
+
+    return iso
+      ? (window.aiDocumentCurrencies || []).find(
+          (c) => c.iso_code.toLowerCase() === iso,
+        ) || null
+      : null;
+  });
 
   // Why the document was (not) recorded automatically, see App\Services\AutoRecord\GateEvaluator
   const autoRecordNote = computed(() => {

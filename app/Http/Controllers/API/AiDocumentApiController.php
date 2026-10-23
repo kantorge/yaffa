@@ -12,6 +12,8 @@ use App\Models\AiDocumentFile;
 use App\Models\TransactionOrigin;
 use App\Models\User;
 use App\Services\DuplicateDetectionService;
+use Illuminate\Support\Arr;
+use App\Services\Import\ImportDuplicateDetectionService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
 use Carbon\Carbon;
@@ -450,6 +452,7 @@ class AiDocumentApiController extends Controller
         AiDocument $aiDocument,
         DuplicateDetectionService $duplicateService,
         SameEventClassifier $classifier,
+        ImportDuplicateDetectionService $importDuplicateService,
     ): JsonResponse {
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
@@ -461,6 +464,7 @@ class AiDocumentApiController extends Controller
         if (! isset($extractedData['date'])) {
             return response()->json([
                 'duplicates' => [],
+                'schedules' => [],
                 'documents' => [],
             ], Response::HTTP_OK);
         }
@@ -491,6 +495,16 @@ class AiDocumentApiController extends Controller
             ];
         }, $duplicates);
 
+        // Active schedules whose next occurrence could be entered instead of adding a new transaction,
+        // found by the same engine as the CSV/QIF import
+        $schedules = $importDuplicateService->enrichDraftsWithScheduleCandidates($user, [[
+            'date' => $extractedData['date'],
+            'amount' => $extractedData['amount'] ?? null,
+            'config_type' => $extractedData['config_type'] ?? 'standard',
+            'transaction_type' => $extractedData['transaction_type'] ?? null,
+            'config' => Arr::only($extractedData, ['account_from_id', 'account_to_id']),
+        ]])[0]['schedule_candidates'];
+
         // Other open documents describing the same purchase
         $key = $classifier->keyFromDocument($aiDocument);
         $documents = $key === null
@@ -505,6 +519,7 @@ class AiDocumentApiController extends Controller
 
         return response()->json([
             'duplicates' => $enrichedDuplicates,
+            'schedules' => $schedules,
             'documents' => $documents,
         ], Response::HTTP_OK);
     }

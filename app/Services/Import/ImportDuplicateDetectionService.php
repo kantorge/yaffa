@@ -197,8 +197,8 @@ class ImportDuplicateDetectionService
             return new \Illuminate\Database\Eloquent\Collection();
         }
 
-        $windowStart = $draftDates->min()->subDays($dateWindowDays);
-        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+        $windowStart = $draftDates->min()->clone()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->clone()->addDays($dateWindowDays);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
         $result = $user->transactions()
@@ -236,8 +236,8 @@ class ImportDuplicateDetectionService
             return new \Illuminate\Database\Eloquent\Collection();
         }
 
-        $windowStart = $draftDates->min()->subDays($dateWindowDays);
-        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+        $windowStart = $draftDates->min()->clone()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->clone()->addDays($dateWindowDays);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
         $result = $user->transactions()
