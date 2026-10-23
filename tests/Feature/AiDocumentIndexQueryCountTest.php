@@ -20,12 +20,12 @@ it('resolves matched entities for the whole page without per-document queries', 
 
     Sanctum::actingAs($user, ['*']);
 
-    $countQueries = function (): int {
+    $countQueries = function () use ($account): int {
         DB::flushQueryLog();
         DB::enableQueryLog();
         test()->getJson(route('api.v1.documents.index'))
             ->assertOk()
-            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.account.id', AccountEntity::first()->id);
+            ->assertJsonPath('data.0.processed_transaction_data.matched_entities.account.id', $account->id);
 
         return count(DB::getQueryLog());
     };
