@@ -560,7 +560,8 @@ class ProcessDocumentService
                 $document,
                 'account_matching',
                 "Local account matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$accountName}\"" . ($cardDigits !== null ? ", card ending {$cardDigits}." : '.'),
-                "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
+                "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}.",
+                mode: 'local',
             );
 
             return $topMatch['id'];
@@ -635,7 +636,8 @@ class ProcessDocumentService
                 $document,
                 'payee_matching',
                 "Local payee matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$payeeName}\".",
-                "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
+                "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}.",
+                mode: 'local',
             );
 
             return $topMatch['id'];
@@ -1150,6 +1152,7 @@ class ProcessDocumentService
         string $prompt,
         string $response,
         bool $includeInPromptHistory = true,
+        ?string $mode = null,
     ): void {
         $this->processingHistoryRecorder->appendProcessingHistory(
             $document,
@@ -1157,6 +1160,7 @@ class ProcessDocumentService
             $prompt,
             $response,
             $includeInPromptHistory,
+            $mode,
         );
     }
 

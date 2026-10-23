@@ -16,6 +16,12 @@
           <div class="d-flex align-items-center gap-2">
             <span class="badge text-bg-primary">{{ index + 1 }}</span>
             <strong>{{ formatStep(entry.step) }}</strong>
+            <span
+              v-if="modeBadges[entry.mode]"
+              class="badge"
+              :class="modeBadges[entry.mode].class"
+              >{{ modeBadges[entry.mode].label }}</span
+            >
           </div>
           <small class="text-muted">{{
             formatTimestamp(entry.timestamp)
@@ -95,6 +101,11 @@
       responseContent: normalizeContent(entry?.response),
     })),
   );
+
+  const modeBadges = {
+    local: { label: __('AI call skipped'), class: 'text-bg-success' },
+    fallback: { label: __('AI call failed'), class: 'text-bg-warning' },
+  };
 
   const looksLikeJson = (text) => {
     if (typeof text !== 'string') {
