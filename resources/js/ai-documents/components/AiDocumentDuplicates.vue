@@ -1,8 +1,11 @@
 <template>
   <div
     v-if="
-      canFinalize &&
-      (duplicates.length > 0 || schedules.length > 0 || documents.length > 0)
+      (canFinalize || rechecked) &&
+      (duplicatesLoading ||
+        duplicates.length > 0 ||
+        schedules.length > 0 ||
+        documents.length > 0)
     "
     ref="duplicatesCard"
     class="card mb-3"
@@ -16,23 +19,21 @@
         <i class="fa fa-angle-down"></i>
         {{ __('Potential duplicates') }}
       </div>
-      <span
-        class="fa fa-warning text-warning"
-        data-bs-toggle="tooltip"
-        data-bs-placement="right"
-        :title="
-          __(
-            'The following transactions might be duplicates. Please review before finalizing.',
-          )
-        "
-      ></span>
     </div>
     <div
       id="cardDuplicates"
       class="collapse card-body show"
       aria-expanded="true"
     >
-      <div class="list-group">
+      <div v-if="duplicatesLoading" class="text-center text-muted py-2">
+        <span
+          class="spinner-border spinner-border-sm me-2"
+          role="status"
+          aria-hidden="true"
+        ></span>
+        {{ __('Checking for duplicates...') }}
+      </div>
+      <div v-else class="list-group">
         <button
           v-for="duplicate in duplicates"
           :key="duplicate.id"
@@ -79,7 +80,7 @@
 </template>
 
 <script setup>
-  import { nextTick, onMounted, ref, watch } from 'vue';
+  import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import {
     initializeBootstrapTooltips,
     parseIsoDate,
@@ -110,6 +111,8 @@
   const schedules = ref([]);
   const documents = ref([]);
   const duplicatesLoading = ref(false);
+  // Set once the check was rerun after a transaction was created from this document
+  const rechecked = ref(false);
   const duplicatesCard = ref(null);
   const route = window.route;
   const locale = window.YAFFA?.userSettings?.locale || 'en';
@@ -120,7 +123,7 @@
   };
 
   const loadDuplicates = () => {
-    if (!props.canFinalize || duplicatesLoading.value) {
+    if (duplicatesLoading.value) {
       return;
     }
 
@@ -147,6 +150,21 @@
         duplicatesLoading.value = false;
         initializeTooltips();
       });
+  };
+
+  // The document is finalized by now, so the check is expected to list the new transaction
+  // instead of the schedule it was entered from
+  const onTransactionCreated = (event) => {
+    const transaction = event?.detail?.transaction;
+    const documentId =
+      transaction?.ai_document_id || transaction?.ai_document?.id;
+
+    if (documentId !== props.aiDocumentId) {
+      return;
+    }
+
+    rechecked.value = true;
+    loadDuplicates();
   };
 
   const formatDate = (value) => {
@@ -215,8 +233,15 @@
   };
 
   onMounted(() => {
-    loadDuplicates();
+    window.addEventListener('transaction-created', onTransactionCreated);
+    if (props.canFinalize) {
+      loadDuplicates();
+    }
     initializeTooltips();
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('transaction-created', onTransactionCreated);
   });
 
   watch(
