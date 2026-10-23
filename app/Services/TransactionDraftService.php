@@ -135,30 +135,72 @@ class TransactionDraftService
             unset($item);
         }
 
+        [$accountsById, $investmentsById] = $this->loadReferencedEntities([$draft], $user);
+        $draft['matched_entities'] = $this->buildMatchedEntities($draft, $accountsById, $investmentsById);
+
+        return $draft;
+    }
+
+    /**
+     * Add only `matched_entities` to many drafts at once, with one query per entity kind instead of per draft.
+     * For lists that do not display the category and tag details `enrich()` adds. Keys are preserved.
+     *
+     * @param  array<int|string, array>  $drafts
+     * @return array<int|string, array>
+     */
+    public function enrichMatchedEntities(array $drafts, User $user): array
+    {
+        [$accountsById, $investmentsById] = $this->loadReferencedEntities($drafts, $user);
+
+        foreach ($drafts as $key => $draft) {
+            $drafts[$key]['matched_entities'] = $this->buildMatchedEntities($draft, $accountsById, $investmentsById);
+        }
+
+        return $drafts;
+    }
+
+    /**
+     * The user's accounts and investments the drafts refer to in their config.
+     *
+     * @param  array<int|string, array>  $drafts
+     * @return array{0: Collection<int, AccountEntity>, 1: Collection<int, Investment>}
+     */
+    private function loadReferencedEntities(array $drafts, User $user): array
+    {
+        $configs = collect($drafts)->map(fn (array $draft) => $draft['config'] ?? []);
+
+        $accountIds = $configs
+            ->flatMap(fn (array $config) => [$config['account_id'] ?? null, $config['account_from_id'] ?? null, $config['account_to_id'] ?? null])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $investmentIds = $configs
+            ->map(fn (array $config) => $config['investment_id'] ?? null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return [
+            $accountIds === []
+                ? new Collection()
+                : AccountEntity::query()->where('user_id', $user->id)->whereIn('id', $accountIds)->get()->keyBy('id'),
+            $investmentIds === []
+                ? new Collection()
+                : Investment::query()->where('user_id', $user->id)->whereIn('id', $investmentIds)->get()->keyBy('id'),
+        ];
+    }
+
+    /**
+     * @param  Collection<int, AccountEntity>  $accountsById
+     * @param  Collection<int, Investment>  $investmentsById
+     */
+    private function buildMatchedEntities(array $draft, Collection $accountsById, Collection $investmentsById): array
+    {
         $config = $draft['config'] ?? [];
         $transactionType = $draft['transaction_type'] ?? null;
-
-        $accountIds = collect([
-            $config['account_id'] ?? null,
-            $config['account_from_id'] ?? null,
-            $config['account_to_id'] ?? null,
-        ])->filter()->unique()->values()->all();
-
-        $accountsById = AccountEntity::query()
-            ->where('user_id', $user->id)
-            ->whereIn('id', $accountIds)
-            ->get()
-            ->keyBy('id');
-
-        $investmentIds = collect([
-            $config['investment_id'] ?? null,
-        ])->filter()->unique()->values()->all();
-
-        $investmentsById = Investment::query()
-            ->where('user_id', $user->id)
-            ->whereIn('id', $investmentIds)
-            ->get()
-            ->keyBy('id');
 
         $matchedEntities = [];
 
@@ -204,9 +246,7 @@ class TransactionDraftService
             }
         }
 
-        $draft['matched_entities'] = $matchedEntities;
-
-        return $draft;
+        return $matchedEntities;
     }
 
     /**

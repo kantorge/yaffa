@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -213,9 +214,19 @@ class AiDocumentApiController extends Controller
     {
         $user = $request->user();
 
+        // Only what the document list displays: no chat history or prompt, no mail body, no transaction details
         $query = AiDocument::query()
+            ->select([
+                'id', 'user_id', 'status', 'source_type', 'processed_transaction_data', 'received_mail_id',
+                'content_hash', 'document_kind', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
+            ])
             ->where('user_id', $user->id)
-            ->with(['aiDocumentFiles', 'receivedMail', 'transaction', 'origins']);
+            ->with([
+                'aiDocumentFiles:id,ai_document_id,file_name',
+                'receivedMail:id,subject',
+                'transaction:id,ai_document_id',
+                'origins:id,origin_type,origin_id,transaction_id,relation,reviewed_at',
+            ]);
 
         if ($request->filled('date_from')) {
             $dateFrom = Carbon::parse((string) $request->input('date_from'))->startOfDay();
@@ -249,9 +260,11 @@ class AiDocumentApiController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $documents = $query->latest()->paginate($perPage);
 
-        $documents->getCollection()->each(function (AiDocument $document) use ($user): void {
-            $this->enrichProcessedData($document, $user);
-        });
+        $this->enrichMatchedEntities($documents->getCollection(), $user);
+
+        $documents->getCollection()->each(
+            fn (AiDocument $document) => $document->transaction?->makeHidden('transaction_currency')
+        );
 
         return response()->json([
             'data' => $documents->items(),
@@ -550,6 +563,25 @@ class AiDocumentApiController extends Controller
         }
 
         return 'txt';
+    }
+
+    /**
+     * Adds `matched_entities` to the drafts of a page of documents with one query per entity kind.
+     *
+     * @param  Collection<int, AiDocument>  $documents
+     */
+    private function enrichMatchedEntities(Collection $documents, User $user): void
+    {
+        $drafts = $documents
+            ->filter(fn (AiDocument $document): bool => (bool) $document->processed_transaction_data)
+            ->map(fn (AiDocument $document): array => $document->processed_transaction_data)
+            ->all();
+
+        $enriched = $this->transactionDraftService->enrichMatchedEntities($drafts, $user);
+
+        foreach ($enriched as $key => $draft) {
+            $documents[$key]->processed_transaction_data = $draft;
+        }
     }
 
     private function enrichProcessedData(AiDocument $aiDocument, User $user): void

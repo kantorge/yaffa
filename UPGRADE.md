@@ -183,18 +183,18 @@ After upgrading, open **Reports → Schedules and Budgets** and filter to "Budge
 
 Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
 
-### Document lifecycle and duplicate detection (Fast Transaction Entry, phase 2)
+### Document lifecycle and duplicate detection (Fast Transaction Entry)
 
 AI documents now close themselves when they repeat something already known, and manual entry warns about matching purchases. Nothing is recorded automatically yet.
 
-- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. Clients that switch over the status must handle them. Today's processing produces `duplicate` (the same content or the same purchase as a recorded transaction, closed silently without an email); `dismissed` is set by the user. `auto_recorded` and `awaiting_itemization` are reserved for the next phase.
+- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. Clients that switch over the status must handle them. Today's processing produces `duplicate` (the same content or the same purchase as a recorded transaction, closed silently without an email); `dismissed` is set by the user. `auto_recorded` and `awaiting_itemization` are not produced yet (see "Auto-recording" below).
 - **New field `document_kind`** (`bank_notification`, `receipt`, `invoice`, `other`, or `null`) on documents. The AI extraction also reads `transaction_time`, `bank_reference` and `card_last_digits` into the stored `raw` data. Documents processed before this upgrade have none of them.
 - **New endpoints:** `POST /api/v1/documents/{id}/dismiss` (`write`; from `ready_for_review` or `processing_failed`) and `POST /api/v1/transactions/duplicate-check` (`read`). The transaction store endpoints accept an optional `close_ai_document_id`, which closes an open document as a duplicate of the new transaction.
 - **Reprocessing is restricted:** it is allowed only from `ready_for_review`, `processing_failed` and `dismissed`. Documents closed against a transaction (`finalized`, `auto_recorded`, `duplicate`) cannot be reprocessed.
 - **Retention covers every terminal status:** with a retention period set, `finalized`, `auto_recorded`, `duplicate` and `dismissed` documents are all deleted after it. The reminder email now concerns the other, still open statuses.
 - New migrations add `ai_documents.content_hash`, `document_kind`, `status_changed_at`, `ai_user_settings.same_event_minutes` and the `transaction_origins` table. They are additive and reversible.
 
-### Payee profile, settings and matching (Fast Transaction Entry, phase 3)
+### Payee profile, settings and matching (Fast Transaction Entry)
 
 Every payee now has a stored history profile, and users can set how a payee is treated by the upcoming auto-recording. Nothing is recorded automatically yet.
 
@@ -208,7 +208,7 @@ Every payee now has a stored history profile, and users can set how a payee is t
 - **Payee and account matching is now one rule** for document processing and auto-recording: a match is _certain_ when it is deterministic (equal name or alias, an alias opening the text, or a card ending) or scores at least `match_auto_accept_threshold` and leads the runner-up by `match_min_margin`. The setting `payee_similarity_min` is gone (a migration drops it); `payee_similarity_margin` is renamed `match_min_margin` and now applies to accounts as well. Certain matches skip the AI call; a stricter rule than before, so a few more documents may ask the AI to pick between candidates. `GET`/`PATCH /api/v1/ai/settings` also return `presets`, the Loose/Balanced/Strict value sets of the settings page.
 - **Card endings:** an account is matched by the closing digits of any alias line (`7393`, `****7393`, `Visa Debit 7393`, `400322******7393`), from `card_last_digits` or a masked account number.
 
-### Auto-recording (Fast Transaction Entry, phase 4)
+### Auto-recording (Fast Transaction Entry)
 
 AI documents can now be recorded as normal transactions without a review. It is **off by default and opt-in per user**; nothing changes until a user turns on "Record automatically" in their AI settings (which also needs AI processing on).
 
@@ -218,6 +218,18 @@ AI documents can now be recorded as normal transactions without a review. It is 
 - Reconciling a transaction (the reconcile endpoint or any save that flips `reconciled` to true) marks its `created` origin as reviewed.
 - A new scheduled command `ai-documents:expire-itemization` runs daily at 03:45 (needs the scheduler).
 - New migration adds two columns to `ai_user_settings`. It is additive and reversible. Account identifiers for card endings are alias lines on accounts: all digits, optionally prefixed with `*` (for example `*1234`).
+
+### Slimmer document list API response
+
+`GET /api/v1/documents` (the list behind the AI documents table) now returns only what a list needs, which makes it considerably faster on large collections. `GET /api/v1/documents/{id}` is unchanged and still returns the full document. No action is needed for the bundled frontend, but a custom API integration that reads the removed fields from the list must fetch the single document instead.
+
+- **Fields removed from each document:** `ai_chat_history`, `custom_prompt` and `google_drive_file_id`.
+- **`received_mail`** contains only `id` and `subject`. The mail body (`html`, `text`) and the other columns are no longer included.
+- **`ai_document_files[]`** contain only `id`, `ai_document_id` and `file_name`.
+- **`transaction`** contains only `id` and `ai_document_id`, without `transaction_currency` or any other detail.
+- **`origins[]`** contain only `id`, `origin_type`, `origin_id`, `transaction_id`, `relation` and `reviewed_at`. In particular `decision_reason` is no longer included.
+- **`processed_transaction_data`** still includes `matched_entities` (account, payee, investment), but the category and tag display data is no longer added to the items: `recommended_category_full_name`, `category_full_name` and `tags`. The stored `category_id`, `recommended_category_id` and `tag_ids` are unchanged.
+- No migration or other operator action is required.
 
 ### Sentry support removed
 
