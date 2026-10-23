@@ -9,7 +9,7 @@ return [
         "next_action_text" => "Sprawdź wyekstrahowane wartości, wprowadź poprawki, a następnie zatwierdź transakcję.",
         "next_action_title" => "Następny krok",
         "intro_auto_recorded" => "Twój dokument AI został automatycznie zapisany jako transakcja.",
-        "next_action_text_auto_recorded" => "Sprawdź transakcję za pomocą filtru Przegląd w dokumentach AI i potwierdź ją lub popraw, jeśli coś się nie zgadza.",
+        "next_action_text_auto_recorded" => "Sprawdź transakcję za pomocą filtru Przegląd w dokumentach AI popraw, jeśli coś się nie zgadza, a następnie oznacz ją jako sprawdzoną.",
         "subject_auto_recorded" => "Dokument zapisany automatycznie",
         "subject" => "Dokument przetworzony - gotowy do sprawdzenia",
         "what_happened" => "Co się stało"

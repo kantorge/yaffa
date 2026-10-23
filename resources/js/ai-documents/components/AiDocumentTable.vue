@@ -451,7 +451,7 @@
       emitReviewCounts();
       toastHelpers.showSuccessToast(
         relation === 'created'
-          ? __('Transaction confirmed')
+          ? __('Transaction marked as checked')
           : __('Conflict resolved'),
       );
     } catch (error) {
@@ -495,7 +495,9 @@
       table.value.draw(false);
       emitReviewCounts();
       toastHelpers.showSuccessToast(
-        __(':count transactions confirmed', { count: originIds.length }),
+        __(':count transactions marked as checked', {
+          count: originIds.length,
+        }),
       );
     } catch (error) {
       showReviewError(error);
@@ -742,7 +744,7 @@
             let html = `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
 
             if (type === 'display' && row.needs_confirmation) {
-              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__('Click to confirm this transaction'))}"><span class="confirm-label">${escapeHtml(__('Awaiting confirmation'))}</span><i class="fa fa-spinner fa-spin"></i></button>`;
+              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__("Click once it's correct, fixed or not"))}"><span class="confirm-label">${escapeHtml(__('Needs checking'))}</span><i class="fa fa-spinner fa-spin"></i></button>`;
             }
 
             if (type === 'display' && row.has_conflict) {
@@ -916,7 +918,7 @@
         },
         {
           type: 'option',
-          title: __('Confirm transaction'),
+          title: __('Mark as checked'),
           iconClass: 'fa fa-fw fa-check',
           contextMenuClasses: ['text-success fw-bold'],
           isHidden: (row) => !row.needs_confirmation,

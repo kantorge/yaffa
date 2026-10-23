@@ -107,7 +107,7 @@
               <small class="form-text text-muted">
                 {{
                   __(
-                    'When enabled, a document is recorded as a normal transaction right away if its payee and account are identified for certain and the payee has a consistent history. You can review and confirm what was recorded with the Review filter of your AI documents. Each payee can override the history rule in its own Auto-recording setting. Nothing is recorded unless AI processing is on.',
+                    'When enabled, a document is recorded as a normal transaction right away if its payee and account are identified for certain and the payee has a consistent history. You can check what was recorded with the Review filter of your AI documents. Each payee can override the history rule in its own Auto-recording setting. Nothing is recorded unless AI processing is on.',
                   )
                 }}
                 <a :href="route('payees.auto-record-candidates')">

@@ -145,18 +145,18 @@
                   v-if="createdOrigin.reviewed_at"
                   class="badge bg-success ms-1"
                 >
-                  {{ __('Confirmed') }}
+                  {{ __('Checked') }}
                 </span>
                 <button
                   v-else
                   type="button"
                   class="badge bg-warning border-0 ms-1"
                   dusk="confirm-origin"
-                  :title="__('Click to confirm this transaction')"
+                  :title="__('Click once it\'s correct, fixed or not')"
                   :disabled="confirming"
                   @click="confirmOrigin"
                 >
-                  {{ __('Awaiting confirmation') }}
+                  {{ __('Needs checking') }}
                 </button>
               </dd>
             </dl>
@@ -384,7 +384,7 @@
           )
           .then(() => {
             this.createdOrigin.reviewed_at = new Date().toISOString();
-            toastHelpers.showSuccessToast(__('Transaction confirmed'));
+            toastHelpers.showSuccessToast(__('Transaction marked as checked'));
             // Lists showing the same transaction (e.g. the AI documents table) update themselves
             window.dispatchEvent(
               new CustomEvent('transactionOriginReviewed', {

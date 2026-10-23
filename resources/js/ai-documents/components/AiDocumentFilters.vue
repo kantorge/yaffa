@@ -56,7 +56,7 @@
         >
           <option value="">{{ __('Any') }}</option>
           <option value="auto-recorded">
-            {{ __('Awaiting confirmation') }} ({{ reviewCounts.autoRecorded }})
+            {{ __('Needs checking') }} ({{ reviewCounts.autoRecorded }})
           </option>
           <option value="conflicts">
             {{ __('Conflict') }} ({{ reviewCounts.conflicts }})

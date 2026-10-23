@@ -18,7 +18,7 @@ it('flags an unreviewed auto-recorded transaction and confirms it from the revie
     $page = visit(route('ai-documents.index', ['review' => 'auto-recorded']));
     $this->waitUntil($page, "document.querySelector('#ai-document-table')");
 
-    $page->assertSee('Awaiting confirmation')
+    $page->assertSee('Needs checking')
         ->click('#ai-document-table button.confirm-origin');
 
     $this->waitUntil($page, "!document.querySelector('#ai-document-table button.confirm-origin')");
@@ -26,7 +26,7 @@ it('flags an unreviewed auto-recorded transaction and confirms it from the revie
     expect($origin->fresh()->reviewed_at)->not->toBeNull();
 })->group('critical');
 
-it('confirms every shown auto-recorded transaction with the Confirm all shown action', function () {
+it('confirms every shown auto-recorded transaction with the Mark all shown as checked action', function () {
     $origins = Transaction::where('user_id', $this->user->id)->where('config_type', 'standard')->limit(2)->get()
         ->map(fn (Transaction $transaction) => TransactionOrigin::record(
             $this->user,

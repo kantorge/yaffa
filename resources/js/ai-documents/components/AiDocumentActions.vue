@@ -31,11 +31,11 @@
         v-if="canConfirmAll"
         class="list-group-item d-flex justify-content-between align-items-center"
       >
-        {{ __('Confirm all shown') }}
+        {{ __('Mark all shown as checked') }}
         <button
           type="button"
           class="btn btn-sm btn-outline-success"
-          :title="__('Confirm all shown')"
+          :title="__('Mark all shown as checked')"
           dusk="confirm-all"
           @click="$emit('confirm-all')"
         >
