@@ -308,3 +308,22 @@ it('fails gate 8 when the purchase is already recorded', function () {
 
     expect($result->failedGate)->toBe('duplicates');
 });
+
+it('does not accept an amount of another category of the payee', function () {
+    $transit = Category::factory()->for($this->user)->create(['active' => true]);
+    $payee = $this->createPayeeEntity($this->user, ['name' => 'Parking Kft', 'active' => true]);
+    foreach (range(1, 34) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, 500, now()->subDays($i + 40), categoryId: $this->category->id);
+    }
+    foreach ([1000, 9450, 10395] as $i => $amount) {
+        $this->createStandardTransaction($this->user, $this->account->id, $payee->id, $amount, now()->subDays($i + 80), categoryId: $transit->id);
+    }
+    app(PayeeProfileService::class)->calculate($payee);
+    $this->payee = $payee;
+
+    expect(($this->evaluate)(($this->document)(draft: ['config' => ['amount_from' => '500.00']]))->passed)->toBeTrue();
+
+    foreach (['1200.00', '9450.00'] as $amount) {
+        expect(($this->evaluate)(($this->document)(draft: ['config' => ['amount_from' => $amount]]))->failedGate)->toBe('amount');
+    }
+});

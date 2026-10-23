@@ -104,12 +104,18 @@ class PayeeProfileService
             ->filter(fn (object $t) => $itemsByTransaction->get($t->id, collect())->count() > 1)
             ->count();
 
-        // The window is newest first, so the recent subset is a prefix of it
+        // Amount statistics describe the usual purchase: single-item transactions in the dominant category only.
+        // The window is newest first, so the recent subset is a prefix of it.
+        $usual = $dominantCategoryId === null ? collect() : $transactions->filter(function (object $t) use ($itemsByTransaction, $dominantCategoryId) {
+            $items = $itemsByTransaction->get($t->id, collect());
+
+            return $items->count() === 1 && (int) $items->first()->category_id === $dominantCategoryId;
+        })->values();
         $cutoff = now()->subMonths(self::RECENT_MONTHS)->toDateString();
-        $recentCount = max(self::RECENT_MIN_TRANSACTIONS, $transactions->filter(fn (object $t) => $t->date >= $cutoff)->count());
-        $recent = $transactions->take($recentCount);
+        $recentCount = max(self::RECENT_MIN_TRANSACTIONS, $usual->filter(fn (object $t) => $t->date >= $cutoff)->count());
+        $recent = $usual->take($recentCount);
         if ($recent->count() < self::RECENT_MIN_SAMPLE) {
-            $recent = $transactions;
+            $recent = $usual;
         }
         $amounts = $recent->map(fn (object $t) => $this->amountOf($t))->sort(fn (BigDecimal $a, BigDecimal $b) => $a->compareTo($b))->values();
         $amountCounts = $amounts->map(fn (BigDecimal $amount) => (string) $amount)->countBy()->sortDesc();
@@ -131,10 +137,10 @@ class PayeeProfileService
                 'dominant_share' => $this->share($inDominant, $n),
                 'single_item_dominant_count' => $singleItemDominant,
                 'wilson_lower' => round(self::wilsonLowerBound($singleItemDominant, $n), 4),
-                'amount_median' => $n === 0 ? null : (string) $this->median($amounts),
-                'amount_min' => $n === 0 ? null : (string) $this->percentile($amounts, self::RANGE_LOWER_PERCENTILE),
-                'amount_max' => $n === 0 ? null : (string) $this->percentile($amounts, self::RANGE_UPPER_PERCENTILE),
-                'amount_mode_share' => $n === 0 ? null : $this->share($amountCounts->first(), $amounts->count()),
+                'amount_median' => $amounts->isEmpty() ? null : (string) $this->median($amounts),
+                'amount_min' => $amounts->isEmpty() ? null : (string) $this->percentile($amounts, self::RANGE_LOWER_PERCENTILE),
+                'amount_max' => $amounts->isEmpty() ? null : (string) $this->percentile($amounts, self::RANGE_UPPER_PERCENTILE),
+                'amount_mode_share' => $amounts->isEmpty() ? null : $this->share($amountCounts->first(), $amounts->count()),
                 'known_amounts' => $amountCounts->keys()->take(self::MAX_KNOWN_AMOUNTS)->values()->all(),
                 'typical_account_ids' => $typicalAccountIds,
                 'multi_item_share' => $this->share($multiItem, $n),

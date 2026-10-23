@@ -214,3 +214,38 @@ it('keeps a single outlier out of the median and the displayed range', function 
         ->and((float) $profile->amount_min)->toBeGreaterThan(2000.0)
         ->and((float) $profile->amount_max)->toBe(2250.0);
 });
+
+it('takes the amount statistics from the single-item transactions of the dominant category only', function () {
+    $transit = Category::factory()->for($this->user)->create(['active' => true]);
+    foreach (range(1, 34) as $i) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 500, now()->subDays($i), categoryId: $this->category->id);
+    }
+    foreach ([1000, 4500, 9450, 10395] as $i => $amount) {
+        $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, $amount, now()->subDays($i + 40), categoryId: $transit->id);
+    }
+
+    $profile = app(App\Services\PayeeProfileService::class)->calculate($this->payee);
+
+    expect($profile->sample_size)->toBe(38)
+        ->and($profile->dominant_category_id)->toBe($this->category->id)
+        ->and($profile->single_item_dominant_count)->toBe(34)
+        ->and((float) $profile->amount_median)->toBe(500.0)
+        ->and((float) $profile->amount_max)->toBe(500.0)
+        ->and($profile->known_amounts)->toBe(['500.0000']);
+});
+
+it('has no amount statistics for a payee without a dominant category', function () {
+    $this->createStandardTransaction($this->user, $this->account->id, $this->payee->id, 100, now(), categoryId: $this->category->id);
+    $item = Illuminate\Support\Facades\DB::table('transaction_items')->first();
+    Illuminate\Support\Facades\DB::table('transaction_items')->insert(['transaction_id' => $item->transaction_id, 'category_id' => $item->category_id, 'amount' => 1]);
+
+    $profile = app(App\Services\PayeeProfileService::class)->calculate($this->payee);
+
+    expect($profile->sample_size)->toBe(1)
+        ->and($profile->dominant_category_id)->toBeNull()
+        ->and($profile->amount_median)->toBeNull()
+        ->and($profile->amount_min)->toBeNull()
+        ->and($profile->amount_max)->toBeNull()
+        ->and($profile->amount_mode_share)->toBeNull()
+        ->and($profile->known_amounts)->toBe([]);
+});
