@@ -57,6 +57,13 @@
   const detectedDateRange = ref({ from: null, to: null });
   const route = window.route;
   const RESIZE_RECALC_DELAY_MS = 100;
+  const RECEIVED_AT_FORMAT = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  };
   const COLUMN_INDEX = {
     status: 1,
     source: 2,
@@ -259,6 +266,12 @@
         matchedPayee?.name || rawData?.payee || __('Not available'),
       );
       const hint = renderMatchHint({ isMatched: true });
+
+      if (matchedPayee.url) {
+        const url = escapeHtml(matchedPayee.url);
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+      }
+
       return `<span>${name}</span>${hint}`;
     }
 
@@ -724,7 +737,7 @@
             let html = `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
 
             if (type === 'display' && row.needs_confirmation) {
-              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__('Click to confirm this transaction'))}">${escapeHtml(__('Awaiting confirmation'))}</button>`;
+              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__('Click to confirm this transaction'))}"><span class="confirm-label">${escapeHtml(__('Awaiting confirmation'))}</span><i class="fa fa-spinner fa-spin"></i></button>`;
             }
 
             if (type === 'display' && row.has_conflict) {
@@ -753,6 +766,8 @@
               return toFormattedDateTime(
                 value,
                 window.YAFFA.userSettings.locale,
+                '',
+                RECEIVED_AT_FORMAT,
               );
             }
 
@@ -802,12 +817,8 @@
               return __('Not available');
             }
 
-            return (
-              dataTableHelpers.dataTablesActionButton(
-                transactionId,
-                'quickView',
-              ) + dataTableHelpers.dataTablesActionButton(transactionId, 'show')
-            );
+            // The shared 'busy' class (set by initializeQuickViewButton) reveals the spinner
+            return `<button type="button" class="btn btn-xs btn-outline-success transaction-quickview" data-id="${escapeHtml(transactionId)}" title="${escapeHtml(__('Quick view'))}">#${escapeHtml(transactionId)} <i class="fa fa-fw fa-spinner fa-spin"></i></button>`;
           },
           className: 'dt-nowrap',
           orderable: false,
@@ -1004,10 +1015,23 @@
     window
       .$('#ai-document-table')
       .on('click', 'button.confirm-origin', (event) => {
+        if (ajaxIsBusy.value) {
+          return;
+        }
+
+        // Swap the label for the spinner (shown by the 'busy' class) until the request settles
+        const button = window.$(event.currentTarget);
+        button.addClass('busy').find('.confirm-label').addClass('d-none');
+
         reviewOrigin(
           table.value.row(event.currentTarget.closest('tr')),
           'created',
-        );
+        ).finally(() => {
+          button
+            .removeClass('busy')
+            .find('.confirm-label')
+            .removeClass('d-none');
+        });
       });
     window.addEventListener('transactionOriginReviewed', onOriginReviewed);
 
