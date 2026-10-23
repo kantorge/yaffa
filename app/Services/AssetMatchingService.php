@@ -34,8 +34,9 @@ class AssetMatchingService
     }
 
     /**
-     * Find matching accounts based on similarity. A card ending (see cardDigits()) that equals the last four
-     * digits closing an alias line of an active account is a deterministic match, scored 1.0.
+     * Find matching active accounts based on similarity. A card ending (see cardDigits()) that equals the last
+     * four digits closing an alias line, or a normalized name or alias line equal to the text, is a
+     * deterministic match, scored 1.0.
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
@@ -49,8 +50,11 @@ class AssetMatchingService
 
         $accounts = $this->user
             ->accounts()
-            ->select('id', 'name', 'alias', 'active')
+            ->active()
+            ->select('id', 'name', 'alias')
             ->get();
+
+        $normalizedText = self::normalizeForMatching($accountName);
 
         /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
         $matches = [];
@@ -65,7 +69,10 @@ class AssetMatchingService
                 $secondaryParts ?: null
             );
 
-            if ($cardDigits !== null && $account->active && self::aliasHasCardEnding($account->alias, $cardDigits)) {
+            $isExact = $normalizedText !== '' && collect([$account->name, ...PayeeMatcher::aliasLines($account->alias)])
+                ->contains(fn (string $line) => self::normalizeForMatching($line) === $normalizedText);
+
+            if ($isExact || ($cardDigits !== null && self::aliasHasCardEnding($account->alias, $cardDigits))) {
                 $similarity = 1.0;
             }
 

@@ -159,3 +159,15 @@ it('has a balanced preset equal to the application defaults, and presets that di
             ->and(array_keys($presets['strict']))->toBe(array_keys($presets['balanced']));
     }
 });
+
+it('is certain about an account whose name or alias line equals the text, and ignores inactive accounts', function () {
+    $account = certainAccount($this->user, 'Raiffeisen', "myRaiffeisen Terhelés\nmyRaiffeisen\n****7393");
+    certainAccount($this->user, 'Raiffeisen - EUR');
+    certainAccount($this->user, 'myRaiffeisen Old', 'myRaiffeisen', false);
+
+    $matches = $this->matching->matchAccounts('MyRaiffeisen');
+
+    expect($matches[0])->toMatchArray(['id' => $account->id, 'similarity' => 1.0])
+        ->and($this->matching->certainMatch($matches)['id'])->toBe($account->id)
+        ->and(collect($matches)->pluck('name')->implode('|'))->not->toContain('myRaiffeisen Old');
+});
