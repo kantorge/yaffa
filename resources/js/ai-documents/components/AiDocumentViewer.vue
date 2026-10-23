@@ -741,7 +741,7 @@
         (origin) => origin.relation === 'created',
       )?.decision_reason;
 
-      return reason || __('Recorded automatically.');
+      return reason || __('Recorded automatically');
     }
 
     const autoRecord = document.processed_transaction_data?.auto_record;

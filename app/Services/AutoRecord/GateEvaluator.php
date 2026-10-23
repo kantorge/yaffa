@@ -366,7 +366,7 @@ class GateEvaluator
         $to = $median->plus($band)->toScale(2, RoundingMode::HalfUp);
 
         return [
-            __('Amount: :amount is outside the usual range (around :median, accepted :from–:to).', ['amount' => (string) $amount, 'median' => (string) $median, 'from' => (string) $from, 'to' => (string) $to]),
+            __('Amount: :amount is outside the usual range (around :median, accepted :from - :to).', ['amount' => (string) $amount, 'median' => (string) $median, 'from' => (string) $from, 'to' => (string) $to]),
             ['amount' => (string) $amount, 'median' => (string) $median, 'from' => (string) $from, 'to' => (string) $to],
         ];
     }
