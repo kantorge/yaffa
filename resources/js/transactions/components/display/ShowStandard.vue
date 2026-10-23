@@ -427,13 +427,6 @@
       },
 
       entityLink(entity, entityId, side) {
-        if (this.entityIsPayee(entity, side)) {
-          return route('account-entity.edit', {
-            type: 'payee',
-            account_entity: entityId,
-          });
-        }
-
         return route('account-entity.show', {
           account_entity: entityId,
         });
@@ -441,9 +434,7 @@
 
       entityLinkTitle(entity, side) {
         if (this.entityIsPayee(entity, side)) {
-          return __(
-            'Open payee edit form (payees do not have a details view yet)',
-          );
+          return __('Go to payee');
         }
 
         return __('Go to account');
