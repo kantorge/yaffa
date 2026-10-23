@@ -64,6 +64,11 @@
     hour: 'numeric',
     minute: 'numeric',
   };
+  const SOURCE_ICONS = {
+    manual_upload: 'fa-regular fa-circle-up',
+    received_email: 'fa-regular fa-envelope',
+    google_drive: 'fa-brands fa-google-drive',
+  };
   const COLUMN_INDEX = {
     status: 1,
     source: 2,
@@ -751,12 +756,17 @@
           data: 'source_type',
           title: __('Source'),
           render: (value, type) => {
-            if (type === 'filter') {
-              return props.sourceLabels[value] || value;
+            const label = props.sourceLabels[value] || value;
+
+            if (type !== 'display') {
+              return label;
             }
 
-            return props.sourceLabels[value] || value;
+            const icon = SOURCE_ICONS[value] || 'fa-solid fa-file';
+
+            return `<i class="${icon} fa-fw fa-lg text-secondary" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></i>`;
           },
+          className: 'text-center',
         },
         {
           data: 'created_at',
