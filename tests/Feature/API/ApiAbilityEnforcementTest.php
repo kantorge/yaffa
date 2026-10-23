@@ -91,6 +91,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'imports.parse' => ['api.v1.imports.parse', 'post', 'write', []],
             'imports.file-profiles.store' => ['api.v1.imports.file-profiles.store', 'post', 'write', []],
             'documents.store' => ['api.v1.documents.store', 'post', 'write', []],
+            'documents.reprocessOpen' => ['api.v1.documents.reprocessOpen', 'post', 'write', []],
             'documents.dismiss' => ['api.v1.documents.dismiss', 'post', 'write', ['aiDocument' => 1]],
             'category-learning.store' => ['api.v1.category-learning.store', 'post', 'write', []],
             'currency-rates.store' => ['api.v1.currency-rates.store', 'post', 'write', []],

@@ -135,6 +135,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('documents.show');
     Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
         ->name('documents.update');
+    Route::post('/documents/reprocess-open', [AiDocumentApiController::class, 'reprocessOpen'])
+        ->name('documents.reprocessOpen');
     Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
         ->name('documents.reprocess');
     Route::post('/documents/{aiDocument}/dismiss', [AiDocumentApiController::class, 'dismiss'])

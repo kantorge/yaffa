@@ -16,6 +16,7 @@
         "
         @open-upload-form="openUploadForm"
         @confirm-all="tableRef?.confirmAllShown()"
+        @reprocess-open="reprocessOpen"
       ></ai-document-actions>
 
       <ai-document-filters
@@ -93,6 +94,7 @@
 </template>
 
 <script setup>
+  import Swal from 'sweetalert2';
   import { nextTick, onMounted, ref } from 'vue';
   import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
@@ -317,5 +319,40 @@
       dateFrom: currentFilters.value.dateFrom,
       dateTo: currentFilters.value.dateTo,
     });
+  };
+
+  const reprocessOpen = async () => {
+    const result = await Swal.fire({
+      text: __(
+        'All open documents (ready for review or failed) will be reprocessed. Their previous extraction data and AI chat history will be removed. Do you want to continue?',
+      ),
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: __('Cancel'),
+      confirmButtonText: __('Reprocess'),
+      buttonsStyling: false,
+      customClass: {
+        confirmButton: 'btn btn-warning',
+        cancelButton: 'btn btn-secondary ms-3',
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await window.axios.post(
+        route('api.v1.documents.reprocessOpen'),
+      );
+      toastHelpers.showSuccessToast(response.data.message);
+      await onDocumentCreated();
+    } catch (error) {
+      toastHelpers.showErrorToast(
+        __('Error while reprocessing document: :errorMessage', {
+          errorMessage: error.response?.data?.message || error.message,
+        }),
+      );
+    }
   };
 </script>

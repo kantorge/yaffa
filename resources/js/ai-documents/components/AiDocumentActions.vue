@@ -45,6 +45,20 @@
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
+        {{ __('Reprocess all open documents') }}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-warning"
+          :title="__('Reprocess all open documents')"
+          dusk="reprocess-open"
+          @click="$emit('reprocess-open')"
+        >
+          <i class="fa fa-fw fa-rotate"></i>
+        </button>
+      </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
         {{ __('AI provider settings') }}
         <a
           class="btn btn-sm btn-outline-primary"
@@ -78,7 +92,7 @@
     canConfirmAll: { type: Boolean, default: false },
   });
 
-  defineEmits(['open-upload-form', 'confirm-all']);
+  defineEmits(['open-upload-form', 'confirm-all', 'reprocess-open']);
 
   const route = window.route;
   const aiSettingsUrl = route('user.ai-settings');

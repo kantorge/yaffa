@@ -34,7 +34,7 @@ use Throwable;
     'index', 'show', 'summary',
 ])]
 #[Middleware('abilities:write', only: [
-    'store', 'update', 'reprocess', 'dismiss', 'checkDuplicates', 'destroy',
+    'store', 'update', 'reprocess', 'reprocessOpen', 'dismiss', 'checkDuplicates', 'destroy',
 ])]
 #[Middleware('abilities:settings', only: [
     'cleanupOldFiles',
@@ -341,6 +341,38 @@ class AiDocumentApiController extends Controller
         return response()->json([
             'status' => $aiDocument->status,
             'message' => __('Document reprocessing queued'),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Reprocess all open documents
+     *
+     * Sends every one of the user's open (ready for review or processing failed) documents back to
+     * ready_for_processing in a single query. No jobs are dispatched here: the scheduled
+     * app:process-ai-documents command picks them up in batches, which also keeps a large backlog from
+     * flooding the queue and respects the user's AI enabled setting.
+     */
+    #[Authorize('create', AiDocument::class)]
+    public function reprocessOpen(Request $request): JsonResponse
+    {
+        $count = AiDocument::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('status', AiDocumentStatus::values([
+                AiDocumentStatus::ReadyForReview,
+                AiDocumentStatus::ProcessingFailed,
+            ]))
+            ->update([
+                'processed_transaction_data' => null,
+                'ai_chat_history' => null,
+                'document_kind' => null,
+                'processed_at' => null,
+                'status' => AiDocumentStatus::ReadyForProcessing->value,
+                'status_changed_at' => now(),
+            ]);
+
+        return response()->json([
+            'count' => $count,
+            'message' => trans_choice('{0} No open documents to reprocess|{1} :count document queued for reprocessing|[2,*] :count documents queued for reprocessing', $count, ['count' => $count]),
         ], Response::HTTP_OK);
     }
 
