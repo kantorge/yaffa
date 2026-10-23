@@ -133,11 +133,14 @@ class AccountEntityController extends Controller implements HasMiddleware
             'deferredCategories',
         ]);
 
+        $autoRecordEnabled = (bool) $this->aiUserSettingsResolver->resolveForUser($request->user())['auto_record_enabled'];
+
         JavaScriptFacade::put([
             'payee' => $accountEntity,
             'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
             'categorySuggestion' => $this->payeeCategorySuggestion($request->user(), $accountEntity),
-            'payeeProfile' => $this->payeeProfileData($request->user(), $accountEntity),
+            'autoRecordEnabled' => $autoRecordEnabled,
+            'payeeProfile' => $autoRecordEnabled ? $this->payeeProfileData($request->user(), $accountEntity) : null,
             'baseCurrency' => $request->user()->baseCurrency(),
         ]);
 
@@ -158,22 +161,23 @@ class AccountEntityController extends Controller implements HasMiddleware
             return null;
         }
 
+        $settings = $this->aiUserSettingsResolver->resolveForUser($user);
+        // The history check ignores the payee's own override, which the card shows separately
+        $history = $this->payeeProfileService->qualification($profile, Payee::POLICY_FOLLOW_GLOBAL, $settings);
+
         return [
             'sample_size' => $profile->sample_size,
             'dominant_category' => $profile->dominantCategory?->full_name,
             'dominant_share' => $profile->dominant_share,
-            'single_item_dominant_count' => $profile->single_item_dominant_count,
-            'wilson_lower' => $profile->wilson_lower,
-            'amount_median' => $profile->amount_median,
             'amount_min' => $profile->amount_min,
             'amount_max' => $profile->amount_max,
-            'calculated_at' => $profile->calculated_at->toIso8601String(),
             'currency' => $this->payeeProfileService->currencyOf($profile),
-        ] + $this->payeeProfileService->qualification(
-            $profile,
-            $config->auto_record_policy,
-            $this->aiUserSettingsResolver->resolveForUser($user),
-        );
+            'history_status' => $history['qualifies'] ? 'qualifying' : ($this->payeeProfileService->isNear($profile, $settings) ? 'near' : 'other'),
+            'missing' => $history['missing'],
+            'reason' => $history['reason'],
+            'auto_record_policy' => $config->auto_record_policy,
+            'itemization_expected' => (bool) $config->itemization_expected,
+        ];
     }
 
     /**

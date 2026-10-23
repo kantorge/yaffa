@@ -195,6 +195,18 @@ class PayeeProfileService
     }
 
     /**
+     * Whether a non-qualifying profile is consistent enough to be "almost there".
+     *
+     * @param  array<string, mixed>  $settings  Resolved AI settings
+     */
+    public function isNear(PayeeProfile $profile, array $settings): bool
+    {
+        return $profile->dominant_category_id !== null
+            && ((float) $profile->wilson_lower >= (float) $settings['auto_record_wilson_min'] - self::NEAR_WILSON_MARGIN
+                || ($profile->sample_size < $settings['auto_record_min_history'] && $profile->single_item_dominant_count === $profile->sample_size));
+    }
+
+    /**
      * Rebuild the stored profile of one payee of the user, or of all of them when `$payeeId` is null.
      */
     public function recalculateForUser(User $user, ?int $payeeId = null): void
@@ -214,7 +226,6 @@ class PayeeProfileService
     public function candidates(User $user): array
     {
         $settings = $this->settingsResolver->resolveForUser($user);
-        $wilsonMin = (float) $settings['auto_record_wilson_min'];
         $groups = ['qualifying' => [], 'near' => [], 'itemization_mismatch' => [], 'template_candidates' => [], 'other' => []];
 
         $payeesWithTemplate = $user->transactionTemplates()->whereNotNull('payee_id')->pluck('payee_id')->all();
@@ -239,10 +250,7 @@ class PayeeProfileService
             if ($qualification['qualifies']) {
                 $groups['qualifying'][] = $row + ['reason' => $qualification['reason']];
                 $grouped = true;
-            } elseif ($profile->dominant_category_id !== null
-                && ((float) $profile->wilson_lower >= $wilsonMin - self::NEAR_WILSON_MARGIN
-                    || ($profile->sample_size < $settings['auto_record_min_history'] && $profile->single_item_dominant_count === $profile->sample_size))
-            ) {
+            } elseif ($this->isNear($profile, $settings)) {
                 $groups['near'][] = $row + ['reason' => $qualification['reason']];
                 $grouped = true;
             }

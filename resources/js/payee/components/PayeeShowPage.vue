@@ -103,7 +103,10 @@
           @accepted="onSuggestionAccepted"
         ></payee-category-recommendation>
 
-        <payee-profile-card :profile="profile"></payee-profile-card>
+        <payee-profile-card
+          v-if="autoRecordEnabled"
+          :profile="profile"
+        ></payee-profile-card>
 
         <payee-schedules-card :payee-id="payee.id"></payee-schedules-card>
         <similar-payees-card
@@ -167,6 +170,7 @@
         overview: window.overview,
         baseCurrency: window.baseCurrency,
         suggestion: window.categorySuggestion || null,
+        autoRecordEnabled: Boolean(window.autoRecordEnabled),
         profile: window.payeeProfile || null,
         dateFrom: null,
         dateTo: null,
