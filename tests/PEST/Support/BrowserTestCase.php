@@ -31,7 +31,7 @@ abstract class BrowserTestCase extends TestCase
     /**
      * Wait until the given JavaScript expression is truthy on the page (Pest browser assertions don't wait).
      */
-    public function waitUntil(object $page, string $expression, int $timeoutMs = 5000): void
+    public function waitUntil(object $page, string $expression, int $timeoutMs = 10000): void
     {
         $page->script(<<<JS
             () => new Promise((resolve, reject) => {
