@@ -1503,7 +1503,6 @@
     "You cannot merge a parent category into a child category.": "Nie możesz połączyć kategorii nadrzędnej z kategorią podrzędną.",
     "You cannot register new users.": "Nie możesz rejestrować nowych użytkowników.",
     "Your API key from the provider. This will be encrypted before storage.": "Twój klucz API od dostawcy. Zostanie zaszyfrowany przed zapisaniem.",
-    "Your changes have been saved!": "Twoje zmiany zostały zapisane!",
     "Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Twój obecny model jest przestarzały. Możesz go zachować w obecnej formie, ale po zmianie nie będzie można go ponownie wybrać.",
     "Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Twój obecny dostawca jest przestarzały. Możesz go zachować bez zmian, ale po zmianie nie będzie można go ponownie wybrać.",
     "Your search returned <strong>:total</strong> transactions in total": "Twoje wyszukiwanie zwróciło <strong>:total</strong> transakcji w sumie",

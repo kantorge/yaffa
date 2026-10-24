@@ -1502,7 +1502,6 @@
     "You cannot merge a parent category into a child category.": "Vous ne pouvez pas fusionner une catégorie parente dans une catégorie enfant.",
     "You cannot register new users.": "Vous ne pouvez pas enregistrer de nouveaux utilisateurs.",
     "Your API key from the provider. This will be encrypted before storage.": "Votre clé API fournie par le fournisseur. Elle sera chiffrée avant d'être stockée.",
-    "Your changes have been saved!": "Vos modifications ont été enregistrées !",
     "Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Votre modèle actuel est obsolète. Vous pouvez le conserver tel quel, mais une fois modifié, vous ne pourrez plus le sélectionner.",
     "Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Votre fournisseur actuel est obsolète. Vous pouvez le conserver tel quel, mais une fois modifié, vous ne pourrez plus le sélectionner.",
     "Your search returned <strong>:total</strong> transactions in total": "Votre recherche a renvoyé <strong>:total</strong> transactions au total",

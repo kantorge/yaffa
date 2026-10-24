@@ -29,11 +29,6 @@
           </div>
           <div class="modal-body">
             <AlertErrors :form="form" :message="errorMessage" />
-            <AlertSuccess
-              v-if="showSuccessAlert"
-              :form="form"
-              :message="successMessage"
-            />
 
             <slot></slot>
           </div>
@@ -64,7 +59,6 @@
   import {
     Button as SubmitButton,
     AlertErrors,
-    AlertSuccess,
   } from 'vform/src/components/bootstrap5';
 
   import { __ } from '@/shared/lib/i18n';
@@ -72,7 +66,7 @@
 
   /**
    * Shared modal-form skeleton: header/body/footer layout, the "new"/"edit"
-   * title-toggle idiom, vform's AlertErrors/AlertSuccess, and (T-01) a
+   * title-toggle idiom, vform's AlertErrors, and (T-01) a
    * dirty-check confirm before the modal is dismissed with unsaved changes.
    *
    * Consumers fill in their own fields via the default slot, and may add
@@ -87,7 +81,6 @@
     components: {
       SubmitButton,
       AlertErrors,
-      AlertSuccess,
     },
 
     props: {
@@ -127,18 +120,6 @@
       errorMessage: {
         type: String,
         default: () => __('There were some problems with your input.'),
-      },
-      successMessage: {
-        type: String,
-        default: () => __('Your changes have been saved!'),
-      },
-      // Consumers that already surface a toast on save (see showSuccessToast() calls) can turn
-      // this off - vform's own AlertSuccess is otherwise a stale duplicate: `form.successful` is
-      // deliberately excluded from Form.reset() (see vform's Form.ignore), so it stays true from
-      // the previous save and re-renders the instant the modal is reopened for a new edit.
-      showSuccessAlert: {
-        type: Boolean,
-        default: true,
       },
     },
 

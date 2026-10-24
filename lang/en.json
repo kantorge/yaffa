@@ -1502,7 +1502,6 @@
     "You cannot merge a parent category into a child category.": "You cannot merge a parent category into a child category.",
     "You cannot register new users.": "You cannot register new users.",
     "Your API key from the provider. This will be encrypted before storage.": "Your API key from the provider. This will be encrypted before storage.",
-    "Your changes have been saved!": "Your changes have been saved!",
     "Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.",
     "Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.",
     "Your search returned <strong>:total</strong> transactions in total": "Your search returned <strong>:total</strong> transactions in total",

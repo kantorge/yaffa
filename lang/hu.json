@@ -1501,7 +1501,6 @@
     "You cannot merge a parent category into a child category.": "Nem lehet szülőkategóriát gyermekkategóriával egyesíteni.",
     "You cannot register new users.": "Új felhasználókat nem lehet regisztrálni.",
     "Your API key from the provider. This will be encrypted before storage.": "Az API-kulcsod a szolgáltatótól. Ez a kulcs a tárolás előtt titkosítva lesz.",
-    "Your changes have been saved!": "A módosításokat mentettük!",
     "Your current model is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "A jelenlegi modelled elavult. Megtarthatod a jelenlegi állapotában, de ha egyszer megváltoztattad, nem választhatod ki újra.",
     "Your current provider is deprecated. You can keep it as-is, but once you change it, you cannot select it again.": "A jelenlegi szolgáltatód elavult. Megtarthatod a jelenlegi állapotában, de ha egyszer megváltoztattad, nem választhatod ki újra.",
     "Your search returned <strong>:total</strong> transactions in total": "A keresés összesen <strong>:total</strong> tranzakciót eredményezett",
