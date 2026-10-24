@@ -177,6 +177,7 @@
       payee_matching: __('Payee matching'),
       investment_matching: __('Investment matching'),
       category_batch_matching: __('Category matching'),
+      schedule_skip: __('Scheduled transaction skip'),
     };
 
     return map[step] || step;

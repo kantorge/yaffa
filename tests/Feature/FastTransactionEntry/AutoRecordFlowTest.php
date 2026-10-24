@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\CategoryLearning;
 use App\Models\Transaction;
 use App\Models\TransactionOrigin;
+use App\Models\TransactionSchedule;
 use App\Models\User;
 use App\Services\CategoryLearningService;
 use App\Services\PayeeProfileService;
@@ -237,4 +238,66 @@ it('sends the "recorded automatically" variant of the processed notification', f
         fn ($mail) => $mail->envelope()->subject === __('mail.ai_document_processed.subject_auto_recorded')
             && str_contains($mail->render(), __('mail.ai_document_processed.intro_auto_recorded')),
     );
+});
+
+describe('schedule skipping', function () {
+    // A monthly schedule of the payee, due $dueDaysAgo days ago, for $amount
+    beforeEach(function () {
+        $this->schedule = function ($payee, int $dueDaysAgo = 30, float $amount = 11) {
+            $transaction = $this->createStandardTransaction($this->user, $this->account->id, $payee->id, $amount, now()->subDays($dueDaysAgo)->subMonths(2), categoryId: $this->category->id);
+            $transaction->update(['schedule' => true]);
+            $transaction->currency_id = $this->account->config->currency_id;
+            $transaction->save();
+            TransactionSchedule::query()->create([
+                'transaction_id' => $transaction->id,
+                'start_date' => now()->subDays($dueDaysAgo)->subMonths(2)->toDateString(),
+                'next_date' => now()->subDays($dueDaysAgo)->toDateString(),
+                'frequency' => 'MONTHLY',
+                'interval' => 1,
+                'automatic_recording' => false,
+            ]);
+
+            return $transaction->transactionSchedule()->first();
+        };
+    });
+
+    it('skips the next occurrence of the payee schedule due around the document date and logs it', function () {
+        $payee = ($this->payeeWithHistory)();
+        $due = ($this->schedule)($payee, 31);
+        $before = $due->next_date->toDateString();
+
+        $document = ($this->notification)();
+
+        expect($document->status)->toBe('auto_recorded')
+            ->and($due->refresh()->next_date->toDateString())->not->toBe($before)
+            ->and(collect($document->refresh()->ai_chat_history)->firstWhere('step', 'schedule_skip')['response'])->toContain('Next occurrence skipped')
+            ->and(TransactionOrigin::query()->where('origin_id', $document->id)->sole()->decision_reason)->toContain('skipped');
+    });
+
+    it('leaves a schedule outside the date window or amount tolerance alone', function (int $dueDaysAgo, float $amount) {
+        $payee = ($this->payeeWithHistory)();
+        $due = ($this->schedule)($payee, $dueDaysAgo, $amount);
+        $before = $due->next_date->toDateString();
+
+        $document = ($this->notification)();
+
+        expect($document->status)->toBe('auto_recorded')
+            ->and($due->refresh()->next_date->toDateString())->toBe($before)
+            ->and(collect($document->refresh()->ai_chat_history)->firstWhere('step', 'schedule_skip'))->toBeNull();
+    })->with([
+        'overdue beyond the window' => [60, 11],
+        'amount out of tolerance' => [30, 40],
+    ]);
+
+    it('skips nothing when two schedules of the payee match', function () {
+        $payee = ($this->payeeWithHistory)();
+        $first = ($this->schedule)($payee, 30);
+        $second = ($this->schedule)($payee, 31);
+
+        $document = ($this->notification)();
+
+        expect($first->refresh()->next_date->toDateString())->toBe(now()->subDays(30)->toDateString())
+            ->and($second->refresh()->next_date->toDateString())->toBe(now()->subDays(31)->toDateString())
+            ->and(collect($document->refresh()->ai_chat_history)->firstWhere('step', 'schedule_skip')['response'])->toContain('more than one');
+    });
 });
