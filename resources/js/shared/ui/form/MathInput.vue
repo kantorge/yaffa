@@ -3,6 +3,7 @@
     :value="modelValue"
     type="text"
     @blur.stop="updateAmount($event.target)"
+    @keydown.enter="updateAmount($event.target)"
     @paste.stop="updateAmount($event.target)"
   />
 </template>
