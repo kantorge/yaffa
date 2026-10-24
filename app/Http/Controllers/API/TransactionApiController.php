@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 #[Middleware('auth:sanctum')]
@@ -616,7 +617,8 @@ class TransactionApiController extends Controller
             'transactionSchedule'
         ]);
 
-        $transaction->fill($validated);
+        // The form always posts ai_document_id (null when editing), but an update must never change the link
+        $transaction->fill(Arr::except($validated, 'ai_document_id'));
         $transaction->config->fill($validated['config']);
 
         // Store the original values of the changed attributes
@@ -689,7 +691,8 @@ class TransactionApiController extends Controller
             ];
         }
 
-        $transaction->fill($validated);
+        // The form always posts ai_document_id (null when editing), but an update must never change the link
+        $transaction->fill(Arr::except($validated, 'ai_document_id'));
         $transaction->config->fill($validated['config']);
 
         // Store the original values of the changed attributes
