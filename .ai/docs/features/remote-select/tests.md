@@ -11,7 +11,7 @@
 | Payee API update authz | Foreign payee → denied | `PayeeApiControllerTest::test_user_cannot_update_other_users_payee` | feature | Feature |
 | Payee endpoints honour token abilities | Read/write token deny + allow | `tests/Feature/API/ApiAbilityEnforcementTest.php` | feature | Feature |
 | Payee merge authz | Foreign payee → denied (form + submit) | `tests/Feature/PayeeTest.php` | feature | Feature |
-| `user_id` defaults even when the model booted unauthenticated | Created model gets the acting user's id. An explicit id isn't overridden | `tests/Feature/ModelOwnedByUserTraitBootOrderTest.php` | feature | Feature |
+| `user_id` defaults even when the model booted unauthenticated | Created model gets the acting user's id. An explicit id isn't overridden | `tests/Feature/ModelOwnedByUserTraitTest.php` | feature | Feature |
 | Custom `renderOption`/`renderItem` escape API data | Investment named `<img src=x onerror=…>` renders as text in the option and the selected item, and the handler doesn't run | `TransactionFormInvestmentStandaloneTest.php` (~line 410) | browser E2E | `test-e2e.yml` |
 | Query-string semantics (`undefined` omitted, `null` empty) | Exact serialized string | `resources/js/shared/lib/tom-select/queryString.test.js` | JS unit (`node --test`) | **not in CI** |
 | Every migrated select: search, select, clear, presets, modals, deep links, merge exclusion, investment currency filter, Tab/click-away never selects | UI behaviour per spec AC | `tests/PEST/**` (Pest browser, 90 pass / 3 todo at the last full run) | browser E2E | `test-e2e.yml` on PRs |

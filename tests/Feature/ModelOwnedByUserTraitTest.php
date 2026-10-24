@@ -1,37 +1,37 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Models\AccountGroup;
+use App\Models\Tag;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class ModelOwnedByUserTraitTest extends TestCase
-{
-    use RefreshDatabase;
+uses(RefreshDatabase::class);
 
-    public function test_explicit_user_id_is_not_overwritten_by_authenticated_user(): void
-    {
-        $authenticatedUser = User::factory()->create();
-        $otherUser = User::factory()->create();
+it('does not overwrite an explicit user_id with the authenticated user', function () {
+    $this->actingAs(User::factory()->create());
+    $otherUser = User::factory()->create();
 
-        $this->actingAs($authenticatedUser);
+    expect(AccountGroup::factory()->for($otherUser)->create()->user_id)->toBe($otherUser->id);
+});
 
-        $accountGroup = AccountGroup::factory()->for($otherUser)->create();
+it('defaults user_id to the authenticated user when unset', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-        $this->assertSame($otherUser->id, $accountGroup->user_id);
-    }
+    $accountGroup = AccountGroup::factory()->make(['user_id' => null]);
+    $accountGroup->save();
 
-    public function test_user_id_defaults_to_authenticated_user_when_unset(): void
-    {
-        $authenticatedUser = User::factory()->create();
+    expect($accountGroup->user_id)->toBe($user->id);
+});
 
-        $this->actingAs($authenticatedUser);
+it('defaults user_id to the authenticated user even if the model booted before anyone logged in', function () {
+    // A model boots once per process: boot Tag while nobody is authenticated
+    Model::clearBootedModels();
+    new Tag();
 
-        $accountGroup = AccountGroup::factory()->make(['user_id' => null]);
-        $accountGroup->save();
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-        $this->assertSame($authenticatedUser->id, $accountGroup->user_id);
-    }
-}
+    expect(Tag::create(['name' => 'Owned tag'])->user_id)->toBe($user->id);
+});
