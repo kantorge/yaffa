@@ -9,6 +9,8 @@ use Illuminate\Support\Arr;
 
 class PayeePersistenceService
 {
+    private const array CONFIG_FIELDS = ['category_id', 'auto_record_policy', 'itemization_expected'];
+
     /**
      * Create a new payee account entity from the given request.
      */
@@ -19,7 +21,7 @@ class PayeePersistenceService
 
         $accountEntity = new AccountEntity($validated);
 
-        $payeeConfig = Payee::create(Arr::only((array) data_get($validated, 'config', []), ['category_id']));
+        $payeeConfig = Payee::create(Arr::only((array) data_get($validated, 'config', []), self::CONFIG_FIELDS));
         $accountEntity->config()->associate($payeeConfig);
 
         $accountEntity->push();
@@ -44,7 +46,7 @@ class PayeePersistenceService
         $accountEntity->fill($validated);
 
         if ($accountEntity->config instanceof Payee) {
-            $accountEntity->config->fill(Arr::only($config, ['category_id']));
+            $accountEntity->config->fill(Arr::only($config, self::CONFIG_FIELDS));
         }
 
         $accountEntity->push();

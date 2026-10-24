@@ -15,6 +15,13 @@
     ></payee-form>
 
     <form accept-charset="UTF-8" autocomplete="off" @submit.prevent="onSubmit">
+      <template-fields
+        v-if="isTemplate"
+        v-model:name="templateName"
+        v-model:is-featured="templateIsFeatured"
+        :notices="templateInfo?.notices || []"
+        :errors="form.errors"
+      ></template-fields>
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
@@ -117,6 +124,7 @@
             <div class="card-body">
               <div class="row">
                 <div
+                  v-if="!isTemplate"
                   class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
@@ -137,6 +145,7 @@
                   </label>
                 </div>
                 <div
+                  v-if="!isTemplate"
                   :class="[
                     action === 'enter'
                       ? 'col-8 col-sm-2 col-md-4 col-lg-2'
@@ -441,25 +450,94 @@
           </div>
         </div>
         <div class="col-md-8">
-          <!-- AI Recommendations Info Banner -->
+          <!-- AI recommendations and related documents/transactions -->
           <div
-            v-if="hasAiRecommendations"
-            class="alert alert-primary mb-3"
+            v-if="showAiBanner || hasDuplicateMatches"
+            class="alert mb-3"
+            :class="
+              hasDuplicateMatches
+                ? 'alert-warning'
+                : 'alert-primary alert-dismissible'
+            "
             role="alert"
+            :dusk="hasDuplicateMatches ? 'duplicate-warning' : null"
           >
-            <div class="d-flex align-items-center">
-              <i class="fa fa-robot fa-2x me-3"></i>
-              <div>
-                <h6 class="alert-heading mb-2">
-                  ✨ {{ __('AI-Assisted Transaction') }}
-                </h6>
-                <p class="mb-1 small">
-                  {{
-                    __(
-                      'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
-                    )
-                  }}
-                </p>
+            <button
+              v-if="!hasDuplicateMatches"
+              type="button"
+              class="btn-close"
+              :aria-label="__('Close')"
+              @click="aiBannerDismissed = true"
+            ></button>
+            <div v-if="showAiBanner">
+              <h6 class="alert-heading mb-2">
+                ✨ {{ __('AI-Assisted Transaction') }}
+              </h6>
+              <p class="mb-1 small">
+                {{
+                  __(
+                    'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
+                  )
+                }}
+              </p>
+            </div>
+            <div v-if="hasDuplicateMatches" :class="{ 'mt-3': showAiBanner }">
+              <h6 class="alert-heading">
+                <i class="fa fa-triangle-exclamation me-1"></i>
+                {{
+                  duplicateMatches.transactions.length
+                    ? __('This purchase may already be recorded')
+                    : __('Another document may describe this purchase')
+                }}
+              </h6>
+              <p class="small mb-2">
+                {{
+                  __(
+                    'Repeated purchases are normal, so you can still save this transaction.',
+                  )
+                }}
+              </p>
+              <ul
+                v-if="duplicateMatches.transactions.length"
+                class="small mb-2"
+              >
+                <li
+                  v-for="match in duplicateMatches.transactions"
+                  :key="match.id"
+                >
+                  {{ __('Transaction on :date', { date: match.date }) }}
+                  <a :href="match.url" target="_blank" rel="noopener">
+                    #{{ match.id }}
+                  </a>
+                </li>
+              </ul>
+              <div
+                v-for="document in duplicateMatches.documents"
+                :key="document.id"
+                class="form-check small"
+              >
+                <input
+                  :id="'close-ai-document-' + document.id"
+                  class="form-check-input"
+                  type="checkbox"
+                  :checked="form.close_ai_document_id === document.id"
+                  :disabled="!canCloseDocuments"
+                  @change="
+                    toggleCloseDocument(document.id, $event.target.checked)
+                  "
+                />
+                <label
+                  class="form-check-label"
+                  :for="'close-ai-document-' + document.id"
+                >
+                  {{ __('Document:') }}
+                  <a :href="document.url" target="_blank" rel="noopener">
+                    {{ document.title }}
+                  </a>
+                  <span v-if="canCloseDocuments">
+                    — {{ __('close this document when saving') }}
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -487,7 +565,7 @@
         <div class="card-body">
           <div class="row justify-content-end">
             <div
-              v-if="!fromModal"
+              v-if="!fromModal && !isTemplate"
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
               dusk="action-after-save-desktop-button-group"
             >
@@ -513,7 +591,7 @@
               </div>
             </div>
             <div
-              v-if="!fromModal"
+              v-if="!fromModal && !isTemplate"
               class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
             >
               <label class="form-label" for="callback-selector-mobile-standard">
@@ -585,6 +663,8 @@
   import MathInput from '@/shared/ui/form/MathInput.vue';
 
   import Form from 'vform';
+  import templateForm from '@/transaction-templates/templateForm';
+  import TemplateFields from '@/transaction-templates/components/TemplateFields.vue';
   import {
     Button as SubmitButton,
     AlertErrors,
@@ -597,6 +677,7 @@
 
   export default {
     components: {
+      TemplateFields,
       TransactionItemContainer,
       TransactionSchedule,
       PayeeForm,
@@ -604,6 +685,8 @@
       AlertErrors,
       MathInput,
     },
+
+    mixins: [templateForm],
 
     props: {
       action: String,
@@ -683,7 +766,15 @@
         remaining_payee_default_amount: 0,
         remaining_payee_default_category_id: null,
         ai_document_id: null,
+        transaction_template_id: null,
+        close_ai_document_id: null,
       });
+
+      // Recorded transactions and open documents matching the purchase being entered
+      data.duplicateMatches = { transactions: [], documents: [] };
+      data.aiBannerDismissed = false;
+      data.duplicateCheckTimer = null;
+      data.duplicateCheckRequestId = 0;
 
       // Id counter for items
       data.itemCounter = 0;
@@ -737,6 +828,58 @@
     },
 
     computed: {
+      // What identifies the purchase for the duplicate check, or null while it is incomplete or not checkable
+      // (templates, schedules, transfers)
+      duplicateCheckPayload() {
+        const { transaction_type: type, config, date, schedule } = this.form;
+        const amount = parseFloat(config.amount_from);
+
+        if (
+          this.isTemplate ||
+          schedule ||
+          !['withdrawal', 'deposit'].includes(type) ||
+          !config.account_from_id ||
+          !config.account_to_id ||
+          !date ||
+          !(amount > 0)
+        ) {
+          return null;
+        }
+
+        const isWithdrawal = type === 'withdrawal';
+
+        return {
+          config_type: 'standard',
+          transaction_type: type,
+          account_id: isWithdrawal
+            ? config.account_from_id
+            : config.account_to_id,
+          payee_id: isWithdrawal
+            ? config.account_to_id
+            : config.account_from_id,
+          date,
+          amount: config.amount_from,
+          exclude_transaction_id:
+            this.action === 'edit' ? this.form.id || null : null,
+        };
+      },
+
+      showAiBanner() {
+        return this.hasAiRecommendations && !this.aiBannerDismissed;
+      },
+
+      hasDuplicateMatches() {
+        return (
+          this.duplicateMatches.transactions.length > 0 ||
+          this.duplicateMatches.documents.length > 0
+        );
+      },
+
+      // Closing a document is done by saving a new transaction; editing one cannot do it
+      canCloseDocuments() {
+        return this.action !== 'edit';
+      },
+
       // Account TO and FROM labels based on transaction type
       accountFromFieldLabel() {
         return ['withdrawal', 'transfer'].includes(this.form.transaction_type)
@@ -932,7 +1075,7 @@
 
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
-        return ['create', 'finalize'].includes(this.action);
+        return ['create', 'finalize', 'template'].includes(this.action);
       },
 
       // Check if any items have AI recommendations
@@ -945,6 +1088,11 @@
     },
 
     watch: {
+      // Re-run the duplicate check whenever the purchase's identifying fields change
+      duplicateCheckPayload(payload) {
+        this.scheduleDuplicateCheck(payload);
+      },
+
       remainingAmountToPayeeDefault(newAmount) {
         this.form.remaining_payee_default_amount = newAmount;
       },
@@ -1046,6 +1194,7 @@
     },
 
     beforeUnmount() {
+      clearTimeout(this.duplicateCheckTimer);
       this.accountSelects.from?.destroy();
       this.accountSelects.to?.destroy();
     },
@@ -1053,6 +1202,59 @@
     methods: {
       getCurrencySymbol,
       toFormattedCurrency,
+
+      // Debounced, and only the latest response is used. The check is informational, so a failure is ignored.
+      scheduleDuplicateCheck(payload) {
+        clearTimeout(this.duplicateCheckTimer);
+        const requestId = ++this.duplicateCheckRequestId;
+
+        if (!payload) {
+          this.applyDuplicateMatches({ transactions: [], documents: [] });
+          return;
+        }
+
+        this.duplicateCheckTimer = setTimeout(() => {
+          window.axios
+            .post(window.route('api.v1.transactions.duplicate-check'), payload)
+            .then((response) => {
+              if (requestId === this.duplicateCheckRequestId) {
+                this.applyDuplicateMatches(response.data);
+              }
+            })
+            .catch(() => {
+              if (requestId === this.duplicateCheckRequestId) {
+                this.applyDuplicateMatches({ transactions: [], documents: [] });
+              }
+            });
+        }, 500);
+      },
+
+      applyDuplicateMatches(matches) {
+        // The document being finalized is not a duplicate of its own transaction
+        this.duplicateMatches = {
+          ...matches,
+          documents: matches.documents.filter(
+            (d) => d.id !== this.aiDocumentId,
+          ),
+        };
+        matches = this.duplicateMatches;
+
+        // A document that no longer matches cannot be closed by this transaction
+        if (
+          this.form.close_ai_document_id !== null &&
+          !matches.documents.some(
+            (d) => d.id === this.form.close_ai_document_id,
+          )
+        ) {
+          this.form.close_ai_document_id = null;
+        }
+      },
+
+      // One document can be closed per saved transaction
+      toggleCloseDocument(documentId, checked) {
+        this.form.close_ai_document_id = checked ? documentId : null;
+      },
+
       initializeTransaction() {
         this.initializingTransaction = true;
 
@@ -1192,6 +1394,7 @@
 
         // Assign AI document ID passed to the form for future reference when saving the transaction
         this.form.ai_document_id = this.aiDocumentId;
+        this.form.transaction_template_id = this.transactionTemplateId;
 
         // Set form action
         this.form.action = this.action;
@@ -1219,7 +1422,9 @@
         const item = { ...rawItem };
 
         item.id = this.itemCounter++;
-        item.amount = Number(item.amount);
+        // A template item may have no amount yet
+        item.amount =
+          this.draftDecimal(item.amount) === null ? null : Number(item.amount);
         item.learnRecommendation = true;
 
         item.category_full_name =
@@ -1508,6 +1713,11 @@
           this.form.config.amount_to = this.form.config.amount_from;
         }
 
+        if (this.isTemplate) {
+          this.saveTemplate(this.buildTemplateDraft());
+          return;
+        }
+
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form
@@ -1545,6 +1755,41 @@
               },
             );
           });
+      },
+
+      // Only the filled fields, in the draft format shared with AI documents (schema v2)
+      buildTemplateDraft() {
+        const config = this.compactDraftPart({
+          account_from_id: this.draftId(this.form.config.account_from_id),
+          account_to_id: this.draftId(this.form.config.account_to_id),
+          amount_from: this.draftDecimal(this.form.config.amount_from),
+          amount_to: this.draftDecimal(this.form.config.amount_to),
+        });
+
+        const items = this.form.items
+          .map((item) => {
+            // Existing tags are objects or IDs; a tag typed in as new text cannot be stored yet
+            const tagIds = (item.tags || [])
+              .map((tag) => this.draftId(tag?.id ?? tag))
+              .filter((id) => Number.isInteger(id));
+
+            return this.compactDraftPart({
+              category_id: this.draftId(item.category_id),
+              amount: this.draftDecimal(item.amount),
+              comment: item.comment,
+              tag_ids: tagIds.length > 0 ? tagIds : null,
+            });
+          })
+          .filter((item) => Object.keys(item).length > 0);
+
+        return {
+          schema_version: 2,
+          config_type: 'standard',
+          transaction_type: this.form.transaction_type,
+          ...this.compactDraftPart({ comment: this.form.comment }),
+          config,
+          ...(items.length > 0 ? { transaction_items: items } : {}),
+        };
       },
 
       setPayee(payee) {

@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\AiDocumentStatus;
 use App\Events\AiDocumentProcessedEvent;
 use App\Mail\AiDocumentProcessed as AiDocumentProcessedMail;
 use Exception;
@@ -16,6 +17,11 @@ class SendAiDocumentProcessedNotification implements ShouldQueue
      */
     public function handle(AiDocumentProcessedEvent $event): void
     {
+        // A document closed as a duplicate, or held for its receipt, needs nothing from the user
+        if (in_array($event->document->status, [AiDocumentStatus::Duplicate->value, AiDocumentStatus::AwaitingItemization->value], true)) {
+            return;
+        }
+
         try {
             Mail::to($event->document->user->email)
                 ->locale($event->document->user->language)

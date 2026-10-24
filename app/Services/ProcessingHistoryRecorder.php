@@ -14,6 +14,7 @@ class ProcessingHistoryRecorder
         string $prompt,
         string $response,
         bool $includeInPromptHistory = true,
+        ?string $mode = null,
     ): void {
         $history = $document->ai_chat_history;
 
@@ -32,6 +33,11 @@ class ProcessingHistoryRecorder
             $entry['include_in_prompt_history'] = false;
         }
 
+        // 'local' = AI call skipped, 'fallback' = AI call failed; absent for regular AI calls
+        if ($mode !== null) {
+            $entry['mode'] = $mode;
+        }
+
         $history[] = $entry;
 
         $document->ai_chat_history = $history;
@@ -46,6 +52,7 @@ class ProcessingHistoryRecorder
             $this->buildLocalHistoryPrompt($step, $context),
             $this->buildLocalHistoryResponse($result),
             false,
+            'local',
         );
     }
 
@@ -74,7 +81,7 @@ class ProcessingHistoryRecorder
             'recommended_category_id' => null,
         ]);
 
-        $this->appendProcessingHistory($document, $step, $historyPrompt, $historyResponse, false);
+        $this->appendProcessingHistory($document, $step, $historyPrompt, $historyResponse, false, 'fallback');
     }
 
     public function hasAiFailureFallbackHistory(AiDocument $document, string $step): bool

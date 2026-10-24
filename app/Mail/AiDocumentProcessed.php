@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Enums\AiDocumentStatus;
 use App\Models\AiDocument;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -26,7 +27,9 @@ class AiDocumentProcessed extends Mailable
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), config('mail.from.name')),
-            subject: __('mail.ai_document_processed.subject'),
+            subject: $this->document->status === AiDocumentStatus::AutoRecorded->value
+                ? __('mail.ai_document_processed.subject_auto_recorded')
+                : __('mail.ai_document_processed.subject'),
         );
     }
 

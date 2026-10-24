@@ -62,7 +62,7 @@ class ProcessAiDocuments extends Command
                 $claimed = AiDocument::query()
                     ->whereKey($documentId)
                     ->where('status', AiDocumentStatus::ReadyForProcessing->value)
-                    ->update(['status' => AiDocumentStatus::Processing->value]);
+                    ->update(['status' => AiDocumentStatus::Processing->value, 'status_changed_at' => now()]);
 
                 if ($claimed === 0) {
                     continue;

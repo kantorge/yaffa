@@ -40,6 +40,7 @@ class SandboxDemoDataExporter
         'investment_groups',
         'account_entities',
         'payees',
+        'transaction_templates',
         'received_mails',
         'investment_prices',
     ];

@@ -1,5 +1,7 @@
 ## Tech debts, future improvements
 
+- Add frontend support for AI hint account/payee tokens.
+  - Verbose detail: `{account:ID}` / `{payee:ID}` tokens in AI hints work in the backend (`AiHintService::render()`), but the UI has no helper: users must type the IDs manually. Add "Insert account"/"Insert payee" remote-select dropdowns that insert the token at the caret, and a resolved `hint_preview` (names instead of tokens) in the list and edit modal. A full inline-chip editor is not worth it. Also consider token validation on save (IDs exist, belong to the user) and a visible warning for hints referencing deleted accounts/payees; today missing tokens are silently left as typed.
 - Add camera capture support in upload flow for mobile receipt capture.
   - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
 - Add payee/account-level custom prompt support and optional prompt-learning UX.

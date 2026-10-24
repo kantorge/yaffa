@@ -4,7 +4,7 @@
 
 | Notification | Class · template | Trigger | Recipient | Subject key |
 |---|---|---|---|---|
-| Old AI documents waiting | `App\Mail\AiDocumentsAwaitingAction` · `resources/views/emails/ai-documents-awaiting-action.blade.php` (markdown mail) | `CleanupOldAiDocuments::handle()` when ≥ 1 non-finalized document is older than the retention cutoff | The document owner's own `users.email` | `mail.ai_documents_awaiting_action.subject` |
+| Old AI documents waiting | `App\Mail\AiDocumentsAwaitingAction` · `resources/views/emails/ai-documents-awaiting-action.blade.php` (markdown mail) | `CleanupOldAiDocuments::handle()` when ≥ 1 non-terminal document is older than the retention cutoff | The document owner's own `users.email` | `mail.ai_documents_awaiting_action.subject` |
 
 ## Path
 

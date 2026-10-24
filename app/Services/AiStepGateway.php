@@ -274,6 +274,10 @@ class AiStepGateway
                 new NumberSchema('commission', 'Commission or fee amount.', nullable: true),
                 new NumberSchema('tax', 'Tax amount.', nullable: true),
                 new NumberSchema('dividend', 'Dividend amount.', nullable: true),
+                new StringSchema('document_kind', 'Kind of document: bank_notification, receipt, invoice or other.', nullable: true),
+                new StringSchema('transaction_time', 'Time of the transaction in HH:MM, 24 hour format.', nullable: true),
+                new StringSchema('bank_reference', 'Bank transaction reference or authorization code.', nullable: true),
+                new StringSchema('card_last_digits', 'Last digits of the card or account number used.', nullable: true),
             ],
             requiredFields: [
                 'transaction_type',
@@ -291,6 +295,10 @@ class AiStepGateway
                 'commission',
                 'tax',
                 'dividend',
+                'document_kind',
+                'transaction_time',
+                'bank_reference',
+                'card_last_digits',
             ]
         );
     }

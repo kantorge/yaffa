@@ -4,12 +4,16 @@ namespace Tests\Feature\API;
 
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
+use App\Models\AiDocument;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\Tag;
+use App\Models\Transaction;
+use App\Models\TransactionOrigin;
+use App\Models\TransactionTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -39,6 +43,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'categories.overview' => ['api.v1.categories.overview', 'get', 'read', ['category' => 1]],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
+            'payees.auto-record-candidates' => ['api.v1.payees.auto-record-candidates', 'get', 'read', []],
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
             'payees.overview' => ['api.v1.payees.overview', 'get', 'read', ['accountEntity' => 1]],
             'tags.index' => ['api.v1.tags.index', 'get', 'read', []],
@@ -49,6 +54,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'reports.cashflow' => ['api.v1.reports.cashflow', 'get', 'read', []],
             'imports.file-profiles.index' => ['api.v1.imports.file-profiles.index', 'get', 'read', []],
             'documents.index' => ['api.v1.documents.index', 'get', 'read', []],
+            'ai-hints.index' => ['api.v1.ai-hints.index', 'get', 'read', []],
             'category-learning.index' => ['api.v1.category-learning.index', 'get', 'read', []],
             'currency-rates.index' => ['api.v1.currency-rates.index', 'get', 'read', ['from' => 1, 'to' => 2]],
             'investment-prices.index' => ['api.v1.investment-prices.index', 'get', 'read', ['investment' => 1]],
@@ -58,14 +64,24 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.show' => ['api.v1.budgets.show', 'get', 'read', ['budget' => 1]],
             'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
             'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
+            'transactions.duplicate-check' => ['api.v1.transactions.duplicate-check', 'post', 'read', []],
+            'transaction-templates.index' => ['api.v1.transaction-templates.index', 'get', 'read', []],
+            'transaction-origins.index' => ['api.v1.transaction-origins.index', 'get', 'read', []],
+            'transaction-templates.show' => ['api.v1.transaction-templates.show', 'get', 'read', ['template' => 1]],
 
             // write
             'transactions.store-standard' => ['api.v1.transactions.store-standard', 'post', 'write', []],
+            'transaction-templates.store' => ['api.v1.transaction-templates.store', 'post', 'write', []],
+            'transaction-origins.review' => ['api.v1.transaction-origins.review', 'post', 'write', ['origin' => 1]],
+            'transaction-origins.review-many' => ['api.v1.transaction-origins.review-many', 'post', 'write', []],
+            'transaction-templates.update' => ['api.v1.transaction-templates.update', 'patch', 'write', ['template' => 1]],
+            'transaction-templates.destroy' => ['api.v1.transaction-templates.destroy', 'delete', 'write', ['template' => 1]],
             'budgets.store' => ['api.v1.budgets.store', 'post', 'write', []],
             'budgets.update' => ['api.v1.budgets.update', 'patch', 'write', ['budget' => 1]],
             'budgets.destroy' => ['api.v1.budgets.destroy', 'delete', 'write', ['budget' => 1]],
             'categories.store' => ['api.v1.categories.store', 'post', 'write', []],
             'categories.destroy' => ['api.v1.categories.destroy', 'delete', 'write', ['category' => 1]],
+            'payees.auto-record-candidates.recalculate' => ['api.v1.payees.auto-record-candidates.recalculate', 'post', 'write', []],
             'payees.store' => ['api.v1.payees.store', 'post', 'write', []],
             'tags.patch-active' => ['api.v1.tags.patch-active', 'patch', 'write', ['tag' => 1]],
             'investments.destroy' => ['api.v1.investments.destroy', 'delete', 'write', ['investment' => 1]],
@@ -77,6 +93,9 @@ class ApiAbilityEnforcementTest extends TestCase
             'imports.parse' => ['api.v1.imports.parse', 'post', 'write', []],
             'imports.file-profiles.store' => ['api.v1.imports.file-profiles.store', 'post', 'write', []],
             'documents.store' => ['api.v1.documents.store', 'post', 'write', []],
+            'documents.reprocessOpen' => ['api.v1.documents.reprocessOpen', 'post', 'write', []],
+            'documents.dismiss' => ['api.v1.documents.dismiss', 'post', 'write', ['aiDocument' => 1]],
+            'ai-hints.store' => ['api.v1.ai-hints.store', 'post', 'write', []],
             'category-learning.store' => ['api.v1.category-learning.store', 'post', 'write', []],
             'currency-rates.store' => ['api.v1.currency-rates.store', 'post', 'write', []],
             'investment-prices.store' => ['api.v1.investment-prices.store', 'post', 'write', []],
@@ -163,6 +182,20 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.tags.show', 'api.v1.tags.patch-active', 'api.v1.tags.destroy' => [
                 'tag' => Tag::factory()->for($user)->create()->id,
+            ],
+            'api.v1.transaction-templates.show', 'api.v1.transaction-templates.update', 'api.v1.transaction-templates.destroy' => [
+                'template' => TransactionTemplate::factory()->for($user)->create()->id,
+            ],
+            'api.v1.transaction-origins.review' => [
+                'origin' => TransactionOrigin::record(
+                    $user,
+                    Transaction::factory()->withdrawal($user)->create(),
+                    TransactionOrigin::RELATION_CREATED,
+                    null,
+                )->id,
+            ],
+            'api.v1.documents.dismiss' => [
+                'aiDocument' => AiDocument::factory()->for($user)->readyForReview()->create()->id,
             ],
             'api.v1.currencies.destroy' => [
                 'currency' => Currency::factory()->for($user)->create()->id,

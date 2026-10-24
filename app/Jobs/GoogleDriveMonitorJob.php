@@ -30,9 +30,6 @@ class GoogleDriveMonitorJob implements ShouldQueue
         // Check if the configured time interval has passed since the last sync to avoid unnecessary job dispatching
         $configs = GoogleDriveConfig::query()
             ->where('enabled', true)
-            ->whereHas('user.aiUserSettings', function ($query) {
-                $query->where('ai_enabled', true);
-            })
             ->get()
             ->filter(function (GoogleDriveConfig $config) use ($now): bool {
                 if ($config->last_sync_at === null) {

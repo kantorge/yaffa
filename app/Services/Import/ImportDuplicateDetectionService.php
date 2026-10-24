@@ -173,6 +173,32 @@ class ImportDuplicateDetectionService
     }
 
     /**
+     * The schedule candidates of a draft that are safe to act on without a person looking: the schedule's
+     * transaction involves the draft's matched payee, and the amount is within the user's duplicate amount
+     * tolerance. A caller that skips a schedule's occurrence automatically should only do so on exactly one
+     * of these.
+     *
+     * @param  array<string, mixed>  $draft  Same shape as enrichDraftsWithScheduleCandidates(), with `matched_payee.id` set
+     * @return list<array<string, mixed>>
+     */
+    public function strictScheduleCandidates(User $user, array $draft): array
+    {
+        $tolerance = (float) ($this->duplicateDetectionService->resolveSettingsForUser($user)['duplicate_amount_tolerance_percent'] ?? 10.0);
+        $draftAmount = abs((float) ($draft['amount'] ?? 0));
+
+        return array_values(array_filter(
+            $this->enrichDraftsWithScheduleCandidates($user, [$draft])[0]['schedule_candidates'],
+            function (array $candidate) use ($tolerance, $draftAmount): bool {
+                $amount = abs((float) ($candidate['summary']['amount'] ?? 0));
+
+                return in_array('payee', $candidate['matched_on'], true)
+                    && $amount > 0
+                    && abs($draftAmount - $amount) <= $amount * $tolerance / 100;
+            }
+        ));
+    }
+
+    /**
      * Load all transactions that fall within the combined date window of the given drafts.
      * Eager-loads config and transactionItems to prevent N+1 queries during scoring.
      *
@@ -197,13 +223,13 @@ class ImportDuplicateDetectionService
             return new \Illuminate\Database\Eloquent\Collection();
         }
 
-        $windowStart = $draftDates->min()->subDays($dateWindowDays);
-        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+        $windowStart = $draftDates->min()->clone()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->clone()->addDays($dateWindowDays);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
         $result = $user->transactions()
             ->whereBetween('date', [$windowStart, $windowEnd])
-            ->select(['id', 'date', 'config_type', 'config_id'])
+            ->select(['id', 'user_id', 'currency_id', 'date', 'config_type', 'config_id'])
             ->with(['config', 'transactionItems'])
             ->get();
 
@@ -236,8 +262,8 @@ class ImportDuplicateDetectionService
             return new \Illuminate\Database\Eloquent\Collection();
         }
 
-        $windowStart = $draftDates->min()->subDays($dateWindowDays);
-        $windowEnd = $draftDates->max()->addDays($dateWindowDays);
+        $windowStart = $draftDates->min()->clone()->subDays($dateWindowDays);
+        $windowEnd = $draftDates->max()->clone()->addDays($dateWindowDays);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Transaction> $result */
         $result = $user->transactions()
@@ -246,7 +272,7 @@ class ImportDuplicateDetectionService
                 $query->where('active', true)
                     ->whereBetween('next_date', [$windowStart, $windowEnd]);
             })
-            ->select(['id', 'date', 'config_type', 'config_id'])
+            ->select(['id', 'user_id', 'currency_id', 'date', 'config_type', 'config_id'])
             ->with(['config', 'transactionItems', 'transactionSchedule'])
             ->get();
 
@@ -352,7 +378,7 @@ class ImportDuplicateDetectionService
      * @param  array<string, mixed>  $draft
      * @return list<string>
      */
-    private function buildMatchedOnSignals(array $draft, ?Transaction $transaction): array
+    public function buildMatchedOnSignals(array $draft, ?Transaction $transaction): array
     {
         if (! $transaction instanceof Transaction) {
             return [];

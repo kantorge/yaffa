@@ -5,7 +5,7 @@
         <div ref="chartRate" style="width: 100%; height: 500px"></div>
       </div>
       <div v-else-if="isLoading">
-        <div class="text-center text-muted">{{ __('Loading...') }}</div>
+        <div class="text-center text-muted">{{ __('Loading') + '...' }}</div>
       </div>
       <div v-else>
         <div class="text-center text-muted">

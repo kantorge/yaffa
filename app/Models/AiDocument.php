@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -25,6 +26,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $google_drive_file_id
  * @property int|null $received_mail_id
  * @property string|null $custom_prompt
+ * @property string|null $content_hash
+ * @property string|null $document_kind
+ * @property Carbon|null $status_changed_at
  * @property Carbon|null $processed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -52,7 +56,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiDocument whereUserId($value)
  * @mixin \Eloquent
  */
-#[Fillable('status', 'source_type', 'processed_transaction_data', 'ai_chat_history', 'google_drive_file_id', 'received_mail_id', 'custom_prompt', 'processed_at')]
+#[Fillable('status', 'source_type', 'processed_transaction_data', 'ai_chat_history', 'google_drive_file_id', 'received_mail_id', 'custom_prompt', 'content_hash', 'document_kind', 'processed_at')]
 class AiDocument extends Model
 {
     use HasFactory;
@@ -64,7 +68,62 @@ class AiDocument extends Model
             'processed_transaction_data' => 'array',
             'ai_chat_history' => 'array',
             'processed_at' => 'datetime',
+            'status_changed_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $document): void {
+            $document->status_changed_at ??= now();
+        });
+
+        // The `created` origin of a transaction keeps its provenance and review state without the document;
+        // the rows that only link the document to a transaction are meaningless without it.
+        static::deleting(function (self $document): void {
+            $document->origins()->where('relation', '!=', TransactionOrigin::RELATION_CREATED)->delete();
+            $document->origins()->update(['origin_id' => null]);
+        });
+    }
+
+    /**
+     * The only place a document's status changes after creation: records when it changed (the itemization
+     * timeout is measured from it) and saves the document together with any other pending attribute changes.
+     */
+    public function transitionTo(AiDocumentStatus $status): void
+    {
+        $this->status = $status->value;
+        $this->status_changed_at = now();
+        $this->save();
+    }
+
+    /**
+     * sha256 of the sorted sha256 values of the document's files, so the same content always hashes the same.
+     *
+     * @param  list<string>  $fileHashes
+     */
+    public static function hashFiles(array $fileHashes): string
+    {
+        sort($fileHashes);
+
+        return hash('sha256', implode('', $fileHashes));
+    }
+
+    /**
+     * A receipt or an invoice with at least one line item: the only kind of document whose items can be trusted
+     * to be a full breakdown of the purchase.
+     */
+    public function isItemized(): bool
+    {
+        $draft = $this->processed_transaction_data ?? [];
+        $items = $draft['transaction_items'] ?? $draft['raw']['transaction_items'] ?? [];
+
+        return in_array($this->document_kind, ['receipt', 'invoice'], true) && is_array($items) && $items !== [];
+    }
+
+    public function origins(): MorphMany
+    {
+        return $this->morphMany(TransactionOrigin::class, 'origin');
     }
 
     public function user(): BelongsTo

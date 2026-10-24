@@ -47,12 +47,28 @@
     },
   });
 
+  const emit = defineEmits(['review-counts']);
+
   const tableElement = ref(null);
   const table = ref(null);
   const ajaxIsBusy = ref(false);
+  // '', 'auto-recorded' (transactions awaiting confirmation) or 'conflicts'
+  const reviewFilter = ref('');
   const detectedDateRange = ref({ from: null, to: null });
   const route = window.route;
   const RESIZE_RECALC_DELAY_MS = 100;
+  const RECEIVED_AT_FORMAT = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  };
+  const SOURCE_ICONS = {
+    manual_upload: 'fa-regular fa-circle-up',
+    received_email: 'fa-regular fa-envelope',
+    google_drive: 'fa-brands fa-google-drive',
+  };
   const COLUMN_INDEX = {
     status: 1,
     source: 2,
@@ -73,13 +89,30 @@
       case 'processing_failed':
         return 'bg-danger';
       case 'ready_for_review':
+      case 'awaiting_itemization':
         return 'bg-warning';
       case 'finalized':
+      case 'auto_recorded':
         return 'bg-success';
       default:
         return 'bg-secondary';
     }
   };
+
+  // The transaction the document created, or the one it was closed against as a duplicate or conflict
+  const getLinkedTransactionId = (document) =>
+    document?.transaction?.id ??
+    document?.origins?.find((origin) =>
+      ['duplicate_of', 'conflicts_with'].includes(origin.relation),
+    )?.transaction_id ??
+    null;
+
+  // The not yet reviewed origin of a given relation: an auto-recorded transaction awaiting confirmation
+  // ('created') or a receipt contradicting one ('conflicts_with')
+  const getUnreviewedOrigin = (document, relation) =>
+    document?.origins?.find(
+      (origin) => origin.relation === relation && !origin.reviewed_at,
+    ) ?? null;
 
   const getTitle = (document) => {
     if (document.received_mail?.subject) {
@@ -238,6 +271,12 @@
         matchedPayee?.name || rawData?.payee || __('Not available'),
       );
       const hint = renderMatchHint({ isMatched: true });
+
+      if (matchedPayee.url) {
+        const url = escapeHtml(matchedPayee.url);
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+      }
+
       return `<span>${name}</span>${hint}`;
     }
 
@@ -329,6 +368,8 @@
       ...document,
       created_at: document.created_at ? new Date(document.created_at) : null,
       display_title: getTitle(document),
+      needs_confirmation: Boolean(getUnreviewedOrigin(document, 'created')),
+      has_conflict: Boolean(getUnreviewedOrigin(document, 'conflicts_with')),
       detected_transaction_date: detectedDate,
       detected_payee_search: getDetectedPayeeForSearch(document),
       detected_amount_search: getDetectedAmountForSearch(document),
@@ -342,6 +383,127 @@
   const updateRow = (row, updates) => {
     const data = row.data();
     row.data({ ...data, ...updates }).invalidate();
+  };
+
+  const emitReviewCounts = () => {
+    const rows = table.value.rows().data().toArray();
+
+    emit('review-counts', {
+      autoRecorded: rows.filter((row) => row.needs_confirmation).length,
+      conflicts: rows.filter((row) => row.has_conflict).length,
+    });
+  };
+
+  const withReviewedOrigins = (document, originIds, status = document.status) =>
+    prepareDocument({
+      ...document,
+      status,
+      origins: document.origins.map((origin) =>
+        originIds.includes(origin.id)
+          ? { ...origin, reviewed_at: new Date().toISOString() }
+          : origin,
+      ),
+    });
+
+  const showReviewError = (error) =>
+    toastHelpers.showErrorToast(
+      __('Error while reviewing document: :errorMessage', {
+        errorMessage: error.response?.data?.message || error.message,
+      }),
+    );
+
+  // Closes the unreviewed origin of the given relation; optionally dismisses the receipt first
+  const reviewOrigin = async (row, relation, dismiss = false) => {
+    if (ajaxIsBusy.value) {
+      return;
+    }
+
+    const document = row.data();
+    const origin = getUnreviewedOrigin(document, relation);
+
+    if (!origin) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    try {
+      if (dismiss) {
+        await window.axios.post(
+          route('api.v1.documents.dismiss', { aiDocument: document.id }),
+        );
+      }
+
+      await window.axios.post(
+        route('api.v1.transaction-origins.review', { origin: origin.id }),
+      );
+
+      row
+        .data(
+          withReviewedOrigins(
+            document,
+            [origin.id],
+            dismiss ? 'dismissed' : document.status,
+          ),
+        )
+        .invalidate();
+      table.value.draw(false);
+      emitReviewCounts();
+      toastHelpers.showSuccessToast(
+        relation === 'created'
+          ? __('Transaction marked as checked')
+          : __('Conflict resolved'),
+      );
+    } catch (error) {
+      showReviewError(error);
+    } finally {
+      ajaxIsBusy.value = false;
+    }
+  };
+
+  // Confirms every auto-recorded transaction the current filters leave visible
+  const confirmAllShown = async () => {
+    if (ajaxIsBusy.value || !table.value) {
+      return;
+    }
+
+    const originIds = table.value
+      .rows({ search: 'applied' })
+      .data()
+      .toArray()
+      .map((document) => getUnreviewedOrigin(document, 'created')?.id)
+      .filter(Boolean);
+
+    if (originIds.length === 0) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    try {
+      await window.axios.post(route('api.v1.transaction-origins.review-many'), {
+        ids: originIds,
+      });
+
+      table.value
+        .rows((_index, document) =>
+          originIds.includes(getUnreviewedOrigin(document, 'created')?.id),
+        )
+        .every(function () {
+          this.data(withReviewedOrigins(this.data(), originIds)).invalidate();
+        });
+      table.value.draw(false);
+      emitReviewCounts();
+      toastHelpers.showSuccessToast(
+        __(':count transactions marked as checked', {
+          count: originIds.length,
+        }),
+      );
+    } catch (error) {
+      showReviewError(error);
+    } finally {
+      ajaxIsBusy.value = false;
+    }
   };
 
   const reprocessDocument = (documentId, row) => {
@@ -437,8 +599,38 @@
     });
   };
 
-  const canReprocess = (status) =>
+  const canDismiss = (status) =>
     ['ready_for_review', 'processing_failed'].includes(status);
+
+  const dismissDocument = (documentId, row) => {
+    if (ajaxIsBusy.value) {
+      return;
+    }
+
+    ajaxIsBusy.value = true;
+
+    window.axios
+      .post(route('api.v1.documents.dismiss', { aiDocument: documentId }))
+      .then((response) => {
+        updateRow(row, { status: response.data.status });
+        table.value.draw(false);
+        emitReviewCounts();
+        toastHelpers.showSuccessToast(response.data.message);
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while dismissing document: :errorMessage', {
+            errorMessage: error.response?.data?.error || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        ajaxIsBusy.value = false;
+      });
+  };
+
+  const canReprocess = (status) =>
+    ['ready_for_review', 'processing_failed', 'dismissed'].includes(status);
 
   const recalculateTableLayout = () => {
     if (!table.value) {
@@ -463,6 +655,7 @@
     table.value.clear();
     table.value.rows.add(data);
     table.value.draw(false);
+    emitReviewCounts();
 
     window.requestAnimationFrame(() => {
       recalculateTableLayout();
@@ -502,6 +695,22 @@
     return true;
   };
 
+  const reviewFilterFn = (settings, _searchData, _dataIndex, rowData) => {
+    if (!tableElement.value || settings.table !== tableElement.value) {
+      return true;
+    }
+
+    if (reviewFilter.value === 'auto-recorded') {
+      return Boolean(rowData?.needs_confirmation);
+    }
+
+    if (reviewFilter.value === 'conflicts') {
+      return Boolean(rowData?.has_conflict);
+    }
+
+    return true;
+  };
+
   onMounted(() => {
     const data = prepareDocuments(props.documents);
 
@@ -526,25 +735,40 @@
         {
           data: 'status',
           title: __('Status'),
-          render: (value, type) => {
+          render: (value, type, row) => {
             if (type === 'filter') {
               return props.statusLabels[value] || value;
             }
 
             const label = props.statusLabels[value] || value;
-            return `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
+            let html = `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
+
+            if (type === 'display' && row.needs_confirmation) {
+              html += ` <button type="button" class="badge bg-warning border-0 confirm-origin" title="${escapeHtml(__("Click once it's correct, fixed or not"))}"><span class="confirm-label">${escapeHtml(__('Needs checking'))}</span><i class="fa fa-spinner fa-spin"></i></button>`;
+            }
+
+            if (type === 'display' && row.has_conflict) {
+              html += ` <span class="badge bg-danger" title="${escapeHtml(__('The items of this document differ from the automatically recorded transaction.'))}">${escapeHtml(__('Conflict'))}</span>`;
+            }
+
+            return html;
           },
         },
         {
           data: 'source_type',
           title: __('Source'),
           render: (value, type) => {
-            if (type === 'filter') {
-              return props.sourceLabels[value] || value;
+            const label = props.sourceLabels[value] || value;
+
+            if (type !== 'display') {
+              return label;
             }
 
-            return props.sourceLabels[value] || value;
+            const icon = SOURCE_ICONS[value] || 'fa-solid fa-file';
+
+            return `<i class="${icon} fa-fw fa-lg text-secondary" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></i>`;
           },
+          className: 'text-center',
         },
         {
           data: 'created_at',
@@ -554,6 +778,8 @@
               return toFormattedDateTime(
                 value,
                 window.YAFFA.userSettings.locale,
+                '',
+                RECEIVED_AT_FORMAT,
               );
             }
 
@@ -596,15 +822,15 @@
         {
           data: 'transaction',
           title: __('Linked transaction'),
-          render: (value, _type) => {
-            if (!value) {
+          render: (_value, _type, row) => {
+            const transactionId = getLinkedTransactionId(row);
+
+            if (!transactionId) {
               return __('Not available');
             }
 
-            return (
-              dataTableHelpers.dataTablesActionButton(value.id, 'quickView') +
-              dataTableHelpers.dataTablesActionButton(value.id, 'show')
-            );
+            // The shared 'busy' class (set by initializeQuickViewButton) reveals the spinner
+            return `<button type="button" class="btn btn-xs btn-outline-success transaction-quickview" data-id="${escapeHtml(transactionId)}" title="${escapeHtml(__('Quick view'))}">#${escapeHtml(transactionId)} <i class="fa fa-fw fa-spinner fa-spin"></i></button>`;
           },
           className: 'dt-nowrap',
           orderable: false,
@@ -640,7 +866,7 @@
         style: 'os',
       },
       createdRow: (row, data) => {
-        if (!data.transaction) {
+        if (!getLinkedTransactionId(data)) {
           window
             .$('td:eq(' + COLUMN_INDEX.linkedTransaction + ')', row)
             .addClass('text-muted text-italic');
@@ -649,6 +875,8 @@
     });
 
     window.$.fn.dataTable.ext.search.push(detectedDateRangeFilterFn);
+    window.$.fn.dataTable.ext.search.push(reviewFilterFn);
+    emitReviewCounts();
 
     table.value.contextualActions({
       contextMenuClasses: ['text-primary'],
@@ -677,18 +905,86 @@
         {
           type: 'option',
           title: __('Open linked transaction'),
-          iconClass: 'fa fa-fw fa-external-link',
+          iconClass: 'fa fa-fw fa-eye',
           contextMenuClasses: ['text-info fw-bold'],
-          isHidden: (row) => !row.transaction,
+          isHidden: (row) => !getLinkedTransactionId(row),
           action: (selectedRows) => {
-            if (!selectedRows[0].transaction) {
-              return;
-            }
+            const transactionId = getLinkedTransactionId(selectedRows[0]);
 
-            window.location.href = route('transaction.open', {
-              transaction: selectedRows[0].transaction.id,
-              action: 'show',
+            if (transactionId) {
+              dataTableHelpers.triggerTransactionQuickView(transactionId);
+            }
+          },
+        },
+        {
+          type: 'option',
+          title: __('Mark as checked'),
+          iconClass: 'fa fa-fw fa-check',
+          contextMenuClasses: ['text-success fw-bold'],
+          isHidden: (row) => !row.needs_confirmation,
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'created');
+          },
+        },
+        {
+          type: 'option',
+          title: __('Keep transaction, discard receipt'),
+          iconClass: 'fa fa-fw fa-ban',
+          contextMenuClasses: ['text-danger fw-bold'],
+          isHidden: (row) =>
+            !row.has_conflict || row.status !== 'ready_for_review',
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'conflicts_with', true);
+          },
+        },
+        {
+          type: 'option',
+          title: __('Keep both, decide on the receipt later'),
+          iconClass: 'fa fa-fw fa-check-double',
+          contextMenuClasses: ['text-success fw-bold'],
+          isHidden: (row) => !row.has_conflict,
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            reviewOrigin(row, 'conflicts_with');
+          },
+        },
+        {
+          type: 'option',
+          title: __('Finalize transaction'),
+          iconClass: 'fa fa-fw fa-edit',
+          contextMenuClasses: ['text-primary fw-bold'],
+          isHidden: (row) => row.status !== 'ready_for_review',
+          action: (selectedRows) => {
+            // The draft is built in the viewer, which opens the finalize form on load
+            window.location.href = route('ai-documents.show', {
+              aiDocument: selectedRows[0].id,
+              finalize: 1,
             });
+          },
+        },
+        {
+          type: 'option',
+          title: __('Dismiss document'),
+          iconClass: 'fa fa-fw fa-ban',
+          contextMenuClasses: ['text-secondary fw-bold'],
+          isHidden: (row) => !canDismiss(row.status),
+          isDisabled: () => ajaxIsBusy.value,
+          action: (selectedRows) => {
+            const row = table.value.row(
+              (idx, data) => data.id === selectedRows[0].id,
+            );
+            dismissDocument(selectedRows[0].id, row);
           },
         },
         {
@@ -728,12 +1024,50 @@
 
     dataTableHelpers.initializeQuickViewButton('#ai-document-table');
 
+    window
+      .$('#ai-document-table')
+      .on('click', 'button.confirm-origin', (event) => {
+        if (ajaxIsBusy.value) {
+          return;
+        }
+
+        // Swap the label for the spinner (shown by the 'busy' class) until the request settles
+        const button = window.$(event.currentTarget);
+        button.addClass('busy').find('.confirm-label').addClass('d-none');
+
+        reviewOrigin(
+          table.value.row(event.currentTarget.closest('tr')),
+          'created',
+        ).finally(() => {
+          button
+            .removeClass('busy')
+            .find('.confirm-label')
+            .removeClass('d-none');
+        });
+      });
+    window.addEventListener('transactionOriginReviewed', onOriginReviewed);
+
     window.requestAnimationFrame(() => {
       recalculateTableLayout();
     });
 
     window.addEventListener('resize', handleWindowResize);
   });
+
+  // The transaction was confirmed elsewhere (e.g. in the transaction modal)
+  const onOriginReviewed = (event) => {
+    table.value
+      .rows((_index, document) =>
+        document.origins?.some((origin) => origin.id === event.detail.id),
+      )
+      .every(function () {
+        this.data(
+          withReviewedOrigins(this.data(), [event.detail.id]),
+        ).invalidate();
+      });
+    table.value.draw(false);
+    emitReviewCounts();
+  };
 
   const handleWindowResize = () => {
     window.setTimeout(() => {
@@ -745,7 +1079,15 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  // 'unprocessed' is a pseudo status matching every status except finalized
+  // Statuses nothing is waiting on any more, see App\Enums\AiDocumentStatus::terminal()
+  const TERMINAL_STATUSES = [
+    'finalized',
+    'auto_recorded',
+    'duplicate',
+    'dismissed',
+  ];
+
+  // 'unprocessed' is a pseudo status matching every status that is not terminal
   const statusFilterPattern = (status) => {
     if (!status) {
       return '';
@@ -754,7 +1096,7 @@
     const labels =
       status === 'unprocessed'
         ? Object.entries(props.statusLabels)
-            .filter(([key]) => key !== 'finalized')
+            .filter(([key]) => !TERMINAL_STATUSES.includes(key))
             .map(([, label]) => label)
         : [props.statusLabels[status] || status];
 
@@ -767,10 +1109,13 @@
     search,
     detectedDateFrom,
     detectedDateTo,
+    review,
   }) => {
     if (!table.value) {
       return;
     }
+
+    reviewFilter.value = review || '';
 
     const sourceValue = source ? props.sourceLabels[source] || source : '';
 
@@ -821,6 +1166,7 @@
 
   onUnmounted(() => {
     window.removeEventListener('resize', handleWindowResize);
+    window.removeEventListener('transactionOriginReviewed', onOriginReviewed);
 
     const dateFilterIndex = window.$.fn.dataTable.ext.search.indexOf(
       detectedDateRangeFilterFn,
@@ -829,9 +1175,16 @@
     if (dateFilterIndex > -1) {
       window.$.fn.dataTable.ext.search.splice(dateFilterIndex, 1);
     }
+
+    const reviewFilterIndex =
+      window.$.fn.dataTable.ext.search.indexOf(reviewFilterFn);
+
+    if (reviewFilterIndex > -1) {
+      window.$.fn.dataTable.ext.search.splice(reviewFilterIndex, 1);
+    }
   });
 
-  defineExpose({ applyFilters });
+  defineExpose({ applyFilters, confirmAllShown });
 </script>
 
 <style scoped>

@@ -13,20 +13,20 @@ This file contains the implementation-oriented material extracted from the main 
 - PDF text extraction using smalot/pdfparser is always available (no OCR required for text-based PDFs).
 - OCR for images is optional and requires either Tesseract (self-hosted) or Vision AI (cloud-based) to be enabled and available.
 - If a document contains images but no OCR method is available/enabled, processing fails with clear user notification.
-- Per-user AI behavior settings override global config values; null DB values fall back to global config, then safe hardcoded defaults. `ai_enabled = false` hard-blocks all new AI processing while letting in-flight jobs complete.
+- Per-user AI behavior settings override global config values; null DB values fall back to global config, then safe hardcoded defaults. `ai_enabled = false` blocks AI processing only: uploads, incoming emails and Google Drive imports are still accepted and held in `ready_for_processing` until AI is enabled.
 
 ## Backend Scope (Laravel)
 
 - Models and their most important fields:
   - `AiDocument`
-    - `status` (enum: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`)
+    - `status` (enum `App\Enums\AiDocumentStatus`: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`, `auto_recorded`, `duplicate`, `awaiting_itemization`, `dismissed`; changed only through `AiDocument::transitionTo()`, which also sets `status_changed_at`), `content_hash`, `document_kind`
       - `ready_for_processing` - Initial state after document submission/import, queued for AI processing, all minimum required data present
       - `processing` - Currently being processed by AI
       - `processing_failed` - AI processing failed after configured retries
       - `ready_for_review` - Processing complete, awaiting user review
       - `finalized` - Transaction created from draft
     - `source_type` (enum: `manual_upload`, `received_email`, `google_drive`)
-    - `processed_transaction_data` (JSON, nullable)
+    - `processed_transaction_data` (JSON, nullable) - the transaction draft. New drafts carry `schema_version: 2`; a draft without it is v1 (same shape, upgraded on read). `App\Services\TransactionDraftService` owns the format: `normalize()` (validate, upgrade, blank stale references), `enrich()` (display data for the viewer and the API), `fromTransaction()` and `toUnsavedTransaction()` (draft → form). See `.ai/docs/specifications/fast-transaction-entry/specification.md` D5
     - `google_drive_file_id` (nullable)
     - `received_mail_id` (nullable, FK to existing received_mails table)
     - `custom_prompt` (nullable)
@@ -39,6 +39,8 @@ This file contains the implementation-oriented material extracted from the main 
     - `item_description`
     - `category_id`
     - `usage_count`
+  - `AiHint`
+    - `user_id`, `name`, `trigger_text` (nullable), `hint` (text), `active` - see "AI Hints" below
   - `AiProviderConfig`
     - `provider` (validated against static list from config)
     - `model` (validated against provider’s model list)
@@ -67,7 +69,7 @@ This file contains the implementation-oriented material extracted from the main 
     - `image_max_width_tesseract` / `image_max_height_tesseract` (unsigned smallint, nullable) — optional Tesseract resize cap (`null` = no downscale; use only to cap very large images that cause resource or timeout issues)
     - `asset_similarity_threshold` (decimal(4,3), default 0.5) — minimum score for asset match candidates
     - `asset_max_suggestions` (unsigned tinyint, default 10) — max asset candidates sent to AI
-    - `match_auto_accept_threshold` (decimal(4,3), default 0.95) — score above which an asset match is auto-accepted without AI confirmation
+    - `match_auto_accept_threshold` (decimal(4,3), default 0.95) — score from which a payee/account match is certain (together with `match_min_margin`, default 0.1: the lead over the runner-up): taken without AI confirmation, and the only kind auto-recording accepts. Card endings match accounts too
     - `duplicate_date_window_days` (unsigned tinyint, default 3)
     - `duplicate_amount_tolerance_percent` (decimal(5,2), default 10.0)
     - `duplicate_similarity_threshold` (decimal(4,3), default 0.5)
@@ -273,7 +275,7 @@ This file contains the implementation-oriented material extracted from the main 
      - Identify account(s)/payee/investment matches from user's database using local exact match or AI-assisted matching
      - For withdrawals and deposits, if items are detected, try to identify line item level category mappings. Either use local exact match or AI-assisted matching based on item description.
    - Validates output schema
-   - Stores JSON draft in `processed_transaction_data`
+   - Stores JSON draft in `processed_transaction_data` (`schema_version: 2`)
 4. Status set to `ready_for_review` and email notification sent.
 5. User opens document review (`/ai-documents/{id}`) and can view extracted details.
    - "Extracted details" tab displays all transaction data comprehensively
@@ -300,6 +302,8 @@ This file contains the implementation-oriented material extracted from the main 
    - When the transaction is saved successfully, then increment the usage_count for each CategoryLearning record used in the transaction items, which was not overridden by the user.
 
 A few notes on the statuses
+
+- Since Fast Transaction Entry phase 2, `ProcessDocumentService::process()` ends in `decideOutcome()` (under a per-user `Cache::lock("ai-decide:{userId}")`): the same `content_hash` as another document, or the same purchase as a recorded transaction (`SameEventClassifier`), closes the document as `duplicate`; everything else becomes `ready_for_review`. See `.ai/docs/features/fast-transaction-entry/lifecycle-and-duplicates.md`.
 
 - The user cannot directly change the status, except some activities performed by them, triggering status changes. E.g. finalize a transaction.
 - This means, that `processing_failed` status cannot be forced into transaction creation, but a reprocessing can be requested. This means, that the general processing transaction should be restarted by the responsible jobs.
@@ -372,7 +376,7 @@ A few notes on the statuses
   - "Old" means both `created_at` **and** `updated_at` are older than the retention period (`AiDocument::olderThan()` scope), so a document touched recently (e.g. reprocessed) is never old
   - **Finalized old documents are deleted**, together with their `ai_document_files` rows, the files on the `local` disk, and the linked `ReceivedMail` (which holds the stored email body, the main source of database growth). The user is not notified about these deletions
   - The transaction created from a deleted document is **kept**: `transactions.ai_document_id` is a loose reference (`nullOnDelete`; the transaction only loses its "source document" link). This holds for every way of deleting a document, the retention cleanup and the manual delete action alike
-  - **Old documents in any other status** (`ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`) are never deleted. Instead, the job sends the owner one `App\Mail\AiDocumentsAwaitingAction` email per run (not per document) with the number of such documents and a link to `ai-documents.index?status=unprocessed&date_to=<cutoff date>`. This repeats on every daily run until the user finalizes or deletes them. `unprocessed` is a UI-only pseudo status of the list's status filter (every status except `finalized`, applied client-side in `AiDocumentTable.vue`); the API `status` parameter does not accept it
+  - **Old documents in any non-terminal status** (`ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `awaiting_itemization`) are never deleted. Instead, the job sends the owner one `App\Mail\AiDocumentsAwaitingAction` email per run (not per document) with the number of such documents and a link to `ai-documents.index?status=unprocessed&date_to=<cutoff date>`. This repeats on every daily run until the user finalizes or deletes them. `unprocessed` is a UI-only pseudo status of the list's status filter (every non-terminal status, applied client-side in `AiDocumentTable.vue`); the API `status` parameter does not accept it
   - "Processed" deliberately means finalized. A `ready_for_review` draft still needs the user's decision, so it is treated as unprocessed
   - The deleted documents' Google Drive files are not touched. A Drive-sourced document whose file is still in the monitored folder can be re-imported as a duplicate by a manual (full) sync, as the deduplication relies on `google_drive_file_id` (see "Deleted AiDocument handling" below). This can only happen when the post-import actions don't remove/rename the file. Therefore a SweetAlert warning is shown when the user enables or changes the retention period in the settings form, and in the maintenance page's cleanup confirmation, if they have an enabled Google Drive config with no post-import action (`User::googleDriveKeepsImportedFiles()`; the settings page receives it as `aiSettingsPageMeta.drive_keeps_imported_files`). Scheduled runs cannot ask for confirmation
   - Only paths recorded in `ai_document_files.file_path` are removed from disk. Afterwards the document's own directory (`ai_documents/{user_id}/{document id or uuid}`) is removed if it is empty; any other directory level, and a directory still containing untracked files, is left alone
@@ -675,6 +679,19 @@ The system will use multi-step prompting similar to existing email processing:
 After payee matching, backend processing resolves category usage from shared payee-stats logic (the same logic powering `GET /api/v1/payees/{accountEntity}/category-stats`). If only one category is present in the 6-month stats, category matching is skipped and that category is assigned to the entire amount as one line item.
 
 All prompts require JSON responses with strict schemas to ensure validation.
+
+### AI Hints
+
+User-defined guidelines for recurring document patterns (e.g. bank notification emails that must always map to a specific transfer), sent only with the **main extraction prompt**. The extraction → matching sequence is unchanged; hints do not push the account/payee lists into the first prompt.
+
+- **Model:** `AiHint` (`ai_hints` table): `name`, `trigger_text` (nullable), `hint`, `active`; user-owned (`AiHintPolicy`, `ModelOwnedByUserTrait`; `user_id` is never client-writable).
+- **Selection:** `AiHintService::hintsForText()` returns the user's active hints (ordered by id) whose `trigger_text` occurs in the extracted document text (plain, case-insensitive substring - deliberately not a regex, see the ReDoS note for import profiles), or that have no trigger text (always sent).
+- **Tokens:** `{account:ID}` and `{payee:ID}` inside `hint` are replaced with the current `AccountEntity` name when the prompt is built (`AiHintService::render()`), so renames don't stale a hint. Tokens for a missing entity, or one owned by another user, stay as typed. No token validation on save and no UI support for inserting tokens: it is an intentionally undocumented-in-UI feature; users type the tokens manually.
+- **Prompt:** `AiPromptBuilder::buildMainExtractionPrompt()` takes the rendered hints as a last `$hints` argument and adds a "USER-DEFINED PATTERNS" block before the per-document custom instructions. No matching hints = no block.
+- **Wiring:** `ProcessDocumentService::extractTransactionData()` loads hints for `$document->user` and passes them to the builder.
+- **API:** `GET|POST /api/v1/ai-hints`, `GET|PATCH|DELETE /api/v1/ai-hints/{aiHint}` (`AiHintApiController`; `abilities:read` for index/show, `abilities:write` for store/update/destroy; covered in `ApiAbilityEnforcementTest`). Validation (`AiHintRequest`): `name` and `hint` required, `trigger_text` optional, `active` boolean.
+- **UI:** `/ai-hints` (`ai-hints.index`, nav entry under Category learning, shown when an AI provider is configured; breadcrumb in `routes/breadcrumbs.php`). Vue island like the payee/category-learning pages: DataTable with active filter and search, clickable active icon (toggles via PATCH), and `AiHintForm.vue` on the shared `FormModal` (Cancel button, discard-changes confirmation on dirty close via Cancel/X/Esc/backdrop). Onboarding topic `AiHints` (guided-tour step in `OnboardingApiController`). Entry: `resources/js/ai-hints/index.js`.
+- **Tests:** `tests/Feature/AiHintTest.php`.
 
 ### Required Composer Dependencies
 

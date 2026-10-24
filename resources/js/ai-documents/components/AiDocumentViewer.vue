@@ -18,10 +18,6 @@
           aria-expanded="true"
         >
           <dl class="row mb-0">
-            <dt class="col-7">{{ __('Created at') }}</dt>
-            <dd class="col-5" :title="aiDocument.created_at">
-              {{ createdAtLabel }}
-            </dd>
             <dt class="col-7">{{ __('Status') }}</dt>
             <dd class="col-5">
               <span class="badge" :class="statusClass">
@@ -30,6 +26,10 @@
             </dd>
             <dt class="col-7">{{ __('Source') }}</dt>
             <dd class="col-5">{{ sourceLabel }}</dd>
+            <dt class="col-7">{{ __('Created at') }}</dt>
+            <dd class="col-5" :title="aiDocument.created_at">
+              {{ createdAtLabel }}
+            </dd>
             <dt class="col-7">{{ __('Processed at') }}</dt>
             <dd
               class="col-5"
@@ -44,11 +44,11 @@
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
-                v-if="aiDocument.transaction"
+                v-if="linkedTransactionId"
                 :href="transactionLink"
                 :title="__('View transaction')"
               >
-                {{ aiDocument.transaction.id }}
+                {{ linkedTransactionId }}
               </a>
               <span v-else class="text-muted">{{ __('Not available') }}</span>
             </dd>
@@ -293,7 +293,15 @@
                   }"
                 >
                   <template v-if="matchedEntities.payee?.matched">
-                    <span>{{ matchedEntities.payee.name }}</span>
+                    <a
+                      v-if="matchedEntities.payee.url"
+                      :href="matchedEntities.payee.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ matchedEntities.payee.name }}
+                    </a>
+                    <span v-else>{{ matchedEntities.payee.name }}</span>
                     <span class="text-muted small ms-1">
                       <i
                         class="fa fa-check-circle text-success"
@@ -339,6 +347,8 @@
       <AiDocumentDuplicates
         :ai-document-id="aiDocument.id"
         :can-finalize="canFinalize"
+        :currency="draftCurrency"
+        :draft-amount="draftData.config?.amount_from ?? rawData.amount"
       />
 
       <div class="card mb-3">
@@ -372,6 +382,21 @@
             </button>
           </li>
           <li
+            v-if="unreviewedCreatedOrigin"
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            {{ __('Mark transaction as checked') }}
+            <button
+              class="btn btn-xs btn-success"
+              type="button"
+              :disabled="isBusy"
+              :title="__('Mark transaction as checked')"
+              @click="markTransactionChecked"
+            >
+              <i class="fa fa-fw fa-check"></i>
+            </button>
+          </li>
+          <li
             v-if="canReprocess"
             class="list-group-item d-flex justify-content-between align-items-center"
           >
@@ -384,6 +409,21 @@
               @click="reprocessDocument"
             >
               <i class="fa fa-fw fa-repeat" :class="{ 'fa-spin': isBusy }"></i>
+            </button>
+          </li>
+          <li
+            v-if="canDismiss"
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            {{ __('Dismiss document') }}
+            <button
+              class="btn btn-xs btn-secondary"
+              type="button"
+              :disabled="isBusy"
+              :title="__('Dismiss document')"
+              @click="dismissDocument"
+            >
+              <i class="fa fa-fw fa-ban"></i>
             </button>
           </li>
           <li
@@ -478,6 +518,20 @@
                 {{ __('Processing details') }}
               </button>
             </li>
+            <li v-if="linkedTransactionId" class="nav-item">
+              <button
+                id="nav-document-tab-transaction"
+                class="nav-link"
+                data-coreui-toggle="tab"
+                data-coreui-target="#document-tab-transaction"
+                type="button"
+                role="tab"
+                aria-controls="document-tab-transaction"
+                aria-selected="false"
+              >
+                {{ __('Transaction') }}
+              </button>
+            </li>
           </ul>
         </div>
         <div class="card-body">
@@ -533,7 +587,53 @@
               aria-labelledby="nav-document-tab-history"
               tabindex="0"
             >
-              <ai-document-processing-history :entries="processingHistory" />
+              <ai-document-processing-history
+                :entries="processingHistory"
+                :auto-record-note="autoRecordNote"
+              />
+            </div>
+
+            <div
+              v-if="linkedTransactionId"
+              id="document-tab-transaction"
+              class="tab-pane fade"
+              role="tabpanel"
+              aria-labelledby="nav-document-tab-transaction"
+              tabindex="0"
+            >
+              <div v-if="transactionLoading" class="text-center text-muted">
+                <i class="fa fa-spinner fa-spin"></i> {{ __('Loading') }}
+              </div>
+              <div v-else-if="transactionError" class="text-danger">
+                {{ transactionError }}
+              </div>
+              <TransactionShowStandard
+                v-else-if="linkedTransaction?.config_type === 'standard'"
+                :transaction="linkedTransaction"
+              />
+              <TransactionShowInvestment
+                v-else-if="linkedTransaction?.config_type === 'investment'"
+                :transaction="linkedTransaction"
+              />
+              <div v-else class="text-muted">{{ __('Not available') }}</div>
+              <div
+                v-if="
+                  linkedTransaction?.id &&
+                  !transactionLoading &&
+                  !transactionError
+                "
+                class="card mb-0"
+              >
+                <div class="card-body">
+                  <ActionButtonBar
+                    :transaction="linkedTransaction"
+                    :is-modal="false"
+                    edit-callback="back"
+                    :on-deleted="handleLinkedTransactionDeleted"
+                    @transaction-updated="(t) => (linkedTransaction = t)"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -548,13 +648,24 @@
 
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-  import { getTransactionTypeConfig } from '@/shared/lib/helpers';
-  import { __, toFormattedDateTime } from '@/shared/lib/i18n';
+  import {
+    getTransactionTypeConfig,
+    processTransaction,
+  } from '@/shared/lib/helpers';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedDate,
+    toFormattedDateTime,
+  } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
   import TransactionFormModalInvestment from '@/transactions/components/form/ModalInvestment.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+  import TransactionShowStandard from '@/transactions/components/display/ShowStandard.vue';
+  import ActionButtonBar from '@/transactions/components/display/ActionButtonBar.vue';
+  import TransactionShowInvestment from '@/transactions/components/display/ShowInvestment.vue';
   import AiDocumentEmailViewer from './AiDocumentEmailViewer.vue';
   import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
   import AiDocumentExtractedDetails from './AiDocumentExtractedDetails.vue';
@@ -606,8 +717,10 @@
       case 'processing_failed':
         return 'bg-danger';
       case 'ready_for_review':
+      case 'awaiting_itemization':
         return 'bg-warning';
       case 'finalized':
+      case 'auto_recorded':
         return 'bg-success';
       default:
         return 'bg-secondary';
@@ -663,23 +776,203 @@
 
   const hasProcessingHistory = computed(
     () =>
-      showExtractedDetails.value &&
-      Array.isArray(processingHistory.value) &&
-      processingHistory.value.length > 0,
+      (showExtractedDetails.value &&
+        Array.isArray(processingHistory.value) &&
+        processingHistory.value.length > 0) ||
+      !!autoRecordNote.value,
   );
 
+  // Documents linked to a transaction cannot be reprocessed, see App\Enums\AiDocumentStatus::reprocessable()
   const canReprocess = computed(() =>
+    ['ready_for_review', 'processing_failed', 'dismissed'].includes(
+      aiDocument.value.status,
+    ),
+  );
+
+  const canDismiss = computed(() =>
     ['ready_for_review', 'processing_failed'].includes(aiDocument.value.status),
   );
 
+  // The transaction the document created, or the one it was closed against as a duplicate
+  const linkedTransactionId = computed(
+    () =>
+      aiDocument.value.transaction?.id ??
+      aiDocument.value.origins?.find(
+        (origin) => origin.relation === 'duplicate_of',
+      )?.transaction_id ??
+      null,
+  );
+
   const transactionLink = computed(() =>
-    aiDocument.value.transaction
+    linkedTransactionId.value
       ? route('transaction.open', {
-          transaction: aiDocument.value.transaction.id,
+          transaction: linkedTransactionId.value,
           action: 'show',
         })
       : '#',
   );
+
+  const linkedTransaction = ref(null);
+  const transactionLoading = ref(false);
+  const transactionError = ref('');
+
+  const loadLinkedTransaction = () => {
+    if (!linkedTransactionId.value) {
+      return;
+    }
+
+    transactionLoading.value = true;
+    transactionError.value = '';
+
+    window.axios
+      .get(
+        route('api.v1.transactions.show', {
+          transaction: linkedTransactionId.value,
+        }),
+      )
+      .then((response) => {
+        linkedTransaction.value = processTransaction(response.data.transaction);
+      })
+      .catch((error) => {
+        transactionError.value = __(
+          'Error while loading the transaction: :errorMessage',
+          { errorMessage: error.response?.data?.message || error.message },
+        );
+      })
+      .finally(() => {
+        transactionLoading.value = false;
+      });
+  };
+
+  const handleLinkedTransactionDeleted = () => {
+    linkedTransaction.value = null;
+    showFilesTab();
+    refreshDocument();
+  };
+
+  // An auto-recorded transaction still waiting for the person to confirm it
+  const unreviewedCreatedOrigin = computed(
+    () =>
+      aiDocument.value.origins?.find(
+        (origin) => origin.relation === 'created' && !origin.reviewed_at,
+      ) ?? null,
+  );
+
+  const markTransactionChecked = () => {
+    const origin = unreviewedCreatedOrigin.value;
+
+    isBusy.value = true;
+
+    window.axios
+      .post(route('api.v1.transaction-origins.review', { origin: origin.id }))
+      .then(() => {
+        toastHelpers.showSuccessToast(__('Transaction marked as checked'));
+        handleOriginReviewed({ detail: { id: origin.id } });
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while reviewing document: :errorMessage', {
+            errorMessage: error.response?.data?.message || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        isBusy.value = false;
+      });
+  };
+
+  // Fired by the transaction details (or the button above) once an origin is reviewed
+  const handleOriginReviewed = (event) => {
+    const reviewedAt = new Date().toISOString();
+
+    [aiDocument.value.origins, linkedTransaction.value?.origins].forEach(
+      (origins) =>
+        origins?.forEach((origin) => {
+          if (origin.id === event.detail.id && !origin.reviewed_at) {
+            origin.reviewed_at = reviewedAt;
+          }
+        }),
+    );
+  };
+
+  // The document's currency with the user's rounding settings, for formatting candidate amounts
+  const draftCurrency = computed(() => {
+    const iso = String(rawData.value.currency || '').toLowerCase();
+
+    return iso
+      ? (window.aiDocumentCurrencies || []).find(
+          (c) => c.iso_code.toLowerCase() === iso,
+        ) || null
+      : null;
+  });
+
+  // Why the document was (not) recorded automatically, see App\Services\AutoRecord\GateEvaluator
+  const autoRecordNote = computed(() => {
+    const document = aiDocument.value;
+
+    if (document.status === 'auto_recorded') {
+      const reason = document.origins?.find(
+        (origin) => origin.relation === 'created',
+      )?.decision_reason;
+
+      return reason || __('Recorded automatically');
+    }
+
+    const autoRecord = document.processed_transaction_data?.auto_record;
+
+    if (document.status === 'awaiting_itemization') {
+      return autoRecord?.hold_until
+        ? __('Waiting for the receipt until :date.', {
+            date: toFormattedDate(
+              new Date(autoRecord.hold_until),
+              locale,
+              null,
+            ),
+          })
+        : __('Waiting for the receipt.');
+    }
+
+    if (document.status === 'ready_for_review' && autoRecord?.reason) {
+      const { amount, median, from, to } = autoRecord.context || {};
+      const currency = rawData.value.currency;
+
+      // Show the amounts in the document's currency, rounded as the user's currency (if known) is configured
+      if (
+        autoRecord.failed_gate === 'amount' &&
+        amount &&
+        median &&
+        from &&
+        to &&
+        currency
+      ) {
+        const currencySettings = {
+          generic_decimal_precision: null,
+          ...(window.aiDocumentCurrencies || []).find(
+            (c) => c.iso_code.toLowerCase() === String(currency).toLowerCase(),
+          ),
+          iso_code: String(currency).toUpperCase(),
+        };
+
+        return __('Not recorded automatically: :reason', {
+          reason: __(
+            'Amount: :amount is outside the usual range (around :median, accepted :from - :to).',
+            {
+              amount: toFormattedCurrency(amount, locale, currencySettings),
+              median: toFormattedCurrency(median, locale, currencySettings),
+              from: toFormattedCurrency(from, locale, currencySettings),
+              to: toFormattedCurrency(to, locale, currencySettings),
+            },
+          ),
+        });
+      }
+
+      return __('Not recorded automatically: :reason', {
+        reason: autoRecord.reason,
+      });
+    }
+
+    return null;
+  });
 
   const isUnidentified = (value) => {
     return value === null || typeof value === 'undefined' || value === '';
@@ -837,6 +1130,35 @@
     });
   };
 
+  const dismissDocument = () => {
+    if (isBusy.value) {
+      return;
+    }
+
+    isBusy.value = true;
+
+    window.axios
+      .post(
+        window.route('api.v1.documents.dismiss', {
+          aiDocument: aiDocument.value.id,
+        }),
+      )
+      .then((response) => {
+        aiDocument.value.status = response.data.status;
+        toastHelpers.showSuccessToast(response.data.message);
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while dismissing document: :errorMessage', {
+            errorMessage: error.response?.data?.error || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        isBusy.value = false;
+      });
+  };
+
   const deleteDocument = () => {
     if (isBusy.value) {
       return;
@@ -907,6 +1229,7 @@
       .then((response) => {
         if (response?.data?.document) {
           aiDocument.value = response.data.document;
+          loadLinkedTransaction();
         }
       });
 
@@ -923,14 +1246,121 @@
       return;
     }
 
+    // Read the draft's payee before the refresh replaces the document
+    const aliasOffer = getPayeeAliasOffer(transaction);
+
     refreshDocument();
+
+    if (aliasOffer) {
+      offerPayeeAlias(aliasOffer);
+    }
+  };
+
+  // The leading words of the extracted payee text, up to the first word with a digit (store numbers, cities
+  // and the like follow it), at most three words
+  const leadingWords = (text) => {
+    const words = String(text || '')
+      .trim()
+      .split(/\s+/);
+    const firstNumbered = words.findIndex((word) => /\d/.test(word));
+
+    return words
+      .slice(0, firstNumbered === -1 ? words.length : firstNumbered)
+      .slice(0, 3)
+      .join(' ');
+  };
+
+  // When the person picked another payee than the one the document was matched to, the extracted text is
+  // worth remembering as an alias of the chosen payee
+  const getPayeeAliasOffer = (transaction) => {
+    const payeeId =
+      {
+        withdrawal: transaction.config?.account_to_id,
+        deposit: transaction.config?.account_from_id,
+      }[transaction.transaction_type] ?? null;
+    const alias = leadingWords(rawData.value.payee);
+
+    if (!payeeId || !alias || payeeId === matchedEntities.value.payee?.id) {
+      return null;
+    }
+
+    return { payeeId, alias };
+  };
+
+  const offerPayeeAlias = ({ payeeId, alias }) => {
+    window.axios
+      .get(route('api.v1.payees.show', { accountEntity: payeeId }))
+      .then(({ data: payee }) => {
+        const knownNames = [payee.name, ...(payee.alias || '').split(/\r?\n/)];
+
+        if (
+          knownNames.some(
+            (name) => name.trim().toLowerCase() === alias.toLowerCase(),
+          )
+        ) {
+          return null;
+        }
+
+        return Swal.fire({
+          text: __(
+            'Add ":alias" as an alias of :payee? Documents with this payee text will then be matched to it.',
+            { alias, payee: payee.name },
+          ),
+          icon: 'question',
+          showCancelButton: true,
+          cancelButtonText: __('No'),
+          confirmButtonText: __('Add alias'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-primary',
+            cancelButton: 'btn btn-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return null;
+          }
+
+          return window.axios
+            .patch(route('api.v1.payees.update', { accountEntity: payeeId }), {
+              config_type: 'payee',
+              name: payee.name,
+              active: payee.active,
+              alias: [payee.alias, alias].filter(Boolean).join('\n'),
+              simplified: true,
+              config: { category_id: payee.config?.category_id ?? null },
+            })
+            .then(() => {
+              toastHelpers.showSuccessToast(__('Alias added'));
+            });
+        });
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          error.response?.data?.errors?.alias?.[0] ||
+            __('Unable to add the alias.'),
+        );
+      });
   };
 
   onMounted(() => {
     window.addEventListener('transaction-created', handleTransactionCreated);
+    window.addEventListener('transactionOriginReviewed', handleOriginReviewed);
+    loadLinkedTransaction();
+
+    // Set by the document list's "Finalize transaction" action
+    if (
+      new URLSearchParams(window.location.search).has('finalize') &&
+      canFinalize.value
+    ) {
+      finalizeDocument();
+    }
   });
 
   onBeforeUnmount(() => {
     window.removeEventListener('transaction-created', handleTransactionCreated);
+    window.removeEventListener(
+      'transactionOriginReviewed',
+      handleOriginReviewed,
+    );
   });
 </script>

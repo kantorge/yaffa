@@ -91,6 +91,8 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property-read Collection<int, AiProviderConfig> $aiProviderConfigs
  * @property-read int|null $ai_provider_configs_count
  * @property-read AiUserSettings|null $aiUserSettings
+ * @property-read Collection<int, AiHint> $aiHints
+ * @property-read int|null $ai_hints_count
  * @property-read Collection<int, CategoryLearning> $categoryLearning
  * @property-read int|null $category_learning_count
  * @property-read Collection<int, GoogleDriveConfig> $googleDriveConfigs
@@ -183,9 +185,20 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
         return $this->hasMany(AccountEntity::class)->payees();
     }
 
+    /**
+     * @return HasMany<Tag, $this>
+     */
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
+    }
+
+    /**
+     * @return HasMany<TransactionTemplate, $this>
+     */
+    public function transactionTemplates(): HasMany
+    {
+        return $this->hasMany(TransactionTemplate::class);
     }
 
     public function transactions(): HasMany
@@ -247,6 +260,14 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
             ->where('enabled', true)
             ->get()
             ->contains(fn (GoogleDriveConfig $config) => empty($config->post_import_actions));
+    }
+
+    /**
+     * @return HasMany<AiHint, $this>
+     */
+    public function aiHints(): HasMany
+    {
+        return $this->hasMany(AiHint::class);
     }
 
     /**

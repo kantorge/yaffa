@@ -58,7 +58,7 @@
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
             </a>
             @env('local')
-                <span id="breakpoint-label" class="badge bg-info ms-3" style="align-self: center;">Loading...</span>
+                <span id="breakpoint-label" class="badge bg-info ms-3" style="align-self: center;">Loading</span>
             @endenv
             <ul class="header-nav ms-auto"></ul>
             <ul class="header-nav ms-3 me-4">

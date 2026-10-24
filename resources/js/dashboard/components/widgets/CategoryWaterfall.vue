@@ -87,7 +87,7 @@
           class="btn btn-sm btn-outline-primary"
           for="waterfallTransactionCategory_Standard"
         >
-          {{ __('widget.categoryWaterfall.onlyStandard') }}
+          {{ __('widget.categoryWaterfall.withoutInvestment') }}
         </label>
 
         <input

@@ -41,7 +41,7 @@
 
     <a
       v-if="controls.edit"
-      :href="getRoute('edit', { callback: 'show' })"
+      :href="getRoute('edit', { callback: editCallback })"
       class="btn btn-primary ms-2"
       :title="__('Edit')"
     >
@@ -54,6 +54,15 @@
       :title="__('Clone')"
     >
       <i class="fa me-1 fa-clone"></i>{{ __('Clone') }}
+    </a>
+
+    <a
+      v-if="controls.clone"
+      :href="getRoute('template')"
+      class="btn btn-primary ms-2"
+      :title="__('Save as template')"
+    >
+      <i class="fa me-1 fa-bookmark"></i>{{ __('Save as template') }}
     </a>
 
     <button
@@ -85,7 +94,7 @@
   import { __ } from '@/shared/lib/i18n';
   import { processTransaction } from '@/shared/lib/helpers';
   import { confirmDelete } from '@/shared/lib/confirm';
-  import { showErrorToast } from '@/shared/lib/toast';
+  import { showErrorToast, showSuccessToast } from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
 
   export default {
@@ -105,6 +114,16 @@
       isModal: {
         type: Boolean,
         default: false,
+      },
+      // Replaces the redirect after a successful delete
+      onDeleted: {
+        type: Function,
+        default: null,
+      },
+      // Where the edit form returns to after saving
+      editCallback: {
+        type: String,
+        default: 'show',
       },
       transaction: {
         type: Object,
@@ -168,13 +187,18 @@
               }),
             )
             .then(() => {
-              storeNotification(
-                'success',
-                __('Transaction deleted (#:transactionId)', {
-                  transactionId: this.transaction.id,
-                }),
-                { dismissible: true },
-              );
+              const message = __('Transaction deleted (#:transactionId)', {
+                transactionId: this.transaction.id,
+              });
+
+              if (this.onDeleted) {
+                showSuccessToast(message);
+                this.deleteButtonBusy = false;
+                this.onDeleted();
+                return;
+              }
+
+              storeNotification('success', message, { dismissible: true });
               location.href = returnUrl;
             })
             .catch((error) => {

@@ -105,6 +105,20 @@ class Transaction extends Model
         'transactionItems',
     ];
 
+    protected static function booted(): void
+    {
+        // Reconciling a transaction against the bank statement is the strongest review there is, so an
+        // automatically recorded transaction no longer needs confirming. Covers every path that reconciles.
+        static::saved(function (self $transaction): void {
+            if ($transaction->reconciled && $transaction->wasChanged('reconciled')) {
+                $transaction->origins()
+                    ->where('relation', TransactionOrigin::RELATION_CREATED)
+                    ->whereNull('reviewed_at')
+                    ->update(['reviewed_at' => now()]);
+            }
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -158,6 +172,11 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function origins(): HasMany
+    {
+        return $this->hasMany(TransactionOrigin::class);
     }
 
     public function aiDocument(): BelongsTo

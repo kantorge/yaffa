@@ -1,6 +1,6 @@
 <template>
   <div class="timeline-wrapper">
-    <div v-if="entries.length === 0" class="text-muted">
+    <div v-if="entries.length === 0 && !autoRecordNote" class="text-muted">
       {{ __('No processing history available') }}
     </div>
 
@@ -16,6 +16,12 @@
           <div class="d-flex align-items-center gap-2">
             <span class="badge text-bg-primary">{{ index + 1 }}</span>
             <strong>{{ formatStep(entry.step) }}</strong>
+            <span
+              v-if="modeBadges[entry.mode]"
+              class="badge"
+              :class="modeBadges[entry.mode].class"
+              >{{ modeBadges[entry.mode].label }}</span
+            >
           </div>
           <small class="text-muted">{{
             formatTimestamp(entry.timestamp)
@@ -53,6 +59,21 @@
           </details>
         </div>
       </details>
+
+      <details
+        v-if="autoRecordNote"
+        class="card mb-3 shadow-sm border-0 interaction-card"
+      >
+        <summary
+          class="card-header d-flex justify-content-between align-items-center bg-body-tertiary"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge text-bg-primary">{{ entries.length + 1 }}</span>
+            <strong>{{ __('Automatic recording') }}</strong>
+          </div>
+        </summary>
+        <div class="card-body">{{ autoRecordNote }}</div>
+      </details>
     </div>
   </div>
 </template>
@@ -67,6 +88,10 @@
       type: Array,
       default: () => [],
     },
+    autoRecordNote: {
+      type: String,
+      default: null,
+    },
   });
 
   const normalizedEntries = computed(() =>
@@ -76,6 +101,11 @@
       responseContent: normalizeContent(entry?.response),
     })),
   );
+
+  const modeBadges = {
+    local: { label: __('AI call skipped'), class: 'text-bg-success' },
+    fallback: { label: __('AI call failed'), class: 'text-bg-warning' },
+  };
 
   const looksLikeJson = (text) => {
     if (typeof text !== 'string') {
@@ -147,6 +177,7 @@
       payee_matching: __('Payee matching'),
       investment_matching: __('Investment matching'),
       category_batch_matching: __('Category matching'),
+      schedule_skip: __('Scheduled transaction skip'),
     };
 
     return map[step] || step;

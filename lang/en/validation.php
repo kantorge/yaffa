@@ -100,6 +100,12 @@ return [
         "string" => "The :attribute must be at least :min characters.",
     ],
 
+    "missing" => "The :attribute field must be missing.",
+    "missing_if" => "The :attribute field must be missing when :other is :value.",
+    "missing_unless" => "The :attribute field must be missing unless :other is :value.",
+    "missing_with" => "The :attribute field must be missing when :values is present.",
+    "missing_with_all" => "The :attribute field must be missing when :values are present.",
+
     "not_regex" => "The :attribute format is invalid.",
     "numeric" => "The :attribute must be a number.",
     "password" => "The password is incorrect.",

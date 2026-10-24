@@ -35,6 +35,7 @@ class AiUserSettingsFactory extends Factory
             'duplicate_date_window_days' => 3,
             'duplicate_amount_tolerance_percent' => 10.0,
             'duplicate_similarity_threshold' => 0.5,
+            'same_event_minutes' => 10,
             'category_matching_mode' => 'child_preferred',
             'document_retention_days' => null,
         ];
