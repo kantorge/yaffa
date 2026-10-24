@@ -15,10 +15,10 @@
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ __('New standard template') }}
+                        {{ __('New template') }}
                         <a class="btn btn-success btn-sm"
                            href="{{ route('transaction-templates.create', 'standard') }}"
-                           title="{{ __('New standard template') }}"
+                           title="{{ __('New template') }}"
                         >
                             <i class="fa fa-plus"></i>
                         </a>

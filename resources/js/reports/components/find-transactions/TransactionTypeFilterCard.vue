@@ -34,7 +34,7 @@
     investment: 'group_investment',
   };
   const GROUP_LABELS = {
-    standard: () => __('Standard'),
+    standard: () => __('Deposit, withdrawal, transfer'),
     investment: () => __('Investment'),
   };
 
