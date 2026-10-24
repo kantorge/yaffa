@@ -1819,5 +1819,7 @@
     "Payee: \":text\" is not a certain match for :payee.": "Odbiorca: „:text” nie jest pewnym dopasowaniem do :payee.",
     "account :name from card ending :digits": "konto :name na podstawie końcówki karty :digits",
     "account :name": "konto :name",
-    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Konto: nie można z pewnością ustalić konta (brak pasującej końcówki karty lub nazwy konta, a odbiorca nie ma jednego szablonu z kontem)."
+    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Konto: nie można z pewnością ustalić konta (brak pasującej końcówki karty lub nazwy konta, a odbiorca nie ma jednego szablonu z kontem).",
+    "Mark transaction as checked": "Oznacz transakcję jako sprawdzoną",
+    "Error while loading the transaction: :errorMessage": "Błąd podczas ładowania transakcji: :errorMessage"
 }

@@ -1819,5 +1819,7 @@
     "Payee: \":text\" is not a certain match for :payee.": "Payee: \":text\" is not a certain match for :payee.",
     "account :name from card ending :digits": "account :name from card ending :digits",
     "account :name": "account :name",
-    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account)."
+    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).",
+    "Mark transaction as checked": "Mark transaction as checked",
+    "Error while loading the transaction: :errorMessage": "Error while loading the transaction: :errorMessage"
 }

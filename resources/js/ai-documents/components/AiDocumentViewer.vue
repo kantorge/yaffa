@@ -18,10 +18,6 @@
           aria-expanded="true"
         >
           <dl class="row mb-0">
-            <dt class="col-7">{{ __('Created at') }}</dt>
-            <dd class="col-5" :title="aiDocument.created_at">
-              {{ createdAtLabel }}
-            </dd>
             <dt class="col-7">{{ __('Status') }}</dt>
             <dd class="col-5">
               <span class="badge" :class="statusClass">
@@ -30,6 +26,10 @@
             </dd>
             <dt class="col-7">{{ __('Source') }}</dt>
             <dd class="col-5">{{ sourceLabel }}</dd>
+            <dt class="col-7">{{ __('Created at') }}</dt>
+            <dd class="col-5" :title="aiDocument.created_at">
+              {{ createdAtLabel }}
+            </dd>
             <dt class="col-7">{{ __('Processed at') }}</dt>
             <dd
               class="col-5"
@@ -382,6 +382,21 @@
             </button>
           </li>
           <li
+            v-if="unreviewedCreatedOrigin"
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            {{ __('Mark transaction as checked') }}
+            <button
+              class="btn btn-xs btn-success"
+              type="button"
+              :disabled="isBusy"
+              :title="__('Mark transaction as checked')"
+              @click="markTransactionChecked"
+            >
+              <i class="fa fa-fw fa-check"></i>
+            </button>
+          </li>
+          <li
             v-if="canReprocess"
             class="list-group-item d-flex justify-content-between align-items-center"
           >
@@ -503,6 +518,20 @@
                 {{ __('Processing details') }}
               </button>
             </li>
+            <li v-if="linkedTransactionId" class="nav-item">
+              <button
+                id="nav-document-tab-transaction"
+                class="nav-link"
+                data-coreui-toggle="tab"
+                data-coreui-target="#document-tab-transaction"
+                type="button"
+                role="tab"
+                aria-controls="document-tab-transaction"
+                aria-selected="false"
+              >
+                {{ __('Transaction') }}
+              </button>
+            </li>
           </ul>
         </div>
         <div class="card-body">
@@ -563,6 +592,31 @@
                 :auto-record-note="autoRecordNote"
               />
             </div>
+
+            <div
+              v-if="linkedTransactionId"
+              id="document-tab-transaction"
+              class="tab-pane fade"
+              role="tabpanel"
+              aria-labelledby="nav-document-tab-transaction"
+              tabindex="0"
+            >
+              <div v-if="transactionLoading" class="text-center text-muted">
+                <i class="fa fa-spinner fa-spin"></i> {{ __('Loading') }}
+              </div>
+              <div v-else-if="transactionError" class="text-danger">
+                {{ transactionError }}
+              </div>
+              <TransactionShowStandard
+                v-else-if="linkedTransaction?.config_type === 'standard'"
+                :transaction="linkedTransaction"
+              />
+              <TransactionShowInvestment
+                v-else-if="linkedTransaction?.config_type === 'investment'"
+                :transaction="linkedTransaction"
+              />
+              <div v-else class="text-muted">{{ __('Not available') }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -576,7 +630,10 @@
 
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-  import { getTransactionTypeConfig } from '@/shared/lib/helpers';
+  import {
+    getTransactionTypeConfig,
+    processTransaction,
+  } from '@/shared/lib/helpers';
   import {
     __,
     toFormattedCurrency,
@@ -588,6 +645,8 @@
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
   import TransactionFormModalInvestment from '@/transactions/components/form/ModalInvestment.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
+  import TransactionShowStandard from '@/transactions/components/display/ShowStandard.vue';
+  import TransactionShowInvestment from '@/transactions/components/display/ShowInvestment.vue';
   import AiDocumentEmailViewer from './AiDocumentEmailViewer.vue';
   import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
   import AiDocumentExtractedDetails from './AiDocumentExtractedDetails.vue';
@@ -733,6 +792,83 @@
         })
       : '#',
   );
+
+  const linkedTransaction = ref(null);
+  const transactionLoading = ref(false);
+  const transactionError = ref('');
+
+  const loadLinkedTransaction = () => {
+    if (!linkedTransactionId.value) {
+      return;
+    }
+
+    transactionLoading.value = true;
+    transactionError.value = '';
+
+    window.axios
+      .get(
+        route('api.v1.transactions.show', {
+          transaction: linkedTransactionId.value,
+        }),
+      )
+      .then((response) => {
+        linkedTransaction.value = processTransaction(response.data.transaction);
+      })
+      .catch((error) => {
+        transactionError.value = __(
+          'Error while loading the transaction: :errorMessage',
+          { errorMessage: error.response?.data?.message || error.message },
+        );
+      })
+      .finally(() => {
+        transactionLoading.value = false;
+      });
+  };
+
+  // An auto-recorded transaction still waiting for the person to confirm it
+  const unreviewedCreatedOrigin = computed(
+    () =>
+      aiDocument.value.origins?.find(
+        (origin) => origin.relation === 'created' && !origin.reviewed_at,
+      ) ?? null,
+  );
+
+  const markTransactionChecked = () => {
+    const origin = unreviewedCreatedOrigin.value;
+
+    isBusy.value = true;
+
+    window.axios
+      .post(route('api.v1.transaction-origins.review', { origin: origin.id }))
+      .then(() => {
+        toastHelpers.showSuccessToast(__('Transaction marked as checked'));
+        handleOriginReviewed({ detail: { id: origin.id } });
+      })
+      .catch((error) => {
+        toastHelpers.showErrorToast(
+          __('Error while reviewing document: :errorMessage', {
+            errorMessage: error.response?.data?.message || error.message,
+          }),
+        );
+      })
+      .finally(() => {
+        isBusy.value = false;
+      });
+  };
+
+  // Fired by the transaction details (or the button above) once an origin is reviewed
+  const handleOriginReviewed = (event) => {
+    const reviewedAt = new Date().toISOString();
+
+    [aiDocument.value.origins, linkedTransaction.value?.origins].forEach(
+      (origins) =>
+        origins?.forEach((origin) => {
+          if (origin.id === event.detail.id && !origin.reviewed_at) {
+            origin.reviewed_at = reviewedAt;
+          }
+        }),
+    );
+  };
 
   // The document's currency with the user's rounding settings, for formatting candidate amounts
   const draftCurrency = computed(() => {
@@ -1068,6 +1204,7 @@
       .then((response) => {
         if (response?.data?.document) {
           aiDocument.value = response.data.document;
+          loadLinkedTransaction();
         }
       });
 
@@ -1182,6 +1319,8 @@
 
   onMounted(() => {
     window.addEventListener('transaction-created', handleTransactionCreated);
+    window.addEventListener('transactionOriginReviewed', handleOriginReviewed);
+    loadLinkedTransaction();
 
     // Set by the document list's "Finalize transaction" action
     if (
@@ -1194,5 +1333,9 @@
 
   onBeforeUnmount(() => {
     window.removeEventListener('transaction-created', handleTransactionCreated);
+    window.removeEventListener(
+      'transactionOriginReviewed',
+      handleOriginReviewed,
+    );
   });
 </script>

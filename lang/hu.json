@@ -1818,5 +1818,7 @@
     "Payee: \":text\" is not a certain match for :payee.": "Partner: a(z) \":text\" nem biztos egyezés a következővel: :payee.",
     "account :name from card ending :digits": "számla: :name, a(z) :digits végű kártya alapján",
     "account :name": "számla: :name",
-    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Számla: nem azonosítható biztosan számla (nincs egyező kártyavégződés vagy számlanév, és a partnernek nincs egyetlen számlát tartalmazó sablonja)."
+    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Számla: nem azonosítható biztosan számla (nincs egyező kártyavégződés vagy számlanév, és a partnernek nincs egyetlen számlát tartalmazó sablonja).",
+    "Mark transaction as checked": "Tranzakció megjelölése ellenőrzöttként",
+    "Error while loading the transaction: :errorMessage": "Hiba a tranzakció betöltésekor: :errorMessage"
 }

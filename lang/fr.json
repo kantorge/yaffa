@@ -1818,5 +1818,7 @@
     "Payee: \":text\" is not a certain match for :payee.": "Bénéficiaire : « :text » n'est pas une correspondance certaine pour :payee.",
     "account :name from card ending :digits": "compte :name d'après la fin de carte :digits",
     "account :name": "compte :name",
-    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Compte : aucun compte n'a pu être identifié avec certitude (aucune fin de carte ni aucun nom de compte ne correspond, et le bénéficiaire n'a pas de modèle unique avec un compte)."
+    "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Compte : aucun compte n'a pu être identifié avec certitude (aucune fin de carte ni aucun nom de compte ne correspond, et le bénéficiaire n'a pas de modèle unique avec un compte).",
+    "Mark transaction as checked": "Marquer la transaction comme vérifiée",
+    "Error while loading the transaction: :errorMessage": "Erreur lors du chargement de la transaction : :errorMessage"
 }
