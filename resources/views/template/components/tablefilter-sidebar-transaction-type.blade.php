@@ -6,7 +6,7 @@
             role="group"
     >
         <input type="radio" class="btn-check" name="table_filter_transaction_type" id="table_filter_transaction_type_standard" value="{{__('standard')}}">
-        <label class="btn btn-outline-primary btn-xs" for="table_filter_transaction_type_standard" title="{{ __('Standard') }}">
+        <label class="btn btn-outline-primary btn-xs" for="table_filter_transaction_type_standard" title="{{ __('Deposit, withdrawal, transfer') }}">
             <span class="fa fa-fw fa-shopping-cart"></span>
         </label>
 

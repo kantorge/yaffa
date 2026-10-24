@@ -18,9 +18,7 @@
           v-if="canApplySuggestions"
           type="button"
           class="btn btn-sm btn-outline-primary"
-          :title="
-            __('Apply standard transaction items based on past statistics')
-          "
+          :title="__('Apply usual items based on past statistics')"
           :disabled="isLoadingSuggestions"
           @click="applyStandardTransactionItems"
         >
@@ -29,7 +27,7 @@
               isLoadingSuggestions ? 'fa fa-spinner fa-spin' : 'fa fa-magic'
             "
           ></i>
-          {{ __('Apply standard transaction items') }}
+          {{ __('Apply usual items') }}
         </button>
       </div>
       <div>
@@ -359,12 +357,10 @@
           this.$emit('replaceTransactionItems', newItems);
 
           toastHelpers.showSuccessToast(
-            __('Standard transaction items applied successfully.'),
+            __('Usual items applied successfully.'),
           );
         } catch (error) {
-          toastHelpers.showErrorToast(
-            __('Failed to apply standard transaction items.'),
-          );
+          toastHelpers.showErrorToast(__('Failed to apply usual items.'));
           // Keep this for debugging in browser console without breaking UX.
           console.error('Error applying standard transaction items', error);
         } finally {

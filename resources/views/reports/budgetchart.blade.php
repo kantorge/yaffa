@@ -162,7 +162,7 @@
                                 'schedule' => '1',
                                 'callback' => 'back'
                             ]) }}"
-                            title="{{ __('New scheduled standard transaction') }}"
+                            title="{{ __('New scheduled transaction') }}"
                     >
                         <i class="fa fa-fw fa-cart-plus"></i>
                     </a>

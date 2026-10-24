@@ -309,7 +309,7 @@
 
         if (hasStandardOnlyFilter && !hasStandardTypeSelected) {
           return __(
-            'Category, payee, and tag filters only apply to standard transactions, but no standard transaction type is selected. This combination will not return any results.',
+            'Category, payee, and tag filters only apply to deposits, withdrawals and transfers, but none of these types is selected. This combination will not return any results.',
           );
         }
 
