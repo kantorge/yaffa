@@ -42,6 +42,8 @@ class ProcessDocumentService
 
     private AutoRecorder $autoRecorder;
 
+    private AiHintService $aiHintService;
+
     private bool $promptChatHistoryEnabled = true;
 
     public function __construct(
@@ -56,6 +58,7 @@ class ProcessDocumentService
         ?SameEventClassifier $sameEventClassifier = null,
         ?GateEvaluator $gateEvaluator = null,
         ?AutoRecorder $autoRecorder = null,
+        ?AiHintService $aiHintService = null,
     ) {
         $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
         $this->processingHistoryRecorder = $processingHistoryRecorder ?? app(ProcessingHistoryRecorder::class);
@@ -63,6 +66,7 @@ class ProcessDocumentService
         $this->sameEventClassifier = $sameEventClassifier ?? app(SameEventClassifier::class);
         $this->gateEvaluator = $gateEvaluator ?? app(GateEvaluator::class);
         $this->autoRecorder = $autoRecorder ?? app(AutoRecorder::class);
+        $this->aiHintService = $aiHintService ?? app(AiHintService::class);
     }
 
     /**
@@ -411,7 +415,8 @@ class ProcessDocumentService
         ?string $customPrompt = null,
         ?string $genericDocumentLanguage = null,
     ): array {
-        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage);
+        $hints = $this->aiHintService->hintsForText($document->user, $text);
+        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage, $hints);
         try {
             $data = $this->requestMainExtractionPayload($config, $document, $prompt);
             $data = $this->normalizeMainExtractionPayload($data);

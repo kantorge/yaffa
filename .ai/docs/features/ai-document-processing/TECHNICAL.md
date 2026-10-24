@@ -39,6 +39,8 @@ This file contains the implementation-oriented material extracted from the main 
     - `item_description`
     - `category_id`
     - `usage_count`
+  - `AiHint`
+    - `user_id`, `name`, `trigger_text` (nullable), `hint` (text), `active` - see "AI Hints" below
   - `AiProviderConfig`
     - `provider` (validated against static list from config)
     - `model` (validated against provider’s model list)
@@ -677,6 +679,19 @@ The system will use multi-step prompting similar to existing email processing:
 After payee matching, backend processing resolves category usage from shared payee-stats logic (the same logic powering `GET /api/v1/payees/{accountEntity}/category-stats`). If only one category is present in the 6-month stats, category matching is skipped and that category is assigned to the entire amount as one line item.
 
 All prompts require JSON responses with strict schemas to ensure validation.
+
+### AI Hints
+
+User-defined guidelines for recurring document patterns (e.g. bank notification emails that must always map to a specific transfer), sent only with the **main extraction prompt**. The extraction → matching sequence is unchanged; hints do not push the account/payee lists into the first prompt.
+
+- **Model:** `AiHint` (`ai_hints` table): `name`, `trigger_text` (nullable), `hint`, `active`; user-owned (`AiHintPolicy`, `ModelOwnedByUserTrait`; `user_id` is never client-writable).
+- **Selection:** `AiHintService::hintsForText()` returns the user's active hints (ordered by id) whose `trigger_text` occurs in the extracted document text (plain, case-insensitive substring - deliberately not a regex, see the ReDoS note for import profiles), or that have no trigger text (always sent).
+- **Tokens:** `{account:ID}` and `{payee:ID}` inside `hint` are replaced with the current `AccountEntity` name when the prompt is built (`AiHintService::render()`), so renames don't stale a hint. Tokens for a missing entity, or one owned by another user, stay as typed. No token validation on save and no UI support for inserting tokens: it is an intentionally undocumented-in-UI feature; users type the tokens manually.
+- **Prompt:** `AiPromptBuilder::buildMainExtractionPrompt()` takes the rendered hints as a last `$hints` argument and adds a "USER-DEFINED PATTERNS" block before the per-document custom instructions. No matching hints = no block.
+- **Wiring:** `ProcessDocumentService::extractTransactionData()` loads hints for `$document->user` and passes them to the builder.
+- **API:** `GET|POST /api/v1/ai-hints`, `GET|PATCH|DELETE /api/v1/ai-hints/{aiHint}` (`AiHintApiController`; `abilities:read` for index/show, `abilities:write` for store/update/destroy; covered in `ApiAbilityEnforcementTest`). Validation (`AiHintRequest`): `name` and `hint` required, `trigger_text` optional, `active` boolean.
+- **UI:** `/ai-hints` (`ai-hints.index`, nav entry under Category learning, shown when an AI provider is configured; breadcrumb in `routes/breadcrumbs.php`). Vue island like the payee/category-learning pages: DataTable with active filter and search, clickable active icon (toggles via PATCH), and `AiHintForm.vue` on the shared `FormModal` (Cancel button, discard-changes confirmation on dirty close via Cancel/X/Esc/backdrop). Onboarding topic `AiHints` (guided-tour step in `OnboardingApiController`). Entry: `resources/js/ai-hints/index.js`.
+- **Tests:** `tests/Feature/AiHintTest.php`.
 
 ### Required Composer Dependencies
 

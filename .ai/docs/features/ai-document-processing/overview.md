@@ -61,6 +61,7 @@ AI Document Processing helps users turn receipts, invoices, email confirmations,
 - Email-based purchase confirmations and receipts
 - Files imported from a user-configured Google Drive folder
 - Optional user guidance through a custom prompt
+- Optional saved AI hints (per-user guidelines applied to recurring document patterns)
 
 ## Outputs
 
@@ -74,6 +75,7 @@ AI Document Processing helps users turn receipts, invoices, email confirmations,
 
 - AI document: a submitted source document waiting for review or already finalized
 - Draft transaction: a prefilled transaction that still requires user confirmation
+- AI hint: a saved, user-written guideline sent with the extraction prompt when its trigger text appears in the document
 - Category learning: reuse of previously accepted category choices for similar items
 - Source link: the connection between the stored document and the saved transaction
 

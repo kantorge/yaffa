@@ -277,11 +277,20 @@ EOF;
         };
     }
 
+    /**
+     * @param  array<int, string>  $hints  rendered user-defined hint texts
+     */
     public function buildMainExtractionPrompt(
         string $text,
         ?string $customPrompt = null,
         ?string $genericDocumentLanguage = null,
+        array $hints = [],
     ): string {
+        $hintsSection = $hints === []
+            ? ''
+            : "USER-DEFINED PATTERNS (apply these when the document matches; they describe how this user's recurring documents must be interpreted, including which accounts and payees are involved):\n"
+                . implode("\n", array_map(fn (string $hint): string => "* {$hint}", $hints))
+                . "\n\n";
         $customInstructionsIntro = <<<EOF
         The user has provided some custom instructions that may contain additional context or specific requirements for extracting data from this document. Please carefully consider these instructions when processing the document content.
         If the custom instructions are not relevant to the document or do not provide any useful information for extraction, you can ignore them. However, if they contain important details that can help you better understand the document or improve the accuracy of the extracted data, please take them into account.
@@ -407,8 +416,7 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
 * Additional rules for INVESTMENT TRANSACTIONS:
   * For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
 
-{$customInstructions}
-
+{$hintsSection}{$customInstructions}
 The document content to process is:
 """
 {$text}

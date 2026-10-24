@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountEntityController;
 use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\AiHintController;
 use App\Http\Controllers\CategoryLearningController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
@@ -59,6 +60,10 @@ Route::resource('categories', CategoryController::class)->except(['destroy']);
 // Category learning route
 Route::get('/category-learning', [CategoryLearningController::class, 'index'])
     ->name('category-learning.index');
+
+// AI hints route
+Route::get('/ai-hints', [AiHintController::class, 'index'])
+    ->name('ai-hints.index');
 
 /*********************
  * Currency and currency rate related routes

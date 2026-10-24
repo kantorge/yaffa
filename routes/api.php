@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\ApiTokenApiController;
 use App\Http\Controllers\API\BudgetApiController;
+use App\Http\Controllers\API\AiHintApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyApiController;
@@ -230,6 +231,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('category-learning.destroy');
     Route::get('/category-learning/{categoryLearning}', [CategoryLearningApiController::class, 'show'])
         ->name('category-learning.show');
+
+    // AI hint endpoints
+    Route::get('/ai-hints', [AiHintApiController::class, 'index'])
+        ->name('ai-hints.index');
+    Route::post('/ai-hints', [AiHintApiController::class, 'store'])
+        ->name('ai-hints.store');
+    Route::get('/ai-hints/{aiHint}', [AiHintApiController::class, 'show'])
+        ->name('ai-hints.show');
+    Route::patch('/ai-hints/{aiHint}', [AiHintApiController::class, 'update'])
+        ->name('ai-hints.update');
+    Route::delete('/ai-hints/{aiHint}', [AiHintApiController::class, 'destroy'])
+        ->name('ai-hints.destroy');
 
     // Investment endpoints
     Route::get('/investments', [InvestmentApiController::class, 'index'])

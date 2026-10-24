@@ -204,6 +204,9 @@
         confirmAction(__('Are you sure you want to discard any changes?'), {
           icon: 'warning',
           confirmButtonText: __('Discard changes'),
+          // Rendered inside the modal, so its focus trap doesn't steal the focus (and the
+          // Enter/Tab/Esc keys) from the confirm dialog's buttons
+          target: this.modalEl,
         }).then((result) => {
           if (result.isConfirmed) {
             this.form.reset();

@@ -43,6 +43,7 @@ const routeMap = new Map([
   ['account.history', 'account/history'],
   ['categories.index', 'categories/index'],
   ['categories.show', 'categories/show'],
+  ['ai-hints.index', 'ai-hints/index'],
   ['category-learning.index', 'category-learning/index'],
   ['categories.create', 'categories/form'],
   ['categories.edit', 'categories/form'],
