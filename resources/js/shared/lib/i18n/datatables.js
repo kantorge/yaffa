@@ -12,21 +12,11 @@ const dataTablesLanguageFallbackLocales = {
   pl: 'pl',
 };
 
-export function normalizeDataTablesLocale(locale) {
-  if (!locale || typeof locale !== 'string') {
-    return null;
-  }
-
-  return locale.replace('-', '_');
-}
-
-export function resolveDataTablesLocaleCandidates(locale, language) {
-  const normalizedLocale = normalizeDataTablesLocale(locale);
+export function resolveDataTablesLocaleCandidates(language) {
   const normalizedLanguage =
     typeof language === 'string' ? language.toLowerCase() : null;
 
   return [
-    normalizedLocale,
     dataTablesLanguageFallbackLocales[normalizedLanguage],
     dataTablesLanguageFallbackLocales.en,
   ].filter(
@@ -34,19 +24,12 @@ export function resolveDataTablesLocaleCandidates(locale, language) {
   );
 }
 
-function getActiveLocale() {
-  return window.YAFFA?.userSettings?.locale || window.YAFFA?.locale || null;
-}
-
 function getActiveLanguage() {
   return window.YAFFA?.userSettings?.language || window.YAFFA?.language || null;
 }
 
-export async function loadDataTablesLanguage(
-  locale = getActiveLocale(),
-  language = getActiveLanguage(),
-) {
-  const candidates = resolveDataTablesLocaleCandidates(locale, language);
+export async function loadDataTablesLanguage(language = getActiveLanguage()) {
+  const candidates = resolveDataTablesLocaleCandidates(language);
 
   for (const candidate of candidates) {
     const loader = dataTablesLocaleLoaders[candidate];
@@ -106,11 +89,8 @@ function applyDataTablesLanguageToExistingTables(languageOptions) {
   tables.draw(false);
 }
 
-export async function initializeDataTablesI18n(
-  locale = getActiveLocale(),
-  language = getActiveLanguage(),
-) {
-  const languageOptions = await loadDataTablesLanguage(locale, language);
+export async function initializeDataTablesI18n(language = getActiveLanguage()) {
+  const languageOptions = await loadDataTablesLanguage(language);
 
   if (!languageOptions) {
     return null;
