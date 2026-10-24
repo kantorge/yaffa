@@ -3,7 +3,7 @@
     :value="modelValue"
     type="text"
     @blur.stop="updateAmount($event.target)"
-    @keydown.enter="updateAmount($event.target)"
+    @keydown.enter="onEnter"
     @paste.stop="updateAmount($event.target)"
   />
 </template>
@@ -32,6 +32,7 @@
     methods: {
       updateAmount: function (target) {
         let amount;
+        let valid = true;
         try {
           // Make some preparations to the input value
           let input = target.value;
@@ -78,7 +79,14 @@
 
             amount = roundedAmount.toNumber();
           }
+
+          // Write the value now rather than waiting for Vue's async re-render,
+          // so a native form submit triggered right after (Enter) sends it.
+          if (target.value !== String(amount ?? '')) {
+            target.value = amount ?? '';
+          }
         } catch (_error) {
+          valid = false;
           // On error, leave the input value and the amount as is
           amount = this.modelValue;
 
@@ -89,6 +97,19 @@
         }
 
         this.$emit('update:modelValue', amount);
+        return valid;
+      },
+
+      onEnter(event) {
+        // Enter confirming an IME candidate is not a submit attempt
+        if (event.isComposing || event.keyCode === 229) {
+          return;
+        }
+
+        // Do not submit a form with an expression that cannot be evaluated
+        if (!this.updateAmount(event.target)) {
+          event.preventDefault();
+        }
       },
 
       getDecimalSeparator(locale) {
