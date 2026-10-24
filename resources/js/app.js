@@ -20,7 +20,6 @@ const modules = import.meta.glob([
 ]);
 
 const dataTablesI18nReady = initializeDataTablesI18n(
-  window.YAFFA?.userSettings?.locale || window.YAFFA?.locale,
   window.YAFFA?.userSettings?.language || window.YAFFA?.language,
 ).catch(() => null);
 
