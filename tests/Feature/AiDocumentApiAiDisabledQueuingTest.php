@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
-class AiDocumentApiAiEnabledGuardTest extends TestCase
+class AiDocumentApiAiDisabledQueuingTest extends TestCase
 {
     use RefreshDatabase;
 

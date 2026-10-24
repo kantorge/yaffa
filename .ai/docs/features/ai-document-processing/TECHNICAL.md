@@ -40,7 +40,7 @@ This file contains the implementation-oriented material extracted from the main 
     - `category_id`
     - `usage_count`
   - `AiHint`
-    - `user_id`, `name`, `trigger_text` (nullable), `hint` (text), `active` - see "AI Hints" below
+    - `user_id`, `name`, `trigger_text` (nullable), `hint` (varchar 500), `active` - see "AI Hints" below
   - `AiProviderConfig`
     - `provider` (validated against static list from config)
     - `model` (validated against provider’s model list)
@@ -119,7 +119,7 @@ This file contains the implementation-oriented material extracted from the main 
     - Calls AI provider via Prism (text or vision-enhanced completion)
     - Validates AI response against schema
     - Updates document status (centralized status management)
-    - Auto-accept threshold, category matching mode, and `ai_enabled` gate sourced from user AI settings; blocks processing start if AI is disabled
+    - Auto-accept threshold, category matching mode, and `ai_enabled` gate sourced from user AI settings. If AI is disabled for the user, `AiProcessingJob` skips the document and leaves it in `ready_for_processing`; the upload (`POST /api/v1/documents`) and reprocess endpoints themselves still accept and queue it, they no longer return 403 `AI_DISABLED`
   - `AiProcessingJob`
     - Wraps ProcessDocumentService for async execution
     - Implements retry logic (3 attempts, 30s delay)
@@ -689,7 +689,7 @@ User-defined guidelines for recurring document patterns (e.g. bank notification 
 - **Tokens:** `{account:ID}` and `{payee:ID}` inside `hint` are replaced with the current `AccountEntity` name when the prompt is built (`AiHintService::render()`), so renames don't stale a hint. Tokens for a missing entity, or one owned by another user, stay as typed. No token validation on save and no UI support for inserting tokens: it is an intentionally undocumented-in-UI feature; users type the tokens manually.
 - **Prompt:** `AiPromptBuilder::buildMainExtractionPrompt()` takes the rendered hints as a last `$hints` argument and adds a "USER-DEFINED PATTERNS" block before the per-document custom instructions. No matching hints = no block.
 - **Wiring:** `ProcessDocumentService::extractTransactionData()` loads hints for `$document->user` and passes them to the builder.
-- **API:** `GET|POST /api/v1/ai-hints`, `GET|PATCH|DELETE /api/v1/ai-hints/{aiHint}` (`AiHintApiController`; `abilities:read` for index/show, `abilities:write` for store/update/destroy; covered in `ApiAbilityEnforcementTest`). Validation (`AiHintRequest`): `name` and `hint` required, `trigger_text` optional, `active` boolean.
+- **API:** `GET|POST /api/v1/ai-hints`, `GET|PATCH|DELETE /api/v1/ai-hints/{aiHint}` (`AiHintApiController`; `abilities:read` for index/show, `abilities:write` for store/update/destroy; covered in `ApiAbilityEnforcementTest`). Validation (`AiHintRequest`): `name` and `hint` required (`hint` max 500 characters, with a live counter under the textarea in `AiHintForm.vue`), `trigger_text` optional, `active` boolean.
 - **UI:** `/ai-hints` (`ai-hints.index`, nav entry under Category learning, shown when an AI provider is configured; breadcrumb in `routes/breadcrumbs.php`). Vue island like the payee/category-learning pages: DataTable with active filter and search, clickable active icon (toggles via PATCH), and `AiHintForm.vue` on the shared `FormModal` (Cancel button, discard-changes confirmation on dirty close via Cancel/X/Esc/backdrop). Onboarding topic `AiHints` (guided-tour step in `OnboardingApiController`). Entry: `resources/js/ai-hints/index.js`.
 - **Tests:** `tests/Feature/AiHintTest.php`.
 

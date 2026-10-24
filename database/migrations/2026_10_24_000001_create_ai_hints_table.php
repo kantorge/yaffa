@@ -17,7 +17,7 @@ return new class () extends Migration {
                 ->cascadeOnDelete();
             $table->string('name', 255);
             $table->string('trigger_text', 255)->nullable();
-            $table->text('hint');
+            $table->string('hint', 500);
             $table->boolean('active')->default(true);
             $table->timestamps();
 

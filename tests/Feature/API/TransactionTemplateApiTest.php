@@ -243,3 +243,19 @@ it('does not render the edit page of another user\'s template', function () {
     $this->actingAs(User::factory()->create())
         ->get(route('transaction-templates.edit', $template))->assertForbidden();
 });
+
+it('blanks another user\'s account, payee and category from a stored draft', function () {
+    $user = User::factory()->create();
+    $foreign = templateTestFixtures(User::factory()->create());
+    $this->actingAs($user);
+
+    $response = $this->postJson(route('api.v1.transaction-templates.store'), [
+        'name' => 'Sneaky', 'draft' => templateWithdrawalDraft($foreign),
+    ])->assertCreated()->assertJsonPath('template.payee_id', null);
+
+    $draft = TransactionTemplate::findOrFail($response->json('template.id'))->draft;
+
+    expect($draft['config'])->not->toHaveKeys(['account_from_id', 'account_to_id'])
+        ->and($draft['transaction_items'][0])->not->toHaveKey('category_id')
+        ->and(collect($response->json('notices'))->pluck('reason')->unique()->all())->not->toBeEmpty();
+});

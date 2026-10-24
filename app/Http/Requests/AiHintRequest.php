@@ -9,7 +9,7 @@ class AiHintRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'trigger_text' => ['nullable', 'string', 'max:255'],
-            'hint' => ['required', 'string', 'max:5000'],
+            'hint' => ['required', 'string', 'max:500'],
             'active' => ['required', 'boolean'],
         ];
     }

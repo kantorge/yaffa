@@ -92,3 +92,11 @@ it('has an onboarding topic for the AI hints page', function () {
         ->assertOk()
         ->assertJsonCount(1, 'steps');
 });
+
+it('limits a hint to 500 characters', function () {
+    Sanctum::actingAs(User::factory()->create(), ['*']);
+    $payload = ['name' => 'n', 'active' => true];
+
+    $this->postJson(route('api.v1.ai-hints.store'), $payload + ['hint' => str_repeat('a', 501)])->assertJsonValidationErrors('hint');
+    $this->postJson(route('api.v1.ai-hints.store'), $payload + ['hint' => str_repeat('a', 500)])->assertCreated();
+});

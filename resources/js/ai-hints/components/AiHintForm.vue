@@ -72,9 +72,10 @@
           :id="hintInputId"
           v-model="form.hint"
           class="form-control"
-          maxlength="5000"
+          maxlength="500"
           rows="6"
         ></textarea>
+        <div class="form-text text-end">{{ form.hint.length }} / 500</div>
         <HasError field="hint" :form="form" />
       </div>
     </div>

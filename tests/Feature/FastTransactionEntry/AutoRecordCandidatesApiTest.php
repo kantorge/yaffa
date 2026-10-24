@@ -193,3 +193,14 @@ it('never reports more missing transactions than the evaluation window holds', f
 
     expect($row['missing_transactions'])->toBeInt()->toBeLessThanOrEqual(PayeeProfileService::WINDOW);
 });
+
+it('does not recalculate the profile of another user\'s payee', function () {
+    $foreign = ($this->payeeWithHistory)(11, [], [], User::factory()->create());
+    PayeeProfile::where('account_entity_id', $foreign->id)->delete();
+
+    $this->actingAs($this->user)
+        ->postJson(route('api.v1.payees.auto-record-candidates.recalculate'), ['payee_id' => $foreign->id])
+        ->assertOk();
+
+    expect(PayeeProfile::where('account_entity_id', $foreign->id)->exists())->toBeFalse();
+});
