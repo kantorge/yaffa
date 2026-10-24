@@ -616,6 +616,24 @@
                 :transaction="linkedTransaction"
               />
               <div v-else class="text-muted">{{ __('Not available') }}</div>
+              <div
+                v-if="
+                  linkedTransaction?.id &&
+                  !transactionLoading &&
+                  !transactionError
+                "
+                class="card mb-0"
+              >
+                <div class="card-body">
+                  <ActionButtonBar
+                    :transaction="linkedTransaction"
+                    :is-modal="false"
+                    edit-callback="back"
+                    :on-deleted="handleLinkedTransactionDeleted"
+                    @transaction-updated="(t) => (linkedTransaction = t)"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -646,6 +664,7 @@
   import TransactionFormModalInvestment from '@/transactions/components/form/ModalInvestment.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
   import TransactionShowStandard from '@/transactions/components/display/ShowStandard.vue';
+  import ActionButtonBar from '@/transactions/components/display/ActionButtonBar.vue';
   import TransactionShowInvestment from '@/transactions/components/display/ShowInvestment.vue';
   import AiDocumentEmailViewer from './AiDocumentEmailViewer.vue';
   import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
@@ -823,6 +842,12 @@
       .finally(() => {
         transactionLoading.value = false;
       });
+  };
+
+  const handleLinkedTransactionDeleted = () => {
+    linkedTransaction.value = null;
+    showFilesTab();
+    refreshDocument();
   };
 
   // An auto-recorded transaction still waiting for the person to confirm it
