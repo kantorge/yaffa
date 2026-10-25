@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 
 it('tells the user to pick another model when the configured model was removed', function () {
+    config(['ai-documents.providers.openai.models' => ['listed-model']]);
     $user = User::factory()->create();
     AiProviderConfig::factory()->for($user)->create(['provider' => 'openai', 'model' => 'retired-model']);
     Sanctum::actingAs($user, ['*']);
@@ -19,6 +20,8 @@ it('tells the user to pick another model when the configured model was removed',
 });
 
 it('reports a retired model as availability false and a listed one as true', function () {
+    config(['ai-documents.providers.openai.models' => ['listed-model']]);
+
     expect(new AiProviderConfig(['provider' => 'openai', 'model' => 'retired-model']))->isModelAvailable()->toBeFalse()
-        ->and(new AiProviderConfig(['provider' => 'openai', 'model' => 'gpt-5.6-luna']))->isModelAvailable()->toBeTrue();
+        ->and(new AiProviderConfig(['provider' => 'openai', 'model' => 'listed-model']))->isModelAvailable()->toBeTrue();
 });

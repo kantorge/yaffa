@@ -4,7 +4,7 @@ Parent feature: [AI Document Processing](../ai-document-processing/overview.md) 
 
 ## What it is
 
-An **opt-in, per-user** policy that irreversibly deletes old **finalized** AI documents (row, stored files, linked received email) after `ai_user_settings.document_retention_days` days. The transaction created from a document is kept. Old documents in any other status are never deleted; the owner gets a daily reminder email instead.
+An **opt-in, per-user** policy that irreversibly deletes old AI documents in a **terminal status** (`finalized`, `auto_recorded`, `duplicate`, `dismissed`) (row, stored files, linked received email) after `ai_user_settings.document_retention_days` days. The transaction created from a document is kept. Old documents in any other (open) status are never deleted; the owner gets a daily reminder email instead.
 
 Default is `NULL` = keep forever. There is no env var and no global default (the former `AI_DOCUMENT_FILE_RETENTION_DAYS` was never read and is removed).
 
@@ -16,7 +16,7 @@ Default is `NULL` = keep forever. There is no env var and no global default (the
 | Resolver | `App\Services\AiUserSettingsResolver` | Returns the resolved value (`null` when unset) |
 | Schedule | `routes/console.php` | `ai-documents:cleanup-old-files` daily 03:30, only where `yaffa.runs_scheduler` |
 | Command | `App\Console\Commands\CleanupOldAiDocumentFiles` | Finds users with `document_retention_days > 0`, dispatches one job per user; optional `userId` scope |
-| Job | `App\Jobs\CleanupOldAiDocuments` (queued) | Purges finalized old documents; counts old unprocessed ones; sends reminder |
+| Job | `App\Jobs\CleanupOldAiDocuments` (queued) | Purges old terminal-status documents; counts old open ones; sends reminder |
 | Path guard | `CleanupOldAiDocuments::isOwnedPath()` | Only paths inside `ai_documents/{userId}/`, without traversal/backslash/NUL, not escaping through a symlink, may be deleted |
 | Scope | `AiDocument::olderThan()` | `created_at < cutoff AND updated_at < cutoff` |
 | Mail | `App\Mail\AiDocumentsAwaitingAction` | Reminder about old unprocessed documents (see `emails.md`) |

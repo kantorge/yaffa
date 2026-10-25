@@ -21,6 +21,7 @@
           type="text"
           @keyup="onNameChange"
         />
+        <HasError field="name" :form="form" />
       </div>
     </div>
 
@@ -64,6 +65,64 @@
             class="form-control"
             rows="3"
           ></textarea>
+          <HasError field="alias" :form="form" />
+          <small class="form-text text-muted">
+            {{
+              __(
+                'One name per line. A payee text that starts with an alias, or equals it, is matched to this payee.',
+              )
+            }}
+          </small>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <label :for="autoRecordPolicyId" class="form-label col-sm-3">
+          {{ __('Auto-recording') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="autoRecordPolicyId"
+            v-model="form.config.auto_record_policy"
+            class="form-select"
+          >
+            <option value="follow_global">
+              {{ __('Automatic (based on history)') }}
+            </option>
+            <option value="always">{{ __('Always allow') }}</option>
+            <option value="never">{{ __('Never') }}</option>
+          </select>
+          <small class="form-text text-muted">
+            {{ autoRecordPolicyHelp }}
+            {{
+              __(
+                'Nothing is recorded without your review while automatic recording is turned off in your AI settings.',
+              )
+            }}
+          </small>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <label :for="itemizationExpectedId" class="form-label col-sm-3">
+          {{ __('Itemization') }}
+        </label>
+        <div class="col-sm-9">
+          <select
+            :id="itemizationExpectedId"
+            v-model="form.config.itemization_expected"
+            class="form-select"
+          >
+            <option :value="false">{{ __('Summary is sufficient') }}</option>
+            <option :value="true">{{ __('Itemization expected') }}</option>
+          </select>
+          <small class="form-text text-muted">
+            {{
+              __(
+                'Choose itemization expected for payees where you record the individual items of a receipt, such as a grocery store.',
+              )
+            }}
+          </small>
         </div>
       </div>
 
@@ -129,6 +188,7 @@
 <script>
   import { markRaw } from 'vue';
   import Form from 'vform';
+  import { HasError } from 'vform/src/components/bootstrap5';
 
   import FormModal from '@/shared/ui/FormModal.vue';
   import { __ } from '@/shared/lib/i18n';
@@ -142,6 +202,7 @@
   export default {
     components: {
       FormModal,
+      HasError,
     },
 
     props: {
@@ -177,6 +238,8 @@
           category_id: null,
           preferred: [],
           not_preferred: [],
+          auto_record_policy: 'follow_global',
+          itemization_expected: false,
         },
       });
 
@@ -193,6 +256,19 @@
     },
 
     computed: {
+      autoRecordPolicyHelp() {
+        return (
+          {
+            always: __(
+              'Skips the history check. The payee, account, amount and duplicate checks still apply.',
+            ),
+            never: __('Documents of this payee always wait for your review.'),
+          }[this.form.config.auto_record_policy] ??
+          __(
+            'Documents of this payee are recorded without review once it has a consistent transaction history, as set in your AI settings.',
+          )
+        );
+      },
       formInstanceId() {
         return this.instanceId || this.id;
       },
@@ -204,6 +280,12 @@
       },
       categorySelectId() {
         return `${this.formInstanceId}-category_id`;
+      },
+      autoRecordPolicyId() {
+        return `${this.formInstanceId}-auto_record_policy`;
+      },
+      itemizationExpectedId() {
+        return `${this.formInstanceId}-itemization_expected`;
       },
       aliasInputId() {
         return `${this.formInstanceId}-alias`;
@@ -354,6 +436,11 @@
             this.form.active = Boolean(data.active);
             this.form.alias = data.alias || '';
             this.form.config.category_id = data.config?.category_id || null;
+            this.form.config.auto_record_policy =
+              data.config?.auto_record_policy || 'follow_global';
+            this.form.config.itemization_expected = Boolean(
+              data.config?.itemization_expected,
+            );
             this.form.config.preferred = (data.preferred_categories || []).map(
               (category) => Number(category.id),
             );
@@ -403,6 +490,8 @@
         this.form.active = true;
         this.form.alias = '';
         this.form.config.category_id = null;
+        this.form.config.auto_record_policy = 'follow_global';
+        this.form.config.itemization_expected = false;
         this.form.config.preferred = [];
         this.form.config.not_preferred = [];
 

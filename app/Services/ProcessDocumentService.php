@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\AiDocumentStatus;
+use App\Enums\SameEventOutcome;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\AiResponseParseException;
 use App\Exceptions\InvalidAiResponseSchemaException;
@@ -10,8 +12,17 @@ use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
 use App\Models\AccountEntity;
 use App\Models\CategoryLearning;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use App\Models\TransactionOrigin;
 use App\Models\User;
+use App\Services\AutoRecord\AutoRecorder;
+use App\Services\AutoRecord\GateEvaluator;
+use App\Services\AutoRecord\GateResult;
 use Exception;
+use Brick\Math\BigDecimal;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -25,6 +36,14 @@ class ProcessDocumentService
 
     private ProcessingHistoryRecorder $processingHistoryRecorder;
 
+    private SameEventClassifier $sameEventClassifier;
+
+    private GateEvaluator $gateEvaluator;
+
+    private AutoRecorder $autoRecorder;
+
+    private AiHintService $aiHintService;
+
     private bool $promptChatHistoryEnabled = true;
 
     public function __construct(
@@ -36,10 +55,18 @@ class ProcessDocumentService
         ?AiUserSettingsResolver $aiUserSettingsResolver = null,
         ?AiStepGateway $aiStepGateway = null,
         ?ProcessingHistoryRecorder $processingHistoryRecorder = null,
+        ?SameEventClassifier $sameEventClassifier = null,
+        ?GateEvaluator $gateEvaluator = null,
+        ?AutoRecorder $autoRecorder = null,
+        ?AiHintService $aiHintService = null,
     ) {
         $this->aiUserSettingsResolver = $aiUserSettingsResolver ?? app(AiUserSettingsResolver::class);
         $this->processingHistoryRecorder = $processingHistoryRecorder ?? app(ProcessingHistoryRecorder::class);
         $this->aiStepGateway = $aiStepGateway ?? app(AiStepGateway::class);
+        $this->sameEventClassifier = $sameEventClassifier ?? app(SameEventClassifier::class);
+        $this->gateEvaluator = $gateEvaluator ?? app(GateEvaluator::class);
+        $this->autoRecorder = $autoRecorder ?? app(AutoRecorder::class);
+        $this->aiHintService = $aiHintService ?? app(AiHintService::class);
     }
 
     /**
@@ -67,8 +94,7 @@ class ProcessDocumentService
             $autoAcceptThreshold = (float) ($resolvedSettings['match_auto_accept_threshold'] ?? self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH);
 
             // Update status to processing
-            $document->status = 'processing';
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::Processing);
 
             // Step 1: Extract text from all files
             $extractedText = $this->extractTextFromFiles($document, $config, $resolvedSettings);
@@ -97,11 +123,12 @@ class ProcessDocumentService
             $accountToId = null;
             $investmentId = null;
             $matchedPayeeId = null;
+            $cardDigits = AssetMatchingService::cardDigits($rawData['card_last_digits'] ?? null, $rawData['account'] ?? null);
 
             if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                    $accountId = $this->matchAccount($config, $document, $user, $rawData['account']);
                 }
                 if (!empty($rawData['investment'])) {
                     $investmentId = $this->matchInvestment($config, $document, $user, $rawData['investment'], $autoAcceptThreshold);
@@ -109,28 +136,28 @@ class ProcessDocumentService
             } elseif ($transactionType === 'transfer') {
                 // Transfer: match two accounts
                 if (!empty($rawData['account_from'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from'], $autoAcceptThreshold);
+                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account_from']);
                 }
                 if (!empty($rawData['account_to'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to'], $autoAcceptThreshold);
+                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account_to']);
                 }
             } elseif ($transactionType === 'withdrawal') {
                 // Withdrawal: match account (from) and payee (to)
-                if (!empty($rawData['account'])) {
-                    $accountFromId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                if (!empty($rawData['account']) || $cardDigits !== null) {
+                    $accountFromId = $this->matchAccount($config, $document, $user, (string) ($rawData['account'] ?? ''), $cardDigits);
                 }
                 if (!empty($rawData['payee'])) {
-                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
+                    $accountToId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountToId;
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
-                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee'], $autoAcceptThreshold);
+                    $accountFromId = $this->matchPayee($config, $document, $user, $rawData['payee']);
                     $matchedPayeeId = $accountFromId;
                 }
-                if (!empty($rawData['account'])) {
-                    $accountToId = $this->matchAccount($config, $document, $user, $rawData['account'], $autoAcceptThreshold);
+                if (!empty($rawData['account']) || $cardDigits !== null) {
+                    $accountToId = $this->matchAccount($config, $document, $user, (string) ($rawData['account'] ?? ''), $cardDigits);
                 }
             }
 
@@ -159,10 +186,11 @@ class ProcessDocumentService
             // Step 5: Store processed data and update document
             $document->processed_transaction_data = $transactionData;
             $document->processed_at = now();
-            $document->status = 'ready_for_review';
-            $document->save();
+            $document->document_kind = $this->documentKind($rawData);
 
-            Log::info("Document {$document->id} processed successfully");
+            $this->decideOutcome($document);
+
+            Log::info("Document {$document->id} processed successfully, status {$document->status}");
 
             return [
                 'success' => true,
@@ -171,11 +199,184 @@ class ProcessDocumentService
         } catch (Exception $e) {
             Log::error("Document {$document->id} processing failed: {$e->getMessage()}");
 
-            $document->status = 'processing_failed';
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::ProcessingFailed);
 
             throw $e;
         }
+    }
+
+    /**
+     * Decide what happens to the freshly processed document: it is closed when it repeats a document or a
+     * recorded purchase, merged into the notification it completes, recorded automatically when every gate
+     * passes, and waits for review otherwise. Runs under a per-user lock, so two documents of the same
+     * purchase that finish processing in parallel cannot both miss each other.
+     */
+    private function decideOutcome(AiDocument $document): void
+    {
+        Cache::lock("ai-decide:{$document->user_id}", 60)->block(30, function () use ($document): void {
+            // Clearly not about money (2FA codes, newsletters): nothing to record, match or review
+            if ($document->isNonFinancial()) {
+                $document->dismiss('non_financial');
+
+                return;
+            }
+
+            $result = $this->sameEventClassifier->classify($document);
+
+            DB::transaction(function () use ($document, $result): void {
+                match ($result->outcome) {
+                    // The same content again: closed silently, nothing to link it to
+                    SameEventOutcome::ExactRepeat => $document->transitionTo(AiDocumentStatus::Duplicate),
+                    SameEventOutcome::SameEventTransaction => $this->closeOrFlagConflict($document, $result->transaction),
+                    SameEventOutcome::SameEventDocument => $document->isItemized() && $result->document->status === AiDocumentStatus::AwaitingItemization->value
+                        ? $this->mergeIntoHeldDocument($document, $result->document)
+                        : $document->transitionTo(AiDocumentStatus::ReadyForReview),
+                    SameEventOutcome::None => $this->runGates($document),
+                    default => $document->transitionTo(AiDocumentStatus::ReadyForReview),
+                };
+            });
+        });
+    }
+
+    /**
+     * Run the auto-record gates: record, hold for the receipt, or send to review with the reason.
+     */
+    private function runGates(AiDocument $document): ?Transaction
+    {
+        $gates = $this->gateEvaluator->evaluate($document);
+
+        if ($gates->passed) {
+            return $this->autoRecorder->record($document, $gates);
+        }
+
+        $this->saveGateFailure($document, $gates);
+        $document->transitionTo($gates->hold ? AiDocumentStatus::AwaitingItemization : AiDocumentStatus::ReadyForReview);
+
+        return null;
+    }
+
+    /**
+     * Keep the failed gate and its reason in the draft for the document viewer. A switched-off feature is not
+     * a failure worth showing on every document.
+     */
+    private function saveGateFailure(AiDocument $document, GateResult $gates): void
+    {
+        if ($gates->failedGate === GateEvaluator::GATE_SWITCH) {
+            return;
+        }
+
+        $autoRecord = ['failed_gate' => $gates->failedGate, 'reason' => $gates->reason()];
+
+        if ($gates->context !== []) {
+            $autoRecord['context'] = $gates->context;
+        }
+
+        if ($gates->hold) {
+            $days = (int) $this->aiUserSettingsResolver->resolveForUser($document->user)['itemization_timeout_days'];
+            $autoRecord['hold_until'] = now()->addDays($days)->toDateString();
+        }
+
+        $document->processed_transaction_data = ($document->processed_transaction_data ?? []) + ['auto_record' => $autoRecord];
+    }
+
+    /**
+     * An itemized receipt for a notification that waits for it: the receipt takes over as the main document
+     * with the notification's account, card ending, time and bank reference, and the notification is closed.
+     * The gates then run on the merged draft; the notification is linked to the transaction when one is created.
+     */
+    private function mergeIntoHeldDocument(AiDocument $receipt, AiDocument $held): void
+    {
+        $draft = $receipt->processed_transaction_data;
+        $heldDraft = $held->processed_transaction_data ?? [];
+
+        $accountKey = ($draft['transaction_type'] ?? null) === 'withdrawal' ? 'account_from_id' : 'account_to_id';
+        if (! empty($heldDraft['config'][$accountKey])) {
+            $draft['config'][$accountKey] = $heldDraft['config'][$accountKey];
+        }
+
+        foreach (['account', 'card_last_digits', 'transaction_time', 'bank_reference'] as $key) {
+            if (! empty($heldDraft['raw'][$key])) {
+                $draft['raw'][$key] = $heldDraft['raw'][$key];
+            }
+        }
+
+        $receipt->processed_transaction_data = $draft;
+        $held->transitionTo(AiDocumentStatus::Duplicate);
+
+        $transaction = $this->runGates($receipt);
+
+        if ($transaction !== null) {
+            $this->recordDuplicateOrigin($held, $transaction, 'The receipt for this notification arrived and was recorded.');
+        }
+    }
+
+    /**
+     * A same-event match with a committed transaction closes the document, unless it is an itemized document
+     * whose items contradict an automatically recorded transaction: then the person decides, and the
+     * transaction stays untouched.
+     */
+    private function closeOrFlagConflict(AiDocument $document, Transaction $transaction): void
+    {
+        $autoRecorded = $transaction->origins()->where('relation', TransactionOrigin::RELATION_CREATED)->exists();
+
+        if ($autoRecorded && $document->isItemized() && $this->itemsConflict($document, $transaction)) {
+            $this->recordDuplicateOrigin(
+                $document,
+                $transaction,
+                'The items of this document differ from the automatically recorded transaction.',
+                TransactionOrigin::RELATION_CONFLICTS_WITH,
+            );
+            $document->transitionTo(AiDocumentStatus::ReadyForReview);
+
+            return;
+        }
+
+        $this->recordDuplicateOrigin($document, $transaction, 'Same purchase as an already recorded transaction (same amount, payee and date window).');
+        $document->transitionTo(AiDocumentStatus::Duplicate);
+    }
+
+    private function recordDuplicateOrigin(AiDocument $document, Transaction $transaction, string $reason, string $relation = TransactionOrigin::RELATION_DUPLICATE_OF): void
+    {
+        TransactionOrigin::record($document->user, $transaction, $relation, $document, $reason);
+    }
+
+    /**
+     * Whether the document's items disagree with the transaction's: another number of items, another amount,
+     * or (where the document knows it) another category.
+     */
+    private function itemsConflict(AiDocument $document, Transaction $transaction): bool
+    {
+        $draft = app(TransactionDraftService::class)->normalize($document->processed_transaction_data, $document->user)['draft'];
+
+        $documentItems = collect($draft['transaction_items'] ?? [])
+            ->map(fn (array $item) => [
+                'amount' => BigDecimal::of($item['amount'] ?? '0'),
+                'category' => ($item['match_type'] ?? null) === 'exact' ? ($item['recommended_category_id'] ?? null) : ($item['category_id'] ?? null),
+            ])
+            ->sortBy(fn (array $item) => (string) $item['amount'])
+            ->values();
+
+        $transactionItems = $transaction->transactionItems
+            ->map(fn (TransactionItem $item) => ['amount' => $item->amount->getAmount(), 'category' => $item->category_id])
+            ->sortBy(fn (array $item) => (string) $item['amount'])
+            ->values();
+
+        if ($documentItems->count() !== $transactionItems->count()) {
+            return true;
+        }
+
+        return $documentItems->contains(fn (array $item, int $index) => ! $item['amount']->isEqualTo($transactionItems[$index]['amount'])
+            || ($item['category'] !== null && (int) $item['category'] !== (int) $transactionItems[$index]['category']));
+    }
+
+    /**
+     * @param  array<string, mixed>  $rawData
+     */
+    private function documentKind(array $rawData): string
+    {
+        $kind = $rawData['document_kind'] ?? null;
+
+        return in_array($kind, AiExtractionSchemaValidator::DOCUMENT_KINDS, true) ? $kind : 'other';
     }
 
     /**
@@ -221,7 +422,8 @@ class ProcessDocumentService
         ?string $customPrompt = null,
         ?string $genericDocumentLanguage = null,
     ): array {
-        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage);
+        $hints = $this->aiHintService->hintsForText($document->user, $text);
+        $prompt = $this->aiPromptBuilder->buildMainExtractionPrompt($text, $customPrompt, $genericDocumentLanguage, $hints);
         try {
             $data = $this->requestMainExtractionPayload($config, $document, $prompt);
             $data = $this->normalizeMainExtractionPayload($data);
@@ -282,6 +484,11 @@ class ProcessDocumentService
             ? $investmentKeys
             : $standardKeys;
 
+        // The optional identifying fields are a best effort of the model: an unusable value is dropped
+        // rather than failing the whole extraction
+        $keys = [...$keys, ...AiExtractionSchemaValidator::OPTIONAL_KEYS];
+        $data = $this->sanitizeOptionalFields($data);
+
         $normalized = [];
 
         foreach ($keys as $key) {
@@ -296,15 +503,42 @@ class ProcessDocumentService
     }
 
     /**
-     * Match account name to user's accounts
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
      */
-    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName, float $autoAcceptThreshold): ?int
+    private function sanitizeOptionalFields(array $data): array
+    {
+        foreach (['bank_reference', 'card_last_digits'] as $key) {
+            $value = $data[$key] ?? null;
+            $value = is_int($value) ? (string) $value : $value;
+            $data[$key] = is_string($value) && mb_trim($value) !== '' ? mb_trim($value) : null;
+        }
+
+        $kind = $data['document_kind'] ?? null;
+        $data['document_kind'] = is_string($kind) && in_array(Str::lower($kind), AiExtractionSchemaValidator::DOCUMENT_KINDS, true)
+            ? Str::lower($kind)
+            : 'other';
+
+        // Accept HH:MM, and cut off seconds the model may add
+        $time = $data['transaction_time'] ?? null;
+        $data['transaction_time'] = is_string($time) && preg_match('/^([01]\d|2[0-3]):[0-5]\d/', mb_trim($time), $matches)
+            ? $matches[0]
+            : null;
+
+        return $data;
+    }
+
+    /**
+     * Match account name (and card ending) to user's accounts. A certain match is taken without asking the AI,
+     * and is the only kind the auto-record gates accept: see AssetMatchingService::certainMatch().
+     */
+    private function matchAccount(AiProviderConfig $config, AiDocument $document, User $user, string $accountName, ?string $cardDigits = null): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
 
         // Get similar accounts - this already limits to top N matches
-        $similarAccounts = $matchingService->matchAccounts($accountName);
+        $similarAccounts = $matchingService->matchAccounts($accountName, $cardDigits);
 
         if (empty($similarAccounts)) {
             Log::debug('No similar accounts found', ['account_name' => $accountName]);
@@ -324,10 +558,10 @@ class ProcessDocumentService
             return null;
         }
 
-        // If the top match has high confidence, return it immediately to save AI calls
-        $topMatch = reset($similarAccounts);
-        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
-            Log::info('High confidence match found for account name, skipping AI call', [
+        // If the top match is certain, return it immediately to save AI calls
+        $topMatch = $matchingService->certainMatch($similarAccounts);
+        if ($topMatch !== null) {
+            Log::info('Certain match found for account name, skipping AI call', [
                 'account_name' => $accountName,
                 'account_name_in_list' => $topMatch['name'],
                 'matched_id' => $topMatch['id'],
@@ -337,11 +571,17 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'account_matching',
-                "Local account matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$accountName}\".",
-                "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
+                "Local account matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$accountName}\"" . ($cardDigits !== null ? ", card ending {$cardDigits}." : '.'),
+                "Matched account ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}.",
+                mode: 'local',
             );
 
             return $topMatch['id'];
+        }
+
+        // A card ending alone, without an account text, has nothing for the AI to match
+        if ($accountName === '') {
+            return null;
         }
 
         // Format for AI prompt
@@ -365,9 +605,10 @@ class ProcessDocumentService
     }
 
     /**
-     * Match payee name to user's payees
+     * Match payee name to user's payees. A certain match is taken without asking the AI, and is the only kind
+     * the auto-record gates accept: see AssetMatchingService::certainMatch().
      */
-    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName, float $autoAcceptThreshold): ?int
+    private function matchPayee(AiProviderConfig $config, AiDocument $document, User $user, string $payeeName): ?int
     {
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
@@ -393,10 +634,10 @@ class ProcessDocumentService
             return null;
         }
 
-        // If the top match has high confidence, return it immediately to save AI calls
-        $topMatch = reset($similarPayees);
-        if ($topMatch['similarity'] >= $autoAcceptThreshold) {
-            Log::info('High confidence match found for payee name, skipping AI call', [
+        // If the top match is certain, return it immediately to save AI calls
+        $topMatch = $matchingService->certainMatch($similarPayees);
+        if ($topMatch !== null) {
+            Log::info('Certain match found for payee name, skipping AI call', [
                 'payee_name' => $payeeName,
                 'payee_name_in_list' => $topMatch['name'],
                 'matched_id' => $topMatch['id'],
@@ -406,8 +647,9 @@ class ProcessDocumentService
             $this->appendProcessingHistory(
                 $document,
                 'payee_matching',
-                "Local payee matching used. AI call skipped because similarity reached threshold " . $autoAcceptThreshold . ". Input: \"{$payeeName}\".",
-                "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}."
+                "Local payee matching used. AI call skipped because the match is certain (similarity reached the auto-accept threshold " . $matchingService->autoAcceptThreshold() . " with a clear lead). Input: \"{$payeeName}\".",
+                "Matched payee ID {$topMatch['id']} ({$topMatch['name']}) with similarity {$topMatch['similarity']}.",
+                mode: 'local',
             );
 
             return $topMatch['id'];
@@ -528,6 +770,7 @@ class ProcessDocumentService
         $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypeValues());
 
         $data = [
+            'schema_version' => TransactionDraftService::SCHEMA_VERSION,
             'raw' => $rawData,
             'date' => $rawData['date'] ?? now()->format('Y-m-d'),
             'config_type' => $isInvestment ? 'investment' : 'standard',
@@ -921,6 +1164,7 @@ class ProcessDocumentService
         string $prompt,
         string $response,
         bool $includeInPromptHistory = true,
+        ?string $mode = null,
     ): void {
         $this->processingHistoryRecorder->appendProcessingHistory(
             $document,
@@ -928,6 +1172,7 @@ class ProcessDocumentService
             $prompt,
             $response,
             $includeInPromptHistory,
+            $mode,
         );
     }
 

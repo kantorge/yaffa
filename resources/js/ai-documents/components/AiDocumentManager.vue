@@ -10,13 +10,21 @@
       ></onboarding-card>
 
       <ai-document-actions
+        :can-confirm-all="
+          currentFilters.review === 'auto-recorded' &&
+          reviewCounts.autoRecorded > 0
+        "
         @open-upload-form="openUploadForm"
+        @confirm-all="tableRef?.confirmAllShown()"
+        @reprocess-open="reprocessOpen"
       ></ai-document-actions>
 
       <ai-document-filters
         :initial-status="initialStatus"
         :initial-source="initialSource"
         :initial-search="initialSearch"
+        :initial-review="initialReview"
+        :review-counts="reviewCounts"
         :status-options="statusLabels"
         :source-options="sourceLabels"
         @update="onFiltersUpdated"
@@ -71,6 +79,7 @@
         :loading="isLoading"
         :status-labels="statusLabels"
         :source-labels="sourceLabels"
+        @review-counts="reviewCounts = $event"
       ></ai-document-table>
 
       <transaction-show-modal></transaction-show-modal>
@@ -85,6 +94,7 @@
 </template>
 
 <script setup>
+  import Swal from 'sweetalert2';
   import { nextTick, onMounted, ref } from 'vue';
   import OnboardingCard from '@/dashboard/components/widgets/OnboardingCard.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
@@ -97,6 +107,7 @@
   import * as toastHelpers from '@/shared/lib/toast';
   import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
 
+  const reviewCounts = ref({ autoRecorded: 0, conflicts: 0 });
   const documents = ref([]);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
   const sourceLabels = ref(window.aiDocumentSourceLabels || {});
@@ -115,7 +126,16 @@
   const detectedDates = readDateRangeParams(urlParams, 'detected_');
   const initialDateFrom = ref(receivedDates.dateFrom);
   const initialDateTo = ref(receivedDates.dateTo);
-  const initialStatus = ref(urlParams.get('status') || 'ready_for_review');
+  // Narrows the table to documents awaiting review (?review=auto-recorded|conflicts)
+  const initialReview = ref(
+    ['auto-recorded', 'conflicts'].includes(urlParams.get('review'))
+      ? urlParams.get('review')
+      : '',
+  );
+  // Auto-recorded documents are not in an open status, so a review filter starts without a status filter
+  const initialStatus = ref(
+    urlParams.get('status') ?? (initialReview.value ? '' : 'unprocessed'),
+  );
   const initialSource = ref(urlParams.get('source') || '');
   const initialSearch = ref(urlParams.get('search') || '');
   const hasExplicitDateFilter = Boolean(
@@ -131,6 +151,7 @@
 
   const currentFilters = ref({
     status: initialStatus.value,
+    review: initialReview.value,
     source: initialSource.value,
     search: initialSearch.value,
     dateFrom: initialDateFrom.value,
@@ -183,6 +204,10 @@
       }
     }
 
+    if (currentFilters.value.review) {
+      params.set('review', currentFilters.value.review);
+    }
+
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
     window.history.replaceState('', '', nextUrl);
@@ -196,15 +221,20 @@
     }
   });
 
-  const onFiltersUpdated = (filters) => {
-    currentFilters.value = { ...currentFilters.value, ...filters };
+  const applyTableFilters = () => {
     tableRef.value?.applyFilters({
       status: currentFilters.value.status,
       source: currentFilters.value.source,
       search: currentFilters.value.search,
       detectedDateFrom: currentFilters.value.detectedDateFrom,
       detectedDateTo: currentFilters.value.detectedDateTo,
+      review: currentFilters.value.review,
     });
+  };
+
+  const onFiltersUpdated = (filters) => {
+    currentFilters.value = { ...currentFilters.value, ...filters };
+    applyTableFilters();
     rebuildUrl();
   };
 
@@ -248,13 +278,7 @@
       documents.value = normalizeDocuments(allDocuments);
 
       await nextTick();
-      tableRef.value?.applyFilters({
-        status: currentFilters.value.status,
-        source: currentFilters.value.source,
-        search: currentFilters.value.search,
-        detectedDateFrom: currentFilters.value.detectedDateFrom,
-        detectedDateTo: currentFilters.value.detectedDateTo,
-      });
+      applyTableFilters();
     } catch (error) {
       documents.value = [];
       toastHelpers.showErrorToast(
@@ -281,13 +305,7 @@
     currentFilters.value.detectedDateTo = dateTo;
     currentFilters.value.detectedDatePreset = preset || null;
 
-    tableRef.value?.applyFilters({
-      status: currentFilters.value.status,
-      source: currentFilters.value.source,
-      search: currentFilters.value.search,
-      detectedDateFrom: currentFilters.value.detectedDateFrom,
-      detectedDateTo: currentFilters.value.detectedDateTo,
-    });
+    applyTableFilters();
 
     rebuildUrl();
   };
@@ -301,5 +319,40 @@
       dateFrom: currentFilters.value.dateFrom,
       dateTo: currentFilters.value.dateTo,
     });
+  };
+
+  const reprocessOpen = async () => {
+    const result = await Swal.fire({
+      text: __(
+        'All open documents (ready for review or failed) will be reprocessed. Their previous extraction data and AI chat history will be removed. Do you want to continue?',
+      ),
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: __('Cancel'),
+      confirmButtonText: __('Reprocess'),
+      buttonsStyling: false,
+      customClass: {
+        confirmButton: 'btn btn-warning',
+        cancelButton: 'btn btn-secondary ms-3',
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await window.axios.post(
+        route('api.v1.documents.reprocessOpen'),
+      );
+      toastHelpers.showSuccessToast(response.data.message);
+      await onDocumentCreated();
+    } catch (error) {
+      toastHelpers.showErrorToast(
+        __('Error while reprocessing document: :errorMessage', {
+          errorMessage: error.response?.data?.message || error.message,
+        }),
+      );
+    }
   };
 </script>

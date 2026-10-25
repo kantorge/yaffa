@@ -81,13 +81,10 @@
                     {{ __('Opening balance') }}
                 </label>
                 <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="opening_balance"
-                        name="config[opening_balance]"
-                        type="text"
-                        value="{{ old('config.opening_balance', ($account ?? null)?->config?->opening_balance?->getAmount()->strippedOfTrailingZeros() ?? '' ) }}"
-                    >
+                    <div
+                        id="opening-balance"
+                        data-value="{{ old('config.opening_balance', ($account ?? null)?->config?->opening_balance?->getAmount()->strippedOfTrailingZeros() ?? '' ) }}"
+                    ></div>
                 </div>
             </div>
 

@@ -7,20 +7,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
-use App\Models\AccountEntity;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
-use App\Models\Category;
-use App\Models\Investment;
+use App\Models\TransactionOrigin;
 use App\Models\User;
-use App\Services\AiUserSettingsResolver;
 use App\Services\DuplicateDetectionService;
+use Illuminate\Support\Arr;
+use App\Services\Import\ImportDuplicateDetectionService;
+use App\Services\Import\ImportNormalizationService;
+use App\Services\SameEventClassifier;
+use App\Services\TransactionDraftService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -34,17 +37,15 @@ use Throwable;
     'index', 'show', 'summary',
 ])]
 #[Middleware('abilities:write', only: [
-    'store', 'update', 'reprocess', 'checkDuplicates', 'destroy',
+    'store', 'update', 'reprocess', 'reprocessOpen', 'dismiss', 'checkDuplicates', 'destroy',
 ])]
 #[Middleware('abilities:settings', only: [
     'cleanupOldFiles',
 ])]
 class AiDocumentApiController extends Controller
 {
-    private const string AI_DISABLED_MESSAGE = 'AI document processing is disabled in your AI settings';
-
     public function __construct(
-        private AiUserSettingsResolver $aiUserSettingsResolver
+        private TransactionDraftService $transactionDraftService,
     ) {
     }
 
@@ -58,13 +59,6 @@ class AiDocumentApiController extends Controller
     #[Authorize('create', AiDocument::class)]
     public function store(StoreAiDocumentRequest $request): JsonResponse
     {
-        /** @var User $user */
-        $user = $request->user();
-
-        if ($response = $this->ensureAiProcessingEnabled($user)) {
-            return $response;
-        }
-
         // Create the document
         $document = AiDocument::create([
             'status' => 'ready_for_processing',
@@ -73,17 +67,21 @@ class AiDocumentApiController extends Controller
         ]);
 
         try {
+            $fileHashes = [];
+
             // Store uploaded files
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
-                    $this->storeFile($document, $file);
+                    $fileHashes[] = $this->storeFile($document, $file);
                 }
             }
 
             // Store text input if provided
             if ($request->input('text_input')) {
-                $this->storeTextFile($document, $request->input('text_input'));
+                $fileHashes[] = $this->storeTextFile($document, $request->input('text_input'));
             }
+
+            $document->update(['content_hash' => AiDocument::hashFiles($fileHashes)]);
         } catch (Throwable $e) {
             // Don't leave a half-stored document (or its files) behind; cascades to the file records.
             Storage::disk('local')->deleteDirectory("ai_documents/{$document->user_id}/{$document->id}");
@@ -125,10 +123,10 @@ class AiDocumentApiController extends Controller
             }
 
             if ($request->filled('status')) {
-                $document->status = $request->input('status');
+                $document->transitionTo(AiDocumentStatus::from($request->input('status')));
+            } else {
+                $document->save();
             }
-
-            $document->save();
 
             return $document;
         });
@@ -150,7 +148,7 @@ class AiDocumentApiController extends Controller
      * Get document processing summary
      *
      * Returns aggregate counts (ready for review, processing failed, oldest pending) for the
-     * user's non-finalized AI documents.
+     * user's AI documents that are not in a terminal status.
      */
     public function summary(Request $request): JsonResponse
     {
@@ -164,7 +162,7 @@ class AiDocumentApiController extends Controller
 
         $stats = AiDocument::query()
             ->where('user_id', $user->id)
-            ->where('status', '!=', 'finalized')
+            ->whereNotIn('status', AiDocumentStatus::values(AiDocumentStatus::terminal()))
             ->selectRaw(
                 "COUNT(*) as total, "
                 . "COUNT(CASE WHEN status = 'ready_for_review' THEN 1 END) as ready_for_review, "
@@ -179,6 +177,16 @@ class AiDocumentApiController extends Controller
             'total' => (int) ($stats->total ?? 0),
             'ready_for_review' => (int) ($stats->ready_for_review ?? 0),
             'processing_failed' => (int) ($stats->processing_failed ?? 0),
+            'auto_recorded_to_review' => TransactionOrigin::query()
+                ->where('user_id', $user->id)
+                ->where('relation', TransactionOrigin::RELATION_CREATED)
+                ->whereNull('reviewed_at')
+                ->count(),
+            'auto_dismissed_non_financial' => AiDocument::query()
+                ->where('user_id', $user->id)
+                ->where('status', AiDocumentStatus::Dismissed->value)
+                ->where('document_kind', 'other_non_financial')
+                ->count(),
             'oldest_created_at' => $stats->oldest_created_at
                 ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
                 : null,
@@ -214,9 +222,19 @@ class AiDocumentApiController extends Controller
     {
         $user = $request->user();
 
+        // Only what the document list displays: no chat history or prompt, no mail body, no transaction details
         $query = AiDocument::query()
+            ->select([
+                'id', 'user_id', 'status', 'source_type', 'processed_transaction_data', 'received_mail_id',
+                'content_hash', 'document_kind', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
+            ])
             ->where('user_id', $user->id)
-            ->with(['aiDocumentFiles', 'receivedMail', 'transaction']);
+            ->with([
+                'aiDocumentFiles:id,ai_document_id,file_name',
+                'receivedMail:id,subject',
+                'transaction:id,ai_document_id',
+                'origins:id,origin_type,origin_id,transaction_id,relation,reviewed_at',
+            ]);
 
         if ($request->filled('date_from')) {
             $dateFrom = Carbon::parse((string) $request->input('date_from'))->startOfDay();
@@ -250,9 +268,11 @@ class AiDocumentApiController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $documents = $query->latest()->paginate($perPage);
 
-        $documents->getCollection()->each(function (AiDocument $document): void {
-            $this->enrichProcessedData($document);
-        });
+        $this->enrichMatchedEntities($documents->getCollection(), $user);
+
+        $documents->getCollection()->each(
+            fn (AiDocument $document) => $document->transaction?->makeHidden('transaction_currency')
+        );
 
         return response()->json([
             'data' => $documents->items(),
@@ -279,10 +299,10 @@ class AiDocumentApiController extends Controller
      * @throws AuthorizationException
      */
     #[Authorize('view', 'aiDocument')]
-    public function show(AiDocument $aiDocument): JsonResponse
+    public function show(Request $request, AiDocument $aiDocument): JsonResponse
     {
-        $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
-        $this->enrichProcessedData($aiDocument);
+        $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction', 'origins');
+        $this->enrichProcessedData($aiDocument, $request->user());
 
         return response()->json([
             'document' => $aiDocument
@@ -300,10 +320,6 @@ class AiDocumentApiController extends Controller
     #[Authorize('reprocess', 'aiDocument')]
     public function reprocess(AiDocument $aiDocument): JsonResponse
     {
-        if ($response = $this->ensureAiProcessingEnabled($aiDocument->user)) {
-            return $response;
-        }
-
         $aiDocument = DB::transaction(function () use ($aiDocument): ?AiDocument {
             $document = $this->lockReprocessable($aiDocument);
 
@@ -312,11 +328,11 @@ class AiDocumentApiController extends Controller
             }
 
             // Reset document to ready_for_processing
-            $document->status = AiDocumentStatus::ReadyForProcessing->value;
             $document->processed_transaction_data = null;
             $document->ai_chat_history = null;
+            $document->document_kind = null;
             $document->processed_at = null;
-            $document->save();
+            $document->transitionTo(AiDocumentStatus::ReadyForProcessing);
 
             return $document;
         });
@@ -333,6 +349,73 @@ class AiDocumentApiController extends Controller
         return response()->json([
             'status' => $aiDocument->status,
             'message' => __('Document reprocessing queued'),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Reprocess all open documents
+     *
+     * Sends every one of the user's open (ready for review or processing failed) documents back to
+     * ready_for_processing in a single query. No jobs are dispatched here: the scheduled
+     * app:process-ai-documents command picks them up in batches, which also keeps a large backlog from
+     * flooding the queue and respects the user's AI enabled setting.
+     */
+    #[Authorize('create', AiDocument::class)]
+    public function reprocessOpen(Request $request): JsonResponse
+    {
+        $count = AiDocument::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('status', AiDocumentStatus::values([
+                AiDocumentStatus::ReadyForReview,
+                AiDocumentStatus::ProcessingFailed,
+            ]))
+            ->update([
+                'processed_transaction_data' => null,
+                'ai_chat_history' => null,
+                'document_kind' => null,
+                'processed_at' => null,
+                'status' => AiDocumentStatus::ReadyForProcessing->value,
+                'status_changed_at' => now(),
+            ]);
+
+        return response()->json([
+            'count' => $count,
+            'message' => trans_choice('{0} No open documents to reprocess|{1} :count document queued for reprocessing|[2,*] :count documents queued for reprocessing', $count, ['count' => $count]),
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Dismiss a document
+     *
+     * Closes a document the user does not want to record, for example because it is insufficient. Only
+     * allowed from ready_for_review or processing_failed. A dismissed document can still be reprocessed.
+     *
+     * @throws AuthorizationException
+     */
+    #[Authorize('update', 'aiDocument')]
+    public function dismiss(AiDocument $aiDocument): JsonResponse
+    {
+        $dismissed = DB::transaction(function () use ($aiDocument): bool {
+            $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! in_array($document->status, [AiDocumentStatus::ReadyForReview->value, AiDocumentStatus::ProcessingFailed->value], true)) {
+                return false;
+            }
+
+            $document->dismiss('manual');
+
+            return true;
+        });
+
+        if (! $dismissed) {
+            return response()->json([
+                'error' => __('Document cannot be dismissed from current status'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return response()->json([
+            'status' => AiDocumentStatus::Dismissed->value,
+            'message' => __('Document dismissed'),
         ], Response::HTTP_OK);
     }
 
@@ -371,8 +454,13 @@ class AiDocumentApiController extends Controller
      * @throws AuthorizationException
      */
     #[Authorize('view', 'aiDocument')]
-    public function checkDuplicates(AiDocument $aiDocument, DuplicateDetectionService $duplicateService): JsonResponse
-    {
+    public function checkDuplicates(
+        AiDocument $aiDocument,
+        DuplicateDetectionService $duplicateService,
+        SameEventClassifier $classifier,
+        ImportDuplicateDetectionService $importDuplicateService,
+        ImportNormalizationService $normalizationService,
+    ): JsonResponse {
         // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
             return response()->json([], Response::HTTP_BAD_REQUEST);
@@ -383,6 +471,9 @@ class AiDocumentApiController extends Controller
         if (! isset($extractedData['date'])) {
             return response()->json([
                 'duplicates' => [],
+                'schedules' => [],
+                'related_documents' => [],
+                'documents' => [],
             ], Response::HTTP_OK);
         }
 
@@ -391,13 +482,29 @@ class AiDocumentApiController extends Controller
 
         $duplicates = $duplicateService->findDuplicates($user, $extractedData);
 
+        // The document's data in the shape of an import draft, so the import's matching can be reused
+        $payload = $aiDocument->processed_transaction_data;
+        $payeeAccountId = ($extractedData['transaction_type'] ?? null) === 'deposit'
+            ? ($extractedData['account_from_id'] ?? null)
+            : ($extractedData['account_to_id'] ?? null);
+        $draft = [
+            'date' => $extractedData['date'],
+            'amount' => $extractedData['amount'] ?? null,
+            'config_type' => $extractedData['config_type'] ?? 'standard',
+            'transaction_type' => $extractedData['transaction_type'] ?? null,
+            'config' => Arr::only($extractedData, ['account_from_id', 'account_to_id']),
+            'payee' => data_get($payload, 'raw.payee'),
+            'matched_payee' => $payeeAccountId !== null ? ['id' => $payeeAccountId] : null,
+        ];
+
         // Load full transaction details for frontend
         $transactionIds = array_column($duplicates, 'id');
         $transactions = \App\Models\Transaction::whereIn('id', $transactionIds)
+            ->with(['config', 'transactionItems'])
             ->get()
             ->keyBy('id');
 
-        $enrichedDuplicates = array_map(function ($duplicate) use ($transactions) {
+        $enrichedDuplicates = array_map(function ($duplicate) use ($transactions, $importDuplicateService, $draft) {
             $transaction = $transactions->get($duplicate['id']);
 
             return [
@@ -409,18 +516,48 @@ class AiDocumentApiController extends Controller
                 // raw array embedding the Money value directly, bypassing that control point.
                 'amount' => $transaction->cashflow_value !== null ? (string) $transaction->cashflow_value->getAmount() : null,
                 'type' => $transaction->config_type,
+                'comment' => $transaction->comment,
+                'matched_on' => $importDuplicateService->buildMatchedOnSignals($draft, $transaction),
             ];
         }, $duplicates);
 
+        // Active schedules whose next occurrence could be entered instead of adding a new transaction,
+        // found by the same engine as the CSV/QIF import
+        $schedules = $importDuplicateService->enrichDraftsWithScheduleCandidates($user, [$draft])[0]['schedule_candidates'];
+
+        // Other open documents describing the same purchase
+        $key = $classifier->keyFromDocument($aiDocument);
+        $documents = $key === null
+            ? []
+            : $classifier->openDocumentMatches($user, $key, $aiDocument->id)
+                ->map(fn (AiDocument $other) => [
+                    'id' => $other->id,
+                    'status' => $other->status,
+                    'url' => route('ai-documents.show', $other),
+                ])
+                ->values();
+
+        // Other documents that may describe the same purchase, found as in the CSV/QIF import. Documents
+        // already listed above are not repeated, and the document itself is not its own match.
+        $listedIds = collect($documents)->pluck('id')->push($aiDocument->id);
+        $relatedDocuments = collect($normalizationService->enrichDraftsWithRelatedAiDocuments($user, [$draft])[0]['related_ai_documents'])
+            ->reject(fn (array $candidate) => $listedIds->contains($candidate['ai_document_id']))
+            ->values();
+
         return response()->json([
             'duplicates' => $enrichedDuplicates,
+            'schedules' => $schedules,
+            'related_documents' => $relatedDocuments,
+            'documents' => $documents,
         ], Response::HTTP_OK);
     }
 
     /**
      * Store an uploaded file for the document
+     *
+     * @return string sha256 of the file's content
      */
-    private function storeFile(AiDocument $aiDocument, $file): void
+    private function storeFile(AiDocument $aiDocument, $file): string
     {
         $filename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -444,12 +581,14 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => $fileType,
         ]);
+
+        return hash_file('sha256', $file->getRealPath());
     }
 
     /**
      * Store text input as a file
      */
-    private function storeTextFile(AiDocument $aiDocument, string $textInput): void
+    private function storeTextFile(AiDocument $aiDocument, string $textInput): string
     {
         $filename = 'text_input_' . now()->timestamp . '.txt';
 
@@ -466,6 +605,8 @@ class AiDocumentApiController extends Controller
             'file_name' => $filename,
             'file_type' => 'txt',
         ]);
+
+        return hash('sha256', $textInput);
     }
 
     /**
@@ -477,20 +618,6 @@ class AiDocumentApiController extends Controller
         $document = AiDocument::query()->whereKey($aiDocument->getKey())->lockForUpdate()->firstOrFail();
 
         return AiDocumentStatus::isReprocessable($document->status) ? $document : null;
-    }
-
-    private function ensureAiProcessingEnabled(User $user): ?JsonResponse
-    {
-        if ($this->aiUserSettingsResolver->isEnabledForUser($user)) {
-            return null;
-        }
-
-        return response()->json([
-            'error' => [
-                'code' => 'AI_DISABLED',
-                'message' => __(self::AI_DISABLED_MESSAGE),
-            ],
-        ], Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -513,139 +640,29 @@ class AiDocumentApiController extends Controller
         return 'txt';
     }
 
-    private function enrichProcessedData(AiDocument $aiDocument): void
+    /**
+     * Adds `matched_entities` to the drafts of a page of documents with one query per entity kind.
+     *
+     * @param  Collection<int, AiDocument>  $documents
+     */
+    private function enrichMatchedEntities(Collection $documents, User $user): void
     {
-        $processedData = $aiDocument->processed_transaction_data;
+        $drafts = $documents
+            ->filter(fn (AiDocument $document): bool => (bool) $document->processed_transaction_data)
+            ->map(fn (AiDocument $document): array => $document->processed_transaction_data)
+            ->all();
 
-        if (! $processedData) {
-            return;
+        $enriched = $this->transactionDraftService->enrichMatchedEntities($drafts, $user);
+
+        foreach ($enriched as $key => $draft) {
+            $documents[$key]->processed_transaction_data = $draft;
         }
+    }
 
-        if (isset($processedData['transaction_items']) && is_array($processedData['transaction_items'])) {
-            $categoryIds = collect($processedData['transaction_items'])
-                ->map(fn ($item) => $item['recommended_category_id'] ?? null)
-                ->filter()
-                ->unique()
-                ->values()
-                ->toArray();
-
-            if (! empty($categoryIds)) {
-                $categories = Category::query()
-                    ->with('parent')
-                    ->whereIn('id', $categoryIds)
-                    ->where('user_id', $aiDocument->user_id)
-                    ->get()
-                    ->keyBy('id');
-
-                foreach ($processedData['transaction_items'] as &$item) {
-                    if (isset($item['recommended_category_id']) && $categories->has($item['recommended_category_id'])) {
-                        $recommendedCategory = $categories->get($item['recommended_category_id']);
-                        $item['recommended_category_full_name'] = $recommendedCategory->full_name;
-                    }
-                }
-            }
+    private function enrichProcessedData(AiDocument $aiDocument, User $user): void
+    {
+        if ($aiDocument->processed_transaction_data) {
+            $aiDocument->processed_transaction_data = $this->transactionDraftService->enrich($aiDocument->processed_transaction_data, $user);
         }
-
-        $config = $processedData['config'] ?? [];
-        $transactionType = $processedData['transaction_type'] ?? null;
-
-        $accountIds = collect([
-            $config['account_id'] ?? null,
-            $config['account_from_id'] ?? null,
-            $config['account_to_id'] ?? null,
-        ])->filter()->unique()->values()->all();
-
-        $accountsById = AccountEntity::query()
-            ->where('user_id', $aiDocument->user_id)
-            ->whereIn('id', $accountIds)
-            ->get()
-            ->keyBy('id');
-
-        $investmentIds = collect([
-            $config['investment_id'] ?? null,
-        ])->filter()->unique()->values()->all();
-
-        $investmentsById = Investment::query()
-            ->where('user_id', $aiDocument->user_id)
-            ->whereIn('id', $investmentIds)
-            ->get()
-            ->keyBy('id');
-
-        $matchedEntities = [];
-
-        if ($transactionType === 'transfer') {
-            $from = $accountsById->get($config['account_from_id'] ?? null);
-            $to = $accountsById->get($config['account_to_id'] ?? null);
-
-            if ($from) {
-                $matchedEntities['account_from'] = [
-                    'id' => $from->id,
-                    'name' => $from->name,
-                    'matched' => true,
-                    'url' => route('account-entity.show', $from->id),
-                ];
-            }
-
-            if ($to) {
-                $matchedEntities['account_to'] = [
-                    'id' => $to->id,
-                    'name' => $to->name,
-                    'matched' => true,
-                    'url' => route('account-entity.show', $to->id),
-                ];
-            }
-        } elseif (in_array($transactionType, ['withdrawal', 'deposit'], true)) {
-            $accountId = $transactionType === 'withdrawal'
-                ? ($config['account_from_id'] ?? null)
-                : ($config['account_to_id'] ?? null);
-            $payeeId = $transactionType === 'withdrawal'
-                ? ($config['account_to_id'] ?? null)
-                : ($config['account_from_id'] ?? null);
-
-            $account = $accountsById->get($accountId);
-            $payee = $accountsById->get($payeeId);
-
-            if ($account) {
-                $matchedEntities['account'] = [
-                    'id' => $account->id,
-                    'name' => $account->name,
-                    'matched' => true,
-                    'url' => route('account-entity.show', $account->id),
-                ];
-            }
-
-            if ($payee) {
-                $matchedEntities['payee'] = [
-                    'id' => $payee->id,
-                    'name' => $payee->name,
-                    'matched' => true,
-                    'url' => null,
-                ];
-            }
-        } elseif (in_array($transactionType, ['buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares'], true)) {
-            $account = $accountsById->get($config['account_id'] ?? null);
-            $investment = $investmentsById->get($config['investment_id'] ?? null);
-
-            if ($account) {
-                $matchedEntities['account'] = [
-                    'id' => $account->id,
-                    'name' => $account->name,
-                    'matched' => true,
-                    'url' => route('account-entity.show', $account->id),
-                ];
-            }
-
-            if ($investment) {
-                $matchedEntities['investment'] = [
-                    'id' => $investment->id,
-                    'name' => $investment->name,
-                    'matched' => true,
-                    'url' => route('investments.show', ['investment' => $investment->id]),
-                ];
-            }
-        }
-
-        $processedData['matched_entities'] = $matchedEntities;
-        $aiDocument->processed_transaction_data = $processedData;
     }
 }

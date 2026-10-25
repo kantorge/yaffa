@@ -62,6 +62,40 @@
         </span>
       </li>
       <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <a
+          :href="autoRecordedUrl"
+          class="text-decoration-none text-body"
+          :title="__('widget.aiDocumentSummary.autoRecordedToReviewTitle')"
+        >
+          {{ __('widget.aiDocumentSummary.autoRecordedToReview') }}
+        </a>
+        <span
+          class="badge rounded-pill"
+          :class="
+            summary.auto_recorded_to_review > 0 ? 'bg-info' : 'bg-secondary'
+          "
+        >
+          {{ summary.auto_recorded_to_review }}
+        </span>
+      </li>
+      <li
+        v-if="summary.auto_dismissed_non_financial > 0"
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <a
+          :href="indexUrl('dismissed')"
+          class="text-decoration-none text-body"
+          :title="__('widget.aiDocumentSummary.autoDismissedTitle')"
+        >
+          {{ __('widget.aiDocumentSummary.autoDismissed') }}
+        </a>
+        <span class="badge rounded-pill bg-info">
+          {{ summary.auto_dismissed_non_financial }}
+        </span>
+      </li>
+      <li
         v-if="summary.oldest_created_at"
         class="list-group-item d-flex justify-content-between align-items-center"
       >
@@ -99,6 +133,8 @@
           total: 0,
           ready_for_review: 0,
           processing_failed: 0,
+          auto_recorded_to_review: 0,
+          auto_dismissed_non_financial: 0,
           oldest_created_at: null,
         },
         locale: window.YAFFA.userSettings.locale || 'en',
@@ -106,6 +142,10 @@
     },
 
     computed: {
+      autoRecordedUrl() {
+        return `${window.route('ai-documents.index')}?review=auto-recorded`;
+      },
+
       oldestDateString() {
         if (!this.summary.oldest_created_at) {
           return null;

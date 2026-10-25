@@ -187,7 +187,7 @@
             for="auto_merge_standard_transaction_items"
             class="col-form-label col-sm-3"
           >
-            {{ __('Auto-merge standard transaction items') }}
+            {{ __('Auto-merge transaction items') }}
           </label>
           <div class="col-sm-9">
             <div class="input-group">
@@ -221,11 +221,7 @@
         </div>
       </div>
       <div class="card-footer">
-        <SubmitButton
-          class="btn btn-primary"
-          :form="form"
-          dusk="button-update-settings"
-        >
+        <SubmitButton class="btn btn-primary" :form="form">
           {{ __('Save') }}
         </SubmitButton>
       </div>

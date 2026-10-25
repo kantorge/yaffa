@@ -87,6 +87,10 @@
     <div class="col-12 col-lg-9">
         <div class="card mb-3">
             <div class="card-body no-datatable-search">
+                <div id="investment-summary-error" class="alert alert-danger" role="alert" hidden>
+                    {{ __('Investments could not be loaded.') }}
+                    <button id="investment-summary-retry" type="button" class="btn btn-sm btn-outline-danger">{{ __('Retry') }}</button>
+                </div>
                 <table class="table table-striped table-bordered table-hover" id="investmentSummary" role="grid"
                     aria-label="{{ __('List of investments') }}"></table>
             </div>

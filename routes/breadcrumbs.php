@@ -71,6 +71,13 @@ Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->push(__('Merge'), route('payees.merge.form'));
 });
 
+// Payee > auto-record candidates
+Breadcrumbs::for('payees.auto-record-candidates', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Payees'), route('account-entity.index', ['type' => 'payee']));
+    $trail->push(__('Auto-record candidates'), route('payees.auto-record-candidates'));
+});
+
 // Category resource (index, create, show, edit)
 Breadcrumbs::for('categories.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -100,6 +107,12 @@ Breadcrumbs::for('category-learning.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
     $trail->push(__('Category learning'), route('category-learning.index'));
+});
+
+Breadcrumbs::for('ai-hints.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('AI hints'), route('ai-hints.index'));
 });
 
 // Currency resource views (index, create, edit)
@@ -202,6 +215,20 @@ Breadcrumbs::for('transaction.open', function (BreadcrumbTrail $trail, $transact
     $trail->push(__('Transactions'));
     $action = request()->route('action');
     $trail->push(__(ucfirst($action)), route('transaction.open', ['transaction' => $transaction, 'action' => $action]));
+});
+
+// Transaction template views
+Breadcrumbs::for('transaction-templates.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Transaction templates'), route('transaction-templates.index'));
+});
+Breadcrumbs::for('transaction-templates.create', function (BreadcrumbTrail $trail, $type) {
+    $trail->parent('transaction-templates.index');
+    $trail->push(__('Create'), route('transaction-templates.create', $type));
+});
+Breadcrumbs::for('transaction-templates.edit', function (BreadcrumbTrail $trail, $template) {
+    $trail->parent('transaction-templates.index');
+    $trail->push(__('Edit'), route('transaction-templates.edit', $template));
 });
 
 /* Reports */

@@ -20,9 +20,6 @@ class GetCurrencyRatesTest extends TestCase
      */
     public function test_base_currency_is_not_queued_for_currency_rate_retrieval(): void
     {
-        // Ensure that the database is empty
-        $this->artisan('migrate:fresh');
-
         /** @var User $user */
         $user = User::factory()->create();
 
@@ -47,9 +44,6 @@ class GetCurrencyRatesTest extends TestCase
      */
     public function test_currency_rate_retrieval_is_not_queued_for_currencies_with_auto_update_set_to_false(): void
     {
-        // Ensure that the database is empty
-        $this->artisan('migrate:fresh');
-
         /** @var User $user */
         $user = User::factory()->create();
 

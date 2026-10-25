@@ -44,7 +44,7 @@
                                         @enderror
                                     </div>
 
-                                    <button class="btn btn-primary px-4" type="submit" dusk="two-factor-challenge-button">
+                                    <button class="btn btn-primary px-4" type="submit">
                                         {{ __('Verify') }}
                                     </button>
                                 </form>

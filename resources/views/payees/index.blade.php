@@ -39,13 +39,23 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             {{ __('Merge payees') }}
                             <a class="btn btn-sm btn-primary"
-                               dusk="button-merge-payees"
                                href="{{ route('payees.merge.form') }}"
                                title="{{ __('Merge payees') }}"
                             >
                                 <i class="fa fa-random"></i>
                             </a>
                         </li>
+                        @if(auth()->user()->aiProviderConfigs()->exists())
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ __('Auto-record candidates') }}
+                                <a class="btn btn-sm btn-primary"
+                                   href="{{ route('payees.auto-record-candidates') }}"
+                                   title="{{ __('Auto-record candidates') }}"
+                                >
+                                    <i class="fa fa-wand-magic-sparkles"></i>
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </div>
 

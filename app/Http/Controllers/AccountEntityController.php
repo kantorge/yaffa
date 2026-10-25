@@ -18,7 +18,9 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use App\Services\AssetOverviewService;
+use App\Services\AiUserSettingsResolver;
 use App\Services\PayeeCategoryStatsService;
+use App\Services\PayeeProfileService;
 use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,6 +45,8 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function __construct(
         private readonly PayeeCategoryStatsService $payeeCategoryStatsService,
         private readonly AssetOverviewService $assetOverviewService,
+        private readonly PayeeProfileService $payeeProfileService,
+        private readonly AiUserSettingsResolver $aiUserSettingsResolver,
     ) {
     }
 
@@ -129,14 +133,51 @@ class AccountEntityController extends Controller implements HasMiddleware
             'deferredCategories',
         ]);
 
+        $autoRecordEnabled = (bool) $this->aiUserSettingsResolver->resolveForUser($request->user())['auto_record_enabled'];
+
         JavaScriptFacade::put([
             'payee' => $accountEntity,
             'overview' => $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
             'categorySuggestion' => $this->payeeCategorySuggestion($request->user(), $accountEntity),
+            'autoRecordEnabled' => $autoRecordEnabled,
+            'payeeProfile' => $autoRecordEnabled ? $this->payeeProfileData($request->user(), $accountEntity) : null,
             'baseCurrency' => $request->user()->baseCurrency(),
         ]);
 
         return view('payees.show', ['payee' => $accountEntity]);
+    }
+
+    /**
+     * Stored history profile of one payee, with the auto-recording qualification. Null until first calculated.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function payeeProfileData(User $user, AccountEntity $payee): ?array
+    {
+        $profile = $payee->payeeProfile()->with('dominantCategory.parent')->first();
+        $config = $payee->config;
+
+        if ($profile === null || ! $config instanceof Payee) {
+            return null;
+        }
+
+        $settings = $this->aiUserSettingsResolver->resolveForUser($user);
+        // The history check ignores the payee's own override, which the card shows separately
+        $history = $this->payeeProfileService->qualification($profile, Payee::POLICY_FOLLOW_GLOBAL, $settings);
+
+        return [
+            'sample_size' => $profile->sample_size,
+            'dominant_category' => $profile->dominantCategory?->full_name,
+            'dominant_share' => $profile->dominant_share,
+            'amount_min' => $profile->amount_min,
+            'amount_max' => $profile->amount_max,
+            'currency' => $this->payeeProfileService->currencyOf($profile),
+            'history_status' => $history['qualifies'] ? 'qualifying' : ($this->payeeProfileService->isNear($profile, $settings) ? 'near' : 'other'),
+            'missing' => $history['missing'],
+            'reason' => $history['reason'],
+            'auto_record_policy' => $config->auto_record_policy,
+            'itemization_expected' => (bool) $config->itemization_expected,
+        ];
     }
 
     /**

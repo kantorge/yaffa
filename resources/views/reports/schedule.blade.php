@@ -27,7 +27,7 @@
                     id="cardActions"
             >
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ __('New scheduled standard transaction') }}
+                    {{ __('New scheduled transaction') }}
                     <a class="btn btn-sm btn-success"
                        dusk="button-new-payee"
                        href="{{ route('transaction.create', [
@@ -35,7 +35,7 @@
                             'schedule' => '1',
                             'callback' => 'back'
                             ]) }}"
-                       title="{{ __('New scheduled standard transaction') }}"
+                       title="{{ __('New scheduled transaction') }}"
                     >
                         <i class="fa fa-fw fa-cart-plus"></i>
                     </a>

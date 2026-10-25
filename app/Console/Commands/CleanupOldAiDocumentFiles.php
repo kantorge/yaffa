@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('ai-documents:cleanup-old-files {userId? : Optional user ID for scoped cleanup}')]
-#[Description('Delete finalized AI documents and their files after the retention period, and remind users about old unprocessed ones')]
+#[Description('Delete AI documents in a terminal status (finalized, auto-recorded, duplicate, dismissed) and their files after the retention period, and remind users about old open ones')]
 class CleanupOldAiDocumentFiles extends Command
 {
     /**

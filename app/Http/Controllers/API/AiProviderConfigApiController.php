@@ -121,6 +121,13 @@ class AiProviderConfigApiController extends Controller
         // Only update API key if provided (and not the empty string)
         if (!empty($validated['api_key']) && $validated['api_key'] !== '__existing__') {
             $updateData['api_key'] = $validated['api_key'];
+
+            // The dirty check would decrypt the old stored key, which fails (and blocks
+            // replacing it) if it was encrypted with a different APP_KEY.
+            $aiProviderConfig->setRawAttributes(
+                array_merge($aiProviderConfig->getAttributes(), ['api_key' => null]),
+                true
+            );
         }
 
         $aiProviderConfig->update($updateData);

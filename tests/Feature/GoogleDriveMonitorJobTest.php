@@ -65,7 +65,7 @@ class GoogleDriveMonitorJobTest extends TestCase
         Queue::assertNotPushed(ProcessGoogleDriveConfigJob::class);
     }
 
-    public function test_job_skips_configs_for_users_with_ai_disabled(): void
+    public function test_job_dispatches_configs_for_users_with_ai_disabled(): void
     {
         Queue::fake();
 
@@ -79,7 +79,7 @@ class GoogleDriveMonitorJobTest extends TestCase
 
         (new GoogleDriveMonitorJob())->handle();
 
-        Queue::assertNotPushed(ProcessGoogleDriveConfigJob::class);
+        Queue::assertPushed(ProcessGoogleDriveConfigJob::class);
     }
 
     public function test_job_uses_each_configs_sync_interval_for_dispatch_eligibility(): void

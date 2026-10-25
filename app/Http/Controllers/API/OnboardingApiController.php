@@ -78,6 +78,7 @@ class OnboardingApiController extends Controller
      * @uses onboardingTopicDataInvestmentGroups
      * @uses onboardingTopicDataAiDocuments
      * @uses onboardingTopicDataCategoryLearning
+     * @uses onboardingTopicDataAiHints
      * @uses onboardingTopicDataImport
      */
     private function loadOnboardingSteps(string $topic): void
@@ -198,6 +199,16 @@ class OnboardingApiController extends Controller
                 'icon' => 'fa fa-fw fa-info',
             ])
             ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-CategoryLearning'));
+    }
+
+    private function onboardingTopicDataAiHints(): void
+    {
+        Onboard::addStep(__('View the guided tour for this page'))
+            ->attributes([
+                'tour' => true,
+                'icon' => 'fa fa-fw fa-info',
+            ])
+            ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-AiHints'));
     }
 
     private function onboardingTopicDataImport(): void

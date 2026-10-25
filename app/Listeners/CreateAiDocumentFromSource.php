@@ -6,7 +6,6 @@ use App\Events\DocumentImported;
 use App\Events\EmailReceived;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
-use App\Services\AiUserSettingsResolver;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Storage;
@@ -14,11 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class CreateAiDocumentFromSource implements ShouldQueue
 {
-    public function __construct(
-        private AiUserSettingsResolver $aiUserSettingsResolver
-    ) {
-    }
-
     /**
      * Handle EmailReceived event
      */
@@ -27,12 +21,6 @@ class CreateAiDocumentFromSource implements ShouldQueue
         try {
             $receivedMail = $event->receivedMail;
             $user = $receivedMail->user;
-
-            if (! $this->aiUserSettingsResolver->isEnabledForUser($user)) {
-                Log::info("Skipping AI document creation for received email {$receivedMail->id} because AI is disabled for user {$user->id}");
-
-                return;
-            }
 
             // Create AI document
             $document = $user->aiDocuments()->create([
@@ -57,6 +45,8 @@ class CreateAiDocumentFromSource implements ShouldQueue
                 'file_name' => $filename,
                 'file_type' => 'txt',
             ]);
+
+            $document->update(['content_hash' => AiDocument::hashFiles([hash('sha256', $emailContent)])]);
 
             Log::info("Created AI document {$document->id} from received email {$receivedMail->id}");
         } catch (Exception $e) {

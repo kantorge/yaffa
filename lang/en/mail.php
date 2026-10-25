@@ -8,8 +8,18 @@ return [
         "intro" => "Your AI document is ready for review.",
         "next_action_text" => "Review the extracted values, adjust anything needed, then finalize the transaction.",
         "next_action_title" => "Next action",
+        "intro_auto_recorded" => "Your AI document was recorded automatically as a transaction.",
+        "next_action_text_auto_recorded" => "Check the transaction with the Review filter of your AI documents fix anything that's off, then mark it as checked.",
+        "subject_auto_recorded" => "Document recorded automatically",
         "subject" => "Document Processed - Ready for Review",
         "what_happened" => "What happened"
+    ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Open this document",
+        "button_open_dismissed" => "Open dismissed documents",
+        "intro" => "Your AI document was dismissed automatically.",
+        "next_action_text" => "It was recognized as not financial, so nothing was recorded. If this is wrong, open the dismissed documents and reprocess it.",
+        "subject" => "AI document dismissed - not financial"
     ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Open AI Settings",
