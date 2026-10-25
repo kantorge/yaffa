@@ -8,6 +8,17 @@
 * **deps:** bump the npm_and_yarn group across 1 directory with 3 updates ([#567](https://github.com/kantorge/yaffa/issues/567)) ([f75be48](https://github.com/kantorge/yaffa/commit/f75be4832f93e78ca11914b6e6d3da23c5dd2e2a))
 * **deps:** bump the npm_and_yarn group across 1 directory with 4 updates ([#574](https://github.com/kantorge/yaffa/issues/574)) ([2d86255](https://github.com/kantorge/yaffa/commit/2d862551a2c07e4ad21a525035bdac68d5e57a9a))
 * remove unused dusk attributes ([#573](https://github.com/kantorge/yaffa/issues/573)) ([da2a922](https://github.com/kantorge/yaffa/commit/da2a922969fb3a72e69649c25532b4ae9e5adf10))
+* **i18n:** replace the 'standard transaction' UI wording ([#579](https://github.com/kantorge/yaffa/issues/579)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+
+
+### 🎡 Continuous Integration
+
+* add translation sync check for pull requests ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+
+
+### 📚 Documentation
+
+* cleanup technical details from UPGRADE.md ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
 
 
 ### ✨ Features
@@ -15,6 +26,15 @@
 * add delete button to transaction display page ([f36f6a9](https://github.com/kantorge/yaffa/commit/f36f6a931b7cdc9cec8d615dfd70333f98f0d2af))
 * AI-based transaction creation from qualifying payees and documents ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
 * improvement to Investment Index Render ([#559](https://github.com/kantorge/yaffa/issues/559)) ([90124f5](https://github.com/kantorge/yaffa/commit/90124f5d00110adc1a8061aca1834e8cef820323))
+* introduce transaction templates ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* enhance AI document lifecycle and duplicate detection ([#564](https://github.com/kantorge/yaffa/issues/564)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* introduce payee profiles and matching groundwork ([#566](https://github.com/kantorge/yaffa/issues/566)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* unify payee/account matching for drafts and auto-record gates ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* polish the AI documents table ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* show loader in AI document duplicates card and recheck after entry ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* show linked transaction tab and mark-as-checked action on AI document view ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* skip matching schedule occurrence when AI document is auto-recorded ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+* auto-dismiss non-financial AI documents and show the dismissal reason ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
 
 
 ### 🐛 Bug Fixes
@@ -23,6 +43,16 @@
 * opening balance decimal handling ([#577](https://github.com/kantorge/yaffa/issues/577)) ([78dbe95](https://github.com/kantorge/yaffa/commit/78dbe95a2087c719b28e3b68e386f02400e043c0))
 * pint cleanup ([151b70e](https://github.com/kantorge/yaffa/commit/151b70e16527c29ec9f37be87b54ed81f579bd96))
 * sandbox settings ([5c82357](https://github.com/kantorge/yaffa/commit/5c82357e444dc9a691a570c388565e71526ff0ea))
+
+
+### 🚀 Performance Improvements
+
+* slim down and batch the AI document list API ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
+
+
+### 🧪 Tests
+
+* fix and simplify various tests ([#572](https://github.com/kantorge/yaffa/issues/572)) ([18a8cc1](https://github.com/kantorge/yaffa/commit/18a8cc1d06355e9a25b9cbd63d693f3953b16c2e))
 
 ## [4.1.0](https://github.com/kantorge/yaffa/compare/v4.0.0...v4.1.0) (2026-10-17)
 
