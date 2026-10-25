@@ -3,6 +3,7 @@
 use App\Events\AiDocumentProcessedEvent;
 use App\Jobs\AiProcessingJob;
 use App\Listeners\SendAiDocumentProcessedNotification;
+use App\Mail\AiDocumentDismissedNonFinancial;
 use App\Mail\AiDocumentProcessed;
 use App\Models\AccountEntity;
 use App\Models\AiDocument;
@@ -95,10 +96,25 @@ it('drops unusable optional fields instead of failing the extraction', function 
     $document = ($this->process)(['document_kind' => 'something else', 'transaction_time' => 'noon', 'card_last_digits' => 1234]);
 
     expect($document->status)->toBe('ready_for_review')
-        ->and($document->document_kind)->toBeNull()
+        ->and($document->document_kind)->toBe('other')
         ->and($document->processed_transaction_data['raw']['transaction_time'])->toBeNull()
         ->and($document->processed_transaction_data['raw']['card_last_digits'])->toBe('1234');
 });
+
+it('dismisses a clearly non-financial document and sends the dedicated mail', function () {
+    Mail::fake();
+    $document = ($this->process)(['document_kind' => 'other_non_financial']);
+
+    expect($document->status)->toBe('dismissed');
+
+    (new SendAiDocumentProcessedNotification())->handle(new AiDocumentProcessedEvent($document));
+    Mail::assertSent(AiDocumentDismissedNonFinancial::class);
+    Mail::assertNotSent(AiDocumentProcessed::class);
+});
+
+it('keeps other and other_financial documents in review', function (string $kind) {
+    expect(($this->process)(['document_kind' => $kind])->status)->toBe('ready_for_review');
+})->with(['other', 'other_financial']);
 
 it('closes a document with the same content as a duplicate, silently', function () {
     Mail::fake();
@@ -263,4 +279,15 @@ it('keeps an AiDocument\'s created origin without it and deletes the link rows',
         ->and($created->origin_type)->toBe('ai_document')
         ->and($created->decision_reason)->toBe('why');
     expect(Transaction::find($transaction->id))->not->toBeNull();
+});
+
+it('records why a document was dismissed', function () {
+    $auto = ($this->process)(['document_kind' => 'other_non_financial']);
+    expect($auto->processed_transaction_data['dismissal']['reason'])->toBe('non_financial')
+        ->and($auto->processed_transaction_data['raw'])->not->toBeEmpty();
+
+    $manual = ($this->process)(['document_kind' => 'other']);
+    $manual->dismiss('manual');
+    expect($manual->fresh()->status)->toBe('dismissed')
+        ->and($manual->fresh()->processed_transaction_data['dismissal']['reason'])->toBe('manual');
 });

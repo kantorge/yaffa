@@ -134,7 +134,7 @@
   );
   // Auto-recorded documents are not in an open status, so a review filter starts without a status filter
   const initialStatus = ref(
-    urlParams.get('status') ?? (initialReview.value ? '' : 'ready_for_review'),
+    urlParams.get('status') ?? (initialReview.value ? '' : 'unprocessed'),
   );
   const initialSource = ref(urlParams.get('source') || '');
   const initialSearch = ref(urlParams.get('search') || '');

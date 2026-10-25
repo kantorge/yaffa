@@ -8,6 +8,7 @@ As built. Design intent: [specification](../../specifications/fast-transaction-e
 
 | Outcome | Result |
 | --- | --- |
+| document kind `other_non_financial` (checked before the classifier) | `dismissed`; the user gets `AiDocumentDismissedNonFinancial` instead of the processed mail; deleted later by retention with other dismissed documents, silently |
 | `exact_repeat` | `duplicate`, silent |
 | `same_event_transaction` | `duplicate` + `duplicate_of` origin — **unless** the document is itemized, the transaction has a `created` origin (auto-recorded) and its items differ: then a `conflicts_with` origin is written, the document goes to `ready_for_review`, the transaction is left unchanged |
 | `same_event_document`, the document is itemized and the other one is `awaiting_itemization` | **merge** (below) |

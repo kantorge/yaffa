@@ -98,6 +98,16 @@ class AiDocument extends Model
     }
 
     /**
+     * Closes the document without recording anything, keeping why in the draft for the document viewer.
+     * $reason is `non_financial` (dismissed by the processing) or `manual` (dismissed by the person).
+     */
+    public function dismiss(string $reason): void
+    {
+        $this->processed_transaction_data = ($this->processed_transaction_data ?? []) + ['dismissal' => ['reason' => $reason]];
+        $this->transitionTo(AiDocumentStatus::Dismissed);
+    }
+
+    /**
      * sha256 of the sorted sha256 values of the document's files, so the same content always hashes the same.
      *
      * @param  list<string>  $fileHashes
@@ -119,6 +129,14 @@ class AiDocument extends Model
         $items = $draft['transaction_items'] ?? $draft['raw']['transaction_items'] ?? [];
 
         return in_array($this->document_kind, ['receipt', 'invoice'], true) && is_array($items) && $items !== [];
+    }
+
+    /**
+     * Classified by the AI as clearly carrying no financial event, so it is dismissed without a review.
+     */
+    public function isNonFinancial(): bool
+    {
+        return $this->document_kind === 'other_non_financial';
     }
 
     public function origins(): MorphMany

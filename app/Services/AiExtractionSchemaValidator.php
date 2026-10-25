@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class AiExtractionSchemaValidator
 {
-    public const array DOCUMENT_KINDS = ['bank_notification', 'receipt', 'invoice', 'other'];
+    public const array DOCUMENT_KINDS = ['bank_notification', 'receipt', 'invoice', 'other_financial', 'other_non_financial', 'other'];
 
     /** Optional on every document: they identify the purchase, but are not part of the transaction itself. */
     public const array OPTIONAL_KEYS = ['document_kind', 'transaction_time', 'bank_reference', 'card_last_digits'];

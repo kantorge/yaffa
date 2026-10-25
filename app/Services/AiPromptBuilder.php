@@ -330,7 +330,7 @@ FOR STANDARD TRANSACTIONS (spend, purchase, gain money, transfer between account
       "amount": "item monetary amount as number"
     }
   ],
-  "document_kind": "exactly one of bank_notification|receipt|invoice|other, or null",
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other_financial|other_non_financial|other",
   "transaction_time": "HH:MM (24 hour) time of the purchase, or null",
   "bank_reference": "bank transaction reference or authorization code, or null",
   "card_last_digits": "last digits of the card or account used (for example 1234), digits only, or null"
@@ -349,7 +349,7 @@ FOR INVESTMENT TRANSACTIONS (stock/bond buy, sell, gain dividends or other inter
   "tax": "total tax amount as number, if available",
   "dividend": "dividend amount as number (for dividend/interest)",
   "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing",
-  "document_kind": "exactly one of bank_notification|receipt|invoice|other, or null",
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other_financial|other_non_financial|other",
   "transaction_time": "HH:MM (24 hour) time of the transaction, or null",
   "bank_reference": "bank transaction reference or authorization code, or null",
   "card_last_digits": "last digits of the account used, digits only, or null"
@@ -367,7 +367,7 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
   * If you cannot find any transaction data in the document, return the standard JSON with all keys set to null (except transaction_type which can be set to "withdrawal" as default, and transaction_items as an empty array).
 
 * Rules for identifying the document and the purchase:
-  * document_kind: "bank_notification" for a short message from a bank or card issuer about a card payment or account movement (for example an SMS, push notification or email alert, typically in Hungarian such as "Vásárlás ... kártyával", "Terhelés", "Jóváírás"); "receipt" for a shop or service receipt; "invoice" for an invoice; "other" for anything else. Use null if you cannot tell.
+  * document_kind: "bank_notification" for a short message from a bank or card issuer about a card payment or account movement (for example an SMS, push notification or email alert, typically in Hungarian such as "Vásárlás ... kártyával", "Terhelés", "Jóváírás"); "receipt" for a shop or service receipt; "invoice" for an invoice; "other_financial" for any other document that describes a financial event or obligation; "other_non_financial" ONLY for a document that clearly carries no financial event, for example a newsletter, advertisement, personal letter, or a 2FA/OTP code, login, security or confirmation notification, even when it comes from a bank or financial app; "other" if you cannot decide. When in doubt, use "other", never "other_non_financial".
   * transaction_time is the time of the purchase itself, as printed in the document, converted to 24 hour HH:MM. Do not use the time an email was sent. Set to null if the document has no time.
   * bank_reference is a bank reference, authorization or transaction ID, if one is printed. Do not use receipt numbers, tax numbers or order numbers. Set to null if there is none.
   * card_last_digits is the last digits of the card or account number as printed (for example "1234" from "****1234"). Digits only. Set to null if there is none.

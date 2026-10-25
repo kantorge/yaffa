@@ -214,6 +214,13 @@ class ProcessDocumentService
     private function decideOutcome(AiDocument $document): void
     {
         Cache::lock("ai-decide:{$document->user_id}", 60)->block(30, function () use ($document): void {
+            // Clearly not about money (2FA codes, newsletters): nothing to record, match or review
+            if ($document->isNonFinancial()) {
+                $document->dismiss('non_financial');
+
+                return;
+            }
+
             $result = $this->sameEventClassifier->classify($document);
 
             DB::transaction(function () use ($document, $result): void {
@@ -365,11 +372,11 @@ class ProcessDocumentService
     /**
      * @param  array<string, mixed>  $rawData
      */
-    private function documentKind(array $rawData): ?string
+    private function documentKind(array $rawData): string
     {
         $kind = $rawData['document_kind'] ?? null;
 
-        return in_array($kind, AiExtractionSchemaValidator::DOCUMENT_KINDS, true) ? $kind : null;
+        return in_array($kind, AiExtractionSchemaValidator::DOCUMENT_KINDS, true) ? $kind : 'other';
     }
 
     /**
@@ -510,7 +517,7 @@ class ProcessDocumentService
         $kind = $data['document_kind'] ?? null;
         $data['document_kind'] = is_string($kind) && in_array(Str::lower($kind), AiExtractionSchemaValidator::DOCUMENT_KINDS, true)
             ? Str::lower($kind)
-            : null;
+            : 'other';
 
         // Accept HH:MM, and cut off seconds the model may add
         $time = $data['transaction_time'] ?? null;

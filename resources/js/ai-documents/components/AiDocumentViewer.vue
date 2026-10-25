@@ -764,10 +764,13 @@
     () => aiDocument.value.status === 'ready_for_review' && hasDraftData.value,
   );
 
+  // A document dismissed before it was processed has no extraction to show (only the dismissal note)
   const showExtractedDetails = computed(
     () =>
       hasDraftData.value &&
-      ['ready_for_review', 'finalized'].includes(aiDocument.value.status),
+      (['ready_for_review', 'finalized'].includes(aiDocument.value.status) ||
+        (aiDocument.value.status === 'dismissed' &&
+          !!(draftData.value.raw || draftData.value.config_type))),
   );
 
   const processingHistory = computed(
@@ -916,6 +919,18 @@
       )?.decision_reason;
 
       return reason || __('Recorded automatically');
+    }
+
+    if (document.status === 'dismissed') {
+      const reason = document.processed_transaction_data?.dismissal?.reason;
+
+      if (reason === 'non_financial') {
+        return __(
+          'Dismissed automatically: the document was recognized as not financial.',
+        );
+      }
+
+      return reason === 'manual' ? __('Dismissed manually.') : null;
     }
 
     const autoRecord = document.processed_transaction_data?.auto_record;
@@ -1145,6 +1160,10 @@
       )
       .then((response) => {
         aiDocument.value.status = response.data.status;
+        aiDocument.value.processed_transaction_data = {
+          ...aiDocument.value.processed_transaction_data,
+          dismissal: { reason: 'manual' },
+        };
         toastHelpers.showSuccessToast(response.data.message);
       })
       .catch((error) => {

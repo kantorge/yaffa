@@ -14,6 +14,13 @@ return [
         "subject" => "Dokumentum feldolgozva - ellenőrzésre kész",
         "what_happened" => "Mi történt"
     ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Dokumentum megnyitása",
+        "button_open_dismissed" => "Elvetett dokumentumok megnyitása",
+        "intro" => "Az AI dokumentumodat automatikusan elvetettük.",
+        "next_action_text" => "Nem pénzügyi dokumentumként ismertük fel, ezért nem rögzítettünk semmit. Ha tévedtünk, nyisd meg az elvetett dokumentumokat, és dolgozd fel újra.",
+        "subject" => "AI dokumentum elvetve - nem pénzügyi"
+    ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "AI beállítások megnyitása",
         "button_review_reprocess" => "Ellenőrzés és újrafeldolgozás",

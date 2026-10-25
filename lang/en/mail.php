@@ -14,6 +14,13 @@ return [
         "subject" => "Document Processed - Ready for Review",
         "what_happened" => "What happened"
     ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Open this document",
+        "button_open_dismissed" => "Open dismissed documents",
+        "intro" => "Your AI document was dismissed automatically.",
+        "next_action_text" => "It was recognized as not financial, so nothing was recorded. If this is wrong, open the dismissed documents and reprocess it.",
+        "subject" => "AI document dismissed - not financial"
+    ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Open AI Settings",
         "button_review_reprocess" => "Review & Reprocess",

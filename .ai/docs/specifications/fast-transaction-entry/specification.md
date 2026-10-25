@@ -71,7 +71,7 @@ D1–D4 are owner decisions (2026-10-02). D5–D15 are defaults chosen while wri
     - One `App\Services\TransactionDraftService` owns the draft. It validates, upgrades, enriches (it absorbs both `enrichProcessedData()` copies), and blanks stale references.
     - A stale reference is an ID that is deleted, inactive, or not owned by the user. Blanking it removes the key and adds a notice, for example `{field: "config.account_from_id", reason: "inactive"}`.
 - **D6 New extraction fields.** The main extraction schema in `AiStepGateway` (standard keys in `AiExtractionSchemaValidator`) gains four optional fields:
-    - `document_kind`: `bank_notification | receipt | invoice | other`
+    - `document_kind`: `bank_notification | receipt | invoice | other_financial | other_non_financial | other` (`other_non_financial` is auto-dismissed; `other` is the fallback)
     - `transaction_time`: `HH:MM`
     - `bank_reference`
     - `card_last_digits`

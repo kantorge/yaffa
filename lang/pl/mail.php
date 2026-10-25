@@ -14,6 +14,13 @@ return [
         "subject" => "Dokument przetworzony - gotowy do sprawdzenia",
         "what_happened" => "Co się stało"
     ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Otwórz ten dokument",
+        "button_open_dismissed" => "Otwórz odrzucone dokumenty",
+        "intro" => "Twój dokument AI został odrzucony automatycznie.",
+        "next_action_text" => "Rozpoznano go jako niefinansowy, więc nic nie zapisano. Jeśli to błąd, otwórz odrzucone dokumenty i przetwórz go ponownie.",
+        "subject" => "Dokument AI odrzucony - niefinansowy"
+    ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Otwórz ustawienia AI",
         "button_review_reprocess" => "Sprawdź i przetwórz ponownie",

@@ -182,6 +182,11 @@ class AiDocumentApiController extends Controller
                 ->where('relation', TransactionOrigin::RELATION_CREATED)
                 ->whereNull('reviewed_at')
                 ->count(),
+            'auto_dismissed_non_financial' => AiDocument::query()
+                ->where('user_id', $user->id)
+                ->where('status', AiDocumentStatus::Dismissed->value)
+                ->where('document_kind', 'other_non_financial')
+                ->count(),
             'oldest_created_at' => $stats->oldest_created_at
                 ? Carbon::parse((string) $stats->oldest_created_at)->toIso8601String()
                 : null,
@@ -397,7 +402,7 @@ class AiDocumentApiController extends Controller
                 return false;
             }
 
-            $document->transitionTo(AiDocumentStatus::Dismissed);
+            $document->dismiss('manual');
 
             return true;
         });

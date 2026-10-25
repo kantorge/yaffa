@@ -14,6 +14,13 @@ return [
         "subject" => "Document traité - prêt pour révision",
         "what_happened" => "Ce qui s'est passé"
     ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Ouvrir ce document",
+        "button_open_dismissed" => "Ouvrir les documents écartés",
+        "intro" => "Votre document IA a été écarté automatiquement.",
+        "next_action_text" => "Il a été reconnu comme non financier, donc rien n'a été enregistré. Si c'est une erreur, ouvrez les documents écartés et retraitez-le.",
+        "subject" => "Document IA écarté - non financier"
+    ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Ouvrir les paramètres IA",
         "button_review_reprocess" => "Réviser et retraiter",

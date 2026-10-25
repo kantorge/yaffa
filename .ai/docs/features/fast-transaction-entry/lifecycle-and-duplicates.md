@@ -12,7 +12,7 @@ As built. Design intent: [specification](../../specifications/fast-transaction-e
 
 ## Extraction and content hash
 
-- The main extraction gains the optional `document_kind`, `transaction_time` (HH:MM), `bank_reference`, `card_last_digits`. `ProcessDocumentService::sanitizeOptionalFields()` drops unusable values (unknown kind, malformed time) rather than failing the extraction; `AiExtractionSchemaValidator` accepts them as optional keys. They are stored in the draft's `raw`, and `document_kind` is also copied to `ai_documents.document_kind`.
+- The main extraction gains the optional `document_kind`, `transaction_time` (HH:MM), `bank_reference`, `card_last_digits`. `ProcessDocumentService::sanitizeOptionalFields()` drops unusable values (unknown kind, malformed time) rather than failing the extraction; `AiExtractionSchemaValidator` accepts them as optional keys. `document_kind` is one of `bank_notification | receipt | invoice | other_financial | other_non_financial | other`; `other` is the fallback for a missing or unknown value and for "cannot decide". `other_non_financial` (newsletters, 2FA/confirmation notifications even from a bank) makes `ProcessDocumentService::decideOutcome()` dismiss the document before any matching (`AiDocument::isNonFinancial()`). They are stored in the draft's `raw`, and `document_kind` is also copied to `ai_documents.document_kind`.
 - `ai_documents.content_hash` = sha256 of the sorted per-file sha256 values (`AiDocument::hashFiles()`), set by the three create paths: upload (files and text), received email (the formatted text), Google Drive.
 
 ## SameEventClassifier
