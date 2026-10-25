@@ -12,17 +12,24 @@ use Illuminate\Support\Str;
  */
 class PayeeMatcher
 {
-    private const array LEGAL_SUFFIXES = ['kft', 'zrt', 'bt', 'nyrt', 'kkt', 'ltd', 'gmbh'];
+    /**
+     * Legal-form suffixes, as they look after base normalization. Only removed from the end of a name, and words
+     * that are also common in real names (`as`, `ab`, `sa`, `co`) are deliberately left out.
+     */
+    private const array LEGAL_SUFFIXES = [
+        'kft', 'zrt', 'bt', 'nyrt', 'kkt', 'ltd', 'llc', 'inc', 'corp', 'plc', 'gmbh', 'ag', 'bv', 'nv',
+        'srl', 'sarl', 'sas', 'oy', 'sro', 'sp z o o',
+    ];
 
     /**
-     * Base normalization, plus legal suffixes and digit groups (store numbers, postal codes) removed:
+     * Base normalization, plus digit groups (store numbers, postal codes) and trailing legal suffixes removed:
      * `OMV 4471 BUDAPEST` => `omv budapest`, `Példa Kft.` => `pelda`.
      */
     public static function normalize(string $value): string
     {
         $base = AssetMatchingService::normalizeForMatching($value);
-        $stripped = preg_replace('/\b(?:\d+|' . implode('|', self::LEGAL_SUFFIXES) . ')\b/u', ' ', $base) ?? $base;
-        $stripped = Str::squish($stripped);
+        $stripped = Str::squish(preg_replace('/\b\d+\b/u', ' ', $base) ?? $base);
+        $stripped = preg_replace('/(?:\s+(?:' . implode('|', self::LEGAL_SUFFIXES) . '))+$/u', '', $stripped) ?? $stripped;
 
         return $stripped === '' ? $base : $stripped;
     }
