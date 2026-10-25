@@ -128,6 +128,37 @@
                 ></i>
                 <i v-else class="fa fa-ban text-danger" :title="__('No')"></i>
               </dd>
+
+              <dt v-if="createdOrigin" class="col-6">
+                {{ __('Origin') }}
+              </dt>
+              <dd v-if="createdOrigin" class="col-6">
+                <span
+                  class="badge bg-success"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  :title="createdOrigin.decision_reason || null"
+                >
+                  {{ __('Auto-recorded') }}
+                </span>
+                <span
+                  v-if="createdOrigin.reviewed_at"
+                  class="badge bg-success ms-1"
+                >
+                  {{ __('Checked') }}
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="badge bg-warning border-0 ms-1"
+                  dusk="confirm-origin"
+                  :title="__('Click once it\'s correct, fixed or not')"
+                  :disabled="confirming"
+                  @click="confirmOrigin"
+                >
+                  {{ __('Needs checking') }}
+                </button>
+              </dd>
             </dl>
           </div>
         </div>
@@ -224,6 +255,8 @@
   import TransactionItemContainer from './ItemContainer.vue';
   import TransactionSchedule from './Schedule.vue';
   import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import * as toastHelpers from '@/shared/lib/toast';
+  import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
 
   export default {
     components: {
@@ -242,7 +275,20 @@
       },
     },
 
+    data() {
+      return { confirming: false };
+    },
+
     computed: {
+      // Set when the transaction was recorded automatically from an AI document
+      createdOrigin() {
+        return (
+          this.transaction.origins?.find(
+            (origin) => origin.relation === 'created',
+          ) ?? null
+        );
+      },
+
       // Account TO and FROM labels based on transaction type
       accountFromFieldLabel() {
         if (
@@ -318,7 +364,46 @@
         return this.transaction?.transaction_type === 'transfer';
       },
     },
+
+    mounted() {
+      initializeBootstrapTooltips(this.$el);
+    },
+
+    updated() {
+      initializeBootstrapTooltips(this.$el);
+    },
     methods: {
+      confirmOrigin() {
+        this.confirming = true;
+
+        window.axios
+          .post(
+            window.route('api.v1.transaction-origins.review', {
+              origin: this.createdOrigin.id,
+            }),
+          )
+          .then(() => {
+            this.createdOrigin.reviewed_at = new Date().toISOString();
+            toastHelpers.showSuccessToast(__('Transaction marked as checked'));
+            // Lists showing the same transaction (e.g. the AI documents table) update themselves
+            window.dispatchEvent(
+              new CustomEvent('transactionOriginReviewed', {
+                detail: { id: this.createdOrigin.id },
+              }),
+            );
+          })
+          .catch((error) => {
+            toastHelpers.showErrorToast(
+              __('Error while reviewing document: :errorMessage', {
+                errorMessage: error.response?.data?.message || error.message,
+              }),
+            );
+          })
+          .finally(() => {
+            this.confirming = false;
+          });
+      },
+
       entityHasLink(entity, entityId) {
         return Boolean(entityId && entity?.name);
       },
@@ -340,13 +425,6 @@
       },
 
       entityLink(entity, entityId, side) {
-        if (this.entityIsPayee(entity, side)) {
-          return route('account-entity.edit', {
-            type: 'payee',
-            account_entity: entityId,
-          });
-        }
-
         return route('account-entity.show', {
           account_entity: entityId,
         });
@@ -354,9 +432,7 @@
 
       entityLinkTitle(entity, side) {
         if (this.entityIsPayee(entity, side)) {
-          return __(
-            'Open payee edit form (payees do not have a details view yet)',
-          );
+          return __('Go to payee');
         }
 
         return __('Go to account');

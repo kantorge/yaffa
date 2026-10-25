@@ -8,8 +8,18 @@ return [
         "intro" => "Votre document IA est prêt pour révision.",
         "next_action_text" => "Vérifiez les valeurs extraites, ajustez si nécessaire, puis finalisez la transaction.",
         "next_action_title" => "Action suivante",
+        "intro_auto_recorded" => "Votre document IA a été enregistré automatiquement comme transaction.",
+        "next_action_text_auto_recorded" => "Vérifiez la transaction avec le filtre Vérification de vos documents IA, corrigez ce qui ne va pas, puis marquez-la comme vérifiée.",
+        "subject_auto_recorded" => "Document enregistré automatiquement",
         "subject" => "Document traité - prêt pour révision",
         "what_happened" => "Ce qui s'est passé"
+    ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Ouvrir ce document",
+        "button_open_dismissed" => "Ouvrir les documents écartés",
+        "intro" => "Votre document IA a été écarté automatiquement.",
+        "next_action_text" => "Il a été reconnu comme non financier, donc rien n'a été enregistré. Si c'est une erreur, ouvrez les documents écartés et retraitez-le.",
+        "subject" => "Document IA écarté - non financier"
     ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Ouvrir les paramètres IA",

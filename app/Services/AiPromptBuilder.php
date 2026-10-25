@@ -277,11 +277,20 @@ EOF;
         };
     }
 
+    /**
+     * @param  array<int, string>  $hints  rendered user-defined hint texts
+     */
     public function buildMainExtractionPrompt(
         string $text,
         ?string $customPrompt = null,
         ?string $genericDocumentLanguage = null,
+        array $hints = [],
     ): string {
+        $hintsSection = $hints === []
+            ? ''
+            : "USER-DEFINED PATTERNS (apply these when the document matches; they describe how this user's recurring documents must be interpreted, including which accounts and payees are involved):\n"
+                . implode("\n", array_map(fn (string $hint): string => "* {$hint}", $hints))
+                . "\n\n";
         $customInstructionsIntro = <<<EOF
         The user has provided some custom instructions that may contain additional context or specific requirements for extracting data from this document. Please carefully consider these instructions when processing the document content.
         If the custom instructions are not relevant to the document or do not provide any useful information for extraction, you can ignore them. However, if they contain important details that can help you better understand the document or improve the accuracy of the extracted data, please take them into account.
@@ -320,7 +329,11 @@ FOR STANDARD TRANSACTIONS (spend, purchase, gain money, transfer between account
       "description": "item description extracted from the document",
       "amount": "item monetary amount as number"
     }
-  ]
+  ],
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other_financial|other_non_financial|other",
+  "transaction_time": "HH:MM (24 hour) time of the purchase, or null",
+  "bank_reference": "bank transaction reference or authorization code, or null",
+  "card_last_digits": "last digits of the card or account used (for example 1234), digits only, or null"
 }
 
 FOR INVESTMENT TRANSACTIONS (stock/bond buy, sell, gain dividends or other interest yield):
@@ -335,7 +348,11 @@ FOR INVESTMENT TRANSACTIONS (stock/bond buy, sell, gain dividends or other inter
   "commission": "total commission/fee amount as number, if available",
   "tax": "total tax amount as number, if available",
   "dividend": "dividend amount as number (for dividend/interest)",
-  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing"
+  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing",
+  "document_kind": "exactly one of bank_notification|receipt|invoice|other_financial|other_non_financial|other",
+  "transaction_time": "HH:MM (24 hour) time of the transaction, or null",
+  "bank_reference": "bank transaction reference or authorization code, or null",
+  "card_last_digits": "last digits of the account used, digits only, or null"
 }
 
 RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
@@ -348,6 +365,12 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
   * You must extract at most one transaction from the document. If there are multiple transactions mentioned, extract only the first one that appears, that can be identified as a transaction qualifying the above schemas.
   * If you see multiple transactions, DON'T combine them into one transaction, and DON'T convert the output JSON to an array of transactions.
   * If you cannot find any transaction data in the document, return the standard JSON with all keys set to null (except transaction_type which can be set to "withdrawal" as default, and transaction_items as an empty array).
+
+* Rules for identifying the document and the purchase:
+  * document_kind: "bank_notification" for a short message from a bank or card issuer about a card payment or account movement (for example an SMS, push notification or email alert, typically in Hungarian such as "Vásárlás ... kártyával", "Terhelés", "Jóváírás"); "receipt" for a shop or service receipt; "invoice" for an invoice; "other_financial" for any other document that describes a financial event or obligation; "other_non_financial" ONLY for a document that clearly carries no financial event, for example a newsletter, advertisement, personal letter, or a 2FA/OTP code, login, security or confirmation notification, even when it comes from a bank or financial app; "other" if you cannot decide. When in doubt, use "other", never "other_non_financial".
+  * transaction_time is the time of the purchase itself, as printed in the document, converted to 24 hour HH:MM. Do not use the time an email was sent. Set to null if the document has no time.
+  * bank_reference is a bank reference, authorization or transaction ID, if one is printed. Do not use receipt numbers, tax numbers or order numbers. Set to null if there is none.
+  * card_last_digits is the last digits of the card or account number as printed (for example "1234" from "****1234"). Digits only. Set to null if there is none.
 
 * Rules for localization
   * {$documentLanguageLine}
@@ -393,8 +416,7 @@ RULES OF EXTRACTION TO BE STRICTLY FOLLOWED:
 * Additional rules for INVESTMENT TRANSACTIONS:
   * For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
 
-{$customInstructions}
-
+{$hintsSection}{$customInstructions}
 The document content to process is:
 """
 {$text}

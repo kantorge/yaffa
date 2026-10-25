@@ -17,10 +17,9 @@ class AiDocumentsIndexTest extends DuskTestCase
     {
         parent::setUp();
 
-        // Migrate and seed only once for this file
+        // Migrate only once for this file - factory-created data only, no demo seed needed
         if (!static::$migrationRun) {
             $this->artisan('migrate:fresh');
-            $this->artisan('db:seed');
             static::$migrationRun = true;
         }
     }
@@ -83,8 +82,8 @@ class AiDocumentsIndexTest extends DuskTestCase
 
     /**
      * Status is pinned to 'ready_for_review' on both documents below because
-     * that's the table's default status filter (see AiDocumentManager.vue's
-     * initialStatus) - the factory's random status would otherwise make either
+     * the table's default status filter is "Any open" (see AiDocumentManager.vue's
+     * initialStatus), which matches it - the factory's random status would otherwise make either
      * document invisible regardless of date.
      */
     public function test_ai_documents_date_filter_updates_table(): void

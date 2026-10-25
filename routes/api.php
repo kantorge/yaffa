@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\AiUserSettingsApiController;
 use App\Http\Controllers\API\ApiTokenApiController;
 use App\Http\Controllers\API\BudgetApiController;
+use App\Http\Controllers\API\AiHintApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyApiController;
@@ -26,6 +27,8 @@ use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TransactionOriginApiController;
+use App\Http\Controllers\API\TransactionTemplateApiController;
 use App\Http\Controllers\API\TwoFactorApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
@@ -133,8 +136,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('documents.show');
     Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
         ->name('documents.update');
+    Route::post('/documents/reprocess-open', [AiDocumentApiController::class, 'reprocessOpen'])
+        ->name('documents.reprocessOpen');
     Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
         ->name('documents.reprocess');
+    Route::post('/documents/{aiDocument}/dismiss', [AiDocumentApiController::class, 'dismiss'])
+        ->name('documents.dismiss');
     Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
         ->name('documents.checkDuplicates');
     Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
@@ -225,6 +232,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/category-learning/{categoryLearning}', [CategoryLearningApiController::class, 'show'])
         ->name('category-learning.show');
 
+    // AI hint endpoints
+    Route::get('/ai-hints', [AiHintApiController::class, 'index'])
+        ->name('ai-hints.index');
+    Route::post('/ai-hints', [AiHintApiController::class, 'store'])
+        ->name('ai-hints.store');
+    Route::get('/ai-hints/{aiHint}', [AiHintApiController::class, 'show'])
+        ->name('ai-hints.show');
+    Route::patch('/ai-hints/{aiHint}', [AiHintApiController::class, 'update'])
+        ->name('ai-hints.update');
+    Route::delete('/ai-hints/{aiHint}', [AiHintApiController::class, 'destroy'])
+        ->name('ai-hints.destroy');
+
     // Investment endpoints
     Route::get('/investments', [InvestmentApiController::class, 'index'])
         ->name('investments.index');
@@ -258,6 +277,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('payees.similar');
     Route::get('/payees/category-suggestions/default', [PayeeApiController::class, 'getPayeeDefaultSuggestion'])
         ->name('payees.category-suggestions.default');
+    Route::get('/payees/auto-record-candidates', [PayeeApiController::class, 'getAutoRecordCandidates'])
+        ->name('payees.auto-record-candidates');
+    Route::post('/payees/auto-record-candidates/recalculate', [PayeeApiController::class, 'recalculateAutoRecordCandidates'])
+        ->name('payees.auto-record-candidates.recalculate');
     Route::get('/payees/{accountEntity}', [PayeeApiController::class, 'getItem'])
         ->name('payees.show');
     Route::patch('/payees/{accountEntity}', [PayeeApiController::class, 'updatePayee'])
@@ -281,11 +304,33 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::delete('/tags/{tag}', [TagApiController::class, 'destroy'])
         ->name('tags.destroy');
 
+    // Transaction template endpoints
+    Route::get('/transaction-templates', [TransactionTemplateApiController::class, 'index'])
+        ->name('transaction-templates.index');
+    Route::post('/transaction-templates', [TransactionTemplateApiController::class, 'store'])
+        ->name('transaction-templates.store');
+    Route::get('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'show'])
+        ->name('transaction-templates.show');
+    Route::patch('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'update'])
+        ->name('transaction-templates.update');
+    Route::delete('/transaction-templates/{template}', [TransactionTemplateApiController::class, 'destroy'])
+        ->name('transaction-templates.destroy');
+
+    // Transaction origin endpoints (auto-recorded review)
+    Route::get('/transaction-origins', [TransactionOriginApiController::class, 'index'])
+        ->name('transaction-origins.index');
+    Route::post('/transaction-origins/review', [TransactionOriginApiController::class, 'reviewMany'])
+        ->name('transaction-origins.review-many');
+    Route::post('/transaction-origins/{origin}/review', [TransactionOriginApiController::class, 'review'])
+        ->name('transaction-origins.review');
+
     // Transaction endpoints
     Route::get('/transactions', [TransactionApiController::class, 'findTransactions'])
         ->name('transactions.index');
     Route::get('/transactions/scheduled-items', [TransactionApiController::class, 'getScheduledItems'])
         ->name('transactions.scheduled-items');
+    Route::post('/transactions/duplicate-check', [TransactionApiController::class, 'duplicateCheck'])
+        ->name('transactions.duplicate-check');
     Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
         ->name('transactions.store-standard');
     Route::post('/transactions/investment', [TransactionApiController::class, 'storeInvestment'])

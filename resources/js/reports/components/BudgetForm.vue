@@ -8,7 +8,6 @@
     :edit-title="__('Edit budget')"
     :replace-title="__('Edit and create new budget period')"
     :form="form"
-    :show-success-alert="false"
     @submit="onSubmit"
   >
     <div class="row mb-3">

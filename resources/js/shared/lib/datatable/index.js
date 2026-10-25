@@ -90,6 +90,19 @@ export function dataTablesActionButton(id, action, params = {}) {
         '"><i class="fa fa-fw fa-clone"></i></a> '
       );
     },
+    template() {
+      return (
+        '<a href="' +
+        route('transaction.open', {
+          transaction: id,
+          action: 'template',
+          ...params,
+        }) +
+        '" class="btn btn-xs btn-primary" title="' +
+        __('Save as template') +
+        '"><i class="fa fa-fw fa-bookmark"></i></a> '
+      );
+    },
     replace() {
       return (
         '<a href="' +

@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\FileImportProfile;
+use App\Models\Payee;
+use App\Services\PayeeMatcher;
 use App\Models\TransactionDetailInvestment;
 use Closure;
 use Illuminate\Validation\Rule;
@@ -112,7 +114,26 @@ class AccountEntityRequest extends FormRequest
         }
 
         if ($this->config_type === 'payee') {
+            // Payees are matched by normalized name and alias, so those have to stay unique per user.
+            // Only a changed value is checked, so existing data never blocks an unrelated edit.
+            $rules['name'][] = fn (string $attribute, mixed $value, Closure $fail) => $this->failOnPayeeConflict(
+                [(string) $value],
+                $accountEntity !== null && PayeeMatcher::normalize($accountEntity->name) === PayeeMatcher::normalize((string) $value) ? [] : [(string) $value],
+                $accountEntity,
+                $attribute,
+                $fail,
+            );
+            $rules['alias'][] = fn (string $attribute, mixed $value, Closure $fail) => $this->failOnPayeeConflict(
+                PayeeMatcher::aliasLines($value),
+                $this->changedAliasLines($value, $accountEntity),
+                $accountEntity,
+                $attribute,
+                $fail,
+            );
+
             $rules = array_merge($rules, [
+                'config.auto_record_policy' => ['sometimes', Rule::in(Payee::AUTO_RECORD_POLICIES)],
+                'config.itemization_expected' => ['sometimes', 'boolean'],
                 'config.category_id' => [
                     'nullable',
                     Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', $this->user()->id)),
@@ -138,6 +159,47 @@ class AccountEntityRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * @param  array<int, string>  $own  All values of the field, to catch duplicates within the field itself
+     * @param  array<int, string>  $changed  The values that are new or changed and are checked against other payees
+     */
+    private function failOnPayeeConflict(array $own, array $changed, ?AccountEntity $accountEntity, string $attribute, Closure $fail): void
+    {
+        $normalized = array_map(PayeeMatcher::normalize(...), $own);
+
+        foreach ($changed as $value) {
+            $conflict = PayeeMatcher::findConflict($this->user(), $value, $accountEntity?->id);
+
+            if ($conflict !== null) {
+                $fail(__('":value" is already used by the payee ":payee" (names and aliases are compared without numbers and company suffixes).', [
+                    'value' => $value,
+                    'payee' => $conflict->name,
+                ]));
+
+                return;
+            }
+        }
+
+        if ($attribute === 'alias' && count($normalized) !== count(array_unique($normalized))) {
+            $fail(__('The alias lines must be different from each other.'));
+        }
+    }
+
+    /**
+     * The alias lines that are new, comparing by normalized value so a case-only edit is not a change.
+     *
+     * @return array<int, string>
+     */
+    private function changedAliasLines(?string $alias, ?AccountEntity $accountEntity): array
+    {
+        $existing = array_map(PayeeMatcher::normalize(...), PayeeMatcher::aliasLines($accountEntity?->alias));
+
+        return array_values(array_filter(
+            PayeeMatcher::aliasLines($alias),
+            fn (string $line) => ! in_array(PayeeMatcher::normalize($line), $existing, true),
+        ));
     }
 
     /**

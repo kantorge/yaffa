@@ -5,8 +5,8 @@
     </div>
     <div class="card-body">
       <dl class="row mb-0">
-        <dt class="col-6">{{ __('Active') }}</dt>
-        <dd class="col-6">
+        <dt class="col-5">{{ __('Active') }}</dt>
+        <dd class="col-7">
           <i
             v-if="payee.active"
             class="fa fa-check-square text-success"
@@ -15,8 +15,8 @@
           <i v-else class="fa fa-square text-danger" :title="__('No')"></i>
         </dd>
 
-        <dt class="col-6">{{ __('Default category') }}</dt>
-        <dd class="col-6">
+        <dt class="col-5">{{ __('Default category') }}</dt>
+        <dd class="col-7">
           <a
             v-if="payee.config?.category"
             :href="
@@ -29,8 +29,8 @@
         </dd>
 
         <template v-if="preferredCategories.length > 0">
-          <dt class="col-6">{{ __('Preferred categories') }}</dt>
-          <dd class="col-6">
+          <dt class="col-5">{{ __('Preferred categories') }}</dt>
+          <dd class="col-7">
             <template
               v-for="(category, index) in preferredCategories"
               :key="category.id"
@@ -43,8 +43,8 @@
           </dd>
         </template>
         <template v-if="excludedCategories.length > 0">
-          <dt class="col-6">{{ __('Excluded categories') }}</dt>
-          <dd class="col-6">
+          <dt class="col-5">{{ __('Excluded categories') }}</dt>
+          <dd class="col-7">
             <template
               v-for="(category, index) in excludedCategories"
               :key="category.id"
@@ -56,27 +56,31 @@
             </template>
           </dd>
         </template>
-        <template v-if="payee.alias">
-          <dt class="col-6">{{ __('Import alias') }}</dt>
-          <dd class="col-6 text-break">{{ payee.alias }}</dd>
+        <template v-if="aliases.length > 0">
+          <dt class="col-5">{{ __('Import alias') }}</dt>
+          <dd class="col-7 text-break">
+            <ul class="mb-0 ps-3">
+              <li v-for="alias in aliases" :key="alias">{{ alias }}</li>
+            </ul>
+          </dd>
         </template>
 
-        <dt class="col-6">{{ __('Number of transactions') }}</dt>
-        <dd class="col-6">{{ overview.count }}</dd>
+        <dt class="col-5">{{ __('Number of transactions') }}</dt>
+        <dd class="col-7">{{ overview.count }}</dd>
 
-        <dt class="col-6">{{ __('First transaction') }}</dt>
-        <dd class="col-6">{{ formatDate(overview.first_date) }}</dd>
+        <dt class="col-5">{{ __('First transaction') }}</dt>
+        <dd class="col-7">{{ formatDate(overview.first_date) }}</dd>
 
-        <dt class="col-6">{{ __('Last transaction') }}</dt>
-        <dd class="col-6">
+        <dt class="col-5">{{ __('Last transaction') }}</dt>
+        <dd class="col-7">
           {{ formatDate(overview.last_date) }}
           <span v-if="daysSinceLast !== null" class="text-muted">
             ({{ __(':days days ago', { days: daysSinceLast }) }})
           </span>
         </dd>
 
-        <dt class="col-6">{{ __('Total paid') }}</dt>
-        <dd class="col-6">
+        <dt class="col-5">{{ __('Total paid') }}</dt>
+        <dd class="col-7">
           {{ formatMoney(overview.withdrawal_total) }}
           <i
             v-if="overview.rates_missing"
@@ -89,8 +93,8 @@
           ></i>
         </dd>
 
-        <dt class="col-6">{{ __('Total received') }}</dt>
-        <dd class="col-6">
+        <dt class="col-5">{{ __('Total received') }}</dt>
+        <dd class="col-7">
           {{ formatMoney(overview.deposit_total) }}
           <i
             v-if="overview.rates_missing"
@@ -121,6 +125,12 @@
       return { locale: window.YAFFA.userSettings.locale };
     },
     computed: {
+      aliases() {
+        return (this.payee.alias || '')
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+      },
       preferredCategories() {
         return this.payee.preferred_categories || [];
       },

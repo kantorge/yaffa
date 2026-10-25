@@ -55,6 +55,11 @@
                     iconClasses="fa-solid fa-graduation-cap"
                     text="{{ __('Category learning') }}"
                 />
+                <x-nav-link
+                    href="{{ route('ai-hints.index') }}"
+                    iconClasses="fa-solid fa-lightbulb"
+                    text="{{ __('AI hints') }}"
+                />
             @endif
             <x-nav-link
                 href="{{ route('tags.index') }}"

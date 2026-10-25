@@ -1,0 +1,72 @@
+# Payee profile, settings and matching (Fast Transaction Entry, Phase 3)
+
+As built. Design intent: [specification](../../specifications/fast-transaction-entry/specification.md), Phase 3 and D7–D10, D15. Nothing is recorded automatically in this phase: the profile, matcher and candidates page prepare Phase 4.
+
+## Payee profile
+
+`payee_profiles` (one row per payee, rebuilt at any time) is calculated by `PayeeProfileService::calculate()`.
+
+- **Window:** the 50 newest non-schedule standard withdrawals (payee in `account_to_id`) and deposits (payee in `account_from_id`), ordered by date then ID, no time limit.
+- **Dominant category:** the category most single-item transactions of the window are in. `single_item_dominant_count` counts those transactions; `dominant_share` is the share of transactions with any item in that category; `multi_item_share` is the share with more than one item.
+- **Wilson bound:** `wilson_lower` = `wilsonLowerBound(single_item_dominant_count, sample_size)`, z = 1.645 (D9). 10/10 → 0.787, 11/11 → 0.803, 20/21 → 0.812, 18/20 → 0.738.
+- **Amounts** are on the account side (withdrawal: `amount_from`, deposit: `amount_to`), so they are in the currency of the payee's typical account. They come from a **recent subset of the dominant-category transactions**, not all 50: first only the transactions counted in `single_item_dominant_count` (one item, in the dominant category) are kept, so a different purchase type of the same payee (e.g. transit passes next to parking) never feeds the usual amount or `known_amounts`; with no dominant category every amount field is null/empty. Of those, the larger of the 10 newest transactions and all transactions of the last 12 months (`RECENT_MIN_TRANSACTIONS`, `RECENT_MONTHS`); if that is fewer than 5 (`RECENT_MIN_SAMPLE`), all of them. This keeps old prices (e.g. 2019–2022 receipts) from skewing the usual amount. Sample size, dominant category, Wilson bound, typical accounts and multi-item share stay on the full window.
+  - `amount_median`: median of the recent subset.
+  - `amount_min` / `amount_max`: **10th / 90th percentile** (linear interpolation) of the recent subset, not the raw extremes, so one outlier does not stretch the range. (Column meaning changed; no schema change. Before, they were the minimum and maximum of all 50.)
+  - `amount_mode_share`: share of the most common amount within the recent subset. `known_amounts`: distinct recent amounts, most frequent first, capped at 20.
+  - Transactions in several currencies are mixed as-is; gate 7 fails on a currency mismatch (spec R3).
+- **`typical_account_ids`:** the account side IDs covering at least 20% of the window, most frequent first.
+
+### When it is recalculated
+
+- `RecalculatePayeeProfile` (`ShouldBeUnique` per payee) is dispatched by `ProcessTransactionCreated`, `ProcessTransactionUpdated` (current payee and, from `changedAttributes['config']`, the previous one) and `ProcessTransactionDeleted` (before the config is deleted), through `RecalculatePayeeProfile::dispatchForTransaction()`. Schedules, investments and account-only transfers dispatch nothing.
+- `app:payees:recalculate-profiles {userId?}` recalculates every payee; scheduled `dailyAt('02:30')` in the `runs_scheduler` block. It also covers paths that fire no event (schedule recording, reconcile) and is the way to build the first profiles after the upgrade.
+
+### Amount gate (gate 7)
+
+`GateEvaluator::amountFailure()` passes a document amount that is an exact `known_amounts` entry (recent only), or within `max(median × tolerance%, SPREAD_FACTOR × (amount_max − amount_min) / 2)` of `amount_median`. `SPREAD_FACTOR` is 1.5: half the stored p10–p90 range times 1.5 is about two standard deviations for normal data, comparable to 3 × MAD. The tolerance (`auto_record_amount_tolerance_percent`, default 20) is unchanged and is the floor, so identical-amount payees stay strict. The failure reason names the band, e.g. "around 2280, accepted 1824.00–2736.00", and `context` carries `from`/`to` for the document viewer.
+
+The spread is taken from the stored percentiles instead of a median absolute deviation (MAD) because storing a MAD would need a new `payee_profiles` column; it can be swapped in later if the percentile range proves too noisy.
+
+## Qualification and candidates
+
+`PayeeProfileService::qualification()` applies the history gate with the user's resolved settings: policy `never` never qualifies, `always` always does, otherwise `sample_size ≥ auto_record_min_history` and `wilson_lower ≥ auto_record_wilson_min`. When it fails, `missing` is the number of further matching (single item, dominant category) transactions that would pass it, or `null` when none ever would.
+
+`GET /api/v1/payees/auto-record-candidates` (`PayeeApiController::getAutoRecordCandidates`, `read`) returns, from the stored profiles, four lists. A payee can be in several. Each row carries the numbers and a `reason`; the profile `currency` is the typical account's.
+
+| Group                  | Rule                                                                                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `qualifying`           | passes `qualification()`                                                                                                                                                                                              |
+| `near`                 | not qualifying, policy not `never`, has a dominant category, and the lower bound is within 0.10 below the minimum, **or** the payee is perfectly consistent but has fewer than `auto_record_min_history` transactions |
+| `itemization_mismatch` | at least 5 transactions, and `multi_item_share ≥ 0.3` while _Summary sufficient_, or `≤ 0.05` while _Itemization expected_                                                                                            |
+| `template_candidates`  | at least 5 transactions, `amount_mode_share ≥ 0.8`, every transaction single item in the dominant category, and no template with this `payee_id`                                                                      |
+
+The 5-transaction floor of the last two groups is not in the specification; it keeps one-off payees out of them.
+
+## Settings
+
+- `payees.auto_record_policy` (`follow_global` default, `always`, `never`) and `payees.itemization_expected` (default `false`); `Payee::AUTO_RECORD_POLICIES`, validated in `AccountEntityRequest`, persisted by `PayeePersistenceService::CONFIG_FIELDS`.
+- `ai_user_settings`: `auto_record_min_history` (10), `auto_record_wilson_min` (0.8), `auto_record_amount_tolerance_percent` (20), `match_min_margin` (0.1; shared with the asset matching, see below). NULL = default, resolved by `AiUserSettingsResolver`. `auto_record_enabled` and `itemization_timeout_days` arrive with Phase 4. The amount tolerance is the floor of the gate 7 band (see above).
+
+## Payee matching
+
+`AssetMatchingService::matchPayees(text)` over the user's **active** payees; `PayeeMatcher` only keeps the static helpers below. Matching and the "certain match" rule are shared with document processing and the auto-record gates: see [auto-recording.md](auto-recording.md#one-matching-two-questions).
+
+- **Normalization** (`PayeeMatcher::normalize()`): `AssetMatchingService::normalizeForMatching()` (`public static`: NFC, lowercase, transliterated, punctuation to spaces), then digit-only tokens and the legal suffixes `kft zrt bt nyrt kkt ltd gmbh` are dropped. If nothing is left, the base normalization is used. `OMV 4471 BUDAPEST` → `omv budapest`; `Példa Kft.` → `pelda`.
+- **Scores:** 1.0 for a payee whose normalized name or alias line equals the text, else for the one with the longest alias line that opens the text as whole tokens (names do not take part); otherwise the best Jaro-Winkler over name and alias lines, kept above `asset_similarity_threshold`.
+- `PayeeMatcher::aliasLines()`/`findConflict()` are used by the payee request and the CSV import.
+
+## Alias uniqueness (D15)
+
+`AccountEntityRequest` rejects, for payees, a name or alias line that normalizes to the same value as another payee's name or alias line (`PayeeMatcher::findConflict()`), and an alias with two lines that normalize equally. Only new or changed values are checked, so legacy collisions never block an unrelated edit. `CsvParserService::loadPayeeLookup()` now maps each alias line.
+
+## Frontend
+
+- `PayeeForm.vue`: _Auto-recording_ and _Itemization_ selects (not in the simplified form, but their values are still sent so a simplified save keeps them); name and alias errors show at their field.
+- `PayeeProfileCard.vue` on the payee page; data from `AccountEntityController::payeeProfileData()` through `window.payeeProfile` (`null` until the first calculation).
+- Candidates page: `GET /payees/auto-record-candidates` (`payees.auto-record-candidates`), `resources/js/payee/candidates.js`, `AutoRecordCandidates.vue` with four tabs and an edit button opening `PayeeForm`. The "nothing is recorded yet" notice is static until the Phase 4 switch exists. Linked from the payee list (when an AI provider is configured) and from the settings.
+- `AiBehaviorSettings.vue`: the strictness groups (see auto-recording.md); the payee policy select reads _Automatic (based on history)_ / _Always allow_ / _Never_ with a help text per choice.
+- `AiDocumentViewer.vue`: after a transaction is created from the document, when the chosen payee differs from the one the draft was matched to, it offers _Add "<leading words>" as alias of <payee>_ (leading words of the extracted payee text up to the first word with a digit, at most three) and saves it with one PATCH.
+
+## Tests
+
+`tests/Unit/Services/PayeeMatchingMathTest.php` (Wilson, normalizer), `tests/Feature/FastTransactionEntry/PayeeMatcherTest.php`, `PayeeProfileTest.php`, `AutoRecordCandidatesApiTest.php`, `PayeeSettingsAndAliasTest.php`; `ApiAbilityEnforcementTest` row `payees.auto-record-candidates`.

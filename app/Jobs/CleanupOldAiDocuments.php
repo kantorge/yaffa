@@ -19,9 +19,10 @@ use Throwable;
 /**
  * Applies the user's AI document retention setting (`document_retention_days`) to their documents.
  *
- * Finalized documents past the retention period are deleted together with their files (and the
- * emptied per-document directories) and any received email. Old documents that are not finalized
- * are never deleted; the user gets one reminder email per run instead.
+ * Documents in a terminal status (finalized, auto-recorded, duplicate, dismissed) past the retention
+ * period are deleted together with their files (and the emptied per-document directories) and any
+ * received email. Old documents that are not terminal are never deleted; the user gets one reminder
+ * email per run instead.
  */
 class CleanupOldAiDocuments implements ShouldQueue
 {
@@ -45,8 +46,10 @@ class CleanupOldAiDocuments implements ShouldQueue
         $cutoff = now()->subDays($retentionDays);
         $oldDocuments = AiDocument::query()->where('user_id', $user->id)->olderThan($cutoff);
 
+        $terminalStatuses = AiDocumentStatus::values(AiDocumentStatus::terminal());
+
         (clone $oldDocuments)
-            ->where('status', AiDocumentStatus::Finalized->value)
+            ->whereIn('status', $terminalStatuses)
             ->with(['files', 'receivedMail'])
             ->chunkById(100, fn ($documents) => $documents->each(function (AiDocument $document): void {
                 // A failing document must not block the others; it stays and is retried on the next run.
@@ -58,7 +61,7 @@ class CleanupOldAiDocuments implements ShouldQueue
             }));
 
         $unprocessedCount = (clone $oldDocuments)
-            ->where('status', '!=', AiDocumentStatus::Finalized->value)
+            ->whereNotIn('status', $terminalStatuses)
             ->count();
 
         if ($unprocessedCount > 0) {
@@ -76,7 +79,8 @@ class CleanupOldAiDocuments implements ShouldQueue
             ->all();
 
         DB::transaction(function () use ($document, $disk, $filePaths): void {
-            // Cascades to ai_document_files; a linked transaction only loses its reference.
+            // Cascades to ai_document_files; a linked transaction only loses its reference, and its origin
+            // records are cleaned up by the model (see AiDocument::booted()).
             $document->delete();
             $document->receivedMail?->delete();
 

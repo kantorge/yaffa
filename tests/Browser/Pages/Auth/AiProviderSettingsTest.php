@@ -18,10 +18,9 @@ class AiProviderSettingsTest extends DuskTestCase
     {
         parent::setUp();
 
-        // Migrate and seed only once for this file
+        // Migrate only once for this file - factory-created data only, no demo seed needed
         if (!static::$migrationRun) {
             $this->artisan('migrate:fresh');
-            $this->artisan('db:seed');
 
             static::$migrationRun = true;
         }

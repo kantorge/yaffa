@@ -4,7 +4,8 @@
 
 | Notification | Class · template | Trigger | Recipient | Subject key |
 |---|---|---|---|---|
-| Old AI documents waiting | `App\Mail\AiDocumentsAwaitingAction` · `resources/views/emails/ai-documents-awaiting-action.blade.php` (markdown mail) | `CleanupOldAiDocuments::handle()` when ≥ 1 non-finalized document is older than the retention cutoff | The document owner's own `users.email` | `mail.ai_documents_awaiting_action.subject` |
+| Old AI documents waiting | `App\Mail\AiDocumentsAwaitingAction` · `resources/views/emails/ai-documents-awaiting-action.blade.php` (markdown mail) | `CleanupOldAiDocuments::handle()` when ≥ 1 non-terminal document is older than the retention cutoff | The document owner's own `users.email` | `mail.ai_documents_awaiting_action.subject` |
+| Document auto-dismissed as non-financial | `App\Mail\AiDocumentDismissedNonFinancial` · `resources/views/emails/ai-document-dismissed-non-financial.blade.php` | `SendAiDocumentProcessedNotification` when processing ended in `dismissed` (not part of retention; retention later deletes such documents silently) | The document owner | `mail.ai_document_dismissed_non_financial.subject` |
 
 ## Path
 

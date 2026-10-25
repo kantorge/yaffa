@@ -4,6 +4,8 @@
     :initial-callback="callback"
     :transaction="transactionData"
     :ai-document-id="aiDocumentId"
+    :template-info="templateInfo"
+    :transaction-template-id="transactionTemplateId"
     :simplified="isSimplified"
     :dropdown-parent-selector="'body'"
     @cancel="onCancel"
@@ -47,6 +49,16 @@
         type: Number,
         default: null,
       },
+      // The template being edited (action "template"): {id, name, is_featured, notices}
+      templateInfo: {
+        type: Object,
+        default: null,
+      },
+      // The template a new transaction is created from
+      transactionTemplateId: {
+        type: Number,
+        default: null,
+      },
     },
 
     data() {
@@ -87,7 +99,7 @@
 
     computed: {
       isSimplified() {
-        return this.action === 'enter';
+        return ['enter', 'template'].includes(this.action);
       },
     },
 
@@ -151,8 +163,22 @@
         window.history.back();
       },
 
+      // A template was saved: it has no follow-up options, so go back to the list
+      onTemplateSaved(template) {
+        storeNotification(
+          'success',
+          __('Template saved (:name)', { name: template.name }),
+          { dismissible: true },
+        );
+        location.href = this.route('transaction-templates.index');
+      },
+
       // Actual form was submitted. We need to proceed to the screen selected by the user.
       onSuccess(transaction, options) {
+        if (this.action === 'template') {
+          return this.onTemplateSaved(transaction);
+        }
+
         if (['create', 'clone', 'enter', 'finalize'].includes(this.action)) {
           storeNotification(
             'success',

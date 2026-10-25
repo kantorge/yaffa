@@ -26,8 +26,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $duplicate_date_window_days
  * @property float $duplicate_amount_tolerance_percent
  * @property float $duplicate_similarity_threshold
+ * @property int|null $same_event_minutes
  * @property string $category_matching_mode
  * @property int|null $document_retention_days
+ * @property float|null $auto_record_wilson_min
+ * @property int|null $auto_record_min_history
+ * @property float|null $auto_record_amount_tolerance_percent
+ * @property float|null $match_min_margin
+ * @property bool $auto_record_enabled
+ * @property int|null $itemization_timeout_days
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read User $user
@@ -58,7 +65,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AiUserSettings whereUserId($value)
  * @mixin \Eloquent
  */
-#[Fillable('ai_enabled', 'prompt_chat_history_enabled', 'ocr_language', 'generic_document_language', 'image_max_width_vision', 'image_max_height_vision', 'image_quality_vision', 'image_max_width_tesseract', 'image_max_height_tesseract', 'asset_similarity_threshold', 'asset_max_suggestions', 'match_auto_accept_threshold', 'duplicate_date_window_days', 'duplicate_amount_tolerance_percent', 'duplicate_similarity_threshold', 'category_matching_mode', 'document_retention_days')]
+#[Fillable('ai_enabled', 'prompt_chat_history_enabled', 'ocr_language', 'generic_document_language', 'image_max_width_vision', 'image_max_height_vision', 'image_quality_vision', 'image_max_width_tesseract', 'image_max_height_tesseract', 'asset_similarity_threshold', 'asset_max_suggestions', 'match_auto_accept_threshold', 'duplicate_date_window_days', 'duplicate_amount_tolerance_percent', 'duplicate_similarity_threshold', 'same_event_minutes', 'category_matching_mode', 'document_retention_days', 'auto_record_wilson_min', 'auto_record_min_history', 'auto_record_amount_tolerance_percent', 'match_min_margin', 'auto_record_enabled', 'itemization_timeout_days')]
 class AiUserSettings extends Model
 {
     /** @use HasFactory<\Database\Factories\AiUserSettingsFactory> */
@@ -70,6 +77,7 @@ class AiUserSettings extends Model
     {
         return [
             'ai_enabled' => 'boolean',
+            'auto_record_enabled' => 'boolean',
             'prompt_chat_history_enabled' => 'boolean',
             'image_max_width_vision' => 'integer',
             'image_max_height_vision' => 'integer',
@@ -82,7 +90,12 @@ class AiUserSettings extends Model
             'duplicate_date_window_days' => 'integer',
             'duplicate_amount_tolerance_percent' => 'float',
             'duplicate_similarity_threshold' => 'float',
+            'same_event_minutes' => 'integer',
             'document_retention_days' => 'integer',
+            'auto_record_wilson_min' => 'float',
+            'auto_record_min_history' => 'integer',
+            'auto_record_amount_tolerance_percent' => 'float',
+            'match_min_margin' => 'float',
         ];
     }
 

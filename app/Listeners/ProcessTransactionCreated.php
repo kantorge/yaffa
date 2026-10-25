@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TransactionCreated;
+use App\Jobs\RecalculatePayeeProfile;
 use App\Services\CategoryWaterfallCacheService;
 use App\Services\TransactionService;
 
@@ -28,5 +29,7 @@ class ProcessTransactionCreated
         $this->transactionService->recalculateMonthlySummaries($transaction);
 
         CategoryWaterfallCacheService::forgetForDate($transaction->user_id, $transaction->date);
+
+        RecalculatePayeeProfile::dispatchForTransaction($transaction);
     }
 }
