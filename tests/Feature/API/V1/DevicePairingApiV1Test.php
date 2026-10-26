@@ -110,6 +110,18 @@ it('refuses to show a pairing code for a read-only token', function () {
         ->assertUnprocessable();
 });
 
+it('refuses to show a pairing code for a token with settings or wildcard access', function (array $abilities) {
+    $user = User::factory()->create();
+    $token = $user->createToken('admin', $abilities);
+    $secret = $token->accessToken->token;
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.users.me.tokens.pairing.rotate', $token->accessToken->id))
+        ->assertUnprocessable();
+
+    expect($token->accessToken->fresh()->token)->toBe($secret);
+})->with([[['read', 'write', 'settings']], [['*']]]);
+
 it('refuses to pair over plain HTTP in production', function () {
     config(['app.url' => 'http://yaffa.example.com']);
     $this->app['env'] = 'production';

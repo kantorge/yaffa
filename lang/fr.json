@@ -1839,5 +1839,19 @@
     "account :name": "compte :name",
     "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Compte : aucun compte n'a pu être identifié avec certitude (aucune fin de carte ni aucun nom de compte ne correspond, et le bénéficiaire n'a pas de modèle unique avec un compte).",
     "Mark transaction as checked": "Marquer la transaction comme vérifiée",
-    "Error while loading the transaction: :errorMessage": "Erreur lors du chargement de la transaction : :errorMessage"
+    "Error while loading the transaction: :errorMessage": "Erreur lors du chargement de la transaction : :errorMessage",
+    "A document could not be processed": "Un document n'a pas pu être traité",
+    "A document is ready for review": "Un document est prêt à être vérifié",
+    "(No title)": "(Sans titre)",
+    "Mobile scan": "Scan mobile",
+    "Mobile share": "Partage mobile",
+    "Mobile notification": "Notification mobile",
+    "Connect mobile app": "Connecter l'application mobile",
+    "Created": "Créé",
+    "Show QR code": "Afficher le code QR",
+    "Device name": "Nom de l'appareil",
+    "e.g. Pixel 8 - YAFFA app": "p. ex. Pixel 8 - application YAFFA",
+    "Generate QR code": "Générer le code QR",
+    "Unable to create the pairing code.": "Impossible de créer le code d'appairage.",
+    "Only tokens with exactly read and write access can be paired with the app.": "Seuls les jetons disposant exactement des accès lecture et écriture peuvent être appairés avec l'application."
 }

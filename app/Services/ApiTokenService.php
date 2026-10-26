@@ -61,7 +61,7 @@ class ApiTokenService
      * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
      *
      * @throws ModelNotFoundException
-     * @throws InvalidArgumentException when the token lacks read or write ability, or APP_URL is not https in production
+     * @throws InvalidArgumentException when the token's abilities are not exactly read and write, or APP_URL is not https in production
      */
     public function rotateForPairing(User $user, int $tokenId): array
     {
@@ -70,8 +70,12 @@ class ApiTokenService
         /** @var PersonalAccessToken $token */
         $token = $user->tokens()->findOrFail($tokenId);
 
-        if (! $token->can('read') || ! $token->can('write')) {
-            throw new InvalidArgumentException('Only tokens with read and write access can be paired with the app.');
+        // Exactly read+write: a token with 'settings' (or '*') must never end up on a phone.
+        $abilities = $token->abilities;
+        sort($abilities);
+
+        if ($abilities !== [ApiTokenAbility::Read->value, ApiTokenAbility::Write->value]) {
+            throw new InvalidArgumentException('Only tokens with exactly read and write access can be paired with the app.');
         }
 
         $secret = $user->generateTokenString();

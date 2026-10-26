@@ -82,7 +82,7 @@
                     canShowQr(token)
                       ? null
                       : __(
-                          'Only tokens with read and write access can be paired with the app.',
+                          'Only tokens with exactly read and write access can be paired with the app.',
                         )
                   "
                   dusk="button-show-token-qr"
@@ -585,7 +585,10 @@
         }
       },
       canShowQr(token) {
-        return ['read', 'write'].every((a) => token.abilities.includes(a));
+        return (
+          token.abilities.length === 2 &&
+          ['read', 'write'].every((a) => token.abilities.includes(a))
+        );
       },
       async showTokenQr(token) {
         const result = await Swal.fire({

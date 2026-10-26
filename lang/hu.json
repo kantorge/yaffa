@@ -1839,5 +1839,19 @@
     "account :name": "számla: :name",
     "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Számla: nem azonosítható biztosan számla (nincs egyező kártyavégződés vagy számlanév, és a partnernek nincs egyetlen számlát tartalmazó sablonja).",
     "Mark transaction as checked": "Tranzakció megjelölése ellenőrzöttként",
-    "Error while loading the transaction: :errorMessage": "Hiba a tranzakció betöltésekor: :errorMessage"
+    "Error while loading the transaction: :errorMessage": "Hiba a tranzakció betöltésekor: :errorMessage",
+    "A document could not be processed": "Egy dokumentumot nem sikerült feldolgozni",
+    "A document is ready for review": "Egy dokumentum készen áll az ellenőrzésre",
+    "(No title)": "(Nincs cím)",
+    "Mobile scan": "Mobilos beolvasás",
+    "Mobile share": "Mobilos megosztás",
+    "Mobile notification": "Mobilértesítés",
+    "Connect mobile app": "Mobilalkalmazás csatlakoztatása",
+    "Created": "Létrehozva",
+    "Show QR code": "QR-kód megjelenítése",
+    "Device name": "Eszköz neve",
+    "e.g. Pixel 8 - YAFFA app": "pl. Pixel 8 – YAFFA alkalmazás",
+    "Generate QR code": "QR-kód létrehozása",
+    "Unable to create the pairing code.": "Nem sikerült létrehozni a párosítási kódot.",
+    "Only tokens with exactly read and write access can be paired with the app.": "Csak pontosan olvasási és írási jogosultsággal rendelkező tokenek párosíthatók az alkalmazással."
 }

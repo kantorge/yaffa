@@ -20,7 +20,7 @@ sender itself (UnifiedPush channel, optional FCM relay); endpoints and notificat
 token (deliberately no `settings`: a lost phone must not reach credential/config controllers or `/maintenance/*`) via `ApiTokenService::createPairing()` and returns, once: `token`, `deep_link`
 (`yaffa://pair?v=1&url=<APP_URL>&token=<token>`), `qr_svg` (`bacon/bacon-qr-code`), and `warnings`
 (`not_https`, `localhost`, computed from `APP_URL`). UI: "Connect mobile app" in `ApiTokenManager.vue`.
-Any existing token can be re-shown as a QR code via `POST /api/v1/users/me/tokens/{id}/pairing` (session only, sandbox-blocked):
+An existing token whose abilities are exactly `read,write` can be re-shown as a QR code via `POST /api/v1/users/me/tokens/{id}/pairing` (session only, sandbox-blocked; `settings`/`*` tokens are refused with 422):
 the plain text is never stored, so `ApiTokenService::rotateForPairing()` replaces the secret in place (name, abilities, expiry and
 `devices` row are kept; the old secret stops working) and returns the same payload as pairing. The UI confirms via SweetAlert first.
 Revoking the token (existing endpoint) makes the app's next call return 401.
@@ -102,3 +102,7 @@ sender is built, endpoints must pass `PublicEndpointUrlValidator` (SSRF) at send
 ## OpenAPI
 
 See `.ai/docs/features/api-access-and-2fa/api-versioning.md` (spec generation, error envelope, breaking-change policy).
+
+## Before building the push sender
+
+Run `PublicEndpointUrlValidator` on `devices.endpoint` at send time (DNS rebinding); `DeviceRequest` only checks the URL shape.

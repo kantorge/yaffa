@@ -1840,5 +1840,19 @@
     "account :name": "account :name",
     "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).": "Account: no account could be identified for certain (no card ending or account name matched, and the payee has no single template with an account).",
     "Mark transaction as checked": "Mark transaction as checked",
-    "Error while loading the transaction: :errorMessage": "Error while loading the transaction: :errorMessage"
+    "Error while loading the transaction: :errorMessage": "Error while loading the transaction: :errorMessage",
+    "A document could not be processed": "A document could not be processed",
+    "A document is ready for review": "A document is ready for review",
+    "(No title)": "(No title)",
+    "Mobile scan": "Mobile scan",
+    "Mobile share": "Mobile share",
+    "Mobile notification": "Mobile notification",
+    "Connect mobile app": "Connect mobile app",
+    "Created": "Created",
+    "Show QR code": "Show QR code",
+    "Device name": "Device name",
+    "e.g. Pixel 8 - YAFFA app": "e.g. Pixel 8 - YAFFA app",
+    "Generate QR code": "Generate QR code",
+    "Unable to create the pairing code.": "Unable to create the pairing code.",
+    "Only tokens with exactly read and write access can be paired with the app.": "Only tokens with exactly read and write access can be paired with the app."
 }
