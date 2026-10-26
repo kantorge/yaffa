@@ -585,15 +585,15 @@ class ProcessDocumentServiceTest extends TestCase
         $accountHistory = $historyByStep['account_matching'];
         $payeeHistory = $historyByStep['payee_matching'];
 
-        $this->assertStringContainsString('Local account matching used. AI call skipped because similarity reached threshold', $accountHistory['prompt']);
-        $this->assertStringContainsString('threshold 0.88', $accountHistory['prompt']);
+        $this->assertStringContainsString('Local account matching used. AI call skipped because the match is certain', $accountHistory['prompt']);
+        $this->assertStringContainsString('auto-accept threshold 0.88', $accountHistory['prompt']);
         $this->assertStringContainsString("Input: \"{$accountName}\".", $accountHistory['prompt']);
         $this->assertStringContainsString("Matched account ID {$account->id} ({$accountName})", $accountHistory['response']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['prompt']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $accountHistory['response']);
 
-        $this->assertStringContainsString('Local payee matching used. AI call skipped because similarity reached threshold', $payeeHistory['prompt']);
-        $this->assertStringContainsString('threshold 0.88', $payeeHistory['prompt']);
+        $this->assertStringContainsString('Local payee matching used. AI call skipped because the match is certain', $payeeHistory['prompt']);
+        $this->assertStringContainsString('auto-accept threshold 0.88', $payeeHistory['prompt']);
         $this->assertStringContainsString("Input: \"{$payeeName}\".", $payeeHistory['prompt']);
         $this->assertStringContainsString("Matched payee ID {$payee->id} ({$payeeName})", $payeeHistory['response']);
         $this->assertDoesNotMatchRegularExpression('/^\s*\{/', $payeeHistory['prompt']);
@@ -674,6 +674,7 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertTrue($result['success']);
         $document->refresh();
         $this->assertSame('ready_for_review', $document->status);
+        $this->assertSame(2, $document->processed_transaction_data['schema_version']);
     }
 
     public function test_process_uses_generic_document_language_in_main_extraction_prompt(): void

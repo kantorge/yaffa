@@ -667,7 +667,8 @@ class GoogleDriveConfigApiControllerTest extends TestCase
         ]);
 
         $mock = $this->createMock(GoogleDriveService::class);
-        $mock->method('getFolderName')
+        $mock->expects($this->once())
+            ->method('getFolderName')
             ->with('custom-folder-id', $this->anything())
             ->willReturn('Custom Folder Name');
         $this->instance(GoogleDriveService::class, $mock);

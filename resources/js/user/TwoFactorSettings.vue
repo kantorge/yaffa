@@ -40,7 +40,6 @@
               type="button"
               class="btn btn-outline-secondary btn-sm"
               :disabled="busy"
-              dusk="button-regenerate-recovery-codes"
               @click="regenerateRecoveryCodes"
             >
               {{ __('Regenerate recovery codes') }}
@@ -49,7 +48,6 @@
               type="button"
               class="btn btn-danger btn-sm"
               :disabled="busy"
-              dusk="button-disable-2fa"
               @click="disableTwoFactor"
             >
               {{ __('Disable') }}
@@ -68,7 +66,6 @@
           <button
             type="button"
             class="btn btn-primary"
-            dusk="button-enable-2fa"
             @click="openEnrollModal"
           >
             <i class="fa fa-shield-alt"></i>
@@ -91,7 +88,6 @@
               class="form-control font-monospace"
               readonly
               rows="4"
-              dusk="recovery-codes-value"
               :value="revealedRecoveryCodes.join('\n')"
             ></textarea>
             <button

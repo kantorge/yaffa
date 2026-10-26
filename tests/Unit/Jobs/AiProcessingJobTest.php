@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Jobs;
 
+use App\Enums\AiDocumentStatus;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
@@ -35,7 +36,7 @@ class AiProcessingJobTest extends TestCase
         Event::fake([AiDocumentProcessingFailedEvent::class]);
 
         /** @var AiDocument $document */
-        $document = AiDocument::factory()->create();
+        $document = AiDocument::factory()->create(['status' => AiDocumentStatus::ReadyForProcessing->value]);
         AiUserSettings::factory()->enabled()->create(['user_id' => $document->user_id]);
 
         $service = Mockery::mock(ProcessDocumentService::class);

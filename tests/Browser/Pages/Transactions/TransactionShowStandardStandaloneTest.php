@@ -61,15 +61,14 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
                 ->assertAttribute(
                     '@label-account-to-name a',
                     'href',
-                    route('account-entity.edit', [
-                        'type' => 'payee',
+                    route('account-entity.show', [
                         'account_entity' => $transaction->config->accountTo->id,
                     ])
                 )
                 ->assertAttribute(
                     '@label-account-to-name a',
                     'title',
-                    __('Open payee edit form (payees do not have a details view yet)')
+                    __('Go to payee')
                 )
 
                 // Action button bar is present

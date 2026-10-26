@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountEntityController;
 use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\AiHintController;
 use App\Http\Controllers\CategoryLearningController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionTemplateController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +39,10 @@ Route::resource('account-entity', AccountEntityController::class)
 Route::get('/account/history/{account}/{withForecast?}', [AccountEntityController::class, 'history'])
     ->name('account.history');
 
+Route::view('/payees/auto-record-candidates', 'payees.auto-record-candidates')
+    ->middleware(['auth', 'verified'])
+    ->name('payees.auto-record-candidates');
+
 // Routes to display form to merge two payees
 Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
     ->name('payees.merge.form');
@@ -45,15 +51,19 @@ Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->n
 /*********************
  * Category related routes
  ********************/
-Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
-// Routes to display form to merge two categories
+// Routes to display form to merge two categories (before the resource, so 'merge' isn't taken as {category})
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
     ->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+Route::resource('categories', CategoryController::class)->except(['destroy']);
 
 // Category learning route
 Route::get('/category-learning', [CategoryLearningController::class, 'index'])
     ->name('category-learning.index');
+
+// AI hints route
+Route::get('/ai-hints', [AiHintController::class, 'index'])
+    ->name('ai-hints.index');
 
 /*********************
  * Currency and currency rate related routes
@@ -88,13 +98,24 @@ Route::get('/transactions/create/{type}', [TransactionController::class, 'create
     ->name('transaction.create');
 
 Route::get('/transactions/{transaction}/{action}', [TransactionController::class, 'openTransaction'])
-    ->where('action', 'edit|clone|enter|show|replace')
+    ->where('action', 'edit|clone|enter|show|replace|template')
     ->name('transaction.open');
 
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])
     ->name('transactions.skipScheduleInstance');
 Route::post('/transactions/create-from-draft', [TransactionController::class, 'createFromDraft'])
     ->name('transactions.createFromDraft');
+
+/*******************
+ * Transaction template related routes
+ ******************/
+Route::get('/transaction-templates', [TransactionTemplateController::class, 'index'])
+    ->name('transaction-templates.index');
+Route::get('/transaction-templates/create/{type}', [TransactionTemplateController::class, 'create'])
+    ->where('type', 'standard|investment')
+    ->name('transaction-templates.create');
+Route::get('/transaction-templates/{template}/edit', [TransactionTemplateController::class, 'edit'])
+    ->name('transaction-templates.edit');
 
 /*******************
  * Report related routes

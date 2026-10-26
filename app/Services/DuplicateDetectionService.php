@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Casts\MoneyCast;
-use App\Models\AiDocument;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -64,118 +63,6 @@ class DuplicateDetectionService
     }
 
     /**
-     * Flag likely duplicates of a processed AI document, among existing transactions and among the user's
-     * other AI documents (for example a receipt scan that arrives after the payment notification).
-     * This only reads: nothing that is found is ever modified.
-     *
-     * @return array{transactions: array<int, array{id: int, similarity: float}>, documents: array<int, array{id: int, similarity: float}>}
-     */
-    public function findForDocument(AiDocument $document): array
-    {
-        $data = $document->processed_transaction_data;
-        $raw = is_array($data) ? ($data['raw'] ?? []) : [];
-
-        if (! is_array($raw) || ! array_key_exists('date', $raw)) {
-            return ['transactions' => [], 'documents' => []];
-        }
-
-        /** @var User $user */
-        $user = $document->user;
-
-        return [
-            'transactions' => $this->findDuplicates($user, $raw),
-            'documents' => $this->findDocumentDuplicates($user, $document),
-        ];
-    }
-
-    /**
-     * @return array<int, array{id: int, similarity: float}>
-     */
-    public function findDocumentDuplicates(User $user, AiDocument $document): array
-    {
-        $data = $document->processed_transaction_data;
-
-        try {
-            $date = \Carbon\Carbon::parse($data['date'] ?? null);
-        } catch (\Carbon\Exceptions\InvalidFormatException) {
-            return [];
-        }
-
-        $settings = $this->resolveSettings($user);
-        $window = max(1, (int) ($settings['duplicate_date_window_days'] ?? self::DEFAULT_DATE_WINDOW_DAYS));
-        $tolerance = (float) ($settings['duplicate_amount_tolerance_percent'] ?? self::DEFAULT_AMOUNT_TOLERANCE_PERCENT);
-        $threshold = (float) ($settings['duplicate_similarity_threshold'] ?? self::DEFAULT_SIMILARITY_THRESHOLD);
-
-        $candidates = AiDocument::query()
-            ->where('user_id', $user->id)
-            ->whereKeyNot($document->id)
-            ->whereNotNull('processed_transaction_data')
-            ->whereBetween('processed_transaction_data->date', [
-                $date->clone()->subDays($window)->toDateString(),
-                $date->clone()->addDays($window)->toDateString(),
-            ])
-            ->get();
-
-        $matches = [];
-
-        foreach ($candidates as $candidate) {
-            $similarity = $this->calculateDocumentSimilarity($data, $candidate->processed_transaction_data, $tolerance);
-
-            if ($similarity > $threshold) {
-                $matches[] = ['id' => $candidate->id, 'similarity' => round($similarity, 3)];
-            }
-        }
-
-        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
-
-        return $matches;
-    }
-
-    /**
-     * Same weighting as calculateSimilarity(): date 1, amount 2 (exact) or 1 (within tolerance), assets up to 2.
-     *
-     * @param  array<string, mixed>  $a
-     * @param  array<string, mixed>  $b
-     */
-    private function calculateDocumentSimilarity(array $a, array $b, float $amountTolerancePercent): float
-    {
-        $score = 1;
-        $maxScore = 1;
-
-        $amountA = abs((float) ($a['config']['amount_from'] ?? $a['raw']['amount'] ?? 0));
-        $amountB = abs((float) ($b['config']['amount_from'] ?? $b['raw']['amount'] ?? 0));
-
-        if ($amountA > 0) {
-            $maxScore += 2;
-
-            if ($amountB > 0) {
-                $difference = abs($amountA - $amountB);
-
-                if ($difference < self::EXACT_AMOUNT_EPSILON) {
-                    $score += 2;
-                } elseif ($difference <= $amountB * ($amountTolerancePercent / 100)) {
-                    $score += 1;
-                } else {
-                    // Two documents with clearly different amounts are different payments, whatever else they share
-                    return 0.0;
-                }
-            }
-        }
-
-        $maxScore += 2;
-        $assetMatches = 0;
-        foreach (['account_from_id', 'account_to_id'] as $key) {
-            $value = $a['config'][$key] ?? null;
-
-            if ($value !== null && $value === ($b['config'][$key] ?? null)) {
-                $assetMatches++;
-            }
-        }
-
-        return ($score + $assetMatches) / $maxScore;
-    }
-
-    /**
      * Find potential duplicates by scoring against a pre-loaded in-memory transaction window.
      * Use this instead of findDuplicates() when processing many drafts in a single request
      * to avoid O(n) database round-trips.
@@ -226,6 +113,44 @@ class DuplicateDetectionService
         );
 
         return $this->scoreTransactions($extractedData, $candidates, $amountTolerancePercent, $similarityThreshold);
+    }
+
+    /**
+     * Flatten a stored AI document draft (see ProcessDocumentService::buildTransactionData())
+     * into the shape findDuplicates() expects. A legacy draft holding only `raw` falls back to
+     * its date and amount.
+     *
+     * @param  array<array-key, mixed>  $draft  Stored JSON, so every field is untrusted: reads `raw.date`, `raw.amount`, `date`, `config_type`, `transaction_type`, and from `config` the amount and ID fields.
+     * @return array{date?: string, config_type?: string, transaction_type?: string, amount?: float, account_from_id?: int, account_to_id?: int, account_id?: int, investment_id?: int}
+     */
+    public function matchDataFromDraft(array $draft): array
+    {
+        $raw = is_array($draft['raw'] ?? null) ? $draft['raw'] : [];
+        $config = is_array($draft['config'] ?? null) ? $draft['config'] : [];
+
+        $data = [
+            'date' => $draft['date'] ?? $raw['date'] ?? null,
+            'config_type' => $draft['config_type'] ?? null,
+            'transaction_type' => $draft['transaction_type'] ?? null,
+        ];
+
+        if ($data['config_type'] === 'investment') {
+            // No amount: getTransactionAmount() yields 0 for investments, so it could never score.
+            $idKeys = ['account_id', 'investment_id'];
+        } else {
+            $idKeys = ['account_from_id', 'account_to_id'];
+            // buildTransactionData() stores 0 when the AI found no amount; treat that as unknown.
+            $data['amount'] = (float) ($config['amount_from'] ?? $raw['amount'] ?? 0) ?: null;
+        }
+
+        // countAssetMatches() compares with ===, and JSON may hand IDs back as strings.
+        foreach ($idKeys as $key) {
+            if (isset($config[$key])) {
+                $data[$key] = (int) $config[$key];
+            }
+        }
+
+        return array_filter($data, fn ($value) => $value !== null);
     }
 
     /**

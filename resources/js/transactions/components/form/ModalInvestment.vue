@@ -21,6 +21,7 @@
             :simplified="true"
             :from-modal="true"
             :ai-document-id="aiDocumentId"
+            :transaction-template-id="templateId"
             :dropdown-parent-selector="'#modal-transaction-form-investment'"
             @cancel="onCancel"
             @success="onSuccess"
@@ -70,6 +71,8 @@
     data() {
       let data = {
         action: 'create',
+        // The template the draft comes from, if any (see transaction-templates/useTemplate.js)
+        templateId: null,
         // Set right before a programmatic hide() so the hide.coreui.modal listener
         // lets it through once without re-running the dirty check.
         forceClose: false,
@@ -111,6 +114,9 @@
       document
         .getElementById('modal-transaction-form-investment')
         .addEventListener('hide.coreui.modal', this.onHide);
+      document
+        .getElementById('modal-transaction-form-investment')
+        .addEventListener('shown.coreui.modal', this.onShown);
     },
     beforeUnmount() {
       // Clean up event listeners when component is destroyed
@@ -125,6 +131,9 @@
       document
         .getElementById('modal-transaction-form-investment')
         .removeEventListener('hide.coreui.modal', this.onHide);
+      document
+        .getElementById('modal-transaction-form-investment')
+        .removeEventListener('shown.coreui.modal', this.onShown);
     },
     methods: {
       hide() {
@@ -133,6 +142,17 @@
       },
       onCancel() {
         this.hide();
+      },
+      // A template leaves the date empty: put the cursor where the user has to type
+      onShown() {
+        if (!this.templateId) {
+          return;
+        }
+
+        const date = document.getElementById('investment-date');
+        if (date && !date.value) {
+          date.focus();
+        }
       },
       // Cancelable pre-dismiss hook (backdrop click, Esc, close button) - ask for
       // confirmation only if the form has unsaved changes. The in-form Cancel button
@@ -201,6 +221,7 @@
         this.hide();
       },
       onInitiateEnterInstance(transaction) {
+        this.templateId = null;
         this.action = 'enter';
         this.transactionData = transaction;
 
@@ -226,6 +247,7 @@
           return;
         }
 
+        this.templateId = event.detail.templateId ?? null;
         this.onInitiateCreateDraft(event.detail.transaction);
       },
     },

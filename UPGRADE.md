@@ -4,11 +4,70 @@ This document describes the breaking changes of major versions, and also include
 
 Table of contents:
 
-- [Upgrade from YAFFA 3.x to 4.x](#upgrade-from-yaffa-3x-to-4x)
 - [Upgrade within YAFFA 4.x](#upgrade-within-yaffa-4x)
+- [Upgrade from YAFFA 3.x to 4.x](#upgrade-from-yaffa-3x-to-4x)
 - [Upgrade within YAFFA 3.x](#upgrade-within-yaffa-3x)
 - [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
+
+## Upgrade within YAFFA 4.x
+
+Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option. Note the following changes that may affect any external API integrations or custom scripts:
+
+### Document lifecycle and duplicate detection (Fast Transaction Entry)
+
+AI documents now close themselves when they repeat something already known, and manual entry warns about matching purchases. Nothing is recorded automatically yet.
+
+- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. Clients that switch over the status must handle them. Today's processing produces `duplicate` (the same content or the same purchase as a recorded transaction, closed silently without an email); `dismissed` is set by the user.
+- **Reprocessing is restricted:** it is allowed only from `ready_for_review`, `processing_failed` and `dismissed`. Documents closed against a transaction (`finalized`, `auto_recorded`, `duplicate`) cannot be reprocessed.
+- **Retention covers every terminal status:** with a retention period set, `finalized`, `auto_recorded`, `duplicate` and `dismissed` documents are all deleted after it. The reminder email now concerns the other, still open statuses.
+
+### Payee profile, settings and matching (Fast Transaction Entry)
+
+Every payee now has a stored history profile, and users can set how a payee is treated by the upcoming auto-recording.
+
+- **Run `php artisan app:payees:recalculate-profiles` once after upgrading** (or wait for the nightly run at 02:30, which needs the scheduler). Profiles are otherwise rebuilt in the background whenever a transaction of the payee is created, changed or deleted.
+- **Payee names and aliases must be unique per user once normalized** (accents, punctuation, numbers and company suffixes such as `Kft`, `Ltd`, `GmbH` are ignored, so `OMV 4471` and `omv` collide). Saving a payee with a new or changed name or alias line that collides with another payee returns a 422 on `name` or `alias`. Existing data is never rejected: only a changed value is checked.
+
+### Auto-recording (Fast Transaction Entry)
+
+AI documents can now be recorded as normal transactions without a review. It is **off by default and opt-in per user**; nothing changes until a user turns on "Record automatically" in their AI settings (which also needs AI processing on).
+
+- **`auto_recorded` and `awaiting_itemization` are now produced** in `GET /api/v1/documents`. An auto-recorded document is linked to its transaction (`ai_document_id`) and has a `created` origin with a `decision_reason`. A document for a payee set to expect itemization waits as `awaiting_itemization` until its receipt arrives, then moves to `ready_for_review` after `itemization_timeout_days`. The processed-document email has a "recorded automatically" variant.
+- Reconciling a transaction (the reconcile endpoint or any save that flips `reconciled` to true) marks its `created` origin as reviewed.
+- A new scheduled command `ai-documents:expire-itemization` runs daily at 03:45 (needs the scheduler).
+
+### Slimmer document list API response
+
+`GET /api/v1/documents` (the list behind the AI documents table) now returns only what a list needs, which makes it considerably faster on large collections. `GET /api/v1/documents/{id}` is unchanged and still returns the full document. No action is needed for the bundled frontend, but a custom API integration that reads the removed fields from the list must fetch the single document instead.
+
+- **Fields removed from each document:** `ai_chat_history`, `custom_prompt` and `google_drive_file_id`.
+- **`received_mail`** contains only `id` and `subject`. The mail body (`html`, `text`) and the other columns are no longer included.
+- **`ai_document_files[]`** contain only `id`, `ai_document_id` and `file_name`.
+- **`transaction`** contains only `id` and `ai_document_id`, without `transaction_currency` or any other detail.
+- **`origins[]`** contain only `id`, `origin_type`, `origin_id`, `transaction_id`, `relation` and `reviewed_at`. In particular `decision_reason` is no longer included.
+- **`processed_transaction_data`** still includes `matched_entities` (account, payee, investment), but the category and tag display data is no longer added to the items: `recommended_category_full_name`, `category_full_name` and `tags`. The stored `category_id`, `recommended_category_id` and `tag_ids` are unchanged.
+- No migration or other operator action is required.
+
+### Mobile app support
+
+- New migrations add `idempotency_keys` and two columns on `ai_documents` (`captured_at`, `note`); they run with the usual migration step.
+- The Docker image now sets PHP `upload_max_filesize=20M` and `post_max_size=100M` (`docker/php-uploads.ini`). If you do not use the image, raise these PHP settings yourself, together with any change to `AI_DOCUMENT_MAX_FILE_SIZE_MB`. Reverse proxies need their own limit too (nginx: `client_max_body_size`).
+- Phone uploads need `AI_DOCUMENT_ALLOWED_TYPES=jpg,jpeg,png,pdf` (the default is `txt`).
+- `/api/v1` validation errors (422) and other HTTP errors now also carry an `error.code`/`error.message` envelope; the existing `message` and `errors` keys are unchanged.
+- Optional new env values: `MOBILE_APP_MIN_VERSION`, `IDEMPOTENCY_RETENTION_DAYS` (default 7).
+- New migrations: `notifications` and `devices` tables. New endpoints: `/api/v1/notifications`, `/devices`, `/reference-data`, `/summary`.
+- The OpenAPI spec (`php artisan scramble:export`) is generated in CI and attached to releases.
+- File-only uploads to `POST /api/v1/documents` were previously rejected with "You must provide either files or text input"; this is fixed.
+- `POST /api/v1/documents` also accepts `source` (`mobile_scan`, `mobile_share`, `mobile_notification`), `captured_at`, `note`, and `source_app`/`title`/`text`/`posted_at` for notifications. Duplicate detection for these documents is the same as for every other AI document (statuses `duplicate`/`auto_recorded`, `POST /api/v1/documents/{id}/check-duplicates` returning `documents`, `related_documents`, `schedules`); there is no mobile-specific duplicate field.
+
+### Sentry support removed
+
+The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.
+
+- If you used Sentry, error monitoring stops after the upgrade. Errors are now only written to the configured Laravel log channel (see `LOG_CHANNEL`/`LOG_STACK`).
+- `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read; you can delete them from your `.env`.
+- Source code users: run `composer install` as usual, so the package is removed from `vendor/`.
 
 ## Upgrade from YAFFA 3.x to 4.x
 
@@ -22,9 +81,9 @@ A scheduled standard withdrawal/deposit's categorized items now always count tow
 - **New standalone `Budget` entity and `budgets` table.** Existing transactions that were budget-only (`schedule = false, budget = true`, i.e. created via the old "Budget" checkbox with no schedule) are automatically converted to one `Budget` row per distinct category, then **hard-deleted** from `transactions` - this data migration has no downgrade path (see below).
 - **`transaction_details_standard.account_from_id`/`account_to_id` are now `NOT NULL`.** These were only nullable to support the old budget-only transaction case; that case no longer exists after the conversion above.
 - **API changes:**
-  - `GET /api/v1/transactions/scheduled-items` — the `type` query parameter no longer accepts `budget`, `budget_only`, `both`, or `any`; only `schedule` and `none` remain meaningful. A new `includeBudgets=1` parameter merges standalone `Budget` rows into the response (used by the Schedules & Budgets report only).
-  - `ReportApiController`'s budget-vs-actual chart endpoint response shape changed: each period entry now also includes a `budgetBreakdown` array listing the individual `Budget` rows (with `account_id`/`account_name`) that contributed to the total, and a `scheduleBreakdown` array for the schedule-derived side.
-  - New CRUD endpoints: `GET/POST /api/v1/budgets`, `GET/PATCH/DELETE /api/v1/budgets/{budget}`.
+    - `GET /api/v1/transactions/scheduled-items` — the `type` query parameter no longer accepts `budget`, `budget_only`, `both`, or `any`; only `schedule` and `none` remain meaningful. A new `includeBudgets=1` parameter merges standalone `Budget` rows into the response (used by the Schedules & Budgets report only).
+    - `ReportApiController`'s budget-vs-actual chart endpoint response shape changed: each period entry now also includes a `budgetBreakdown` array listing the individual `Budget` rows (with `account_id`/`account_name`) that contributed to the total, and a `scheduleBreakdown` array for the schedule-derived side.
+    - New CRUD endpoints: `GET/POST /api/v1/budgets`, `GET/PATCH/DELETE /api/v1/budgets/{budget}`.
 - **UI change:** the "Budget" checkbox/section on the standard transaction form is removed. Standalone Budgets are created, edited, and deleted from the existing Schedules & Budgets report page (Reports → Schedules and Budgets) instead, alongside real schedules.
 - **Schedule/Budget recurrence storage collapsed into a single `rrule` column.** `transaction_schedules.frequency`/`interval`/`count`/`end_date` (and, if present, `by_day`/`by_month`) are consolidated into one RFC 5545 RRULE string column (`rrule`) and the old columns are dropped. This runs automatically as part of the migration step below and needs no manual input — the request/response contract for schedules and budgets is unchanged (you still work with the same discrete frequency/interval/day/month fields in the UI and API; only the underlying storage changed). See below for the backup recommendation, since this conversion has no downgrade path once the old columns are dropped.
 - **reCAPTCHA support removed.** The login, registration, and password reset forms no longer use reCAPTCHA, and `RECAPTCHA_SITE_KEY`/`RECAPTCHA_SECRET_KEY` are no longer read; you can delete them from your `.env`. If you expose a public instance, note that this bot protection is gone (login attempts remain rate limited, and users can now enable optional two-factor authentication, see below).
@@ -75,6 +134,13 @@ Two more precision-related changes, transparent to a normal upgrade:
 - `ext-bcmath` is now a required PHP extension (declared in `composer.json`). It's already present in the Sail dev image; if you run PHP outside Sail/Docker, confirm it's compiled in before upgrading (`php -m | grep bcmath`) — it wasn't previously listed among YAFFA's required extensions.
 
 **Action required if you have investment transactions predating a currency change on an account or investment**: an investment transaction's `price` (in the investment's currency) and its `commission`/`tax`/`dividend` (in the account's currency) are now combined with exact `Brick\Money\Money` arithmetic, which requires both sides to share a currency. New transactions are already prevented from mismatching (`TransactionRequest`'s account/investment currency check, and the currency-change confirmation now shown in the account/investment edit forms), but a transaction recorded _before_ either guard existed — back when the account or investment's currency was later changed — may still have a mismatched pair. For such a row, `cashflow_value` is now computed as `null` instead of throwing, and a `warning`-level log entry ("Investment transaction cash flow spans mismatched currencies (legacy data)") is written with the transaction ID. Search your logs for that message after upgrading, and manually correct the identified transactions (or the account/investment currency) to restore their cash-flow value.
+
+### Payee and Category Detail Pages, Find Transactions Summary Change
+
+Payees and categories now have detail pages (click a name in the payee or category list). No action is needed, but two things are visible to existing users:
+
+- **Find transactions: "matching items only" now also applies to the Summary and Timeline tabs.** Previously only the category-aware tabs honoured it, so for split transactions the Summary and Timeline totals counted the whole transaction amount even with the option on. With the option on, they now count only the matching items, so these totals can be lower than before. Reports without the option, or without split transactions, are unchanged.
+- **The setting "Default date range for account details" is now "Default date range for transaction history"** and also sets the initial date range on the payee and category pages. The stored value is unchanged. With "Don't load data by default", those pages load no transactions until a range is picked.
 
 ### Step-by-step Guide
 
@@ -172,30 +238,6 @@ The migration step will:
 
 After upgrading, open **Reports → Schedules and Budgets** and filter to "Budget" rows to review what was converted from your old budget-only transactions. Each converted `Budget` is account-scoped only if its original transaction had a real account attached; otherwise it's account-agnostic. No further action is required unless you want to adjust the converted targets.
 
-## Upgrade within YAFFA 4.x
-
-Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
-
-### Mobile app support
-
-- New migrations add `idempotency_keys` and two columns on `ai_documents` (`captured_at`, `note`); they run with the usual migration step.
-- The Docker image now sets PHP `upload_max_filesize=20M` and `post_max_size=100M` (`docker/php-uploads.ini`). If you do not use the image, raise these PHP settings yourself, together with any change to `AI_DOCUMENT_MAX_FILE_SIZE_MB`. Reverse proxies need their own limit too (nginx: `client_max_body_size`).
-- Phone uploads need `AI_DOCUMENT_ALLOWED_TYPES=jpg,jpeg,png,pdf` (the default is `txt`).
-- `/api/v1` validation errors (422) and other HTTP errors now also carry an `error.code`/`error.message` envelope; the existing `message` and `errors` keys are unchanged.
-- Optional new env values: `MOBILE_APP_MIN_VERSION`, `IDEMPOTENCY_RETENTION_DAYS` (default 7).
-- New migrations: `notifications` and `devices` tables. New endpoints: `/api/v1/notifications`, `/devices`, `/reference-data`, `/summary`.
-- `POST /api/v1/documents` accepts `source=mobile_notification` for text-only payment notifications; processed documents now carry `duplicate_candidates` in `processed_transaction_data`.
-- The OpenAPI spec (`php artisan scramble:export`) is generated in CI and attached to releases.
-- File-only uploads to `POST /api/v1/documents` were previously rejected with "You must provide either files or text input"; this is fixed.
-
-### Sentry support removed
-
-The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.
-
-- If you used Sentry, error monitoring stops after the upgrade. Errors are now only written to the configured Laravel log channel (see `LOG_CHANNEL`/`LOG_STACK`).
-- `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read; you can delete them from your `.env`.
-- Source code users: run `composer install` as usual, so the package is removed from `vendor/`.
-
 ## Upgrade within YAFFA 3.x
 
 Most 3.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option.
@@ -224,18 +266,18 @@ This version introduces several significant changes:
 ### Breaking Changes
 
 - **Transaction Types Refactored**: The `transaction_types` database table has been removed and replaced with a PHP enum (`App\Enums\TransactionType`).
-  - The `transactions` table now uses a `transaction_type` ENUM column instead of a foreign key to the `transaction_types` table.
-  - This change cannot be automatically reversed by Laravel migrations, so a backup of your database is essential before proceeding with the migration.
+    - The `transactions` table now uses a `transaction_type` ENUM column instead of a foreign key to the `transaction_types` table.
+    - This change cannot be automatically reversed by Laravel migrations, so a backup of your database is essential before proceeding with the migration.
 
 - **Data Migration**: All existing transactions will be automatically migrated from `transaction_type_id` to the new `transaction_type` enum column.
-  - IDs 1-8 and 11 map to the active transaction types.
-  - IDs 9-10 (previously unused) drop support.
-  - **WARNING**: If you have transactions with IDs 9 or 10, the migration will fail. You must either delete these transactions or reassign them to a valid type before running the migration.
+    - IDs 1-8 and 11 map to the active transaction types.
+    - IDs 9-10 (previously unused) drop support.
+    - **WARNING**: If you have transactions with IDs 9 or 10, the migration will fail. You must either delete these transactions or reassign them to a valid type before running the migration.
 
 - **Email Processing Refactored**: The `received_mails` table has been restructured. The columns `transaction_data`, `processed`, `handled`, and `transaction_id` are dropped.
-  - All previously processed received mails (where `processed = true`) are automatically migrated to the new `ai_documents` table.
-  - Unprocessed mails are intentionally not converted and will be discarded.
-  - The dedicated email processing pages and routes have been removed; email-sourced receipts are now accessible under **AI Documents**.
+    - All previously processed received mails (where `processed = true`) are automatically migrated to the new `ai_documents` table.
+    - Unprocessed mails are intentionally not converted and will be discarded.
+    - The dedicated email processing pages and routes have been removed; email-sourced receipts are now accessible under **AI Documents**.
 
 - **Investment Price Providers Refactored**: The `investment_provider_configs` table has been introduced to store user-specific credentials and settings for investment price providers. Instead of global .env settings, users can now configure providers individually, and the scheduler checks for config availability before dispatching jobs.
 
@@ -341,68 +383,68 @@ From this point, the steps differ depending on your hosting option. Follow only 
 ##### Docker users
 
 1. **Update your `docker-compose.yml`** to reflect the infrastructure changes:
-   - Decide whether to use Tesseract OCR as a local service. It is disabled by default and not needed if you only use a Vision AI model for document processing, or if you don't use document processing at all.
-   - If you want to use Tesseract OCR, uncomment the relevant lines in the `depends_on` section of the `app` service and uncomment the entire `tesseract` service definition.
-   - If using Tesseract in `http` mode, set `TESSERACT_HTTP_HOST` to the Docker service name (e.g., `tesseract`) and set `TESSERACT_ENABLED=true`.
-   - Make sure `DB_HOST` matches the database service name in the compose file. In the default packaged Docker setup, this is `db`.
-   - If you are updating to a compose file that switches the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, keep the existing named database volume in place. This allows the upgraded container to reuse the current data directory instead of initializing a fresh database.
-   - Before the first start on the new MySQL image, verify that your Docker deployment does not use `DB_USERNAME=root`. The official `mysql` image does not support initializing `MYSQL_USER=root`. Use a dedicated application user instead, such as the default `yaffa_user` from `.env.example`.
+    - Decide whether to use Tesseract OCR as a local service. It is disabled by default and not needed if you only use a Vision AI model for document processing, or if you don't use document processing at all.
+    - If you want to use Tesseract OCR, uncomment the relevant lines in the `depends_on` section of the `app` service and uncomment the entire `tesseract` service definition.
+    - If using Tesseract in `http` mode, set `TESSERACT_HTTP_HOST` to the Docker service name (e.g., `tesseract`) and set `TESSERACT_ENABLED=true`.
+    - Make sure `DB_HOST` matches the database service name in the compose file. In the default packaged Docker setup, this is `db`.
+    - If you are updating to a compose file that switches the database image from `mysql/mysql-server:8.0` to `mysql:8.0`, keep the existing named database volume in place. This allows the upgraded container to reuse the current data directory instead of initializing a fresh database.
+    - Before the first start on the new MySQL image, verify that your Docker deployment does not use `DB_USERNAME=root`. The official `mysql` image does not support initializing `MYSQL_USER=root`. Use a dedicated application user instead, such as the default `yaffa_user` from `.env.example`.
 
 2. **Pull the latest image and restart your container**:
 
-   ```bash
-   docker compose pull
-   docker compose stop app scheduler
-   docker compose up -d db
-   docker compose up -d app scheduler
-   ```
+    ```bash
+    docker compose pull
+    docker compose stop app scheduler
+    docker compose up -d db
+    docker compose up -d app scheduler
+    ```
 
-   This restart order minimizes user impact during the MySQL image swap by letting the database finish its first startup on the new image before YAFFA reconnects.
+    This restart order minimizes user impact during the MySQL image swap by letting the database finish its first startup on the new image before YAFFA reconnects.
 
-   If you use different service names, adapt the commands accordingly. Avoid removing the database volume unless you intentionally want a fresh empty database.
+    If you use different service names, adapt the commands accordingly. Avoid removing the database volume unless you intentionally want a fresh empty database.
 
-   The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup. No further action is required.
+    The container entrypoint automatically runs migrations, clears caches, and rebuilds assets on startup. No further action is required.
 
 ##### Source code users
 
 1. **Pull the latest changes** from GitHub:
 
-   ```bash
-   git pull
-   ```
+    ```bash
+    git pull
+    ```
 
 2. **Install updated dependencies**:
 
-   ```bash
-   composer install
-   ```
+    ```bash
+    composer install
+    ```
 
 3. **Run the migrations**:
 
-   ```bash
-   php artisan migrate
-   ```
+    ```bash
+    php artisan migrate
+    ```
 
-   This will perform the following changes:
-   - Add a new `transaction_type` ENUM column to the `transactions` table, migrate all data, and drop the legacy `transaction_type_id` column and `transaction_types` table.
-   - Create new tables: `ai_documents`, `ai_document_files`, `ai_provider_configs`, `category_learning`, `google_drive_configs`, `ai_user_settings`.
-   - Add an `ai_document_id` column to the `transactions` table.
-   - Migrate processed `received_mails` rows into the `ai_documents` table, then drop the legacy `transaction_data`, `processed`, `handled`, and `transaction_id` columns from `received_mails`.
+    This will perform the following changes:
+    - Add a new `transaction_type` ENUM column to the `transactions` table, migrate all data, and drop the legacy `transaction_type_id` column and `transaction_types` table.
+    - Create new tables: `ai_documents`, `ai_document_files`, `ai_provider_configs`, `category_learning`, `google_drive_configs`, `ai_user_settings`.
+    - Add an `ai_document_id` column to the `transactions` table.
+    - Migrate processed `received_mails` rows into the `ai_documents` table, then drop the legacy `transaction_data`, `processed`, `handled`, and `transaction_id` columns from `received_mails`.
 
-   **Note**: The transaction type migration is irreversible after the `transaction_types` table is dropped. Ensure you have a backup before proceeding.
+    **Note**: The transaction type migration is irreversible after the `transaction_types` table is dropped. Ensure you have a backup before proceeding.
 
 4. **Clear caches**:
 
-   ```bash
-   php artisan config:clear
-   php artisan cache:clear
-   php artisan view:clear
-   ```
+    ```bash
+    php artisan config:clear
+    php artisan cache:clear
+    php artisan view:clear
+    ```
 
 5. **Rebuild frontend assets**:
-   ```bash
-   npm install && npm run build
-   ```
+    ```bash
+    npm install && npm run build
+    ```
 
 #### 6. Configure Alpha Vantage price provider in the UI (if applicable)
 

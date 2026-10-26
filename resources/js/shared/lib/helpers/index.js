@@ -451,7 +451,10 @@ export function transactionLink(id, text) {
     transaction: id,
   });
 
-  return `<a href="${url}">${text}</a>`;
+  const label = document.createElement('div');
+  label.textContent = text;
+
+  return `<a href="${url}">${label.innerHTML}</a>`;
 }
 
 /**

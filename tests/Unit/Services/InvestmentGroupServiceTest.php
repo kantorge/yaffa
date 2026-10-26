@@ -7,10 +7,13 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use App\Services\InvestmentGroupService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InvestmentGroupServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_deletesInvestmentGroupSuccessfully(): void
     {
         $investmentGroup = InvestmentGroup::factory()->create();

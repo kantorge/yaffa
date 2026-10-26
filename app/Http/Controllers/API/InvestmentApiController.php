@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InvestmentSummaryRequest;
 use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'index', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
+    'index', 'summary', 'getInvestmentDetails', 'getPriceHistory', 'getInvestmentsWithTimeline', 'getDisplayData',
 ])]
 #[Middleware('abilities:write', only: [
     'patchActive', 'updateProviderSettings', 'destroy',
@@ -34,6 +35,17 @@ class InvestmentApiController extends Controller
         protected InvestmentService $investmentService,
         protected InvestmentProviderSettingsResolver $providerSettingsResolver
     ) {
+    }
+
+    #[Authorize('viewAny', Investment::class)]
+    public function summary(InvestmentSummaryRequest $request): JsonResponse
+    {
+        $active = $request->validated('active', '1');
+
+        return response()->json(['data' => $this->investmentService->getSummary(
+            $request->user(),
+            $active === 'all' ? null : (bool) $active,
+        )]);
     }
 
     /**

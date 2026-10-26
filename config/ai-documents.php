@@ -19,13 +19,16 @@ return [
             'name' => 'OpenAI',
             'supported' => true,
             'models' => [
+                // DEPRECATED: OpenAI retires gpt-4o and gpt-4o-mini (and gpt-4.1 / gpt-4.1-mini) on 2027-01-14.
+                // Remove these entries after that date. Until then `supported => false` only hides them for
+                // new selections; existing configurations keep working.
                 'gpt-4o-mini' => [
                     'vision' => true,
-                    'supported' => true,
+                    'supported' => false,
                 ],
                 'gpt-4o' => [
                     'vision' => true,
-                    'supported' => true,
+                    'supported' => false,
                 ],
                 'gpt-5.6-luna' => [
                     'vision' => true,

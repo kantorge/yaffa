@@ -29,10 +29,37 @@
         >
           <option value="">{{ __('Any') }}</option>
           <option value="unprocessed">
-            {{ __('Unprocessed (not finalized)') }}
+            {{ __('Any open') }}
           </option>
-          <option v-for="(label, key) in statusOptions" :key="key" :value="key">
-            {{ label }}
+          <optgroup :label="__('Specific status')">
+            <option
+              v-for="(label, key) in statusOptions"
+              :key="key"
+              :value="key"
+            >
+              {{ label }}
+            </option>
+          </optgroup>
+        </select>
+      </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <label class="form-label col-4" for="table_filter_review">
+          {{ __('Review') }}
+        </label>
+        <select
+          id="table_filter_review"
+          v-model="filters.review"
+          class="form-select"
+          @change="onReviewChange"
+        >
+          <option value="">{{ __('Any') }}</option>
+          <option value="auto-recorded">
+            {{ __('Needs checking') }} ({{ reviewCounts.autoRecorded }})
+          </option>
+          <option value="conflicts">
+            {{ __('Conflict') }} ({{ reviewCounts.conflicts }})
           </option>
         </select>
       </li>
@@ -109,6 +136,14 @@
       type: String,
       default: '',
     },
+    initialReview: {
+      type: String,
+      default: '',
+    },
+    reviewCounts: {
+      type: Object,
+      default: () => ({ autoRecorded: 0, conflicts: 0 }),
+    },
   });
 
   const emit = defineEmits(['update']);
@@ -117,10 +152,20 @@
     status: props.initialStatus || '',
     source: props.initialSource || '',
     search: props.initialSearch || '',
+    review: props.initialReview || '',
   });
 
   const emitFilters = () => {
     emit('update', { ...filters });
+  };
+
+  // Auto-recorded documents are not in an open status, so a review filter would be hidden by the default status
+  const onReviewChange = () => {
+    if (filters.review) {
+      filters.status = '';
+    }
+
+    emitFilters();
   };
 
   const clearSearch = () => {

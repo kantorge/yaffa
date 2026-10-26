@@ -94,7 +94,6 @@
                   type="button"
                   class="btn btn-danger btn-sm"
                   :disabled="revokingId === token.id"
-                  dusk="button-revoke-api-token"
                   @click="revokeToken(token)"
                 >
                   <i
@@ -157,7 +156,6 @@
                   class="form-control font-monospace"
                   readonly
                   :value="createdToken"
-                  dusk="api-token-value"
                 />
                 <button
                   type="button"

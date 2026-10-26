@@ -86,15 +86,9 @@ class StoreAiDocumentRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Ensure either files or text_input is provided
         // A notification is text-only: its body travels as the regular text input
         if ($this->input('source') === 'mobile_notification' && $this->filled('text')) {
             $this->merge(['text_input' => $this->input('text')]);
-        }
-
-        // input() never contains uploads, so they must be checked separately or they get nulled out below
-        if (! $this->hasFile('files') && ! $this->filled('text_input')) {
-            $this->merge(['files' => null]);
         }
     }
 }

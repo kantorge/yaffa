@@ -28,6 +28,35 @@
         </button>
       </li>
       <li
+        v-if="canConfirmAll"
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        {{ __('Mark all shown as checked') }}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-success"
+          :title="__('Mark all shown as checked')"
+          dusk="confirm-all"
+          @click="$emit('confirm-all')"
+        >
+          <i class="fa fa-fw fa-check-double"></i>
+        </button>
+      </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        {{ __('Reprocess all open documents') }}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-warning"
+          :title="__('Reprocess all open documents')"
+          dusk="reprocess-open"
+          @click="$emit('reprocess-open')"
+        >
+          <i class="fa fa-fw fa-rotate"></i>
+        </button>
+      </li>
+      <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         {{ __('AI provider settings') }}
@@ -58,7 +87,12 @@
 <script setup>
   import { __ } from '@/shared/lib/i18n';
 
-  defineEmits(['open-upload-form']);
+  defineProps({
+    // Shown while the review filter lists transactions awaiting confirmation
+    canConfirmAll: { type: Boolean, default: false },
+  });
+
+  defineEmits(['open-upload-form', 'confirm-all', 'reprocess-open']);
 
   const route = window.route;
   const aiSettingsUrl = route('user.ai-settings');

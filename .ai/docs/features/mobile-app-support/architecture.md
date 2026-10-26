@@ -73,12 +73,10 @@ processed by the normal `AiProcessingJob`. For this source `EnsureIdempotent` ma
 app updating and re-posting a notification with changed text replays the original document instead of failing or
 creating a second one.
 
-**Duplicates.** After successful processing the job stores `processed_transaction_data.duplicate_candidates =
-{transactions, documents}` (`DuplicateDetectionService::findForDocument`). Documents are compared on date window,
-amount (two documents with clearly different amounts are never duplicates) and matched accounts, within the user's
-duplicate settings. `POST /documents/{id}/check-duplicates` also returns `document_duplicates`. Detection only reads:
-it never modifies a transaction or another document. A later receipt scan is flagged against the earlier notification;
-the earlier notification is not re-flagged retroactively.
+**Duplicates.** Mobile documents use the same duplicate handling as every other AI document: the stored `content_hash`
+(file content hashes, the notification text included) and `SameEventClassifier` during processing, which closes a repeat
+as `duplicate`. `POST /documents/{id}/check-duplicates` returns `duplicates`, `schedules`, `documents` and
+`related_documents`. There is no mobile-specific duplicate field.
 
 ## Notifications and devices
 

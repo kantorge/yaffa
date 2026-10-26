@@ -1,0 +1,43 @@
+name: Translation Sync
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - 'app/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'lang/**'
+      - '.github/scripts/check-translations.php'
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  translations:
+    runs-on: ubuntu-latest
+    name: Check translation files are in sync
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # On PRs only keys touched by the PR are reported; manual runs check everything.
+      - name: Check translations
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            php .github/scripts/check-translations.php --base=origin/${{ github.base_ref }}
+          else
+            php .github/scripts/check-translations.php
+          fi

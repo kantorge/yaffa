@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AiDocumentStatus;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ValidatesRecurrenceRule;
 use App\Models\Account;
@@ -36,6 +37,8 @@ class TransactionRequest extends FormRequest
             // Standard fields
             'config.amount_to' => __('amount to'),
             'ai_document_id' => __('AI document'),
+            'close_ai_document_id' => __('AI document to close'),
+            'transaction_template_id' => __('transaction template'),
             // Schedule fields
             'schedule_config.start_date' => __('schedule start date'),
             'schedule_config.next_date' => __('schedule next date'),
@@ -185,6 +188,22 @@ class TransactionRequest extends FormRequest
             'schedule' => 'boolean',
             'catch_up_schedule' => 'boolean',
             'config_type' => 'required|in:standard,investment',
+
+            // Optional template the transaction was created from, only used for its usage statistics
+            'transaction_template_id' => [
+                'nullable',
+                Rule::exists('transaction_templates', 'id')->where('user_id', $this->user()->id),
+            ],
+
+            // Optional open AI document the user closes as a duplicate of this transaction
+            'close_ai_document_id' => [
+                'nullable',
+                'different:ai_document_id',
+                Rule::exists('ai_documents', 'id')->where(function ($query) {
+                    $query->where('user_id', $this->user()->id)
+                        ->whereIn('status', AiDocumentStatus::values(AiDocumentStatus::open()));
+                }),
+            ],
 
             // Optional AI document association - exists, owned by the user, and not already finalized
             'ai_document_id' => [

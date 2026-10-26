@@ -11,7 +11,7 @@ Every `api/v1` error response is `{"error": {"code": "UPPER_SNAKE_CODE", "messag
 rendered centrally in `bootstrap/app.php`. 422 responses keep Laravel's `message` and `errors` map as well
 (dotted field keys such as `items.0.category_id`). Codes: `UNAUTHENTICATED` 401, `FORBIDDEN` 403, `NOT_FOUND` 404,
 `METHOD_NOT_ALLOWED` 405, `CONFLICT` 409, `VALIDATION_ERROR`/`FILE_TOO_LARGE`/`IDEMPOTENCY_KEY_*` 422,
-`PAYLOAD_TOO_LARGE` 413, `TOO_MANY_REQUESTS` 429. Controllers add their own domain codes (for example `AI_DISABLED`).
+`PAYLOAD_TOO_LARGE` 413, `TOO_MANY_REQUESTS` 429. Controllers add their own domain codes (for example `FILE_TOO_LARGE`).
 Document a new code where it is introduced; never repurpose or rename one.
 
 ## What counts as breaking (not allowed within `v1`)

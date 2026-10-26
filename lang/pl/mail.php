@@ -8,8 +8,18 @@ return [
         "intro" => "Twój dokument AI jest gotowy do sprawdzenia.",
         "next_action_text" => "Sprawdź wyekstrahowane wartości, wprowadź poprawki, a następnie zatwierdź transakcję.",
         "next_action_title" => "Następny krok",
+        "intro_auto_recorded" => "Twój dokument AI został automatycznie zapisany jako transakcja.",
+        "next_action_text_auto_recorded" => "Sprawdź transakcję za pomocą filtru Przegląd w dokumentach AI popraw, jeśli coś się nie zgadza, a następnie oznacz ją jako sprawdzoną.",
+        "subject_auto_recorded" => "Dokument zapisany automatycznie",
         "subject" => "Dokument przetworzony - gotowy do sprawdzenia",
         "what_happened" => "Co się stało"
+    ],
+    "ai_document_dismissed_non_financial" => [
+        "button_open_document" => "Otwórz ten dokument",
+        "button_open_dismissed" => "Otwórz odrzucone dokumenty",
+        "intro" => "Twój dokument AI został odrzucony automatycznie.",
+        "next_action_text" => "Rozpoznano go jako niefinansowy, więc nic nie zapisano. Jeśli to błąd, otwórz odrzucone dokumenty i przetwórz go ponownie.",
+        "subject" => "Dokument AI odrzucony - niefinansowy"
     ],
     "ai_document_processing_failed" => [
         "button_open_settings" => "Otwórz ustawienia AI",

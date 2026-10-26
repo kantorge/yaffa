@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Enums\TransactionType;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
+use App\Services\AssetOverviewService;
 use App\Services\PayeeCategoryStatsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -15,12 +16,34 @@ use Symfony\Component\HttpFoundation\Response;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'categoryStats',
+    'categoryStats', 'overview',
 ])]
 class PayeeStatsApiController extends Controller
 {
-    public function __construct(private PayeeCategoryStatsService $payeeCategoryStatsService)
+    public function __construct(
+        private PayeeCategoryStatsService $payeeCategoryStatsService,
+        private AssetOverviewService $assetOverviewService,
+    ) {
+    }
+
+    /**
+     * Get payee lifetime overview
+     *
+     * Returns the number of transactions, first and last transaction date, and the total paid
+     * to and received from the payee (in the base currency). Schedules are excluded.
+     */
+    public function overview(Request $request, AccountEntity $accountEntity): JsonResponse
     {
+        if (! $accountEntity->isPayee() || $accountEntity->user_id !== $request->user()->id) {
+            return response()->json([
+                'error' => __('Payee not found'),
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json(
+            $this->assetOverviewService->payeeOverview($request->user(), $accountEntity),
+            Response::HTTP_OK
+        );
     }
 
     /**

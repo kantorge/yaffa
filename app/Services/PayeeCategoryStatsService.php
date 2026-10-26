@@ -62,9 +62,9 @@ class PayeeCategoryStatsService
      *
      * @return Collection<int, object{payee_id: int, category_id: int, usage_count: int}>
      */
-    public function getCategoryStatsForAllPayees(User $user, ?int $months = null): Collection
+    public function getCategoryStatsForAllPayees(User $user, ?int $months = null, ?int $payeeId = null): Collection
     {
-        return $this->buildAggregatedStatsQuery($user, $months)
+        return $this->buildAggregatedStatsQuery($user, $months, $payeeId)
             ->get()
             ->map(function ($row) {
                 $row->payee_id = (int) $row->payee_id;
@@ -91,6 +91,24 @@ class PayeeCategoryStatsService
         );
 
         return $this->hydrateSuggestions($user, $payees);
+    }
+
+    /**
+     * Get the default category suggestion of a single payee, if it has an eligible one.
+     *
+     * @return array{payee_id: int, sum: int, max: int, max_category_id: int, payee: string, category: string}|null
+     */
+    public function getDefaultSuggestionForPayee(User $user, AccountEntity $payee): ?array
+    {
+        $payees = $this->getEligibleDefaultSuggestions(
+            user: $user,
+            months: null,
+            onlyActive: false,
+            excludeDismissed: false,
+            payeeId: $payee->id,
+        );
+
+        return $this->hydrateSuggestions($user, $payees)->first();
     }
 
     /**
@@ -172,8 +190,9 @@ class PayeeCategoryStatsService
         ?int $months = null,
         bool $onlyActive = true,
         bool $excludeDismissed = true,
+        ?int $payeeId = null,
     ): Collection {
-        $data = $this->getCategoryStatsForAllPayees($user, $months);
+        $data = $this->getCategoryStatsForAllPayees($user, $months, $payeeId);
 
         $eligiblePayeeIds = DB::table('account_entities')
             ->join('payees', 'payees.id', '=', 'account_entities.config_id')

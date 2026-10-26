@@ -119,11 +119,13 @@ window.table = $(dataTableSelector).DataTable({
           return data;
         }
 
+        const link = `<a href="${escapeHtml(route('categories.show', { category: row.id }))}">${escapeHtml(data)}</a>`;
+
         if (!row.description) {
-          return escapeHtml(data);
+          return link;
         }
 
-        return `${escapeHtml(data)} <i class="fa fa-info-circle text-muted ms-1" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-trigger="hover focus" title="${escapeHtml(row.description)}"></i>`;
+        return `${link} <i class="fa fa-info-circle text-muted ms-1" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-trigger="hover focus" title="${escapeHtml(row.description)}"></i>`;
       },
     },
     {

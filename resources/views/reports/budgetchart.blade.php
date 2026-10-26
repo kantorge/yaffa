@@ -122,7 +122,7 @@
                     style="z-index: 10;"
                 >
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                        <span class="visually-hidden">{{ __('Loading') . '...' }}</span>
                     </div>
                 </div>
             </div>
@@ -162,7 +162,7 @@
                                 'schedule' => '1',
                                 'callback' => 'back'
                             ]) }}"
-                            title="{{ __('New scheduled standard transaction') }}"
+                            title="{{ __('New scheduled transaction') }}"
                     >
                         <i class="fa fa-fw fa-cart-plus"></i>
                     </a>

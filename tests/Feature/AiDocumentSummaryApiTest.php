@@ -42,6 +42,8 @@ class AiDocumentSummaryApiTest extends TestCase
         AiDocument::factory()->for($user)->create(['status' => 'ready_for_review']);
         AiDocument::factory()->for($user)->create(['status' => 'processing_failed']);
         AiDocument::factory()->for($user)->create(['status' => 'finalized']);
+        AiDocument::factory()->for($user)->create(['status' => 'dismissed', 'document_kind' => 'other_non_financial']);
+        AiDocument::factory()->for($user)->create(['status' => 'dismissed', 'document_kind' => 'other']);
 
         Sanctum::actingAs($user, ['*']);
 
@@ -55,6 +57,7 @@ class AiDocumentSummaryApiTest extends TestCase
                 'total' => 3,
                 'ready_for_review' => 2,
                 'processing_failed' => 1,
+                'auto_dismissed_non_financial' => 1,
             ]);
     }
 

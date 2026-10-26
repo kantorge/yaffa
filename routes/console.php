@@ -3,10 +3,12 @@
 use App\Console\Commands\CalculateAccountMonthlySummaries;
 use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
 use App\Console\Commands\CleanupOldAiDocumentFiles;
+use App\Console\Commands\ExpireAiDocumentItemization;
 use App\Console\Commands\GetCurrencyRates;
 use App\Console\Commands\GetInvestmentPrices;
 use App\Console\Commands\MergeStandardTransactionItems;
 use App\Console\Commands\ProcessAiDocuments;
+use App\Console\Commands\RecalculatePayeeProfiles;
 use App\Console\Commands\RecordScheduledTransactions;
 use App\Jobs\GoogleDriveMonitorJob;
 use Illuminate\Support\Facades\Schedule;
@@ -53,6 +55,12 @@ if (config('yaffa.runs_scheduler')) {
 
     // Apply the AI document retention policy (does nothing unless retention days are configured)
     Schedule::command(CleanupOldAiDocumentFiles::class)->dailyAt('03:30');
+
+    // Documents that waited too long for their receipt go to review
+    Schedule::command(ExpireAiDocumentItemization::class)->dailyAt('03:45');
+
+    // Safety net for payee profiles: covers the paths that fire no transaction event (schedule recording, reconcile)
+    Schedule::command(RecalculatePayeeProfiles::class)->dailyAt('02:30');
 
     // Batch job cleanup
     // Unfinished batches never get a finished_at, so the default retention (finished batches
