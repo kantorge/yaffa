@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\NotificationIndexRequest;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -22,21 +23,15 @@ class NotificationApiController extends Controller
      * Polling endpoint: returns the user's newest notifications, optionally only those created after `since`
      * (ISO 8601) or only unread ones. The payload holds a type, an entity id and a generic title, nothing sensitive.
      */
-    public function index(Request $request): JsonResponse
+    public function index(NotificationIndexRequest $request): JsonResponse
     {
-        $request->validate([
-            'since' => ['nullable', 'date'],
-            'unread' => ['nullable', 'boolean'],
-            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
-
         /** @var User $user */
         $user = $request->user();
 
         $query = $user->notifications()->latest();
 
         if ($request->filled('since')) {
-            $query->where('created_at', '>', Carbon::parse((string) $request->input('since')));
+            $query->where('created_at', '>', Carbon::parse((string) $request->input('since'))->setTimezone(config('app.timezone')));
         }
 
         if ($request->boolean('unread')) {

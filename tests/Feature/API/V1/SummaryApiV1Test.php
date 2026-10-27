@@ -53,8 +53,13 @@ it('counts this month\'s spending in budgeted categories against the budget', fu
         'active' => true,
     ]);
 
+    $withdrawal = Transaction::factory()->withdrawal($this->user)->create(['user_id' => $this->user->id, 'date' => now()->toDateString()]);
+    $withdrawal->transactionItems()->delete();
+    $withdrawal->transactionItems()->create(['category_id' => $category->id, 'amount' => 120]);
+
     $response = $this->getJson(route('api.v1.summary'))->assertOk();
 
     expect((float) $response->json('budget.budgeted'))->toBe(500.0);
-    expect((float) $response->json('budget.remaining'))->toEqualWithDelta(500.0 - (float) $response->json('budget.spent'), 0.01);
+    expect((float) $response->json('budget.spent'))->toBe(120.0);
+    expect((float) $response->json('budget.remaining'))->toBe(380.0);
 });

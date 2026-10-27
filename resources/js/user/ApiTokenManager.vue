@@ -572,12 +572,16 @@
           this.pairing = response.data;
           await this.loadTokens();
         } catch (error) {
-          if (error.response?.status === 422) {
-            this.pairErrors = error.response.data.errors || {};
+          const data = error.response?.data;
+          if (
+            error.response?.status === 422 &&
+            Object.keys(data?.errors || {}).length > 0
+          ) {
+            this.pairErrors = data.errors;
           } else {
             console.error(error);
             toastHelpers.showErrorToast(
-              __('Unable to create the pairing code.'),
+              data?.message || __('Unable to create the pairing code.'),
             );
           }
         } finally {
@@ -623,7 +627,10 @@
           this.pairModal?.show();
         } catch (error) {
           console.error(error);
-          toastHelpers.showErrorToast(__('Unable to create the pairing code.'));
+          toastHelpers.showErrorToast(
+            error.response?.data?.message ||
+              __('Unable to create the pairing code.'),
+          );
         } finally {
           this.pairingBusy = false;
         }

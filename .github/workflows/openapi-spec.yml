@@ -21,6 +21,9 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -29,9 +32,6 @@ jobs:
   openapi:
     runs-on: ubuntu-latest
     name: Export OpenAPI spec
-
-    permissions:
-      contents: write
 
     # Scramble boots the app and some type inference runs schema checks, so a reachable DB is needed
     services:
@@ -55,6 +55,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
@@ -77,8 +79,23 @@ jobs:
           name: openapi-spec
           path: openapi.json
 
+  attach:
+    if: github.event_name == 'release'
+    needs: openapi
+    runs-on: ubuntu-latest
+    name: Attach spec to the release
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download spec artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: openapi-spec
+
       - name: Attach spec to the release
-        if: github.event_name == 'release'
-        run: gh release upload "${{ github.event.release.tag_name }}" openapi.json --clobber
+        run: gh release upload "$TAG" openapi.json --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}

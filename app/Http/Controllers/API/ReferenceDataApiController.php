@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReferenceDataRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
@@ -12,7 +13,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 #[Middleware('auth:sanctum')]
@@ -29,15 +29,13 @@ class ReferenceDataApiController extends Controller
      * without timestamps, so a change there cannot be detected. Send the previous `ETag` as `If-None-Match` to get
      * 304 when nothing changed. Use `server_time` as the next `updated_since`.
      */
-    public function index(Request $request): JsonResponse
+    public function index(ReferenceDataRequest $request): JsonResponse
     {
-        $request->validate(['updated_since' => ['nullable', 'date']]);
-
         /** @var User $user */
         $user = $request->user();
 
         $serverTime = now();
-        $since = $request->filled('updated_since') ? Carbon::parse((string) $request->input('updated_since')) : null;
+        $since = $request->filled('updated_since') ? Carbon::parse((string) $request->input('updated_since'))->setTimezone(config('app.timezone')) : null;
 
         $data = [
             'accounts' => $user->accounts()->with('config')->orderBy('id')->get()

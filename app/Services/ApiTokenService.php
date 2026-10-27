@@ -61,7 +61,7 @@ class ApiTokenService
      * @return array{token: string, deep_link: string, qr_svg: string, warnings: array<string>}
      *
      * @throws ModelNotFoundException
-     * @throws InvalidArgumentException when the token's abilities are not exactly read and write, or APP_URL is not https in production
+     * @throws InvalidArgumentException when the token is expired, its abilities are not exactly read and write, or APP_URL is not https in production
      */
     public function rotateForPairing(User $user, int $tokenId): array
     {
@@ -69,6 +69,10 @@ class ApiTokenService
 
         /** @var PersonalAccessToken $token */
         $token = $user->tokens()->findOrFail($tokenId);
+
+        if ($token->expires_at !== null && $token->expires_at->isPast()) {
+            throw new InvalidArgumentException('This token has expired and cannot be paired with the app.');
+        }
 
         // Exactly read+write: a token with 'settings' (or '*') must never end up on a phone.
         $abilities = $token->abilities;

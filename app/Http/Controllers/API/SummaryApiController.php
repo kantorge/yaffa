@@ -71,6 +71,8 @@ class SummaryApiController extends Controller
             'name' => $a['name'],
             'active' => (bool) $a['active'],
             'currency' => $a['currency']['iso_code'] ?? null,
+            // `balance` is already converted to the base currency
+            'balance_currency' => $base->iso_code,
             'balance' => $format(BigDecimal::of($a['sum'] ?? 0)),
         ])->values();
 

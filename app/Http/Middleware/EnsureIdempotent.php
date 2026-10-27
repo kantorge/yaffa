@@ -30,8 +30,8 @@ class EnsureIdempotent
             return $next($request);
         }
 
-        if (mb_strlen($key) > 255) {
-            return $this->error('IDEMPOTENCY_KEY_INVALID', 'The Idempotency-Key must not exceed 255 characters.', 422);
+        if (mb_strlen($key) > 191) {
+            return $this->error('IDEMPOTENCY_KEY_INVALID', 'The Idempotency-Key must not exceed 191 characters.', 422);
         }
 
         $attributes = [
@@ -71,7 +71,14 @@ class EnsureIdempotent
                 // The original attempt died mid-flight; release the key and let this retry run.
                 $existing->delete();
 
-                return $this->run($request, $next, IdempotencyKey::query()->create($attributes + ['request_hash' => $hash]));
+                try {
+                    $record = IdempotencyKey::query()->create($attributes + ['request_hash' => $hash]);
+                } catch (UniqueConstraintViolationException) {
+                    // A concurrent retry claimed the key first
+                    return $this->error('IDEMPOTENCY_REQUEST_IN_PROGRESS', 'The original request is still being processed.', 409);
+                }
+
+                return $this->run($request, $next, $record);
             }
 
             return $this->error('IDEMPOTENCY_REQUEST_IN_PROGRESS', 'The original request is still being processed.', 409);

@@ -114,9 +114,7 @@ class ApiTokenApiController extends Controller implements HasMiddleware
     public function storePairing(PairDeviceRequest $request): JsonResponse
     {
         if (config('yaffa.sandbox_mode')) {
-            return response()->json([
-                'message' => __('This action is not allowed in sandbox mode.'),
-            ], 403);
+            return $this->pairingError('SANDBOX_MODE', __('This action is not allowed in sandbox mode.'), 403);
         }
 
         /** @var User $user */
@@ -128,7 +126,7 @@ class ApiTokenApiController extends Controller implements HasMiddleware
                 201
             );
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->pairingError('PAIRING_NOT_ALLOWED', $e->getMessage(), 422);
         }
     }
 
@@ -144,9 +142,7 @@ class ApiTokenApiController extends Controller implements HasMiddleware
     public function rotatePairing(Request $request, int $id): JsonResponse
     {
         if (config('yaffa.sandbox_mode')) {
-            return response()->json([
-                'message' => __('This action is not allowed in sandbox mode.'),
-            ], 403);
+            return $this->pairingError('SANDBOX_MODE', __('This action is not allowed in sandbox mode.'), 403);
         }
 
         /** @var User $user */
@@ -155,8 +151,16 @@ class ApiTokenApiController extends Controller implements HasMiddleware
         try {
             return response()->json($this->apiTokenService->rotateForPairing($user, $id));
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->pairingError('PAIRING_NOT_ALLOWED', $e->getMessage(), 422);
         }
+    }
+
+    /**
+     * Error response in the API's `error` envelope; `message` is kept for the web UI.
+     */
+    private function pairingError(string $code, string $message, int $status): JsonResponse
+    {
+        return response()->json(['message' => $message, 'error' => ['code' => $code, 'message' => $message]], $status);
     }
 
     /**

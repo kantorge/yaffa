@@ -41,8 +41,14 @@ Records live in `idempotency_keys` (unique per user + route + key), pruned daily
   its events and side effects do not run again.
 - Same key, different request: 422 `IDEMPOTENCY_KEY_REUSED`. Original still running: 409
   `IDEMPOTENCY_REQUEST_IN_PROGRESS` (a claim older than 10 minutes is treated as crashed and released).
+- Keys longer than 191 characters: 422 `IDEMPOTENCY_KEY_INVALID`.
 - Non-2xx responses and exceptions are not remembered, so the client can fix the request and retry with the same key.
 - Multipart requests are compared by file name, size and content hash, not the raw body.
+
+## Pairing errors
+
+`POST /users/me/tokens/pairing` and the rotate endpoint return `{"message", "error": {"code", "message"}}` on failure:
+403 `SANDBOX_MODE`, 422 `PAIRING_NOT_ALLOWED` (non-https production URL, expired token, or token abilities other than exactly read+write).
 
 ## Document upload
 

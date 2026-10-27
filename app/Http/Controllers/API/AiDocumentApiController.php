@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Enums\AiDocumentSource;
 use App\Enums\AiDocumentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IndexAiDocumentRequest;
 use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
@@ -231,7 +232,7 @@ class AiDocumentApiController extends Controller
      * Returns the user's AI documents, with optional filters for date range, status, source
      * type, and free-text search.
      */
-    public function index(Request $request): JsonResponse
+    public function index(IndexAiDocumentRequest $request): JsonResponse
     {
         $user = $request->user();
 
@@ -261,8 +262,7 @@ class AiDocumentApiController extends Controller
 
         // Incremental polling: only documents changed since the given timestamp
         if ($request->filled('updated_since')) {
-            $request->validate(['updated_since' => 'date']);
-            $query->where('updated_at', '>', Carbon::parse((string) $request->input('updated_since')));
+            $query->where('updated_at', '>', Carbon::parse((string) $request->input('updated_since'))->setTimezone(config('app.timezone')));
         }
 
         // Filter by status
