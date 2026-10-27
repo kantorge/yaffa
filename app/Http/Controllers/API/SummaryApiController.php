@@ -75,16 +75,6 @@ class SummaryApiController extends Controller
         $from = Carbon::now()->startOfMonth();
         $to = Carbon::now()->endOfMonth();
 
-        $accounts = collect($balance['accountBalanceData'])->map(fn (array $a) => [
-            'id' => $a['id'],
-            'name' => $a['name'],
-            'active' => (bool) $a['active'],
-            'currency' => $a['currency']['iso_code'] ?? null,
-            // `balance` is already converted to the base currency
-            'balance_currency' => $base->iso_code,
-            'balance' => $format(BigDecimal::of($a['sum'] ?? 0)),
-        ])->values();
-
         $flows = Transaction::query()
             ->where('user_id', $user->id)
             ->where('schedule', false)
@@ -101,6 +91,19 @@ class SummaryApiController extends Controller
         );
 
         try {
+            $accounts = collect($balance['accountBalanceData'])->map(fn (array $a) => [
+                'id' => $a['id'],
+                'name' => $a['name'],
+                'active' => (bool) $a['active'],
+                'currency' => $a['currency']['iso_code'] ?? null,
+                'balance_currency' => $base->iso_code,
+                // Convert the foreign amount here, so a missing rate fails loudly instead of defaulting to 1 as in
+                // getAccountBalance()
+                'balance' => $format(isset($a['sum_foreign'])
+                    ? $toBase(BigDecimal::of($a['sum_foreign']), $a['currency']['id'] ?? null)
+                    : BigDecimal::of($a['sum'] ?? 0)),
+            ])->values();
+
             $income = $sumFlows('deposit');
             $expense = $sumFlows('withdrawal');
             [$budgeted, $spent] = $this->budgetStatus($user, $from, $to, $toBase);
