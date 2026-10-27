@@ -8,6 +8,8 @@ class IndexAiDocumentRequest extends FormRequest
     {
         return [
             'updated_since' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
         ];
     }
 }

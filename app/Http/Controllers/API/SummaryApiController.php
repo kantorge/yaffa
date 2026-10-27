@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Carbon;
+use DomainException;
 
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
@@ -57,9 +58,17 @@ class SummaryApiController extends Controller
 
         $rates = $this->allCurrencyRatesByMonth();
         $toBase = function (BigDecimal $amount, ?int $currencyId) use ($rates, $base): BigDecimal {
+            if ($currencyId === $base->id) {
+                return $amount;
+            }
+
             $rate = $this->getLatestRateFromMap($currencyId, Carbon::now(), $rates, $base->id);
 
-            return $rate === null ? $amount : $amount->multipliedBy(BigDecimal::of($rate));
+            if ($rate === null) {
+                throw new DomainException('Missing currency rate');
+            }
+
+            return $amount->multipliedBy(BigDecimal::of($rate));
         };
         $format = fn (BigDecimal $amount): string => (string) $amount->toScale($base->generic_decimal_precision ?? 2, RoundingMode::HalfUp);
 
@@ -91,7 +100,15 @@ class SummaryApiController extends Controller
             BigDecimal::zero()
         );
 
-        [$budgeted, $spent] = $this->budgetStatus($user, $from, $to, $toBase);
+        try {
+            $income = $sumFlows('deposit');
+            $expense = $sumFlows('withdrawal');
+            [$budgeted, $spent] = $this->budgetStatus($user, $from, $to, $toBase);
+        } catch (DomainException) {
+            return response()->json([
+                'error' => ['code' => 'MISSING_CURRENCY_RATE', 'message' => 'A currency rate to the base currency is missing.'],
+            ], 422);
+        }
 
         return response()->json([
             'result' => 'success',
@@ -101,8 +118,8 @@ class SummaryApiController extends Controller
             'month' => [
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
-                'income' => $format($sumFlows('deposit')),
-                'expense' => $format($sumFlows('withdrawal')),
+                'income' => $format($income),
+                'expense' => $format($expense),
             ],
             'budget' => [
                 'budgeted' => $format($budgeted),

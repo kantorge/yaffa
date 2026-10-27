@@ -68,10 +68,22 @@ jobs:
         run: php artisan config:clear
 
       - name: Export spec
-        run: php artisan scramble:export --path=openapi.json
+        run: |
+          # On a release the spec is versioned with the release tag (leading "v" stripped)
+          if [ "$EVENT" = "release" ]; then export API_VERSION="${TAG#v}"; fi
+          php artisan scramble:export --path=openapi.json
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.event.release.tag_name }}
 
       - name: Check the spec is valid JSON with paths
         run: php -r '$d = json_decode(file_get_contents("openapi.json"), true, 512, JSON_THROW_ON_ERROR); if (empty($d["paths"])) { exit(1); } echo count($d["paths"]) . " paths, version " . $d["info"]["version"] . PHP_EOL;'
+
+      - name: Check the spec version matches the release
+        if: github.event_name == 'release'
+        run: php -r '$v = json_decode(file_get_contents("openapi.json"), true)["info"]["version"]; $t = ltrim(getenv("TAG"), "v"); if ($v !== $t) { fwrite(STDERR, "spec version $v != release $t\n"); exit(1); }'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
 
       - name: Upload spec artifact
         uses: actions/upload-artifact@v4
