@@ -24,9 +24,14 @@ task('deploy:write_build_ref', static function () {
     run('echo {{target}} > {{release_path}}/BUILD_REF');
 });
 
+task('deploy:link_well_known', static function () {
+    run('ln -sfn {{deploy_path}}/.well-known {{release_path}}/public/.well-known');
+});
+
 before('deploy:prepare', 'build:assets');
 after('deploy:vendors', 'deploy:upload_assets');
 after('deploy:update_code', 'deploy:write_build_ref');
+after('deploy:shared', 'deploy:link_well_known');
 
 host('private')
     ->set('hostname', getenv('SSH_HOST'))
