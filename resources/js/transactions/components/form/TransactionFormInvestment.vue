@@ -596,7 +596,7 @@
         type: Number,
         default: null,
       },
-      dropdownParentSelector: {
+      swalTargetSelector: {
         type: String,
         default: 'body',
       },
@@ -1241,7 +1241,7 @@
 
         confirmAction(__('Are you sure you want to discard any changes?'), {
           icon: 'warning',
-          target: this.dropdownParentSelector,
+          target: this.swalTargetSelector,
         }).then((result) => {
           if (result.isConfirmed) {
             this.$emit('cancel');

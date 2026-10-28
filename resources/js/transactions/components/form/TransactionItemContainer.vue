@@ -190,7 +190,7 @@
         type: Boolean,
         default: true,
       },
-      dropdownParentSelector: {
+      swalTargetSelector: {
         type: String,
         default: 'body',
       },
@@ -314,7 +314,7 @@
             {
               title: __('Replace items?'),
               confirmButtonText: __('Replace'),
-              target: this.dropdownParentSelector,
+              target: this.swalTargetSelector,
             },
           );
 
