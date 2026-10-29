@@ -552,7 +552,7 @@
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
-            :dropdown-parent-selector="dropdownParentSelector"
+            :swal-target-selector="swalTargetSelector"
             @add-transaction-item="addTransactionItem"
             @remove-transaction-item="removeTransactionItem"
             @update-transaction-item="updateTransactionItem"
@@ -716,7 +716,7 @@
         type: Number,
         default: null,
       },
-      dropdownParentSelector: {
+      swalTargetSelector: {
         type: String,
         default: 'body',
       },
@@ -1460,7 +1460,7 @@
           __(
             'Are you sure, you want to change the transaction type? Some data might get lost.',
           ),
-          { icon: 'warning', target: this.dropdownParentSelector },
+          { icon: 'warning', target: this.swalTargetSelector },
         ).then((result) => {
           if (result.isConfirmed) {
             this.onChangeTransactionType(newState, false);
@@ -1680,7 +1680,7 @@
 
         confirmAction(__('Are you sure you want to discard any changes?'), {
           icon: 'warning',
-          target: this.dropdownParentSelector,
+          target: this.swalTargetSelector,
         }).then((result) => {
           if (result.isConfirmed) {
             this.$emit('cancel');

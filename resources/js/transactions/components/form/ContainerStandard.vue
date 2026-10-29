@@ -7,7 +7,7 @@
     :template-info="templateInfo"
     :transaction-template-id="transactionTemplateId"
     :simplified="isSimplified"
-    :dropdown-parent-selector="'body'"
+    :swal-target-selector="'body'"
     @cancel="onCancel"
     @success="onSuccess"
   ></transaction-form-standard>
