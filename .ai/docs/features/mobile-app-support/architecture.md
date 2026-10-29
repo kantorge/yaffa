@@ -54,7 +54,7 @@ Records live in `idempotency_keys` (unique per user + route + key), pruned daily
 
 - Accepted types come from `AI_DOCUMENT_ALLOWED_TYPES` (default `txt`; the app needs `jpg,jpeg,png,pdf`).
   Multi-page = a PDF, or up to `AI_DOCUMENT_MAX_FILES_PER_SUBMISSION` images.
-- New optional fields: `source` (`mobile_scan`|`mobile_share`, stored as `source_type`), `captured_at`, `note`.
+- New optional fields: `source` (`mobile_scan`|`mobile_share`, stored as `source_type`) and `note` (max 500 characters; the same field the web upload form calls "Notes", and it is passed to the AI as custom instructions).
 - `GET /documents?updated_since=` filters on `updated_at`; `per_page` is capped at 100.
 - Stored file names get an index prefix so same-named files cannot overwrite each other.
 - **Limits.** `docker/php-uploads.ini` sets `upload_max_filesize=20M`, `post_max_size=100M` (5 x 20 MB). They must be
@@ -72,8 +72,8 @@ oversize upload is 422 `FILE_TOO_LARGE` with `limit_mb`.
 
 ## Mobile payment notifications (text-only documents)
 
-`POST /documents` with `source=mobile_notification`, `source_app`, `text` (required), `title`, `posted_at`, and no file.
-`posted_at` is stored as `captured_at`. The text is written in the same `Subject/From/Date/---/body` layout a forwarded
+`POST /documents` with `source=mobile_notification`, `source_app`, `text` (required), `title`, and no file.
+The text is written in the same `Subject/From/Date/---/body` layout a forwarded
 email gets (`App\Support\SourceTextFormatter`, shared with `CreateAiDocumentFromSource`), as a `.txt` document file, and
 processed by the normal `AiProcessingJob`. For this source `EnsureIdempotent` matches on the key alone, so the bank
 app updating and re-posting a notification with changed text replays the original document instead of failing or

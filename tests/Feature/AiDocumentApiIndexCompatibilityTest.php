@@ -92,13 +92,13 @@ class AiDocumentApiIndexCompatibilityTest extends TestCase
         $matching = AiDocument::factory()->for($user)->create([
             'status' => 'processing',
             'source_type' => 'manual_upload',
-            'custom_prompt' => 'Coffee receipt prompt',
+            'note' => 'Coffee receipt prompt',
         ]);
 
         AiDocument::factory()->for($user)->create([
             'status' => 'ready_for_review',
             'source_type' => 'received_email',
-            'custom_prompt' => 'Different content',
+            'note' => 'Different content',
         ]);
 
         Sanctum::actingAs($user, ['*']);

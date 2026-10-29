@@ -18,11 +18,11 @@ function notificationPayload(array $overrides = []): array
         'source_app' => 'com.bank.app',
         'title' => 'Card payment',
         'text' => 'You paid 12.50 EUR at Tesco',
-        'posted_at' => '2026-10-01T09:30:00Z',
     ], $overrides);
 }
 
 beforeEach(function () {
+    $this->travelTo('2026-10-01 09:30:00');
     Queue::fake();
     Storage::fake('local');
 
@@ -36,7 +36,6 @@ it('accepts a text-only notification and stores it in the same layout as a forwa
 
     $document = AiDocument::query()->findOrFail($response->json('id'));
     expect($document->source_type)->toBe('mobile_notification');
-    expect($document->captured_at->toIso8601String())->toBe('2026-10-01T09:30:00+00:00');
 
     $file = $document->files->sole();
     expect($file->file_type)->toBe('txt');

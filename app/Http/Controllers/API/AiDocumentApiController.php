@@ -67,8 +67,6 @@ class AiDocumentApiController extends Controller
         $document = AiDocument::create([
             'status' => 'ready_for_processing',
             'source_type' => $request->input('source') ?: 'manual_upload',
-            'custom_prompt' => $request->input('custom_prompt'),
-            'captured_at' => $request->input('posted_at') ?: $request->input('captured_at'),
             'note' => $request->input('note'),
         ]);
 
@@ -87,7 +85,7 @@ class AiDocumentApiController extends Controller
                 $fileHashes[] = $this->storeTextFile($document, SourceTextFormatter::format(
                     $request->input('title') ?: __('(No title)'),
                     $request->input('source_app'),
-                    Carbon::parse($request->input('posted_at') ?: now()),
+                    now(),
                     $request->input('text'),
                 ), 'notification');
             } elseif ($request->input('text_input')) {
@@ -132,8 +130,8 @@ class AiDocumentApiController extends Controller
                 return null;
             }
 
-            if ($request->filled('custom_prompt')) {
-                $document->custom_prompt = $request->input('custom_prompt');
+            if ($request->filled('note')) {
+                $document->note = $request->input('note');
             }
 
             if ($request->filled('status')) {
@@ -154,7 +152,7 @@ class AiDocumentApiController extends Controller
         return response()->json([
             'id' => $aiDocument->id,
             'status' => $aiDocument->status,
-            'custom_prompt' => $aiDocument->custom_prompt,
+            'note' => $aiDocument->note,
         ], Response::HTTP_OK);
     }
 
@@ -240,7 +238,7 @@ class AiDocumentApiController extends Controller
         $query = AiDocument::query()
             ->select([
                 'id', 'user_id', 'status', 'source_type', 'processed_transaction_data', 'received_mail_id',
-                'content_hash', 'document_kind', 'captured_at', 'note', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
+                'content_hash', 'document_kind', 'note', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
             ])
             ->where('user_id', $user->id)
             ->with([
@@ -280,7 +278,7 @@ class AiDocumentApiController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->whereJsonContains('processed_transaction_data', $search)
-                    ->orWhere('custom_prompt', 'like', "%{$search}%");
+                    ->orWhere('note', 'like', "%{$search}%");
             });
         }
 

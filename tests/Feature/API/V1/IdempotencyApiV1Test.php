@@ -111,7 +111,6 @@ it('creates one document for a repeated multipart upload with the same key', fun
         [
             'files' => [UploadedFile::fake()->image('receipt.jpg'), UploadedFile::fake()->image('receipt.jpg')],
             'source' => 'mobile_scan',
-            'captured_at' => '2026-09-28T10:15:00Z',
             'note' => 'Lunch',
         ],
         ['Idempotency-Key' => 'doc-key-1', 'Accept' => 'application/json']

@@ -47,7 +47,7 @@ class AiDocumentFilterTest extends TestCase
         $user = User::factory()->create();
 
         AiDocument::factory()->for($user)->create([
-            'custom_prompt' => 'Test prompt',
+            'note' => 'Test prompt',
         ]);
 
         // Endpoint should not crash with regex special characters in search

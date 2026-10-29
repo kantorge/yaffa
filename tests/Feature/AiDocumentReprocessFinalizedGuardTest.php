@@ -34,7 +34,7 @@ beforeEach(function () {
 
     $this->makeDocument = fn (string $status) => AiDocument::factory()->for($this->user)->create([
         'status' => $status,
-        'custom_prompt' => 'Original prompt',
+        'note' => 'Original prompt',
         'processed_transaction_data' => $this->processedData,
         'ai_chat_history' => $this->chatHistory,
         'processed_at' => now(),
@@ -64,14 +64,14 @@ it('rejects setting a finalized document back to ready_for_processing via PATCH 
     $this
         ->patchJson("/api/v1/documents/{$document->id}", [
             'status' => 'ready_for_processing',
-            'custom_prompt' => 'Sneaky new prompt',
+            'note' => 'Sneaky new prompt',
         ])
         ->assertUnprocessable()
         ->assertJsonPath('error', 'Document cannot be reprocessed from current status');
 
     $document->refresh();
     expect($document->status)->toBe('finalized')
-        ->and($document->custom_prompt)->toBe('Original prompt')
+        ->and($document->note)->toBe('Original prompt')
         ->and($document->processed_transaction_data)->toEqual($this->processedData)
         ->and($document->ai_chat_history)->toEqual($this->chatHistory);
 });
@@ -94,27 +94,27 @@ it('still allows setting a reprocessable document back to ready_for_processing v
     $this
         ->patchJson("/api/v1/documents/{$document->id}", [
             'status' => 'ready_for_processing',
-            'custom_prompt' => 'New prompt',
+            'note' => 'New prompt',
         ])
         ->assertOk()
         ->assertJsonPath('status', 'ready_for_processing')
-        ->assertJsonPath('custom_prompt', 'New prompt');
+        ->assertJsonPath('note', 'New prompt');
 
     $document->refresh();
     expect($document->status)->toBe('ready_for_processing')
-        ->and($document->custom_prompt)->toBe('New prompt');
+        ->and($document->note)->toBe('New prompt');
 })->with(['ready_for_review', 'processing_failed']);
 
 it('still allows updating only the custom prompt of a finalized document', function () {
     $document = ($this->makeDocument)('finalized');
 
     $this
-        ->patchJson("/api/v1/documents/{$document->id}", ['custom_prompt' => 'New prompt'])
+        ->patchJson("/api/v1/documents/{$document->id}", ['note' => 'New prompt'])
         ->assertOk()
         ->assertJsonPath('status', 'finalized')
-        ->assertJsonPath('custom_prompt', 'New prompt');
+        ->assertJsonPath('note', 'New prompt');
 
     $document->refresh();
     expect($document->status)->toBe('finalized')
-        ->and($document->custom_prompt)->toBe('New prompt');
+        ->and($document->note)->toBe('New prompt');
 });

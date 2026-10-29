@@ -22,7 +22,7 @@ class AiDocumentFactory extends Factory
             'ai_chat_history' => null,
             'google_drive_file_id' => null,
             'received_mail_id' => null,
-            'custom_prompt' => null,
+            'note' => null,
             'processed_at' => null,
         ];
     }

@@ -34,19 +34,16 @@ class StoreAiDocumentRequest extends FormRequest
                 'string',
                 'max:10000',
             ],
-            'custom_prompt' => [
+            'note' => [
                 'nullable',
                 'string',
-                'max:5000',
+                'max:500',
             ],
-            'captured_at' => ['nullable', 'date'],
-            'note' => ['nullable', 'string', 'max:1000'],
             'source' => ['nullable', 'in:mobile_scan,mobile_share,mobile_notification'],
             // Text-only payment notification captured on the phone
             'source_app' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:191'],
             'title' => ['nullable', 'string', 'max:255'],
             'text' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:10000'],
-            'posted_at' => ['nullable', 'date'],
         ];
     }
 
