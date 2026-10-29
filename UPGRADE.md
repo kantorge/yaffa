@@ -41,7 +41,7 @@ Most 4.x upgrades do not require any special manual steps beyond the usual appli
 
 ### AI document notes (`custom_prompt` renamed to `note`, limited to 500 characters)
 
-The "Custom Processing Instructions" of an AI document are now called "Notes", and the `custom_prompt` field (database column and API) is renamed to `note`. Existing texts longer than 500 characters are truncated by the migration, and the truncation cannot be undone. Update any API integration that uses `custom_prompt`.
+The "Custom Processing Instructions" of an AI document are now called "Notes", and the `custom_prompt` field (database column and API) is renamed to `note`. Update any API integration that uses `custom_prompt`.
 
 ### Sentry support removed
 
