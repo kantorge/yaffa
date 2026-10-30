@@ -113,10 +113,6 @@ class ApiTokenApiController extends Controller implements HasMiddleware
      */
     public function storePairing(PairDeviceRequest $request): JsonResponse
     {
-        if (config('yaffa.sandbox_mode')) {
-            return $this->pairingError('SANDBOX_MODE', __('This action is not allowed in sandbox mode.'), 403);
-        }
-
         /** @var User $user */
         $user = $request->user();
 
@@ -141,10 +137,6 @@ class ApiTokenApiController extends Controller implements HasMiddleware
      */
     public function rotatePairing(Request $request, int $id): JsonResponse
     {
-        if (config('yaffa.sandbox_mode')) {
-            return $this->pairingError('SANDBOX_MODE', __('This action is not allowed in sandbox mode.'), 403);
-        }
-
         /** @var User $user */
         $user = $request->user();
 

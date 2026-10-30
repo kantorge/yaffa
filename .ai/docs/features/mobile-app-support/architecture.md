@@ -16,11 +16,11 @@ sender itself (UnifiedPush channel, optional FCM relay); endpoints and notificat
 
 ## Pairing
 
-`POST /api/v1/users/me/tokens/pairing {name}` (session only, blocked in sandbox mode) creates a `read,write`
+`POST /api/v1/users/me/tokens/pairing {name}` (session only) creates a `read,write`
 token (deliberately no `settings`: a lost phone must not reach credential/config controllers or `/maintenance/*`) via `ApiTokenService::createPairing()` and returns, once: `token`, `deep_link`
 (`yaffa://pair?v=1&url=<APP_URL>&token=<token>`), `qr_svg` (`bacon/bacon-qr-code`), and `warnings`
 (`not_https`, `localhost`, computed from `APP_URL`). UI: "Connect mobile app" in `ApiTokenManager.vue`.
-An existing token whose abilities are exactly `read,write` can be re-shown as a QR code via `POST /api/v1/users/me/tokens/{id}/pairing` (session only, sandbox-blocked; `settings`/`*` tokens are refused with 422):
+An existing token whose abilities are exactly `read,write` can be re-shown as a QR code via `POST /api/v1/users/me/tokens/{id}/pairing` (session only; `settings`/`*` tokens are refused with 422):
 the plain text is never stored, so `ApiTokenService::rotateForPairing()` replaces the secret in place (name, abilities, expiry and
 `devices` row are kept; the old secret stops working) and returns the same payload as pairing. The UI confirms via SweetAlert first.
 Revoking the token (existing endpoint) makes the app's next call return 401.
@@ -48,7 +48,7 @@ Records live in `idempotency_keys` (unique per user + route + key), pruned daily
 ## Pairing errors
 
 `POST /users/me/tokens/pairing` and the rotate endpoint return `{"message", "error": {"code", "message"}}` on failure:
-403 `SANDBOX_MODE`, 422 `PAIRING_NOT_ALLOWED` (non-https production URL, expired token, or token abilities other than exactly read+write).
+422 `PAIRING_NOT_ALLOWED` (non-https production URL, expired token, or token abilities other than exactly read+write).
 
 ## Document upload
 

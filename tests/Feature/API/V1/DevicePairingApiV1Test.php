@@ -46,12 +46,12 @@ it('does not let a device token pair further devices', function () {
         ->assertForbidden();
 });
 
-it('is blocked in sandbox mode', function () {
+it('is allowed in sandbox mode', function () {
     config(['yaffa.sandbox_mode' => true]);
 
     $this->actingAs(User::factory()->create())
         ->postJson(route('api.v1.users.me.tokens.pairing'), ['name' => 'Test phone'])
-        ->assertForbidden();
+        ->assertCreated();
 });
 
 it('revokes a device so its next call fails', function () {
