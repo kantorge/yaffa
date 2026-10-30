@@ -28,7 +28,7 @@ Revoking the token (existing endpoint) makes the app's next call return 401.
 ## Server info
 
 `GET /api/v1/meta` is public. Anonymous: `api_version`, `min_app_version`
-(`MOBILE_APP_MIN_VERSION`), `token_header`, `features`. With a valid token it adds `yaffa_version` and `user`: `base_currency`, `locale`,
+(`MOBILE_APP_MIN_VERSION`), `token_header`, `features`. With a valid token it adds `yaffa_version`, `idempotency_retention_days` and `user`: `base_currency`, `locale`,
 `max_upload_mb`, `max_files_per_submission`. Date format is not sent: it is derived from `locale` client-side.
 
 ## Retry safety

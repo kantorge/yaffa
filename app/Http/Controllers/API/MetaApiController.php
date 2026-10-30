@@ -37,6 +37,7 @@ class MetaApiController extends Controller
 
             // The exact version is only shown to authenticated callers, to limit fingerprinting.
             $data['yaffa_version'] = config('yaffa.version');
+            $data['idempotency_retention_days'] = (int) config('yaffa.idempotency_retention_days');
             $data['user'] = [
                 'base_currency' => $baseCurrency ? [
                     'id' => $baseCurrency->id,
