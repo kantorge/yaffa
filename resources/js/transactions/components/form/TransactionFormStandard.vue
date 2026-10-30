@@ -1454,6 +1454,12 @@
           return false;
         }
 
+        // Nothing to lose, so no need to bother the user
+        if (!this.typeChangeLosesData(newState)) {
+          this.onChangeTransactionType(newState, false);
+          return;
+        }
+
         // Confirm transaction type change with user
         const target = event.currentTarget;
         confirmAction(
@@ -1468,6 +1474,20 @@
             target.blur();
           }
         });
+      },
+
+      // Mirrors what onChangeTransactionType() resets: a selected account/payee on a side
+      // whose kind changes, and all items when moving to transfer
+      typeChangeLosesData(newState) {
+        const sideLost = (side) =>
+          this.getAccountType(side) !== this.getAccountType(side, newState) &&
+          !!this.form.config['account_' + side + '_id'];
+
+        return (
+          sideLost('from') ||
+          sideLost('to') ||
+          (newState === 'transfer' && this.form.items.length > 0)
+        );
       },
 
       /**
@@ -1550,11 +1570,11 @@
       },
 
       // Check if TO or FROM is account or payee
-      getAccountType(type) {
-        if (this.form.transaction_type === 'withdrawal') {
+      getAccountType(type, transactionType = this.form.transaction_type) {
+        if (transactionType === 'withdrawal') {
           return type === 'from' ? 'account' : 'payee';
         }
-        if (this.form.transaction_type === 'deposit') {
+        if (transactionType === 'deposit') {
           return type === 'from' ? 'payee' : 'account';
         }
 
