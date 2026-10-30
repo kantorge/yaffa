@@ -112,3 +112,9 @@ See `.ai/docs/features/api-access-and-2fa/api-versioning.md` (spec generation, e
 ## Before building the push sender
 
 Run `PublicEndpointUrlValidator` on `devices.endpoint` at send time (DNS rebinding); `DeviceRequest` only checks the URL shape.
+
+## Possible extension: unified notifications with channel selection
+
+Not built. Today an AI-document event has two independent, always-on paths: mail listeners (`SendAiDocumentProcessedNotification`, `SendAiDocumentProcessingFailedNotification`) and the database-only `NotifyAiDocumentStatus` -> `AiDocumentStatusNotification`. The user cannot choose; both fire (the same duplicate / awaiting-itemization skip rule is copied in the mail and in-app listeners).
+
+If per-user channel selection (`mail`, `database`, push) or the push sender is added, unify first: one Laravel `Notification` per event whose `via()` returns the user's selected channels, `toMail()` returning the existing Mailable, `toArray()` keeping the generic, push-safe payload. The skip rule and the preference check then live in one place. Failure details (error message, exception class, error code) must reach the mail channel only, never the database or push payload. Keep the mail's `Dismissed` variant and locale handling, and the queued, failure-isolated delivery. Push then becomes one more channel reading `devices`, subject to the send-time `PublicEndpointUrlValidator` check above.

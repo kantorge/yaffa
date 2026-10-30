@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\AiDocumentStatus;
 use App\Events\AiDocumentProcessedEvent;
 use App\Events\AiDocumentProcessingFailedEvent;
 use App\Notifications\AiDocumentStatusNotification;
@@ -16,6 +17,11 @@ class NotifyAiDocumentStatus implements ShouldQueue
 {
     public function handleProcessed(AiDocumentProcessedEvent $event): void
     {
+        // Same rule as the email listener: a duplicate, or a document held for its receipt, needs nothing from the user
+        if (in_array($event->document->status, [AiDocumentStatus::Duplicate->value, AiDocumentStatus::AwaitingItemization->value], true)) {
+            return;
+        }
+
         $event->document->user->notify(
             new AiDocumentStatusNotification($event->document, AiDocumentStatusNotification::READY_FOR_REVIEW)
         );
