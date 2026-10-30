@@ -37,6 +37,10 @@ AI documents can now be recorded as normal transactions without a review. It is 
 - Reconciling a transaction (the reconcile endpoint or any save that flips `reconciled` to true) marks its `created` origin as reviewed.
 - A new scheduled command `ai-documents:expire-itemization` runs daily at 03:45 (needs the scheduler).
 
+### AI off now holds documents instead of rejecting uploads
+
+When AI processing is off for a user, uploaded, emailed and imported documents are no longer refused. They are stored as `ready_for_processing` and wait; the scheduled processing skips them. Turning AI processing on later processes the waiting documents. No action is needed. Documents you do not want processed can be dismissed or deleted from the AI documents page, and a retention period (if set) does not delete them while they wait.
+
 ### Slimmer document list API response
 
 `GET /api/v1/documents` (the list behind the AI documents table) now returns only what a list needs, which makes it considerably faster on large collections. `GET /api/v1/documents/{id}` is unchanged and still returns the full document. No action is needed for the bundled frontend, but a custom API integration that reads the removed fields from the list must fetch the single document instead.
