@@ -1,10 +1,10 @@
 <template>
   <div
     class="list-group-item transaction_item_row"
-    :data-has-details="tags.length > 0 || !!comment"
+    :data-has-details="hasDetails"
   >
     <div class="row">
-      <div>
+      <div v-if="hasDetails">
         <button
           type="button"
           class="btn btn-sm btn-info d-sm-none"
@@ -15,45 +15,65 @@
         </button>
       </div>
 
-      <div class="col-12 col-sm-4">
-        <dt>
+      <!-- On mobile, labels are dropped: the category and the formatted amount are self-explanatory -->
+      <div class="col col-sm-4">
+        <dt class="d-none d-sm-block">
           {{ __('Category') }}
         </dt>
-        <dd :class="category.full_name ? '' : 'text-muted'">
+        <dd class="mb-1 mb-sm-3" :class="{ 'not-set': !category.full_name }">
           {{ category.full_name || __('Not set') }}
         </dd>
       </div>
-      <div class="col-12 col-sm-2">
-        <dt>
+      <div
+        class="col-auto col-sm-2 text-end text-sm-start text-nowrap"
+        :class="{ 'pe-5': hasDetails }"
+      >
+        <dt class="d-none d-sm-block">
           {{ __('Amount') }}
         </dt>
-        <dd>
+        <dd class="mb-1 mb-sm-3">
           {{ toFormattedCurrency(amount, locale, currency) }}
         </dd>
       </div>
+      <!-- Tags and comment: shown on mobile only when toggled, and only if they have a value; icons replace labels -->
       <div
         class="col-12 col-sm-3 transaction_detail_container d-none d-md-block"
       >
-        <dt>
+        <dt class="d-none d-md-block">
           {{ __('Tags') }}
         </dt>
-        <dd v-if="tags.length > 0">
-          <span v-for="tag in tags" :key="tag.id" class="badge text-bg-info">
+        <dd v-if="tags.length > 0" class="mb-1 mb-md-3">
+          <i
+            class="fa fa-tag fa-fw text-muted d-md-none"
+            :title="__('Tags')"
+          ></i>
+          <span
+            v-for="tag in tags"
+            :key="tag.id"
+            class="badge text-bg-info me-1"
+          >
             {{ tag.name }}
           </span>
         </dd>
-        <dd v-else class="text-muted text-italic">
+        <dd v-else class="not-set d-none d-md-block">
           {{ __('Not set') }}
         </dd>
       </div>
       <div
         class="col-12 col-sm-2 transaction_detail_container d-none d-md-block"
       >
-        <dt>
+        <dt class="d-none d-md-block">
           {{ __('Comment') }}
         </dt>
-        <dd :class="{ 'text-muted text-italic': !comment }">
-          {{ comment || __('Not set') }}
+        <dd v-if="comment" class="mb-1 mb-md-3">
+          <i
+            class="fa fa-comment fa-fw text-muted d-md-none"
+            :title="__('Comment')"
+          ></i>
+          {{ comment }}
+        </dd>
+        <dd v-else class="not-set d-none d-md-block">
+          {{ __('Not set') }}
         </dd>
       </div>
     </div>
@@ -76,6 +96,12 @@
       locale: {
         type: String,
         default: window.YAFFA.userSettings.locale,
+      },
+    },
+
+    computed: {
+      hasDetails() {
+        return this.tags.length > 0 || !!this.comment;
       },
     },
 

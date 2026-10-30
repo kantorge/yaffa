@@ -285,7 +285,7 @@
             data-transaction-id="${transaction.id}"
             title="${escapeHtml(this.__('Enter schedule instance'))}"
           >
-            <i class="fa fa-fw fa-pencil"></i>
+            <i class="fa fa-fw fa-calendar-plus"></i>
           </button>
         </div>
       </div>

@@ -289,13 +289,13 @@ let table = $(tableSelector).DataTable({
       data.config_type === 'standard' &&
       data.categories.length === 0
     ) {
-      $('td', row).eq(7).addClass('text-muted text-italic');
+      $('td', row).eq(7).addClass('not-set');
     }
 
     // Mute the 'N/A' next date/payee cells on a Budget row - neither column applies to it.
     if (data.row_type === 'budget') {
-      $('td', row).eq(2).addClass('text-muted text-italic');
-      $('td', row).eq(6).addClass('text-muted text-italic');
+      $('td', row).eq(2).addClass('not-set');
+      $('td', row).eq(6).addClass('not-set');
     }
   },
   drawCallback: function () {
@@ -335,7 +335,7 @@ table.contextualActions({
     {
       type: 'option',
       title: __('Edit and insert instance'),
-      iconClass: 'fa fa-pencil',
+      iconClass: 'fa fa-calendar-plus',
       contextMenuClasses: ['text-success fw-bold'],
       action: function (row) {
         window.location.href = window.route('transaction.open', {

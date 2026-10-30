@@ -13,9 +13,7 @@
         </span>
         <span v-else class="text-danger">{{ __('Cannot parse') }}</span>
       </template>
-      <span v-else class="text-muted fst-italic">{{
-        __('No sample value')
-      }}</span>
+      <span v-else class="not-set">{{ __('No sample value') }}</span>
     </div>
   </div>
 </template>

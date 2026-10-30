@@ -169,7 +169,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 
     // Mute category cell with 'not set' value
     if (data.config_type === 'standard' && data.categories.length === 0) {
-      $('td', row).eq(3).addClass('text-muted text-italic');
+      $('td', row).eq(3).addClass('not-set');
     }
   },
   initComplete: function () {
@@ -352,7 +352,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
 
     // Mute category cell with 'not set' value
     if (data.categories.length === 0) {
-      $('td', row).eq(2).addClass('text-muted text-italic');
+      $('td', row).eq(2).addClass('not-set');
     }
   },
   initComplete: function () {
@@ -400,7 +400,7 @@ dtSchedule.contextualActions({
     {
       type: 'option',
       title: __('Adjust and enter instance'),
-      iconClass: 'fa fa-pencil',
+      iconClass: 'fa fa-calendar-plus',
       contextMenuClasses: ['text-success fw-bold'],
       action: function (row) {
         // TODO: should this data be passed back and forth instead of storing it?

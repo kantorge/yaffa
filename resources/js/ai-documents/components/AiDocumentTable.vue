@@ -235,7 +235,7 @@
     }
 
     if (isUnidentified(rawValue)) {
-      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawValue)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -258,7 +258,7 @@
     }
 
     if (!isStandardDocument(row) || isTransferDocument(row)) {
-      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
     const rawData = getRawData(row);
@@ -282,7 +282,7 @@
 
     // No match - fall back to raw value or "Not available"
     if (isUnidentified(rawData?.payee)) {
-      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawData.payee)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -304,11 +304,11 @@
     }
 
     if (!isStandardDocument(row)) {
-      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
     if (isUnidentified(row.detected_amount_search)) {
-      return `<span class="text-muted text-italic">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
     return row.detected_amount_search;
@@ -869,7 +869,7 @@
         if (!getLinkedTransactionId(data)) {
           window
             .$('td:eq(' + COLUMN_INDEX.linkedTransaction + ')', row)
-            .addClass('text-muted text-italic');
+            .addClass('not-set');
         }
       },
     });

@@ -11,9 +11,9 @@
         class="card mb-3 shadow-sm border-0 interaction-card"
       >
         <summary
-          class="card-header d-flex justify-content-between align-items-center bg-body-tertiary"
+          class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1 bg-body-tertiary"
         >
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex flex-wrap align-items-center gap-2">
             <span class="badge text-bg-primary">{{ index + 1 }}</span>
             <strong>{{ formatStep(entry.step) }}</strong>
             <span

@@ -21,10 +21,7 @@
         <dt class="col-4">{{ __('Symbol') }}</dt>
         <dd class="col-8">{{ investment.symbol }}</dd>
         <dt class="col-4">{{ __('ISIN number') }}</dt>
-        <dd
-          class="col-8"
-          :class="{ 'text-muted text-italic': !investment.isin }"
-        >
+        <dd class="col-8" :class="{ 'not-set': !investment.isin }">
           {{ investment.isin || __('Not set') }}
         </dd>
         <dt class="col-4">{{ __('Active') }}</dt>

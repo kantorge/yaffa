@@ -10,9 +10,11 @@
       :disabled="skipInstanceButtonBusy"
       dusk="button-action-bar-skip"
       :title="__('Skip schedule instance')"
+      :aria-label="__('Skip schedule instance')"
       @click="skipInstance"
     >
-      <i class="fa me-1 fa-fast-forward"></i>{{ __('Skip instance') }}
+      <i class="fa me-md-1 fa-fast-forward"></i
+      ><span class="d-none d-md-inline">{{ __('Skip instance') }}</span>
     </button>
 
     <a
@@ -25,8 +27,10 @@
       dusk="button-action-bar-enter-instance"
       :href="getRoute('enter')"
       :title="__('Enter schedule instance')"
+      :aria-label="__('Enter schedule instance')"
     >
-      <i class="fa me-1 fa-pencil"></i>{{ __('Enter instance') }}
+      <i class="fa me-md-1 fa-calendar-plus"></i
+      ><span class="d-none d-md-inline">{{ __('Enter instance') }}</span>
     </a>
 
     <a
@@ -35,8 +39,10 @@
       dusk="button-action-bar-open"
       :href="getRoute('show')"
       :title="__('View details')"
+      :aria-label="__('View details')"
     >
-      <i class="fa me-1 fa-search"></i>{{ __('Open') }}
+      <i class="fa me-md-1 fa-search"></i
+      ><span class="d-none d-md-inline">{{ __('Open') }}</span>
     </a>
 
     <a
@@ -44,16 +50,20 @@
       :href="getRoute('edit', { callback: editCallback })"
       class="btn btn-primary ms-2"
       :title="__('Edit')"
+      :aria-label="__('Edit')"
     >
-      <i class="fa me-1 fa-edit"></i>{{ __('Edit') }}
+      <i class="fa me-md-1 fa-edit"></i
+      ><span class="d-none d-md-inline">{{ __('Edit') }}</span>
     </a>
     <a
       v-if="controls.clone"
       :href="getRoute('clone')"
       class="btn btn-primary ms-2"
       :title="__('Clone')"
+      :aria-label="__('Clone')"
     >
-      <i class="fa me-1 fa-clone"></i>{{ __('Clone') }}
+      <i class="fa me-md-1 fa-clone"></i
+      ><span class="d-none d-md-inline">{{ __('Clone') }}</span>
     </a>
 
     <a
@@ -61,8 +71,10 @@
       :href="getRoute('template')"
       class="btn btn-primary ms-2"
       :title="__('Save as template')"
+      :aria-label="__('Save as template')"
     >
-      <i class="fa me-1 fa-bookmark"></i>{{ __('Save as template') }}
+      <i class="fa me-md-1 fa-bookmark"></i
+      ><span class="d-none d-md-inline">{{ __('Save as template') }}</span>
     </a>
 
     <button
@@ -72,9 +84,11 @@
       dusk="button-action-bar-delete"
       type="button"
       :title="__('Delete')"
+      :aria-label="__('Delete')"
       @click="deleteTransaction"
     >
-      <i class="fa me-1 fa-trash"></i>{{ __('Delete') }}
+      <i class="fa me-md-1 fa-trash"></i
+      ><span class="d-none d-md-inline">{{ __('Delete') }}</span>
     </button>
 
     <button

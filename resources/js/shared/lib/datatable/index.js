@@ -136,7 +136,7 @@ export function dataTablesActionButton(id, action, params = {}) {
                     class="btn btn-xs btn-success"
                     title="${__('Edit and insert instance')}"
                 >
-                    <i class="fa fa-fw fa-pencil"></i>
+                    <i class="fa fa-fw fa-calendar-plus"></i>
                 </a> `;
     },
   };
@@ -311,7 +311,7 @@ export function transactionTypeIcon(transactionType, customTitle) {
 
 export function muteCellWithValue(column, mutedValue) {
   if (column.text() === mutedValue) {
-    column.addClass('text-muted text-italic');
+    column.addClass('not-set');
   }
 }
 

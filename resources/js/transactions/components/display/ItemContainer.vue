@@ -47,10 +47,7 @@
       <div v-if="!enabled">
         {{ __('Transaction items are disabled for this transaction type') }}
       </div>
-      <div
-        v-else-if="transactionItems.length === 0"
-        class="text-muted text-italic"
-      >
+      <div v-else-if="transactionItems.length === 0" class="not-set">
         {{ __('No items added') }}
       </div>
     </div>
@@ -105,8 +102,8 @@
     },
 
     mounted() {
-      // Set initial state of detail visibility
-      this.itemListShow();
+      // Details (tags, comment) start collapsed; they are always visible from md up
+      this.itemListCollapse();
     },
 
     methods: {

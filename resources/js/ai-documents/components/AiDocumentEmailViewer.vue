@@ -9,40 +9,39 @@
     <div v-if="!hasHtml && !hasText" class="text-muted">
       {{ __('No email content available') }}
     </div>
-    <div v-else class="card mb-3">
-      <div v-if="hasHtml && hasText" class="card-header">
-        <ul class="nav nav-tabs card-header-tabs">
-          <li class="nav-item">
-            <button
-              id="nav-email-tab-html"
-              class="nav-link active"
-              data-coreui-toggle="tab"
-              data-coreui-target="#email-tab-html"
-              type="button"
-              role="tab"
-              aria-controls="email-tab-html"
-              aria-selected="true"
-            >
-              {{ __('HTML view') }}
-            </button>
-          </li>
-          <li class="nav-item">
-            <button
-              id="nav-email-tab-text"
-              class="nav-link"
-              data-coreui-toggle="tab"
-              data-coreui-target="#email-tab-text"
-              type="button"
-              role="tab"
-              aria-controls="email-tab-text"
-              aria-selected="false"
-            >
-              {{ __('Text view') }}
-            </button>
-          </li>
-        </ul>
+    <div v-else>
+      <!-- Segmented toggle instead of a second tab row, to avoid nested navigation -->
+      <div
+        v-if="hasHtml && hasText"
+        class="btn-group btn-group-sm mb-3"
+        role="tablist"
+      >
+        <button
+          id="nav-email-tab-html"
+          class="btn btn-outline-primary active"
+          data-coreui-toggle="tab"
+          data-coreui-target="#email-tab-html"
+          type="button"
+          role="tab"
+          aria-controls="email-tab-html"
+          aria-selected="true"
+        >
+          {{ __('HTML view') }}
+        </button>
+        <button
+          id="nav-email-tab-text"
+          class="btn btn-outline-primary"
+          data-coreui-toggle="tab"
+          data-coreui-target="#email-tab-text"
+          type="button"
+          role="tab"
+          aria-controls="email-tab-text"
+          aria-selected="false"
+        >
+          {{ __('Text view') }}
+        </button>
       </div>
-      <div class="card-body">
+      <div>
         <div id="nav-tabContent" class="tab-content">
           <div
             v-if="hasHtml"
