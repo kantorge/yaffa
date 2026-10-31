@@ -16,15 +16,17 @@
   import {
     showSuccessToast,
     showInfoToast,
-    showWarningToast,
-    showErrorToast,
+    showToast,
   } from '@/shared/lib/toast';
 
+  // Warnings and errors stay until dismissed, the others use the default timeout
   const toastByType = {
     success: showSuccessToast,
     info: showInfoToast,
-    warning: showWarningToast,
-    error: showErrorToast,
+    warning: (message) =>
+      showToast(__('Warning'), message, 'bg-warning', { delay: Infinity }),
+    error: (message) =>
+      showToast(__('Error'), message, 'bg-danger', { delay: Infinity }),
   };
 
   export default {
