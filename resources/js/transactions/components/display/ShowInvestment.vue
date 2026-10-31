@@ -24,9 +24,7 @@
                 <span v-if="transaction.date">{{
                   formattedDate(transaction.date)
                 }}</span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
+                <span v-else class="not-set">{{ __('Not set') }}</span>
               </dd>
 
               <dt class="col-6">
@@ -64,10 +62,7 @@
               <dt class="col-6">
                 {{ __('Comment') }}
               </dt>
-              <dd
-                class="col-6"
-                :class="transaction.comment ? '' : 'text-muted text-italic'"
-              >
+              <dd class="col-6" :class="transaction.comment ? '' : 'not-set'">
                 {{ transaction.comment || 'Not set' }}
               </dd>
 
@@ -140,7 +135,7 @@
                 }}
               </dd>
               <dd v-else class="col-6">
-                <span class="text-muted text-italic">{{ __('Not set') }}</span>
+                <span class="not-set">{{ __('Not set') }}</span>
               </dd>
 
               <dt class="col-6">
@@ -156,7 +151,7 @@
                 }}
               </dd>
               <dd v-else class="col-6">
-                <span class="text-muted text-italic">{{ __('Not set') }}</span>
+                <span class="not-set">{{ __('Not set') }}</span>
               </dd>
 
               <dt class="col-6">
@@ -176,7 +171,7 @@
                 }}
               </dd>
               <dd v-else class="col-6" dusk="label-dividend">
-                <span class="text-muted text-italic">{{ __('Not set') }}</span>
+                <span class="not-set">{{ __('Not set') }}</span>
               </dd>
             </dl>
           </div>

@@ -136,15 +136,15 @@
               </div>
             </div>
 
-            <!-- Custom Prompt Section -->
+            <!-- Notes Section -->
             <div class="mb-3">
-              <label for="customPrompt" class="form-label">
-                {{ __('Custom Processing Instructions') }}
+              <label for="note" class="form-label">
+                {{ __('Notes') }}
                 <span class="text-muted">({{ __('optional') }})</span>
               </label>
               <textarea
-                id="customPrompt"
-                v-model="form.customPrompt"
+                id="note"
+                v-model="form.note"
                 class="form-control"
                 :placeholder="
                   __(
@@ -152,10 +152,10 @@
                   )
                 "
                 rows="4"
-                maxlength="5000"
+                maxlength="500"
               ></textarea>
               <small class="form-text text-muted">
-                {{ form.customPrompt.length }}/5000
+                {{ form.note.length }}/500
               </small>
             </div>
           </div>
@@ -225,7 +225,7 @@
         errors: [],
         warningDismissed: false,
         form: {
-          customPrompt: '',
+          note: '',
         },
         maxFilesPerSubmission,
         maxFileSize,
@@ -247,9 +247,7 @@
         return allowedTypes.map((type) => mimeMap[type] || '').join(',');
       },
       isDirty() {
-        return (
-          this.selectedFiles.length > 0 || this.form.customPrompt.trim() !== ''
-        );
+        return this.selectedFiles.length > 0 || this.form.note.trim() !== '';
       },
     },
 
@@ -280,7 +278,7 @@
             }).then((result) => {
               if (result.isConfirmed) {
                 this.selectedFiles = [];
-                this.form.customPrompt = '';
+                this.form.note = '';
                 this.closeModal();
               }
             });
@@ -396,8 +394,8 @@
           }
 
           // Add custom prompt if provided
-          if (this.form.customPrompt.trim()) {
-            formData.append('custom_prompt', this.form.customPrompt);
+          if (this.form.note.trim()) {
+            formData.append('note', this.form.note);
           }
 
           const response = await fetch(route('api.v1.documents.store'), {
@@ -418,7 +416,7 @@
 
             // Reset form
             this.selectedFiles = [];
-            this.form.customPrompt = '';
+            this.form.note = '';
 
             // Emit event for parent to refresh the list
             this.$emit('document-created', data);

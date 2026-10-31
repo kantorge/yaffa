@@ -5,7 +5,7 @@
         {{ __('Transaction items') }}
       </div>
       <div>
-        <div class="btn-group d-sm-none">
+        <div class="btn-group d-md-none">
           <button
             type="button"
             class="btn btn-sm btn-info"
@@ -47,14 +47,11 @@
       <div v-if="!enabled">
         {{ __('Transaction items are disabled for this transaction type') }}
       </div>
-      <div
-        v-else-if="transactionItems.length === 0"
-        class="text-muted text-italic"
-      >
+      <div v-else-if="transactionItems.length === 0" class="not-set">
         {{ __('No items added') }}
       </div>
     </div>
-    <div v-if="transactionItems.length > 0" class="card-footer d-sm-none">
+    <div v-if="transactionItems.length > 0" class="card-footer d-md-none">
       <div class="text-end">
         <div class="btn-group">
           <button
@@ -105,8 +102,8 @@
     },
 
     mounted() {
-      // Set initial state of detail visibility
-      this.itemListShow();
+      // Details (tags, comment) start collapsed; they are always visible from md up
+      this.itemListCollapse();
     },
 
     methods: {

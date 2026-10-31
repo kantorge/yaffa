@@ -40,7 +40,7 @@
                     </label>
                     <select
                       id="transaction_type"
-                      v-model="form.transaction_type"
+                      :value="form.transaction_type"
                       class="form-select"
                       :disabled="!isBaseSettingsEditsAllowed"
                       @change="transactionTypeChanged($event)"
@@ -596,7 +596,7 @@
         type: Number,
         default: null,
       },
-      dropdownParentSelector: {
+      swalTargetSelector: {
         type: String,
         default: 'body',
       },
@@ -1177,17 +1177,38 @@
         this.formLoaded = true;
       },
 
-      transactionTypeChanged() {
-        const settings = this.transactionTypeSettings;
-        if (!settings.quantity) {
-          this.form.config.quantity = null;
+      // The select is not v-model bound: the type only changes once the user accepted the data loss
+      transactionTypeChanged(event) {
+        const newType = event.target.value;
+        const settings = this.transactionTypes.find((t) => t.value === newType);
+        const lostFields = ['quantity', 'price', 'dividend'].filter(
+          (field) =>
+            !settings[field] &&
+            ![null, undefined, ''].includes(this.form.config[field]),
+        );
+
+        const apply = () => {
+          this.form.transaction_type = newType;
+          lostFields.forEach((field) => (this.form.config[field] = null));
+        };
+
+        if (lostFields.length === 0) {
+          apply();
+          return;
         }
-        if (!settings.price) {
-          this.form.config.price = null;
-        }
-        if (!settings.dividend) {
-          this.form.config.dividend = null;
-        }
+
+        confirmAction(
+          __(
+            'Are you sure, you want to change the transaction type? Some data might get lost.',
+          ),
+          { icon: 'warning', target: this.swalTargetSelector },
+        ).then((result) => {
+          if (result.isConfirmed) {
+            apply();
+          } else {
+            event.target.value = this.form.transaction_type;
+          }
+        });
       },
 
       loadCallbackUrl(transactionId) {
@@ -1241,7 +1262,7 @@
 
         confirmAction(__('Are you sure you want to discard any changes?'), {
           icon: 'warning',
-          target: this.dropdownParentSelector,
+          target: this.swalTargetSelector,
         }).then((result) => {
           if (result.isConfirmed) {
             this.$emit('cancel');

@@ -812,7 +812,7 @@ window.table = $(tableSelector).DataTable({
   ],
   createdRow: function (row, data) {
     if (!data.account_name) {
-      $('td', row).eq(1).addClass('text-muted text-italic');
+      $('td', row).eq(1).addClass('not-set');
     }
   },
   order: [[0, 'asc']],

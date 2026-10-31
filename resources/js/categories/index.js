@@ -239,19 +239,19 @@ window.table = $(dataTableSelector).DataTable({
   ],
   createdRow: function (row, data) {
     if (!data.parent) {
-      $('td:eq(1)', row).addClass('text-muted text-italic');
+      $('td:eq(1)', row).addClass('not-set');
     }
     if (data.transactions_count_regular === 0) {
-      $('td:eq(3)', row).addClass('text-muted text-italic');
+      $('td:eq(3)', row).addClass('not-set');
     }
     if (data.budgets_count === 0) {
-      $('td:eq(4)', row).addClass('text-muted text-italic');
+      $('td:eq(4)', row).addClass('not-set');
     }
     if (!data.transactions_min_date) {
-      $('td:eq(5)', row).addClass('text-muted text-italic');
+      $('td:eq(5)', row).addClass('not-set');
     }
     if (!data.transactions_max_date) {
-      $('td:eq(6)', row).addClass('text-muted text-italic');
+      $('td:eq(6)', row).addClass('not-set');
     }
   },
   order: [[0, 'asc']],

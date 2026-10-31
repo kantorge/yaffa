@@ -7,10 +7,10 @@ class UpdateAiDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'custom_prompt' => [
+            'note' => [
                 'nullable',
                 'string',
-                'max:5000',
+                'max:500',
             ],
             'status' => [
                 'nullable',
@@ -23,7 +23,7 @@ class UpdateAiDocumentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'custom_prompt.max' => 'Custom prompt must not exceed 5000 characters.',
+            'note.max' => 'Notes must not exceed 500 characters.',
             'status.in' => 'Invalid status value.',
         ];
     }

@@ -109,7 +109,7 @@ window.table = $(dataTableSelector).DataTable({
   ],
   createdRow: function (row, data) {
     if (!data.alias) {
-      $('td:eq(6)', row).addClass('text-muted text-italic');
+      $('td:eq(6)', row).addClass('not-set');
     }
   },
   order: [[0, 'asc']],

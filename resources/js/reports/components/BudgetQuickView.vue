@@ -25,10 +25,7 @@
             </dd>
 
             <dt class="col-4">{{ __('Account') }}</dt>
-            <dd
-              class="col-8"
-              :class="budget.account ? '' : 'text-muted text-italic'"
-            >
+            <dd class="col-8" :class="budget.account ? '' : 'not-set'">
               {{ budget.account?.name || __('No account (base currency)') }}
             </dd>
 
@@ -44,10 +41,7 @@
             <dd class="col-8">{{ cadenceText }}</dd>
 
             <dt class="col-4">{{ __('Inflation') }}</dt>
-            <dd
-              class="col-8"
-              :class="budget.inflation ? '' : 'text-muted text-italic'"
-            >
+            <dd class="col-8" :class="budget.inflation ? '' : 'not-set'">
               {{
                 budget.inflation
                   ? __(':rate% per year', {

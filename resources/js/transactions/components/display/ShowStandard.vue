@@ -24,9 +24,7 @@
                 <span v-if="transaction.date">{{
                   formattedDate(transaction.date)
                 }}</span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
+                <span v-else class="not-set">{{ __('Not set') }}</span>
               </dd>
 
               <dt class="col-6">
@@ -34,9 +32,7 @@
               </dt>
               <dd
                 class="col-6"
-                :class="
-                  transaction.config.account_from?.name ? '' : 'text-muted'
-                "
+                :class="{ 'not-set': !transaction.config.account_from?.name }"
                 dusk="label-account-from-name"
               >
                 <a
@@ -69,7 +65,7 @@
               </dt>
               <dd
                 class="col-6"
-                :class="transaction.config.account_to?.name ? '' : 'text-muted'"
+                :class="{ 'not-set': !transaction.config.account_to?.name }"
                 dusk="label-account-to-name"
               >
                 <a
@@ -98,10 +94,7 @@
               <dt class="col-6">
                 {{ __('Comment') }}
               </dt>
-              <dd
-                class="col-6"
-                :class="transaction.comment ? '' : 'text-muted'"
-              >
+              <dd class="col-6" :class="{ 'not-set': !transaction.comment }">
                 {{ transaction.comment || __('Not set') }}
               </dd>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div class="row" :class="{ 'pb-5': !actionsVisible }">
     <div class="col-12 col-lg-4">
       <div class="card mb-3">
         <div class="card-header">
@@ -45,8 +45,9 @@
             <dd class="col-5">
               <a
                 v-if="linkedTransactionId"
-                :href="transactionLink"
+                href="#document-tab-transaction"
                 :title="__('View transaction')"
+                @click.prevent="showTransactionTab"
               >
                 {{ linkedTransactionId }}
               </a>
@@ -87,7 +88,7 @@
             <dd
               class="col-6"
               :class="{
-                'text-muted text-italic': !draftTypeLabel,
+                'not-set': !draftTypeLabel,
               }"
             >
               {{ draftTypeLabel || unidentifiedLabel }}
@@ -96,7 +97,7 @@
             <dd
               class="col-6"
               :class="{
-                'text-muted text-italic': isUnidentified(draftData.date),
+                'not-set': isUnidentified(draftData.date),
               }"
             >
               {{ formatRawValue(draftData.date) }}
@@ -107,7 +108,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.account),
+                  'not-set': isUnidentified(rawData.account),
                 }"
               >
                 <template v-if="matchedEntities.account?.matched">
@@ -132,7 +133,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.investment),
+                  'not-set': isUnidentified(rawData.investment),
                 }"
               >
                 <template v-if="matchedEntities.investment?.matched">
@@ -157,7 +158,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.quantity),
+                  'not-set': isUnidentified(rawData.quantity),
                 }"
               >
                 {{ formatRawValue(rawData.quantity) }}
@@ -166,7 +167,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.price),
+                  'not-set': isUnidentified(rawData.price),
                 }"
               >
                 {{ formatRawValue(rawData.price) }}
@@ -175,7 +176,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.amount),
+                  'not-set': isUnidentified(rawData.amount),
                 }"
               >
                 {{ formatRawValue(rawData.amount) }}
@@ -184,7 +185,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.currency),
+                  'not-set': isUnidentified(rawData.currency),
                 }"
               >
                 {{ formatRawValue(rawData.currency) }}
@@ -197,9 +198,7 @@
                 <dd
                   class="col-6"
                   :class="{
-                    'text-muted text-italic': isUnidentified(
-                      rawData.account_from,
-                    ),
+                    'not-set': isUnidentified(rawData.account_from),
                   }"
                 >
                   <template v-if="matchedEntities.account_from?.matched">
@@ -227,9 +226,7 @@
                 <dd
                   class="col-6"
                   :class="{
-                    'text-muted text-italic': isUnidentified(
-                      rawData.account_to,
-                    ),
+                    'not-set': isUnidentified(rawData.account_to),
                   }"
                 >
                   <template v-if="matchedEntities.account_to?.matched">
@@ -259,7 +256,7 @@
                 <dd
                   class="col-6"
                   :class="{
-                    'text-muted text-italic': isUnidentified(rawData.account),
+                    'not-set': isUnidentified(rawData.account),
                   }"
                 >
                   <template v-if="matchedEntities.account?.matched">
@@ -287,7 +284,7 @@
                 <dd
                   class="col-6"
                   :class="{
-                    'text-muted text-italic':
+                    'not-set':
                       isUnidentified(rawData.payee) &&
                       !matchedEntities.payee?.matched,
                   }"
@@ -319,7 +316,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.amount),
+                  'not-set': isUnidentified(rawData.amount),
                 }"
               >
                 {{ formatRawValue(rawData.amount) }}
@@ -328,7 +325,7 @@
               <dd
                 class="col-6"
                 :class="{
-                  'text-muted text-italic': isUnidentified(rawData.currency),
+                  'not-set': isUnidentified(rawData.currency),
                 }"
               >
                 {{ formatRawValue(rawData.currency) }}
@@ -351,7 +348,7 @@
         :draft-amount="draftData.config?.amount_from ?? rawData.amount"
       />
 
-      <div class="card mb-3">
+      <div ref="actionsCard" class="card mb-3">
         <div class="card-header">
           <div
             class="card-title collapse-control"
@@ -368,76 +365,24 @@
           aria-expanded="true"
         >
           <li
-            v-if="canFinalize"
+            v-for="action in actions"
+            :key="action.key"
             class="list-group-item d-flex justify-content-between align-items-center"
           >
-            {{ __('Finalize transaction') }}
+            {{ action.label }}
             <button
-              class="btn btn-xs btn-primary"
+              class="btn btn-xs"
+              :class="`btn-${action.variant}`"
               type="button"
-              :title="__('Finalize transaction')"
-              @click="finalizeDocument"
+              :disabled="action.busyAware && isBusy"
+              :title="action.title || action.label"
+              :aria-label="action.title || action.label"
+              @click="action.handler"
             >
-              <i class="fa fa-fw fa-edit"></i>
-            </button>
-          </li>
-          <li
-            v-if="unreviewedCreatedOrigin"
-            class="list-group-item d-flex justify-content-between align-items-center"
-          >
-            {{ __('Mark transaction as checked') }}
-            <button
-              class="btn btn-xs btn-success"
-              type="button"
-              :disabled="isBusy"
-              :title="__('Mark transaction as checked')"
-              @click="markTransactionChecked"
-            >
-              <i class="fa fa-fw fa-check"></i>
-            </button>
-          </li>
-          <li
-            v-if="canReprocess"
-            class="list-group-item d-flex justify-content-between align-items-center"
-          >
-            {{ __('Reprocess document') }}
-            <button
-              class="btn btn-xs btn-warning"
-              type="button"
-              :disabled="isBusy"
-              :title="__('Reprocess document')"
-              @click="reprocessDocument"
-            >
-              <i class="fa fa-fw fa-repeat" :class="{ 'fa-spin': isBusy }"></i>
-            </button>
-          </li>
-          <li
-            v-if="canDismiss"
-            class="list-group-item d-flex justify-content-between align-items-center"
-          >
-            {{ __('Dismiss document') }}
-            <button
-              class="btn btn-xs btn-secondary"
-              type="button"
-              :disabled="isBusy"
-              :title="__('Dismiss document')"
-              @click="dismissDocument"
-            >
-              <i class="fa fa-fw fa-ban"></i>
-            </button>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center"
-          >
-            {{ __('Delete document') }}
-            <button
-              class="btn btn-xs btn-danger"
-              type="button"
-              :disabled="isBusy"
-              :title="__('Delete')"
-              @click="deleteDocument"
-            >
-              <i class="fa fa-fw fa-trash"></i>
+              <i
+                class="fa fa-fw"
+                :class="[action.icon, { 'fa-spin': action.spin && isBusy }]"
+              ></i>
             </button>
           </li>
         </ul>
@@ -476,7 +421,7 @@
                 {{ __('Email content') }}
               </button>
             </li>
-            <li v-if="aiDocument.custom_prompt" class="nav-item">
+            <li v-if="aiDocument.note" class="nav-item">
               <button
                 id="nav-document-tab-prompt"
                 class="nav-link"
@@ -487,7 +432,7 @@
                 aria-controls="document-tab-prompt"
                 aria-selected="false"
               >
-                {{ __('Custom prompt') }}
+                {{ __('Notes') }}
               </button>
             </li>
             <li v-if="showExtractedDetails" class="nav-item">
@@ -555,14 +500,14 @@
             />
 
             <div
-              v-if="aiDocument.custom_prompt"
+              v-if="aiDocument.note"
               id="document-tab-prompt"
               class="tab-pane fade"
               role="tabpanel"
               aria-labelledby="nav-document-tab-prompt"
               tabindex="0"
             >
-              <pre class="mb-0">{{ aiDocument.custom_prompt }}</pre>
+              <pre class="mb-0">{{ aiDocument.note }}</pre>
             </div>
 
             <div
@@ -640,6 +585,29 @@
       </div>
     </div>
 
+    <!-- Mobile only: the Actions card's actions, pinned to the bottom once the card scrolls out of view -->
+    <div
+      v-if="!actionsVisible && actions.length > 0"
+      class="position-fixed bottom-0 start-0 end-0 d-flex gap-2 p-2 bg-body border-top shadow d-lg-none sticky-action-bar"
+    >
+      <button
+        v-for="action in actions"
+        :key="action.key"
+        class="btn flex-fill"
+        :class="`btn-${action.variant}`"
+        type="button"
+        :disabled="action.busyAware && isBusy"
+        :title="action.title || action.label"
+        :aria-label="action.title || action.label"
+        @click="action.handler"
+      >
+        <i
+          class="fa fa-fw"
+          :class="[action.icon, { 'fa-spin': action.spin && isBusy }]"
+        ></i>
+      </button>
+    </div>
+
     <transaction-form-modal-standard :ai-document-id="aiDocument.id" />
     <transaction-form-modal-investment :ai-document-id="aiDocument.id" />
     <transaction-show-modal />
@@ -647,7 +615,13 @@
 </template>
 
 <script setup>
-  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+  import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    useTemplateRef,
+  } from 'vue';
   import {
     getTransactionTypeConfig,
     processTransaction,
@@ -681,6 +655,13 @@
   const route = window.route;
   const locale = window.YAFFA.userSettings.locale || 'en';
   const unidentifiedLabel = __('Unidentified');
+  const dateTimeNoSeconds = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  };
 
   // Computed properties used in the component
   const createdAtLabel = computed(() => {
@@ -688,7 +669,12 @@
       return __('Not set');
     }
 
-    return toFormattedDateTime(aiDocument.value.created_at, locale);
+    return toFormattedDateTime(
+      aiDocument.value.created_at,
+      locale,
+      '',
+      dateTimeNoSeconds,
+    );
   });
 
   const processedAtLabel = computed(() => {
@@ -696,7 +682,12 @@
       return __('Not set');
     }
 
-    return toFormattedDateTime(aiDocument.value.processed_at, locale);
+    return toFormattedDateTime(
+      aiDocument.value.processed_at,
+      locale,
+      '',
+      dateTimeNoSeconds,
+    );
   });
 
   const statusLabel = computed(
@@ -804,15 +795,6 @@
         (origin) => origin.relation === 'duplicate_of',
       )?.transaction_id ??
       null,
-  );
-
-  const transactionLink = computed(() =>
-    linkedTransactionId.value
-      ? route('transaction.open', {
-          transaction: linkedTransactionId.value,
-          action: 'show',
-        })
-      : '#',
   );
 
   const linkedTransaction = ref(null);
@@ -988,6 +970,62 @@
 
     return null;
   });
+
+  const actions = computed(() =>
+    [
+      {
+        key: 'finalize',
+        show: canFinalize.value,
+        label: __('Finalize transaction'),
+        icon: 'fa-edit',
+        variant: 'primary',
+        handler: finalizeDocument,
+      },
+      {
+        key: 'check',
+        show: !!unreviewedCreatedOrigin.value,
+        label: __('Mark transaction as checked'),
+        icon: 'fa-check',
+        variant: 'success',
+        busyAware: true,
+        handler: markTransactionChecked,
+      },
+      {
+        key: 'reprocess',
+        show: canReprocess.value,
+        label: __('Reprocess document'),
+        icon: 'fa-repeat',
+        variant: 'warning',
+        busyAware: true,
+        spin: true,
+        handler: reprocessDocument,
+      },
+      {
+        key: 'dismiss',
+        show: canDismiss.value,
+        label: __('Dismiss document'),
+        icon: 'fa-ban',
+        variant: 'secondary',
+        busyAware: true,
+        handler: dismissDocument,
+      },
+      {
+        key: 'delete',
+        show: true,
+        label: __('Delete document'),
+        title: __('Delete'),
+        icon: 'fa-trash',
+        variant: 'danger',
+        busyAware: true,
+        handler: deleteDocument,
+      },
+    ].filter((action) => action.show),
+  );
+
+  // The sticky action bar appears only while the Actions card is out of the viewport
+  const actionsCard = useTemplateRef('actionsCard');
+  const actionsVisible = ref(true);
+  let actionsObserver = null;
 
   const isUnidentified = (value) => {
     return value === null || typeof value === 'undefined' || value === '';
@@ -1225,6 +1263,16 @@
     tab.show();
   };
 
+  // On narrow screens the tabs are below the cards, so bring them into view as well
+  const showTransactionTab = () => {
+    const button = window.document.getElementById(
+      'nav-document-tab-transaction',
+    );
+
+    new window.coreui.Tab(button).show();
+    button.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const showFilesTab = () => {
     const filesTabButton = window.document.getElementById(
       'nav-document-tab-files',
@@ -1366,6 +1414,11 @@
     window.addEventListener('transactionOriginReviewed', handleOriginReviewed);
     loadLinkedTransaction();
 
+    actionsObserver = new IntersectionObserver(([entry]) => {
+      actionsVisible.value = entry.isIntersecting;
+    });
+    actionsObserver.observe(actionsCard.value);
+
     // Set by the document list's "Finalize transaction" action
     if (
       new URLSearchParams(window.location.search).has('finalize') &&
@@ -1376,6 +1429,7 @@
   });
 
   onBeforeUnmount(() => {
+    actionsObserver?.disconnect();
     window.removeEventListener('transaction-created', handleTransactionCreated);
     window.removeEventListener(
       'transactionOriginReviewed',

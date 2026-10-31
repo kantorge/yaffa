@@ -107,10 +107,7 @@
       <div v-if="!enabled">
         {{ __('Transaction items are disabled for this transaction type') }}
       </div>
-      <div
-        v-if="enabled && transactionItems.length === 0"
-        class="text-muted text-italic"
-      >
+      <div v-if="enabled && transactionItems.length === 0" class="not-set">
         {{ __('No items added') }}
       </div>
     </div>
@@ -190,7 +187,7 @@
         type: Boolean,
         default: true,
       },
-      dropdownParentSelector: {
+      swalTargetSelector: {
         type: String,
         default: 'body',
       },
@@ -314,7 +311,7 @@
             {
               title: __('Replace items?'),
               confirmButtonText: __('Replace'),
-              target: this.dropdownParentSelector,
+              target: this.swalTargetSelector,
             },
           );
 

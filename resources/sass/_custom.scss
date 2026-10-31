@@ -20,8 +20,30 @@ td.dt-shrink, th.dt-shrink {
     font-weight: normal;
 }
 
-.text-italic {
+// Missing / not available data (e.g. "Not set"): muted and italic, everywhere.
+.not-set {
+    color: var(--cui-secondary-color);
     font-style: italic;
+}
+
+// Action cards: make the whole row (not just the trailing icon button) trigger the row's action.
+// Rows with a single trailing button only; the button's ::after covers the row (list-group-item is
+// position: relative), so the label stays plain text instead of a blue underlined link.
+.list-group-item:has(> .btn:last-child:not(.btn ~ .btn)) {
+    cursor: pointer;
+
+    > .btn:last-child::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+    }
+}
+
+// Light hover feedback for those rows, only on devices that can actually hover
+@media (hover: hover) {
+    .list-group-item:has(> .btn:last-child:not(.btn ~ .btn)):hover {
+        background-color: var(--cui-tertiary-bg);
+    }
 }
 
 .reconcile {
@@ -453,4 +475,8 @@ button[type="submit"] .spinner-border {
 .left-control-panel-toggle-shell {
     display: flex;
     flex-direction: column;
+}
+// Keeps page content clear of the fixed bottom action bar on mobile
+.sticky-action-bar {
+    z-index: 1030;
 }
