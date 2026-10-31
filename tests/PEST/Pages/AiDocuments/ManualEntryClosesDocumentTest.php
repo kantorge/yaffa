@@ -48,7 +48,7 @@ it('warns about an open document while entering a purchase by hand and closes it
         ->click("#close-ai-document-{$document->id}")
         ->click('#transactionFormStandard-Save');
 
-    $this->waitUntil($page, "document.querySelector('#BootstrapNotificationContainer')?.textContent.includes('Transaction added')");
+    $this->waitUntil($page, "document.querySelector('.toast-container')?.textContent.includes('Transaction added')");
 
     expect($document->fresh()->status)->toBe('duplicate')
         ->and(TransactionOrigin::where('origin_id', $document->id)->where('relation', 'duplicate_of')->exists())->toBeTrue();

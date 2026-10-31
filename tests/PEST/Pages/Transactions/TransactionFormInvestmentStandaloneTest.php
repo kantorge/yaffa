@@ -17,7 +17,7 @@ const INVESTMENT_EUR = 'Test investment EUR';
 const INVESTMENT_EUR_OPTION = 'Test investment EUR (TIEUR)';
 const INVESTMENT_ACCOUNT_USD = 'Investment account USD';
 const INVESTMENT_ACCOUNT_EUR = 'Investment account EUR';
-const INVESTMENT_FORM_SAVED = "document.querySelector('#BootstrapNotificationContainer')?.textContent.includes('Transaction added')";
+const INVESTMENT_FORM_SAVED = "document.querySelector('.toast-container')?.textContent.includes('Transaction added')";
 
 beforeEach(function () {
     $this->user = User::where('email', 'demo@yaffa.cc')->firstOrFail();
@@ -407,7 +407,7 @@ it('saves a transaction with price storage enabled', function () {
         ->click('#transactionFormInvestment-Save');
 
     $this->waitUntil($page, INVESTMENT_FORM_SAVED);
-    $this->waitForTextIn($page, '#BootstrapNotificationContainer', 'Investment price stored');
+    $this->waitForTextIn($page, '.toast-container', 'Investment price stored');
 
     $transaction = Transaction::orderByDesc('id')->first();
     expect($transaction)->not->toBeNull()

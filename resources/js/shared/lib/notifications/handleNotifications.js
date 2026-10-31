@@ -1,6 +1,8 @@
 /**
  * Stores a notification to be displayed on the next page load.
  *
+ * @deprecated Currently unused. Prefer storeToast(), which shows a toast on the next page load.
+ *
  * @param {string} type - The type of notification (e.g., 'success', 'error', 'warning', 'info')
  * @param {string} message - The notification message text
  * @param {Object} [options={}] - Optional configuration object for additional notification settings
@@ -34,4 +36,23 @@ export function storeNotification(type, message, options = {}) {
     'pendingBootstrapNotifications',
     JSON.stringify(pendingNotifications),
   );
+}
+
+/**
+ * Stores a toast to be displayed on the next page load.
+ *
+ * @param {string} type - 'success', 'info', 'warning' or 'error'
+ * @param {string} message - The toast body text
+ * @returns {void}
+ */
+export function storeToast(type, message) {
+  let pendingToasts = [];
+  try {
+    pendingToasts = JSON.parse(localStorage.getItem('pendingToasts') || '[]');
+  } catch (e) {
+    console.error('Failed to parse pending toasts from localStorage:', e);
+  }
+
+  pendingToasts.push({ type, message });
+  localStorage.setItem('pendingToasts', JSON.stringify(pendingToasts));
 }

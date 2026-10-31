@@ -13,6 +13,19 @@
 
 <script>
   import BootstrapNotification from './BootstrapNotification.vue';
+  import {
+    showSuccessToast,
+    showInfoToast,
+    showWarningToast,
+    showErrorToast,
+  } from '@/shared/lib/toast';
+
+  const toastByType = {
+    success: showSuccessToast,
+    info: showInfoToast,
+    warning: showWarningToast,
+    error: showErrorToast,
+  };
 
   export default {
     name: 'BootstrapNotificationContainer',
@@ -52,6 +65,16 @@
           this.notifications.push(event.detail.notification);
         }.bind(this),
       );
+
+      // Show toasts queued by the previous page, and clear this queue
+      try {
+        JSON.parse(localStorage.getItem('pendingToasts') || '[]').forEach(
+          ({ type, message }) => (toastByType[type] || showInfoToast)(message),
+        );
+      } catch (e) {
+        console.error('Failed to parse stored toasts from localStorage:', e);
+      }
+      localStorage.removeItem('pendingToasts');
 
       // Additionally, read the localStorage for any stored notifications, and also clear this queue
       let storedNotifications = localStorage.getItem(

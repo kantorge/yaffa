@@ -75,7 +75,7 @@ function standardStandaloneSwitchType(object $page, string $type): void
     test()->waitUntil($page, "document.querySelector('[dusk=\"transaction-type-{$type}\"]').classList.contains('active')");
 }
 
-const STANDARD_FORM_SAVED = "document.querySelector('#BootstrapNotificationContainer')?.textContent.includes('Transaction added')";
+const STANDARD_FORM_SAVED = "document.querySelector('.toast-container')?.textContent.includes('Transaction added')";
 
 it('loads the standard transaction form', function () {
     $page = visit(route('transaction.create', ['type' => 'standard']));

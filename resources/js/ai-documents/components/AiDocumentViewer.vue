@@ -638,7 +638,7 @@
     toFormattedNumber,
   } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
-  import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
+  import { storeToast } from '@/shared/lib/notifications/handleNotifications';
   import TransactionFormModalStandard from '@/transactions/components/form/ModalStandard.vue';
   import TransactionFormModalInvestment from '@/transactions/components/form/ModalInvestment.vue';
   import TransactionShowModal from '@/transactions/components/display/Modal.vue';
@@ -1273,9 +1273,7 @@
           }),
         )
         .then(() => {
-          storeNotification('success', __('Document deleted'), {
-            dismissible: true,
-          });
+          storeToast('success', __('Document deleted'));
           window.location.href = route('ai-documents.index');
         })
         .catch((error) => {
