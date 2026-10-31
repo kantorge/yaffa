@@ -476,7 +476,7 @@
                 {{ __('Email content') }}
               </button>
             </li>
-            <li v-if="aiDocument.custom_prompt" class="nav-item">
+            <li v-if="aiDocument.note" class="nav-item">
               <button
                 id="nav-document-tab-prompt"
                 class="nav-link"
@@ -487,7 +487,7 @@
                 aria-controls="document-tab-prompt"
                 aria-selected="false"
               >
-                {{ __('Custom prompt') }}
+                {{ __('Notes') }}
               </button>
             </li>
             <li v-if="showExtractedDetails" class="nav-item">
@@ -555,14 +555,14 @@
             />
 
             <div
-              v-if="aiDocument.custom_prompt"
+              v-if="aiDocument.note"
               id="document-tab-prompt"
               class="tab-pane fade"
               role="tabpanel"
               aria-labelledby="nav-document-tab-prompt"
               tabindex="0"
             >
-              <pre class="mb-0">{{ aiDocument.custom_prompt }}</pre>
+              <pre class="mb-0">{{ aiDocument.note }}</pre>
             </div>
 
             <div

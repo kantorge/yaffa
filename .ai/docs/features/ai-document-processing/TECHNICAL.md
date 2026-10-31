@@ -29,7 +29,7 @@ This file contains the implementation-oriented material extracted from the main 
     - `processed_transaction_data` (JSON, nullable) - the transaction draft. New drafts carry `schema_version: 2`; a draft without it is v1 (same shape, upgraded on read). `App\Services\TransactionDraftService` owns the format: `normalize()` (validate, upgrade, blank stale references), `enrich()` (display data for the viewer and the API), `fromTransaction()` and `toUnsavedTransaction()` (draft → form). See `.ai/docs/specifications/fast-transaction-entry/specification.md` D5
     - `google_drive_file_id` (nullable)
     - `received_mail_id` (nullable, FK to existing received_mails table)
-    - `custom_prompt` (nullable)
+    - `note` (nullable, max 500 characters; passed to the AI as custom instructions)
   - `AiDocumentFile`
     - `ai_document_id` (FK to AiDocument)
     - `file_path` (location in local storage)

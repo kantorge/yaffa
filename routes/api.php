@@ -12,6 +12,8 @@ use App\Http\Controllers\API\AiHintApiController;
 use App\Http\Controllers\API\CategoryLearningApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyApiController;
+use App\Http\Controllers\API\DeviceApiController;
+use App\Http\Controllers\API\NotificationApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\FileImportProfileApiController;
 use App\Http\Controllers\API\GoogleDriveConfigApiController;
@@ -21,10 +23,13 @@ use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
 use App\Http\Controllers\API\InvestmentPriceProviderApiController;
 use App\Http\Controllers\API\InvestmentProviderConfigApiController;
+use App\Http\Controllers\API\MetaApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\PayeeStatsApiController;
+use App\Http\Controllers\API\ReferenceDataApiController;
 use App\Http\Controllers\API\ReportApiController;
+use App\Http\Controllers\API\SummaryApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use App\Http\Controllers\API\TransactionOriginApiController;
@@ -37,6 +42,9 @@ use Illuminate\Support\Facades\Route;
 // API V1 - Versioned, resource-oriented routes
 // ============================================================
 Route::prefix('v1')->name('api.v1.')->group(function () {
+    // Server info; intentionally public (a token only adds user context)
+    Route::get('/meta', [MetaApiController::class, 'show'])->name('meta');
+
     // Currency endpoints
     Route::delete('/currencies/{currency}', [CurrencyApiController::class, 'destroy'])
         ->name('currencies.destroy');
@@ -387,11 +395,36 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::put('/users/me/preferences/{key}', [UserApiController::class, 'setPreference'])
         ->name('users.me.preferences.set');
 
+    // Combined at-a-glance data for the mobile app
+    Route::get('/summary', [SummaryApiController::class, 'show'])
+        ->name('summary');
+
+    // Reference data for offline entry (mobile app)
+    Route::get('/reference-data', [ReferenceDataApiController::class, 'index'])
+        ->name('reference-data');
+
+    // Notifications (polling) and push endpoint registration
+    Route::get('/notifications', [NotificationApiController::class, 'index'])
+        ->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationApiController::class, 'markAllRead'])
+        ->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationApiController::class, 'markRead'])
+        ->name('notifications.read');
+    Route::post('/devices', [DeviceApiController::class, 'store'])
+        ->name('devices.store');
+    Route::delete('/devices', [DeviceApiController::class, 'destroy'])
+        ->name('devices.destroy');
+
     // API token endpoints
     Route::get('/users/me/tokens', [ApiTokenApiController::class, 'index'])
         ->name('users.me.tokens.index');
     Route::post('/users/me/tokens', [ApiTokenApiController::class, 'store'])
         ->name('users.me.tokens.store');
+    Route::post('/users/me/tokens/pairing', [ApiTokenApiController::class, 'storePairing'])
+        ->name('users.me.tokens.pairing');
+    Route::post('/users/me/tokens/{id}/pairing', [ApiTokenApiController::class, 'rotatePairing'])
+        ->whereNumber('id')
+        ->name('users.me.tokens.pairing.rotate');
     Route::delete('/users/me/tokens/{id}', [ApiTokenApiController::class, 'destroy'])
         ->whereNumber('id')
         ->name('users.me.tokens.destroy');

@@ -108,7 +108,7 @@ class ProcessDocumentService
                 $config,
                 $document,
                 $extractedText,
-                $document->custom_prompt,
+                $document->note,
                 data_get($resolvedSettings, 'generic_document_language'),
             );
 

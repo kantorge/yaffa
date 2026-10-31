@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\AiDocumentSource;
 use App\Enums\AiDocumentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IndexAiDocumentRequest;
 use App\Http\Requests\StoreAiDocumentRequest;
 use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
@@ -12,17 +14,18 @@ use App\Models\AiDocumentFile;
 use App\Models\TransactionOrigin;
 use App\Models\User;
 use App\Services\DuplicateDetectionService;
-use Illuminate\Support\Arr;
 use App\Services\Import\ImportDuplicateDetectionService;
 use App\Services\Import\ImportNormalizationService;
 use App\Services\SameEventClassifier;
 use App\Services\TransactionDraftService;
+use App\Support\SourceTextFormatter;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +45,7 @@ use Throwable;
 #[Middleware('abilities:settings', only: [
     'cleanupOldFiles',
 ])]
+#[Middleware('idempotent', only: ['store'])]
 class AiDocumentApiController extends Controller
 {
     public function __construct(
@@ -62,8 +66,8 @@ class AiDocumentApiController extends Controller
         // Create the document
         $document = AiDocument::create([
             'status' => 'ready_for_processing',
-            'source_type' => 'manual_upload',
-            'custom_prompt' => $request->input('custom_prompt'),
+            'source_type' => $request->input('source') ?: 'manual_upload',
+            'note' => $request->input('note'),
         ]);
 
         try {
@@ -71,13 +75,21 @@ class AiDocumentApiController extends Controller
 
             // Store uploaded files
             if ($request->hasFile('files')) {
-                foreach ($request->file('files') as $file) {
-                    $fileHashes[] = $this->storeFile($document, $file);
+                foreach (array_values($request->file('files')) as $index => $file) {
+                    $fileHashes[] = $this->storeFile($document, $file, $index);
                 }
             }
 
-            // Store text input if provided
-            if ($request->input('text_input')) {
+            if ($request->input('source') === AiDocumentSource::MobileNotification->value) {
+                // Same plain-text layout as a forwarded email, so it takes the same processing path
+                $fileHashes[] = $this->storeTextFile($document, SourceTextFormatter::format(
+                    $request->input('title') ?: __('(No title)'),
+                    $request->input('source_app'),
+                    now(),
+                    $request->input('text'),
+                ), 'notification');
+            } elseif ($request->input('text_input')) {
+                // Store text input if provided
                 $fileHashes[] = $this->storeTextFile($document, $request->input('text_input'));
             }
 
@@ -118,8 +130,8 @@ class AiDocumentApiController extends Controller
                 return null;
             }
 
-            if ($request->filled('custom_prompt')) {
-                $document->custom_prompt = $request->input('custom_prompt');
+            if ($request->filled('note')) {
+                $document->note = $request->input('note');
             }
 
             if ($request->filled('status')) {
@@ -140,7 +152,7 @@ class AiDocumentApiController extends Controller
         return response()->json([
             'id' => $aiDocument->id,
             'status' => $aiDocument->status,
-            'custom_prompt' => $aiDocument->custom_prompt,
+            'note' => $aiDocument->note,
         ], Response::HTTP_OK);
     }
 
@@ -218,7 +230,7 @@ class AiDocumentApiController extends Controller
      * Returns the user's AI documents, with optional filters for date range, status, source
      * type, and free-text search.
      */
-    public function index(Request $request): JsonResponse
+    public function index(IndexAiDocumentRequest $request): JsonResponse
     {
         $user = $request->user();
 
@@ -226,7 +238,7 @@ class AiDocumentApiController extends Controller
         $query = AiDocument::query()
             ->select([
                 'id', 'user_id', 'status', 'source_type', 'processed_transaction_data', 'received_mail_id',
-                'content_hash', 'document_kind', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
+                'content_hash', 'document_kind', 'note', 'processed_at', 'status_changed_at', 'created_at', 'updated_at',
             ])
             ->where('user_id', $user->id)
             ->with([
@@ -246,6 +258,11 @@ class AiDocumentApiController extends Controller
             $query->where('created_at', '<=', $dateTo);
         }
 
+        // Incremental polling: only documents changed since the given timestamp
+        if ($request->filled('updated_since')) {
+            $query->where('updated_at', '>', Carbon::parse((string) $request->input('updated_since'))->setTimezone(config('app.timezone')));
+        }
+
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -261,11 +278,11 @@ class AiDocumentApiController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->whereJsonContains('processed_transaction_data', $search)
-                    ->orWhere('custom_prompt', 'like', "%{$search}%");
+                    ->orWhere('note', 'like', "%{$search}%");
             });
         }
 
-        $perPage = (int) $request->input('per_page', 15);
+        $perPage = max(1, min(100, (int) $request->input('per_page', 15)));
         $documents = $query->latest()->paginate($perPage);
 
         $this->enrichMatchedEntities($documents->getCollection(), $user);
@@ -557,7 +574,7 @@ class AiDocumentApiController extends Controller
      *
      * @return string sha256 of the file's content
      */
-    private function storeFile(AiDocument $aiDocument, $file): string
+    private function storeFile(AiDocument $aiDocument, $file, int $index): string
     {
         $filename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -566,7 +583,7 @@ class AiDocumentApiController extends Controller
         // Store file
         $path = $file->storeAs(
             "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}",
-            $filename,
+            "{$index}_{$filename}", // index prefix keeps same-named files from overwriting each other
             'local'
         );
 
@@ -588,9 +605,9 @@ class AiDocumentApiController extends Controller
     /**
      * Store text input as a file
      */
-    private function storeTextFile(AiDocument $aiDocument, string $textInput): string
+    private function storeTextFile(AiDocument $aiDocument, string $textInput, string $prefix = 'text_input'): string
     {
-        $filename = 'text_input_' . now()->timestamp . '.txt';
+        $filename = $prefix . '_' . now()->timestamp . '.txt';
 
         // Storage::put() returns a bool, not the path
         $path = "ai_documents/{$aiDocument->user_id}/{$aiDocument->id}/{$filename}";

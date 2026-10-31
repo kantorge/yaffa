@@ -1,0 +1,113 @@
+name: OpenAPI Spec
+
+# Generates the OpenAPI document from the Laravel code. Every run proves the spec still generates
+# (so a broken route or request class fails the PR), and each published release gets the spec attached,
+# versioned with that release, for generating API clients.
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - 'app/Http/**'
+      - 'app/Providers/AppServiceProvider.php'
+      - 'bootstrap/app.php'
+      - 'routes/api.php'
+      - 'config/scramble.php'
+      - 'composer.lock'
+
+  release:
+    types: [published]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  openapi:
+    runs-on: ubuntu-latest
+    name: Export OpenAPI spec
+
+    # Scramble boots the app and some type inference runs schema checks, so a reachable DB is needed
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: testing
+          MYSQL_USER: default
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: secretroot
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, mysql
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+
+      - name: Prepare Laravel Application
+        run: ln -f -s .env.ci .env
+
+      - name: Clear Config
+        run: php artisan config:clear
+
+      - name: Export spec
+        run: |
+          # On a release the spec is versioned with the release tag (leading "v" stripped)
+          if [ "$EVENT" = "release" ]; then export API_VERSION="${TAG#v}"; fi
+          php artisan scramble:export --path=openapi.json
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.event.release.tag_name }}
+
+      - name: Check the spec is valid JSON with paths
+        run: php -r '$d = json_decode(file_get_contents("openapi.json"), true, 512, JSON_THROW_ON_ERROR); if (empty($d["paths"])) { exit(1); } echo count($d["paths"]) . " paths, version " . $d["info"]["version"] . PHP_EOL;'
+
+      - name: Check the spec version matches the release
+        if: github.event_name == 'release'
+        run: php -r '$v = json_decode(file_get_contents("openapi.json"), true)["info"]["version"]; $t = ltrim(getenv("TAG"), "v"); if ($v !== $t) { fwrite(STDERR, "spec version $v != release $t\n"); exit(1); }'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+
+      - name: Upload spec artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: openapi.json
+
+  attach:
+    if: github.event_name == 'release'
+    needs: openapi
+    runs-on: ubuntu-latest
+    name: Attach spec to the release
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download spec artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: openapi-spec
+
+      - name: Attach spec to the release
+        run: gh release upload "$TAG" openapi.json --clobber --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}

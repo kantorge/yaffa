@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApiTokenRequest;
+use App\Http\Requests\PairDeviceRequest;
 use App\Models\User;
 use App\Services\ApiTokenService;
 use Closure;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiTokenApiController extends Controller implements HasMiddleware
@@ -101,6 +103,56 @@ class ApiTokenApiController extends Controller implements HasMiddleware
             'expires_at' => $newToken->accessToken->expires_at,
             'token' => $newToken->plainTextToken,
         ], 201);
+    }
+
+    /**
+     * Pair a mobile device
+     *
+     * Creates a named `read`+`write` token (no `settings`) and returns it once, as a `yaffa://pair` deep link and QR code,
+     * together with warnings about the instance URL (`not_https`, `localhost`). Session requests only.
+     */
+    public function storePairing(PairDeviceRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            return response()->json(
+                $this->apiTokenService->createPairing($user, $request->validated('name')),
+                201
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->pairingError('PAIRING_NOT_ALLOWED', $e->getMessage(), 422);
+        }
+    }
+
+    /**
+     * Re-show a pairing code
+     *
+     * The plain-text token is never stored, so this replaces the token's secret and returns a fresh
+     * `yaffa://pair` deep link and QR code, as `POST /users/me/tokens/pairing` does. The previous secret
+     * stops working immediately; name, abilities and expiry are kept. Session requests only.
+     *
+     * @throws ModelNotFoundException
+     */
+    public function rotatePairing(Request $request, int $id): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            return response()->json($this->apiTokenService->rotateForPairing($user, $id));
+        } catch (InvalidArgumentException $e) {
+            return $this->pairingError('PAIRING_NOT_ALLOWED', $e->getMessage(), 422);
+        }
+    }
+
+    /**
+     * Error response in the API's `error` envelope; `message` is kept for the web UI.
+     */
+    private function pairingError(string $code, string $message, int $status): JsonResponse
+    {
+        return response()->json(['message' => $message, 'error' => ['code' => $code, 'message' => $message]], $status);
     }
 
     /**
