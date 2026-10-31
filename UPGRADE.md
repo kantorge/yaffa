@@ -26,6 +26,10 @@ Most 4.x upgrades do not require any special manual steps beyond the usual appli
 - **Run `php artisan app:payees:recalculate-profiles` once after upgrading** (or wait for the nightly run at 02:30, which needs the scheduler) to build the history profile of existing payees.
 - **Payee names and aliases must now be unique per user once normalized** (accents, punctuation, numbers and company suffixes such as `Kft`, `Ltd`, `GmbH` are ignored, so `OMV 4471` and `omv` collide). Saving a payee with a new or changed name or alias that collides with another payee returns a 422 on `name` or `alias`. Existing data is not rejected: only changed values are checked.
 
+### AI off now holds documents instead of rejecting uploads
+
+When AI processing is off for a user, uploaded, emailed and imported documents are no longer refused. They are stored as `ready_for_processing` and wait; the scheduled processing skips them. Turning AI processing on later processes the waiting documents. No action is needed. Documents you do not want processed can be dismissed or deleted from the AI documents page, and a retention period (if set) does not delete them while they wait.
+
 ### Slimmer document list API response
 
 `GET /api/v1/documents` now returns only what a list needs. `GET /api/v1/documents/{id}` is unchanged. The bundled frontend needs no action, but a custom API integration that reads the removed fields from the list must fetch the single document instead:

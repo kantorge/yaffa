@@ -22,7 +22,7 @@
             :from-modal="true"
             :ai-document-id="aiDocumentId"
             :transaction-template-id="templateId"
-            :dropdown-parent-selector="'#modal-transaction-form-investment'"
+            :swal-target-selector="'#modal-transaction-form-investment'"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-investment>
