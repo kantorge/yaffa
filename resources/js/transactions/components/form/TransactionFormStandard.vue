@@ -1274,8 +1274,19 @@
           this.form.reconciled = this.transaction.reconciled ?? false;
 
           // Copy configuration
-          this.form.config.amount_from = this.transaction.config.amount_from;
-          this.form.config.amount_to = this.transaction.config.amount_to;
+          // Amounts may arrive as fixed-scale decimal strings (e.g. "12.5000" from
+          // MoneyCast or an AI draft) - Number() drops the trailing zeros, the same
+          // way MathInput normalizes what the user types.
+          const toAmount = (value) =>
+            value === null || value === undefined || value === ''
+              ? value
+              : Number(value);
+          this.form.config.amount_from = toAmount(
+            this.transaction.config.amount_from,
+          );
+          this.form.config.amount_to = toAmount(
+            this.transaction.config.amount_to,
+          );
           this.form.config.account_from_id =
             this.transaction.config.account_from_id;
           this.form.config.account_to_id =

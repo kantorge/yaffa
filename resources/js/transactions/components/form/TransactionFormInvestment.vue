@@ -1061,11 +1061,16 @@
 
           // Copy configuration (handle both saved transactions and AI drafts)
           const config = this.transaction.config || {};
-          this.form.config.quantity = config.quantity;
-          this.form.config.price = config.price;
-          this.form.config.commission = config.commission;
-          this.form.config.tax = config.tax;
-          this.form.config.dividend = config.dividend;
+          // These may arrive as fixed-scale decimal strings (e.g. "12.5000") - Number()
+          // drops the trailing zeros, the same way MathInput normalizes typed values.
+          ['quantity', 'price', 'commission', 'tax', 'dividend'].forEach(
+            (field) => {
+              const value = config[field];
+              this.form.config[field] = [null, undefined, ''].includes(value)
+                ? value
+                : Number(value);
+            },
+          );
           this.form.config.account_id = config.account_id;
           this.form.config.investment_id = config.investment_id;
 
