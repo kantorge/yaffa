@@ -55,6 +55,9 @@ ENV APP_ENV=production \
 # Production-safe PHP error logging to stderr (visible in container logs).
 COPY ./docker/php-logging.ini /usr/local/etc/php/conf.d/zz-php-logging.ini
 
+# Upload limits large enough for phone photos and multi-file document submissions.
+COPY ./docker/php-uploads.ini /usr/local/etc/php/conf.d/zz-php-uploads.ini
+
 # Install dependencies via Composer
 RUN composer install --no-dev --no-interaction --no-progress
 

@@ -12,30 +12,19 @@ Table of contents:
 
 ## Upgrade within YAFFA 4.x
 
-Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option. Note the following changes that may affect any external API integrations or custom scripts:
+Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option. Note the following changes that may need your attention:
 
-### Document lifecycle and duplicate detection (Fast Transaction Entry)
+### Fast Transaction Entry: document statuses, reprocessing and retention
 
-AI documents now close themselves when they repeat something already known, and manual entry warns about matching purchases. Nothing is recorded automatically yet.
+- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. API clients that switch over the status must handle them.
+- **Reprocessing is restricted** to documents in `ready_for_review`, `processing_failed` and `dismissed`. Documents closed against a transaction (`finalized`, `auto_recorded`, `duplicate`) cannot be reprocessed.
+- **Retention now covers every terminal status.** If a user has set a retention period, `finalized`, `auto_recorded`, `duplicate` and `dismissed` documents are all deleted after it (previously only finalized ones). The reminder email now concerns only the other, still open statuses.
+- Auto-recording of documents is off by default and opt-in per user; nothing changes until a user enables it.
 
-- **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. Clients that switch over the status must handle them. Today's processing produces `duplicate` (the same content or the same purchase as a recorded transaction, closed silently without an email); `dismissed` is set by the user.
-- **Reprocessing is restricted:** it is allowed only from `ready_for_review`, `processing_failed` and `dismissed`. Documents closed against a transaction (`finalized`, `auto_recorded`, `duplicate`) cannot be reprocessed.
-- **Retention covers every terminal status:** with a retention period set, `finalized`, `auto_recorded`, `duplicate` and `dismissed` documents are all deleted after it. The reminder email now concerns the other, still open statuses.
+### Payee profiles and unique payee names
 
-### Payee profile, settings and matching (Fast Transaction Entry)
-
-Every payee now has a stored history profile, and users can set how a payee is treated by the upcoming auto-recording.
-
-- **Run `php artisan app:payees:recalculate-profiles` once after upgrading** (or wait for the nightly run at 02:30, which needs the scheduler). Profiles are otherwise rebuilt in the background whenever a transaction of the payee is created, changed or deleted.
-- **Payee names and aliases must be unique per user once normalized** (accents, punctuation, numbers and company suffixes such as `Kft`, `Ltd`, `GmbH` are ignored, so `OMV 4471` and `omv` collide). Saving a payee with a new or changed name or alias line that collides with another payee returns a 422 on `name` or `alias`. Existing data is never rejected: only a changed value is checked.
-
-### Auto-recording (Fast Transaction Entry)
-
-AI documents can now be recorded as normal transactions without a review. It is **off by default and opt-in per user**; nothing changes until a user turns on "Record automatically" in their AI settings (which also needs AI processing on).
-
-- **`auto_recorded` and `awaiting_itemization` are now produced** in `GET /api/v1/documents`. An auto-recorded document is linked to its transaction (`ai_document_id`) and has a `created` origin with a `decision_reason`. A document for a payee set to expect itemization waits as `awaiting_itemization` until its receipt arrives, then moves to `ready_for_review` after `itemization_timeout_days`. The processed-document email has a "recorded automatically" variant.
-- Reconciling a transaction (the reconcile endpoint or any save that flips `reconciled` to true) marks its `created` origin as reviewed.
-- A new scheduled command `ai-documents:expire-itemization` runs daily at 03:45 (needs the scheduler).
+- **Run `php artisan app:payees:recalculate-profiles` once after upgrading** (or wait for the nightly run at 02:30, which needs the scheduler) to build the history profile of existing payees.
+- **Payee names and aliases must now be unique per user once normalized** (accents, punctuation, numbers and company suffixes such as `Kft`, `Ltd`, `GmbH` are ignored, so `OMV 4471` and `omv` collide). Saving a payee with a new or changed name or alias that collides with another payee returns a 422 on `name` or `alias`. Existing data is not rejected: only changed values are checked.
 
 ### AI off now holds documents instead of rejecting uploads
 
@@ -43,23 +32,24 @@ When AI processing is off for a user, uploaded, emailed and imported documents a
 
 ### Slimmer document list API response
 
-`GET /api/v1/documents` (the list behind the AI documents table) now returns only what a list needs, which makes it considerably faster on large collections. `GET /api/v1/documents/{id}` is unchanged and still returns the full document. No action is needed for the bundled frontend, but a custom API integration that reads the removed fields from the list must fetch the single document instead.
+`GET /api/v1/documents` now returns only what a list needs. `GET /api/v1/documents/{id}` is unchanged. The bundled frontend needs no action, but a custom API integration that reads the removed fields from the list must fetch the single document instead:
 
-- **Fields removed from each document:** `ai_chat_history`, `custom_prompt` and `google_drive_file_id`.
-- **`received_mail`** contains only `id` and `subject`. The mail body (`html`, `text`) and the other columns are no longer included.
-- **`ai_document_files[]`** contain only `id`, `ai_document_id` and `file_name`.
-- **`transaction`** contains only `id` and `ai_document_id`, without `transaction_currency` or any other detail.
-- **`origins[]`** contain only `id`, `origin_type`, `origin_id`, `transaction_id`, `relation` and `reviewed_at`. In particular `decision_reason` is no longer included.
-- **`processed_transaction_data`** still includes `matched_entities` (account, payee, investment), but the category and tag display data is no longer added to the items: `recommended_category_full_name`, `category_full_name` and `tags`. The stored `category_id`, `recommended_category_id` and `tag_ids` are unchanged.
-- No migration or other operator action is required.
+- **Removed from each document:** `ai_chat_history` and `google_drive_file_id`.
+- **Reduced to a few fields:** `received_mail` (`id`, `subject`), `ai_document_files[]` (`id`, `ai_document_id`, `file_name`), `transaction` (`id`, `ai_document_id`), `origins[]` (no `decision_reason`).
+- **`processed_transaction_data` items** no longer include `recommended_category_full_name`, `category_full_name` and `tags`. The stored `category_id`, `recommended_category_id` and `tag_ids` are unchanged.
+
+### Mobile app support
+
+- The Docker image now sets PHP `upload_max_filesize=20M` and `post_max_size=100M`. If you do not use the image, raise these PHP settings yourself, together with any change to `AI_DOCUMENT_MAX_FILE_SIZE_MB`. Reverse proxies need their own limit too (nginx: `client_max_body_size`).
+- Phone uploads need `AI_DOCUMENT_ALLOWED_TYPES=jpg,jpeg,png,pdf` (the default is `txt`).
+
+### AI document notes (`custom_prompt` renamed to `note`, limited to 500 characters)
+
+The "Custom Processing Instructions" of an AI document are now called "Notes", and the `custom_prompt` field (database column and API) is renamed to `note`. Update any API integration that uses `custom_prompt`.
 
 ### Sentry support removed
 
-The `sentry/sentry-laravel` package and its `config/sentry.php` have been removed, so exceptions are no longer reported to Sentry.
-
-- If you used Sentry, error monitoring stops after the upgrade. Errors are now only written to the configured Laravel log channel (see `LOG_CHANNEL`/`LOG_STACK`).
-- `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read; you can delete them from your `.env`.
-- Source code users: run `composer install` as usual, so the package is removed from `vendor/`.
+The `sentry/sentry-laravel` package has been removed, so exceptions are no longer reported to Sentry. If you used it, error monitoring stops after the upgrade; errors are only written to the configured Laravel log channel. `SENTRY_LARAVEL_DSN` and `SENTRY_TRACES_SAMPLE_RATE` are no longer read and can be deleted from your `.env`.
 
 ## Upgrade from YAFFA 3.x to 4.x
 

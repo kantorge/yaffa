@@ -2,17 +2,22 @@
 
 namespace App\Http\Requests;
 
+use App\Services\UploadLimitService;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
 class StoreAiDocumentRequest extends FormRequest
 {
     public function rules(): array
     {
         $maxFilesPerSubmission = config('ai-documents.file_upload.max_files_per_submission');
-        $maxFileSize = config('ai-documents.file_upload.max_file_size_mb');
+        $maxFileSize = UploadLimitService::maxFileMb();
         $allowedTypes = config('ai-documents.file_upload.allowed_types');
 
         return [
             'files' => [
                 'required_without:text_input',
+                'prohibited_if:source,mobile_notification',
                 'nullable',
                 'array',
                 'max:' . $maxFilesPerSubmission,
@@ -29,11 +34,16 @@ class StoreAiDocumentRequest extends FormRequest
                 'string',
                 'max:10000',
             ],
-            'custom_prompt' => [
+            'note' => [
                 'nullable',
                 'string',
-                'max:5000',
+                'max:500',
             ],
+            'source' => ['nullable', 'in:mobile_scan,mobile_share,mobile_notification'],
+            // Text-only payment notification captured on the phone
+            'source_app' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:191'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'text' => ['required_if:source,mobile_notification', 'nullable', 'string', 'max:10000'],
         ];
     }
 
@@ -43,8 +53,39 @@ class StoreAiDocumentRequest extends FormRequest
             'files.required_without' => 'You must provide either files or text input.',
             'files.max' => 'You can upload a maximum of ' . config('ai-documents.file_upload.max_files_per_submission') . ' files.',
             'files.*.file' => 'Each file must be a valid file.',
-            'files.*.max' => 'Each file must not exceed ' . config('ai-documents.file_upload.max_file_size_mb') . 'MB.',
+            'files.*.max' => 'Each file must not exceed ' . UploadLimitService::maxFileMb() . 'MB.',
+            'files.*.uploaded' => 'A file could not be uploaded. Each file must not exceed ' . UploadLimitService::maxFileMb() . 'MB.',
             'files.*.mimes' => 'Files must be of type: ' . implode(', ', config('ai-documents.file_upload.allowed_types')),
         ];
+    }
+
+    /**
+     * Oversize files get a dedicated error code and the limit, so clients can react precisely.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        foreach ($validator->failed() as $field => $rules) {
+            if (str_starts_with($field, 'files.') && (isset($rules['Max']) || isset($rules['Uploaded']))) {
+                throw new HttpResponseException(response()->json([
+                    'message' => $validator->errors()->first(),
+                    'error' => [
+                        'code' => 'FILE_TOO_LARGE',
+                        'message' => $validator->errors()->first($field),
+                        'limit_mb' => UploadLimitService::maxFileMb(),
+                    ],
+                    'errors' => $validator->errors()->messages(),
+                ], 422));
+            }
+        }
+
+        parent::failedValidation($validator);
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // A notification is text-only: its body travels as the regular text input
+        if ($this->input('source') === 'mobile_notification' && $this->filled('text')) {
+            $this->merge(['text_input' => $this->input('text')]);
+        }
     }
 }
