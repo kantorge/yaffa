@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
+  import { storeToast } from '@/shared/lib/notifications/handleNotifications';
   import { processTransaction } from '@/shared/lib/helpers';
   import TransactionFormInvestment from './TransactionFormInvestment.vue';
 
@@ -170,10 +170,9 @@
 
       // A template was saved: it has no follow-up options, so go back to the list
       onTemplateSaved(template) {
-        storeNotification(
+        storeToast(
           'success',
           __('Template saved (:name)', { name: template.name }),
-          { dismissible: true },
         );
         location.href = this.route('transaction-templates.index');
       },
@@ -185,47 +184,30 @@
         }
 
         if (['create', 'clone', 'enter', 'finalize'].includes(this.action)) {
-          storeNotification(
+          storeToast(
             'success',
             __('Transaction added (#:id)', { id: transaction.id }),
-            {
-              dismissible: true,
-            },
           );
 
           // Check if investment price was stored
           if (options.investmentPriceStoredResult) {
             if (options.investmentPriceStoredResult === 'success') {
-              storeNotification('success', __('Investment price stored'), {
-                dismissible: true,
-              });
+              storeToast('success', __('Investment price stored'));
             } else if (options.investmentPriceStoredResult === 'skipped') {
-              storeNotification(
+              storeToast(
                 'warning',
                 __('Price for this date already exists and was not updated'),
-                {
-                  dismissible: true,
-                },
               );
             } else if (options.investmentPriceStoredResult === 'error') {
-              storeNotification(
-                'error',
-                __('Failed to store investment price'),
-                {
-                  dismissible: true,
-                },
-              );
+              storeToast('error', __('Failed to store investment price'));
             }
           }
         } else {
-          storeNotification(
+          storeToast(
             'success',
             __('Transaction updated (#:id)', {
               id: transaction.id,
             }),
-            {
-              dismissible: true,
-            },
           );
         }
 

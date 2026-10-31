@@ -109,7 +109,7 @@
   import { processTransaction } from '@/shared/lib/helpers';
   import { confirmDelete } from '@/shared/lib/confirm';
   import { showErrorToast, showSuccessToast } from '@/shared/lib/toast';
-  import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
+  import { storeToast } from '@/shared/lib/notifications/handleNotifications';
 
   export default {
     name: 'ActionButtonBar',
@@ -212,7 +212,7 @@
                 return;
               }
 
-              storeNotification('success', message, { dismissible: true });
+              storeToast('success', message);
               location.href = returnUrl;
             })
             .catch((error) => {
