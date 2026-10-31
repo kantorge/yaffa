@@ -108,6 +108,11 @@
     methods: {
       // Decide how to proceed on success
       loadCallbackUrl(transaction) {
+        if (this.callback === 'returnToAiDocuments') {
+          location.href = this.route('ai-documents.index');
+          return;
+        }
+
         if (this.callback === 'returnToDashboard') {
           location.href = this.route('home');
           return;

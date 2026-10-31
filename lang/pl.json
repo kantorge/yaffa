@@ -221,6 +221,7 @@
     "Cached monthly summaries need to be recalculated. This may take a while. Please be patient.": "Skumulowane miesięczne podsumowania wymagają ponownego przeliczenia. Może to chwilę potrwać. Prosimy o cierpliwość.",
     "callback.cloneTransaction": "Sklonuj tę transakcję",
     "callback.newTransaction": "Nowa transakcja",
+    "callback.returnToAiDocuments": "Wróć do listy dokumentów AI",
     "callback.returnToDashboard": "Wróć do pulpitu nawigacyjnego",
     "callback.returnToInvestment": "Przejdź do szczegółów inwestycji",
     "callback.returnToPreviousPage": "Wróć do poprzedniej strony",

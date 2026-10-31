@@ -220,6 +220,7 @@
     "Cached monthly summaries need to be recalculated. This may take a while. Please be patient.": "Cached monthly summaries need to be recalculated. This may take a while. Please be patient.",
     "callback.cloneTransaction": "Clone this transaction",
     "callback.newTransaction": "New transaction",
+    "callback.returnToAiDocuments": "Back to AI document list",
     "callback.returnToDashboard": "Return to dashboard",
     "callback.returnToInvestment": "Go to investment details",
     "callback.returnToPreviousPage": "Back to previous page",

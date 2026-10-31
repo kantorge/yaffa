@@ -779,7 +779,11 @@
       // Id counter for items
       data.itemCounter = 0;
 
-      data.callback = this.initialCallback;
+      // Finalizing an AI document: default to returning to the document list
+      data.callback =
+        this.action === 'finalize' && this.aiDocumentId !== null
+          ? 'returnToAiDocuments'
+          : this.initialCallback;
 
       // Various callback options
       data.callbackOptions = [
@@ -807,6 +811,12 @@
           value: 'returnToSecondaryAccount',
           label: __('callback.returnToSecondaryAccount'),
           enabled: false,
+        },
+        {
+          value: 'returnToAiDocuments',
+          label: __('callback.returnToAiDocuments'),
+          // Only when finalizing an AI document
+          enabled: this.action === 'finalize' && this.aiDocumentId !== null,
         },
         {
           value: 'returnToDashboard',

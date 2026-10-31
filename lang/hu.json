@@ -220,6 +220,7 @@
     "Cached monthly summaries need to be recalculated. This may take a while. Please be patient.": "A gyorsítótárazott havi összesítőket újra kell számolni. Ez eltarthat egy ideig. Kérjük, légy türelmes.",
     "callback.cloneTransaction": "Másold ezt a tranzakciót",
     "callback.newTransaction": "Új tranzakció",
+    "callback.returnToAiDocuments": "Vissza az AI dokumentumok listájához",
     "callback.returnToDashboard": "Kezdőoldalra",
     "callback.returnToInvestment": "Tovább a befektetési részletekhez",
     "callback.returnToPreviousPage": "Előző oldalra",

@@ -640,7 +640,11 @@
       data.account_currency = null;
       data.investment_currency = null;
 
-      data.callback = this.initialCallback;
+      // Finalizing an AI document: default to returning to the document list
+      data.callback =
+        this.action === 'finalize' && this.aiDocumentId !== null
+          ? 'returnToAiDocuments'
+          : this.initialCallback;
 
       // Store price feature related data
       data.storePriceEnabled = false;
@@ -673,6 +677,12 @@
           value: 'returnToInvestment',
           label: __('callback.returnToInvestment'),
           enabled: true,
+        },
+        {
+          value: 'returnToAiDocuments',
+          label: __('callback.returnToAiDocuments'),
+          // Only when finalizing an AI document
+          enabled: this.action === 'finalize' && this.aiDocumentId !== null,
         },
         {
           value: 'returnToDashboard',
