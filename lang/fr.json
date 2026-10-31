@@ -426,6 +426,7 @@
     "e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.": "Par exemple: Ce reçu est en français. Le nom du compte ne peut être extrait; veuillez utiliser « Compte bancaire de Jean ».",
     "Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.": "Chaque ligne enregistre comment une description de transaction a été apprise pour une catégorie. Cela permet de garder des suggestions IA cohérentes à l'avenir.",
     "Edit": "Modifier",
+    "Edit account": "Modifier le compte",
     "Edit and create new schedule": "Modifier et créer un nouvel horaire",
     "Edit and insert instance": "Modifier et insérer une instance",
     "Edit category learning entry": "Modifier l'entrée d'apprentissage de catégorie",

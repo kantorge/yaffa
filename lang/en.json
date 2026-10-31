@@ -425,6 +425,7 @@
     "e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.": "e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.",
     "Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.": "Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.",
     "Edit": "Edit",
+    "Edit account": "Edit account",
     "Edit and create new schedule": "Edit and create new schedule",
     "Edit and insert instance": "Edit and insert instance",
     "Edit category learning entry": "Edit category learning entry",

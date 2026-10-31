@@ -425,6 +425,7 @@
     "e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.": "Pl. Ez a nyugta francia nyelvű. A számla neve nem kinyerhető, kérjük, használd a „János bankszámlája” kifejezést.",
     "Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.": "Minden sor azt tárolja, hogy egy tranzakcióleírást hogyan tanult meg a rendszer egy kategóriához. Ez segít abban, hogy a jövőbeli AI-javaslatok következetesek maradjanak.",
     "Edit": "Szerkesztés",
+    "Edit account": "Számla szerkesztése",
     "Edit and create new schedule": "Szerkesztés és új ütemterv létrehozása",
     "Edit and insert instance": "Példány szerkesztése és beszúrása",
     "Edit category learning entry": "Kategóriatanulási bejegyzés szerkesztése",

@@ -426,6 +426,7 @@
     "e.g., This receipt is in French. The account name cannot be extracted, please use Bank account of John.": "Np. Ten paragon jest w języku francuskim. Nie można wyodrębnić nazwy konta, proszę użyć konta bankowego Johna.",
     "Each row stores how a transaction description was learned for a category. This helps future AI suggestions stay consistent.": "Każdy wiersz przechowuje informacje, jak opis transakcji został nauczony dla kategorii. Pomaga to utrzymać spójność przyszłych sugestii AI.",
     "Edit": "Edytuj",
+    "Edit account": "Edytuj konto",
     "Edit and create new schedule": "Edytuj i utwórz nowy harmonogram",
     "Edit and insert instance": "Edytuj i wstaw instancję",
     "Edit category learning entry": "Edytuj wpis uczenia kategorii",
