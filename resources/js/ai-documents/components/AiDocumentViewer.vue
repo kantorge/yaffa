@@ -179,17 +179,19 @@
                   'not-set': isUnidentified(rawData.amount),
                 }"
               >
-                {{ formatRawValue(rawData.amount) }}
+                <span class="text-nowrap">{{ amount.text }}</span>
               </dd>
-              <dt class="col-6">{{ __('Currency') }}</dt>
-              <dd
-                class="col-6"
-                :class="{
-                  'not-set': isUnidentified(rawData.currency),
-                }"
-              >
-                {{ formatRawValue(rawData.currency) }}
-              </dd>
+              <template v-if="!amount.hasCurrency">
+                <dt class="col-6">{{ __('Currency') }}</dt>
+                <dd
+                  class="col-6"
+                  :class="{
+                    'not-set': isUnidentified(rawData.currency),
+                  }"
+                >
+                  {{ formatRawValue(rawData.currency) }}
+                </dd>
+              </template>
             </template>
 
             <template v-else>
@@ -319,17 +321,19 @@
                   'not-set': isUnidentified(rawData.amount),
                 }"
               >
-                {{ formatRawValue(rawData.amount) }}
+                <span class="text-nowrap">{{ amount.text }}</span>
               </dd>
-              <dt class="col-6">{{ __('Currency') }}</dt>
-              <dd
-                class="col-6"
-                :class="{
-                  'not-set': isUnidentified(rawData.currency),
-                }"
-              >
-                {{ formatRawValue(rawData.currency) }}
-              </dd>
+              <template v-if="!amount.hasCurrency">
+                <dt class="col-6">{{ __('Currency') }}</dt>
+                <dd
+                  class="col-6"
+                  :class="{
+                    'not-set': isUnidentified(rawData.currency),
+                  }"
+                >
+                  {{ formatRawValue(rawData.currency) }}
+                </dd>
+              </template>
               <template v-if="showLineItemsCount">
                 <dt class="col-6">{{ __('Line items') }}</dt>
                 <dd class="col-6">
@@ -631,6 +635,7 @@
     toFormattedCurrency,
     toFormattedDate,
     toFormattedDateTime,
+    toFormattedNumber,
   } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
   import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
@@ -889,6 +894,36 @@
           (c) => c.iso_code.toLowerCase() === iso,
         ) || null
       : null;
+  });
+
+  // The amount in the document's currency, or as a plain number when the currency is missing or invalid
+  const amount = computed(() => {
+    const value = rawData.value.amount;
+
+    if (isUnidentified(value)) {
+      return { text: unidentifiedLabel, hasCurrency: false };
+    }
+
+    const iso = String(rawData.value.currency || '')
+      .trim()
+      .toUpperCase();
+
+    if (iso) {
+      try {
+        return {
+          text: toFormattedCurrency(value, locale, {
+            generic_decimal_precision: null,
+            ...draftCurrency.value,
+            iso_code: iso,
+          }),
+          hasCurrency: true,
+        };
+      } catch {
+        // Not a valid ISO 4217 code: shown as unknown below
+      }
+    }
+
+    return { text: toFormattedNumber(value, locale), hasCurrency: false };
   });
 
   // Why the document was (not) recorded automatically, see App\Services\AutoRecord\GateEvaluator
