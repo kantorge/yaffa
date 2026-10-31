@@ -7,7 +7,7 @@
       <div v-if="hasDetails">
         <button
           type="button"
-          class="btn btn-sm btn-info d-sm-none"
+          class="btn btn-sm btn-info d-md-none"
           :title="__('Show item details')"
           @click="toggleItemDetails"
         >
@@ -16,28 +16,28 @@
       </div>
 
       <!-- On mobile, labels are dropped: the category and the formatted amount are self-explanatory -->
-      <div class="col col-sm-4">
-        <dt class="d-none d-sm-block">
+      <div class="col col-md-4">
+        <dt class="d-none d-md-block">
           {{ __('Category') }}
         </dt>
-        <dd class="mb-1 mb-sm-3" :class="{ 'not-set': !category.full_name }">
+        <dd class="mb-1 mb-md-3" :class="{ 'not-set': !category.full_name }">
           {{ category.full_name || __('Not set') }}
         </dd>
       </div>
       <div
-        class="col-auto col-sm-2 text-end text-sm-start text-nowrap"
-        :class="{ 'pe-5': hasDetails }"
+        class="col-auto col-md-2 text-end text-md-start text-nowrap"
+        :class="{ 'pe-5 pe-md-0': hasDetails }"
       >
-        <dt class="d-none d-sm-block">
+        <dt class="d-none d-md-block">
           {{ __('Amount') }}
         </dt>
-        <dd class="mb-1 mb-sm-3">
+        <dd class="mb-1 mb-md-3">
           {{ toFormattedCurrency(amount, locale, currency) }}
         </dd>
       </div>
       <!-- Tags and comment: shown on mobile only when toggled, and only if they have a value; icons replace labels -->
       <div
-        class="col-12 col-sm-3 transaction_detail_container d-none d-md-block"
+        class="col-12 col-md-3 transaction_detail_container d-none d-md-block"
       >
         <dt class="d-none d-md-block">
           {{ __('Tags') }}
@@ -60,7 +60,7 @@
         </dd>
       </div>
       <div
-        class="col-12 col-sm-2 transaction_detail_container d-none d-md-block"
+        class="col-12 col-md-2 transaction_detail_container d-none d-md-block"
       >
         <dt class="d-none d-md-block">
           {{ __('Comment') }}

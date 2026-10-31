@@ -5,7 +5,7 @@
         {{ __('Transaction items') }}
       </div>
       <div>
-        <div class="btn-group d-sm-none">
+        <div class="btn-group d-md-none">
           <button
             type="button"
             class="btn btn-sm btn-info"
@@ -51,7 +51,7 @@
         {{ __('No items added') }}
       </div>
     </div>
-    <div v-if="transactionItems.length > 0" class="card-footer d-sm-none">
+    <div v-if="transactionItems.length > 0" class="card-footer d-md-none">
       <div class="text-end">
         <div class="btn-group">
           <button

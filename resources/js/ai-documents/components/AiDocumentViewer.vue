@@ -376,6 +376,7 @@
               type="button"
               :disabled="action.busyAware && isBusy"
               :title="action.title || action.label"
+              :aria-label="action.title || action.label"
               @click="action.handler"
             >
               <i

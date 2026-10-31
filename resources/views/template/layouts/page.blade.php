@@ -67,6 +67,7 @@
                         aria-expanded="false">
                         <i class="fa-solid fa-user me-1"></i>
                         <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
+                        <span class="visually-hidden d-md-none">{{ Auth::user()->name }}</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <a class="dropdown-item" href="{{ route('user.settings') }}">
