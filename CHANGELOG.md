@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.4.0](https://github.com/kantorge/yaffa/compare/v4.3.0...v4.4.0) (2026-10-31)
+
+
+### 🛠️ Chores
+
+* add the Edit action to the account page ([e6a4d08](https://github.com/kantorge/yaffa/commit/e6a4d0867e8b24c7ab0b3b735aa8182f6a83d883))
+* **deps:** bump follow-redirects ([#585](https://github.com/kantorge/yaffa/issues/585)) ([d93f7ef](https://github.com/kantorge/yaffa/commit/d93f7ef3d4f959f3832645477500f54413612ed1))
+
+
+### ✨ Features
+
+* add return to AI document list callback when finalizing ([45f818c](https://github.com/kantorge/yaffa/commit/45f818ced0dbee7d70f0b6ccd7c077d74650acbf))
+
+
+### 🐛 Bug Fixes
+
+* AI document details display ([caaa35a](https://github.com/kantorge/yaffa/commit/caaa35af482359ca893b858b9af5bccbe5777956))
+* AI document table display ([ecb548d](https://github.com/kantorge/yaffa/commit/ecb548d71f4d4b9d30c4e1f616c4966b0105257c))
+* transaction form initial amount display ([4f236df](https://github.com/kantorge/yaffa/commit/4f236dfcae9d0c345aa5c7684c83402a04f46bac))
+
 ## [4.3.0](https://github.com/kantorge/yaffa/compare/v4.2.0...v4.3.0) (2026-10-31)
 
 
