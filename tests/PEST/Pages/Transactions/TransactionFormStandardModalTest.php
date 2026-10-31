@@ -54,9 +54,11 @@ it('never shows the add new payee button in the modal', function () {
     $this->confirmSwal($page);
     $page->assertNotPresent($button('from'));
 
+    // The payee side is still empty, so nothing is lost and no confirmation is asked
     $page->click('[dusk="transaction-type-transfer"]');
-    $this->confirmSwal($page);
-    $page->assertNotPresent($button('to'))
+    $this->waitUntil($page, "document.querySelector('[dusk=\"transaction-type-transfer\"]').classList.contains('active')");
+    $page->assertNotPresent('.swal2-popup')
+        ->assertNotPresent($button('to'))
         ->assertNotPresent($button('from'));
 })->group('critical');
 
