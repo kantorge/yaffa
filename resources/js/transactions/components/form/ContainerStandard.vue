@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  import { storeNotification } from '@/shared/lib/notifications/handleNotifications';
+  import { storeToast } from '@/shared/lib/notifications/handleNotifications';
   import { processTransaction } from '@/shared/lib/helpers';
   import TransactionFormStandard from './TransactionFormStandard.vue';
 
@@ -134,6 +134,11 @@
 
       // Decide how to proceed on success
       loadCallbackUrl(transaction) {
+        if (this.callback === 'returnToAiDocuments') {
+          location.href = this.route('ai-documents.index');
+          return;
+        }
+
         if (this.callback === 'returnToDashboard') {
           location.href = this.route('home');
           return;
@@ -191,10 +196,9 @@
 
       // A template was saved: it has no follow-up options, so go back to the list
       onTemplateSaved(template) {
-        storeNotification(
+        storeToast(
           'success',
           __('Template saved (:name)', { name: template.name }),
-          { dismissible: true },
         );
         location.href = this.route('transaction-templates.index');
       },
@@ -206,12 +210,9 @@
         }
 
         if (['create', 'clone', 'enter', 'finalize'].includes(this.action)) {
-          storeNotification(
+          storeToast(
             'success',
             __('Transaction added (#:id)', { id: transaction.id }),
-            {
-              dismissible: true,
-            },
           );
 
           if (options.categoryLearningSummary) {
@@ -223,28 +224,22 @@
                 (summary.incremented || 0) >
               0
             ) {
-              storeNotification(
+              storeToast(
                 'info',
                 __('categoryLearning.summary', {
                   created: summary.created || 0,
                   updated: summary.updated || 0,
                   incremented: summary.incremented || 0,
                 }),
-                {
-                  dismissible: true,
-                },
               );
             }
           }
         } else {
-          storeNotification(
+          storeToast(
             'success',
             __('Transaction updated (#:id)', {
               id: transaction.id,
             }),
-            {
-              dismissible: true,
-            },
           );
         }
 

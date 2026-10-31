@@ -640,7 +640,11 @@
       data.account_currency = null;
       data.investment_currency = null;
 
-      data.callback = this.initialCallback;
+      // Finalizing an AI document: default to returning to the document list
+      data.callback =
+        this.action === 'finalize' && this.aiDocumentId !== null
+          ? 'returnToAiDocuments'
+          : this.initialCallback;
 
       // Store price feature related data
       data.storePriceEnabled = false;
@@ -673,6 +677,12 @@
           value: 'returnToInvestment',
           label: __('callback.returnToInvestment'),
           enabled: true,
+        },
+        {
+          value: 'returnToAiDocuments',
+          label: __('callback.returnToAiDocuments'),
+          // Only when finalizing an AI document
+          enabled: this.action === 'finalize' && this.aiDocumentId !== null,
         },
         {
           value: 'returnToDashboard',
@@ -1061,11 +1071,16 @@
 
           // Copy configuration (handle both saved transactions and AI drafts)
           const config = this.transaction.config || {};
-          this.form.config.quantity = config.quantity;
-          this.form.config.price = config.price;
-          this.form.config.commission = config.commission;
-          this.form.config.tax = config.tax;
-          this.form.config.dividend = config.dividend;
+          // These may arrive as fixed-scale decimal strings (e.g. "12.5000") - Number()
+          // drops the trailing zeros, the same way MathInput normalizes typed values.
+          ['quantity', 'price', 'commission', 'tax', 'dividend'].forEach(
+            (field) => {
+              const value = config[field];
+              this.form.config[field] = [null, undefined, ''].includes(value)
+                ? value
+                : Number(value);
+            },
+          );
           this.form.config.account_id = config.account_id;
           this.form.config.investment_id = config.investment_id;
 

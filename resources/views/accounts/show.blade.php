@@ -50,6 +50,14 @@
                 </div>
             </div>
             <ul class="list-group list-group-flush collapse" aria-expanded="false" id="cardActions">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="nav-link">
+                        {{ __('Edit account') }}
+                    </span>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ route('account-entity.edit', ['type' => 'account', 'account_entity' => $account->id]) }}">
+                        <i class="fa-solid fa-edit"></i>
+                    </a>
+                </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a class="nav-link" href="{{ route('account.history', ['account' => $account]) }}">
                         {{ __('Load account transaction history') }}

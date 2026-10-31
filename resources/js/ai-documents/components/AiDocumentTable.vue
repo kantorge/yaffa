@@ -21,8 +21,10 @@
   import {
     __,
     getDataTablesLanguageOptions,
+    toFormattedCurrency,
     toFormattedDate,
     toFormattedDateTime,
+    toFormattedNumber,
   } from '@/shared/lib/i18n';
   import * as dataTableHelpers from '@/shared/lib/datatable';
   import * as toastHelpers from '@/shared/lib/toast';
@@ -311,7 +313,25 @@
       return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
     }
 
-    return row.detected_amount_search;
+    const locale = window.YAFFA.userSettings.locale;
+    const currency = String(getRawData(row).currency ?? '')
+      .trim()
+      .toUpperCase();
+    let formatted;
+
+    try {
+      formatted = currency
+        ? toFormattedCurrency(row.detected_amount_search, locale, {
+            iso_code: currency,
+          })
+        : toFormattedNumber(row.detected_amount_search, locale);
+    } catch {
+      // Not a valid ISO 4217 code: fall back to a plain number
+      formatted = toFormattedNumber(row.detected_amount_search, locale);
+    }
+
+    // Keep grouping spaces (and the currency symbol) on one line
+    return `<span class="text-nowrap">${escapeHtml(formatted)}</span>`;
   };
 
   const getDetectedAccountForSearch = (document) => {
@@ -826,7 +846,7 @@
             const transactionId = getLinkedTransactionId(row);
 
             if (!transactionId) {
-              return __('Not available');
+              return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
             }
 
             // The shared 'busy' class (set by initializeQuickViewButton) reveals the spinner
@@ -864,13 +884,6 @@
         select: true,
         info: false,
         style: 'os',
-      },
-      createdRow: (row, data) => {
-        if (!getLinkedTransactionId(data)) {
-          window
-            .$('td:eq(' + COLUMN_INDEX.linkedTransaction + ')', row)
-            .addClass('not-set');
-        }
       },
     });
 
