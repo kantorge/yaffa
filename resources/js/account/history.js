@@ -187,7 +187,7 @@ let historyTable = $(selectorHistoryTable).DataTable({
     $(row).attr('data-id', data.id);
 
     if (data.schedule) {
-      $(row).addClass('text-muted text-italic');
+      $(row).addClass('not-set');
     }
   },
   initComplete: function () {
@@ -321,7 +321,7 @@ historyTable.contextualActions({
     {
       type: 'option',
       title: __('Edit and insert instance'),
-      iconClass: 'fa fa-pencil',
+      iconClass: 'fa fa-calendar-plus',
       contextMenuClasses: ['text-success fw-bold'],
       action: function (row) {
         window.location.href = route('transaction.open', {
@@ -458,7 +458,7 @@ scheduleTable.contextualActions({
     {
       type: 'option',
       title: __('Edit and insert instance'),
-      iconClass: 'fa fa-pencil',
+      iconClass: 'fa fa-calendar-plus',
       contextMenuClasses: ['text-success fw-bold'],
       action: function (row) {
         window.location.href = route('transaction.open', {

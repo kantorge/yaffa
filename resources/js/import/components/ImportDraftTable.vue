@@ -221,9 +221,7 @@
                       >{{ __('Text') }}</span
                     >
                   </template>
-                  <span v-else class="text-muted fst-italic">{{
-                    __('Not set')
-                  }}</span>
+                  <span v-else class="not-set">{{ __('Not set') }}</span>
                 </td>
                 <td>
                   <span :class="statusClass(draft.status)">

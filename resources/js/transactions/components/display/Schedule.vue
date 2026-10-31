@@ -40,9 +40,7 @@
                 <span v-if="schedule.next_date">{{
                   formattedDate(schedule.next_date)
                 }}</span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
+                <span v-else class="not-set">{{ __('Not set') }}</span>
               </dd>
             </div>
             <div>
@@ -56,9 +54,7 @@
                 >
                   {{ schedule.count }}
                 </span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
+                <span v-else class="not-set">{{ __('Not set') }}</span>
               </dd>
             </div>
             <div>
@@ -67,9 +63,7 @@
                 <span v-if="schedule.end_date">{{
                   formattedDate(schedule.end_date)
                 }}</span>
-                <span v-else class="text-muted text-italic">{{
-                  __('Not set')
-                }}</span>
+                <span v-else class="not-set">{{ __('Not set') }}</span>
               </dd>
             </div>
           </dl>

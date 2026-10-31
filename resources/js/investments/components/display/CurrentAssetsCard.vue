@@ -14,7 +14,7 @@
         <dt class="col-8">{{ __('Latest price') }}</dt>
         <dd
           class="col-4"
-          :class="{ 'text-muted fst-italic': investment.latest_price == null }"
+          :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">
             {{ __('Not available') }}
@@ -33,7 +33,7 @@
         <dt class="col-8">{{ __('Latest owned value') }}</dt>
         <dd
           class="col-4"
-          :class="{ 'text-muted fst-italic': investment.latest_price == null }"
+          :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">
             {{ __('Not available') }}
