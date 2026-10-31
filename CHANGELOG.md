@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.3.0](https://github.com/kantorge/yaffa/compare/v4.2.0...v4.3.0) (2026-10-31)
+
+
+### 📚 Documentation
+
+* fixed missing note in UPGRADE.md ([0555124](https://github.com/kantorge/yaffa/commit/0555124664ba625589fb2badeb43b37d96750002))
+
+
+### ✨ Features
+
+* introduce comprehensive mobile app API support ([#581](https://github.com/kantorge/yaffa/issues/581)) ([9a25c67](https://github.com/kantorge/yaffa/commit/9a25c676b5006a278a9994d83f8428f5462e02e3))
+* several small UI improvements ([#583](https://github.com/kantorge/yaffa/issues/583)) ([adfd120](https://github.com/kantorge/yaffa/commit/adfd120403ab53d29babc5c2c41a24bfd41f4bd5))
+
+
+### 🐛 Bug Fixes
+
+* deployer script permission issues ([3c470be](https://github.com/kantorge/yaffa/commit/3c470be550194cf63f8f1f31590344d1605767ec))
+* more fluent notification about transaction type changes ([cbc8308](https://github.com/kantorge/yaffa/commit/cbc8308e0cdf316ab44a18d2e880d117ecfe5a7e))
+* transaction type change confirm in standard modal ([#582](https://github.com/kantorge/yaffa/issues/582)) ([f2f4d29](https://github.com/kantorge/yaffa/commit/f2f4d2964dddae065b79d63eeb42b789908a8a20))
+
 ## [4.2.0](https://github.com/kantorge/yaffa/compare/v4.1.0...v4.2.0) (2026-10-25)
 
 
