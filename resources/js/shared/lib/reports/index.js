@@ -473,6 +473,9 @@ export function calculateMonthlyTotalsByType(categoryData, months, isIncome) {
  */
 const INVESTMENT_CASHFLOW_TYPES = ['dividend', 'interest_yield'];
 
+/** Investment buy/sell types, shown as their own purchases/sales buckets when requested. */
+const INVESTMENT_TRADE_TYPES = ['buy', 'sell'];
+
 /**
  * Aggregate transactions into waterfall-ready {category, value} rows, mirroring the
  * grouping used by the dashboard's category waterfall widget: standard transactions
@@ -491,6 +494,8 @@ const INVESTMENT_CASHFLOW_TYPES = ['dividend', 'interest_yield'];
  *   active category/tag filters are counted (see itemMatchesActiveFilters)
  * @param {string[]} [options.categoryIds] - Currently selected category ids
  * @param {string[]} [options.tagIds] - Currently selected tag ids
+ * @param {string[]} [options.include] - Groups to include: 'standard' (withdrawals and
+ *   deposits), 'income' (dividend/interest), 'trades' (investment buy/sell, as two buckets)
  * @returns {Array<{category: string, value: number}>}
  */
 export function aggregateTransactionsForWaterfall(
@@ -498,11 +503,18 @@ export function aggregateTransactionsForWaterfall(
   translateFn = (s) => s,
   options = {},
 ) {
-  const { matchingItemsOnly = false, categoryIds = [], tagIds = [] } = options;
+  const {
+    matchingItemsOnly = false,
+    categoryIds = [],
+    tagIds = [],
+    include = ['standard', 'income'],
+  } = options;
   const dataByCategory = {};
+  const labels = {};
 
   transactions.forEach((transaction) => {
     if (transaction.config_type === 'standard') {
+      if (!include.includes('standard')) return;
       if (transaction.transaction_type === 'transfer') return;
 
       (transaction.transaction_items || []).forEach((item) => {
@@ -525,22 +537,39 @@ export function aggregateTransactionsForWaterfall(
           (dataByCategory[label] || 0) + (isFinite(signed) ? signed : 0);
       });
     } else if (transaction.config_type === 'investment') {
-      if (!INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type))
+      const isTrade = INVESTMENT_TRADE_TYPES.includes(
+        transaction.transaction_type,
+      );
+      if (
+        isTrade
+          ? !include.includes('trades')
+          : !include.includes('income') ||
+            !INVESTMENT_CASHFLOW_TYPES.includes(transaction.transaction_type)
+      )
         return;
 
       const rate = transaction.currencyRateToBase ?? 1;
       const amount = Number(transaction.cashflow_value || 0) * rate;
       const label = translateFn(
-        amount < 0 ? 'Investment payment' : 'Investment income',
+        isTrade
+          ? transaction.transaction_type === 'buy'
+            ? 'Investment purchases'
+            : 'Investment sales'
+          : amount < 0
+            ? 'Investment payment'
+            : 'Investment income',
       );
+      // Trade buckets are keyed apart from category names so they never merge
+      const key = isTrade ? `trade:${transaction.transaction_type}` : label;
+      labels[key] = label;
 
-      dataByCategory[label] =
-        (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
+      dataByCategory[key] =
+        (dataByCategory[key] || 0) + (isFinite(amount) ? amount : 0);
     }
   });
 
-  return Object.entries(dataByCategory).map(([category, value]) => ({
-    category,
+  return Object.entries(dataByCategory).map(([key, value]) => ({
+    category: labels[key] ?? key,
     value,
   }));
 }

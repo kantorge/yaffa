@@ -14,6 +14,10 @@
   } from '@/shared/lib/ui/amchartsColorTheme';
   import { buildWaterfallChartData } from '@/shared/lib/charts/waterfall';
 
+  // Below this column width (px) category labels are rotated instead of kept horizontal
+  const MIN_HORIZONTAL_LABEL_WIDTH = 90;
+  const ROTATED_LABEL_MAX_WIDTH = 140;
+
   export default {
     name: 'WaterfallChart',
     props: {
@@ -66,6 +70,8 @@
           return;
         }
 
+        // Label layout depends on the column count, so refit before the data is redrawn
+        this.fitCategoryLabels();
         this.chart.data = this.chartData;
         this.chart.validateData();
         this.toggleNoDataMessage();
@@ -114,19 +120,14 @@
         if (!this.categoryAxisVisible) {
           categoryAxis.hide();
         } else {
-          categoryAxis.events.on('sizechanged', function (ev) {
-            var axis = ev.target;
-            var cellWidth = axis.pixelWidth / (axis.endIndex - axis.startIndex);
-            if (cellWidth < axis.renderer.labels.template.maxWidth) {
-              axis.renderer.labels.template.rotation = -45;
-              axis.renderer.labels.template.horizontalCenter = 'right';
-              axis.renderer.labels.template.verticalCenter = 'middle';
-            } else {
-              axis.renderer.labels.template.rotation = 0;
-              axis.renderer.labels.template.horizontalCenter = 'middle';
-              axis.renderer.labels.template.verticalCenter = 'top';
-            }
-          });
+          const labels = categoryAxis.renderer.labels.template;
+          labels.truncate = true;
+          labels.tooltipText = '{category}';
+          labels.interactionsEnabled = true;
+          labels.focusable = true;
+          labels.hoverOnFocus = true;
+
+          categoryAxis.events.on('sizechanged', () => this.fitCategoryLabels());
         }
 
         chart.yAxes.push(new am4charts.ValueAxis());
@@ -196,6 +197,29 @@
         this.noDataMessagecontainer = noDataMessagecontainer;
 
         this.toggleNoDataMessage();
+      },
+
+      /**
+       * Fit category labels to the width of one column: horizontal and truncated to the
+       * column when there is room, rotated (with a fixed truncation length) when there is
+       * not. Needs to run on resize and whenever the number of columns changes.
+       */
+      fitCategoryLabels() {
+        if (!this.categoryAxisVisible || !this.chart) return;
+
+        const axis = this.chart.xAxes.getIndex(0);
+        // Not laid out yet (e.g. the chart sits in a hidden tab)
+        if (!axis || !axis.pixelWidth) return;
+
+        const labels = axis.renderer.labels.template;
+        const cellWidth = axis.pixelWidth / Math.max(1, this.chartData.length);
+        const rotate = cellWidth < MIN_HORIZONTAL_LABEL_WIDTH;
+
+        labels.rotation = rotate ? -45 : 0;
+        labels.horizontalCenter = rotate ? 'right' : 'middle';
+        labels.verticalCenter = rotate ? 'middle' : 'top';
+        labels.maxWidth = rotate ? ROTATED_LABEL_MAX_WIDTH : cellWidth - 10;
+        axis.invalidateLayout();
       },
 
       toggleNoDataMessage() {

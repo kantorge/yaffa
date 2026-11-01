@@ -26,6 +26,7 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
@@ -425,9 +426,21 @@ class ReportApiController extends Controller
         int $year,
         int|null $month = null
     ): JsonResponse {
-        $cacheKey = CategoryWaterfallCacheService::key($request->user()->id, $transactionType, $dataType, $year, $month);
+        // The optional `include` query parameter selects any combination of waterfall groups;
+        // without it, the legacy {transactionType} segment maps to a fixed set of groups.
+        $request->validate([
+            'include' => ['sometimes', 'array', 'min:1'],
+            'include.*' => ['string', Rule::in(CategoryWaterfallCacheService::GROUPS)],
+        ]);
+        $groups = CategoryWaterfallCacheService::normalizeGroups(
+            $request->has('include')
+                ? $request->query('include')
+                : CategoryWaterfallCacheService::LEGACY_TYPE_GROUPS[$transactionType]
+        );
 
-        $payload = Cache::remember($cacheKey, CategoryWaterfallCacheService::ttl(), fn () => $this->buildCategoryWaterfallPayload($request, $transactionType, $year, $month));
+        $cacheKey = CategoryWaterfallCacheService::key($request->user()->id, $groups, $dataType, $year, $month);
+
+        $payload = Cache::remember($cacheKey, CategoryWaterfallCacheService::ttl(), fn () => $this->buildCategoryWaterfallPayload($request, $groups, $year, $month));
 
         return response()->json(
             ['result' => 'success', ...$payload],
@@ -440,10 +453,11 @@ class ReportApiController extends Controller
      */
     private function buildCategoryWaterfallPayload(
         Request $request,
-        string $transactionType,
+        string $groups,
         int $year,
         int|null $month
     ): array {
+        $groups = explode(',', $groups);
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
@@ -456,10 +470,16 @@ class ReportApiController extends Controller
         $categoryIdByBucket = [];
         // Transaction type values that contributed to each bucket, keyed by bucket label
         $transactionTypesByBucket = [];
+        // Display label for buckets whose key differs from it (trade buckets)
+        $labelByBucket = [];
         $standardBucketTypes = [TransactionTypeEnum::WITHDRAWAL->value, TransactionTypeEnum::DEPOSIT->value];
         $investmentBucketTypes = TransactionTypeEnum::investmentTypesWithAmountValues();
+        $tradeBucketTypes = [
+            TransactionTypeEnum::BUY->value => __('Investment purchases'),
+            TransactionTypeEnum::SELL->value => __('Investment sales'),
+        ];
 
-        if ($transactionType === 'all' || $transactionType === 'standard') {
+        if (in_array('standard', $groups, true)) {
             // Get all standard transactions with related categories
             $standardTransactions = TransactionItem::with([
                 'category.parent',
@@ -515,7 +535,7 @@ class ReportApiController extends Controller
             });
         }
 
-        if ($transactionType === 'all' || $transactionType === 'investment') {
+        if (in_array('income', $groups, true)) {
             // Add investment transaction results
             $investmentTransactions = Transaction::with([
                 'currency',
@@ -559,6 +579,45 @@ class ReportApiController extends Controller
             });
         }
 
+        if (in_array('trades', $groups, true)) {
+            // Buys and sells are asset conversions rather than income or expense, so they get
+            // their own two buckets (purchases and sales), shown only when explicitly requested.
+            $tradeTransactions = Transaction::with(['currency'])
+                ->byType('investment')
+                ->whereIn('transaction_type', array_keys($tradeBucketTypes))
+                ->where('user_id', $request->user()->id)
+                ->whereBetween('date', [$rangeStart, $rangeEnd])
+                ->get();
+
+            $tradeTransactions->each(function ($transaction) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, &$labelByBucket, $tradeBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
+                // Keyed separately from the displayed label, so a user category with the same
+                // name can never merge into (or take over the metadata of) a trade bucket.
+                $category = 'trade:' . $transaction->transaction_type->value;
+
+                if (!array_key_exists($category, $dataByCategory)) {
+                    $dataByCategory[$category] = BigDecimal::zero();
+                    $categoryIdByBucket[$category] = null;
+                    $transactionTypesByBucket[$category] = [$transaction->transaction_type->value];
+                    $labelByBucket[$category] = $tradeBucketTypes[$transaction->transaction_type->value];
+                }
+
+                $rate = $this->getLatestRateFromMap(
+                    $transaction->currency_id,
+                    $transaction->date,
+                    $allRatesMap,
+                    $baseCurrency->id
+                );
+
+                if ($rate === null && $transaction->currency_id !== $baseCurrency->id) {
+                    $currenciesWithMissingRates[$transaction->currency_id] = true;
+                }
+
+                $dataByCategory[$category] = $dataByCategory[$category]->plus(
+                    ($transaction->cashflow_value?->getAmount() ?? BigDecimal::zero())->multipliedBy((string) ($rate ?? 1))
+                );
+            });
+        }
+
         $result = [];
         foreach ($dataByCategory as $category => $value) {
             // The find-transactions endpoint already expands a top-level category into
@@ -569,7 +628,7 @@ class ReportApiController extends Controller
             // real JSON number, not a decimal string - the same chart-boundary rule Phase 3
             // established for the frontend (Decimal -> Number only at the amCharts feed).
             $result[] = [
-                'category' => $category,
+                'category' => $labelByBucket[$category] ?? $category,
                 'value' => $value->toFloat(),
                 'category_id' => $categoryIdByBucket[$category],
                 'transaction_types' => $transactionTypesByBucket[$category],
