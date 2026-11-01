@@ -510,6 +510,7 @@ export function aggregateTransactionsForWaterfall(
     include = ['standard', 'income'],
   } = options;
   const dataByCategory = {};
+  const labels = {};
 
   transactions.forEach((transaction) => {
     if (transaction.config_type === 'standard') {
@@ -558,14 +559,17 @@ export function aggregateTransactionsForWaterfall(
             ? 'Investment payment'
             : 'Investment income',
       );
+      // Trade buckets are keyed apart from category names so they never merge
+      const key = isTrade ? `trade:${transaction.transaction_type}` : label;
+      labels[key] = label;
 
-      dataByCategory[label] =
-        (dataByCategory[label] || 0) + (isFinite(amount) ? amount : 0);
+      dataByCategory[key] =
+        (dataByCategory[key] || 0) + (isFinite(amount) ? amount : 0);
     }
   });
 
-  return Object.entries(dataByCategory).map(([category, value]) => ({
-    category,
+  return Object.entries(dataByCategory).map(([key, value]) => ({
+    category: labels[key] ?? key,
     value,
   }));
 }

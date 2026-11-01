@@ -124,6 +124,8 @@
           labels.truncate = true;
           labels.tooltipText = '{category}';
           labels.interactionsEnabled = true;
+          labels.focusable = true;
+          labels.hoverOnFocus = true;
 
           categoryAxis.events.on('sizechanged', () => this.fitCategoryLabels());
         }

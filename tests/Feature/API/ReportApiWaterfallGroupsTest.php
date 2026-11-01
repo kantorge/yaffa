@@ -64,10 +64,12 @@ it('returns separate purchase and sale buckets for the trades group', function (
     expect($data->all())->toEqual(['Investment purchases' => -1000.0, 'Investment sales' => 1500.0]);
 });
 
-it('combines groups and excludes trades from the legacy all type', function () {
+it('combines the selected groups', function () {
     expect(($this->fetch)(['include' => ['income', 'trades']])->keys()->sort()->values()->all())
         ->toEqual(['Investment income', 'Investment purchases', 'Investment sales']);
+});
 
+it('excludes trades from the legacy all type when include is omitted', function () {
     expect(($this->fetch)([])->keys()->all())->toEqual(['Investment income']);
 });
 

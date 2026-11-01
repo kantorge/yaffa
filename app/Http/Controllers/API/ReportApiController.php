@@ -470,6 +470,8 @@ class ReportApiController extends Controller
         $categoryIdByBucket = [];
         // Transaction type values that contributed to each bucket, keyed by bucket label
         $transactionTypesByBucket = [];
+        // Display label for buckets whose key differs from it (trade buckets)
+        $labelByBucket = [];
         $standardBucketTypes = [TransactionTypeEnum::WITHDRAWAL->value, TransactionTypeEnum::DEPOSIT->value];
         $investmentBucketTypes = TransactionTypeEnum::investmentTypesWithAmountValues();
         $tradeBucketTypes = [
@@ -587,13 +589,16 @@ class ReportApiController extends Controller
                 ->whereBetween('date', [$rangeStart, $rangeEnd])
                 ->get();
 
-            $tradeTransactions->each(function ($transaction) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, $tradeBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
-                $category = $tradeBucketTypes[$transaction->transaction_type->value];
+            $tradeTransactions->each(function ($transaction) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, &$labelByBucket, $tradeBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
+                // Keyed separately from the displayed label, so a user category with the same
+                // name can never merge into (or take over the metadata of) a trade bucket.
+                $category = 'trade:' . $transaction->transaction_type->value;
 
                 if (!array_key_exists($category, $dataByCategory)) {
                     $dataByCategory[$category] = BigDecimal::zero();
                     $categoryIdByBucket[$category] = null;
                     $transactionTypesByBucket[$category] = [$transaction->transaction_type->value];
+                    $labelByBucket[$category] = $tradeBucketTypes[$transaction->transaction_type->value];
                 }
 
                 $rate = $this->getLatestRateFromMap(
@@ -623,7 +628,7 @@ class ReportApiController extends Controller
             // real JSON number, not a decimal string - the same chart-boundary rule Phase 3
             // established for the frontend (Decimal -> Number only at the amCharts feed).
             $result[] = [
-                'category' => $category,
+                'category' => $labelByBucket[$category] ?? $category,
                 'value' => $value->toFloat(),
                 'category_id' => $categoryIdByBucket[$category],
                 'transaction_types' => $transactionTypesByBucket[$category],

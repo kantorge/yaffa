@@ -12,7 +12,7 @@
         autocomplete="off"
         :checked="modelValue.includes(group.value)"
         :disabled="disabled"
-        @change="toggle(group.value)"
+        @change="toggle(group.value, $event)"
       />
       <label
         class="btn btn-sm btn-outline-primary"
@@ -56,14 +56,14 @@
       },
     },
     methods: {
-      toggle(value) {
+      toggle(value, event) {
         const selected = this.modelValue.includes(value)
           ? this.modelValue.filter((v) => v !== value)
           : [...this.modelValue, value];
 
-        // At least one group must stay selected; re-render to restore the checkbox
+        // At least one group must stay selected; put the checkbox back
         if (selected.length === 0) {
-          this.$forceUpdate();
+          event.target.checked = true;
           return;
         }
 
