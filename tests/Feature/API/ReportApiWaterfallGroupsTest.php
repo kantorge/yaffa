@@ -55,7 +55,22 @@ beforeEach(function () {
             'year' => 2025,
             'month' => 1,
         ] + $query))->assertOk()->json('chartData')
-    )->pluck('value', 'category');
+    )->pluck('value', 'label');
+});
+
+it('keeps a unique bucket key separate from the display label', function () {
+    $rows = collect(
+        $this->getJson(route('api.v1.reports.waterfall', [
+            'transactionType' => 'all',
+            'dataType' => 'result',
+            'year' => 2025,
+            'month' => 1,
+            'include' => ['trades'],
+        ]))->assertOk()->json('chartData')
+    );
+
+    expect($rows->pluck('category')->sort()->values()->all())->toEqual(['trade:buy', 'trade:sell'])
+        ->and($rows->pluck('label')->sort()->values()->all())->toEqual(['Investment purchases', 'Investment sales']);
 });
 
 it('returns separate purchase and sale buckets for the trades group', function () {

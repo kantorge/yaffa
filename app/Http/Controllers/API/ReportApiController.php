@@ -628,7 +628,8 @@ class ReportApiController extends Controller
             // real JSON number, not a decimal string - the same chart-boundary rule Phase 3
             // established for the frontend (Decimal -> Number only at the amCharts feed).
             $result[] = [
-                'category' => $labelByBucket[$category] ?? $category,
+                'category' => (string) $category,
+                'label' => $labelByBucket[$category] ?? (string) $category,
                 'value' => $value->toFloat(),
                 'category_id' => $categoryIdByBucket[$category],
                 'transaction_types' => $transactionTypesByBucket[$category],
