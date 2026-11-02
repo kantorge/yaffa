@@ -496,7 +496,8 @@ const INVESTMENT_TRADE_TYPES = ['buy', 'sell'];
  * @param {string[]} [options.tagIds] - Currently selected tag ids
  * @param {string[]} [options.include] - Groups to include: 'standard' (withdrawals and
  *   deposits), 'income' (dividend/interest), 'trades' (investment buy/sell, as two buckets)
- * @returns {Array<{category: string, value: number}>}
+ * @returns {Array<{category: string, label: string, value: number}>} `category` is a unique
+ *   bucket key (for the chart axis); `label` is the translated name to display
  */
 export function aggregateTransactionsForWaterfall(
   transactions,
@@ -533,8 +534,10 @@ export function aggregateTransactionsForWaterfall(
         const signed =
           transaction.transaction_type === 'withdrawal' ? -amount : amount;
 
-        dataByCategory[label] =
-          (dataByCategory[label] || 0) + (isFinite(signed) ? signed : 0);
+        const key = `category:${label}`;
+        labels[key] = label;
+        dataByCategory[key] =
+          (dataByCategory[key] || 0) + (isFinite(signed) ? signed : 0);
       });
     } else if (transaction.config_type === 'investment') {
       const isTrade = INVESTMENT_TRADE_TYPES.includes(
@@ -560,7 +563,9 @@ export function aggregateTransactionsForWaterfall(
             : 'Investment income',
       );
       // Trade buckets are keyed apart from category names so they never merge
-      const key = isTrade ? `trade:${transaction.transaction_type}` : label;
+      const key = isTrade
+        ? `trade:${transaction.transaction_type}`
+        : `investment:${label}`;
       labels[key] = label;
 
       dataByCategory[key] =
@@ -569,7 +574,8 @@ export function aggregateTransactionsForWaterfall(
   });
 
   return Object.entries(dataByCategory).map(([key, value]) => ({
-    category: labels[key] ?? key,
+    category: key,
+    label: labels[key],
     value,
   }));
 }

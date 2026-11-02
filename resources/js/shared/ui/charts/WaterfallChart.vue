@@ -123,6 +123,11 @@
           const labels = categoryAxis.renderer.labels.template;
           labels.truncate = true;
           labels.tooltipText = '{category}';
+          // The axis key is unique; show the row's display label instead
+          const toLabel = (text, target) =>
+            target.dataItem?.dataContext?.label ?? text;
+          labels.adapter.add('text', toLabel);
+          labels.adapter.add('tooltipText', toLabel);
           labels.interactionsEnabled = true;
           labels.focusable = true;
           labels.hoverOnFocus = true;
@@ -139,7 +144,7 @@
         columnSeries.fillOpacity = 0.8;
         columnSeries.sequencedInterpolation = true;
         columnSeries.interpolationDuration = 1500;
-        columnSeries.tooltipText = `[bold]{categoryX}[/]: {value}`;
+        columnSeries.tooltipText = `[bold]{label}[/]: {value}`;
 
         var columnTemplate = columnSeries.columns.template;
         columnTemplate.strokeOpacity = 0;

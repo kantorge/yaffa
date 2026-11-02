@@ -9,7 +9,9 @@ import * as am4core from '@amcharts/amcharts4/core';
  * Any additional fields present on the raw rows (e.g. category_ids, transaction_types)
  * are preserved on the returned rows.
  *
- * @param {Array<{category: string, value: number}>} rawData
+ * Rows may carry a unique `category` key plus a separate display `label` (defaults to `category`).
+ *
+ * @param {Array<{category: string, label?: string, value: number}>} rawData
  * @param {Object} [options]
  * @param {string|null} [options.resultLabel] - Label for the trailing summary bar; omit/null to skip it
  * @returns {Array<Object>} Chart-ready rows, each extended with open/stepValue/barValue/color/isResult
@@ -34,6 +36,7 @@ export function buildWaterfallChartData(rawData, options = {}) {
     })
     .map((row) => {
       const category = { ...row };
+      category.label = category.label ?? category.category;
       category.open = openHistory;
       category.stepValue = openHistory + category.value;
       category.barValue = openHistory + category.value;
@@ -50,6 +53,7 @@ export function buildWaterfallChartData(rawData, options = {}) {
   if (resultLabel && data.length > 1) {
     data.push({
       category: resultLabel,
+      label: resultLabel,
       open: 0,
       stepValue: 0,
       barValue: openHistory,
