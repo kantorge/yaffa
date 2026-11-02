@@ -422,6 +422,8 @@ export function processScheduledTransaction(transaction) {
       ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
     }
 
+    // Unadjusted rule for toText(): the last-day fix would read as "the 30th and last".
+    transaction.transaction_schedule.textRule = new RRule({ ...ruleOptions });
     transaction.transaction_schedule.rule = new RRule(
       applyLastDayOfMonthFix(ruleOptions),
     );
@@ -443,7 +445,7 @@ export function scheduleCadenceText(schedule) {
     return '';
   }
 
-  const { rule } = processScheduledTransaction({
+  const { textRule } = processScheduledTransaction({
     transaction_schedule: {
       start_date: parseIsoDate(schedule.start_date),
       frequency: schedule.frequency,
@@ -456,7 +458,7 @@ export function scheduleCadenceText(schedule) {
     },
   }).transaction_schedule;
 
-  return rule.toText();
+  return textRule.toText();
 }
 
 /**
