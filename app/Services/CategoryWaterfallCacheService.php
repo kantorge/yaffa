@@ -40,12 +40,12 @@ class CategoryWaterfallCacheService
      * The payload contains translated bucket labels, so the locale is part of the key.
      * Defaults to the current application locale.
      */
-    public static function key(int $userId, string $groups, string $dataType, int $year, ?int $month, ?string $locale = null): string
+    public static function key(int $userId, string $groups, string $dataType, int $year, ?int $month, ?string $locale = null, ?int $version = null): string
     {
         return sprintf(
             'categoryWaterfall_v2_user_%d_ver_%d_%s_%s_%s_%d_%s',
             $userId,
-            self::version($userId),
+            $version ?? self::version($userId),
             $locale ?? app()->getLocale(),
             $groups,
             $dataType,
@@ -96,6 +96,10 @@ class CategoryWaterfallCacheService
             return;
         }
 
+        $version = self::version($userId);
+        $locales = array_keys(config('app.available_languages'));
+        $keys = [];
+
         // Every non-empty subset of GROUPS (bitmask 1..2^n-1)
         $count = count(self::GROUPS);
         for ($mask = 1; $mask < (1 << $count); $mask++) {
@@ -108,11 +112,13 @@ class CategoryWaterfallCacheService
             $groups = self::normalizeGroups($groups);
 
             foreach (self::DATA_TYPES as $dataType) {
-                foreach (array_keys(config('app.available_languages')) as $locale) {
-                    Cache::forget(self::key($userId, $groups, $dataType, $date->year, null, $locale));
-                    Cache::forget(self::key($userId, $groups, $dataType, $date->year, $date->month, $locale));
+                foreach ($locales as $locale) {
+                    $keys[] = self::key($userId, $groups, $dataType, $date->year, null, $locale, $version);
+                    $keys[] = self::key($userId, $groups, $dataType, $date->year, $date->month, $locale, $version);
                 }
             }
         }
+
+        Cache::deleteMultiple($keys);
     }
 }
