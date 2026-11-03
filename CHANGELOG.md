@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.5.0](https://github.com/kantorge/yaffa/compare/v4.4.0...v4.5.0) (2026-11-03)
+
+
+### 🛠️ Chores
+
+* gemini ai model deprecations ([c604a82](https://github.com/kantorge/yaffa/commit/c604a822b771d2775894a07fe11eb7b97c566d35))
+* gemini ai model deprecations ([feba81b](https://github.com/kantorge/yaffa/commit/feba81b3c15cb2bdbd717ad49d659c094240b0ca))
+
+
+### ✨ Features
+
+* category waterfall group toggles with investment buy/sell bars ([#588](https://github.com/kantorge/yaffa/issues/588)) ([26c68e7](https://github.com/kantorge/yaffa/commit/26c68e7bc1cb9cff8a7b76acc9cda4627ace1cff))
+
+
+### 🐛 Bug Fixes
+
+* add missing currency label to monthly breakdown report ([4e84cb9](https://github.com/kantorge/yaffa/commit/4e84cb91c2bfc2b7ae3db2ff70c55511aa5333ca))
+* monthly schedule month-end date handling ([#591](https://github.com/kantorge/yaffa/issues/591)) ([40ad6ec](https://github.com/kantorge/yaffa/commit/40ad6ec37434f5be5e3adb5bd7fb16038fb77b26))
+* row coloring for skipped transaction instances ([1f26245](https://github.com/kantorge/yaffa/commit/1f2624532a1113ec2cfb7955550d12f21405b20b))
+* schedule pattern summary ([#592](https://github.com/kantorge/yaffa/issues/592)) ([50fc1f6](https://github.com/kantorge/yaffa/commit/50fc1f6c467f5263eb3e833f326d8ae3d2bf17fe))
+
 ## [4.4.0](https://github.com/kantorge/yaffa/compare/v4.3.0...v4.4.0) (2026-10-31)
 
 
