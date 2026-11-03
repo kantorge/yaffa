@@ -548,9 +548,7 @@ class ReportApiController extends Controller
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, &$categoryIdByBucket, &$transactionTypesByBucket, $investmentBucketTypes, &$currenciesWithMissingRates, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = ($transaction->transaction_type->amountMultiplier() === 1
-                    ? __('Investment income')
-                    : __('Investment payment'));
+                $category = __('Investment income');
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {

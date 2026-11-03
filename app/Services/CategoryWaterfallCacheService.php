@@ -36,12 +36,17 @@ class CategoryWaterfallCacheService
         return implode(',', $groups);
     }
 
-    public static function key(int $userId, string $groups, string $dataType, int $year, ?int $month): string
+    /**
+     * The payload contains translated bucket labels, so the locale is part of the key.
+     * Defaults to the current application locale.
+     */
+    public static function key(int $userId, string $groups, string $dataType, int $year, ?int $month, ?string $locale = null): string
     {
         return sprintf(
-            'categoryWaterfall_v1_user_%d_ver_%d_%s_%s_%d_%s',
+            'categoryWaterfall_v2_user_%d_ver_%d_%s_%s_%s_%d_%s',
             $userId,
             self::version($userId),
+            $locale ?? app()->getLocale(),
             $groups,
             $dataType,
             $year,
@@ -103,8 +108,10 @@ class CategoryWaterfallCacheService
             $groups = self::normalizeGroups($groups);
 
             foreach (self::DATA_TYPES as $dataType) {
-                Cache::forget(self::key($userId, $groups, $dataType, $date->year, null));
-                Cache::forget(self::key($userId, $groups, $dataType, $date->year, $date->month));
+                foreach (array_keys(config('app.available_languages')) as $locale) {
+                    Cache::forget(self::key($userId, $groups, $dataType, $date->year, null, $locale));
+                    Cache::forget(self::key($userId, $groups, $dataType, $date->year, $date->month, $locale));
+                }
             }
         }
     }

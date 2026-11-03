@@ -558,9 +558,7 @@ export function aggregateTransactionsForWaterfall(
           ? transaction.transaction_type === 'buy'
             ? 'Investment purchases'
             : 'Investment sales'
-          : amount < 0
-            ? 'Investment payment'
-            : 'Investment income',
+          : 'Investment income',
       );
       // Trade buckets are keyed apart from category names so they never merge
       const key = isTrade
