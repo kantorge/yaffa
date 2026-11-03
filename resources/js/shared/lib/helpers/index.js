@@ -410,6 +410,7 @@ export function processScheduledTransaction(transaction) {
       freq: RRule[schedule.frequency],
       interval: schedule.interval,
       until: toRRuleDate(schedule.end_date),
+      count: schedule.count || null,
       bymonth: byMonth,
     };
 
@@ -451,6 +452,7 @@ export function scheduleCadenceText(schedule) {
       frequency: schedule.frequency,
       interval: schedule.interval,
       end_date: parseIsoDate(schedule.end_date),
+      count: schedule.count,
       by_day: schedule.by_day,
       by_month: schedule.by_month,
       days_before_month_end: schedule.days_before_month_end,
