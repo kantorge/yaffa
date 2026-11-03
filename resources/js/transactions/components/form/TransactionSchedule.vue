@@ -480,6 +480,7 @@
   import { RRule } from 'rrule';
   import { __ } from '@/shared/lib/i18n';
   import {
+    applyLastDayOfMonthFix,
     byDayToRRuleWeekday,
     businessDayWeekdays,
     toDateInputValue,
@@ -836,7 +837,7 @@
         }
 
         try {
-          return new RRule(ruleOptions);
+          return new RRule(applyLastDayOfMonthFix(ruleOptions));
         } catch {
           return null;
         }
