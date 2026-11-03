@@ -365,7 +365,7 @@
       return {
         showPercentages: false,
         granularity: null, // null = auto
-        baseCurrency: window.YAFFA.baseCurrency,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
         locale: window.YAFFA.userSettings.locale,
         cachedCategoryData: null,
       };
@@ -670,7 +670,7 @@
           isIncome === null ? value : isIncome ? value : -value;
         const sign = normalized > 0 ? '+' : '-';
         return `${sign} ${toFormattedCurrency(
-          round2(Math.abs(normalized)),
+          Math.abs(normalized),
           this.locale,
           this.baseCurrency,
         )}`;
@@ -694,7 +694,7 @@
 
         const sign = normalized > 0 ? '+' : '-';
         return `${sign} ${toFormattedCurrency(
-          round2(Math.abs(normalized)),
+          Math.abs(normalized),
           this.locale,
           this.baseCurrency,
         )}`;

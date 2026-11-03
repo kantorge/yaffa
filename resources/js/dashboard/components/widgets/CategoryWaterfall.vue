@@ -49,65 +49,11 @@
       ></waterfall-chart>
     </div>
     <div class="card-footer text-end">
-      <div
-        class="btn-group"
-        role="group"
-        aria-label="Transaction type selector for category waterfall chart"
-      >
-        <input
-          id="waterfallTransactionCategory_All"
-          v-model="transactionTypeData"
-          type="radio"
-          class="btn-check"
-          name="waterfallTransactionCategory"
-          value="all"
-          autocomplete="off"
-          :disabled="busy"
-          @change="refreshData"
-        />
-        <label
-          class="btn btn-sm btn-outline-primary"
-          for="waterfallTransactionCategory_All"
-        >
-          {{ __('widget.categoryWaterfall.allTransactions') }}</label
-        >
-
-        <input
-          id="waterfallTransactionCategory_Standard"
-          v-model="transactionTypeData"
-          type="radio"
-          class="btn-check"
-          name="waterfallTransactionCategory"
-          value="standard"
-          autocomplete="off"
-          :disabled="busy"
-          @change="refreshData"
-        />
-        <label
-          class="btn btn-sm btn-outline-primary"
-          for="waterfallTransactionCategory_Standard"
-        >
-          {{ __('widget.categoryWaterfall.withoutInvestment') }}
-        </label>
-
-        <input
-          id="waterfallTransactionCategory_Investment"
-          v-model="transactionTypeData"
-          type="radio"
-          class="btn-check"
-          name="waterfallTransactionCategory"
-          value="investment"
-          autocomplete="off"
-          :disabled="busy"
-          @change="refreshData"
-        />
-        <label
-          class="btn btn-sm btn-outline-primary"
-          for="waterfallTransactionCategory_Investment"
-        >
-          {{ __('widget.categoryWaterfall.onlyInvestment') }}
-        </label>
-      </div>
+      <waterfall-group-toggles
+        v-model="include"
+        :disabled="busy"
+        @update:model-value="refreshData"
+      ></waterfall-group-toggles>
     </div>
   </div>
 </template>
@@ -117,6 +63,7 @@
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import WaterfallChart from '@/shared/ui/charts/WaterfallChart.vue';
+  import WaterfallGroupToggles from '@/shared/ui/charts/WaterfallGroupToggles.vue';
 
   function formatDate(date) {
     const y = date.getFullYear();
@@ -128,15 +75,17 @@
   export default {
     components: {
       'waterfall-chart': WaterfallChart,
+      'waterfall-group-toggles': WaterfallGroupToggles,
     },
     props: {
       categoryAxisVisible: {
         type: Boolean,
         default: false,
       },
-      transactionType: {
-        type: String,
-        default: 'all',
+      // Initially selected waterfall groups: 'standard', 'income', 'trades'
+      initialInclude: {
+        type: Array,
+        default: () => ['standard', 'income', 'trades'],
       },
     },
     data() {
@@ -150,7 +99,7 @@
         missingRateCurrencies: [],
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
-        transactionTypeData: this.transactionType,
+        include: [...this.initialInclude],
         ready: false,
       };
     },
@@ -223,13 +172,11 @@
         this.busy = true;
         this.ready = false;
 
-        let url =
-          '/api/v1/reports/waterfall/' +
-          this.transactionTypeData +
-          '/result/' +
-          this.year +
-          '/' +
-          this.month;
+        // The path's transaction type is legacy and ignored when `include` is given
+        const query = this.include
+          .map((group) => `include[]=${encodeURIComponent(group)}`)
+          .join('&');
+        let url = `/api/v1/reports/waterfall/all/result/${this.year}/${this.month}?${query}`;
         let options = {
           method: 'GET',
           headers: {

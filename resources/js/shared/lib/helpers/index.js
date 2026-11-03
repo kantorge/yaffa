@@ -370,6 +370,25 @@ export function scheduleStartDateParts(value) {
 // builder below and TransactionSchedule.vue's pattern picker agree on the exact set.
 export const businessDayWeekdays = ['MO', 'TU', 'WE', 'TH', 'FR'];
 
+// Mirrors the backend's Recurr "last day of month fix" (RecurrenceRuleService): a plain monthly
+// rule starting on the 29th-31st clamps to the last day of shorter months, which rrule.js would
+// otherwise skip. Adding -1 and keeping only the first match of the month gives the same dates.
+// Mutates and returns the rrule.js options; patterned rules (own bymonthday/byweekday) are untouched.
+export function applyLastDayOfMonthFix(ruleOptions) {
+  const startDay = ruleOptions.dtstart?.getUTCDate();
+  if (
+    ruleOptions.freq === RRule.MONTHLY &&
+    startDay > 28 &&
+    !ruleOptions.bymonthday &&
+    !ruleOptions.byweekday
+  ) {
+    ruleOptions.bymonthday = [startDay, -1];
+    ruleOptions.bysetpos = 1;
+  }
+
+  return ruleOptions;
+}
+
 export function processScheduledTransaction(transaction) {
   if (transaction.transaction_schedule) {
     const schedule = transaction.transaction_schedule;
@@ -391,6 +410,7 @@ export function processScheduledTransaction(transaction) {
       freq: RRule[schedule.frequency],
       interval: schedule.interval,
       until: toRRuleDate(schedule.end_date),
+      count: schedule.count || null,
       bymonth: byMonth,
     };
 
@@ -403,7 +423,11 @@ export function processScheduledTransaction(transaction) {
       ruleOptions.byweekday = byDayToRRuleWeekday(schedule.by_day);
     }
 
-    transaction.transaction_schedule.rule = new RRule(ruleOptions);
+    // Unadjusted rule for toText(): the last-day fix would read as "the 30th and last".
+    transaction.transaction_schedule.textRule = new RRule({ ...ruleOptions });
+    transaction.transaction_schedule.rule = new RRule(
+      applyLastDayOfMonthFix(ruleOptions),
+    );
   }
 
   return transaction;
@@ -422,12 +446,13 @@ export function scheduleCadenceText(schedule) {
     return '';
   }
 
-  const { rule } = processScheduledTransaction({
+  const { textRule } = processScheduledTransaction({
     transaction_schedule: {
       start_date: parseIsoDate(schedule.start_date),
       frequency: schedule.frequency,
       interval: schedule.interval,
       end_date: parseIsoDate(schedule.end_date),
+      count: schedule.count,
       by_day: schedule.by_day,
       by_month: schedule.by_month,
       days_before_month_end: schedule.days_before_month_end,
@@ -435,7 +460,7 @@ export function scheduleCadenceText(schedule) {
     },
   }).transaction_schedule;
 
-  return rule.toText();
+  return textRule.toText();
 }
 
 /**

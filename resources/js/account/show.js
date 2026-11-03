@@ -317,7 +317,8 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
     },
   ],
   /**
-   * Callback for every row created: colorize the next date.
+   * Callback for every row draw: colorize the row by next date.
+   * Runs on each draw (unlike createdRow), so classes stay correct after a row's data changes.
    *
    * @param {Node} row
    * @param {Object} data
@@ -325,8 +326,8 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
    * @property {Date} data.transaction_schedule.next_date
    * @returns {void}
    */
-  createdRow: function (row, data) {
-    $(row).attr('data-id', data.id);
+  rowCallback: function (row, data) {
+    const $row = $(row).removeClass('table-danger table-warning');
 
     // This data is required, but just to be on the safe side, let's validate it
     if (data.transaction_schedule.next_date) {
@@ -334,14 +335,24 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         data.transaction_schedule.next_date <
         new Date(new Date().setHours(0, 0, 0, 0))
       ) {
-        $(row).addClass('table-danger');
+        $row.addClass('table-danger');
       } else if (
         data.transaction_schedule.next_date <
         new Date(new Date().setHours(24, 0, 0, 0))
       ) {
-        $(row).addClass('table-warning');
+        $row.addClass('table-warning');
       }
     }
+  },
+  /**
+   * Callback for every row created: row and column specific formatting.
+   *
+   * @param {Node} row
+   * @param {Object} data
+   * @returns {void}
+   */
+  createdRow: function (row, data) {
+    $(row).attr('data-id', data.id);
 
     // Color coding for the amount column
     if (data.current_cash_flow > 0) {
