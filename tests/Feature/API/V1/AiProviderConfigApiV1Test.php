@@ -149,22 +149,22 @@ class AiProviderConfigApiV1Test extends TestCase
         $config = AiProviderConfig::factory()->create([
             'user_id' => $this->user->id,
             'provider' => 'gemini',
-            'model' => 'gemini-2.5-pro',
+            'model' => 'gemini-3.6-flash',
         ]);
 
         $response = $this->actingAs($this->user)
             ->patchJson(route('api.v1.ai.config.update', $config), [
                 'provider' => 'gemini',
-                'model' => 'gemini-2.5-pro',
+                'model' => 'gemini-3.6-flash',
             ]);
 
         $response->assertOk()
-            ->assertJson(['provider' => 'gemini', 'model' => 'gemini-2.5-pro']);
+            ->assertJson(['provider' => 'gemini', 'model' => 'gemini-3.6-flash']);
 
         $this->assertDatabaseHas('ai_provider_configs', [
             'id' => $config->id,
             'provider' => 'gemini',
-            'model' => 'gemini-2.5-pro',
+            'model' => 'gemini-3.6-flash',
         ]);
     }
 

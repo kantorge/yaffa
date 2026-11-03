@@ -59,7 +59,7 @@ class AiProviderConfigApiControllerTest extends TestCase
             route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]),
             [
                 'provider' => 'gemini',
-                'model' => 'gemini-2.5-flash',
+                'model' => 'gemini-3.6-flash',
             ]
         );
         // Unauthenticated requests return 403 when authorization check fails
@@ -100,7 +100,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
-                'model' => 'gemini-2.5-flash',
+                'model' => 'gemini-3.6-flash',
             ]);
 
         // Should not find the resource since it's not the user's
@@ -244,19 +244,19 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response = $this
             ->patchJson(route('api.v1.ai.config.update', ['aiProviderConfig' => $config->id]), [
                 'provider' => 'gemini',
-                'model' => 'gemini-2.5-flash',
+                'model' => 'gemini-3.6-flash',
                 'api_key' => '',
             ]);
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([
             'provider' => 'gemini',
-            'model' => 'gemini-2.5-flash',
+            'model' => 'gemini-3.6-flash',
         ]);
 
         $config->refresh();
         $this->assertEquals('gemini', $config->provider);
-        $this->assertEquals('gemini-2.5-flash', $config->model);
+        $this->assertEquals('gemini-3.6-flash', $config->model);
     }
 
     public function test_update_changes_vision_enabled(): void

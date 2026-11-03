@@ -29,8 +29,8 @@ beforeEach(function () {
 function markGeminiProUnsupported(): void
 {
     config(['ai-documents.providers.gemini.models' => [
-        'gemini-2.5-flash' => ['vision' => true, 'supported' => true],
-        'gemini-2.5-pro' => ['vision' => true, 'supported' => false],
+        'gemini-3.5-flash-lite' => ['vision' => true, 'supported' => true],
+        'gemini-3.6-flash' => ['vision' => true, 'supported' => false],
     ]]);
 }
 
@@ -57,7 +57,7 @@ it('rejects creating a config with an unsupported model', function () use ($vali
     $this->postJson(route('api.v1.ai.config.store'), [
         ...$validCreatePayload,
         'provider' => 'gemini',
-        'model' => 'gemini-2.5-pro',
+        'model' => 'gemini-3.6-flash',
     ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['model']);
@@ -115,12 +115,12 @@ it('allows keeping an existing unsupported model on update', function () {
     $config = AiProviderConfig::factory()->create([
         'user_id' => $this->user->id,
         'provider' => 'gemini',
-        'model' => 'gemini-2.5-pro',
+        'model' => 'gemini-3.6-flash',
     ]);
 
     $this->patchJson(route('api.v1.ai.config.update', $config), [
         'provider' => 'gemini',
-        'model' => 'gemini-2.5-pro',
+        'model' => 'gemini-3.6-flash',
     ])->assertOk();
 });
 
@@ -130,17 +130,17 @@ it('rejects switching to an unsupported model on update', function () {
     $config = AiProviderConfig::factory()->create([
         'user_id' => $this->user->id,
         'provider' => 'gemini',
-        'model' => 'gemini-2.5-flash',
+        'model' => 'gemini-3.6-flash',
     ]);
 
     $this->patchJson(route('api.v1.ai.config.update', $config), [
         'provider' => 'gemini',
-        'model' => 'gemini-2.5-pro',
+        'model' => 'gemini-3.6-pro',
     ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['model']);
 
-    expect($config->refresh()->model)->toBe('gemini-2.5-flash');
+    expect($config->refresh()->model)->toBe('gemini-3.6-flash');
 });
 
 // ===== TEST CONNECTION (POST /api/v1/ai/test) =====
