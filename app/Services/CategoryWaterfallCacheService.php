@@ -12,16 +12,42 @@ use Illuminate\Support\Facades\Cache;
  */
 class CategoryWaterfallCacheService
 {
-    private const array TRANSACTION_TYPES = ['standard', 'investment', 'all'];
+    /** Selectable waterfall groups; the cache key embeds the normalized (sorted) selection. */
+    public const array GROUPS = ['income', 'standard', 'trades'];
+
+    /** Groups behind the legacy {transactionType} route segment, kept for existing API consumers. */
+    public const array LEGACY_TYPE_GROUPS = [
+        'standard' => ['standard'],
+        'investment' => ['income'],
+        'all' => ['standard', 'income'],
+    ];
+
     private const array DATA_TYPES = ['budget', 'result', 'all'];
 
-    public static function key(int $userId, string $transactionType, string $dataType, int $year, ?int $month): string
+    /**
+     * @param  array<int, string>  $groups
+     * @return string Sorted, de-duplicated, comma-joined groups
+     */
+    public static function normalizeGroups(array $groups): string
+    {
+        $groups = array_values(array_unique($groups));
+        sort($groups);
+
+        return implode(',', $groups);
+    }
+
+    /**
+     * The payload contains translated bucket labels, so the locale is part of the key.
+     * Defaults to the current application locale.
+     */
+    public static function key(int $userId, string $groups, string $dataType, int $year, ?int $month, ?string $locale = null, ?int $version = null): string
     {
         return sprintf(
-            'categoryWaterfall_v1_user_%d_ver_%d_%s_%s_%d_%s',
+            'categoryWaterfall_v2_user_%d_ver_%d_%s_%s_%s_%d_%s',
             $userId,
-            self::version($userId),
-            $transactionType,
+            $version ?? self::version($userId),
+            $locale ?? app()->getLocale(),
+            $groups,
             $dataType,
             $year,
             $month ?? 'all'
@@ -57,7 +83,7 @@ class CategoryWaterfallCacheService
     }
 
     /**
-     * Forget every transactionType/dataType cache entry (both the year-only and the
+     * Forget every group-selection/dataType cache entry (both the year-only and the
      * year+month entry) covering the given transaction date.
      *
      * $date is null for schedule template transactions (Transaction::date is cleared
@@ -70,11 +96,29 @@ class CategoryWaterfallCacheService
             return;
         }
 
-        foreach (self::TRANSACTION_TYPES as $transactionType) {
+        $version = self::version($userId);
+        $locales = array_keys(config('app.available_languages'));
+        $keys = [];
+
+        // Every non-empty subset of GROUPS (bitmask 1..2^n-1)
+        $count = count(self::GROUPS);
+        for ($mask = 1; $mask < (1 << $count); $mask++) {
+            $groups = [];
+            foreach (self::GROUPS as $i => $group) {
+                if ($mask & (1 << $i)) {
+                    $groups[] = $group;
+                }
+            }
+            $groups = self::normalizeGroups($groups);
+
             foreach (self::DATA_TYPES as $dataType) {
-                Cache::forget(self::key($userId, $transactionType, $dataType, $date->year, null));
-                Cache::forget(self::key($userId, $transactionType, $dataType, $date->year, $date->month));
+                foreach ($locales as $locale) {
+                    $keys[] = self::key($userId, $groups, $dataType, $date->year, null, $locale, $version);
+                    $keys[] = self::key($userId, $groups, $dataType, $date->year, $date->month, $locale, $version);
+                }
             }
         }
+
+        Cache::deleteMultiple($keys);
     }
 }
