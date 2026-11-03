@@ -29,6 +29,7 @@ return [
                     'vision' => true,
                     'supported' => false,
                 ],
+                // Currently supported OpenAI models
                 'gpt-5.6-luna' => [
                     'vision' => true,
                     'supported' => true,
@@ -43,14 +44,16 @@ return [
             'name' => 'Google Gemini',
             'supported' => true,
             'models' => [
+                // DEPRECATED: Gemini 2.5 Flash and 2.5 Pro will be deprecated and auto-redirected on December 1, 2026
                 'gemini-2.5-flash' => [
                     'vision' => true,
-                    'supported' => true,
+                    'supported' => false,
                 ],
                 'gemini-2.5-pro' => [
                     'vision' => true,
-                    'supported' => true,
+                    'supported' => false,
                 ],
+                // Currently supported Gemini models
                 'gemini-3.5-flash-lite' => [
                     'vision' => true,
                     'supported' => true,
