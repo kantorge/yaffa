@@ -123,6 +123,34 @@ class SameEventClassifier
     }
 
     /**
+     * The other documents waiting for itemization that repeat the held document the (itemized) document merges
+     * into, e.g. a notification received twice. A receipt carries no time or bank reference, so it cannot tell
+     * two payments of the same payee and amount apart: an extra document only counts when it shares a hash,
+     * reference or time with the held one, otherwise it stays open for review.
+     *
+     * @return Collection<int, AiDocument>
+     */
+    public function heldSameEventDocuments(AiDocument $document, AiDocument $held): Collection
+    {
+        $key = $this->keyFromDocument($document);
+
+        if ($key === null) {
+            return collect();
+        }
+
+        $windowMinutes = (int) $this->settingsResolver->resolveForUser($document->user)['same_event_minutes'];
+        $incoming = $this->signals($document);
+        $heldSignals = $this->signals($held);
+
+        return $this->openDocumentMatches($document->user, $key, $document->id)
+            ->filter(fn (AiDocument $other) => $other->id !== $held->id
+                && $other->status === AiDocumentStatus::AwaitingItemization->value
+                && $this->pairVerdict($incoming, $this->signals($other), false, $windowMinutes) === 'same'
+                && $this->pairVerdict($heldSignals, $this->signals($other), false, $windowMinutes) === 'same')
+            ->values();
+    }
+
+    /**
      * The matching key of a manual entry, or null when it cannot be matched (transfers and investments,
      * a missing payee or account, a non-positive amount).
      *

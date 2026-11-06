@@ -164,6 +164,36 @@ it('holds a summary for a payee that expects itemization, and records the merged
         ->and($link->origin_id)->toBe($notification->id);
 });
 
+it('closes every notification of the purchase that waits for the arriving receipt', function () {
+    ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
+
+    $first = ($this->notification)(['bank_reference' => 'REF-1']);
+    $second = ($this->notification)(['bank_reference' => 'REF-1']);
+    $second->update(['status' => 'awaiting_itemization']);
+
+    $receipt = ($this->receipt)();
+
+    expect($receipt->status)->toBe('auto_recorded')
+        ->and($first->fresh()->status)->toBe('duplicate')
+        ->and($second->fresh()->status)->toBe('duplicate')
+        ->and(TransactionOrigin::query()->where('relation', 'duplicate_of')->count())->toBe(2);
+});
+
+it('leaves a notification of a separate payment with the same payee and amount waiting', function () {
+    ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
+
+    $first = ($this->notification)(['bank_reference' => 'REF-1']);
+    $second = ($this->notification)(['bank_reference' => 'REF-2']);
+    $second->update(['status' => 'awaiting_itemization']);
+
+    $receipt = ($this->receipt)();
+
+    // The ambiguous second notification is not closed; the duplicates gate sends the receipt to a person
+    expect($receipt->status)->toBe('ready_for_review')
+        ->and($first->fresh()->status)->toBe('duplicate')
+        ->and($second->fresh()->status)->toBe('awaiting_itemization');
+});
+
 it('moves a held document to review only after the timeout', function () {
     ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
     $young = ($this->notification)();
