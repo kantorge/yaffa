@@ -270,7 +270,7 @@
                       !visibleSchedules(draft).length &&
                       !visibleAiDocuments(draft).length
                     "
-                    class="text-muted"
+                    class="not-set"
                     >—</span
                   >
                 </td>
@@ -323,7 +323,10 @@
                               {{ key }}
                             </th>
                             <td>
-                              {{ val !== null && val !== '' ? val : '—' }}
+                              <template v-if="val !== null && val !== ''">{{
+                                val
+                              }}</template>
+                              <span v-else class="not-set">—</span>
                             </td>
                           </tr>
                         </tbody>
@@ -354,14 +357,17 @@
                               {{ field.label }}
                             </td>
                             <td>
-                              {{ field.value || '—' }}
+                              <template v-if="field.value">{{
+                                field.value
+                              }}</template>
+                              <span v-else class="not-set">—</span>
                             </td>
                           </tr>
                         </tbody>
                       </table>
                       <!-- Fallback -->
                       <pre v-else class="mb-0 small text-wrap">{{
-                        draft.raw_entry || __('Not available')
+                        draft.raw_entry || __('Not set')
                       }}</pre>
 
                       <!-- Warnings -->

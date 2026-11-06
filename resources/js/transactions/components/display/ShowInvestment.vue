@@ -63,7 +63,7 @@
                 {{ __('Comment') }}
               </dt>
               <dd class="col-6" :class="transaction.comment ? '' : 'not-set'">
-                {{ transaction.comment || 'Not set' }}
+                {{ transaction.comment || __('Not set') }}
               </dd>
 
               <dt class="col-6">

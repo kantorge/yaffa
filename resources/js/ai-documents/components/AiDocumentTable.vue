@@ -168,7 +168,7 @@
 
   const toDisplayDate = (isoDate) => {
     if (!isoDate) {
-      return __('Not available');
+      return __('Not set');
     }
 
     return toFormattedDate(
@@ -223,9 +223,7 @@
     allowLink = true,
   }) => {
     if (matchedEntity?.matched) {
-      const name = escapeHtml(
-        matchedEntity?.name || rawValue || __('Not available'),
-      );
+      const name = escapeHtml(matchedEntity?.name || rawValue || __('Not set'));
       const hint = renderMatchHint({ isMatched: true });
 
       if (allowLink && matchedEntity.url) {
@@ -237,7 +235,7 @@
     }
 
     if (isUnidentified(rawValue)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawValue)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -260,7 +258,7 @@
     }
 
     if (!isStandardDocument(row) || isTransferDocument(row)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     const rawData = getRawData(row);
@@ -270,7 +268,7 @@
     // If matched entity exists with matched flag
     if (matchedPayee?.matched) {
       const name = escapeHtml(
-        matchedPayee?.name || rawData?.payee || __('Not available'),
+        matchedPayee?.name || rawData?.payee || __('Not set'),
       );
       const hint = renderMatchHint({ isMatched: true });
 
@@ -282,9 +280,9 @@
       return `<span>${name}</span>${hint}`;
     }
 
-    // No match - fall back to raw value or "Not available"
+    // No match - fall back to raw value or "Not set"
     if (isUnidentified(rawData?.payee)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawData.payee)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -306,11 +304,11 @@
     }
 
     if (!isStandardDocument(row)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     if (isUnidentified(row.detected_amount_search)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     const locale = window.YAFFA.userSettings.locale;
@@ -846,7 +844,7 @@
             const transactionId = getLinkedTransactionId(row);
 
             if (!transactionId) {
-              return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+              return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
             }
 
             // The shared 'busy' class (set by initializeQuickViewButton) reveals the spinner

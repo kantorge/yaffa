@@ -51,7 +51,7 @@
               >
                 {{ linkedTransactionId }}
               </a>
-              <span v-else class="text-muted">{{ __('Not available') }}</span>
+              <span v-else class="not-set">{{ __('Not set') }}</span>
             </dd>
           </dl>
         </div>
@@ -564,7 +564,7 @@
                 v-else-if="linkedTransaction?.config_type === 'investment'"
                 :transaction="linkedTransaction"
               />
-              <div v-else class="text-muted">{{ __('Not available') }}</div>
+              <div v-else class="not-set">{{ __('Not set') }}</div>
               <div
                 v-if="
                   linkedTransaction?.id &&

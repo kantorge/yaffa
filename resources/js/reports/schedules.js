@@ -64,11 +64,11 @@ function normalizeRow(row) {
 // Payee/next date/amount rendering for a Budget row: a Budget has no config relation (no
 // account_from/to, no amount_to) and no next_date (Non-Goals - no "enter/skip instance"
 // workflow for a Budget), so these columns can't go through the shared
-// transactionColumnDefinition renderers as-is. Both cells show plain 'N/A' text (muted/italic
+// transactionColumnDefinition renderers as-is. Both cells show plain 'Not set' text (muted/italic
 // via createdRow below), matching the existing convention for an empty category cell.
 function budgetAwarePayee(data, type, row) {
   if (row.row_type === 'budget') {
-    return __('N/A');
+    return __('Not set');
   }
 
   return dataTableHelpers.transactionColumnDefinition.payee.render(
@@ -87,7 +87,7 @@ const nextDateColumnDefinition =
 
 function budgetAwareNextDate(data, type, row) {
   if (row.row_type === 'budget' && type === 'display') {
-    return __('N/A');
+    return __('Not set');
   }
 
   return nextDateColumnDefinition.render(data, type, row);
@@ -292,7 +292,7 @@ let table = $(tableSelector).DataTable({
       $('td', row).eq(7).addClass('not-set');
     }
 
-    // Mute the 'N/A' next date/payee cells on a Budget row - neither column applies to it.
+    // Mute the 'Not set' next date/payee cells on a Budget row - neither column applies to it.
     if (data.row_type === 'budget') {
       $('td', row).eq(2).addClass('not-set');
       $('td', row).eq(6).addClass('not-set');

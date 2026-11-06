@@ -236,7 +236,7 @@
           const accountName = transaction.config?.account?.name;
           const quantity = transaction.config?.quantity;
 
-          let label = `${this.__(typeConfig.label)}: ${investmentName || this.__('N/A')}`;
+          let label = `${this.__(typeConfig.label)}: ${investmentName || this.__('Not set')}`;
 
           if (accountName) {
             label += `\n${this.__('Account')}: ${accountName}`;

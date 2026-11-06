@@ -26,7 +26,7 @@
           >
             {{ category.parent.name }}
           </a>
-          <span v-else class="text-muted">{{ __('Not set') }}</span>
+          <span v-else class="not-set">{{ __('Not set') }}</span>
         </dd>
 
         <template v-if="category.children.length > 0">
