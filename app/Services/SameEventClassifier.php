@@ -123,6 +123,29 @@ class SameEventClassifier
     }
 
     /**
+     * Every document waiting for itemization that describes the same purchase as the (itemized) document,
+     * e.g. several notifications of one purchase that all wait for the receipt.
+     *
+     * @return Collection<int, AiDocument>
+     */
+    public function heldSameEventDocuments(AiDocument $document): Collection
+    {
+        $key = $this->keyFromDocument($document);
+
+        if ($key === null) {
+            return collect();
+        }
+
+        $windowMinutes = (int) $this->settingsResolver->resolveForUser($document->user)['same_event_minutes'];
+        $incoming = $this->signals($document);
+
+        return $this->openDocumentMatches($document->user, $key, $document->id)
+            ->filter(fn (AiDocument $other) => $other->status === AiDocumentStatus::AwaitingItemization->value
+                && $this->pairVerdict($incoming, $this->signals($other), false, $windowMinutes) === 'same')
+            ->values();
+    }
+
+    /**
      * The matching key of a manual entry, or null when it cannot be matched (transfers and investments,
      * a missing payee or account, a non-positive amount).
      *

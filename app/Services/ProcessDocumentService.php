@@ -21,6 +21,7 @@ use App\Services\AutoRecord\GateEvaluator;
 use App\Services\AutoRecord\GateResult;
 use Exception;
 use Brick\Math\BigDecimal;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -229,7 +230,7 @@ class ProcessDocumentService
                     SameEventOutcome::ExactRepeat => $document->transitionTo(AiDocumentStatus::Duplicate),
                     SameEventOutcome::SameEventTransaction => $this->closeOrFlagConflict($document, $result->transaction),
                     SameEventOutcome::SameEventDocument => $document->isItemized() && $result->document->status === AiDocumentStatus::AwaitingItemization->value
-                        ? $this->mergeIntoHeldDocument($document, $result->document)
+                        ? $this->mergeIntoHeldDocument($document, $result->document, $this->sameEventClassifier->heldSameEventDocuments($document))
                         : $document->transitionTo(AiDocumentStatus::ReadyForReview),
                     SameEventOutcome::None => $this->runGates($document),
                     default => $document->transitionTo(AiDocumentStatus::ReadyForReview),
@@ -284,7 +285,7 @@ class ProcessDocumentService
      * with the notification's account, card ending, time and bank reference, and the notification is closed.
      * The gates then run on the merged draft; the notification is linked to the transaction when one is created.
      */
-    private function mergeIntoHeldDocument(AiDocument $receipt, AiDocument $held): void
+    private function mergeIntoHeldDocument(AiDocument $receipt, AiDocument $held, Collection $allHeld): void
     {
         $draft = $receipt->processed_transaction_data;
         $heldDraft = $held->processed_transaction_data ?? [];
@@ -301,12 +302,14 @@ class ProcessDocumentService
         }
 
         $receipt->processed_transaction_data = $draft;
-        $held->transitionTo(AiDocumentStatus::Duplicate);
+        // Other notifications of the same purchase waiting for this receipt are closed with it
+        $allHeld = $allHeld->reject(fn (AiDocument $other) => $other->id === $held->id)->prepend($held);
+        $allHeld->each(fn (AiDocument $other) => $other->transitionTo(AiDocumentStatus::Duplicate));
 
         $transaction = $this->runGates($receipt);
 
         if ($transaction !== null) {
-            $this->recordDuplicateOrigin($held, $transaction, 'The receipt for this notification arrived and was recorded.');
+            $allHeld->each(fn (AiDocument $other) => $this->recordDuplicateOrigin($other, $transaction, 'The receipt for this notification arrived and was recorded.'));
         }
     }
 

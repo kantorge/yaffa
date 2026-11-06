@@ -164,6 +164,22 @@ it('holds a summary for a payee that expects itemization, and records the merged
         ->and($link->origin_id)->toBe($notification->id);
 });
 
+it('closes every notification of the purchase that waits for the arriving receipt', function () {
+    ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
+
+    $first = ($this->notification)();
+    $second = ($this->notification)();
+    // A repeated input that was held too, e.g. received before the first one was classified
+    $second->update(['status' => 'awaiting_itemization']);
+
+    $receipt = ($this->receipt)();
+
+    expect($receipt->status)->toBe('auto_recorded')
+        ->and($first->fresh()->status)->toBe('duplicate')
+        ->and($second->fresh()->status)->toBe('duplicate')
+        ->and(TransactionOrigin::query()->where('relation', 'duplicate_of')->count())->toBe(2);
+});
+
 it('moves a held document to review only after the timeout', function () {
     ($this->payeeWithHistory)(config: ['itemization_expected' => true]);
     $young = ($this->notification)();
