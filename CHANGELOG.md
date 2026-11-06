@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.5.1](https://github.com/kantorge/yaffa/compare/v4.5.0...v4.5.1) (2026-11-06)
+
+
+### 🛠️ Chores
+
+* Composer update ([#596](https://github.com/kantorge/yaffa/issues/596)) ([0e332c0](https://github.com/kantorge/yaffa/commit/0e332c0e37d1f77799c957947c4f6e7befef92c6))
+* npm update ([#597](https://github.com/kantorge/yaffa/issues/597)) ([dc13db2](https://github.com/kantorge/yaffa/commit/dc13db22dd9b3ce2d1cc6df8119e91215080367c))
+
+
+### 🐛 Bug Fixes
+
+* close all notifications waiting for an arriving itemized document ([#595](https://github.com/kantorge/yaffa/issues/595)) ([451d852](https://github.com/kantorge/yaffa/commit/451d852ee28865e20ea98d2fae82ccfaf17f310b))
+* unify styling and wording of missing values ([#594](https://github.com/kantorge/yaffa/issues/594)) ([0856824](https://github.com/kantorge/yaffa/commit/08568249efefa6270bd1c9cf418db23e717a00d4))
+* waterfall chart label ([7e27474](https://github.com/kantorge/yaffa/commit/7e2747495a9e69a00f00e0e5cc058aca66c1ec91))
+
 ## [4.5.0](https://github.com/kantorge/yaffa/compare/v4.4.0...v4.5.0) (2026-11-03)
 
 
