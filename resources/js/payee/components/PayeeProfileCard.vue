@@ -24,7 +24,7 @@
                 ({{ formatPercent(profile.dominant_share) }})
               </span>
             </template>
-            <span v-else class="text-muted">{{ __('None') }}</span>
+            <span v-else class="not-set">{{ __('None') }}</span>
           </dd>
 
           <dt class="col-6">{{ __('Usual amount') }}</dt>

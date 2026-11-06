@@ -66,7 +66,7 @@ const table = $(dataTableSelector).DataTable({
         }
         // Placeholder returned if no data is available
         if (!row.latest_rate) {
-          return __('Not available');
+          return '<span class="not-set">' + __('Not set') + '</span>';
         }
         // Raw number is returned for sorting
         if (type === 'sort') {
@@ -102,7 +102,7 @@ const table = $(dataTableSelector).DataTable({
         }
         // Placeholder returned if no data is available
         if (!row.latest_rate) {
-          return __('Not available');
+          return '<span class="not-set">' + __('Not set') + '</span>';
         }
         // Raw number is returned for sorting
         if (type === 'sort') {

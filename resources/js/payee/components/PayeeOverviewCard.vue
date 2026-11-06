@@ -25,7 +25,7 @@
           >
             {{ payee.config.category.full_name }}
           </a>
-          <span v-else class="text-muted">{{ __('Not set') }}</span>
+          <span v-else class="not-set">{{ __('Not set') }}</span>
         </dd>
 
         <template v-if="preferredCategories.length > 0">

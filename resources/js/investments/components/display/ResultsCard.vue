@@ -109,9 +109,13 @@
               }}
             </dd>
             <dt class="col-6">{{ __('ROI') }}</dt>
-            <dd class="col-6">{{ roiString }}</dd>
+            <dd class="col-6" :class="{ 'not-set': roi == null }">
+              {{ roiString }}
+            </dd>
             <dt class="col-6">{{ __('Annualized ROI') }}</dt>
-            <dd class="col-6">{{ aroiString }}</dd>
+            <dd class="col-6" :class="{ 'not-set': aroi == null }">
+              {{ aroiString }}
+            </dd>
           </dl>
         </div>
       </div>
@@ -250,7 +254,9 @@
         return this.investmentReturn.roi;
       },
       roiString() {
-        return this.roi == null ? '—' : (this.roi * 100).toFixed(2) + '%';
+        return this.roi == null
+          ? this.__('Not set')
+          : (this.roi * 100).toFixed(2) + '%';
       },
       aroi() {
         if (this.roi == null) return null;
@@ -264,7 +270,9 @@
         return base > 0 ? Math.pow(base, 1 / years) - 1 : -1;
       },
       aroiString() {
-        return this.aroi == null ? '—' : (this.aroi * 100).toFixed(2) + '%';
+        return this.aroi == null
+          ? this.__('Not set')
+          : (this.aroi * 100).toFixed(2) + '%';
       },
     },
     watch: {

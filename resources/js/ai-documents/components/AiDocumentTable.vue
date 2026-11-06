@@ -168,7 +168,7 @@
 
   const toDisplayDate = (isoDate) => {
     if (!isoDate) {
-      return __('Not available');
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return toFormattedDate(
@@ -223,21 +223,20 @@
     allowLink = true,
   }) => {
     if (matchedEntity?.matched) {
-      const name = escapeHtml(
-        matchedEntity?.name || rawValue || __('Not available'),
-      );
+      const label = matchedEntity?.name || rawValue;
+      const name = escapeHtml(label || __('Not set'));
       const hint = renderMatchHint({ isMatched: true });
 
       if (allowLink && matchedEntity.url) {
         const url = escapeHtml(matchedEntity.url);
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"${label ? '' : ' class="not-set"'}>${name}</a>${hint}`;
       }
 
-      return `<span>${name}</span>${hint}`;
+      return `<span${label ? '' : ' class="not-set"'}>${name}</span>${hint}`;
     }
 
     if (isUnidentified(rawValue)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawValue)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -260,7 +259,7 @@
     }
 
     if (!isStandardDocument(row) || isTransferDocument(row)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     const rawData = getRawData(row);
@@ -269,22 +268,22 @@
 
     // If matched entity exists with matched flag
     if (matchedPayee?.matched) {
-      const name = escapeHtml(
-        matchedPayee?.name || rawData?.payee || __('Not available'),
-      );
+      const label = matchedPayee?.name || rawData?.payee;
+      const name = escapeHtml(label || __('Not set'));
       const hint = renderMatchHint({ isMatched: true });
+      const cls = label ? '' : ' class="not-set"';
 
       if (matchedPayee.url) {
         const url = escapeHtml(matchedPayee.url);
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"${cls}>${name}</a>${hint}`;
       }
 
-      return `<span>${name}</span>${hint}`;
+      return `<span${cls}>${name}</span>${hint}`;
     }
 
-    // No match - fall back to raw value or "Not available"
+    // No match - fall back to raw value or "Not set"
     if (isUnidentified(rawData?.payee)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return `<span>${escapeHtml(rawData.payee)}</span>${renderMatchHint({ isMatched: false })}`;
@@ -306,11 +305,11 @@
     }
 
     if (!isStandardDocument(row)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     if (isUnidentified(row.detected_amount_search)) {
-      return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     const locale = window.YAFFA.userSettings.locale;
@@ -846,7 +845,7 @@
             const transactionId = getLinkedTransactionId(row);
 
             if (!transactionId) {
-              return `<span class="not-set">${escapeHtml(__('Not available'))}</span>`;
+              return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
             }
 
             // The shared 'busy' class (set by initializeQuickViewButton) reveals the spinner
