@@ -230,7 +230,7 @@ class ProcessDocumentService
                     SameEventOutcome::ExactRepeat => $document->transitionTo(AiDocumentStatus::Duplicate),
                     SameEventOutcome::SameEventTransaction => $this->closeOrFlagConflict($document, $result->transaction),
                     SameEventOutcome::SameEventDocument => $document->isItemized() && $result->document->status === AiDocumentStatus::AwaitingItemization->value
-                        ? $this->mergeIntoHeldDocument($document, $result->document, $this->sameEventClassifier->heldSameEventDocuments($document))
+                        ? $this->mergeIntoHeldDocument($document, $result->document, $this->sameEventClassifier->heldSameEventDocuments($document, $result->document))
                         : $document->transitionTo(AiDocumentStatus::ReadyForReview),
                     SameEventOutcome::None => $this->runGates($document),
                     default => $document->transitionTo(AiDocumentStatus::ReadyForReview),
