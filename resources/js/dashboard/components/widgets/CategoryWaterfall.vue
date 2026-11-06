@@ -119,16 +119,10 @@
 
       dateLabel() {
         const date = new Date(this.year, this.month - 1, 1);
-        return toFormattedDate(
-          date,
-          window.YAFFA.userSettings.locale,
-          '',
-          false,
-          {
-            year: 'numeric',
-            month: 'long',
-          },
-        );
+        return toFormattedDate(date, this.language, '', false, {
+          year: 'numeric',
+          month: 'long',
+        });
       },
     },
     created() {

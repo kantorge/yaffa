@@ -304,7 +304,8 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-const locale = window.YAFFA?.userSettings?.locale || window.YAFFA?.locale;
+// Names are words, so they follow the user's language, not the number/date format locale.
+const locale = window.YAFFA?.userSettings?.language || window.YAFFA?.locale;
 
 export const weekdayLabels = Object.fromEntries(
   ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map((code, index) => {
