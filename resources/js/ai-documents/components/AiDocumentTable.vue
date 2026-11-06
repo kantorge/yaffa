@@ -168,7 +168,7 @@
 
   const toDisplayDate = (isoDate) => {
     if (!isoDate) {
-      return __('Not set');
+      return `<span class="not-set">${escapeHtml(__('Not set'))}</span>`;
     }
 
     return toFormattedDate(
@@ -223,15 +223,16 @@
     allowLink = true,
   }) => {
     if (matchedEntity?.matched) {
-      const name = escapeHtml(matchedEntity?.name || rawValue || __('Not set'));
+      const label = matchedEntity?.name || rawValue;
+      const name = escapeHtml(label || __('Not set'));
       const hint = renderMatchHint({ isMatched: true });
 
       if (allowLink && matchedEntity.url) {
         const url = escapeHtml(matchedEntity.url);
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"${label ? '' : ' class="not-set"'}>${name}</a>${hint}`;
       }
 
-      return `<span>${name}</span>${hint}`;
+      return `<span${label ? '' : ' class="not-set"'}>${name}</span>${hint}`;
     }
 
     if (isUnidentified(rawValue)) {
@@ -267,17 +268,17 @@
 
     // If matched entity exists with matched flag
     if (matchedPayee?.matched) {
-      const name = escapeHtml(
-        matchedPayee?.name || rawData?.payee || __('Not set'),
-      );
+      const label = matchedPayee?.name || rawData?.payee;
+      const name = escapeHtml(label || __('Not set'));
       const hint = renderMatchHint({ isMatched: true });
+      const cls = label ? '' : ' class="not-set"';
 
       if (matchedPayee.url) {
         const url = escapeHtml(matchedPayee.url);
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>${hint}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"${cls}>${name}</a>${hint}`;
       }
 
-      return `<span>${name}</span>${hint}`;
+      return `<span${cls}>${name}</span>${hint}`;
     }
 
     // No match - fall back to raw value or "Not set"
