@@ -117,6 +117,13 @@
         categoryAxis.dataFields.category = 'category';
         categoryAxis.renderer.minGridDistance = 40;
 
+        // The cursor's axis tooltip would otherwise show the unique axis key (e.g. "trade:sell")
+        categoryAxis.adapter.add(
+          'getTooltipText',
+          (text) =>
+            chart.data.find((row) => row.category === text)?.label ?? text,
+        );
+
         if (!this.categoryAxisVisible) {
           categoryAxis.hide();
         } else {

@@ -407,7 +407,7 @@
               <td class="font-monospace">
                 {{ profile.delimiter || ',' }}
               </td>
-              <td class="text-muted">
+              <td :class="{ 'not-set': !profile.date_format }">
                 {{ profile.date_format || '—' }}
               </td>
             </template>

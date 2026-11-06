@@ -17,7 +17,7 @@
           :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">
-            {{ __('Not available') }}
+            {{ __('Not set') }}
           </template>
           <template v-else>
             {{
@@ -36,7 +36,7 @@
           :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">
-            {{ __('Not available') }}
+            {{ __('Not set') }}
           </template>
           <template v-else>
             {{

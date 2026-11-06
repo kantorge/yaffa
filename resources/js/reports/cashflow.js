@@ -48,7 +48,7 @@ function initChart() {
   );
 
   chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
-  chart.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
+  chart.dateFormatter.intlLocales = window.YAFFA.userSettings.language;
 
   chart.numberFormatter.numberFormat = {
     style: 'currency',
@@ -64,7 +64,7 @@ function initChart() {
 
   dateAxis = chart.xAxes.push(new am4charts.DateAxis());
   dateAxis.dataFields.category = 'month';
-  dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.locale;
+  dateAxis.dateFormatter.intlLocales = window.YAFFA.userSettings.language;
   dateAxis.dateFormats.setKey('year', { year: 'numeric' });
   dateAxis.dateFormats.setKey('month', { year: 'numeric', month: 'short' });
 
