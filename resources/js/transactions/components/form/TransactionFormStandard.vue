@@ -266,6 +266,16 @@
               </div>
             </div>
             <div class="card-body">
+              <div v-if="selectDataError" class="alert alert-danger mb-3">
+                {{ __('Could not load the account and payee lists.') }}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  @click="retrySelectData"
+                >
+                  {{ __('Retry') }}
+                </button>
+              </div>
               <div class="row mb-3">
                 <div
                   class="col-12 mb-3"
@@ -315,6 +325,26 @@
                     >
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
+                  </div>
+                </div>
+                <div v-if="reactivated.length > 0" class="col-12 mt-2">
+                  <div class="form-check">
+                    <input
+                      id="checkbox-deactivate-reactivated"
+                      v-model="deactivateAfterSave"
+                      class="form-check-input"
+                      type="checkbox"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="checkbox-deactivate-reactivated"
+                    >
+                      {{
+                        __('Deactivate again after saving: :names', {
+                          names: reactivated.map((e) => e.name).join(', '),
+                        })
+                      }}
+                    </label>
                   </div>
                 </div>
               </div>
@@ -655,7 +685,21 @@
     toFormattedCurrency,
   } from '@/shared/lib/i18n';
   import { markRaw } from 'vue';
-  import { createRemoteSelect, setSelected } from '@/shared/lib/tom-select';
+  import {
+    createLocalSelect,
+    lockSelect,
+    unlockSelect,
+    setSelected,
+  } from '@/shared/lib/tom-select';
+  import {
+    applySavedTransaction,
+    loadSelectData,
+    rankByUsage,
+    searchEntities,
+    standardUsage,
+    upsertEntity,
+  } from '@/shared/lib/select-data';
+  import * as toastHelpers from '@/shared/lib/toast';
 
   import { confirmAction } from '@/shared/lib/confirm';
 
@@ -829,6 +873,11 @@
           enabled: true,
         },
       ];
+
+      // Entities the user reactivated from the dropdown for this transaction, and whether to restore them on save
+      data.reactivated = [];
+      data.deactivateAfterSave = true;
+      data.selectDataError = false;
 
       // Some other settings
       data.locale = window.YAFFA.userSettings.locale;
@@ -1151,7 +1200,11 @@
         // config.account_from_id/account_to_id before the calls above
         // asynchronously repopulate them, so this must wait for both to settle
         // rather than snapshotting right after initializeTransaction().
-        Promise.all([accountFromReady, accountToReady]).then(() => {
+        Promise.all([
+          this.selectDataReady,
+          accountFromReady,
+          accountToReady,
+        ]).then(() => {
           this.$nextTick(() => this.markFormClean());
         });
       },
@@ -1173,6 +1226,10 @@
     created() {
       // Copy values of existing transaction into component form data
       this.initializeTransaction();
+
+      // The shared reference data behind the account/payee selects (not reactive: it is read on demand)
+      this.selectData = null;
+      this.loadReferenceData();
     },
 
     mounted() {
@@ -1196,9 +1253,13 @@
       // Initialize tooltips
       initializeBootstrapTooltips(this.$el);
 
-      // Snapshot the settled post-load state (both account details loaded and
-      // synced into form.config) as the isDirty() baseline.
-      Promise.all([accountFromReady, accountToReady]).then(() => {
+      // Snapshot the settled post-load state (reference data and both account details
+      // loaded and synced into form.config) as the isDirty() baseline.
+      Promise.all([
+        this.selectDataReady,
+        accountFromReady,
+        accountToReady,
+      ]).then(() => {
         this.$nextTick(() => this.markFormClean());
       });
     },
@@ -1603,14 +1664,6 @@
         return 'account';
       },
 
-      // Get url to payee or account list, based on source or target type
-      getAccountApiUrl(type) {
-        const accountUrl = '/api/v1/accounts';
-        const payeeUrl = '/api/v1/payees';
-
-        return this.getAccountType(type) === 'account' ? accountUrl : payeeUrl;
-      },
-
       // Account has been removed, its properties need to be removed
       resetAccount(type) {
         this.form.config['account_' + type + '_id'] = null;
@@ -1630,33 +1683,122 @@
         return __('Select payee');
       },
 
-      // (Re)create the account/payee select of one side: its endpoint, placeholder and
-      // params depend on the transaction type, so a type change recreates it (empty)
-      initializeAccountSelect(type) {
+      // Load the shared reference data (accounts, payees, categories, usage). Everything the selects show,
+      // and the currency/default category looked up on selection, comes from it - no per-click requests.
+      loadReferenceData() {
+        this.selectDataError = false;
+        this.selectDataReady = loadSelectData().then(
+          (data) => {
+            this.selectData = data;
+            ['from', 'to'].forEach((side) => {
+              const select = this.accountSelects?.[side];
+              if (select?.isLocked) {
+                unlockSelect(select, this.getPlaceholder(side));
+              }
+            });
+          },
+          (error) => {
+            this.selectDataError = true;
+            throw error;
+          },
+        );
+        // The rejection is surfaced through selectDataError; callers that chain on it handle it themselves
+        this.selectDataReady.catch(() => {});
+
+        return this.selectDataReady;
+      },
+
+      // Retry a failed load, then apply the presets that were waiting for it
+      retrySelectData() {
+        this.loadReferenceData().then(() => {
+          const config = this.transaction?.config;
+          Promise.all([
+            this.getDefaultAccountDetails(config?.account_from_id, 'from'),
+            this.getDefaultAccountDetails(config?.account_to_id, 'to'),
+          ]).then(() => {
+            this.$nextTick(() => this.markFormClean());
+          });
+        });
+      },
+
+      // Accounts or payees, depending on what this side is for the current transaction type
+      getEntities(type) {
+        return this.getAccountType(type) === 'account'
+          ? this.selectData.accounts
+          : this.selectData.payees;
+      },
+
+      findEntity(type, id) {
+        return this.getEntities(type).find((e) => e.id === Number(id));
+      },
+
+      toSelectItem(entity) {
+        return {
+          id: entity.id,
+          text: entity.name,
+          alias: entity.alias,
+          active: entity.active,
+        };
+      },
+
+      // Everything selectable on one side, except what the other side already holds
+      selectableEntities(type) {
         const otherType = type === 'from' ? 'to' : 'from';
+        const otherId = Number(
+          this.form.config['account_' + otherType + '_id'],
+        );
 
+        return this.getEntities(type).filter((e) => e.id !== otherId);
+      },
+
+      // Most used / recent / alphabetical suggestions for one side. A payee is ranked by how often it was
+      // used with the account chosen on the other side.
+      suggestionGroups(type) {
+        if (!this.selectData) {
+          return [];
+        }
+
+        const usage = standardUsage(this.selectData.usage, {
+          transactionType: this.form.transaction_type,
+          side: type,
+          anchorId:
+            this.getAccountType(type) === 'payee' ? this.accountId : null,
+        });
+        const { mostUsed, recent, fill } = rankByUsage(
+          this.selectableEntities(type).filter((e) => e.active),
+          usage,
+        );
+
+        return [
+          { id: 'most-used', label: __('Most used'), items: mostUsed },
+          { id: 'recent', label: __('Recent'), items: recent },
+          { id: 'other', label: __('Other'), items: fill },
+        ].map((group) => ({
+          ...group,
+          items: group.items.map((e) => this.toSelectItem(e)),
+        }));
+      },
+
+      searchEntities(type, term) {
+        if (!this.selectData) {
+          return [];
+        }
+
+        return searchEntities(this.selectableEntities(type), term)
+          .slice(0, 50)
+          .map((e) => ({ ...this.toSelectItem(e), matchedVia: e.matchedVia }));
+      },
+
+      // (Re)create the account/payee select of one side: what it lists depends on the transaction
+      // type, so a type change recreates it (empty)
+      initializeAccountSelect(type) {
         this.accountSelects[type]?.destroy();
-        this.accountSelects[type] = markRaw(
-          createRemoteSelect(document.getElementById('account_' + type), {
-            url: this.getAccountApiUrl(type),
-            params: (term) => ({
-              q: term || undefined,
-              transaction_type: this.form.transaction_type,
-              account_type: type,
-              account_entity_id: this.accountId,
-            }),
-            mapResult: (account) => ({ id: account.id, text: account.name }),
-            // Exclude account that is selected in other account select
-            filterResults: (results) => {
-              const otherAccountId =
-                this.form.config['account_' + otherType + '_id'];
-
-              return otherAccountId
-                ? results.filter((item) => item.id != otherAccountId)
-                : results;
-            },
+        const select = markRaw(
+          createLocalSelect(document.getElementById('account_' + type), {
+            suggestions: () => this.suggestionGroups(type),
+            search: (term) => this.searchEntities(type, term),
             placeholder: this.getPlaceholder(type),
-            onSelect: (item) => this.onAccountSelected(type, item.id),
+            onSelect: (item) => this.onAccountPicked(type, item),
             onClear: () => {
               this.resetAccount(type);
               if (this.getAccountType(type) === 'payee') {
@@ -1665,24 +1807,64 @@
             },
           }),
         );
+        this.accountSelects[type] = select;
+
+        if (!this.selectData) {
+          lockSelect(select, __('Loading…'));
+        }
       },
 
-      // Store the selected account/payee and load the details that depend on it. Returns the
-      // details request, so presets can wait for it before the form is treated as loaded.
-      onAccountSelected(type, id) {
-        this.form.config['account_' + type + '_id'] = Number(id);
+      // A user's pick from the dropdown: an inactive entity is reactivated first
+      onAccountPicked(type, item) {
+        const id = Number(item.id);
+        this.onAccountSelected(type, id);
 
-        if (this.getAccountType(type) === 'account') {
-          return window.axios.get('/api/v1/accounts/' + id).then(({ data }) => {
-            this[type].account_currency = data.config.currency;
-          });
+        if (item.active !== false) {
+          return;
         }
 
-        return window.axios.get('/api/v1/payees/' + id).then(({ data }) => {
-          if (data.config.category) {
-            this.payeeCategory.id = data.config.category.id;
-            this.payeeCategory.text = data.config.category.full_name;
+        const kind =
+          this.getAccountType(type) === 'account' ? 'accounts' : 'payees';
+        window.axios
+          .patch(
+            window.route('api.v1.account-entities.patch-active', {
+              accountEntity: id,
+            }),
+            { active: true },
+          )
+          .then(() => {
+            upsertEntity(kind, { id, active: true });
+            this.reactivated.push({ id, kind, name: item.text });
+          })
+          .catch(() => {
+            toastHelpers.showErrorToast(
+              __('Could not reactivate :name.', { name: item.text }),
+            );
+            this.accountSelects[type].clear(true);
+            this.resetAccount(type);
+          });
+      },
+
+      // Store the selected account/payee and take what depends on it (currency, payee default category) from
+      // the preloaded data. Returns a promise, so presets can wait before the form is treated as loaded.
+      onAccountSelected(type, id) {
+        id = Number(id);
+        this.form.config['account_' + type + '_id'] = id;
+
+        return this.selectDataReady.then(() => {
+          const entity = this.findEntity(type, id);
+
+          if (this.getAccountType(type) === 'account') {
+            this[type].account_currency =
+              this.selectData.currencies.get(entity?.currency_id) ?? null;
+            return;
           }
+
+          const category = this.selectData.categories.find(
+            (c) => c.id === entity?.category_id,
+          );
+          this.payeeCategory.id = category?.id ?? null;
+          this.payeeCategory.text = category?.full_name ?? null;
         });
       },
 
@@ -1706,15 +1888,37 @@
           return;
         }
 
-        // Returned so callers can wait for the preset and its detail request to
-        // settle before treating the form as loaded.
-        return window.axios
-          .get(this.getAccountApiUrl(type) + '/' + account_entity_id)
-          .then(({ data }) => this.presetAccount(type, data.id, data.name));
+        // Returned so callers can wait for the preset to settle before treating the form as loaded.
+        return this.selectDataReady.then(() => {
+          const entity = this.findEntity(type, account_entity_id);
+
+          return entity
+            ? this.presetAccount(type, entity.id, entity.name)
+            : undefined;
+        });
+      },
+
+      // Put back the entities reactivated for this transaction, once it is saved
+      restoreReactivated() {
+        if (this.deactivateAfterSave) {
+          this.reactivated.forEach(({ id, kind }) => {
+            window.axios
+              .patch(
+                window.route('api.v1.account-entities.patch-active', {
+                  accountEntity: id,
+                }),
+                { active: false },
+              )
+              .then(() => upsertEntity(kind, { id, active: false }))
+              .catch(() => {});
+          });
+        }
+        this.reactivated = [];
       },
 
       onCancel() {
         if (!this.isDirty()) {
+          this.notifyReactivatedStayActive();
           this.$emit('cancel');
           return false;
         }
@@ -1724,10 +1928,21 @@
           target: this.swalTargetSelector,
         }).then((result) => {
           if (result.isConfirmed) {
+            this.notifyReactivatedStayActive();
             this.$emit('cancel');
           }
         });
         return false;
+      },
+
+      notifyReactivatedStayActive() {
+        if (this.reactivated.length > 0 && this.deactivateAfterSave) {
+          toastHelpers.showInfoToast(
+            __(
+              'Reactivated items stay active, because the transaction was not saved.',
+            ),
+          );
+        }
       },
 
       // True once any field differs from its state right after the form finished
@@ -1769,6 +1984,7 @@
               this.form,
             )
             .then((response) => {
+              this.restoreReactivated();
               this.$emit(
                 'success',
                 processTransaction(response.data.transaction),
@@ -1786,6 +2002,14 @@
         this.form
           .post(this.route('api.v1.transactions.store-standard'), this.form)
           .then((response) => {
+            // Count it into the suggestions, so the next entry in this page session ranks correctly
+            if (this.selectData) {
+              applySavedTransaction(this.selectData.usage, {
+                ...response.data.transaction,
+                config_type: 'standard',
+              });
+            }
+            this.restoreReactivated();
             this.$emit(
               'success',
               processTransaction(response.data.transaction),
@@ -1839,10 +2063,19 @@
           return;
         }
 
-        this.presetAccount(
-          this.form.transaction_type === 'withdrawal' ? 'to' : 'from',
-          payee.id,
-          payee.name,
+        // A payee created or reactivated in the modal is not in the preloaded data yet
+        upsertEntity('payees', {
+          id: payee.id,
+          name: payee.name,
+          alias: payee.alias ?? null,
+          active: payee.active ?? true,
+          category_id: payee.config?.category_id ?? null,
+        }).then(() =>
+          this.presetAccount(
+            this.form.transaction_type === 'withdrawal' ? 'to' : 'from',
+            payee.id,
+            payee.name,
+          ),
         );
       },
 

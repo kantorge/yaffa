@@ -63,6 +63,9 @@ function standardStandaloneSwitchType(object $page, string $type): void
     $page->click("[dusk=\"transaction-type-{$type}\"]");
     if ($losesData) {
         test()->confirmSwal($page);
+        // SweetAlert hands focus back to the clicked button shortly after closing; a dropdown opened before that
+        // would lose focus and close again
+        test()->waitUntil($page, "document.activeElement === document.querySelector('[dusk=\"transaction-type-{$type}\"]')");
     } else {
         $page->assertNotPresent('.swal2-popup');
     }

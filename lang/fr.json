@@ -1854,5 +1854,14 @@
     "e.g. Pixel 8 - YAFFA app": "p. ex. Pixel 8 - application YAFFA",
     "Generate QR code": "Générer le code QR",
     "Unable to create the pairing code.": "Impossible de créer le code d'appairage.",
-    "Only tokens with exactly read and write access can be paired with the app.": "Seuls les jetons disposant exactement des accès lecture et écriture peuvent être appairés avec l'application."
+    "Only tokens with exactly read and write access can be paired with the app.": "Seuls les jetons disposant exactement des accès lecture et écriture peuvent être appairés avec l'application.",
+    "Most used": "Les plus utilisés",
+    "Recent": "Récents",
+    "Matches": "Résultats",
+    "Loading…": "Chargement…",
+    "Could not load the account and payee lists.": "Impossible de charger les listes de comptes et de bénéficiaires.",
+    "Retry": "Réessayer",
+    "Deactivate again after saving: :names": "Désactiver à nouveau après l'enregistrement : :names",
+    "Could not reactivate :name.": "Impossible de réactiver :name.",
+    "Reactivated items stay active, because the transaction was not saved.": "Les éléments réactivés restent actifs, car la transaction n'a pas été enregistrée."
 }

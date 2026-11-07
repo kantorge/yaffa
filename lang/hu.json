@@ -1854,5 +1854,14 @@
     "e.g. Pixel 8 - YAFFA app": "pl. Pixel 8 – YAFFA alkalmazás",
     "Generate QR code": "QR-kód létrehozása",
     "Unable to create the pairing code.": "Nem sikerült létrehozni a párosítási kódot.",
-    "Only tokens with exactly read and write access can be paired with the app.": "Csak pontosan olvasási és írási jogosultsággal rendelkező tokenek párosíthatók az alkalmazással."
+    "Only tokens with exactly read and write access can be paired with the app.": "Csak pontosan olvasási és írási jogosultsággal rendelkező tokenek párosíthatók az alkalmazással.",
+    "Most used": "Leggyakoribb",
+    "Recent": "Legutóbbi",
+    "Matches": "Találatok",
+    "Loading…": "Betöltés…",
+    "Could not load the account and payee lists.": "A számlák és partnerek listáját nem sikerült betölteni.",
+    "Retry": "Újra",
+    "Deactivate again after saving: :names": "Mentés után inaktiválás újra: :names",
+    "Could not reactivate :name.": "A(z) :name újraaktiválása nem sikerült.",
+    "Reactivated items stay active, because the transaction was not saved.": "Az újraaktivált elemek aktívak maradnak, mert a tranzakció nem lett mentve."
 }
