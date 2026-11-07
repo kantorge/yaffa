@@ -271,9 +271,9 @@
                       for="checkbox-deactivate-reactivated"
                     >
                       {{
-                        __('Deactivate again after saving: :names', {
-                          names: reactivated.map((e) => e.name).join(', '),
-                        })
+                        reactivated.length === 1
+                          ? __('One-time use: keep item inactive')
+                          : __('One-time use: keep items inactive')
                       }}
                     </label>
                   </div>

@@ -1864,7 +1864,8 @@
     "matching investment currency": "a befektetés devizanemével egyező",
     "matching account currency": "a számla devizanemével egyező",
     "Retry": "Újra",
-    "Deactivate again after saving: :names": "Mentés után inaktiválás újra: :names",
+    "One-time use: keep item inactive": "Egyszeri használat: az elem maradjon inaktív",
+    "One-time use: keep items inactive": "Egyszeri használat: az elemek maradjanak inaktívak",
     "Could not reactivate :name.": "A(z) :name újraaktiválása nem sikerült.",
     "Reactivated items stay active, because the transaction was not saved.": "Az újraaktivált elemek aktívak maradnak, mert a tranzakció nem lett mentve.",
     "Usual for this payee": "Gyakori ennél a kedvezményezettnél"

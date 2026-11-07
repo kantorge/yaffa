@@ -1865,7 +1865,8 @@
     "matching investment currency": "zgodne z walutą inwestycji",
     "matching account currency": "zgodne z walutą konta",
     "Retry": "Ponów",
-    "Deactivate again after saving: :names": "Dezaktywuj ponownie po zapisaniu: :names",
+    "One-time use: keep item inactive": "Jednorazowe użycie: pozostaw element nieaktywny",
+    "One-time use: keep items inactive": "Jednorazowe użycie: pozostaw elementy nieaktywne",
     "Could not reactivate :name.": "Nie udało się ponownie aktywować: :name.",
     "Reactivated items stay active, because the transaction was not saved.": "Reaktywowane elementy pozostają aktywne, ponieważ transakcja nie została zapisana.",
     "Usual for this payee": "Zwykle dla tego odbiorcy"
