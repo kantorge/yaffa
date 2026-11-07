@@ -178,8 +178,8 @@ transactions only (not edits, they would double count).
 | --- | --- | --- |
 | 1 | Backend: additive `reference-data` fields + `investments`, `usage` endpoint and service, `/meta` feature flag; frontend `select-data` module (ranking, loader) with unit tests | **Done** |
 | 2 | `createLocalSelect`, dropdown CSS, standard form account/payee selects, inactive reactivation, loading/error state, translations, browser tests | **Done** |
-| 3 | Categories and tags in transaction item rows (`TransactionItem.vue`) | To do |
-| 4 | Investment form (`TransactionFormInvestment.vue`): account and investment selects | To do |
+| 3 | Categories and tags in transaction item rows (`TransactionItem.vue`) | **Done** |
+| 4 | Investment form (`TransactionFormInvestment.vue`): account and investment selects | **Done** |
 | 5 | "Apply usual items" redesign (`TransactionItemContainer.vue` + payee stats amounts) | Done |
 | 6 | Measure payload/response time; decide on the server cache (D7); mobile-contract confirmation | Validated, no server cache needed |
 

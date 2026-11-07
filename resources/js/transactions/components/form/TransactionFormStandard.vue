@@ -267,7 +267,11 @@
             </div>
             <div class="card-body">
               <div v-if="selectDataError" class="alert alert-danger mb-3">
-                {{ __('Could not load the account and payee lists.') }}
+                {{
+                  __(
+                    'Could not load the account, payee, category and tag lists.',
+                  )
+                }}
                 <button
                   type="button"
                   class="btn btn-sm btn-outline-danger ms-2"
@@ -1863,8 +1867,15 @@
             toastHelpers.showErrorToast(
               __('Could not reactivate :name.', { name: item.text }),
             );
+            // A newer pick on this side must stay untouched
+            if (this.form.config['account_' + type + '_id'] !== id) {
+              return;
+            }
             this.accountSelects[type].clear(true);
             this.resetAccount(type);
+            if (this.getAccountType(type) === 'payee') {
+              this.resetPayee();
+            }
           });
       },
 

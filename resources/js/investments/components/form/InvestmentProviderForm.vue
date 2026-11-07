@@ -14,7 +14,7 @@
             @change="ensureSelectedProviderState"
           >
             <option value="">
-              {{ __(' < No price provider > ') }}
+              {{ __('< No price provider >') }}
             </option>
             <option
               v-for="provider in providerList"

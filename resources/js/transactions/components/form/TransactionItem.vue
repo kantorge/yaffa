@@ -474,9 +474,24 @@
     methods: {
       __,
 
+      // After a failed preload the form's retry only reaches the form: pick the data up here on first use
+      retryLoad() {
+        loadSelectData()
+          .then((data) => {
+            this.selectData = data;
+            [this.categorySelect, this.tagSelect].forEach((select) => {
+              if (!this.unmounted && select.isOpen) {
+                select.load(select.control_input.value);
+              }
+            });
+          })
+          .catch(() => {});
+      },
+
       // "Usual for this payee": the payee's default category, then its most used ones
       categorySuggestions() {
         if (!this.selectData) {
+          this.retryLoad();
           return [];
         }
         const { categories, payees, usage } = this.selectData;
@@ -498,6 +513,7 @@
 
       searchCategories(term) {
         if (!this.selectData) {
+          this.retryLoad();
           return [];
         }
         const { categories, usage } = this.selectData;
@@ -528,6 +544,7 @@
 
       searchTags(term) {
         if (!this.selectData) {
+          this.retryLoad();
           return [];
         }
 

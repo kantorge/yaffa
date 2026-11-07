@@ -1197,10 +1197,16 @@
       // A user's pick: an inactive entity is reactivated first
       onAccountPicked(item) {
         this.onAccountSelected(item.id);
-        this.reactivateIfInactive(item, 'accounts', this.accountSelect, () => {
-          this.form.config.account_id = null;
-          this.account_currency = null;
-        });
+        this.reactivateIfInactive(
+          item,
+          'accounts',
+          this.accountSelect,
+          () => {
+            this.form.config.account_id = null;
+            this.account_currency = null;
+          },
+          () => this.form.config.account_id === Number(item.id),
+        );
       },
 
       onInvestmentPicked(item) {
@@ -1213,6 +1219,7 @@
             this.form.config.investment_id = null;
             this.investment_currency = null;
           },
+          () => this.form.config.investment_id === Number(item.id),
         );
       },
 
@@ -1231,7 +1238,7 @@
           .then(() => upsertEntity(kind, { id, active }));
       },
 
-      reactivateIfInactive(item, kind, select, reset) {
+      reactivateIfInactive(item, kind, select, reset, isStillSelected) {
         if (item.active !== false) {
           return;
         }
@@ -1243,8 +1250,11 @@
             toastHelpers.showErrorToast(
               __('Could not reactivate :name.', { name: item.text }),
             );
-            select.clear(true);
-            reset();
+            // A newer pick must stay untouched
+            if (isStillSelected()) {
+              select.clear(true);
+              reset();
+            }
           });
       },
 

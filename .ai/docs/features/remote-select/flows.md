@@ -65,6 +65,6 @@ Side effects: reactivation/deactivation of the picked item only. The preload may
 ## Flow 3: Transaction entry
 
 Account, payee, investment, category and tag selects are local (Flow 4); the remote select (Flow 1) remains on other screens. On a transaction type change, the
-form destroys its account/payee selects (aborting any pending request) and rebuilds them against the
-new endpoint. Tags may be created inline: the typed text becomes the option value, and the existing
+form destroys its account/payee selects and rebuilds them over the preloaded accounts or payees for the
+new type. Tags may be created inline: the typed text becomes the option value, and the existing
 transaction API handles it on save exactly as before (unchanged backend).

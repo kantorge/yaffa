@@ -10,7 +10,7 @@ per-user ownership) is in `.ai/docs/features/api-access-and-2fa/permissions.md`.
 | `GET /api/v1/{accounts,accounts/investment,payees,categories,tags,investments,category-learning}` | search | `auth:sanctum`, `verified`, `abilities:read` | user-scoped query in the controller | No |
 | `GET /api/v1/reference-data` | preload for local selects | `auth:sanctum`, `verified`, `abilities:read` | `$user->…` relations / `where('user_id', …)` | Yes: adds `alias`, payee `category_id`, `investments` |
 | `GET /api/v1/reference-data/usage` | usage aggregates for ranking | `abilities:read` (class-level) | every query filters `transactions.user_id` / `e.user_id`; payee rows are reached only through the user's own transactions | **Yes: new** |
-| `PATCH /api/v1/account-entities/{id}/active`, `PATCH /api/v1/investments/{id}/active` | reactivate / deactivate again from a local select | `abilities:write` | route policy (unchanged) | No (new caller) |
+| `PATCH /api/v1/account-entities/{accountEntity}`, `PATCH /api/v1/investments/{investment}` | reactivate / deactivate again from a local select | `abilities:write` | route policy (unchanged) | No (new caller) |
 | `GET /api/v1/payees/{id}` | view | `abilities:read` | `#[Authorize('view')]` → `AccountEntityPolicy` | No (now the only way the edit modal loads a payee) |
 | `POST /api/v1/payees` | create | `abilities:write` | `AccountEntityRequest` exists-rules scoped to the user's categories | No |
 | `PATCH /api/v1/payees/{id}` | update | `abilities:write` | `#[Authorize('update')]` + the same request rules | No |
