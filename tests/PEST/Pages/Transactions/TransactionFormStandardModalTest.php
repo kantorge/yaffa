@@ -248,12 +248,14 @@ it('offers a retry when the account and payee lists fail to load, and loads them
     $page->click('#create-standard-transaction-button');
     $this->waitUntil($page, "document.querySelector('" . STANDARD_MODAL . "').classList.contains('show')");
 
-    $page->assertSee('Could not load the account and payee lists.')
+    // The alert appears only once the failed request comes back
+    $this->waitUntil($page, "document.querySelector('#transactionFormStandard .alert button')");
+    $page->assertSee('Could not load the account, payee, category and tag lists.')
         ->click('#transactionFormStandard .alert button');
 
     // Once the lists are in, the form settles and the selects work
     $this->waitUntil($page, "document.querySelector('#transactionFormStandard').dataset.loaded === 'true'");
-    $page->assertDontSee('Could not load the account and payee lists.');
+    $page->assertDontSee('Could not load the account, payee, category and tag lists.');
     $this->chooseTomSelectOption($page, 'account_to', 'Auchan', 'Auchan');
 })->group('extended');
 
