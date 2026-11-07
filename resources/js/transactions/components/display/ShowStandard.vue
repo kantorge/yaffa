@@ -417,7 +417,7 @@
         );
       },
 
-      entityLink(entity, entityId, side) {
+      entityLink(entity, entityId) {
         return route('account-entity.show', {
           account_entity: entityId,
         });
