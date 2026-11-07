@@ -17,7 +17,7 @@ beforeEach(function () {
 function holding($test, string $type, Investment $investment, string $quantity): void
 {
     Transaction::factory()->{$type}($test->user, [
-        'account_id' => $test->account->config->id,
+        'account_id' => $test->account->id,
         'investment_id' => $investment->id,
         'quantity' => $quantity,
         'price' => 10,

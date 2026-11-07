@@ -257,7 +257,7 @@ class InvestmentService
             ->map(fn (AccountEntity $account) => [
                 'id' => $account->id,
                 'name' => $account->name,
-                'quantity' => (float) ($quantities[$account->id] ?? 0),
+                'quantity' => (string) BigDecimal::of($quantities[$account->id] ?? 0),
             ]);
 
         return compact('investment', 'transactions', 'accounts');

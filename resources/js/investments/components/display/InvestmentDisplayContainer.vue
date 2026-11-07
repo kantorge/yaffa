@@ -141,7 +141,9 @@
     computed: {
       // Mirrors the visibility rule of AccountDistributionCard
       showDistribution() {
-        return this.localAccounts.filter((a) => a.quantity > 0).length > 1;
+        return (
+          this.localAccounts.filter((a) => Number(a.quantity) > 0).length > 1
+        );
       },
       resultsColClass() {
         return this.showDistribution ? 'col-xl-5' : 'col-xl-9';

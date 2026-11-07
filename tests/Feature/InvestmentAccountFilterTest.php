@@ -41,13 +41,14 @@ it('scopes display-data to one account', function () {
     expect($all->json('transactions'))->toHaveCount(2)
         ->and((float) $all->json('investment.current_quantity'))->toBe(7.0)
         ->and($all->json('accounts'))->toHaveCount(2)
-        ->and(collect($all->json('accounts'))->pluck('quantity')->sort()->values()->all())->toEqual([2, 5]);
+        ->and(collect($all->json('accounts'))->pluck('quantity')->map(fn ($q) => (float) $q)->sort()->values()->all())->toEqual([2, 5]);
 
     $filtered = $this->getJson(route('api.v1.investments.display-data', [$investment, 'account' => $b->id]))->assertOk();
     expect($filtered->json('transactions'))->toHaveCount(1)
         ->and((float) $filtered->json('investment.current_quantity'))->toBe(5.0)
         ->and(last($filtered->json('quantities'))['quantity'])->toEqual(5)
-        ->and($filtered->json('accounts'))->toHaveCount(2);
+        ->and($filtered->json('accounts'))->toHaveCount(2)
+        ->and($filtered->json('accounts.0.quantity'))->toBeString();
 });
 
 it('passes the selected account to the show page', function () {

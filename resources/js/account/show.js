@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
@@ -650,7 +651,9 @@ const getInvestmentHoldings = function () {
       list.replaceChildren();
       // Display-only sum; rows without a price are excluded
       total.textContent = toFormattedCurrency(
-        response.data.reduce((sum, item) => sum + Number(item.value ?? 0), 0),
+        response.data
+          .reduce((sum, item) => sum.plus(item.value ?? 0), new Decimal(0))
+          .toString(),
         locale,
         window.account.config.currency,
       );

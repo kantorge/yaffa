@@ -12,6 +12,7 @@
 </template>
 
 <script>
+  import Decimal from 'decimal.js';
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
@@ -40,11 +41,12 @@
     computed: {
       slices() {
         return this.accounts
-          .filter((account) => account.quantity > 0)
+          .filter((account) => new Decimal(account.quantity).gt(0))
           .map((account) => ({
             id: account.id,
             name: account.name,
-            quantity: account.quantity,
+            // Chart share only; exact values are formatted from the decimal string
+            quantity: Number(account.quantity),
             quantityText: toFormattedNumber(account.quantity, this.locale, {
               minimumFractionDigits: 0,
               maximumFractionDigits: 4,
@@ -53,7 +55,9 @@
               this.investment.latest_price == null
                 ? __('Not set')
                 : toFormattedCurrency(
-                    account.quantity * this.investment.latest_price,
+                    new Decimal(account.quantity).times(
+                      this.investment.latest_price,
+                    ),
                     this.locale,
                     this.investment.currency,
                   ),

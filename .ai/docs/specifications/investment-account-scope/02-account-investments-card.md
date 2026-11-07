@@ -15,7 +15,7 @@ On the account show page, add a card listing investments with quantity > 0 in th
 ## Frontend
 1. `resources/views/accounts/show.blade.php`: new collapsible card "Investments" in the left panel after the "Actions" card and before the "Transaction filters" heading; copy sibling card collapse markup. Hidden entirely when empty; loading spinner and error states.
 2. `resources/js/account/show.js`: fetch on load (axios); render list-group rows: name (link via `route('investments.show', {investment, account: window.account.id})`), quantity with `toFormattedNumber`, value with `toFormattedCurrency(value, window.YAFFA.userSettings.locale, window.account.config.currency)` (helpers from `@/shared/lib/i18n`). Refresh alongside `getAccountBalance` after `transaction-created`/delete.
-3. Only for investment-type accounts is data possible; skip the fetch/card for others if the account has no investment support (check account config; verify).
+3. ~~Skip the fetch for accounts without investment support.~~ **Decided: no skip.** There is no account-level flag for investment support, so the fetch runs for every account; the card stays hidden when the response is empty (cost: one grouped query + one request per page view).
 4. New strings → all `/lang/*.json`.
 
 ## Tests
