@@ -620,6 +620,79 @@ class InvestmentService
     }
 
     /**
+     * Resolve the current "combined" price (newer of stored price and priced transaction)
+     * for many investments at once, selecting only the winning rows in the database
+     * instead of loading each investment's full price and transaction history.
+     *
+     * @param  Collection<int, Investment>  $investments
+     * @return array<int, BigDecimal|null> Map keyed by investment id
+     */
+    public function getLatestPricesExact(Collection $investments): array
+    {
+        if ($investments->isEmpty()) {
+            return [];
+        }
+
+        $ids = $investments->pluck('id')->all();
+
+        $latestPriceDates = DB::table('investment_prices')
+            ->select('investment_id', DB::raw('MAX(date) as max_date'))
+            ->whereIn('investment_id', $ids)
+            ->groupBy('investment_id');
+
+        $storedPrices = InvestmentPrice::query()
+            ->select('investment_prices.*')
+            ->joinSub($latestPriceDates, 'latest', function ($join) {
+                $join->on('latest.investment_id', '=', 'investment_prices.investment_id')
+                    ->on('latest.max_date', '=', 'investment_prices.date');
+            })
+            ->get()
+            ->keyBy('investment_id');
+
+        $latestTransactionDates = DB::table('transactions as t')
+            ->join('transaction_details_investment as d', 'd.id', '=', 't.config_id')
+            ->where('t.config_type', 'investment')
+            ->where('t.schedule', false)
+            ->whereNotNull('d.price')
+            ->whereIn('d.investment_id', $ids)
+            ->select('d.investment_id', DB::raw('MAX(t.date) as max_date'))
+            ->groupBy('d.investment_id');
+
+        $pricedTransactions = Transaction::query()
+            ->select('transactions.*')
+            ->join('transaction_details_investment as d', 'd.id', '=', 'transactions.config_id')
+            ->where('transactions.config_type', 'investment')
+            ->where('transactions.schedule', false)
+            ->whereNotNull('d.price')
+            ->joinSub($latestTransactionDates, 'latest', function ($join) {
+                $join->on('latest.investment_id', '=', 'd.investment_id')
+                    ->on('latest.max_date', '=', 'transactions.date');
+            })
+            ->with('config')
+            ->get()
+            ->keyBy(fn (Transaction $transaction) => $transaction->config instanceof TransactionDetailInvestment
+                ? $transaction->config->investment_id
+                : null);
+
+        $results = [];
+
+        foreach ($investments as $investment) {
+            $price = $storedPrices->get($investment->id);
+            // Reuse the loaded investment so MoneyCast doesn't lazy-load its currency per row
+            $price?->setRelation('investment', $investment);
+
+            $transaction = $pricedTransactions->get($investment->id);
+            if ($transaction?->config instanceof TransactionDetailInvestment) {
+                $transaction->config->setRelation('investment', $investment);
+            }
+
+            $results[$investment->id] = $this->resolveCombinedPrice($price, $transaction);
+        }
+
+        return $results;
+    }
+
+    /**
      * From a date-ascending collection, pick the item with the highest date on or before
      * $onOrBefore (or the overall last item when no date bound is given).
      *

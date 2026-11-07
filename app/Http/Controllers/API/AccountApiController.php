@@ -262,12 +262,9 @@ class AccountApiController extends Controller
      * and current value (computed live), sorted by value descending. Price and value are null
      * if no price is available.
      */
-    public function getInvestmentHoldings(Request $request, AccountEntity $accountEntity, InvestmentService $investmentService): JsonResponse
+    #[Authorize('view', 'accountEntity')]
+    public function getInvestmentHoldings(AccountEntity $accountEntity, InvestmentService $investmentService): JsonResponse
     {
-        if ($accountEntity->user_id !== $request->user()->id) {
-            throw new AuthorizationException('You do not have permission to access this account entity.');
-        }
-
         if ($accountEntity->config_type !== 'account') {
             return response()->json(['message' => __('This account entity is not an account.')], Response::HTTP_BAD_REQUEST);
         }
@@ -281,13 +278,11 @@ class AccountApiController extends Controller
 
         $investments = Investment::with('currency')->whereIn('id', $quantities->keys())->get();
 
-        /** @var Collection<int, array{investment: Investment, date: Carbon|null}> $requests */
-        $requests = $investments->map(fn (Investment $investment) => ['investment' => $investment, 'date' => null]);
-        $prices = $investmentService->getLatestPricesBatchExact($requests);
+        $prices = $investmentService->getLatestPricesExact($investments);
 
-        $rows = $investments->map(function (Investment $investment) use ($quantities, $prices, $investmentService) {
+        $rows = $investments->map(function (Investment $investment) use ($quantities, $prices) {
             $quantity = BigDecimal::of($quantities[$investment->id]->quantity);
-            $price = $prices[$investmentService->priceBatchKey($investment->id, null)] ?? null;
+            $price = $prices[$investment->id] ?? null;
 
             return [
                 'investment_id' => $investment->id,

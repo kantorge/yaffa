@@ -133,6 +133,8 @@
         processedPrices: [],
         isRefreshing: false,
         selectedAccountId: this.initialAccount,
+        // Last account whose data loaded successfully; restored if a switch fails
+        loadedAccountId: this.initialAccount,
         loadError: false,
         // Refreshed with each fetch so the distribution follows deletions
         localAccounts: this.accounts,
@@ -201,7 +203,8 @@
           this.dateTo = new Date(date);
         }
       },
-      onAccountChange() {
+      /** Reflect the selected account in the page URL. */
+      syncAccountUrl() {
         const url = new URL(window.location.href);
         if (this.selectedAccountId) {
           url.searchParams.set('account', this.selectedAccountId);
@@ -209,6 +212,9 @@
           url.searchParams.delete('account');
         }
         window.history.replaceState(null, '', url);
+      },
+      onAccountChange() {
+        this.syncAccountUrl();
 
         // The date range belongs to the previous transaction set
         this.dateFrom = null;
@@ -250,6 +256,7 @@
           if (data.prices) {
             this.processedPrices = data.prices;
           }
+          this.loadedAccountId = this.selectedAccountId;
           // The processedTransactions watcher recalculates processedQuantities
         } catch (error) {
           console.error('Error refreshing investment data:', error);
@@ -258,6 +265,9 @@
             window.location.reload();
           } else {
             this.loadError = true;
+            // Show the account whose data is still displayed
+            this.selectedAccountId = this.loadedAccountId;
+            this.syncAccountUrl();
           }
         } finally {
           this.isRefreshing = false;
