@@ -7,7 +7,7 @@
     </div>
     <div class="card-body">
       <div v-if="hasData">
-        <div ref="chartQuantity" style="width: 100%; height: 300px"></div>
+        <div ref="chartQuantity" class="chart-container"></div>
       </div>
       <div v-else>
         <div class="text-center text-muted">

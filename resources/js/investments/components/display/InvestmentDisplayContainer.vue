@@ -12,7 +12,7 @@
       <select
         id="investment-account-filter"
         v-model="selectedAccountId"
-        class="form-select w-auto"
+        class="form-select w-auto flex-grow-1 flex-md-grow-0"
         :disabled="isRefreshing"
         @change="onAccountChange"
       >
@@ -38,39 +38,32 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-8">
-      <div class="row">
-        <div class="col-md-5">
-          <investment-details-card :investment="localInvestment" />
-          <current-assets-card :investment="localInvestment" />
-          <account-distribution-card
-            :accounts="localAccounts"
-            :investment="localInvestment"
-            :selected-account-id="selectedAccountId"
-          />
-        </div>
-
-        <div class="col-md-7">
-          <results-card
-            :investment="localInvestment"
-            :transactions="processedTransactions"
-            :prices="processedPrices"
-            :date-from="dateFrom"
-            :date-to="dateTo"
-            @update:date-from="(val) => (dateFrom = val)"
-            @update:date-to="(val) => (dateTo = val)"
-          />
-        </div>
-      </div>
-      <transaction-history-card
-        :transactions="processedTransactions"
+    <div class="col-12 col-lg-6 col-xl-4 mb-3">
+      <investment-details-card
+        class="h-100 mb-0"
         :investment="localInvestment"
-        @set-date-range="onSetDateRange"
-        @delete-transaction="onDeleteTransaction"
       />
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-lg-6 col-xl-5 mb-3">
+      <results-card
+        class="h-100 mb-0"
+        :investment="localInvestment"
+        :transactions="processedTransactions"
+        :prices="processedPrices"
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        @update:date-from="(val) => (dateFrom = val)"
+        @update:date-to="(val) => (dateTo = val)"
+      />
+    </div>
+    <div class="col-12 col-xl-3 mb-3">
+      <current-assets-card class="h-100 mb-0" :investment="localInvestment" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12 col-lg-6 mb-3" :class="chartColClass">
       <price-history-card
+        class="h-100 mb-0"
         :prices="processedPrices"
         :investment="localInvestment"
         :date-from="dateFrom"
@@ -78,7 +71,10 @@
         @update:date-from="(val) => (dateFrom = val)"
         @update:date-to="(val) => (dateTo = val)"
       />
+    </div>
+    <div class="col-12 col-lg-6 mb-3" :class="chartColClass">
       <quantity-history-card
+        class="h-100 mb-0"
         :quantities="processedQuantities"
         :investment="localInvestment"
         :date-from="dateFrom"
@@ -87,7 +83,21 @@
         @update:date-to="(val) => (dateTo = val)"
       />
     </div>
+    <div v-if="showDistribution" class="col-12 col-xl-4 mb-3">
+      <account-distribution-card
+        class="h-100 mb-0"
+        :accounts="localAccounts"
+        :investment="localInvestment"
+        :selected-account-id="selectedAccountId"
+      />
+    </div>
   </div>
+  <transaction-history-card
+    :transactions="processedTransactions"
+    :investment="localInvestment"
+    @set-date-range="onSetDateRange"
+    @delete-transaction="onDeleteTransaction"
+  />
 </template>
 
 <script>
@@ -132,6 +142,15 @@
         // Refreshed with each fetch so the distribution follows deletions
         localAccounts: this.accounts,
       };
+    },
+    computed: {
+      // Mirrors the visibility rule of AccountDistributionCard
+      showDistribution() {
+        return this.localAccounts.filter((a) => a.quantity > 0).length > 1;
+      },
+      chartColClass() {
+        return this.showDistribution ? 'col-xl-4' : 'col-xl-6';
+      },
     },
     watch: {
       processedTransactions() {

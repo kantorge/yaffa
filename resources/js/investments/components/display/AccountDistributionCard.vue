@@ -6,7 +6,7 @@
       </div>
     </div>
     <div class="card-body">
-      <div ref="chartDistribution" style="width: 100%; height: 250px"></div>
+      <div ref="chartDistribution" class="chart-container"></div>
     </div>
   </div>
 </template>
@@ -112,7 +112,11 @@
           0.08;
 
         chart.legend = new am4charts.Legend();
-        chart.legend.position = 'right';
+        chart.legend.position = 'bottom';
+        // Full-width legend so long account names are not truncated
+        chart.legend.labels.template.truncate = false;
+        chart.legend.maxHeight = 90;
+        chart.legend.scrollable = true;
         chart.legend.valueLabels.template.disabled = true;
 
         this.chart = chart;

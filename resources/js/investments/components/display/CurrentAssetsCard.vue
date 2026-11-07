@@ -7,13 +7,13 @@
     </div>
     <div class="card-body">
       <dl class="row mb-0">
-        <dt class="col-8">{{ __('Owned quantity') }}</dt>
-        <dd class="col-4">
+        <dt class="col-7 col-sm-8">{{ __('Owned quantity') }}</dt>
+        <dd class="col-5 col-sm-4 text-end text-break">
           {{ formatQuantity(investment.current_quantity) }}
         </dd>
-        <dt class="col-8">{{ __('Latest price') }}</dt>
+        <dt class="col-7 col-sm-8">{{ __('Latest price') }}</dt>
         <dd
-          class="col-4"
+          class="col-5 col-sm-4 text-end text-break"
           :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">
@@ -30,9 +30,9 @@
             }}
           </template>
         </dd>
-        <dt class="col-8">{{ __('Latest owned value') }}</dt>
+        <dt class="col-7 col-sm-8">{{ __('Latest owned value') }}</dt>
         <dd
-          class="col-4"
+          class="col-5 col-sm-4 text-end text-break"
           :class="{ 'not-set': investment.latest_price == null }"
         >
           <template v-if="investment.latest_price == null">

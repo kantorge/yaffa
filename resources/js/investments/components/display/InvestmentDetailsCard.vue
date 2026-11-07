@@ -17,11 +17,11 @@
     <div class="card-body">
       <dl class="row mb-0">
         <dt class="col-4">{{ __('Name') }}</dt>
-        <dd class="col-8">{{ investment.name }}</dd>
+        <dd class="col-8 text-break">{{ investment.name }}</dd>
         <dt class="col-4">{{ __('Symbol') }}</dt>
         <dd class="col-8">{{ investment.symbol }}</dd>
         <dt class="col-4">{{ __('ISIN number') }}</dt>
-        <dd class="col-8" :class="{ 'not-set': !investment.isin }">
+        <dd class="col-8 text-break" :class="{ 'not-set': !investment.isin }">
           {{ investment.isin || __('Not set') }}
         </dd>
         <dt class="col-4">{{ __('Active') }}</dt>
@@ -39,7 +39,7 @@
         <dd class="col-8">{{ investment.currency.name }}</dd>
         <template v-if="investment.comment">
           <dt class="col-4">{{ __('Comment') }}</dt>
-          <dd class="col-8">{{ investment.comment }}</dd>
+          <dd class="col-8 text-break">{{ investment.comment }}</dd>
         </template>
         <dt class="col-4">{{ __('Automatic update') }}</dt>
         <dd class="col-8">
@@ -52,8 +52,11 @@
         </dd>
         <template v-if="investment.auto_update">
           <dt class="col-4">{{ __('Price provider') }}</dt>
-          <dd class="col-8">
-            {{ investment.investment_price_provider_name }}
+          <dd
+            class="col-8"
+            :class="{ 'not-set': !investment.investment_price_provider_name }"
+          >
+            {{ investment.investment_price_provider_name || __('Not set') }}
           </dd>
         </template>
       </dl>
