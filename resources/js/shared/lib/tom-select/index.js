@@ -258,6 +258,8 @@ export function createLocalSelect(
     search,
     placeholder = '',
     allowClear = true,
+    multiple = false,
+    create = false,
     renderOption,
     onSelect,
     onClear,
@@ -272,6 +274,14 @@ export function createLocalSelect(
     plugins.clear_button = { title: escape(__('Clear selection')) };
   }
 
+  if (multiple) {
+    plugins.remove_button = { title: escape(__('Remove')) };
+    (typeof element === 'string'
+      ? document.querySelector(element)
+      : element
+    ).multiple = true;
+  }
+
   const defaultOption = (data, esc) =>
     `<div>${esc(data.text)}` +
     (data.matchedVia === 'alias' && data.alias
@@ -284,7 +294,7 @@ export function createLocalSelect(
 
   const ts = new TomSelect(element, {
     plugins,
-    mode: 'single',
+    mode: multiple ? 'multi' : 'single',
     placeholder,
     valueField: 'id',
     labelField: 'text',
@@ -321,7 +331,20 @@ export function createLocalSelect(
 
       callback();
     },
+    create,
+    createFilter(input) {
+      const label = input.toLowerCase();
+
+      return (
+        this.options[input] === undefined &&
+        !Object.values(this.options).some(
+          (option) => String(option.text).toLowerCase() === label,
+        )
+      );
+    },
     render: {
+      option_create: (data, esc) =>
+        `<div class="create">${esc(data.input)} <em>${esc(__('(new)'))}</em></div>`,
       option: renderOption ?? defaultOption,
       optgroup_header: (data, esc) =>
         `<div class="optgroup-header">${esc(data.label)}</div>`,
@@ -333,7 +356,11 @@ export function createLocalSelect(
   // List exactly what load() put in, in its order, instead of Tom Select's own search
   ts.hook('instead', 'search', function (query) {
     const items = resultIds
-      .filter((id) => this.options[id] !== undefined)
+      .filter(
+        (id) =>
+          this.options[id] !== undefined &&
+          !(this.settings.hideSelected && this.items.includes(id)),
+      )
       .map((id) => ({ id, score: 1 }));
 
     return { query, tokens: [], items, total: items.length };

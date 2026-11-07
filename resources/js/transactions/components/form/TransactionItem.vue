@@ -199,10 +199,17 @@
   import { markRaw } from 'vue';
   import { __ } from '@/shared/lib/i18n';
   import {
-    createRemoteSelect,
+    createLocalSelect,
     setSelected,
     clearSelect,
+    lockSelect,
+    unlockSelect,
   } from '@/shared/lib/tom-select';
+  import {
+    loadSelectData,
+    searchEntities,
+    suggestCategories,
+  } from '@/shared/lib/select-data';
 
   export default {
     components: {
@@ -367,11 +374,13 @@
     },
 
     mounted() {
+      // Shared, memoized preload (the form usually has it already); null until it arrives
+      this.selectData = null;
+
       this.categorySelect = markRaw(
-        createRemoteSelect(this.$el.querySelector('select.category'), {
-          url: '/api/v1/categories',
-          params: (term) => ({ q: term || undefined, payee: this.payee }),
-          mapResult: (item) => ({ id: item.id, text: item.full_name }),
+        createLocalSelect(this.$el.querySelector('select.category'), {
+          suggestions: () => this.categorySuggestions(),
+          search: (term) => this.searchCategories(term),
           placeholder: __('Select category'),
           onChange: (value) => {
             this.categoryIdData = value ? Number(value) : null;
@@ -418,9 +427,9 @@
       }
 
       this.tagSelect = markRaw(
-        createRemoteSelect(this.$el.querySelector('select.tag'), {
-          url: '/api/v1/tags',
-          params: (term) => ({ q: term || undefined }),
+        createLocalSelect(this.$el.querySelector('select.tag'), {
+          suggestions: () => this.tagSuggestions(),
+          search: (term) => this.searchTags(term),
           multiple: true,
           create: true,
           placeholder: __('Select tag(s)'),
@@ -436,15 +445,97 @@
           this.tags.map((tag) => ({ id: tag.id, text: tag.name })),
         );
       }
+
+      lockSelect(this.categorySelect, __('Loading…'));
+      lockSelect(this.tagSelect, __('Loading…'));
+      loadSelectData()
+        .then((data) => {
+          this.selectData = data;
+        })
+        .catch(() => {
+          // Selects stay usable for presets; their lists are just empty
+        })
+        .finally(() => {
+          // The item may have been removed while loading
+          if (this.unmounted) {
+            return;
+          }
+          unlockSelect(this.categorySelect, __('Select category'));
+          unlockSelect(this.tagSelect, __('Select tag(s)'));
+        });
     },
 
     beforeUnmount() {
+      this.unmounted = true;
       this.categorySelect?.destroy();
       this.tagSelect?.destroy();
     },
 
     methods: {
       __,
+
+      // "Usual for this payee": the payee's default category, then its most used ones
+      categorySuggestions() {
+        if (!this.selectData) {
+          return [];
+        }
+        const { categories, payees, usage } = this.selectData;
+        const payee = this.payee
+          ? payees.find((p) => p.id === Number(this.payee))
+          : null;
+        const items = suggestCategories(categories, usage, { payee }).map(
+          (c) => ({ id: c.id, text: c.full_name }),
+        );
+
+        return [
+          {
+            id: 'usual',
+            label: payee ? __('Usual for this payee') : __('Most used'),
+            items,
+          },
+        ];
+      },
+
+      searchCategories(term) {
+        if (!this.selectData) {
+          return [];
+        }
+        const { categories, usage } = this.selectData;
+        const payeeId = Number(this.payee);
+        const deferred = new Set(
+          usage.deferred_categories
+            .filter((d) => d.payee_id === payeeId)
+            .map((d) => d.category_id),
+        );
+
+        return searchEntities(
+          categories
+            .filter((c) => c.active && !deferred.has(c.id))
+            .map((c) => ({ id: c.id, name: c.full_name, active: true })),
+          term,
+        ).map((c) => ({ id: c.id, text: c.name }));
+      },
+
+      // Tags have no usage ranking: an empty search lists the active ones by name
+      tagSuggestions() {
+        const tags = (this.selectData?.tags ?? [])
+          .filter((t) => t.active)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((t) => ({ id: t.id, text: t.name }));
+
+        return [{ id: 'tags', label: __('Tags'), items: tags }];
+      },
+
+      searchTags(term) {
+        if (!this.selectData) {
+          return [];
+        }
+
+        return searchEntities(
+          this.selectData.tags.filter((t) => t.active),
+          term,
+        ).map((t) => ({ id: t.id, text: t.name }));
+      },
       updateItemAmount: function (event) {
         this.$emit('updateItemAmount', event.target.value);
       },

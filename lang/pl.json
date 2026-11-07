@@ -1864,5 +1864,6 @@
     "Retry": "Ponów",
     "Deactivate again after saving: :names": "Dezaktywuj ponownie po zapisaniu: :names",
     "Could not reactivate :name.": "Nie udało się ponownie aktywować: :name.",
-    "Reactivated items stay active, because the transaction was not saved.": "Reaktywowane elementy pozostają aktywne, ponieważ transakcja nie została zapisana."
+    "Reactivated items stay active, because the transaction was not saved.": "Reaktywowane elementy pozostają aktywne, ponieważ transakcja nie została zapisana.",
+    "Usual for this payee": "Zwykle dla tego odbiorcy"
 }

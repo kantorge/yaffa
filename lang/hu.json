@@ -1863,5 +1863,6 @@
     "Retry": "Újra",
     "Deactivate again after saving: :names": "Mentés után inaktiválás újra: :names",
     "Could not reactivate :name.": "A(z) :name újraaktiválása nem sikerült.",
-    "Reactivated items stay active, because the transaction was not saved.": "Az újraaktivált elemek aktívak maradnak, mert a tranzakció nem lett mentve."
+    "Reactivated items stay active, because the transaction was not saved.": "Az újraaktivált elemek aktívak maradnak, mert a tranzakció nem lett mentve.",
+    "Usual for this payee": "Gyakori ennél a kedvezményezettnél"
 }

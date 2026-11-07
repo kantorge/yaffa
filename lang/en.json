@@ -1864,5 +1864,6 @@
     "Retry": "Retry",
     "Deactivate again after saving: :names": "Deactivate again after saving: :names",
     "Could not reactivate :name.": "Could not reactivate :name.",
-    "Reactivated items stay active, because the transaction was not saved.": "Reactivated items stay active, because the transaction was not saved."
+    "Reactivated items stay active, because the transaction was not saved.": "Reactivated items stay active, because the transaction was not saved.",
+    "Usual for this payee": "Usual for this payee"
 }

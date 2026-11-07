@@ -471,10 +471,10 @@ button[type="submit"] .spinner-border {
         color: var(--cui-secondary-color);
     }
 
-    // Grouped layout of createLocalSelect() only: room for two groups of five on desktop; shorter screens scroll
+    // Grouped layout of createLocalSelect() only: room for the default view (two groups of five plus group labels) without scrolling; shorter screens scroll
     &.ts-dropdown-grouped {
         .ts-dropdown-content {
-            max-height: min(60vh, 22rem);
+            max-height: min(85vh, 40rem);
         }
 
         .optgroup-header {

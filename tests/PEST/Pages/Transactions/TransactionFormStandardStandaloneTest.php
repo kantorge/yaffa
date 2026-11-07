@@ -295,7 +295,7 @@ it('adds multiple transaction items')->todo();
 it('adds a new payee through the modal and uses it', function () {
     $category = Category::factory()->create([
         'user_id' => $this->user->id,
-        'parent_id' => Category::inRandomOrder()->parentCategory()->first()->id,
+        'parent_id' => Category::where('user_id', $this->user->id)->parentCategory()->inRandomOrder()->first()->id,
         'active' => true,
     ]);
 
