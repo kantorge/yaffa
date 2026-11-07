@@ -14,6 +14,8 @@
             :investment="{{ json_encode($investment) }}"
             :transactions="{{ json_encode($transactions) }}"
             :prices="{{ json_encode($prices) }}"
+            :accounts="{{ json_encode($accounts) }}"
+            :initial-account="{{ json_encode($selectedAccountId) }}"
         ></investment-display-container>
     </div>
 @stop

@@ -17,7 +17,7 @@
     </div>
     <div class="card-body">
       <div v-if="hasData">
-        <div ref="chartPrice" style="width: 100%; height: 300px"></div>
+        <div ref="chartPrice" class="chart-container"></div>
       </div>
       <div v-else>
         <div class="text-center text-muted">
@@ -64,6 +64,23 @@
               investment: this.investment.id,
             })
           : '#';
+      },
+    },
+    watch: {
+      prices() {
+        if (this.chart && this.hasData) {
+          this.chart.data = this.prices;
+          return;
+        }
+        if (this.chart) {
+          // No data: the chart container is removed from the DOM
+          this.chart.dispose();
+          this.chart = null;
+        }
+        if (!this.chart && this.hasData) {
+          // Chart container only exists once there is data
+          this.$nextTick(() => this.createChart());
+        }
       },
     },
     mounted() {
