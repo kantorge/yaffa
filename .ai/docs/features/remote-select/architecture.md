@@ -46,7 +46,7 @@ diff is limited to the payee redirects/404s, the trait fix and the removed view 
 ## Local selects (transaction forms)
 
 `createLocalSelect()` (same module) is a sibling of `createRemoteSelect()` that makes no requests. The standard
-transaction form's account/payee selects use it with the data from `shared/lib/select-data`, loaded once per page from
+transaction form's account/payee selects use it with the data from `shared/lib/select-data`, loaded once per page (after the page has loaded) from
 `GET /api/v1/reference-data` and `/reference-data/usage`: an empty search lists "Most used" and "Recent" groups, typing
 searches name and alias locally (inactive items included, badged), and picking an inactive item reactivates it
 (`PATCH account-entities/{id}`), restoring it after the transaction is saved unless the user opts out. Currency and a

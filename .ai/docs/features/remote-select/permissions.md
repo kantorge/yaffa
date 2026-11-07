@@ -8,12 +8,23 @@ per-user ownership) is in `.ai/docs/features/api-access-and-2fa/permissions.md`.
 | Resource / route | Operation | Gate | Ownership enforced by | Changed here? |
 |---|---|---|---|---|
 | `GET /api/v1/{accounts,accounts/investment,payees,categories,tags,investments,category-learning}` | search | `auth:sanctum`, `verified`, `abilities:read` | user-scoped query in the controller | No |
+| `GET /api/v1/reference-data` | preload for local selects | `auth:sanctum`, `verified`, `abilities:read` | `$user->…` relations / `where('user_id', …)` | Yes: adds `alias`, payee `category_id`, `investments` |
+| `GET /api/v1/reference-data/usage` | usage aggregates for ranking | `abilities:read` (class-level) | every query filters `transactions.user_id` / `e.user_id`; payee rows are reached only through the user's own transactions | **Yes: new** |
+| `PATCH /api/v1/account-entities/{id}/active`, `PATCH /api/v1/investments/{id}/active` | reactivate / deactivate again from a local select | `abilities:write` | route policy (unchanged) | No (new caller) |
 | `GET /api/v1/payees/{id}` | view | `abilities:read` | `#[Authorize('view')]` → `AccountEntityPolicy` | No (now the only way the edit modal loads a payee) |
 | `POST /api/v1/payees` | create | `abilities:write` | `AccountEntityRequest` exists-rules scoped to the user's categories | No |
 | `PATCH /api/v1/payees/{id}` | update | `abilities:write` | `#[Authorize('update')]` + the same request rules | No |
 | `GET /account-entity/create?type=payee` | → redirect | `can:create,AccountEntity` | n/a | **Yes**: redirects to the list modal |
 | `GET /account-entity/{id}/edit` (payee) | → redirect | `can:update,account_entity` (runs before the redirect) | policy | **Yes**: redirects to the list modal |
 | `POST /account-entity`, `PATCH /account-entity/{id}` with `config_type=payee` | write | `can:create` / `can:update` | policy | **Yes**: 404, no write |
+
+## Local selects
+
+- Local selects read only the two preload responses above. Both are user-scoped, so another user's rows never reach
+  the client. `usage` is pinned by a `read` ability case in `ApiAbilityEnforcementTest` and a per-user isolation test.
+- Reactivating an inactive item is an explicit user pick that calls the existing `active` endpoints (`write`), and the
+  form deactivates it again after saving unless the user opts out. No new write route.
+- Mobile device tokens (`read,write`) can call `usage`; it needs only `read`.
 
 ## Code-enforced rules (no DB-level row security)
 

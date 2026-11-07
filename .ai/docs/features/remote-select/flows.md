@@ -42,9 +42,29 @@ Actor: authenticated user. Two entry points:
 The legacy web write routes (`POST /account-entity`, `PATCH /account-entity/{id}` with
 `config_type = payee`) return 404 and write nothing.
 
+## Flow 4: Local selects in the transaction forms
+
+Actor: authenticated user. Precondition: a page with the standard or investment transaction form (the modal form is
+mounted on every page that includes it).
+
+1. After the page `load` event (first render done), the form calls `loadSelectData()`:
+   `GET /api/v1/reference-data` and `GET /api/v1/reference-data/usage` (`abilities:read`, user-scoped; one memoized
+   load shared by all forms on the page). Until it resolves the selects are locked ("Loading…"). A failure shows a
+   Retry alert, and a retry refetches.
+2. Open or type: no request. Suggestions ("Most used", "Recent", "Other") or name/alias matches are computed locally from
+   the preload; inactive items are included when searching, badged.
+3. Picking an account or payee reads its currency or default category from the preload, not from a GET.
+4. Picking an **inactive** item: `PATCH …/active` (`abilities:write`) reactivates it, and the form remembers it. After a
+   successful save it is deactivated again unless the checkbox is cleared. On cancel it stays active and the user is told.
+5. After a successful **create**, the saved transaction is folded into the in-memory usage (`applySavedTransaction`), so
+   the next entry in the same page session ranks it. Edits do not.
+
+Side effects: reactivation/deactivation of the picked item only. The preload may lag for a payee's default category in
+`updated_since` mode (mobile only; the forms always load in full).
+
 ## Flow 3: Transaction entry
 
-Same as Flow 1 for account, payee, category, tag and investment. On a transaction type change, the
+Account, payee, investment, category and tag selects are local (Flow 4); the remote select (Flow 1) remains on other screens. On a transaction type change, the
 form destroys its account/payee selects (aborting any pending request) and rebuilds them against the
 new endpoint. Tags may be created inline: the typed text becomes the option value, and the existing
 transaction API handles it on save exactly as before (unchanged backend).
