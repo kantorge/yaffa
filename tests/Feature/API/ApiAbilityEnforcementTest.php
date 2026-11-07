@@ -39,6 +39,7 @@ class ApiAbilityEnforcementTest extends TestCase
         return [
             // read
             'accounts.index' => ['api.v1.accounts.index', 'get', 'read', []],
+            'accounts.investments' => ['api.v1.accounts.investments', 'get', 'read', ['accountEntity' => 1]],
             'categories.index' => ['api.v1.categories.index', 'get', 'read', []],
             'categories.overview' => ['api.v1.categories.overview', 'get', 'read', ['category' => 1]],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
@@ -210,6 +211,9 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.investments.destroy' => [
                 'investment' => $this->createOwnedInvestment($user)->id,
+            ],
+            'api.v1.accounts.investments' => [
+                'accountEntity' => $this->createOwnedAccountEntity($user)->id,
             ],
             'api.v1.account-entities.destroy' => [
                 'accountEntity' => $this->createOwnedAccountEntity($user)->id,

@@ -8,6 +8,9 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
+use App\Models\Investment;
+use App\Services\InvestmentService;
+use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +26,7 @@ use Illuminate\Support\Facades\DB;
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem',
+    'getList', 'getAccountListForInvestments', 'getAccountBalance', 'getItem', 'getInvestmentHoldings',
 ])]
 #[Middleware('abilities:write', only: [
     'recalculateMonthlySummary',
@@ -250,6 +253,48 @@ class AccountApiController extends Controller
                 $accountEntity,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Investment holdings of an account
+     *
+     * Returns the investments with a positive quantity in the account, with their latest price
+     * and current value (computed live), sorted by value descending. Price and value are null
+     * if no price is available.
+     */
+    #[Authorize('view', 'accountEntity')]
+    public function getInvestmentHoldings(AccountEntity $accountEntity, InvestmentService $investmentService): JsonResponse
+    {
+        if ($accountEntity->config_type !== 'account') {
+            return response()->json(['message' => __('This account entity is not an account.')], Response::HTTP_BAD_REQUEST);
+        }
+
+        /** @var Account $account */
+        $account = $accountEntity->config;
+
+        $quantities = $account->getAssociatedInvestmentsAndQuantity()
+            ->filter(fn ($item) => BigDecimal::of($item->quantity)->isPositive())
+            ->keyBy('investment_id');
+
+        $investments = Investment::with('currency')->whereIn('id', $quantities->keys())->get();
+
+        $prices = $investmentService->getLatestPricesExact($investments);
+
+        $rows = $investments->map(function (Investment $investment) use ($quantities, $prices) {
+            $quantity = BigDecimal::of($quantities[$investment->id]->quantity);
+            $price = $prices[$investment->id] ?? null;
+
+            return [
+                'investment_id' => $investment->id,
+                'name' => $investment->name,
+                'quantity' => (string) $quantity,
+                'price' => $price === null ? null : (string) $price,
+                'value' => $price === null ? null : (string) $quantity->multipliedBy($price),
+            ];
+        });
+
+        // Ordering only, so float precision is irrelevant; missing prices go last
+        return response()->json($rows->sortByDesc(fn ($row) => (float) ($row['value'] ?? -1))->values());
     }
 
     /**

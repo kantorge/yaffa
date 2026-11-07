@@ -1854,5 +1854,9 @@
     "e.g. Pixel 8 - YAFFA app": "pl. Pixel 8 – YAFFA alkalmazás",
     "Generate QR code": "QR-kód létrehozása",
     "Unable to create the pairing code.": "Nem sikerült létrehozni a párosítási kódot.",
-    "Only tokens with exactly read and write access can be paired with the app.": "Csak pontosan olvasási és írási jogosultsággal rendelkező tokenek párosíthatók az alkalmazással."
+    "Only tokens with exactly read and write access can be paired with the app.": "Csak pontosan olvasási és írási jogosultsággal rendelkező tokenek párosíthatók az alkalmazással.",
+    "All accounts": "Minden számla",
+    "Could not load the investment data. Please try again.": "A befektetési adatok betöltése nem sikerült. Kérjük, próbálja újra.",
+    "Select a single account": "Válasszon egyetlen számlát",
+    "Distribution by account": "Megoszlás számlák szerint"
 }

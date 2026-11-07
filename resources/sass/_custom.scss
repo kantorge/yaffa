@@ -480,3 +480,13 @@ button[type="submit"] .spinner-border {
 .sticky-action-bar {
     z-index: 1030;
 }
+
+// Fluid chart containers: shorter on phones
+.chart-container {
+  width: 100%;
+  height: 220px;
+
+  @include media-breakpoint-up(sm) {
+    height: 300px;
+  }
+}

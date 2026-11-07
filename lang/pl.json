@@ -1855,5 +1855,9 @@
     "e.g. Pixel 8 - YAFFA app": "np. Pixel 8 - aplikacja YAFFA",
     "Generate QR code": "Wygeneruj kod QR",
     "Unable to create the pairing code.": "Nie można utworzyć kodu parowania.",
-    "Only tokens with exactly read and write access can be paired with the app.": "Z aplikacją można sparować tylko tokeny z dokładnie uprawnieniami odczytu i zapisu."
+    "Only tokens with exactly read and write access can be paired with the app.": "Z aplikacją można sparować tylko tokeny z dokładnie uprawnieniami odczytu i zapisu.",
+    "All accounts": "Wszystkie konta",
+    "Could not load the investment data. Please try again.": "Nie udało się wczytać danych inwestycji. Spróbuj ponownie.",
+    "Select a single account": "Wybierz jedno konto",
+    "Distribution by account": "Podział według kont"
 }
