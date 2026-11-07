@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use App\Http\Requests\InvestmentDisplayRequest;
 use App\Http\Requests\InvestmentRequest;
-use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Services\InvestmentService;
@@ -16,8 +16,6 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentController extends Controller implements HasMiddleware
 {
-    use ScheduleTrait;
-
     public function __construct(
         protected InvestmentService $investmentService
     ) {
@@ -142,56 +140,22 @@ class InvestmentController extends Controller implements HasMiddleware
         return to_route('investments.index');
     }
 
-    public function show(Investment $investment): View
+    public function show(InvestmentDisplayRequest $request, Investment $investment): View
     {
         /**
          * @get("/investments/{investment}")
          * @name("investments.show")
          * @middlewares("web", "auth", "verified")
          */
-
-        // Get all stored price points
-        $prices = InvestmentPrice::where('investment_id', $investment->id)
-            ->orderBy('date')
-            ->get();
-
-        // Eager load investment details to be displayed
-        $investment->load([
-            'investmentGroup',
-            'currency',
-        ]);
-
-        // Add current quantity and price as dynamic properties for use in the view or JS
-        $investment->current_quantity = $this->investmentService->getCurrentQuantity($investment);
-        $investment->latest_price = $this->investmentService->getLatestPrice($investment);
-
-        $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
-
-        // Get basic (non-scheduled) transactions
-        $transactions = $investment->transactionsBasic()
-            ->with([
-                'config',
-            ])
-            ->get();
-
-        // Get scheduled transactions and generate instances
-        $scheduledTransactions = $investment->transactionsScheduled()
-            ->with([
-                'config',
-                'transactionSchedule',
-            ])
-            ->get()
-            ->filter(fn ($transaction): bool => $transaction instanceof \App\Models\Transaction
-                && ($transaction->transactionSchedule?->active) === true);
-
-        // Add all scheduled instances to list of transactions
-        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
-        $transactions = $transactions->concat($scheduleInstances);
+        $account = $request->account();
+        $data = $this->investmentService->getDisplayData($investment, $account);
 
         return view('investments.show', [
-            'investment' => $investment,
-            'transactions' => $transactions,
-            'prices' => $prices,
+            'investment' => $data['investment'],
+            'transactions' => $data['transactions'],
+            'prices' => InvestmentPrice::where('investment_id', $investment->id)->orderBy('date')->get(),
+            'accounts' => $data['accounts'],
+            'selectedAccountId' => $account?->id,
         ]);
     }
 }

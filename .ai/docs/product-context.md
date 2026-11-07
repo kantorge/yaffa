@@ -51,7 +51,7 @@ Users host their own instance to retain full control over their financial data. 
 ## Non-Goals / Explicit Limitations
 
 - No automatic bank synchronization
-- No native mobile application (responsive web only)
+- No standalone mobile product: the web app is responsive, and an optional Android companion app pairs with the user's own instance via the API (see `.ai/docs/features/mobile-app-support/`)
 - Not intended as strict accounting software
 
 ---

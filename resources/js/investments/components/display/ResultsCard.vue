@@ -5,29 +5,36 @@
         {{ __('Results') }}
       </div>
       <div>
-        <button class="btn btn-sm btn-primary" @click="resetDates">
-          {{ __('Reset dates') }}
+        <button
+          class="btn btn-sm btn-primary"
+          :title="__('Reset dates')"
+          @click="resetDates"
+        >
+          <i class="fa fa-rotate-left"></i>
+          <span class="d-none d-md-inline">{{ __('Reset dates') }}</span>
         </button>
       </div>
     </div>
     <div class="card-body">
       <div class="row mb-3">
-        <label for="date_from" class="col-6 col-sm-2 col-form-label">
+        <label for="date_from" class="col-12 col-sm-2 col-form-label">
           {{ __('Date from') }}
         </label>
-        <div class="col-6 col-sm-4">
+        <div class="col-12 col-sm-4 mb-2 mb-sm-0">
           <input
+            id="date_from"
             v-model="dateFromString"
             type="date"
             class="form-control"
             :max="dateToString"
           />
         </div>
-        <label for="date_to" class="col-6 col-sm-2 col-form-label">
+        <label for="date_to" class="col-12 col-sm-2 col-form-label">
           {{ __('Date to') }}
         </label>
-        <div class="col-6 col-sm-4">
+        <div class="col-12 col-sm-4 mb-2 mb-sm-0">
           <input
+            id="date_to"
             v-model="dateToString"
             type="date"
             class="form-control"
@@ -276,6 +283,10 @@
       },
     },
     watch: {
+      transactions() {
+        // Date bounds were derived from the previous transaction set
+        this.resetDates();
+      },
       dateFrom(val) {
         if (val) this.internalDateFrom = val;
       },

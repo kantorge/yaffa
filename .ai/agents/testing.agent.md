@@ -15,6 +15,7 @@ You do NOT implement business logic unless strictly required to fix test failure
 2. Choose the correct test level:
    - Unit tests for isolated logic
    - Feature tests for HTTP/API behavior
+   - JS unit tests (`resources/js/**/*.test.js`, `node:test`, `npm run test:js`) for pure frontend helpers
    - Pest browser tests (`tests/PEST/`) for critical user flows (Dusk is legacy: no new Dusk tests)
 3. Identify missing coverage and risky paths
 4. Fix failing tests caused by backend changes

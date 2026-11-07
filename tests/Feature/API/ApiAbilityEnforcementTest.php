@@ -39,12 +39,14 @@ class ApiAbilityEnforcementTest extends TestCase
         return [
             // read
             'accounts.index' => ['api.v1.accounts.index', 'get', 'read', []],
+            'accounts.investments' => ['api.v1.accounts.investments', 'get', 'read', ['accountEntity' => 1]],
             'categories.index' => ['api.v1.categories.index', 'get', 'read', []],
             'categories.overview' => ['api.v1.categories.overview', 'get', 'read', ['category' => 1]],
             'transactions.index' => ['api.v1.transactions.index', 'get', 'read', []],
             'payees.index' => ['api.v1.payees.index', 'get', 'read', []],
             'summary' => ['api.v1.summary', 'get', 'read', []],
             'reference-data' => ['api.v1.reference-data', 'get', 'read', []],
+            'reference-data.usage' => ['api.v1.reference-data.usage', 'get', 'read', []],
             'notifications.index' => ['api.v1.notifications.index', 'get', 'read', []],
             'payees.auto-record-candidates' => ['api.v1.payees.auto-record-candidates', 'get', 'read', []],
             'payees.category-stats' => ['api.v1.payees.category-stats', 'get', 'read', ['accountEntity' => 1]],
@@ -210,6 +212,9 @@ class ApiAbilityEnforcementTest extends TestCase
             ],
             'api.v1.investments.destroy' => [
                 'investment' => $this->createOwnedInvestment($user)->id,
+            ],
+            'api.v1.accounts.investments' => [
+                'accountEntity' => $this->createOwnedAccountEntity($user)->id,
             ],
             'api.v1.account-entities.destroy' => [
                 'accountEntity' => $this->createOwnedAccountEntity($user)->id,

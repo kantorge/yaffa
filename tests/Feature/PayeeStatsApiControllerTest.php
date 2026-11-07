@@ -141,6 +141,8 @@ class PayeeStatsApiControllerTest extends TestCase
         $response->assertJsonCount(2, 'categories');
         $response->assertJsonPath('categories.0.category_id', $primaryCategory->id);
         $response->assertJsonPath('categories.0.usage_count', 2);
+        $response->assertJsonPath('categories.0.transaction_count', 2);
+        $response->assertJsonStructure(['categories' => [['avg_amount']]]);
         $response->assertJsonPath('categories.1.category_id', $secondaryCategory->id);
         $response->assertJsonPath('categories.1.usage_count', 1);
     }

@@ -572,7 +572,7 @@
                   {{
                     parseAmountPreview(row[ci]) !== null
                       ? parseAmountPreview(row[ci])
-                      : __('?')
+                      : '?'
                   }}
                 </div>
                 <!-- Parsed value preview: date -->

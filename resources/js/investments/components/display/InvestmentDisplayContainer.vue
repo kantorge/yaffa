@@ -1,33 +1,74 @@
 <template>
+  <div v-if="accounts.length > 1" class="card mb-3">
+    <div
+      class="card-body py-2 d-flex flex-wrap align-items-center column-gap-3 row-gap-1"
+    >
+      <label
+        for="investment-account-filter"
+        class="form-label fw-semibold mb-0 text-nowrap"
+      >
+        <i class="fa fa-fw fa-wallet text-muted"></i> {{ __('Account') }}
+      </label>
+      <select
+        id="investment-account-filter"
+        v-model="selectedAccountId"
+        class="form-select w-auto flex-grow-1 flex-md-grow-0"
+        :disabled="isRefreshing"
+        @change="onAccountChange"
+      >
+        <option :value="null">{{ __('All accounts') }}</option>
+        <optgroup :label="__('Select a single account')">
+          <option
+            v-for="account in accounts"
+            :key="account.id"
+            :value="account.id"
+          >
+            {{ account.name }}
+          </option>
+        </optgroup>
+      </select>
+      <span
+        v-if="isRefreshing"
+        class="spinner-border spinner-border-sm text-secondary"
+        role="status"
+      ></span>
+      <span v-if="loadError" class="text-danger small">
+        {{ __('Could not load the investment data. Please try again.') }}
+      </span>
+    </div>
+  </div>
   <div class="row">
-    <div class="col-md-8">
-      <div class="row">
-        <div class="col-md-5">
-          <investment-details-card :investment="localInvestment" />
-          <current-assets-card :investment="localInvestment" />
-        </div>
-
-        <div class="col-md-7">
-          <results-card
-            :investment="localInvestment"
-            :transactions="processedTransactions"
-            :prices="processedPrices"
-            :date-from="dateFrom"
-            :date-to="dateTo"
-            @update:date-from="(val) => (dateFrom = val)"
-            @update:date-to="(val) => (dateTo = val)"
-          />
-        </div>
-      </div>
-      <transaction-history-card
-        :transactions="processedTransactions"
+    <div class="col-12 col-lg-6 col-xl-3 mb-3">
+      <investment-details-card
+        class="h-100 mb-0"
         :investment="localInvestment"
-        @set-date-range="onSetDateRange"
-        @delete-transaction="onDeleteTransaction"
       />
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-lg-6 mb-3" :class="resultsColClass">
+      <results-card
+        class="h-100 mb-0"
+        :investment="localInvestment"
+        :transactions="processedTransactions"
+        :prices="processedPrices"
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        @update:date-from="(val) => (dateFrom = val)"
+        @update:date-to="(val) => (dateTo = val)"
+      />
+    </div>
+    <div v-if="showDistribution" class="col-12 col-xl-4 mb-3">
+      <account-distribution-card
+        class="h-100 mb-0"
+        :accounts="localAccounts"
+        :investment="localInvestment"
+        :selected-account-id="selectedAccountId"
+      />
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12 col-lg-6 mb-3">
       <price-history-card
+        class="h-100 mb-0"
         :prices="processedPrices"
         :investment="localInvestment"
         :date-from="dateFrom"
@@ -35,7 +76,10 @@
         @update:date-from="(val) => (dateFrom = val)"
         @update:date-to="(val) => (dateTo = val)"
       />
+    </div>
+    <div class="col-12 col-lg-6 mb-3">
       <quantity-history-card
+        class="h-100 mb-0"
         :quantities="processedQuantities"
         :investment="localInvestment"
         :date-from="dateFrom"
@@ -45,11 +89,17 @@
       />
     </div>
   </div>
+  <transaction-history-card
+    :transactions="processedTransactions"
+    :investment="localInvestment"
+    @set-date-range="onSetDateRange"
+    @delete-transaction="onDeleteTransaction"
+  />
 </template>
 
 <script>
   import InvestmentDetailsCard from './InvestmentDetailsCard.vue';
-  import CurrentAssetsCard from './CurrentAssetsCard.vue';
+  import AccountDistributionCard from './AccountDistributionCard.vue';
   import ResultsCard from './ResultsCard.vue';
   import TransactionHistoryCard from './TransactionHistoryCard.vue';
   import PriceHistoryCard from './PriceHistoryCard.vue';
@@ -58,7 +108,7 @@
   export default {
     components: {
       InvestmentDetailsCard,
-      CurrentAssetsCard,
+      AccountDistributionCard,
       ResultsCard,
       TransactionHistoryCard,
       PriceHistoryCard,
@@ -69,6 +119,8 @@
       transactions: Array,
       prices: Array,
       quantities: Array,
+      accounts: { type: Array, default: () => [] },
+      initialAccount: { type: Number, default: null },
     },
     data() {
       return {
@@ -80,7 +132,24 @@
         processedQuantities: [],
         processedPrices: [],
         isRefreshing: false,
+        selectedAccountId: this.initialAccount,
+        // Last account whose data loaded successfully; restored if a switch fails
+        loadedAccountId: this.initialAccount,
+        loadError: false,
+        // Refreshed with each fetch so the distribution follows deletions
+        localAccounts: this.accounts,
       };
+    },
+    computed: {
+      // Mirrors the visibility rule of AccountDistributionCard
+      showDistribution() {
+        return (
+          this.localAccounts.filter((a) => Number(a.quantity) > 0).length > 1
+        );
+      },
+      resultsColClass() {
+        return this.showDistribution ? 'col-xl-5' : 'col-xl-9';
+      },
     },
     watch: {
       processedTransactions() {
@@ -134,52 +203,72 @@
           this.dateTo = new Date(date);
         }
       },
+      /** Reflect the selected account in the page URL. */
+      syncAccountUrl() {
+        const url = new URL(window.location.href);
+        if (this.selectedAccountId) {
+          url.searchParams.set('account', this.selectedAccountId);
+        } else {
+          url.searchParams.delete('account');
+        }
+        window.history.replaceState(null, '', url);
+      },
+      onAccountChange() {
+        this.syncAccountUrl();
+
+        // The date range belongs to the previous transaction set
+        this.dateFrom = null;
+        this.dateTo = null;
+        this.refreshData();
+      },
       async onDeleteTransaction(id) {
+        // Remove the transaction locally first for immediate feedback
+        this.processedTransactions = this.processedTransactions.filter(
+          (tx) => String(tx.id) !== String(id),
+        );
+        await this.refreshData(true);
+      },
+      async refreshData(reloadOnError = false) {
         // Prevent multiple refresh attempts
         if (this.isRefreshing) return;
         this.isRefreshing = true;
+        this.loadError = false;
 
         try {
-          // Remove the transaction from processedTransactions locally first for immediate feedback
-          this.processedTransactions = this.processedTransactions.filter(
-            (tx) => String(tx.id) !== String(id),
-          );
-
-          // Fetch fresh investment display data from API endpoint
-          // This includes recalculated quantities, transactions, and prices
           const response = await window.axios.get(
             `/api/v1/investments/${this.localInvestment.id}/display-data`,
+            {
+              params: this.selectedAccountId
+                ? { account: this.selectedAccountId }
+                : {},
+            },
           );
+          const data = response.data;
 
-          if (response.data) {
-            // Update investment with fresh data (includes recalculated quantities)
-            Object.assign(this.localInvestment, response.data.investment);
-
-            // Update transactions with fresh data and convert dates to Date objects
-            if (
-              response.data.transactions &&
-              Array.isArray(response.data.transactions)
-            ) {
-              this.processedTransactions = response.data.transactions.map(
-                (tx) => ({
-                  ...tx,
-                  date: tx.date ? new Date(tx.date) : null,
-                }),
-              );
-            }
-
-            // Update prices - triggers price chart reactivity
-            if (response.data.prices) {
-              this.processedPrices = response.data.prices;
-            }
-
-            // Watch on processedTransactions will automatically trigger recalculateQuantities()
-            // which updates processedQuantities for the quantity history chart
+          Object.assign(this.localInvestment, data.investment);
+          this.processedTransactions = (data.transactions || []).map((tx) => ({
+            ...tx,
+            date: tx.date ? new Date(tx.date) : null,
+          }));
+          if (data.accounts) {
+            this.localAccounts = data.accounts;
           }
+          if (data.prices) {
+            this.processedPrices = data.prices;
+          }
+          this.loadedAccountId = this.selectedAccountId;
+          // The processedTransactions watcher recalculates processedQuantities
         } catch (error) {
           console.error('Error refreshing investment data:', error);
-          // If API call fails, fall back to page reload for data consistency
-          window.location.reload();
+          if (reloadOnError) {
+            // Keep the data consistent with the server
+            window.location.reload();
+          } else {
+            this.loadError = true;
+            // Show the account whose data is still displayed
+            this.selectedAccountId = this.loadedAccountId;
+            this.syncAccountUrl();
+          }
         } finally {
           this.isRefreshing = false;
         }
