@@ -4,7 +4,8 @@
     "scripts": {
         "production": "npm run build",
         "dev": "fuser -k 5173/tcp 2>/dev/null; vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:js": "node --test \"resources/js/**/*.test.js\""
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.4",
