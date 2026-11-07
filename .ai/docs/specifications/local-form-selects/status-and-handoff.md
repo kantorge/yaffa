@@ -3,8 +3,8 @@
 Read [`specification.md`](specification.md) first (goals, decisions D1-D9, API contract, ranking rules). This file says
 what exists, what is left, and how to do the remaining phases without the original conversation.
 
-Work branch: `feature/local-transaction-form-selects` (created from `develop`). Phases 1-4 are implemented and
-committed (Phase 3: `7838cce5`; Phase 4: `8bf82219`); Phases 5 and 6 are left. Run `git log` to see the real state.
+Work branch: `feature/local-transaction-form-selects` (created from `develop`). Phases 1-5 are implemented and
+committed (Phase 3: `7838cce5`; Phase 4: `8bf82219`); Phase 5 is implemented but not yet committed; Phase 6 is left. Run `git log` to see the real state.
 
 ## 1. Environment and commands
 
@@ -172,54 +172,24 @@ Done in `7838cce5` (`TransactionItem.vue` uses `createLocalSelect` for categorie
 
 ## 4. What is left, per phase
 
-Phases 3 and 4 are done (see section 2). Each remaining phase is independently shippable.
+Phases 3-5 are done (see section 2 and above). Each remaining phase is independently shippable.
 
-### Phase 5: "Apply usual items" redesign
+### Phase 5: "Apply usual items" redesign (done)
 
-Goal (D6): fewer, realistic categories and amounts without invented fractions.
-
-Starting point: `resources/js/transactions/components/form/TransactionItemContainer.vue`,
-`applyStandardTransactionItems()` calls `getPayeeCategoryStats(payee, transactionType)`
-(`resources/js/payee/payee-stats-api.js`, `GET /api/v1/payees/{id}/category-stats`, backend
-`PayeeStatsApiController::categoryStats` + `PayeeCategoryStatsService`, 6 months, response `{payee_id, payee_name,
-categories:[{category_id, usage_count, category_full_name}], deferred_category_ids, period_months}`) then
-`buildItemsFromStats()` (proportional split by `usage_count`, `roundAmount` to `ITEM_AMOUNT_SCALE = 4` decimals, the
-remainder goes to the most used category, `.filter(amount > 0)`).
-
-Steps:
-
-1. **Backend** (`PayeeCategoryStatsService::buildAggregatedStatsQuery`, ~line 253): additionally return `transaction_count`
-   (`count(distinct transaction id)`, since `usage_count` counts items) and `avg_amount` per category (average item
-   amount). Keep existing keys unchanged. Add feature tests next to the existing category-stats tests and keep
-   `ApiAbilityEnforcementTest` green. (Backend changes need owner awareness: `resources/js/CLAUDE.md` says the frontend
-   scope does not modify PHP; this task explicitly includes it.)
-2. **Pure helper** (new file next to the container, e.g. `resources/js/transactions/components/form/usualItems.js`, with a
-   node test file like `ranking.test.js` and its own folder-level `package.json` only if needed to run under plain node;
-   otherwise place it under `resources/js/shared/lib/select-data/`): `buildUsualItems({stats, deferredIds, totalAmount,
-   precision, defaultCategoryId})`:
-   - drop deferred categories and non-positive counts;
-   - drop categories with a share under 10% (named constant), keep at most the top 4 by usage;
-   - split `totalAmount` proportionally and round each amount to `precision` decimal places with `decimal.js`
-     (`toDecimalPlaces`); when `precision` is 0 also round to a "nice" step (10 units if the total is at least 1000,
-     else 1);
-   - the remainder (total minus the sum) goes to the item of `defaultCategoryId` if present among the items, otherwise to
-     the largest item; drop items that end up at or below 0; the sum of the amounts must equal the total exactly.
-   - Tests: HUF-like (precision 0, e.g. 12 345), EUR-like (precision 2), a single category, a remainder that would go
-     negative, default category present vs absent.
-3. **Precision source**: the account currency's `generic_decimal_precision` (nullable). Pass it from
-   `TransactionFormStandard.vue` into `TransactionItemContainer.vue` as a new prop (the form already has
-   `from.account_currency` and `to.account_currency`; the currency used for the amount is `from` for withdrawal/transfer
-   and `to` for deposit, see `ammountFromCurrencyLabel`). Currency objects come from the preloaded
-   `reference-data` currencies, so `generic_decimal_precision` is present. When it is null use the same fallback as the
-   money formatting in `resources/js/shared/lib/i18n/format.js` (check what it does; do not invent a default).
-4. Pass the payee default category: `payeeCategory.id` in `TransactionFormStandard.vue` (new prop on the container).
-5. Replace `ITEM_AMOUNT_SCALE`/`roundAmount`/`buildItemsFromStats` in the container with the helper. Keep the confirm
-   dialog for replacing existing items, the loading/empty/error states (spinner, "No statistics available" dialog, error
-   toast) and the emitted `replaceTransactionItems`.
-6. Distribution is share-based (`usage_count`). `avg_amount` is returned for possible refinement; do not use it unless the
-   owner asks.
-7. Tests: node tests for the helper; update or add a browser test only if one covers the button today (search
-   `tests/PEST` for "usual items").
+- Backend: `PayeeCategoryStatsService` also returns `transaction_count` (distinct transactions) and `avg_amount` per
+  category; existing keys unchanged. Test assertions added in `tests/Feature/PayeeStatsApiControllerTest.php`.
+- Helper `buildUsualItems({stats, deferredIds, totalAmount, precision, defaultCategoryId})` in
+  `resources/js/shared/lib/select-data/usualItems.js` (6 node tests in `usualItems.test.js`):
+  drops deferred categories and non-positive counts, drops categories under a 10% share (`MIN_SHARE`), **no fixed cap**
+  (the share threshold bounds it to 10 items; a top-4 cap was tried and removed as arbitrary). Splits by `usage_count`
+  share, rounds with `decimal.js` to `precision` places (precision 0 and total >= 1000 rounds to steps of 10). The
+  remainder goes to the default category if among the items, else the largest item; non-positive items are dropped and
+  the amounts sum exactly to the total.
+- `TransactionItemContainer.vue` uses the helper (new props `amountPrecision`, `defaultCategoryId`); confirm dialog and
+  loading/empty/error states kept. `TransactionFormStandard.vue` computes `amountPrecision` from the amount currency's
+  `generic_decimal_precision`, falling back to Intl's default digits for that currency when null.
+- `avg_amount` is returned but unused (share-based distribution; refine only if the owner asks).
+- Not covered by a browser test (none exists for the button).
 
 ### Phase 6: measure and decide on caching (D7)
 

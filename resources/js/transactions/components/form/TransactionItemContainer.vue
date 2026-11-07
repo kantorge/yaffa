@@ -158,13 +158,10 @@
   import TransactionItem from './TransactionItem.vue';
   import { __ } from '@/shared/lib/i18n';
   import Swal from 'sweetalert2';
-  import Decimal from 'decimal.js';
   import * as toastHelpers from '@/shared/lib/toast';
   import { getPayeeCategoryStats } from '@/payee/payee-stats-api';
+  import { buildUsualItems } from '@/shared/lib/select-data/usualItems';
   import { confirmDelete } from '@/shared/lib/confirm';
-
-  // Matches transaction_items.amount's MoneyCast scale (app/Models/TransactionItem.php).
-  const ITEM_AMOUNT_SCALE = 4;
 
   export default {
     components: {
@@ -181,6 +178,14 @@
       },
       amountFrom: {
         type: Number,
+        default: null,
+      },
+      amountPrecision: {
+        type: Number,
+        default: 2,
+      },
+      defaultCategoryId: {
+        type: [Number, String],
         default: null,
       },
       enabled: {
@@ -332,7 +337,20 @@
             ? data.deferred_category_ids.map((id) => Number(id))
             : [];
 
-          const newItems = this.buildItemsFromStats(stats, deferredCategoryIds);
+          const itemStartId = this.getNextItemId();
+          const newItems = buildUsualItems({
+            stats,
+            deferredIds: deferredCategoryIds,
+            totalAmount: Number(this.amountFrom),
+            precision: this.amountPrecision,
+            defaultCategoryId: this.defaultCategoryId,
+          }).map((item, index) => ({
+            ...item,
+            id: itemStartId + index,
+            learnRecommendation: true,
+            tags: [],
+            comment: null,
+          }));
 
           if (newItems.length === 0) {
             await Swal.fire({
@@ -363,93 +381,6 @@
         } finally {
           this.isLoadingSuggestions = false;
         }
-      },
-
-      buildItemsFromStats(stats, deferredCategoryIds) {
-        if (!Array.isArray(stats) || stats.length === 0) {
-          return [];
-        }
-
-        const normalizedStats = stats
-          .map((stat) => ({
-            category_id: Number(stat.category_id),
-            category_full_name: stat.category_full_name || null,
-            usage_count: Number(stat.usage_count),
-          }))
-          .filter(
-            (stat) =>
-              Number.isInteger(stat.category_id) &&
-              stat.category_id > 0 &&
-              Number.isFinite(stat.usage_count) &&
-              stat.usage_count > 0,
-          )
-          .filter((stat) => !deferredCategoryIds.includes(stat.category_id));
-
-        if (normalizedStats.length === 0) {
-          return [];
-        }
-
-        const totalUsageCount = normalizedStats.reduce(
-          (sum, stat) => sum + stat.usage_count,
-          0,
-        );
-
-        if (totalUsageCount <= 0) {
-          return [];
-        }
-
-        const totalAmount = this.roundAmount(Number(this.amountFrom));
-        const mostUsedStat = normalizedStats[0];
-        const itemStartId = this.getNextItemId();
-
-        const items = normalizedStats.map((stat, index) => ({
-          id: itemStartId + index,
-          learnRecommendation: true,
-          category_id: stat.category_id,
-          category_full_name: stat.category_full_name,
-          amount: 0,
-          tags: [],
-          comment: null,
-        }));
-
-        let allocatedAmount = new Decimal(0);
-
-        items.forEach((item, index) => {
-          if (item.category_id === mostUsedStat.category_id) {
-            return;
-          }
-
-          const usageCount = normalizedStats[index].usage_count;
-          const proportionalAmount = this.roundAmount(
-            new Decimal(totalAmount)
-              .times(usageCount)
-              .dividedBy(totalUsageCount),
-          );
-
-          item.amount = proportionalAmount;
-          allocatedAmount = allocatedAmount.plus(proportionalAmount);
-        });
-
-        const remainderAmount = new Decimal(totalAmount).minus(allocatedAmount);
-        const mostUsedItem = items.find(
-          (item) => item.category_id === mostUsedStat.category_id,
-        );
-
-        if (mostUsedItem !== undefined) {
-          mostUsedItem.amount = this.roundAmount(
-            new Decimal(mostUsedItem.amount).plus(remainderAmount),
-          );
-        }
-
-        return items.filter((item) => item.amount > 0);
-      },
-
-      // Rounds to transaction_items.amount's stored scale using exact decimal
-      // arithmetic, avoiding the float drift a plain toFixed(4) round-trip risks.
-      roundAmount(amount) {
-        return new Decimal(amount)
-          .toDecimalPlaces(ITEM_AMOUNT_SCALE)
-          .toNumber();
       },
 
       getNextItemId() {

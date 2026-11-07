@@ -578,6 +578,8 @@
             :payee="payeeId"
             :transaction-type="form.transaction_type"
             :amount-from="form.config.amount_from"
+            :amount-precision="amountPrecision"
+            :default-category-id="payeeCategory.id"
             :remaining-amount="
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
@@ -973,6 +975,27 @@
        *
        * @returns {string} The currency symbol for the relevant account or an empty string.
        */
+      // Decimal places of the transaction amount's currency; when the currency has no
+      // configured precision, use the same default Intl applies when formatting it.
+      amountPrecision() {
+        const currency =
+          this.form.transaction_type === 'deposit'
+            ? this.to.account_currency
+            : this.from.account_currency;
+
+        if (!currency) {
+          return 2;
+        }
+
+        return (
+          currency.generic_decimal_precision ??
+          new Intl.NumberFormat(this.locale, {
+            style: 'currency',
+            currency: currency.iso_code,
+          }).resolvedOptions().maximumFractionDigits
+        );
+      },
+
       ammountFromCurrencyLabel() {
         if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
           if (this.from.account_currency) {

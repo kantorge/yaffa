@@ -51,7 +51,7 @@ chosen account).
 | D3 | The mobile companion app already reads reference data from `GET /api/v1/reference-data`. The web forms **reuse that endpoint** (extended additively), and the new usage endpoint is part of the same contract, so web and mobile share one source and one set of ranking rules. No parallel "select-data" API. |
 | D4 | Existing list endpoints (`/accounts`, `/payees`, `/categories`, `/tags`, `/investments`, ...) stay exactly as they are: they are a public API contract and 12 other files use them through `createRemoteSelect`. The transaction forms simply stop using them. |
 | D5 | Inactive entities are **reactivated inline**: picking one in the dropdown PATCHes it active (`api.v1.account-entities.patch-active`), works in the modal too, and an opt-out checkbox restores it (inactive again) after a successful save. Cancel or a failed save leaves it active, with a toast. |
-| D6 | "Apply usual items" rounds to the account **currency's decimal precision**, limits the number of categories, and gives the remainder to the payee default category (if among the items) or else the largest item. |
+| D6 | "Apply usual items" rounds to the account **currency's decimal precision**, drops categories under a 10% usage share (no fixed cap, so at most 10 items), and gives the remainder to the payee default category (if among the items) or else the largest item. |
 | D7 | The server-side cache for reference data is a **measured follow-up**, not part of the first change. Start with the existing ETag/304 and measure real response time and payload size first. |
 | D8 | Usage statistics stay **fresh on the client** during a session by counting each saved transaction locally (`applySavedTransaction`), instead of refetching or server-caching them. |
 | D9 | The dropdown height is raised (`min(60vh, 22rem)`) so two groups of five fit on desktop, but only for the grouped layout: `createLocalSelect()` adds the `ts-dropdown-grouped` class to its dropdown and the style is scoped to it. Other Tom Selects are unchanged. |
@@ -180,7 +180,7 @@ transactions only (not edits, they would double count).
 | 2 | `createLocalSelect`, dropdown CSS, standard form account/payee selects, inactive reactivation, loading/error state, translations, browser tests | **Done** |
 | 3 | Categories and tags in transaction item rows (`TransactionItem.vue`) | To do |
 | 4 | Investment form (`TransactionFormInvestment.vue`): account and investment selects | To do |
-| 5 | "Apply usual items" redesign (`TransactionItemContainer.vue` + payee stats amounts) | To do (independent, can go any time) |
+| 5 | "Apply usual items" redesign (`TransactionItemContainer.vue` + payee stats amounts) | Done |
 | 6 | Measure payload/response time; decide on the server cache (D7); mobile-contract confirmation | To do |
 
 Step-by-step instructions per phase are in [`status-and-handoff.md`](status-and-handoff.md).
