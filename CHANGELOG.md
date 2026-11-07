@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.6.0](https://github.com/kantorge/yaffa/compare/v4.5.1...v4.6.0) (2026-11-07)
+
+
+### 🛠️ Chores
+
+* upgrade node version ([78bf56e](https://github.com/kantorge/yaffa/commit/78bf56eef20d4448dc1f7dab1e7032f3538f3be4))
+
+
+### ✨ Features
+
+* improve transaction form selector behavior ([#599](https://github.com/kantorge/yaffa/issues/599)) ([1c4b42b](https://github.com/kantorge/yaffa/commit/1c4b42bf97ab84e984487bc6aa20f5d1adc45dd7))
+* investment and account improvements (account filter, account holdings card, responsive layout) ([#600](https://github.com/kantorge/yaffa/issues/600)) ([cb87c75](https://github.com/kantorge/yaffa/commit/cb87c75b5db5d2e2e75480d3afe6b5895a7694c7))
+
+
+### 🐛 Bug Fixes
+
+* minor lint error ([a1f5f7b](https://github.com/kantorge/yaffa/commit/a1f5f7bc105fff8969b8c56780ba1fb3d84ba7a7))
+* stale docs ([bb9cb4f](https://github.com/kantorge/yaffa/commit/bb9cb4f82af11adaf58858d9c3e014b5fc6c1d25))
+
 ## [4.5.1](https://github.com/kantorge/yaffa/compare/v4.5.0...v4.5.1) (2026-11-06)
 
 
