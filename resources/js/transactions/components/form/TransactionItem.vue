@@ -476,6 +476,13 @@
 
       // After a failed preload the form's retry only reaches the form: pick the data up here on first use
       retryLoad() {
+        // Backoff: every keystroke in a search calls this, so allow one attempt per 10s
+        const now = Date.now();
+        if (this.lastRetryAt && now - this.lastRetryAt < 10000) {
+          return;
+        }
+        this.lastRetryAt = now;
+
         loadSelectData()
           .then((data) => {
             this.selectData = data;

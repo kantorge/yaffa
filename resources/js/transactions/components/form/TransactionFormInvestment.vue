@@ -960,6 +960,7 @@
 
       // The shared reference data behind the selects (not reactive: it is read on demand)
       this.selectData = null;
+      this.pendingActivations = [];
       this.loadReferenceData();
     },
 
@@ -1244,7 +1245,8 @@
         }
         const id = Number(item.id);
 
-        this.setActive(kind, id, true)
+        // Tracked, so onSubmit() can wait for it: restoreReactivated() must see this entity
+        const activation = this.setActive(kind, id, true)
           .then(() => this.reactivated.push({ id, kind, name: item.text }))
           .catch(() => {
             toastHelpers.showErrorToast(
@@ -1256,6 +1258,7 @@
               reset();
             }
           });
+        this.pendingActivations.push(activation);
       },
 
       // Put back the entities reactivated for this transaction, once it is saved
@@ -1592,7 +1595,10 @@
         };
       },
 
-      onSubmit() {
+      async onSubmit() {
+        // Let in-flight reactivations settle (they never reject; failures clear the selection)
+        await Promise.all(this.pendingActivations);
+
         if (this.isTemplate) {
           this.saveTemplate(this.buildTemplateDraft());
           return;

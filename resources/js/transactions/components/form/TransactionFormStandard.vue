@@ -1256,6 +1256,7 @@
 
       // The shared reference data behind the account/payee selects (not reactive: it is read on demand)
       this.selectData = null;
+      this.pendingActivations = [];
       this.loadReferenceData();
     },
 
@@ -1852,7 +1853,8 @@
 
         const kind =
           this.getAccountType(type) === 'account' ? 'accounts' : 'payees';
-        window.axios
+        // Tracked, so onSubmit() can wait for it: restoreReactivated() must see this entity
+        const activation = window.axios
           .patch(
             window.route('api.v1.account-entities.patch-active', {
               accountEntity: id,
@@ -1877,6 +1879,7 @@
               this.resetPayee();
             }
           });
+        this.pendingActivations.push(activation);
       },
 
       // Store the selected account/payee and take what depends on it (currency, payee default category) from
@@ -1989,7 +1992,10 @@
         );
       },
 
-      onSubmit() {
+      async onSubmit() {
+        // Let in-flight reactivations settle (they never reject; failures clear the selection)
+        await Promise.all(this.pendingActivations);
+
         // Some preparation before submitting the form
 
         // Adjust the "amount to" value. It needs to match the "amount from" value, if the currencies are the same,
