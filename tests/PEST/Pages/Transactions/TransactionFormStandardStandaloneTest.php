@@ -63,6 +63,9 @@ function standardStandaloneSwitchType(object $page, string $type): void
     $page->click("[dusk=\"transaction-type-{$type}\"]");
     if ($losesData) {
         test()->confirmSwal($page);
+        // SweetAlert hands focus back to the clicked button shortly after closing; a dropdown opened before that
+        // would lose focus and close again
+        test()->waitUntil($page, "document.activeElement === document.querySelector('[dusk=\"transaction-type-{$type}\"]')");
     } else {
         $page->assertNotPresent('.swal2-popup');
     }
@@ -292,7 +295,7 @@ it('adds multiple transaction items')->todo();
 it('adds a new payee through the modal and uses it', function () {
     $category = Category::factory()->create([
         'user_id' => $this->user->id,
-        'parent_id' => Category::inRandomOrder()->parentCategory()->first()->id,
+        'parent_id' => Category::where('user_id', $this->user->id)->parentCategory()->inRandomOrder()->first()->id,
         'active' => true,
     ]);
 

@@ -405,6 +405,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Reference data for offline entry (mobile app)
     Route::get('/reference-data', [ReferenceDataApiController::class, 'index'])
         ->name('reference-data');
+    Route::get('/reference-data/usage', [ReferenceDataApiController::class, 'usage'])
+        ->name('reference-data.usage');
 
     // Notifications (polling) and push endpoint registration
     Route::get('/notifications', [NotificationApiController::class, 'index'])

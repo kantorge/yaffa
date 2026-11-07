@@ -25,6 +25,7 @@ class MetaApiController extends Controller
             'features' => [
                 'ai_documents' => true,
                 'notifications' => true,
+                'reference_usage' => true,
                 'push' => false,
             ],
         ];

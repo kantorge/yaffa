@@ -17,7 +17,7 @@ class PayeeCategoryStatsService
     /**
      * Get category usage stats for one payee.
      *
-     * @return Collection<int, array{category_id: int, usage_count: int, category_full_name: string}>
+     * @return Collection<int, array{category_id: int, usage_count: int, transaction_count: int, avg_amount: float, category_full_name: string}>
      */
     public function getCategoryStatsForPayee(
         User $user,
@@ -34,6 +34,8 @@ class PayeeCategoryStatsService
             ->map(fn ($row) => [
                 'category_id' => (int) $row->category_id,
                 'usage_count' => (int) $row->usage_count,
+                'transaction_count' => (int) $row->transaction_count,
+                'avg_amount' => (float) $row->avg_amount,
             ])
             ->values();
 
@@ -263,6 +265,8 @@ class PayeeCategoryStatsService
             ->fromSub($baseQuery, 'base')
             ->select(['payee_id', 'category_id'])
             ->selectRaw('count(*) as usage_count')
+            ->selectRaw('count(distinct transaction_id) as transaction_count')
+            ->selectRaw('avg(item_amount) as avg_amount')
             ->groupBy(['payee_id', 'category_id'])
             ->orderByDesc('usage_count');
     }
@@ -312,7 +316,9 @@ class PayeeCategoryStatsService
             ->where('categories.active', true)
             ->whereNotNull('transaction_items.category_id')
             ->selectRaw("transaction_details_standard.{$payeeColumn} as payee_id")
-            ->addSelect('transaction_items.category_id');
+            ->addSelect('transaction_items.category_id')
+            ->selectRaw('transactions.id as transaction_id')
+            ->selectRaw('transaction_items.amount as item_amount');
 
         if ($months !== null) {
             $query->where('transactions.date', '>=', now()->subMonthsNoOverflow($months)->startOfDay());

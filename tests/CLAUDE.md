@@ -9,6 +9,7 @@ See [.ai/agents/testing.agent.md](../.ai/agents/testing.agent.md) for full testi
 | -------------- | ---------------- | ---------------------------------------- |
 | Unit           | `tests/Unit/`    | Pure isolated logic, no DB or HTTP       |
 | Feature        | `tests/Feature/` | HTTP endpoints, policies, validation, DB |
+| JS unit        | `resources/js/**/*.test.js` | Pure JS helpers (no DOM/Vue), `node:test` |
 | Browser (Pest) | `tests/PEST/`    | Critical E2E user journeys only          |
 | Browser (Dusk) | `tests/Browser/` | **Legacy** — no new Dusk tests           |
 
@@ -50,6 +51,12 @@ be run with `pest`/`artisan test` — plain `vendor/bin/phpunit` can't load them
 - Reuse the **generic test user** and their seeded assets by default
 - UI/text assertions: use English locale unless testing locale-specific behavior
 - Seed the database once per class where possible (`setUpBeforeClass` / `RefreshDatabase`)
+
+## JS Unit (`node:test`)
+
+Colocated `*.test.js` files next to the module under test; no extra dependency. Run with
+`vendor/bin/sail npm run test:js` (also CI: `.github/workflows/test-js.yml`). A test folder needs a
+`package.json` with `{"type":"module"}` so Node loads the ES modules.
 
 ## Pest Browser-Specific (`tests/PEST/`)
 
