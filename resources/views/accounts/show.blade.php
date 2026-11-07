@@ -81,6 +81,23 @@
             </ul>
         </div>
 
+        <div class="card mb-3 d-none" id="investmentHoldingsCard">
+            <div class="card-header">
+                <div class="card-title collapse-control" data-coreui-toggle="collapse"
+                    data-coreui-target="#cardInvestments">
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Investment value') }}
+                </div>
+            </div>
+            <div class="collapse show" aria-expanded="true" id="cardInvestments">
+                <ul class="list-group list-group-flush" id="investmentHoldingsList"></ul>
+                <div class="card-footer d-flex justify-content-between fw-bold">
+                    <span>{{ __('Total') }}</span>
+                    <span id="investmentHoldingsTotal"></span>
+                </div>
+            </div>
+        </div>
+
         <h2>{{ __('Transaction filters') }}</h2>
 
         <div class="card mb-3">
