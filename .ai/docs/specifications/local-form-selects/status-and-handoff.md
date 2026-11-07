@@ -3,8 +3,8 @@
 Read [`specification.md`](specification.md) first (goals, decisions D1-D9, API contract, ranking rules). This file says
 what exists, what is left, and how to do the remaining phases without the original conversation.
 
-Work branch: `feature/local-transaction-form-selects` (created from `develop`). At the time of writing, Phases 1 and 2
-were implemented but **not committed**; run `git status` / `git log` to see the real state before starting.
+Work branch: `feature/local-transaction-form-selects` (created from `develop`). Phases 1-4 are implemented and
+committed (Phase 3: `7838cce5`; Phase 4: `8bf82219`); Phases 5 and 6 are left. Run `git log` to see the real state.
 
 ## 1. Environment and commands
 
@@ -16,7 +16,7 @@ about 20 seconds for MySQL.
 | JS unit tests (ranking) | `node --test resources/js/shared/lib/select-data/ranking.test.js` (the folder's `package.json` `{"type":"module"}` lets plain node load the ESM files) |
 | API feature tests | `vendor/bin/sail artisan test --compact tests/Feature/API/V1/ReferenceDataApiV1Test.php` and `--filter=ApiAbilityEnforcement` |
 | Build assets (needed before browser tests, and no `public/hot` may exist) | `vendor/bin/sail npm run build` |
-| Pest browser tests | `vendor/bin/sail php vendor/bin/pest --testsuite=Browser --filter="TransactionFormStandard"` (about 90 s for the standard form files) |
+| Pest browser tests | `vendor/bin/sail php vendor/bin/pest --testsuite=Browser --filter="TransactionFormStandard"` (about 90 s for the standard form files; `TransactionFormInvestment` about 55 s). If it fails with `PlaywrightOutdatedException`, the browsers are missing **inside the Sail container** (host installs do not count): run `vendor/bin/sail npx playwright install chromium` |
 | JS lint | `npx eslint resources/js/shared resources/js/transactions` (`--fix` for prettier) |
 | PHP style / static analysis | `vendor/bin/sail bin pint --dirty`, `vendor/bin/sail php vendor/bin/phpstan analyse <files> --memory-limit=1G` |
 | Translations check | `php .github/scripts/check-translations.php --base=develop` |
@@ -68,7 +68,8 @@ Frontend, `resources/js/shared/lib/select-data/`:
     option, `clearOptionGroups()`, `addOptionGroup`, `addOption({... optgroup})`, `callback()`), `lockOptgroupOrder`,
     and an `instead search` hook that returns only the ids of the current list, in order (same trick as the remote select).
   - Default option render: name, muted alias when `matchedVia === 'alias'`, "inactive" badge when `active === false`.
-  - **Single select only** (no `multiple`, no `create`). See Phase 3.
+  - Also supports `multiple`/`create` (added for tags in Phase 3) and `searchLabel: () => string` (label of the search
+    results group, default "Matches"; the investment form uses it for the currency suffix).
   - `setSelected`/`clearSelect` (with `silent`) work on the returned instance. Element ids and `.tomselect` access are kept.
 - `resources/sass/_custom.scss` (`.ts-dropdown.ts-dropdown-grouped`, class added by `createLocalSelect`): `.ts-dropdown-content { max-height: min(60vh, 22rem) }` and
   `.optgroup-header` styling, both scoped to the grouped class.
@@ -102,6 +103,39 @@ Frontend, `resources/js/shared/lib/select-data/`:
 Verified at the end of Phase 2: all `TransactionFormStandard*` browser tests, plus `TransactionTemplate`,
 `ManualEntryClosesDocument`, `AccountShow`, `PayeeMerge` (14 passed), API tests, ranking tests, Pint, PHPStan on the new
 PHP files. `ModalStandard.vue` needed **no change**: the form inside it is mounted at page load and starts the preload itself.
+
+### Phase 3: categories and tags in item rows
+
+Done in `7838cce5` (`TransactionItem.vue` uses `createLocalSelect` for categories and tags). See the commit for details.
+
+### Phase 4: investment form
+
+`resources/js/transactions/components/form/TransactionFormInvestment.vue` mirrors the standard form:
+
+- `created()` sets `this.selectData = null` and calls `loadReferenceData()` (`selectDataReady`, `selectDataError`,
+  `retrySelectData()`, Retry alert in the Details card). Selects are locked with "Loading…" until the data arrives.
+- Account and investment selects are `createLocalSelect`s. `accountCandidates()` / `investmentCandidates()` filter by the
+  other side's currency (`investment_currency` / `account_currency`; all when nothing is selected) and exclude inactive
+  ones unless searching. Investments are mapped with `alias = symbol`, so search matches the symbol; the option render
+  is `name (symbol)` plus an "inactive" badge, everything escaped.
+- Ranking: `investmentAccountUsage(usage, {investmentId, transactionType})` (new optional `transactionType`, falls back
+  to all types when that type has no history; node test added) and `investmentUsage(usage, {accountId})`, then
+  `rankByUsage`. Groups: Most used, Recent, Other.
+- Group labels: `groupLabel()` adds " - matching investment currency" (account select) or " - matching account
+  currency" (investment select) to "Other" and "Matches" while the other side is selected.
+- Currencies come from `selectData.currencies`; no GETs on selection, the "set currency immediately" workaround is gone.
+  Presets (`getDefaultAccountDetails`, `getDefaultInvestmentDetails`, URL params) resolve locally on `selectDataReady`;
+  `markFormClean` waits on it in `mounted()` and the `transaction` watcher.
+- Inactive entities: `reactivateIfInactive()` / `setActive()` use `api.v1.account-entities.patch-active` for accounts and
+  `api.v1.investments.patch-active` for investments; `#checkbox-deactivate-reactivated`, `restoreReactivated()` after a
+  successful create or edit, `notifyReactivatedStayActive()` on cancel.
+- After a successful create: `applySavedTransaction(usage, {...transaction, config_type: 'investment'})` (not on edit).
+- Translations (all four `lang` files, raw hu/fr/pl): "Could not load the account and investment lists.", "matching
+  investment currency", "matching account currency".
+- Verified: all `TransactionFormInvestment*` and `TransactionFormStandard*` browser tests, `TransactionTemplate`,
+  `ManualEntryClosesDocument`, `AccountShow`, ranking node tests, ESLint, translations check. The existing investment
+  tests needed no changes. No new browser test was added for the investment form.
+- Also in this work: `playwright` bumped to `^1.65.0` (separate commit `4963f706`).
 
 ### Deviations from the original plan (already reflected in the spec)
 
@@ -138,95 +172,7 @@ PHP files. `ModalStandard.vue` needed **no change**: the form inside it is mount
 
 ## 4. What is left, per phase
 
-Each phase is independently shippable. Do them in order unless noted; Phase 5 is independent.
-
-### Phase 3: categories and tags in item rows (`TransactionItem.vue`)
-
-Goal (spec 6.2): once a payee is selected, the item category dropdown lists "Usual for this payee" first, any category
-is findable by typing, tags search locally, no requests.
-
-Starting point (from the read-through of the original code; re-read the file, it was not changed yet):
-`resources/js/transactions/components/form/TransactionItem.vue` builds two `createRemoteSelect`s in `mounted()`:
-the category select (`/api/v1/categories`, params `{q, payee: this.payee}`, label `full_name`; `onChange` tracks whether a
-recommended category was accepted and emits `update:category_id`; preset via non-silent `setSelected` from the saved
-category or the AI recommendation) and the tag select (multi, `create: true`, `/api/v1/tags` `{q}`; emits `update:tags`
-with existing tag ids and new tags as typed text; initial tags via `setSelected`). It also clears and re-presets
-selects in a later code path (around lines 496-518) and destroys both in `beforeUnmount`. Items are rendered by
-`TransactionItemContainer.vue`, which passes the `payee` prop (`payeeId`).
-
-Steps:
-
-1. **Extend `createLocalSelect` for multi-select with creation** (it is single-select today). Add `multiple` (set
-   `element.multiple = true` before init, `mode: 'multi'`, `remove_button` plugin with the same title as
-   `createRemoteSelect`) and `create` (copy `create`, `createFilter` and the `option_create` render from
-   `createRemoteSelect`). In multi mode `onChange` receives the array, as in the remote version. Keep single-select
-   behaviour and the default render unchanged. Alternatively keep tags on `createRemoteSelect` and only do categories;
-   decide with the owner. The spec prefers local tags (D2).
-2. In `TransactionItem.vue` call `loadSelectData()` (shared memoized promise, no extra requests when the form already
-   loaded it). Lock the item selects until it resolves (`lockSelect`/`unlockSelect`), then preset.
-3. Category select: `suggestions` = one group "Usual for this payee" built from
-   `suggestCategories(data.categories, data.usage, {payee})` where `payee` is the preloaded payee row for
-   `this.payee` (`data.payees.find(p => p.id === Number(this.payee))`; `payee.category_id` is the default). Items are
-   `{id, text: full_name}`. `search(term)` = `searchEntities` over categories using `full_name` as the searched name
-   (build `{id, name: c.full_name, active}` objects). The select must re-evaluate when the `payee` prop changes; since
-   suggestions are computed on every open, nothing else is needed. Inactive categories are excluded from suggestions;
-   inactive categories are not searchable (as before). Categories deferred for the selected payee
-   (`data.usage.deferred_categories` rows with that `payee_id`) are also filtered out of `search(term)` (owner decision).
-4. Keep every existing behaviour of the row: recommendation preset and "learn recommendation" tracking, the emitted events,
-   `learnRecommendation`, the silent clear/preset path, and destroying selects in `beforeUnmount`. Note: **category
-   suggestions must not include or hide the AI-recommended category differently than before.**
-5. Tags: local search over `data.tags` (active only, `id` + `name`); a typed new name still creates a tag (value = raw
-   text). After a successful save, tags created on the fly are not in the preloaded list: acceptable (reload refetches);
-   optionally `upsertEntity('tags', ...)` is not possible before the server assigns ids, so skip.
-6. `applySavedTransaction` already updates `payee_categories`, so the next transaction in the session ranks correctly
-   (it is called from `TransactionFormStandard.vue`'s create-success handler).
-8. Tests: update the Pest browser tests that pick categories and tags
-   (`TransactionFormStandardStandaloneTest.php`: "creates a new tag and keeps existing ones in a transaction item",
-   "does not select the highlighted item category when the dropdown..."; the standard modal and template tests) and add
-   one that asserts the "Usual for this payee" group order for a seeded payee with history. Add ranking unit tests if you
-   change `suggestCategories`.
-
-### Phase 4: investment form (`TransactionFormInvestment.vue`)
-
-Goal: account and investment selects local, currency from preloaded data, no GETs on selection.
-
-Starting point (current code): account select `createRemoteSelect` on `/api/v1/accounts/investment` with params
-`{q, transaction_type, currency_id: this.investment_currency?.id}`; investment select on `/api/v1/investments` with
-`{query, active: 1, currency_id: this.account_currency?.id, limit: 10, sort_by: 'name', sort_order: 'asc'}`, `mapResult`
-adding `symbol` and `currency_id`, custom option render `name (symbol)`. On investment select it sets
-`investment_currency = {id}` immediately (to avoid a filtering race) and then GETs `investments.show`; on account select
-it GETs `/accounts/{id}` for the currency. Presets: `getDefaultAccountDetails`/`getDefaultInvestmentDetails` (GETs) and
-`created()` reads `?account=` and `?investment=` from the URL. `mounted()` finishes with
-`Promise.all([accountReady, investmentReady]).then(markFormClean)`; the `transaction` watcher does the same;
-`clearInvestmentDropdown()` clears the investment select.
-
-Steps (mirror what Phase 2 did in `TransactionFormStandard.vue`; use it as the reference implementation):
-
-1. In `created()` set `this.selectData = null` and add `loadReferenceData()` / `selectDataError` / retry exactly like the
-   standard form (consider extracting the shared pieces into a small mixin or helper in `shared/lib/select-data` only if
-   it does not need reactive state; two copies are acceptable, a third is not).
-2. Accounts: candidates = **active accounts whose `currency_id` equals the selected investment's currency** (all accounts
-   when no investment is selected). Rank with `investmentAccountUsage(usage, {investmentId})` + `rankByUsage`. The old
-   endpoint accepted `transaction_type` for ranking; add an optional transaction-type filter to the investment helpers if
-   you want parity (the `type` field is on each `investment` usage row). Verify against
-   `AccountApiController::getAccountListForInvestments` that no further restriction (e.g. account type) applied.
-3. Investments: candidates = **active investments whose `currency_id` equals the selected account's currency** (all when
-   no account). Rank with `investmentUsage(usage, {accountId})` + `rankByUsage`. Items carry `symbol`; give the select a
-   `renderOption` showing `name (symbol)` with `escape()` on every user value (see the existing render). Searching should
-   also match the symbol: extend `searchEntities` (or map `alias` to symbol) so the symbol is matched, keeping the
-   alias-badge logic sane.
-4. Currency lookup is local: `currencies.get(entity.currency_id)` replaces both GETs, and the "set currency immediately"
-   workaround is no longer needed.
-5. Inactive entities: accounts via `api.v1.account-entities.patch-active`, **investments via
-   `api.v1.investments.patch-active`** (see `routes/api.php` ~line 265 for the body). Reuse the checkbox/restore pattern
-   from the standard form. Default is active-only, inactive found by search (old behaviour: `active: 1`).
-6. Presets: replace the GETs with local lookups chained on `selectDataReady`; keep the URL param presets
-   (`?account=`, `?investment=`) and `data-loaded` semantics (`Promise.all` includes `selectDataReady`).
-7. After a successful create save call `applySavedTransaction(this.selectData.usage, {...response.data.transaction,
-   config_type: 'investment'})` (not on edit).
-8. Keep: the `existingPriceForDate`/store-price logic, `transactionTypeChanged`, schedule handling, `isDirty`.
-9. Tests: run `TransactionFormInvestmentStandaloneTest.php` and `TransactionFormInvestmentModalTest.php`, fix selector/timing
-   assumptions (see gotchas 2 and 3), add translation keys if you add strings.
+Phases 3 and 4 are done (see section 2). Each remaining phase is independently shippable.
 
 ### Phase 5: "Apply usual items" redesign
 
@@ -291,7 +237,8 @@ Steps:
 
 ## 5. Known gaps and open questions
 
-- Not yet tested: reactivating an **account** (only a payee is covered), the Retry flow after a failed preload, and the
+- Not yet tested: reactivating an **account** or an **investment** (only a payee is covered, in the standard form), the
+  group-label suffix in the investment form, the Retry flow after a failed preload (both forms), and the
   planned "enter two transactions in one modal session and see the ranking update" browser test (the unit test for
   `applySavedTransaction` exists; the UI-level one does not).
 - Deferred categories: hidden from both suggestions and search for the selected payee (decided, spec 6.2 item 4).

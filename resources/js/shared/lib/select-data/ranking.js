@@ -65,13 +65,26 @@ export function investmentUsage(usage, { accountId = null } = {}) {
   );
 }
 
-/** Usage of accounts in investment transactions. */
-export function investmentAccountUsage(usage, { investmentId = null } = {}) {
-  return aggregateUsage(usage.investment, (r) =>
-    !investmentId || r.investment_id === Number(investmentId)
-      ? r.account_id
-      : null,
-  );
+/**
+ * Usage of accounts in investment transactions, optionally for one investment and/or one transaction type.
+ * Like standardUsage(), a type without history falls back to all types.
+ */
+export function investmentAccountUsage(
+  usage,
+  { investmentId = null, transactionType = null } = {},
+) {
+  const count = (rows) =>
+    aggregateUsage(rows, (r) =>
+      !investmentId || r.investment_id === Number(investmentId)
+        ? r.account_id
+        : null,
+    );
+
+  const typed = transactionType
+    ? count(usage.investment.filter((r) => r.type === transactionType))
+    : null;
+
+  return typed && typed.size > 0 ? typed : count(usage.investment);
 }
 
 const byName = (a, b) => a.name.localeCompare(b.name);

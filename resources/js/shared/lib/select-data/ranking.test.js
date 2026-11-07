@@ -6,6 +6,7 @@ import {
   applySavedTransaction,
   categoryFullName,
   investmentUsage,
+  investmentAccountUsage,
   rankByUsage,
   searchEntities,
   standardUsage,
@@ -247,4 +248,34 @@ test('saving an investment transaction counts it, and a transfer touches no paye
 
   assert.equal(u.investment.length, 1);
   assert.deepEqual(u.payee_categories, []);
+});
+
+test('investment account usage prefers the transaction type, and falls back to all types', () => {
+  const u = {
+    investment: [
+      {
+        type: 'buy',
+        account_id: 1,
+        investment_id: 7,
+        uses: 2,
+        last_used: '2026-01-01',
+      },
+      {
+        type: 'dividend',
+        account_id: 2,
+        investment_id: 7,
+        uses: 5,
+        last_used: '2026-01-02',
+      },
+    ],
+  };
+
+  assert.deepEqual(
+    [...investmentAccountUsage(u, { transactionType: 'buy' }).keys()],
+    [1],
+  );
+  assert.deepEqual(
+    [...investmentAccountUsage(u, { transactionType: 'sell' }).keys()],
+    [1, 2],
+  );
 });

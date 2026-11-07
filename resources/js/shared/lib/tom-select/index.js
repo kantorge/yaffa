@@ -50,6 +50,7 @@ const withQuery = (url, params) => {
  * @param {string} [options.placeholder]
  * @param {boolean} [options.multiple]
  * @param {boolean} [options.allowClear] Show a clear button. Default: true.
+ * @param {function(): string} [options.searchLabel] Label of the search results group. Default: "Matches".
  * @param {boolean} [options.create] Offer to create an option from the typed text (tags). Its value
  *   and label are the raw text. Not offered when an option with that label (case-insensitive) exists.
  * @param {function(Object, function): string} [options.renderOption] Dropdown option HTML. Receives
@@ -258,6 +259,7 @@ export function createLocalSelect(
     search,
     placeholder = '',
     allowClear = true,
+    searchLabel = () => __('Matches'),
     multiple = false,
     create = false,
     renderOption,
@@ -311,7 +313,7 @@ export function createLocalSelect(
     // Synchronous "load": swap in the list for the current term. clearOptions() keeps the selected option.
     load(term, callback) {
       const groups = term.trim()
-        ? [{ id: 'matches', label: __('Matches'), items: search(term) }]
+        ? [{ id: 'matches', label: searchLabel(), items: search(term) }]
         : suggestions();
 
       this.clearOptions();
