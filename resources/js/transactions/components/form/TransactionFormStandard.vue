@@ -1254,6 +1254,12 @@
       // Copy values of existing transaction into component form data
       this.initializeTransaction();
 
+      // The initial type may already be transfer (clone, edit, URL preset), which
+      // onChangeTransactionType() never sees
+      this.callbackOptions.find(
+        (x) => x.value === 'returnToSecondaryAccount',
+      ).enabled = this.form.transaction_type === 'transfer';
+
       // The shared reference data behind the account/payee selects (not reactive: it is read on demand)
       this.selectData = null;
       this.pendingActivations = [];
