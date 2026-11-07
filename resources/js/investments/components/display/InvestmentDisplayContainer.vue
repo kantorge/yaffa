@@ -38,45 +38,18 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-12 col-lg-6 col-xl-4 mb-3">
+    <div class="col-12 col-lg-6 col-xl-3 mb-3">
       <investment-details-card
         class="h-100 mb-0"
         :investment="localInvestment"
       />
     </div>
-    <div class="col-12 col-lg-6 col-xl-5 mb-3">
+    <div class="col-12 col-lg-6 mb-3" :class="resultsColClass">
       <results-card
         class="h-100 mb-0"
         :investment="localInvestment"
         :transactions="processedTransactions"
         :prices="processedPrices"
-        :date-from="dateFrom"
-        :date-to="dateTo"
-        @update:date-from="(val) => (dateFrom = val)"
-        @update:date-to="(val) => (dateTo = val)"
-      />
-    </div>
-    <div class="col-12 col-xl-3 mb-3">
-      <current-assets-card class="h-100 mb-0" :investment="localInvestment" />
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-12 col-lg-6 mb-3" :class="chartColClass">
-      <price-history-card
-        class="h-100 mb-0"
-        :prices="processedPrices"
-        :investment="localInvestment"
-        :date-from="dateFrom"
-        :date-to="dateTo"
-        @update:date-from="(val) => (dateFrom = val)"
-        @update:date-to="(val) => (dateTo = val)"
-      />
-    </div>
-    <div class="col-12 col-lg-6 mb-3" :class="chartColClass">
-      <quantity-history-card
-        class="h-100 mb-0"
-        :quantities="processedQuantities"
-        :investment="localInvestment"
         :date-from="dateFrom"
         :date-to="dateTo"
         @update:date-from="(val) => (dateFrom = val)"
@@ -92,6 +65,30 @@
       />
     </div>
   </div>
+  <div class="row">
+    <div class="col-12 col-lg-6 mb-3">
+      <price-history-card
+        class="h-100 mb-0"
+        :prices="processedPrices"
+        :investment="localInvestment"
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        @update:date-from="(val) => (dateFrom = val)"
+        @update:date-to="(val) => (dateTo = val)"
+      />
+    </div>
+    <div class="col-12 col-lg-6 mb-3">
+      <quantity-history-card
+        class="h-100 mb-0"
+        :quantities="processedQuantities"
+        :investment="localInvestment"
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        @update:date-from="(val) => (dateFrom = val)"
+        @update:date-to="(val) => (dateTo = val)"
+      />
+    </div>
+  </div>
   <transaction-history-card
     :transactions="processedTransactions"
     :investment="localInvestment"
@@ -102,7 +99,6 @@
 
 <script>
   import InvestmentDetailsCard from './InvestmentDetailsCard.vue';
-  import CurrentAssetsCard from './CurrentAssetsCard.vue';
   import AccountDistributionCard from './AccountDistributionCard.vue';
   import ResultsCard from './ResultsCard.vue';
   import TransactionHistoryCard from './TransactionHistoryCard.vue';
@@ -112,7 +108,6 @@
   export default {
     components: {
       InvestmentDetailsCard,
-      CurrentAssetsCard,
       AccountDistributionCard,
       ResultsCard,
       TransactionHistoryCard,
@@ -148,8 +143,8 @@
       showDistribution() {
         return this.localAccounts.filter((a) => a.quantity > 0).length > 1;
       },
-      chartColClass() {
-        return this.showDistribution ? 'col-xl-4' : 'col-xl-6';
+      resultsColClass() {
+        return this.showDistribution ? 'col-xl-5' : 'col-xl-9';
       },
     },
     watch: {
