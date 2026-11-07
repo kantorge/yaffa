@@ -181,7 +181,7 @@ transactions only (not edits, they would double count).
 | 3 | Categories and tags in transaction item rows (`TransactionItem.vue`) | To do |
 | 4 | Investment form (`TransactionFormInvestment.vue`): account and investment selects | To do |
 | 5 | "Apply usual items" redesign (`TransactionItemContainer.vue` + payee stats amounts) | Done |
-| 6 | Measure payload/response time; decide on the server cache (D7); mobile-contract confirmation | To do |
+| 6 | Measure payload/response time; decide on the server cache (D7); mobile-contract confirmation | Validated, no server cache needed |
 
 Step-by-step instructions per phase are in [`status-and-handoff.md`](status-and-handoff.md).
 

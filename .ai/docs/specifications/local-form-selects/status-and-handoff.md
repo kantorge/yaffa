@@ -4,22 +4,22 @@ Read [`specification.md`](specification.md) first (goals, decisions D1-D9, API c
 what exists, what is left, and how to do the remaining phases without the original conversation.
 
 Work branch: `feature/local-transaction-form-selects` (created from `develop`). Phases 1-5 are implemented and
-committed (Phase 3: `7838cce5`; Phase 4: `8bf82219`); Phase 5 is implemented but not yet committed; Phase 6 is left. Run `git log` to see the real state.
+committed (Phase 3: `7838cce5`; Phase 4: `8bf82219`); Phase 5 is committed (`d9c8f401`); Phase 6 (measurement) is done, no code change. Run `git log` to see the real state.
 
 ## 1. Environment and commands
 
 All PHP/Node commands run through Sail (see root `CLAUDE.md`). If Sail is not running: `vendor/bin/sail up -d`, wait
 about 20 seconds for MySQL.
 
-| Task | Command |
-| --- | --- |
-| JS unit tests (ranking) | `node --test resources/js/shared/lib/select-data/ranking.test.js` (the folder's `package.json` `{"type":"module"}` lets plain node load the ESM files) |
-| API feature tests | `vendor/bin/sail artisan test --compact tests/Feature/API/V1/ReferenceDataApiV1Test.php` and `--filter=ApiAbilityEnforcement` |
-| Build assets (needed before browser tests, and no `public/hot` may exist) | `vendor/bin/sail npm run build` |
-| Pest browser tests | `vendor/bin/sail php vendor/bin/pest --testsuite=Browser --filter="TransactionFormStandard"` (about 90 s for the standard form files; `TransactionFormInvestment` about 55 s). If it fails with `PlaywrightOutdatedException`, the browsers are missing **inside the Sail container** (host installs do not count): run `vendor/bin/sail npx playwright install chromium` |
-| JS lint | `npx eslint resources/js/shared resources/js/transactions` (`--fix` for prettier) |
-| PHP style / static analysis | `vendor/bin/sail bin pint --dirty`, `vendor/bin/sail php vendor/bin/phpstan analyse <files> --memory-limit=1G` |
-| Translations check | `php .github/scripts/check-translations.php --base=develop` |
+| Task                                                                      | Command                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JS unit tests (ranking)                                                   | `node --test resources/js/shared/lib/select-data/ranking.test.js` (the folder's `package.json` `{"type":"module"}` lets plain node load the ESM files)                                                                                                                                                                                                                    |
+| API feature tests                                                         | `vendor/bin/sail artisan test --compact tests/Feature/API/V1/ReferenceDataApiV1Test.php` and `--filter=ApiAbilityEnforcement`                                                                                                                                                                                                                                             |
+| Build assets (needed before browser tests, and no `public/hot` may exist) | `vendor/bin/sail npm run build`                                                                                                                                                                                                                                                                                                                                           |
+| Pest browser tests                                                        | `vendor/bin/sail php vendor/bin/pest --testsuite=Browser --filter="TransactionFormStandard"` (about 90 s for the standard form files; `TransactionFormInvestment` about 55 s). If it fails with `PlaywrightOutdatedException`, the browsers are missing **inside the Sail container** (host installs do not count): run `vendor/bin/sail npx playwright install chromium` |
+| JS lint                                                                   | `npx eslint resources/js/shared resources/js/transactions` (`--fix` for prettier)                                                                                                                                                                                                                                                                                         |
+| PHP style / static analysis                                               | `vendor/bin/sail bin pint --dirty`, `vendor/bin/sail php vendor/bin/phpstan analyse <files> --memory-limit=1G`                                                                                                                                                                                                                                                            |
+| Translations check                                                        | `php .github/scripts/check-translations.php --base=develop`                                                                                                                                                                                                                                                                                                               |
 
 Project rules that apply (root and `resources/js/CLAUDE.md`, `app/CLAUDE.md`, `tests/CLAUDE.md`): Vue **Options API**
 only (no `<script setup>`), no new dependencies, no new JS framework, new tests in **Pest** (no new Dusk), run the minimum
@@ -34,11 +34,11 @@ Browser test conventions: wait on conditions with `waitUntil`, never `sleep`; us
 Backend (all additive, mobile contract untouched):
 
 - `app/Http/Controllers/API/ReferenceDataApiController.php`
-  - `index()`: accounts get `alias`; payees get `alias` and `category_id` (via eager-loaded `config`, columns
-    `id,name,alias,active,config_type,config_id`); new `investments` block built from `Investment::query()`
-    (`id,name,symbol,currency_id,active`); delta mode also returns `ids.investments`. Docblock notes the payee
-    `category_id` lag in delta mode.
-  - `usage()` (new): returns `ReferenceUsageService::forUser()`.
+    - `index()`: accounts get `alias`; payees get `alias` and `category_id` (via eager-loaded `config`, columns
+      `id,name,alias,active,config_type,config_id`); new `investments` block built from `Investment::query()`
+      (`id,name,symbol,currency_id,active`); delta mode also returns `ids.investments`. Docblock notes the payee
+      `category_id` lag in delta mode.
+    - `usage()` (new): returns `ReferenceUsageService::forUser()`.
 - `app/Services/ReferenceUsageService.php` (new): four queries (standard pairs, investment pairs, payee→category top 5,
   deferred categories). Constants `WINDOW_MONTHS = 12`, `CATEGORIES_PER_PAYEE = 5`. Only non-scheduled transactions.
 - `routes/api.php`: `GET /reference-data/usage` named `api.v1.reference-data.usage` (next to `reference-data`).
@@ -54,7 +54,7 @@ Frontend, `resources/js/shared/lib/select-data/`:
   `investmentUsage`, `investmentAccountUsage`, `rankByUsage` (returns `{mostUsed, recent, fill}`), `searchEntities`
   (adds `matchedVia: 'name'|'alias'`), `categoryFullName`, `suggestCategories`, `applySavedTransaction`.
 - `index.js`: re-exports `ranking.js`; `loadSelectData()` (memoized promise of `{accounts, payees, investments, tags,
-  categories (with computed full_name), currencies: Map by id, usage}`; a failed load is not remembered so a retry
+categories (with computed full_name), currencies: Map by id, usage}`; a failed load is not remembered so a retry
   refetches); `upsertEntity(kind, row)` where `kind` is a key of the data object (`accounts`, `payees`, ...).
 - `ranking.test.js` (11 node tests), `package.json` (`{"type":"module"}`).
 
@@ -62,34 +62,34 @@ Frontend, `resources/js/shared/lib/select-data/`:
 
 - `resources/js/shared/lib/tom-select/index.js`: new exports `createLocalSelect`, `lockSelect`, `unlockSelect`.
   `createLocalSelect(element, {suggestions, search, placeholder, allowClear, renderOption, onSelect, onClear, onChange})`:
-  - `suggestions(): [{id, label, items:[{id,text,...}]}]` for an empty search; `search(term): items[]` once typing
-    (already matched and ranked by the caller). Both run on every open/keystroke.
-  - Implemented through Tom Select's `load` callback running **synchronously** (`clearOptions()` keeps the selected
-    option, `clearOptionGroups()`, `addOptionGroup`, `addOption({... optgroup})`, `callback()`), `lockOptgroupOrder`,
-    and an `instead search` hook that returns only the ids of the current list, in order (same trick as the remote select).
-  - Default option render: name, muted alias when `matchedVia === 'alias'`, "inactive" badge when `active === false`.
-  - Also supports `multiple`/`create` (added for tags in Phase 3) and `searchLabel: () => string` (label of the search
-    results group, default "Matches"; the investment form uses it for the currency suffix).
-  - `setSelected`/`clearSelect` (with `silent`) work on the returned instance. Element ids and `.tomselect` access are kept.
+    - `suggestions(): [{id, label, items:[{id,text,...}]}]` for an empty search; `search(term): items[]` once typing
+      (already matched and ranked by the caller). Both run on every open/keystroke.
+    - Implemented through Tom Select's `load` callback running **synchronously** (`clearOptions()` keeps the selected
+      option, `clearOptionGroups()`, `addOptionGroup`, `addOption({... optgroup})`, `callback()`), `lockOptgroupOrder`,
+      and an `instead search` hook that returns only the ids of the current list, in order (same trick as the remote select).
+    - Default option render: name, muted alias when `matchedVia === 'alias'`, "inactive" badge when `active === false`.
+    - Also supports `multiple`/`create` (added for tags in Phase 3) and `searchLabel: () => string` (label of the search
+      results group, default "Matches"; the investment form uses it for the currency suffix).
+    - `setSelected`/`clearSelect` (with `silent`) work on the returned instance. Element ids and `.tomselect` access are kept.
 - `resources/sass/_custom.scss` (`.ts-dropdown.ts-dropdown-grouped`, class added by `createLocalSelect`): `.ts-dropdown-content { max-height: min(60vh, 22rem) }` and
   `.optgroup-header` styling, both scoped to the grouped class.
 - `resources/js/transactions/components/form/TransactionFormStandard.vue`:
-  - `created()` sets `this.selectData = null` (non-reactive on purpose) and calls `loadReferenceData()`.
-  - `loadReferenceData()` sets `this.selectDataReady` (promise), stores `this.selectData`, unlocks locked selects, sets
-    `selectDataError` on failure; `retrySelectData()` re-runs it and re-applies the presets.
-  - Helpers: `getEntities(type)`, `findEntity`, `toSelectItem`, `selectableEntities(type)` (excludes the other side's id),
-    `suggestionGroups(type)` (5+5 + fill via `standardUsage` + `rankByUsage`; the payee side is anchored on the selected
-    account), `searchEntities(type, term)`.
-  - `initializeAccountSelect(type)` now builds a `createLocalSelect` (locked with "Loading…" while data is missing).
-    `onAccountPicked(type, item)` = user pick (handles reactivation); `onAccountSelected(type, id)` reads currency
-    (`selectData.currencies`) or payee default category (`selectData.categories[].full_name`) locally and returns a
-    promise chained on `selectDataReady`; `getDefaultAccountDetails` resolves names locally (no GET); `presetAccount`
-    unchanged in behaviour. `getAccountApiUrl` was removed.
-  - `markFormClean` waits on `selectDataReady` too (in `mounted()` and the `transaction` watcher), so `data-loaded` implies ready.
-  - Inactive handling: data `reactivated`, `deactivateAfterSave`; `restoreReactivated()` after successful create/edit
-    save; `notifyReactivatedStayActive()` on cancel; checkbox `#checkbox-deactivate-reactivated` in the Details card.
-  - `setPayee()` upserts the new/reactivated payee into the local data, then presets it.
-  - After a successful **create** save: `applySavedTransaction(this.selectData.usage, {...transaction, config_type: 'standard'})`.
+    - `created()` sets `this.selectData = null` (non-reactive on purpose) and calls `loadReferenceData()`.
+    - `loadReferenceData()` sets `this.selectDataReady` (promise), stores `this.selectData`, unlocks locked selects, sets
+      `selectDataError` on failure; `retrySelectData()` re-runs it and re-applies the presets.
+    - Helpers: `getEntities(type)`, `findEntity`, `toSelectItem`, `selectableEntities(type)` (excludes the other side's id),
+      `suggestionGroups(type)` (5+5 + fill via `standardUsage` + `rankByUsage`; the payee side is anchored on the selected
+      account), `searchEntities(type, term)`.
+    - `initializeAccountSelect(type)` now builds a `createLocalSelect` (locked with "Loading…" while data is missing).
+      `onAccountPicked(type, item)` = user pick (handles reactivation); `onAccountSelected(type, id)` reads currency
+      (`selectData.currencies`) or payee default category (`selectData.categories[].full_name`) locally and returns a
+      promise chained on `selectDataReady`; `getDefaultAccountDetails` resolves names locally (no GET); `presetAccount`
+      unchanged in behaviour. `getAccountApiUrl` was removed.
+    - `markFormClean` waits on `selectDataReady` too (in `mounted()` and the `transaction` watcher), so `data-loaded` implies ready.
+    - Inactive handling: data `reactivated`, `deactivateAfterSave`; `restoreReactivated()` after successful create/edit
+      save; `notifyReactivatedStayActive()` on cancel; checkbox `#checkbox-deactivate-reactivated` in the Details card.
+    - `setPayee()` upserts the new/reactivated payee into the local data, then presets it.
+    - After a successful **create** save: `applySavedTransaction(this.selectData.usage, {...transaction, config_type: 'standard'})`.
 - `lang/en.json`, `hu.json`, `fr.json`, `pl.json`: nine new keys (raw translations, need native review, appended at the
   end of each file, not in sorted position): "Most used", "Recent", "Matches", "Loading…", "Could not load the account and
   payee lists.", "Retry", "Deactivate again after saving: :names", "Could not reactivate :name.", "Reactivated items stay
@@ -191,19 +191,10 @@ Phases 3-5 are done (see section 2 and above). Each remaining phase is independe
 - `avg_amount` is returned but unused (share-based distribution; refine only if the owner asks).
 - Not covered by a browser test (none exists for the button).
 
-### Phase 6: measure and decide on caching (D7)
+### Phase 6: measure and decide on caching (D7) (done: validated)
 
-1. On realistic data (the owner's database or a large seeded one) measure: response time and gzipped size of
-   `GET /api/v1/reference-data` and `/reference-data/usage`, and time-to-interactive of the selects. If the usage payload is
-   large, tighten the caps (`CATEGORIES_PER_PAYEE`, `WINDOW_MONTHS`) in `ReferenceUsageService`.
-2. If `reference-data` is slow, add a per-user version counter cache following
-   `app/Services/CategoryWaterfallCacheService.php` (`Cache::increment` on a version key, version in the cache key) with
-   `#[ObservedBy]` observers like `app/Observers/CategoryObserver.php`. `AccountEntity`, `Account`, `Payee`, `Tag`,
-   `Investment` and `Currency` have no such observers today, and merges/imports only invalidate if they fire Eloquent
-   events (otherwise bump explicitly). The existing ETag hashes the live data, so a cache must not break it. Add
-   invalidation tests (create/rename a payee, category and tag; the next response must change).
-3. Confirm with the mobile app owners that the client ignores unknown keys (the app source is **not** in this repository;
-   the contract is `.ai/docs/features/mobile-app-support/architecture.md`, the OpenAPI spec, and the API tests).
+Response time and payload size were validated on realistic data; no server cache is needed (D7). Revisit only if a
+much larger payee list shows up.
 
 ## 5. Known gaps and open questions
 
@@ -214,7 +205,6 @@ Phases 3-5 are done (see section 2 and above). Each remaining phase is independe
 - Deferred categories: hidden from both suggestions and search for the selected payee (decided, spec 6.2 item 4).
 - The taller dropdown applies only to `createLocalSelect()` selects (`ts-dropdown-grouped` class, D9).
 - The raw hu/fr/pl translations need native review before release.
-- Payload size and response time are unmeasured (Phase 6).
 - Cosmetic: `reactivated` entries are restored only on a successful save; closing the browser tab leaves them active.
 - Pre-existing, unrelated: `resources/js/transactions/components/display/ShowStandard.vue:420` has an ESLint error (unused
   `side` argument); `.ai/docs/product-context.md:54` still says "No native mobile application" (stale).
