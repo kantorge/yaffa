@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
@@ -266,7 +267,10 @@ dtHistory.contextualActions({
       action: function (row) {
         dataTableHelpers
           .deleteTransactionRow(selectorHistoryTable, row[0].id)
-          .then(getAccountBalance)
+          .then(() => {
+            getAccountBalance();
+            getInvestmentHoldings();
+          })
           .catch(() => {});
       },
     },
@@ -631,6 +635,72 @@ let getAccountBalance = function () {
   );
 };
 getAccountBalance();
+// Investment holdings card: hidden unless the account has holdings
+let holdingsRequestId = 0;
+const getInvestmentHoldings = function () {
+  const card = document.getElementById('investmentHoldingsCard');
+  const list = document.getElementById('investmentHoldingsList');
+  const total = document.getElementById('investmentHoldingsTotal');
+  const locale = window.YAFFA.userSettings.locale;
+
+  list.innerHTML =
+    '<li class="list-group-item"><i class="fa fa-fw fa-spinner fa-spin"></i></li>';
+
+  // Ignore responses of superseded requests
+  const requestId = ++holdingsRequestId;
+
+  axios
+    .get(window.route('api.v1.accounts.investments', window.account.id))
+    .then((response) => {
+      if (requestId !== holdingsRequestId) return;
+      list.replaceChildren();
+      // Display-only sum; rows without a price are excluded
+      total.textContent = toFormattedCurrency(
+        response.data
+          .reduce((sum, item) => sum.plus(item.value ?? 0), new Decimal(0))
+          .toString(),
+        locale,
+        window.account.config.currency,
+      );
+      card.classList.toggle('d-none', response.data.length === 0);
+
+      response.data.forEach((item) => {
+        const li = document.createElement('li');
+        li.className =
+          'list-group-item d-flex justify-content-between align-items-start';
+
+        const link = document.createElement('a');
+        link.href = window.route('investments.show', {
+          investment: item.investment_id,
+          account: window.account.id,
+        });
+        link.textContent = item.name;
+
+        const value = document.createElement('span');
+        if (item.value === null) {
+          value.className = 'not-set';
+          value.textContent = __('Not set');
+        } else {
+          value.textContent = toFormattedCurrency(
+            item.value,
+            locale,
+            window.account.config.currency,
+          );
+        }
+
+        li.append(link, value);
+        list.append(li);
+      });
+    })
+    .catch((error) => {
+      if (requestId !== holdingsRequestId) return;
+      total.textContent = '';
+      card.classList.remove('d-none');
+      list.innerHTML = `<li class="list-group-item"><i class="text-danger fa-solid fa-triangle-exclamation" title="${__('Error while retrieving data')}"></i></li>`;
+      toastHelpers.showErrorToast(error.message);
+    });
+};
+getInvestmentHoldings();
 
 // Reconciled button listener
 $(selectorHistoryTable).on('click', 'i.reconcile', function () {
@@ -777,6 +847,9 @@ window.addEventListener('transaction-created', function (event) {
 
   // Add the newly created transaction to the history table, regardless if the date range and account matches
   dtHistory.row.add(transaction).draw();
+
+  // Holdings are computed live, so they can refresh immediately
+  getInvestmentHoldings();
 
   // Reload the account balance with a static delay
   setTimeout(getAccountBalance, 15000);

@@ -7,7 +7,7 @@
     </div>
     <div class="card-body">
       <div v-if="hasData">
-        <div ref="chartQuantity" style="width: 100%; height: 300px"></div>
+        <div ref="chartQuantity" class="chart-container"></div>
       </div>
       <div v-else>
         <div class="text-center text-muted">
@@ -41,6 +41,23 @@
     computed: {
       hasData() {
         return this.quantities && this.quantities.length > 0;
+      },
+    },
+    watch: {
+      quantities() {
+        if (this.chart && this.hasData) {
+          this.chart.data = this.quantities;
+          return;
+        }
+        if (this.chart) {
+          // No data: the chart container is removed from the DOM
+          this.chart.dispose();
+          this.chart = null;
+        }
+        if (!this.chart && this.hasData) {
+          // Chart container only exists once there is data
+          this.$nextTick(() => this.createChart());
+        }
       },
     },
     mounted() {

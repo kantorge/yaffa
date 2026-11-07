@@ -179,6 +179,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/accounts/{accountEntity}/balance', [AccountApiController::class, 'getAccountBalance'])
         ->whereNumber('accountEntity')
         ->name('accounts.balance.show');
+    Route::get('/accounts/{accountEntity}/investments', [AccountApiController::class, 'getInvestmentHoldings'])
+        ->whereNumber('accountEntity')
+        ->name('accounts.investments');
     Route::get('/accounts/{accountEntity}', [AccountApiController::class, 'getItem'])
         ->whereNumber('accountEntity')
         ->name('accounts.show');

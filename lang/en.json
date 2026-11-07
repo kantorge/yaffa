@@ -1867,5 +1867,9 @@
     "One-time use: keep items inactive": "One-time use: keep items inactive",
     "Could not reactivate :name.": "Could not reactivate :name.",
     "Reactivated items stay active, because the transaction was not saved.": "Reactivated items stay active, because the transaction was not saved.",
-    "Usual for this payee": "Usual for this payee"
+    "Usual for this payee": "Usual for this payee",
+    "All accounts": "All accounts",
+    "Could not load the investment data. Please try again.": "Could not load the investment data. Please try again.",
+    "Select a single account": "Select a single account",
+    "Distribution by account": "Distribution by account"
 }

@@ -1867,5 +1867,9 @@
     "One-time use: keep items inactive": "Jednorazowe użycie: pozostaw elementy nieaktywne",
     "Could not reactivate :name.": "Nie udało się ponownie aktywować: :name.",
     "Reactivated items stay active, because the transaction was not saved.": "Reaktywowane elementy pozostają aktywne, ponieważ transakcja nie została zapisana.",
-    "Usual for this payee": "Zwykle dla tego odbiorcy"
+    "Usual for this payee": "Zwykle dla tego odbiorcy",
+    "All accounts": "Wszystkie konta",
+    "Could not load the investment data. Please try again.": "Nie udało się wczytać danych inwestycji. Spróbuj ponownie.",
+    "Select a single account": "Wybierz jedno konto",
+    "Distribution by account": "Podział według kont"
 }

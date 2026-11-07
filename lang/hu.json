@@ -1866,5 +1866,9 @@
     "One-time use: keep items inactive": "Egyszeri használat: az elemek maradjanak inaktívak",
     "Could not reactivate :name.": "A(z) :name újraaktiválása nem sikerült.",
     "Reactivated items stay active, because the transaction was not saved.": "Az újraaktivált elemek aktívak maradnak, mert a tranzakció nem lett mentve.",
-    "Usual for this payee": "Gyakori ennél a kedvezményezettnél"
+    "Usual for this payee": "Gyakori ennél a kedvezményezettnél",
+    "All accounts": "Minden számla",
+    "Could not load the investment data. Please try again.": "A befektetési adatok betöltése nem sikerült. Kérjük, próbálja újra.",
+    "Select a single account": "Válasszon egyetlen számlát",
+    "Distribution by account": "Megoszlás számlák szerint"
 }

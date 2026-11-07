@@ -152,10 +152,13 @@ class InvestmentService
         });
     }
 
-    public function enrichInvestmentWithQuantityHistory(Investment $investment): Investment
+    public function enrichInvestmentWithQuantityHistory(Investment $investment, ?AccountEntity $account = null): Investment
     {
-        $transactions = $investment->transactionsBasic()->get();
+        $transactions = $investment->transactionsBasic()
+            ->when($account, fn ($query) => $query->where('transaction_details_investment.account_id', $account->id))
+            ->get();
         $scheduledTransactions = $investment->transactionsScheduled()
+            ->when($account, fn ($query) => $query->where('transaction_details_investment.account_id', $account->id))
             ->get()
             // scheduleInstances() reuses whichever relations are already loaded on the source
             // transaction (see App\Support\ScheduleInstance) instead of lazy-loading per virtual
@@ -202,6 +205,62 @@ class InvestmentService
         $investment->quantities = array_values($quantities->toArray());
 
         return $investment;
+    }
+
+    /**
+     * Data shared by the investment show page and the display-data API, optionally scoped
+     * to one account. Prices are intentionally not included (never account-filtered).
+     *
+     * @return array{investment: Investment, transactions: Collection, accounts: Collection}
+     */
+    public function getDisplayData(Investment $investment, ?AccountEntity $account = null): array
+    {
+        $investment->load(['investmentGroup', 'currency']);
+        $investment->current_quantity = $this->getCurrentQuantity($investment, $account);
+        $investment->latest_price = $this->getLatestPrice($investment);
+        $investment = $this->enrichInvestmentWithQuantityHistory($investment, $account);
+
+        $byAccount = fn ($query) => $query->when(
+            $account,
+            fn ($q) => $q->where('transaction_details_investment.account_id', $account->id)
+        );
+
+        $transactions = $byAccount($investment->transactionsBasic())->with(['config'])->get();
+
+        $scheduledTransactions = $byAccount($investment->transactionsScheduled())
+            ->with(['config', 'transactionSchedule'])
+            ->get()
+            ->filter(fn ($transaction): bool => $transaction instanceof Transaction
+                && ($transaction->transactionSchedule?->active) === true);
+
+        $transactions = $transactions->concat($this->getScheduleInstances($scheduledTransactions, 'next'));
+
+        // Always over all of the investment's transactions, regardless of the active filter.
+        // Each account carries its current quantity (for the distribution chart).
+        $quantities = DB::table('transactions')
+            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->where('transactions.schedule', 0)
+            ->where('transactions.config_type', 'investment')
+            ->where('transaction_details_investment.investment_id', $investment->id)
+            ->groupBy('transaction_details_investment.account_id')
+            ->selectRaw(
+                'transaction_details_investment.account_id AS account_id, SUM( '
+                . TransactionTypeEnum::getQuantityMultiplierSqlCase('transactions.transaction_type')
+                . ' * IFNULL(transaction_details_investment.quantity, 0)) AS quantity'
+            )
+            ->pluck('quantity', 'account_id');
+
+        $accounts = AccountEntity::whereIn(
+            'id',
+            TransactionDetailInvestment::where('investment_id', $investment->id)->select('account_id')
+        )->orderBy('name')->get(['id', 'name'])
+            ->map(fn (AccountEntity $account) => [
+                'id' => $account->id,
+                'name' => $account->name,
+                'quantity' => (string) BigDecimal::of($quantities[$account->id] ?? 0),
+            ]);
+
+        return compact('investment', 'transactions', 'accounts');
     }
 
     /**
@@ -555,6 +614,80 @@ class InvestmentService
             }
 
             $results[$key] = $this->resolveCombinedPrice($price, $transaction);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Resolve the current "combined" price (newer of stored price and priced transaction)
+     * for many investments at once, selecting only the winning rows in the database
+     * instead of loading each investment's full price and transaction history.
+     *
+     * @param  Collection<int, Investment>  $investments
+     * @return array<int, BigDecimal|null> Map keyed by investment id
+     */
+    public function getLatestPricesExact(Collection $investments): array
+    {
+        if ($investments->isEmpty()) {
+            return [];
+        }
+
+        $ids = $investments->pluck('id')->all();
+
+        $latestPriceDates = DB::table('investment_prices')
+            ->select('investment_id', DB::raw('MAX(date) as max_date'))
+            ->whereIn('investment_id', $ids)
+            ->groupBy('investment_id');
+
+        $storedPrices = InvestmentPrice::query()
+            ->select('investment_prices.*')
+            ->joinSub($latestPriceDates, 'latest', function ($join) {
+                $join->on('latest.investment_id', '=', 'investment_prices.investment_id')
+                    ->on('latest.max_date', '=', 'investment_prices.date');
+            })
+            ->get()
+            ->keyBy('investment_id');
+
+        $latestTransactionDates = DB::table('transactions as t')
+            ->join('transaction_details_investment as d', 'd.id', '=', 't.config_id')
+            ->where('t.config_type', 'investment')
+            ->where('t.schedule', false)
+            ->whereNotNull('d.price')
+            ->whereIn('d.investment_id', $ids)
+            ->select('d.investment_id', DB::raw('MAX(t.date) as max_date'))
+            ->groupBy('d.investment_id');
+
+        $pricedTransactions = Transaction::query()
+            ->select('transactions.*')
+            ->join('transaction_details_investment as d', 'd.id', '=', 'transactions.config_id')
+            ->where('transactions.config_type', 'investment')
+            ->where('transactions.schedule', false)
+            ->whereNotNull('d.price')
+            ->joinSub($latestTransactionDates, 'latest', function ($join) {
+                $join->on('latest.investment_id', '=', 'd.investment_id')
+                    ->on('latest.max_date', '=', 'transactions.date');
+            })
+            ->orderBy('transactions.id') // same-date ties: keyBy keeps the last row, so the highest id wins
+            ->with('config')
+            ->get()
+            ->keyBy(fn (Transaction $transaction) => $transaction->config instanceof TransactionDetailInvestment
+                ? $transaction->config->investment_id
+                : null);
+
+        $results = [];
+
+        foreach ($investments as $investment) {
+            $price = $storedPrices->get($investment->id);
+            // Reuse the loaded investment so MoneyCast doesn't lazy-load its currency per row
+            $price?->setRelation('investment', $investment);
+
+            $transaction = $pricedTransactions->get($investment->id);
+            if ($transaction?->config instanceof TransactionDetailInvestment) {
+                $transaction->config->setRelation('investment', $investment);
+            }
+
+            $results[$investment->id] = $this->resolveCombinedPrice($price, $transaction);
         }
 
         return $results;
