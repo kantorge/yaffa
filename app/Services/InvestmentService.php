@@ -668,6 +668,7 @@ class InvestmentService
                 $join->on('latest.investment_id', '=', 'd.investment_id')
                     ->on('latest.max_date', '=', 'transactions.date');
             })
+            ->orderBy('transactions.id') // same-date ties: keyBy keeps the last row, so the highest id wins
             ->with('config')
             ->get()
             ->keyBy(fn (Transaction $transaction) => $transaction->config instanceof TransactionDetailInvestment
