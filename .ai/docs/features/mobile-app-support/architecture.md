@@ -97,9 +97,21 @@ sender is built, endpoints must pass `PublicEndpointUrlValidator` (SSRF) at send
 
 ## Reference data and summary
 
-- `GET /reference-data[?updated_since=]` (read): accounts, payees, categories, tags, currencies. With `updated_since`
+- `GET /reference-data[?updated_since=]` (read): accounts, payees, investments, categories, tags, currencies (inactive
+  rows included, flagged `active`). Accounts and payees carry `alias`, payees their default `category_id`. The web
+  transaction forms read this same endpoint. A payee's `category_id` lives outside the timestamped row, so in delta
+  mode it can lag until the payee row changes. With `updated_since`
   only changed rows plus `ids` (all current ids) so deletions can be detected; accounts are always full (their settings
   table has no timestamps). `ETag` / `If-None-Match` gives 304; `server_time` is the next cursor.
+- `GET /reference-data/usage` (read, `features.reference_usage` in `/meta`): rolling 12-month usage for "most used /
+  recently used" suggestions, built by `ReferenceUsageService`. `standard` rows are per transaction type and
+  `account_from_id`/`account_to_id` pair, `investment` rows per type, `account_id` and `investment_id`, each with `uses`
+  and `last_used` (date). `payee_categories` is each payee's top 5 categories by item count, `deferred_categories`
+  the ones a payee opted out of. Clients rank locally: sum a row set per entity (limited to the chosen type, and to the
+  chosen account when it has shared history, else global), take the 5 most used, then the 5 most recent that are not
+  among them, and fill alphabetically. Category suggestions: payee default first, then its most used categories minus
+  deferred ones. After saving a transaction, bump the matching counts locally. The web implementation is
+  `resources/js/shared/lib/select-data/ranking.js`.
 - `GET /summary` (read): base-currency balances (reuses `AccountApiController::getAccountBalance`), current-month
   income and expense (non-scheduled standard withdrawals/deposits, `cashflow_value`), and budget status (active
   withdrawal budgets' occurrences this month vs spending in their categories and direct children). Decimal strings.

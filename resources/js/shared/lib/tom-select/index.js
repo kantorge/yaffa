@@ -50,6 +50,7 @@ const withQuery = (url, params) => {
  * @param {string} [options.placeholder]
  * @param {boolean} [options.multiple]
  * @param {boolean} [options.allowClear] Show a clear button. Default: true.
+ * @param {function(): string} [options.searchLabel] Label of the search results group. Default: "Matches".
  * @param {boolean} [options.create] Offer to create an option from the typed text (tags). Its value
  *   and label are the raw text. Not offered when an option with that label (case-insensitive) exists.
  * @param {function(Object, function): string} [options.renderOption] Dropdown option HTML. Receives
@@ -225,6 +226,189 @@ export function createRemoteSelect(
   });
 
   return ts;
+}
+
+/**
+ * Create a single-select Tom Select that works entirely on data already in the browser: no requests.
+ *
+ * With an empty search the dropdown shows the `suggestions()` groups (e.g. "Most used" and "Recent"), in the order
+ * given. Once the user types, it shows the single list `search(term)` returns, in that order (the caller does the
+ * matching and ranking, see shared/lib/select-data). Both are evaluated on every open and keystroke, so they can
+ * depend on other fields' current values.
+ *
+ * Items are `{ id, text, ...extra }`; `active: false` renders an "inactive" badge, and `matchedVia: 'alias'` shows
+ * the item's `alias` next to its name. Selection, silent presets and the synced <select> behave as in
+ * createRemoteSelect, so setSelected()/clearSelect() work on the returned instance.
+ *
+ * @param {HTMLSelectElement|string} element
+ * @param {Object} options
+ * @param {function(): Array<{id: string, label: string, items: Object[]}>} options.suggestions
+ * @param {function(string): Object[]} options.search
+ * @param {string} [options.placeholder]
+ * @param {boolean} [options.allowClear] Show a clear button. Default: true.
+ * @param {function(Object, function): string} [options.renderOption] Replaces the default option HTML.
+ * @param {function(Object): void} [options.onSelect]
+ * @param {function(): void} [options.onClear]
+ * @param {function(string|string[]): void} [options.onChange]
+ * @returns {TomSelect}
+ */
+export function createLocalSelect(
+  element,
+  {
+    suggestions,
+    search,
+    placeholder = '',
+    allowClear = true,
+    searchLabel = () => __('Matches'),
+    multiple = false,
+    create = false,
+    renderOption,
+    onSelect,
+    onClear,
+    onChange,
+  },
+) {
+  // Option ids currently listed, in display order; the only options the dropdown shows
+  let resultIds = [];
+
+  const plugins = { dropdown_input: {} };
+  if (allowClear) {
+    plugins.clear_button = { title: escape(__('Clear selection')) };
+  }
+
+  if (multiple) {
+    plugins.remove_button = { title: escape(__('Remove')) };
+    (typeof element === 'string'
+      ? document.querySelector(element)
+      : element
+    ).multiple = true;
+  }
+
+  const defaultOption = (data, esc) =>
+    `<div>${esc(data.text)}` +
+    (data.matchedVia === 'alias' && data.alias
+      ? ` <span class="text-muted small">(${esc(data.alias)})</span>`
+      : '') +
+    (data.active === false
+      ? ` <span class="badge text-bg-secondary ms-1">${esc(__('inactive'))}</span>`
+      : '') +
+    '</div>';
+
+  const ts = new TomSelect(element, {
+    plugins,
+    mode: multiple ? 'multi' : 'single',
+    placeholder,
+    valueField: 'id',
+    labelField: 'text',
+    optgroupField: 'optgroup',
+    optgroupValueField: 'id',
+    optgroupLabelField: 'label',
+    lockOptgroupOrder: true,
+    searchField: [],
+    maxOptions: null,
+    highlight: false,
+    shouldLoad: () => true,
+    loadThrottle: null,
+    refreshThrottle: 0,
+    // Synchronous "load": swap in the list for the current term. clearOptions() keeps the selected option.
+    load(term, callback) {
+      const groups = term.trim()
+        ? [{ id: 'matches', label: searchLabel(), items: search(term) }]
+        : suggestions();
+
+      this.clearOptions();
+      this.clearOptionGroups();
+      resultIds = [];
+
+      groups.forEach((group) => {
+        if (group.items.length === 0) {
+          return;
+        }
+        this.addOptionGroup(group.id, { id: group.id, label: group.label });
+        group.items.forEach((item) => {
+          this.addOption({ ...item, optgroup: group.id });
+          resultIds.push(String(item.id));
+        });
+      });
+
+      callback();
+    },
+    create,
+    createFilter(input) {
+      const label = input.toLowerCase();
+
+      return (
+        this.options[input] === undefined &&
+        !Object.values(this.options).some(
+          (option) => String(option.text).toLowerCase() === label,
+        )
+      );
+    },
+    render: {
+      option_create: (data, esc) =>
+        `<div class="create">${esc(data.input)} <em>${esc(__('(new)'))}</em></div>`,
+      option: renderOption ?? defaultOption,
+      optgroup_header: (data, esc) =>
+        `<div class="optgroup-header">${esc(data.label)}</div>`,
+      no_results: () =>
+        `<div class="no-results">${escape(__('No results found'))}</div>`,
+    },
+  });
+
+  // List exactly what load() put in, in its order, instead of Tom Select's own search
+  ts.hook('instead', 'search', function (query) {
+    const items = resultIds
+      .filter(
+        (id) =>
+          this.options[id] !== undefined &&
+          !(this.settings.hideSelected && this.items.includes(id)),
+      )
+      .map((id) => ({ id, score: 1 }));
+
+    return { query, tokens: [], items, total: items.length };
+  });
+
+  ts.on('dropdown_open', () => {
+    ts.load(ts.inputValue());
+    ts.refreshOptions(false);
+  });
+
+  ts.control_input.placeholder = __('Type to search...');
+
+  // Marks the grouped layout, so the taller dropdown styling applies to these selects only
+  ts.dropdown.classList.add('ts-dropdown-grouped');
+
+  ts.on('item_add', (value) => {
+    if (!muted) {
+      onSelect?.(ts.options[value]);
+    }
+  });
+
+  ts.on('change', () => {
+    if (muted) {
+      return;
+    }
+    onChange?.(ts.getValue());
+    if (ts.items.length === 0) {
+      onClear?.();
+    }
+  });
+
+  return ts;
+}
+
+/** Disable a select while its data loads, showing `text` as the placeholder. */
+export function lockSelect(ts, text) {
+  ts.settings.placeholder = text;
+  ts.control_input.setAttribute('placeholder', text);
+  ts.lock();
+}
+
+/** Re-enable a select locked by lockSelect(). */
+export function unlockSelect(ts, placeholder) {
+  ts.settings.placeholder = placeholder;
+  ts.control_input.setAttribute('placeholder', placeholder);
+  ts.unlock();
 }
 
 /**

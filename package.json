@@ -4,7 +4,8 @@
     "scripts": {
         "production": "npm run build",
         "dev": "fuser -k 5173/tcp 2>/dev/null; vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:js": "node --test \"resources/js/**/*.test.js\""
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.4",
@@ -20,7 +21,7 @@
         "eslint-plugin-vue": "^10.9.0",
         "globals": "^17.3.0",
         "laravel-vite-plugin": "^3.1.0",
-        "playwright": "^1.63.0",
+        "playwright": "^1.65.0",
         "postcss": "^8.5.26",
         "sass": "^1.57.1",
         "vite": "^8.3.5"
