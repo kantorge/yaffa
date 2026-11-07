@@ -24,13 +24,32 @@ function build(reference, usage) {
   };
 }
 
-/** Resolves with the shared data. A failed load is not remembered, so a retry refetches. */
+/** Resolves once the page has fully loaded (after the first render), so the preload never competes with rendering. */
+function whenPageIdle() {
+  return new Promise((resolve) => {
+    const start = () => setTimeout(resolve, 0);
+
+    if (document.readyState === 'complete') {
+      start();
+    } else {
+      window.addEventListener('load', start, { once: true });
+    }
+  });
+}
+
+/**
+ * Resolves with the shared data. The request starts only after the page has loaded. A failed load is not
+ * remembered, so a retry refetches.
+ */
 export function loadSelectData() {
   if (pending === null) {
-    pending = Promise.all([
-      window.axios.get(window.route('api.v1.reference-data')),
-      window.axios.get(window.route('api.v1.reference-data.usage')),
-    ])
+    pending = whenPageIdle()
+      .then(() =>
+        Promise.all([
+          window.axios.get(window.route('api.v1.reference-data')),
+          window.axios.get(window.route('api.v1.reference-data.usage')),
+        ]),
+      )
       .then(([reference, usage]) => build(reference.data, usage.data))
       .catch((error) => {
         pending = null;
