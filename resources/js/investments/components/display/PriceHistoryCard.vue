@@ -66,6 +66,23 @@
           : '#';
       },
     },
+    watch: {
+      prices() {
+        if (this.chart && this.hasData) {
+          this.chart.data = this.prices;
+          return;
+        }
+        if (this.chart) {
+          // No data: the chart container is removed from the DOM
+          this.chart.dispose();
+          this.chart = null;
+        }
+        if (!this.chart && this.hasData) {
+          // Chart container only exists once there is data
+          this.$nextTick(() => this.createChart());
+        }
+      },
+    },
     mounted() {
       if (!this.hasData) return;
 

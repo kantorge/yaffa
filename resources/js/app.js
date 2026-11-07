@@ -13,6 +13,7 @@ const modules = import.meta.glob([
   '!./bootstrap.js',
   '!./shared/lib/i18n/**/*.js',
   '!./shared/lib/confirm/**/*.js',
+  '!./shared/lib/toast/**/*.js',
   '!./shared/lib/vue/installRouteGlobal.js',
   '!./shared/lib/notifications/displayNotifications.js',
   '!./shared/lib/ui/colorMode.js',

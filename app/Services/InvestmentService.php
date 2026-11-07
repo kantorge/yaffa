@@ -152,10 +152,13 @@ class InvestmentService
         });
     }
 
-    public function enrichInvestmentWithQuantityHistory(Investment $investment): Investment
+    public function enrichInvestmentWithQuantityHistory(Investment $investment, ?AccountEntity $account = null): Investment
     {
-        $transactions = $investment->transactionsBasic()->get();
+        $transactions = $investment->transactionsBasic()
+            ->when($account, fn ($query) => $query->where('transaction_details_investment.account_id', $account->id))
+            ->get();
         $scheduledTransactions = $investment->transactionsScheduled()
+            ->when($account, fn ($query) => $query->where('transaction_details_investment.account_id', $account->id))
             ->get()
             // scheduleInstances() reuses whichever relations are already loaded on the source
             // transaction (see App\Support\ScheduleInstance) instead of lazy-loading per virtual
@@ -202,6 +205,62 @@ class InvestmentService
         $investment->quantities = array_values($quantities->toArray());
 
         return $investment;
+    }
+
+    /**
+     * Data shared by the investment show page and the display-data API, optionally scoped
+     * to one account. Prices are intentionally not included (never account-filtered).
+     *
+     * @return array{investment: Investment, transactions: Collection, accounts: Collection}
+     */
+    public function getDisplayData(Investment $investment, ?AccountEntity $account = null): array
+    {
+        $investment->load(['investmentGroup', 'currency']);
+        $investment->current_quantity = $this->getCurrentQuantity($investment, $account);
+        $investment->latest_price = $this->getLatestPrice($investment);
+        $investment = $this->enrichInvestmentWithQuantityHistory($investment, $account);
+
+        $byAccount = fn ($query) => $query->when(
+            $account,
+            fn ($q) => $q->where('transaction_details_investment.account_id', $account->id)
+        );
+
+        $transactions = $byAccount($investment->transactionsBasic())->with(['config'])->get();
+
+        $scheduledTransactions = $byAccount($investment->transactionsScheduled())
+            ->with(['config', 'transactionSchedule'])
+            ->get()
+            ->filter(fn ($transaction): bool => $transaction instanceof Transaction
+                && ($transaction->transactionSchedule?->active) === true);
+
+        $transactions = $transactions->concat($this->getScheduleInstances($scheduledTransactions, 'next'));
+
+        // Always over all of the investment's transactions, regardless of the active filter.
+        // Each account carries its current quantity (for the distribution chart).
+        $quantities = DB::table('transactions')
+            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->where('transactions.schedule', 0)
+            ->where('transactions.config_type', 'investment')
+            ->where('transaction_details_investment.investment_id', $investment->id)
+            ->groupBy('transaction_details_investment.account_id')
+            ->selectRaw(
+                'transaction_details_investment.account_id AS account_id, SUM( '
+                . TransactionTypeEnum::getQuantityMultiplierSqlCase('transactions.transaction_type')
+                . ' * IFNULL(transaction_details_investment.quantity, 0)) AS quantity'
+            )
+            ->pluck('quantity', 'account_id');
+
+        $accounts = AccountEntity::whereIn(
+            'id',
+            TransactionDetailInvestment::where('investment_id', $investment->id)->select('account_id')
+        )->orderBy('name')->get(['id', 'name'])
+            ->map(fn (AccountEntity $account) => [
+                'id' => $account->id,
+                'name' => $account->name,
+                'quantity' => (float) ($quantities[$account->id] ?? 0),
+            ]);
+
+        return compact('investment', 'transactions', 'accounts');
     }
 
     /**

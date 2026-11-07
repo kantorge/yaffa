@@ -276,6 +276,10 @@
       },
     },
     watch: {
+      transactions() {
+        // Date bounds were derived from the previous transaction set
+        this.resetDates();
+      },
       dateFrom(val) {
         if (val) this.internalDateFrom = val;
       },

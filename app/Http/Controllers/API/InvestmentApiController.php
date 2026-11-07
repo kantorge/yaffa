@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InvestmentDisplayRequest;
 use App\Http\Requests\InvestmentSummaryRequest;
 use App\Http\Requests\UpdateInvestmentProviderSettingsRequest;
-use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Services\InvestmentProviderSettingsResolver;
 use App\Services\InvestmentService;
@@ -29,8 +29,6 @@ use Illuminate\Support\Str;
 ])]
 class InvestmentApiController extends Controller
 {
-    use ScheduleTrait;
-
     public function __construct(
         protected InvestmentService $investmentService,
         protected InvestmentProviderSettingsResolver $providerSettingsResolver
@@ -157,47 +155,21 @@ class InvestmentApiController extends Controller
      * Used by the investment detail page to update all visualizations after transaction changes.
      */
     #[Authorize('view', 'investment')]
-    public function getDisplayData(Investment $investment): JsonResponse
+    public function getDisplayData(InvestmentDisplayRequest $request, Investment $investment): JsonResponse
     {
         /**
          * @get("/api/v1/investments/{investment}/display-data")
          * @name("api.v1.investments.display-data")
          * @middlewares("api", "auth:sanctum")
          */
-        // Load investment with related data
-        $investment->load(['investmentGroup', 'currency']);
-
-        // Same dynamic properties as the initial page load, used by the "Current assets" card
-        $investment->current_quantity = $this->investmentService->getCurrentQuantity($investment);
-        $investment->latest_price = $this->investmentService->getLatestPrice($investment);
-
-        // Enrich investment with calculated quantity history
-        $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
-
-        // Get all prices
-        $prices = $this->investmentService->getPrices($investment);
-
-        // Get basic (non-scheduled) transactions
-        $transactions = $investment->transactionsBasic()
-            ->with(['config'])
-            ->get();
-
-        // Get scheduled transactions and generate instances
-        $scheduledTransactions = $investment->transactionsScheduled()
-            ->with(['config', 'transactionSchedule'])
-            ->get()
-            ->filter(fn ($transaction): bool => $transaction instanceof \App\Models\Transaction
-                && ($transaction->transactionSchedule?->active) === true);
-
-        // Add all scheduled instances to list of transactions
-        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
-        $transactions = $transactions->concat($scheduleInstances);
+        $data = $this->investmentService->getDisplayData($investment, $request->account());
 
         return response()->json([
-            'investment' => $this->serializeInvestment($investment),
-            'transactions' => $transactions,
-            'quantities' => $investment->quantities,
-            'prices' => $prices,
+            'investment' => $this->serializeInvestment($data['investment']),
+            'transactions' => $data['transactions'],
+            'quantities' => $data['investment']->quantities,
+            'prices' => $this->investmentService->getPrices($investment),
+            'accounts' => $data['accounts'],
         ], Response::HTTP_OK);
     }
 
