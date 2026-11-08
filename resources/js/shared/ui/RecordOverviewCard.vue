@@ -20,14 +20,16 @@
         <dd class="col-6">{{ records.length }}</dd>
         <dt class="col-6">{{ __('First available data') }}</dt>
         <dd v-if="records.length > 0" class="col-6">
-          {{ formatDate(records[0][dateField]) }}
+          {{ toFormattedDate(records[0][dateField], locale, '') }}
         </dd>
         <dd v-else class="col-6 not-set">
           {{ __('No data') }}
         </dd>
         <dt class="col-6">{{ __('Last available data') }}</dt>
         <dd v-if="records.length > 0" class="col-6">
-          {{ formatDate(records[records.length - 1][dateField]) }}
+          {{
+            toFormattedDate(records[records.length - 1][dateField], locale, '')
+          }}
         </dd>
         <dd v-else class="col-6 not-set">
           {{ __('No data') }}
@@ -79,9 +81,7 @@
       };
     },
     methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
-      },
+      toFormattedDate,
       __,
     },
   };

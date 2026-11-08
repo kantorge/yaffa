@@ -174,6 +174,27 @@ export function toFormattedDate(
   return getCachedDateTimeFormatter(locale, dateOptions).format(date);
 }
 
+/**
+ * Formats a "YYYY-MM-DD" date-only string as a short, locale-aware date (e.g. "Jan 5, 2025").
+ * Thin wrapper over toFormattedDate() for the import screens.
+ *
+ * @param {*} input
+ * @param {string} [locale] Defaults to the user's locale from window.YAFFA, or the browser's.
+ * @param {*} fallback Returned when input is empty or not a valid date.
+ * @returns {string}
+ */
+export function toFormattedShortDate(
+  input,
+  locale = window.YAFFA?.userSettings?.locale || undefined,
+  fallback = '',
+) {
+  return toFormattedDate(input, locale, fallback, true, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 // Date.prototype.toLocaleString()'s own default (no options) formats both the date and time
 // parts as numeric - Intl.DateTimeFormat's default (no options) formats the date part only, so
 // toFormattedDateTime() below needs to spell this out explicitly to be a faithful, cacheable

@@ -20,14 +20,20 @@
         <dd class="col-6">{{ currencyRates.length }}</dd>
         <dt class="col-6">{{ __('First available data') }}</dt>
         <dd v-if="currencyRates.length > 0" class="col-6">
-          {{ formatDate(currencyRates[0].date) }}
+          {{ toFormattedDate(currencyRates[0].date, locale, '') }}
         </dd>
         <dd v-else class="col-6 not-set">
           {{ __('No data') }}
         </dd>
         <dt class="col-6">{{ __('Last available data') }}</dt>
         <dd v-if="currencyRates.length > 0" class="col-6">
-          {{ formatDate(currencyRates[currencyRates.length - 1].date) }}
+          {{
+            toFormattedDate(
+              currencyRates[currencyRates.length - 1].date,
+              locale,
+              '',
+            )
+          }}
         </dd>
         <dd v-else class="col-6 not-set">
           {{ __('No data') }}
@@ -68,9 +74,7 @@
       };
     },
     methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
-      },
+      toFormattedDate,
       toFormattedCurrency,
       __,
     },

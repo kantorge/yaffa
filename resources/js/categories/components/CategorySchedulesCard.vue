@@ -26,7 +26,9 @@
             })
           "
         >
-          {{ formatDate(schedule.transaction_schedule.next_date) }}
+          {{
+            toFormattedDate(schedule.transaction_schedule.next_date, locale, '')
+          }}
         </a>
         <span>{{ formatAmount(schedule) }}</span>
       </li>
@@ -78,9 +80,7 @@
         });
     },
     methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
-      },
+      toFormattedDate,
       // Money leaves the account on a withdrawal, and arrives on a deposit
       formatAmount(schedule) {
         const amount =
