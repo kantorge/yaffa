@@ -61,16 +61,10 @@
 <script>
   import { __, toFormattedDate } from '@/shared/lib/i18n';
   import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
+  import { toIsoDateString } from '@/shared/lib/helpers';
   import * as toastHelpers from '@/shared/lib/toast';
   import WaterfallChart from '@/shared/ui/charts/WaterfallChart.vue';
   import WaterfallGroupToggles from '@/shared/ui/charts/WaterfallGroupToggles.vue';
-
-  function formatDate(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
 
   export default {
     components: {
@@ -204,8 +198,8 @@
        */
       handleColumnClick(bucket) {
         const query = {
-          date_from: formatDate(new Date(this.year, this.month - 1, 1)),
-          date_to: formatDate(new Date(this.year, this.month, 0)),
+          date_from: toIsoDateString(new Date(this.year, this.month - 1, 1)),
+          date_to: toIsoDateString(new Date(this.year, this.month, 0)),
           types: bucket.transaction_types || [],
         };
 
