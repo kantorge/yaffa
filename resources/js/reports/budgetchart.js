@@ -20,6 +20,7 @@ import {
   initializeBootstrapTooltips,
   scheduleCadenceText,
   getArrayParamFromUrl,
+  toIsoDateString,
 } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import {
@@ -181,6 +182,29 @@ function buildScheduleBreakdownRows(rawData) {
 
 const elementRefreshButton = document.getElementById('reload');
 
+// Open Find transactions for the clicked bar's period (per the current month/quarter/year
+// grouping), using the same categories and account scope as the loaded chart
+function openTransactionsForPeriod(start) {
+  const months =
+    { quarter: 3, year: 12 }[
+      document.querySelector('input[name="chart_time_interval"]:checked')?.value
+    ] || 1;
+  const end = new Date(start.getFullYear(), start.getMonth() + months, 0);
+  const params = {
+    categories: getSelectedCategoryIds(),
+    date_from: toIsoDateString(start),
+    date_to: toIsoDateString(end),
+  };
+  if (
+    $('input[name=table_filter_account_scope]:checked').val() === 'selected' &&
+    accountElement.value
+  ) {
+    params.accounts = [accountElement.value];
+  }
+
+  window.open(window.route('reports.transactions', params), '_blank');
+}
+
 let chart,
   dateAxis,
   seriesActual,
@@ -301,6 +325,22 @@ function initChart() {
     '[bold]' + __('Moving average') + ':[/] {valueY}';
   seriesMovingAverage.tooltip.getFillFromObject = false;
   seriesMovingAverage.tooltip.background.fill = colorMovingAverage;
+
+  // Actual bars open the matching transactions in a new tab, forecast bars jump to the
+  // scheduled transactions table
+  seriesActual.columns.template.cursorOverStyle =
+    am4core.MouseCursorStyle.pointer;
+  seriesActual.columns.template.events.on('hit', (ev) =>
+    openTransactionsForPeriod(ev.target.dataItem.dataContext.date),
+  );
+  seriesForecast.columns.template.cursorOverStyle =
+    am4core.MouseCursorStyle.pointer;
+  seriesForecast.columns.template.events.on('hit', () =>
+    document
+      .getElementById('scheduleTable')
+      .closest('.card')
+      .scrollIntoView({ behavior: 'smooth' }),
+  );
 
   scrollbarX = new am4charts.XYChartScrollbar();
   scrollbarX.series.push(seriesBudget);
