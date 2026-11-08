@@ -26,7 +26,9 @@
             })
           "
         >
-          {{ formatDate(schedule.transaction_schedule.next_date) }}
+          {{
+            toFormattedDate(schedule.transaction_schedule.next_date, locale, '')
+          }}
         </a>
         <span>{{ formatAmount(schedule) }}</span>
       </li>
@@ -82,9 +84,7 @@
         });
     },
     methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
-      },
+      toFormattedDate,
       // The payee's side of the transaction, in the transaction's own currency
       formatAmount(schedule) {
         const amount =

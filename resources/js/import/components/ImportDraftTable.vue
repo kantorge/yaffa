@@ -448,7 +448,11 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedShortDate,
+  } from '@/shared/lib/i18n';
   import DuplicateCandidatesPanel from './DuplicateCandidatesPanel.vue';
   import ScheduleCandidatesPanel from './ScheduleCandidatesPanel.vue';
   import RelatedAiDocumentsPanel from './RelatedAiDocumentsPanel.vue';
@@ -716,13 +720,7 @@
         if (!dateString) {
           return __('Invalid');
         }
-        return toFormattedDate(
-          dateString,
-          window.YAFFA?.userSettings?.locale || undefined,
-          dateString,
-          true,
-          { year: 'numeric', month: 'short', day: 'numeric' },
-        );
+        return toFormattedShortDate(dateString, undefined, dateString);
       },
       formatAmount(amount) {
         if (amount === null || amount === undefined) {

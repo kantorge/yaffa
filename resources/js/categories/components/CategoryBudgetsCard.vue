@@ -12,7 +12,7 @@
         <div class="small text-muted">
           <template v-if="budget.next_occurrence">
             {{ __('Next occurrence') }}:
-            {{ formatDate(budget.next_occurrence) }}
+            {{ toFormattedDate(budget.next_occurrence, locale, '') }}
           </template>
           <template v-else>{{ __('No upcoming occurrence') }}</template>
         </div>
@@ -41,9 +41,7 @@
       return { locale: window.YAFFA.userSettings.locale };
     },
     methods: {
-      formatDate(date) {
-        return toFormattedDate(date, this.locale, '');
-      },
+      toFormattedDate,
       // An account-bound budget is in that account's currency
       formatAmount(budget) {
         return toFormattedCurrency(
