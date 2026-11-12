@@ -57,8 +57,8 @@ class ReportApiController extends Controller
         $data = $this->budgetChartService->chart(
             $request->user(),
             $categories,
-            $request->query('accountSelection'),
-            $request->query('accountEntity'),
+            $request->validated('accountSelection'),
+            $request->validated('accountEntity'),
         );
 
         // Return fetched and prepared data
