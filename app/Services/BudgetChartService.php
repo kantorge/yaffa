@@ -471,7 +471,8 @@ class BudgetChartService
 
         foreach ($budgets as $budget) {
             $currencyId = ($budget->account_id ? $budget->currency()?->id : null) ?? $baseCurrencyId;
-            $baseAmount = $budget->amount->getAmount()->multipliedBy($budget->transaction_type->amountMultiplier());
+            // Raw decimal: the Money cast would resolve the budget's currency (a lazy query) just to read the amount.
+            $baseAmount = BigDecimal::of($budget->getRawOriginal('amount'))->multipliedBy($budget->transaction_type->amountMultiplier());
 
             foreach ($this->budgetService->projectOccurrences($budget, $budget->start_date, $user->end_date) as $occurrenceDate) {
                 $multiplier = (string) $inflationCalculator->applyAnnualRate(1.0, $budget->inflation, $budget->start_date, $occurrenceDate);

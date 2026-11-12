@@ -10,6 +10,7 @@ use App\Models\AccountMonthlySummary;
 use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Http\Requests\API\BudgetChartRequest;
 use App\Services\BudgetChartService;
 use App\Services\CategoryService;
 use App\Services\CategoryWaterfallCacheService;
@@ -47,7 +48,7 @@ class ReportApiController extends Controller
      *
      * Collects actual and budgeted cost for selected categories, and returns it aggregated by month.
      */
-    public function budgetChart(Request $request): JsonResponse
+    public function budgetChart(BudgetChartRequest $request): JsonResponse
     {
         // Get list of requested categories
         // This also ensures that child categories are loaded for all parents

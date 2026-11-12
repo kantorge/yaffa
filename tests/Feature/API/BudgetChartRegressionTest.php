@@ -145,9 +145,25 @@ it('aggregates per category exactly as chart() does for each category', function
                     $value = $aggregate[$id][$period][$series] ?? null;
                     $sum = $value === null ? $sum : ($sum ?? Brick\Math\BigDecimal::zero())->plus($value);
                 }
-                expect($sum?->toFloat() ?? ($series === 'actual' ? null : 0.0))
+                if ($series === 'actual' && $entry['actual'] === null) {
+                    expect($sum)->toBeNull("{$period} actual for " . implode(',', $ids));
+
+                    continue;
+                }
+
+                expect($sum?->toFloat() ?? 0.0)
                     ->toEqualWithDelta($entry[$series] ?? 0.0, 0.0001, "{$period} {$series} for " . implode(',', $ids));
             }
         }
     }
 })->after(fn () => Carbon::setTestNow());
+
+it('rejects malformed account scope parameters', function (array $query) {
+    buildBudgetChartFixture();
+
+    $this->getJson(route('api.v1.reports.budget-chart', $query))->assertUnprocessable();
+})->after(fn () => Carbon::setTestNow())->with([
+    'array scope' => [['accountSelection' => ['selected']]],
+    'unknown scope' => [['accountSelection' => 'everything']],
+    'array entity' => [['accountSelection' => 'selected', 'accountEntity' => [1, 2]]],
+]);

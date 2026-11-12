@@ -29,11 +29,12 @@ Dev database: 1 user, 128 categories (115 with data), 43,122 transaction items, 
 
 | Run | Time | Queries |
 | --- | --- | --- |
-| `aggregateByCategory`, cold (cache flushed) | 3.4 s | 60 |
-| `aggregateByCategory`, warm | 1.3 s | 58 |
+| `aggregateByCategory`, cold (cache flushed) | 3.1 s | 10 |
+| `aggregateByCategory`, warm | 1.2-1.4 s | 8 |
 | `chart()` once per active category, warm | 14.5 s | 783 |
 
-- The 5 s target is met, including a cold cache. **Recommendation: the queued fallback is not needed.**
+- `aggregateByCategory()` alone runs well inside 5 s, including a cold cache. This is **only the aggregation step**: the full "Review all" workflow (detector, endpoint, serialization) does not exist yet, so its 5 s target is not yet established and must be re-measured in phase 2b.
+- Recommendation: do not build the queued fallback now, but re-check it against the phase 2b measurement.
 - Remaining time is mostly PHP-side BigDecimal and projection work. The cold run's extra time comes from rebuilding the schedule and budget occurrence caches.
 - Measured in the sail container, which is likely slower than production.
 
@@ -46,4 +47,4 @@ Dev database: 1 user, 128 categories (115 with data), 43,122 transaction items, 
 ## Known issues and open questions
 - `chart()` has the same quirk as before: it mutates `$user->end_date` via `startOfDay()`. Left alone to keep byte-identical behaviour.
 - The golden fixture normalizes database ids to first-seen ordinals, since auto-increment ids differ between runs.
-- Queued fallback: owner decided to defer it to the backlog (recorded in the decisions log).
+- Queued fallback: owner decided to defer it to the backlog (recorded in the decisions log). Re-measure the full "Review all" run in phase 2b.
