@@ -447,7 +447,7 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
 ### Open decisions
 
 - **Threshold values.** The rules are decided; the numbers get tuned during the build. Method: a `--backtest` option on the review command re-runs the detector with `data_through` set to each month of the last two years. It counts suggestions per category per year (target: at most one or two) and checks them against the actuals that followed.
-- **Queued fallback.** Is it needed? That depends on the phase 1 measurement.
+- **Queued fallback: deferred to the backlog.** Phase 1 measured only the aggregation step (1.3 s warm, 3.4 s cold), so it is not built in the MVP for now. Re-measure the full "Review all" run in phase 2b, and revisit it if that or user testing shows a bottleneck on larger datasets.
 
 Decided: parent and child budgets follow the remainder rule (option A, matching the chart); quarterly and yearly persistence is fixed across sensitivities; the level uses the moving-average window; the materiality floor is based on expenses; any single transaction makes a period count as non-zero.
 
@@ -460,3 +460,5 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-11 | Design | Stateless MVP, no scheduled run                           | User-initiated self-check fits the mindful-finance approach; scheduling stays additive |
 | 2026-11-11 | Design | Parent/child budgets use the remainder rule (option A)    | Matches how the budget chart sums budgets today                                        |
 | 2026-11-11 | Design | Level L = plain mean over the chart moving-average window | Consistency with the chart line the user sees                                          |
+| 2026-11-11 | 1      | Queued fallback deferred to backlog (owner confirmed)      | aggregation step measured at 1.3 s warm and 3.4 s cold on 43k items; full "Review all" to be re-measured in phase 2b, revisit if it or user testing finds a bottleneck |
+| 2026-11-11 | 1      | `aggregateByCategory` returns per-category series         | Sums are additive, so units can be composed later without re-querying                 |
