@@ -112,6 +112,11 @@ Across YAFFA, categories influence how money is entered, suggested, reviewed, co
 - The category structure is intentionally modest rather than deeply hierarchical, which keeps it understandable for everyday personal finance use.
 - CategoryLearning is related but separate; it should not be treated as part of the core Category concept itself.
 
+## Tag Requirement (Recharges)
+
+- A category can require a tag on its items (`required`), optionally expecting each tag's balance to net to nil (`required_nil`), e.g. purchases made on someone else's behalf and reimbursed later.
+- It is a reminder, never a block. See [`features/recharge-categories/`](../../features/recharge-categories/architecture.md).
+
 ## Category Detail Page
 
 - Reached from the category name in the categories list, the monthly breakdown report, and payee pages. Answers: _how does this part of my life behave over time?_

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CategoryTagRequirement;
 use App\Models\Category;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
@@ -43,6 +44,12 @@ class CategoryRequest extends FormRequest
             'default_aggregation' => [
                 'required',
                 Rule::in(['month', 'quarter', 'year']),
+            ],
+            // Absent while recharge tags are disabled for the user: the stored value is kept
+            'tag_requirement' => [
+                'sometimes',
+                'required',
+                Rule::enum(CategoryTagRequirement::class),
             ],
         ];
     }

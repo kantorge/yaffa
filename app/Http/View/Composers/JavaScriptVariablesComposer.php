@@ -41,6 +41,8 @@ class JavaScriptVariablesComposer
                 'end_date' => $user->end_date,
                 'account_details_date_range' => $user->account_details_date_range,
                 'auto_merge_standard_transaction_items' => $user->auto_merge_standard_transaction_items,
+                'recharge_tags_enabled' => (bool) $user->recharge_tags_enabled,
+                'recharge_backstop_date' => $user->recharge_backstop_date?->format('Y-m-d'),
             ];
         }
 

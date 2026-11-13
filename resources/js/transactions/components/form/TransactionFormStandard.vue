@@ -700,6 +700,7 @@
   import {
     applySavedTransaction,
     loadSelectData,
+    loadTagRequiredCategoryIds,
     rankByUsage,
     searchEntities,
     standardUsage,
@@ -2020,6 +2021,11 @@
           return;
         }
 
+        // A reminder only: the transaction is saved without the tag if the user insists
+        if (!(await this.confirmMissingRequiredTags())) {
+          return;
+        }
+
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form
@@ -2066,6 +2072,40 @@
               },
             );
           });
+      },
+
+      // Items in a category that expects a tag (e.g. a recharge claim number) but have none.
+      // Schedules are skipped: the claim reference of a future instance is not known yet.
+      async confirmMissingRequiredTags() {
+        if (this.form.schedule) {
+          return true;
+        }
+
+        const tagRequiredIds = await loadTagRequiredCategoryIds();
+        const missing = this.form.items.filter(
+          (item) =>
+            item.category_id &&
+            tagRequiredIds.has(Number(item.category_id)) &&
+            (item.tags || []).length === 0,
+        ).length;
+
+        if (missing === 0) {
+          return true;
+        }
+
+        const result = await confirmAction(
+          __(
+            ':count item(s) are in a category that expects a tag, but have no tag. Save anyway?',
+            { count: missing },
+          ),
+          {
+            icon: 'warning',
+            confirmButtonText: __('Save anyway'),
+            target: this.swalTargetSelector,
+          },
+        );
+
+        return result.isConfirmed;
       },
 
       // Only the filled fields, in the draft format shared with AI documents (schema v2)

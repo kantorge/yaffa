@@ -57,6 +57,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'investments.summary' => ['api.v1.investments.summary', 'get', 'read', []],
             'investments.display-data' => ['api.v1.investments.display-data', 'get', 'read', ['investment' => 1]],
             'reports.cashflow' => ['api.v1.reports.cashflow', 'get', 'read', []],
+            'reports.recharges.summary' => ['api.v1.reports.recharges.summary', 'get', 'read', []],
             'imports.file-profiles.index' => ['api.v1.imports.file-profiles.index', 'get', 'read', []],
             'documents.index' => ['api.v1.documents.index', 'get', 'read', []],
             'ai-hints.index' => ['api.v1.ai-hints.index', 'get', 'read', []],

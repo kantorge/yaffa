@@ -145,7 +145,8 @@
         </div>
       </div>
       <div
-        class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block"
+        class="col-12 col-sm-2 form-group transaction_detail_container"
+        :class="{ 'd-none d-md-block': !tagRequired }"
       >
         <span class="form-label">
           {{ __('Tags') }}
@@ -154,6 +155,14 @@
           class="form-select tag"
           :data-testid="'transaction-item-tags-' + id"
         ></select>
+        <div
+          v-if="isMissingRequiredTag"
+          class="form-text text-warning"
+          :data-testid="'transaction-item-tag-required-' + id"
+        >
+          <i class="fa fa-triangle-exclamation"></i>
+          {{ __('This category expects a tag') }}
+        </div>
       </div>
       <div
         class="col-12 col-sm-3 form-group transaction_detail_container"
@@ -207,6 +216,7 @@
   } from '@/shared/lib/tom-select';
   import {
     loadSelectData,
+    loadTagRequiredCategoryIds,
     searchEntities,
     suggestCategories,
   } from '@/shared/lib/select-data';
@@ -261,10 +271,20 @@
         isRecommendationAccepted: false,
         suggestionRemoved: false,
         learnRecommendation: this.match_type === 'exact' ? false : true,
+        tagRequiredCategoryIds: new Set(),
       };
     },
 
     computed: {
+      // The selected category expects a tag (e.g. a recharge claim number)
+      tagRequired() {
+        return this.tagRequiredCategoryIds.has(this.categoryIdData);
+      },
+
+      isMissingRequiredTag() {
+        return this.tagRequired && (this.tags || []).length === 0;
+      },
+
       /**
        * Determine which alert class to use based on match type and confidence
        */
@@ -374,6 +394,10 @@
     },
 
     mounted() {
+      loadTagRequiredCategoryIds().then((ids) => {
+        this.tagRequiredCategoryIds = ids;
+      });
+
       // Shared, memoized preload (the form usually has it already); null until it arrives
       this.selectData = null;
 
