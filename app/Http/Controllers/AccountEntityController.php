@@ -334,6 +334,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         return view('accounts.form', [
             'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
             'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+            ...$this->settlementAccountOptions($user),
             'allFileImportProfiles' => FileImportProfile::query()
                 ->selectableForUser($user)
                 ->orderBy('file_type')
@@ -341,6 +342,32 @@ class AccountEntityController extends Controller implements HasMiddleware
                 ->orderBy('name')
                 ->get(),
         ]);
+    }
+
+    /**
+     * The accounts in the user's default currency a foreign-currency account can settle into, and that currency's id.
+     *
+     * @return array{allSettlementAccounts: array<int, string>, baseCurrencyId: int|null}
+     */
+    private function settlementAccountOptions(User $user, ?AccountEntity $except = null): array
+    {
+        $baseCurrency = $user->baseCurrency();
+
+        // Active accounts only, plus the one already chosen, so an edit never silently drops a link to a closed account
+        $currentId = $except?->config instanceof Account ? $except->config->settlement_account_id : null;
+
+        $accounts = $baseCurrency === null ? [] : $user->accounts()
+            ->whereHasMorph('config', [Account::class], fn ($query) => $query->where('currency_id', $baseCurrency->id))
+            ->where(fn ($query) => $query->where('active', true)->when($currentId, fn ($query) => $query->orWhere('id', $currentId)))
+            ->when($except, fn ($query) => $query->where('id', '!=', $except->id))
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+
+        return [
+            'allSettlementAccounts' => $accounts,
+            'baseCurrencyId' => $baseCurrency?->id,
+        ];
     }
 
     /**
@@ -410,6 +437,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'account' => $accountEntity,
                 'allAccountGroups' => $user->accountGroups()->pluck('name', 'id')->all(),
                 'allCurrencies' => $user->currencies()->pluck('name', 'id')->all(),
+                ...$this->settlementAccountOptions($user, $accountEntity),
                 'allFileImportProfiles' => FileImportProfile::query()
                     ->selectableForUser($user)
                     ->orderBy('file_type')
