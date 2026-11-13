@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\BudgetSuggestionService;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 
@@ -71,4 +72,39 @@ it('backtests the last 24 months and counts suggestions per year', function () {
         ->and($rows[0]['category_name'])->toBe('Groceries')
         ->and(array_keys($rows[0]['suggestions_per_year']))->each->toBeInt()
         ->and(array_sum($rows[0]['suggestions_per_year']))->toBeGreaterThan(0);
+});
+
+it('counts suggestions per calendar year and flags more than two in a year', function () {
+    // Months suggested per category, over the 24 runs (2024-12 to 2026-11).
+    $suggested = [
+        1 => ['2025-01', '2025-02'],                                     // 2 in 2025: not flagged
+        2 => ['2026-01'],                                                // 1 in 2026: not flagged
+        3 => ['2025-03', '2025-04', '2025-05'],                          // 3 in 2025: flagged
+        4 => ['2024-12', '2025-06', '2025-07', '2025-08'],               // 1 in 2024, 3 in 2025: flagged
+        5 => array_map(fn ($m) => sprintf('2026-%02d', $m), range(1, 11)), // 11 in 2026: flagged
+    ];
+
+    $this->mock(BudgetSuggestionService::class)
+        ->shouldReceive('run')->times(24)
+        ->andReturnUsing(fn ($user, $ids, $through) => [
+            'run' => ['data_through' => $through],
+            'series' => null,
+            'units' => array_map(fn ($id) => [
+                'category_id' => $id,
+                'category_name' => "Category {$id}",
+                'verdict' => in_array($through, $suggested[$id], true) ? 'suggestion' : 'no_drift',
+                'suggestion' => null,
+            ], array_keys($suggested)),
+        ]);
+
+    Illuminate\Support\Facades\Artisan::call('budget-suggestions:review', ['user' => $this->user->id, '--backtest' => true, '--json' => true]);
+    $rows = collect(json_decode(Illuminate\Support\Facades\Artisan::output(), true))->keyBy('category_id');
+
+    expect($rows)->toHaveCount(5)
+        ->and($rows[1]['suggestions_per_year'])->toEqual([2025 => 2])
+        ->and($rows[2]['suggestions_per_year'])->toEqual([2026 => 1])
+        ->and($rows[3]['suggestions_per_year'])->toEqual([2025 => 3])
+        ->and($rows[4]['suggestions_per_year'])->toEqual([2024 => 1, 2025 => 3])
+        ->and($rows[5]['suggestions_per_year'])->toEqual([2026 => 11])
+        ->and($rows->where('flagged', true)->keys()->sort()->values()->all())->toBe([3, 4, 5]);
 });

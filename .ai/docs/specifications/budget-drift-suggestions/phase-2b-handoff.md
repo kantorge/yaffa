@@ -25,3 +25,6 @@ Decisions log: ownership validation of `category_ids`; backtest counting rule (n
 ## Known issues and open questions
 - Owner checkpoint: tune `config/yaffa.php` with `--backtest`, record final values in the decisions log. Suggested first look: the repeated suggestions suggest persistence/tolerance are loose, or that applied-and-unapplied suggestions repeat each month by design (nothing is stored, so an unapplied suggestion re-appears monthly).
 - The 2a open points still stand (horizon cut at `end_date`, counted rrules, mixed-sign netting).
+- The backtest only counts suggestions per category per year; it does not compare them with the actuals that followed (the spec asked for both).
+- The API validation message ("Provide either category_ids or all=1.") is English-only and not in `/lang`.
+- The `neutral|conservative` bias values are hard-coded in three places (the request, the command and the service); only sensitivity is read from config.
