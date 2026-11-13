@@ -77,6 +77,6 @@ it('disables the checkbox under an off parent and keeps the child\'s own value i
     $html = $this->actingAs($user)->get(route('categories.edit', $child))->getContent();
 
     expect($html)
-        ->toMatch('/<input type="hidden" name="calculate_budget_suggestions" value="1">/')
+        ->toMatch('/<input type="hidden" id="calculate_budget_suggestions_hidden" name="calculate_budget_suggestions" value="1"/')
         ->toMatch('/id="calculate_budget_suggestions"[^>]*disabled/s');
 });

@@ -21,6 +21,7 @@ import {
   scheduleCadenceText,
   getArrayParamFromUrl,
   toIsoDateString,
+  parseIsoDate,
 } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import {
@@ -400,7 +401,7 @@ let reloadData = function () {
 
       // Convert date strings to Date objects
       const parsedChartData = chartData.map(function (item) {
-        item.date = new Date(item.period);
+        item.date = parseIsoDate(item.period);
         return item;
       });
 
@@ -493,7 +494,7 @@ function updateChart(rawData) {
       .filter((month) => !have.has(month))
       .map((month) => ({
         period: month + '-01',
-        date: new Date(month + '-01'),
+        date: parseIsoDate(month + '-01'),
         actual: 0,
         budget: 0,
         forecast: 0,
@@ -639,7 +640,7 @@ function updateChart(rawData) {
       ) {
         data.push({
           date: new Date(currentDate),
-          period: currentDate.toISOString().slice(0, 7),
+          period: toIsoDateString(currentDate).slice(0, 7),
           actual: 0,
           budget: 0,
           forecast: 0,

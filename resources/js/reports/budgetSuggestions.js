@@ -44,16 +44,16 @@ export function usableCandidates(suggestion) {
 
 /**
  * What the BudgetForm needs to open prefilled. `replace` keeps the row's own cadence, so only
- * amount, type and start date are set; `create` also carries the category and cadence.
+ * amount (rounded by the form to its account currency), type and start date are set; `create` also carries the category and cadence.
  */
-export function buildFormPrefill(unit, candidate = null, precision = 2) {
+export function buildFormPrefill(unit, candidate = null) {
   const s = unit.suggestion;
   const signed =
     s.proposal_type === 'replace'
       ? candidate.suggested_amount
       : s.suggested_amount;
   const prefill = {
-    amount: Number(Math.abs(signed).toFixed(precision)),
+    amount: Math.abs(signed),
     transaction_type: signed < 0 ? 'withdrawal' : 'deposit',
     start_date: s.effective_date,
   };

@@ -127,6 +127,7 @@
                         @foreach($parents as $id => $name)
                             <option
                                 value="{{ $id }}"
+                                data-suggestions-off="{{ in_array($id, $parentsSuggestionsOff) ? 1 : 0 }}"
                                 @if (old())
                                     @if (old('parent_id') == $id)
                                         selected="selected"
@@ -151,10 +152,12 @@
                 </label>
                 <div class="col-sm-9">
                     @php
-                        $parentSuggestionsOff = isset($category) && $category->parent && !$category->parent->calculate_budget_suggestions;
-                        $suggestionsOn = old() ? old('calculate_budget_suggestions') == '1' : (!isset($category) || $category->calculate_budget_suggestions);
+                        $selectedParentId = old() ? old('parent_id') : ($category->parent_id ?? null);
+                        $parentSuggestionsOff = $selectedParentId && in_array((int) $selectedParentId, $parentsSuggestionsOff, true);
+                        $ownSuggestions = isset($category) ? ($category->calculate_budget_suggestions ? 1 : 0) : 1;
+                        $suggestionsOn = old() ? old('calculate_budget_suggestions') == '1' : $ownSuggestions;
                     @endphp
-                    <input type="hidden" name="calculate_budget_suggestions" value="{{ $parentSuggestionsOff ? ($category->calculate_budget_suggestions ? 1 : 0) : 0 }}">
+                    <input type="hidden" id="calculate_budget_suggestions_hidden" name="calculate_budget_suggestions" value="{{ $parentSuggestionsOff ? $ownSuggestions : 0 }}" data-own="{{ $ownSuggestions }}">
                     <input
                         id="calculate_budget_suggestions"
                         class="form-check-input"
@@ -164,7 +167,12 @@
                         @checked($suggestionsOn)
                         @disabled($parentSuggestionsOff)
                     >
-                    <div class="form-text">
+                    <div
+                        class="form-text"
+                        id="calculate_budget_suggestions_help"
+                        data-default="{{ __('When off, the budget review skips this category and its subcategories.') }}"
+                        data-excluded="{{ __('Excluded via parent category') }}"
+                    >
                         @if ($parentSuggestionsOff)
                             {{ __('Excluded via parent category') }}
                         @else

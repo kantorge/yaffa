@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryBudgetSuggestionsRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
@@ -201,11 +202,9 @@ class CategoryApiController extends Controller
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     #[Authorize('update', 'category')]
-    public function patchBudgetSuggestions(Request $request, Category $category): JsonResponse
+    public function patchBudgetSuggestions(CategoryBudgetSuggestionsRequest $request, Category $category): JsonResponse
     {
-        $validated = $request->validate(['calculate_budget_suggestions' => ['required', 'boolean']]);
-
-        $category->calculate_budget_suggestions = $validated['calculate_budget_suggestions'];
+        $category->calculate_budget_suggestions = $request->validated('calculate_budget_suggestions');
         $category->save();
 
         return response()->json($category, Response::HTTP_OK);

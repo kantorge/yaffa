@@ -363,8 +363,9 @@
           });
       },
 
-      applyPrefill(prefill) {
-        this.form.amount = prefill.amount;
+      applyPrefill(prefill, currency = window.YAFFA.userSettings.baseCurrency) {
+        const precision = currency?.generic_decimal_precision ?? 2;
+        this.form.amount = Number(prefill.amount.toFixed(precision));
         this.form.transaction_type = prefill.transaction_type;
         this.form.start_date = prefill.start_date;
 
@@ -499,7 +500,7 @@
             }
 
             if (prefill) {
-              this.applyPrefill(prefill);
+              this.applyPrefill(prefill, currency);
             }
 
             // The freshly-loaded values are the "clean" baseline for the

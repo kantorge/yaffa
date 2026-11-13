@@ -39,14 +39,11 @@ test('replace prefill uses the picked candidate, as a positive amount with a typ
       suggested_amount: -1,
     },
   };
-  assert.deepEqual(
-    buildFormPrefill(unit, { suggested_amount: -27500.456 }, 0),
-    {
-      amount: 27500,
-      transaction_type: 'withdrawal',
-      start_date: '2027-01-01',
-    },
-  );
+  assert.deepEqual(buildFormPrefill(unit, { suggested_amount: -27500.456 }), {
+    amount: 27500.456,
+    transaction_type: 'withdrawal',
+    start_date: '2027-01-01',
+  });
 });
 
 test('create prefill carries category and cadence', () => {

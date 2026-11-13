@@ -502,11 +502,16 @@ class BudgetSuggestionService
             // A row that fills the gap next to schedules ends with the last of them. If that end falls
             // inside the horizon, E changes within it and one gap amount would be wrong.
             $endDate = null;
-            if ($schedules !== [] && !in_array(null, array_column($schedules, 'end'), true)) {
-                $endDate = collect($schedules)->max('end');
-                if ($endDate->lt(Carbon::parse($this->date($effective + $horizon * $m))->subDay())) {
+            $horizonEnd = Carbon::parse($this->date($effective + $horizon * $m))->subDay();
+            // Any contributing schedule that ends inside the horizon changes E within it, so one gap amount would be wrong
+            foreach ($schedules as $schedule) {
+                if ($schedule['end'] !== null && $schedule['end']->lt($horizonEnd)) {
                     return $this->verdict('needs_review', $m);
                 }
+            }
+            // The new row ends with the last schedule only when every schedule is finite
+            if ($schedules !== [] && !in_array(null, array_column($schedules, 'end'), true)) {
+                $endDate = collect($schedules)->max('end');
             }
 
             return $this->createProposal($unit, $m, $g, $isNew, $target - $expected, $common, $c, $conservative, $schedules, $endDate);

@@ -405,6 +405,11 @@
         picked: {},
         // the unit whose form is open, dropped from the list once the budget is saved
         applying: null,
+        // sensitivity and bias of the displayed result, reused for its series requests
+        runOptions: {
+          sensitivity: prefs.sensitivity || 'medium',
+          bias: prefs.bias || 'neutral',
+        },
       };
     },
 
@@ -459,6 +464,10 @@
           })
           .then(({ data }) => {
             this.result = data;
+            this.runOptions = {
+              sensitivity: params.sensitivity,
+              bias: params.bias,
+            };
             this.hidden = [];
             this.expanded = {};
             this.stopped = [];
@@ -498,8 +507,8 @@
             params: {
               category_ids: categoryIds,
               data_through: this.result?.run.data_through,
-              sensitivity: this.sensitivity,
-              bias: this.bias,
+              sensitivity: this.runOptions.sensitivity,
+              bias: this.runOptions.bias,
             },
             timeout: 60000,
           })
@@ -534,16 +543,10 @@
 
       apply(unit) {
         const candidate = this.pickedCandidate(unit);
-        const baseId = window.YAFFA.userSettings.baseCurrency?.id;
-        const precision =
-          this.shown(unit).currency?.id === baseId
-            ? (window.YAFFA.userSettings.baseCurrency
-                ?.generic_decimal_precision ?? 2)
-            : 2;
         this.applying = unit;
         this.$emit('apply', {
           budgetId: candidate?.budget_id ?? null,
-          prefill: buildFormPrefill(unit, candidate, precision),
+          prefill: buildFormPrefill(unit, candidate),
         });
       },
 
@@ -584,6 +587,11 @@
           )
           .then(() => {
             this.stopped.push(unit.category_id);
+            // The chart's cached recommended series still counts this category: recompute it
+            // (a run over all categories has no series to refresh)
+            if (this.result?.run.scope === 'selected') {
+              this.loadSeries();
+            }
             toastHelpers.showSuccessToast(
               __(
                 'Budget suggestions are off for :category. Switch them back on in the category settings.',
