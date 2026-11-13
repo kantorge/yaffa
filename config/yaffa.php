@@ -52,7 +52,7 @@ return [
             'medium' => ['tolerance' => 0.10, 'persistence' => ['month' => [3, 4], 'quarter' => [2, 3], 'year' => [2, 2]]],
             'high' => ['tolerance' => 0.05, 'persistence' => ['month' => [2, 3], 'quarter' => [2, 3], 'year' => [2, 2]]],
         ],
-        'materiality_floor_share' => 0.005,   // of average monthly expenses
+        'materiality_floor_share' => 0.0,   // share of average monthly expenses; 0 = off; for a future scheduled-notification mode
         'bias' => ['unfavorable_factor' => 0.75, 'favorable_factor' => 1.5, 'margin' => 0.03],
         'neutral_net_share' => 0.25,
         'regularity' => ['month' => [10, 12], 'quarter' => [3, 4], 'year' => [2, 3]], // [k, of n] periods with at least one transaction

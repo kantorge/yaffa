@@ -78,14 +78,16 @@ class ReviewBudgetSuggestions extends Command
         }
 
         $this->table(
-            ['Category', 'Verdict', 'Type', 'Current', 'Suggested', 'Effective', 'Persistence'],
-            collect($result['units'])->sortBy(fn ($u) => [$u['verdict'] === 'suggestion' ? 0 : 1, $u['category_name']])
+            ['Category', 'Verdict', 'Type', 'Current', 'Suggested', 'Monthly impact', '% of monthly expenses', 'Effective', 'Persistence'],
+            collect($result['units'])
                 ->map(fn ($u) => [
                     $u['category_name'],
                     $u['verdict'],
                     $u['suggestion']['proposal_type'] ?? '',
                     $u['suggestion']['current_amount'] ?? '',
                     $u['suggestion']['suggested_amount'] ?? '',
+                    $u['suggestion']['monthly_impact'] ?? '',
+                    isset($u['suggestion']['impact_share']) ? round($u['suggestion']['impact_share'] * 100, 2) . '%' : '',
                     $u['suggestion']['effective_date'] ?? '',
                     isset($u['suggestion']) ? "{$u['suggestion']['persistence']['k']} of {$u['suggestion']['persistence']['n']}" : '',
                 ])->all()

@@ -1912,5 +1912,8 @@
     "Calculate budget suggestions": "Költségvetési javaslatok számítása",
     "Excluded via parent category": "A szülőkategórián keresztül kizárva",
     "When off, the budget review skips this category and its subcategories.": "Kikapcsolva a költségvetés-áttekintés kihagyja ezt a kategóriát és az alkategóriáit.",
-    "Provide either category_ids or all=1.": "Add meg a category_ids vagy az all=1 paramétert (a kettő közül pontosan az egyiket)."
+    "Provide either category_ids or all=1.": "Add meg a category_ids vagy az all=1 paramétert (a kettő közül pontosan az egyiket).",
+    "Monthly impact": "Havi hatás",
+    "per month": "havonta",
+    ":share of monthly expenses": "a havi kiadások :share-a"
 }

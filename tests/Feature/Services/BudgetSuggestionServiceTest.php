@@ -447,3 +447,117 @@ it('reports an excluded member the user explicitly selected under a non-excluded
 
     expect(unitFor(review([$child->id]), $child)['verdict'])->toBe('excluded');
 });
+
+// ---------------------------------------------------------------- materiality floor off, impact ranking
+
+/** A large category, so the average monthly expenses are big enough for the optional floor to matter. */
+function bigSpender(): void
+{
+    spendMonthly(newCategory(['name' => 'Big']), '2025-12', '2026-11', 200000);
+}
+
+it('suggests a change for a small category with a persistent 30% shift under the default config', function () {
+    bigSpender();
+    $category = newCategory(['name' => 'Subscription']);
+    budgetRow($category, ['amount' => 2000]);
+    spendMonthly($category, '2025-12', '2026-11', 2600);
+
+    $unit = unitFor(review(), $category);
+
+    expect(config('yaffa.budget_suggestions.materiality_floor_share'))->toBe(0.0)
+        ->and($unit['verdict'])->toBe('suggestion')
+        ->and($unit['suggestion']['monthly_impact'])->toBe(-600.0);
+});
+
+it('gives no suggestion for the same data when the optional floor is switched on', function () {
+    config(['yaffa.budget_suggestions.materiality_floor_share' => 0.005]);
+    bigSpender();
+    $category = newCategory(['name' => 'Subscription']);
+    budgetRow($category, ['amount' => 2000]);
+    spendMonthly($category, '2025-12', '2026-11', 2600);
+
+    $result = review();
+
+    expect(unitFor($result, $category)['verdict'])->toBe('no_drift')
+        ->and($result['run']['materiality_floor_share'])->toBe(0.005);
+});
+
+it('creates a budget for a small, regular category without one under the default config', function () {
+    bigSpender();
+    $category = newCategory(['name' => 'Small']);
+    spendMonthly($category, '2025-10', '2026-11', 300);
+
+    $unit = unitFor(review(), $category);
+
+    expect($unit['verdict'])->toBe('suggestion')
+        ->and($unit['suggestion'])->toMatchArray(['proposal_type' => 'create', 'suggested_amount' => -300.0, 'monthly_impact' => -300.0]);
+});
+
+it('orders suggestions by absolute monthly impact, dividing a quarterly gap by 3, and lists other units after by name', function () {
+    $alpha = newCategory(['name' => 'Alpha']);
+    budgetRow($alpha);
+    spendMonthly($alpha, '2025-12', '2026-11', 27500);   // -3,500 a month
+
+    $zeta = newCategory(['name' => 'Zeta']);
+    budgetRow($zeta);
+    spendMonthly($zeta, '2025-12', '2026-11', 27500);    // -3,500 a month: tie, by name
+
+    $quarterly = newCategory(['name' => 'Quarterly']);
+    foreach (['2025-07', '2025-10', '2026-01', '2026-04', '2026-07'] as $month) {
+        spend($quarterly, $month, 9000);                  // -9,000 a quarter = -3,000 a month, though 9,000 > 3,500
+    }
+
+    $steady = newCategory(['name' => 'Aaa steady']);
+    budgetRow($steady);
+    spendMonthly($steady, '2025-12', '2026-11', 24000);
+
+    $units = review()['units'];
+
+    expect(collect($units)->pluck('category_name')->all())->toBe(['Alpha', 'Zeta', 'Quarterly', 'Aaa steady'])
+        ->and(collect($units)->pluck('suggestion.monthly_impact')->take(3)->all())->toBe([-3500.0, -3500.0, -3000.0])
+        ->and($units[2]['granularity'])->toBe('quarter')
+        ->and($units[3]['verdict'])->toBe('no_drift');
+});
+
+it('gives the impact share of average monthly expenses, and null when they are zero', function () {
+    $category = newCategory();
+    budgetRow($category);
+    spendMonthly($category, '2025-12', '2026-11', 27500);
+
+    $result = review([$category->id]);
+
+    expect($result['run']['average_monthly_expenses'])->toBe(27500.0)
+        ->and(unitFor($result, $category)['suggestion']['impact_share'])->toBe(0.1273); // 3,500 / 27,500
+});
+
+it('gives a null impact share when there are no expenses', function () {
+    $income = newCategory(['name' => 'Salary']);
+    budgetRow($income, ['transaction_type' => 'deposit', 'amount' => 1000]);
+    for ($m = Carbon::parse('2025-12-01'); $m->lte(Carbon::parse('2026-11-01')); $m->addMonth()) {
+        spend($income, $m->format('Y-m'), 1500, true);
+    }
+
+    $result = app(BudgetSuggestionService::class)->run(test()->user, [$income->id]);
+    $suggestion = unitFor($result, $income)['suggestion'];
+
+    // Only deposits, so there is no expense to relate the impact to
+    expect($result['run']['average_monthly_expenses'])->toBe(0.0)
+        ->and($suggestion['monthly_impact'])->toBe(500.0)
+        ->and($suggestion['impact_share'])->toBeNull();
+});
+
+it('puts the impact and run fields in the documented order and types', function () {
+    $category = newCategory();
+    budgetRow($category);
+    spendMonthly($category, '2025-12', '2026-11', 27500);
+
+    $result = review([$category->id]);
+    $suggestion = unitFor($result, $category)['suggestion'];
+
+    expect(array_keys($result['run']))->toBe(['computed_at', 'scope', 'data_through', 'sensitivity', 'bias', 'tolerance', 'detector_version', 'average_monthly_expenses', 'materiality_floor_share', 'base_currency', 'currencies_without_rates'])
+        ->and($result['run']['average_monthly_expenses'])->toBeFloat()
+        ->and($result['run']['materiality_floor_share'])->toBeFloat()
+        ->and(array_slice(array_keys($suggestion), 0, 8))->toBe(['key', 'effective_date', 'level', 'expected', 'target', 'monthly_impact', 'impact_share', 'direction'])
+        ->and($suggestion['monthly_impact'])->toBeFloat()
+        ->and($suggestion['impact_share'])->toBeFloat();
+});

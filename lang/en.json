@@ -1913,5 +1913,8 @@
     "Calculate budget suggestions": "Calculate budget suggestions",
     "Excluded via parent category": "Excluded via parent category",
     "When off, the budget review skips this category and its subcategories.": "When off, the budget review skips this category and its subcategories.",
-    "Provide either category_ids or all=1.": "Provide either category_ids or all=1."
+    "Provide either category_ids or all=1.": "Provide either category_ids or all=1.",
+    "Monthly impact": "Monthly impact",
+    "per month": "per month",
+    ":share of monthly expenses": ":share of monthly expenses"
 }

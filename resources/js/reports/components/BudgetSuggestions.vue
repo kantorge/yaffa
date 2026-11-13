@@ -140,6 +140,18 @@
                 __('data through :month', { month: result.run.data_through })
               }}
             </div>
+            <div class="small text-muted" data-testid="suggestion-impact">
+              {{ __('Monthly impact') }}:
+              {{ money(unit.suggestion.monthly_impact, base) }}
+              {{ __('per month') }}
+              <span v-if="unit.suggestion.impact_share !== null">
+                ({{
+                  __(':share of monthly expenses', {
+                    share: percent(unit.suggestion.impact_share),
+                  })
+                }})
+              </span>
+            </div>
             <div
               v-if="unit.suggestion.proposal_type === 'create'"
               class="small text-muted"
@@ -229,6 +241,7 @@
   import {
     __,
     toFormattedCurrency,
+    toFormattedNumber,
     toFormattedShortDate,
   } from '@/shared/lib/i18n';
   import * as toastHelpers from '@/shared/lib/toast';
@@ -451,6 +464,13 @@
       aggregationDiffers(unit) {
         const current = this.getDefaultAggregation(unit.category_id);
         return !!current && current !== unit.granularity;
+      },
+
+      percent(fraction) {
+        return toFormattedNumber(fraction, window.YAFFA.userSettings.locale, {
+          style: 'percent',
+          maximumFractionDigits: 1,
+        });
       },
 
       money(value, currency) {

@@ -17,6 +17,8 @@ Wraps `BudgetSuggestionService::run()`, the same call as `GET /api/v1/reports/bu
 - **Ability:** `read`. The tool writes nothing and must not run any write.
 - **Output:** the response contract in `specification.md` ("Response contract"), unchanged: `run`, `units[]`, `series` (`null` for `all`).
 - **Amounts** are signed JSON numbers (withdrawals negative). Unit-level amounts are per period in base currency; suggestion and candidate amounts are per occurrence in the row's currency. This differs from the decimal strings of the Eloquent API responses.
+- **Impact fields.** Every `suggestion` carries, after `target`, `monthly_impact` (target − E per month, base currency, signed: negative = more spending expected) and `impact_share` (|`monthly_impact`| ÷ `run.average_monthly_expenses`, a fraction, `null` when that is 0). `run` carries `average_monthly_expenses` (base currency, positive) and `materiality_floor_share` (the config echo; 0 = no floor).
+- **Ordering.** `units[]` is ordered by the service: `suggestion` units first, by |`monthly_impact`| descending (ties by `category_name`), then all other units by `category_name`. A tool should keep that order and need not re-sort.
 - **`suggestion.key`** is stable across identical runs. An agent that monitors on a schedule should keep its own record of keys it has already reported, because the service stores nothing.
 - Only `verdict = suggestion` units carry a `suggestion`; other verdicts explain why not (`cooldown`, `insufficient_data`, `irregular`, `missing_rates`, `needs_review`, `no_drift`, `excluded`).
 

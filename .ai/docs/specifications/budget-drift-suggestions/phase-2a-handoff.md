@@ -17,7 +17,7 @@
 - Amounts are floats rounded to 2 decimals, signed (withdrawals negative).
 
 ## Deviations from the spec
-All are in the decisions log. Summary: floor from negative category-month actuals and scaled to a month; `create` amount is target − E; horizon truncated to `end_date`; empty units skipped in "Review all"; `missingRatePeriods` key.
+All are in the decisions log. Summary: floor from negative category-month actuals and scaled to a month (now optional and off by default, see the phase 3 handoff); `create` amount is target − E; horizon truncated to `end_date`; empty units skipped in "Review all"; `missingRatePeriods` key.
 
 ## Measurements
 - Dev database (the phase 1 dataset): `run()` for all categories took 3.1 s in the sail container, with a warm cache. Verdicts: 62 no_drift, 27 suggestion, 3 cooldown, 6 irregular, 1 needs_review.

@@ -81,7 +81,8 @@ class BudgetSuggestionService
             'missing' => $aggregate['missingRatePeriods'],
             'categories' => $categories,
         ];
-        $c['floor'] = $cfg['materiality_floor_share'] * $this->averageMonthlyExpenses($c);
+        $c['avgMonthly'] = $this->averageMonthlyExpenses($c);
+        $c['floor'] = $cfg['materiality_floor_share'] * $c['avgMonthly'];
         [$c['budgets'], $c['scheduleMonths']] = $this->loadExpectations($user, $baseCurrency);
 
         $units = [];
@@ -131,10 +132,12 @@ class BudgetSuggestionService
                 'bias' => $bias,
                 'tolerance' => $c['sens']['tolerance'],
                 'detector_version' => self::DETECTOR_VERSION,
+                'average_monthly_expenses' => round($c['avgMonthly'], 2),
+                'materiality_floor_share' => (float) $cfg['materiality_floor_share'],
                 'base_currency' => $this->currencyArray($baseCurrency),
                 'currencies_without_rates' => $this->getMissingRateCurrencies($aggregate['missingRateCurrencyIds']),
             ],
-            'units' => $units,
+            'units' => $this->orderUnits($units),
             'series' => $explicit ? $this->recommendedSeries($analysed, $c) : null,
         ];
     }
@@ -397,8 +400,9 @@ class BudgetSuggestionService
         $factor = $conservative ? ($unfavorable ? $cfg['bias']['unfavorable_factor'] : $cfg['bias']['favorable_factor']) : 1.0;
         $tolerance = $c['sens']['tolerance'] * $factor;
 
-        // Materiality: relative to E and above the floor (the floor is monthly, the gap per period)
-        if (!(abs($gap) > $tolerance * abs($expected) && abs($gap) / $m > $c['floor'])) {
+        // Materiality: relative to E. The optional floor (off when its share is 0) is monthly, the gap per period.
+        $aboveFloor = $cfg['materiality_floor_share'] <= 0 || abs($gap) / $m > $c['floor'];
+        if (!(abs($gap) > $tolerance * abs($expected) && $aboveFloor)) {
             return $this->verdict('no_drift', $m);
         }
 
@@ -424,11 +428,14 @@ class BudgetSuggestionService
         }
 
         $basis = $expected !== 0.0 ? $expected : $level;
+        $monthlyImpact = ($target - $expected) / $m;
         $common = [
             'effective_date' => $this->date($effective),
             'level' => round($level, 2),
             'expected' => round($expected, 2),
             'target' => round($target, 2),
+            'monthly_impact' => round($monthlyImpact, 2),
+            'impact_share' => $c['avgMonthly'] > 0 ? round(abs($monthlyImpact) / $c['avgMonthly'], 4) : null,
             'direction' => $neutral ? 'neutral' : ($basis < 0 ? 'expense' : 'income'),
             'persistence' => ['k' => $matches, 'n' => $n],
             'evidence' => array_reverse($evidence),
@@ -725,6 +732,20 @@ class BudgetSuggestionService
     }
 
     // ---------------------------------------------------------------- small helpers
+
+    /**
+     * Suggestions first, by |monthly_impact| descending then category name; every other unit follows by name.
+     *
+     * @param array<int, array<string, mixed>> $units
+     * @return array<int, array<string, mixed>>
+     */
+    private function orderUnits(array $units): array
+    {
+        usort($units, fn ($a, $b) => [$a['suggestion'] === null, $a['suggestion'] ? -abs($a['suggestion']['monthly_impact']) : 0, $a['category_name']]
+            <=> [$b['suggestion'] === null, $b['suggestion'] ? -abs($b['suggestion']['monthly_impact']) : 0, $b['category_name']]);
+
+        return $units;
+    }
 
     private function unitOutput(Category $root, ?string $granularity, string $verdict, ?array $suggestion): array
     {

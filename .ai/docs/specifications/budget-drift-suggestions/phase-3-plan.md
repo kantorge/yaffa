@@ -5,7 +5,7 @@ Branch `feat/budget-suggestions-phase-3` from `feat/budget-suggestions` (2b merg
 ## Files
 
 **New**
-- `resources/js/reports/components/BudgetSuggestions.vue`: run controls, both run buttons, recommendation list, collapsed verdict list. Options API, self-contained island mounted in the existing `#budgetChartFormApp` area. Loading, error and empty states for each run.
+- `resources/js/reports/components/BudgetSuggestions.vue`: run controls, both run buttons, recommendation list, collapsed verdict list. Options API, self-contained island mounted in the existing `#budgetChartFormApp` area. Loading, error and empty states for each run. *(Changed 2026-11-13: each item also shows the monthly impact and its share of monthly expenses; the list keeps the server order.)*
 - `resources/js/reports/budgetSuggestions.js` (pure helpers, with a `node:test` file next to it): last-complete-month default, grouping units by verdict, building the `BudgetForm` prefill from a suggestion and the picked candidate.
 
 **Changed**

@@ -1912,5 +1912,8 @@
     "Calculate budget suggestions": "Calculer les suggestions de budget",
     "Excluded via parent category": "Exclue via la catégorie parente",
     "When off, the budget review skips this category and its subcategories.": "Désactivé, la revue du budget ignore cette catégorie et ses sous-catégories.",
-    "Provide either category_ids or all=1.": "Fournissez soit category_ids, soit all=1."
+    "Provide either category_ids or all=1.": "Fournissez soit category_ids, soit all=1.",
+    "Monthly impact": "Impact mensuel",
+    "per month": "par mois",
+    ":share of monthly expenses": ":share des dépenses mensuelles"
 }

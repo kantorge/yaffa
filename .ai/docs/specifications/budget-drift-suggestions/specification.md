@@ -63,7 +63,7 @@ The user decides how far their data is complete. Entry can lag days to months, a
 1. **History check.** At least N complete periods at G. Defaults: monthly 6, quarterly 4, yearly 3. Otherwise the result is `insufficient_data`.
 2. **Level L** = plain mean of the complete actuals inside the chart's moving-average window: 12 months, 4 quarters or 5 years. If less history exists, it uses what is available (at least N). This is the same window and the same mean as the corrected chart moving average, so L equals the line the user sees. Protection against one-offs comes from the persistence test, not from the level.
 3. **Forward expectation E** = the average expected per period over a horizon H from the candidate effective date. Defaults: monthly 12, quarterly 4, yearly 2. Averaging absorbs inflation steps and lumpy cadences.
-4. **Materiality.** |L − E| > tolerance × |E| AND > a floor of 0.5% of the user's average monthly expenses. Average monthly expenses = the sum of categorized withdrawal items over the last 12 complete months up to `data_through`, in base currency. Transfers and investment transactions have no categories, so they never count.
+4. **Materiality.** |L − E| > tolerance × |E|. There is no floor by default. An optional floor (`materiality_floor_share`, a share of the user's average monthly expenses, off at 0) is kept for a future scheduled-notification mode: when above 0 the gap must also exceed it, with a quarterly or yearly gap converted to a month first. Average monthly expenses = the sum of negative category-month actuals over the last 12 complete months up to `data_through`, in base currency (a category's refunds net against its withdrawals). Transfers and investment transactions have no categories, so they never count. The suggestion list is ranked by monthly impact instead of filtered (see the response contract). With E near zero the tolerance band is near zero, so any persistent gap passes; persistence still applies.
 5. **Persistence.** The sign of (actual − E) matches the gap's sign in at least k of the last n complete periods (see the sensitivity table).
 6. **Already fixed?** No separate check is needed. E looks forward, so a budget already replaced from next month removes the gap.
 
@@ -142,7 +142,7 @@ The suggested cadence is the finest one at which the unit is regular over comple
 
 "Non-zero" means at least one transaction in the period, whatever its amount.
 
-- **Amount** = L at that cadence plus the bias margin. A suggestion is made only if it clears the materiality floor.
+- **Amount** = L at that cadence plus the bias margin. Every unit that passes the regularity test and the other rules gets a suggestion, whatever its size; the list is ranked by impact.
 - **Defaults:** account-agnostic, `transaction_type` from the net sign, no inflation, starting at the first period after the current one.
 - If the suggested cadence differs from the category's `default_aggregation`, the panel says so. The setting itself is not changed.
 - A category that is irregular on purpose (occasional large purchases) can be opted out with "Stop monitoring this category".
@@ -192,7 +192,7 @@ The thresholds are instance-wide, live in config only (not the UI or `.env`), an
         'medium' => ['tolerance' => 0.10, 'persistence' => ['month' => [3, 4], 'quarter' => [2, 3], 'year' => [2, 2]]],
         'high' => ['tolerance' => 0.05, 'persistence' => ['month' => [2, 3], 'quarter' => [2, 3], 'year' => [2, 2]]],
     ],
-    'materiality_floor_share' => 0.005,   // of average monthly expenses
+    'materiality_floor_share' => 0.0,   // 0 = off; for a future scheduled-notification mode
     'bias' => ['unfavorable_factor' => 0.75, 'favorable_factor' => 1.5, 'margin' => 0.03],
     'neutral_net_share' => 0.25,
     'regularity' => ['month' => [10, 12], 'quarter' => [3, 4], 'year' => [2, 3]], // [k, of n] periods with at least one transaction
@@ -204,12 +204,14 @@ The thresholds are instance-wide, live in config only (not the UI or `.env`), an
 
 The contract is designed so that stored suggestions and scheduling can be added later without changing it.
 
-- **`run`:** `data_through`, sensitivity, bias, tolerance, `detector_version`, `scope` (selected or all), and `computed_at`.
-- **`units[]`:** one entry per unit in scope, with `category_id`, `category_name`, `verdict`, G, and for suggestions a `suggestion` object.
+- **`run`:** `computed_at`, `scope` (selected or all), `data_through`, sensitivity, bias, tolerance, `detector_version` (stays 1: the contract is unreleased), `average_monthly_expenses` (base currency, a positive number), `materiality_floor_share` (echo of the config value), `base_currency` and `currencies_without_rates`.
+- **`units[]`:** one entry per unit in scope, with `category_id`, `category_name`, `verdict`, G, and for suggestions a `suggestion` object. The service orders the list, so the endpoint, the command and the future MCP tool agree: `suggestion` units first, by |`monthly_impact`| descending with ties by `category_name`; all other units follow, by `category_name`.
 - **`suggestion`:**
     - `key`: a stable fingerprint, the hash of category, proposal type, budget id, effective date and the amount rounded to tolerance/2. Computed but not stored. Identical runs give identical keys, so a later dismiss, dedupe or notification can key on it.
     - `proposal_type` (replace or create), `budget_id`, `effective_date`, `current_amount`, `suggested_amount`, `currency`
-    - `level` (L), `expected` (E), `target`, `direction`, `persistence` (k of n)
+    - `level` (L), `expected` (E), `target`, `monthly_impact`, `impact_share`, `direction`, `persistence` (k of n), in that order
+    - `monthly_impact`: (`target` − E) per month, in base currency, signed like other amounts (negative = more spending expected). Per-period gaps are divided by 1, 3 or 12 for monthly, quarterly and yearly units. For `create` on a schedule-only unit it is target − E as already defined.
+    - `impact_share`: |`monthly_impact`| ÷ `run.average_monthly_expenses`, a fraction (4 decimals), or `null` when average monthly expenses are 0
     - `candidates[]`: ranked, each with its converted amount
     - `cadence`: for create
     - `evidence[]`: per period, the actual and the expected
@@ -220,7 +222,7 @@ The contract is designed so that stored suggestions and scheduling can be added 
 This is a run on 3 Dec 2026 for four selected categories, with data through November and medium sensitivity. The first unit is the screenshot case. `evidence` and `series` are shortened.
 
 - Amounts are JSON numbers, as in `budgetChart`'s breakdowns. They are signed: withdrawals are negative.
-- Unit-level amounts (`level`, `expected`, `target`, `series`) are per period G, in base currency.
+- Unit-level amounts (`level`, `expected`, `target`, `series`) are per period G, in base currency. `monthly_impact` is per month, whatever G is: Groceries −3,500 a month; Home > Maintenance −45,000 a quarter = −15,000 a month, so Maintenance is listed first. `impact_share` is against average monthly expenses of 600,000 HUF.
 - Suggestion and candidate amounts are per occurrence, in the row's currency.
 - `cadence` uses the Budget model's own fields (`frequency`: DAILY, WEEKLY, MONTHLY or YEARLY, plus `interval`). Quarterly is MONTHLY with interval 3.
 - `suggestion` is null for every verdict except `suggestion`.
@@ -235,9 +237,39 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
         "bias": "neutral",
         "tolerance": 0.1,
         "detector_version": 1,
+        "average_monthly_expenses": 600000,
+        "materiality_floor_share": 0,
         "base_currency": { "id": 1, "iso_code": "HUF" }
     },
     "units": [
+        {
+            "category_id": 57,
+            "category_name": "Home > Maintenance",
+            "granularity": "quarter",
+            "verdict": "suggestion",
+            "suggestion": {
+                "key": "41d8e07a9c5b2e66",
+                "proposal_type": "create",
+                "budget_id": null,
+                "effective_date": "2027-01-01",
+                "current_amount": null,
+                "suggested_amount": -45000,
+                "currency": { "id": 1, "iso_code": "HUF" },
+                "cadence": { "frequency": "MONTHLY", "interval": 3 },
+                "level": -45000,
+                "expected": 0,
+                "target": -45000,
+                "monthly_impact": -15000,
+                "impact_share": 0.025,
+                "direction": "expense",
+                "persistence": { "k": 3, "n": 3 },
+                "candidates": [],
+                "evidence": [
+                    { "period": "2026-07-01", "actual": -38000, "expected": 0 },
+                    { "period": "2026-10-01", "actual": -51000, "expected": 0 }
+                ]
+            }
+        },
         {
             "category_id": 42,
             "category_name": "Food > Groceries",
@@ -255,6 +287,8 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
                 "level": -27500,
                 "expected": -24000,
                 "target": -27500,
+                "monthly_impact": -3500,
+                "impact_share": 0.0058,
                 "direction": "expense",
                 "persistence": { "k": 4, "n": 4 },
                 "candidates": [
@@ -279,32 +313,6 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
                         "actual": -27300,
                         "expected": -24000
                     }
-                ]
-            }
-        },
-        {
-            "category_id": 57,
-            "category_name": "Home > Maintenance",
-            "granularity": "quarter",
-            "verdict": "suggestion",
-            "suggestion": {
-                "key": "41d8e07a9c5b2e66",
-                "proposal_type": "create",
-                "budget_id": null,
-                "effective_date": "2027-01-01",
-                "current_amount": null,
-                "suggested_amount": -45000,
-                "currency": { "id": 1, "iso_code": "HUF" },
-                "cadence": { "frequency": "MONTHLY", "interval": 3 },
-                "level": -45000,
-                "expected": 0,
-                "target": -45000,
-                "direction": "expense",
-                "persistence": { "k": 3, "n": 3 },
-                "candidates": [],
-                "evidence": [
-                    { "period": "2026-07-01", "actual": -38000, "expected": 0 },
-                    { "period": "2026-10-01", "actual": -51000, "expected": 0 }
                 ]
             }
         },
@@ -361,7 +369,7 @@ Query parameters: `category_ids[]` or `all=1`, plus optional `data_through`, `se
 
 - **Run controls:** a data-through month picker (default: last complete calendar month), sensitivity and bias. The last choice is remembered in browser storage.
 - **Two run buttons:** "Check selected categories" and "Review all categories".
-- **Recommendation list.** Each item shows the category, current vs suggested amount, effective date, L, E, "k of n periods" and data through. It has a target-row picker for alternative candidates and three actions:
+- **Recommendation list.** Each item shows the category, current vs suggested amount, effective date, the monthly impact (currency per month) and its share of monthly expenses (percent), L, E, "k of n periods" and data through. The list keeps the server order (largest impact first); it is not re-sorted client-side. It has a target-row picker for alternative candidates and three actions:
     - **Create new budget period** opens the existing `BudgetForm` replace modal, or the new-budget modal for `create`, prefilled with the effective date and amount.
     - **Hide** removes it from this list only.
     - **Stop monitoring this category.**
@@ -435,7 +443,13 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
     - an excluded child with no Budget rows or schedules still counts toward its parent's unit
     - periods after `data_through` are ignored
     - a partly covered quarter counts as incomplete
-- **New-budget tests:** an irregular category gives `irregular`, a monthly-regular one a monthly `create`, a quarterly-regular one a quarterly `create`.
+- **New-budget tests:** an irregular category gives `irregular`, a monthly-regular one a monthly `create`, a quarterly-regular one a quarterly `create`, and a small regular category with no budget gets a `create` under the default config.
+- **Materiality and impact tests:**
+    - a small category with a persistent 30% change gets a `suggestion` under the default config
+    - the same data with `materiality_floor_share = 0.005` gets none, so the optional floor stays covered
+    - suggestions are ordered by |`monthly_impact`| descending (a quarterly gap divided by 3), then other units by name
+    - `impact_share` is computed correctly, and is `null` when average monthly expenses are 0
+    - contract: the new `run` and `suggestion` fields exist with the right types, in the documented order
 - **Contract tests:**
     - two identical runs return identical keys
     - the endpoint writes nothing (no database changes after a call)
@@ -449,7 +463,7 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
 - **Threshold values.** The rules are decided; the numbers get tuned during the build. Method: a `--backtest` option on the review command re-runs the detector with `data_through` set to each month of the last two years. It counts suggestions per category per year (target: at most one or two) and checks them against the actuals that followed.
 - **Queued fallback: deferred to the backlog.** Phase 1 measured only the aggregation step (1.3 s warm, 3.4 s cold), so it is not built in the MVP for now. Re-measure the full "Review all" run in phase 2b, and revisit it if that or user testing shows a bottleneck on larger datasets.
 
-Decided: parent and child budgets follow the remainder rule (option A, matching the chart); quarterly and yearly persistence is fixed across sensitivities; the level uses the moving-average window; the materiality floor is based on expenses; any single transaction makes a period count as non-zero.
+Decided: parent and child budgets follow the remainder rule (option A, matching the chart); quarterly and yearly persistence is fixed across sensitivities; the level uses the moving-average window; no materiality floor in the MVP; suggestions are ranked by monthly impact; any single transaction makes a period count as non-zero.
 
 ## Decisions log
 
@@ -485,3 +499,4 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 3      | A period only partly covered by the series (quarter/year views) uses budget + forecast for its other months | The series starts at the first effective date |
 | 2026-11-13 | 3      | The chart's moving average counts history from the first period with an actual, but it still ends at the last complete month by today's date (L ends at `data_through`) and is computed at the chart's view granularity | Found in review: the line equals L only when `data_through` is the last complete month and the chart is shown at the unit's own granularity |
 | 2026-11-13 | 3      | The recommended series always assumes the top-ranked candidate and is not refetched after the user picks another row, hides or stops an item | The service computes one series per run; refetching per pick is deferred |
+| 2026-11-13 | 3      | Materiality floor off by default (config 0); suggestions ranked by monthly impact, with impact fields in the contract | In a user-initiated review the floor hid real persistent changes in small categories; ranking keeps large items first without hiding anything (owner) |

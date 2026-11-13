@@ -42,12 +42,13 @@ afterEach(fn () => Carbon::setTestNow());
 it('returns the response contract with a series for explicit categories', function () {
     $response = $this->getJson(route('api.v1.reports.budget-suggestions', ['category_ids' => [$this->category->id]]))
         ->assertOk()
-        ->assertJsonStructure(['run' => ['computed_at', 'scope', 'data_through', 'sensitivity', 'bias', 'tolerance', 'detector_version'], 'units', 'series']);
+        ->assertJsonStructure(['run' => ['computed_at', 'scope', 'data_through', 'sensitivity', 'bias', 'tolerance', 'detector_version', 'average_monthly_expenses', 'materiality_floor_share'], 'units', 'series']);
 
     expect($response->json('run.scope'))->toBe('selected')
         ->and($response->json('run.data_through'))->toBe('2026-11')
         ->and($response->json('units.0.verdict'))->toBe('suggestion')
         ->and($response->json('units.0.suggestion.proposal_type'))->toBe('replace')
+        ->and($response->json('units.0.suggestion.monthly_impact'))->toBeLessThan(0)
         ->and($response->json('units.0.suggestion.budget_id'))->toBe($this->budget->id)
         ->and($response->json('series'))->not->toBeEmpty();
 });
