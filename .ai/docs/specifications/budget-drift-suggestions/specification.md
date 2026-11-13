@@ -317,17 +317,17 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
             }
         },
         {
-            "category_id": 63,
-            "category_name": "Transport > Fuel",
-            "granularity": "month",
-            "verdict": "no_drift",
-            "suggestion": null
-        },
-        {
             "category_id": 71,
             "category_name": "Hobbies > Photography",
             "granularity": "month",
             "verdict": "irregular",
+            "suggestion": null
+        },
+        {
+            "category_id": 63,
+            "category_name": "Transport > Fuel",
+            "granularity": "month",
+            "verdict": "no_drift",
             "suggestion": null
         }
     ],
@@ -477,8 +477,8 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-11 | 1      | Queued fallback deferred to backlog (owner confirmed)      | aggregation step measured at 1.3 s warm and 3.4 s cold on 43k items; full "Review all" to be re-measured in phase 2b, revisit if it or user testing finds a bottleneck |
 | 2026-11-11 | 1      | `aggregateByCategory` returns per-category series         | Sums are additive, so units can be composed later without re-querying                 |
 | 2026-11-13 | 2a     | `aggregateByCategory()` also returns `missingRatePeriods` | Additive. Rates only go missing for a currency with no rates at all (`getLatestRateFromMap` falls back to the oldest rate), flagged here per category and period, like the reports' `currenciesWithoutRates` |
-| 2026-11-13 | 2a     | Average monthly expenses = sum of negative category-month actuals over the last 12 complete months / 12 | `aggregateByCategory` nets withdrawals and deposits per category, so exact withdrawals are not available; the floor is coarse |
-| 2026-11-13 | 2a     | Materiality floor is monthly: a quarterly or yearly gap is divided by the months per period before comparing | The spec defines the floor on monthly expenses and does not say how to compare it with a per-period gap |
+| 2026-11-13 | 2a     | Average monthly expenses = sum of negative category-month actuals over the last 12 complete months / 12 | `aggregateByCategory` nets withdrawals and deposits per category, so exact withdrawals are not available; the floor is coarse *(Superseded in part by the 2026-11-13 phase 3 row: the floor is optional and off by default.)* |
+| 2026-11-13 | 2a     | Materiality floor is monthly: a quarterly or yearly gap is divided by the months per period before comparing | The spec defines the floor on monthly expenses and does not say how to compare it with a per-period gap *(Superseded in part by the 2026-11-13 phase 3 row: the floor is optional and off by default.)* |
 | 2026-11-13 | 2a     | A `create` for a schedule-only unit (or E = 0) uses target − E per period as the amount | Budget rows add to schedules, so the new row covers only the gap |
 | 2026-11-13 | 2a     | Create cadence comes from the regularity test, finer or coarser than `default_aggregation`; no regular cadence gives `insufficient_data` if under 12 months of history, else `irregular` | Spec says "finest regular cadence"; needed a rule to tell short history from irregularity |
 | 2026-11-13 | 2a     | The horizon covers whole periods up to the user's `end_date`; none fits gives `insufficient_data` | The aggregation projects only up to `end_date`, so a longer horizon would understate E |

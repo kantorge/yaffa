@@ -131,3 +131,11 @@ it('returns 422 for a user without any currency', function () {
 
     $this->getJson(route('api.v1.reports.budget-suggestions', ['all' => 1]))->assertUnprocessable();
 });
+
+it('returns the impact fields and run averages for review all', function () {
+    $response = $this->getJson(route('api.v1.reports.budget-suggestions', ['all' => 1]))->assertOk();
+
+    expect($response->json('run.materiality_floor_share'))->toEqual(0)
+        ->and($response->json('run.average_monthly_expenses'))->toBeGreaterThan(0)
+        ->and($response->json('units.0.suggestion.impact_share'))->toBeGreaterThan(0);
+});

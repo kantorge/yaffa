@@ -108,3 +108,13 @@ it('counts suggestions per calendar year and flags more than two in a year', fun
         ->and($rows[5]['suggestions_per_year'])->toEqual([2026 => 11])
         ->and($rows->where('flagged', true)->keys()->sort()->values()->all())->toBe([3, 4, 5]);
 });
+
+it('shows the impact columns and follows the service order', function () {
+    Illuminate\Support\Facades\Artisan::call('budget-suggestions:review', ['user' => $this->user->id]);
+    $output = Illuminate\Support\Facades\Artisan::output();
+
+    expect($output)->toContain('Monthly impact')
+        ->toContain('% of monthly expenses')
+        ->toContain('-3500')
+        ->toContain('12.73%'); // 3,500 of 27,500 average monthly expenses
+});
