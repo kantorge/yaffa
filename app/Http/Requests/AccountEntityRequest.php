@@ -95,6 +95,13 @@ class AccountEntityRequest extends FormRequest
 
                         if ($used) {
                             $fail(__('The currency cannot be changed because this account is already used in an investment transaction.'));
+
+                            return;
+                        }
+
+                        // A settlement account must stay in the default currency, so any change would break the accounts settling into it
+                        if (Account::query()->where('settlement_account_id', $accountEntity->id)->exists()) {
+                            $fail(__('The currency cannot be changed because other accounts settle into this account.'));
                         }
                     },
                 ],

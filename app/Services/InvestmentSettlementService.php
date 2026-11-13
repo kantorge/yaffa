@@ -22,6 +22,9 @@ use Illuminate\Validation\ValidationException;
  */
 class InvestmentSettlementService
 {
+    /** The largest value of transaction_details_standard.amount_from/amount_to, DECIMAL(12,4) UNSIGNED */
+    public const MAX_TRANSFER_AMOUNT = '99999999.9999';
+
     public function __construct(
         private TransactionService $transactionService,
     ) {
@@ -49,12 +52,35 @@ class InvestmentSettlementService
             ]);
         }
 
+        // The link was valid when it was saved, but the user's default currency can change since. Re-check it here, so an
+        // amount entered in the default currency is never recorded against an account in another currency.
+        $settlementAccount = AccountEntity::query()->with('config')->find($settlementAccountId);
+        $baseCurrencyId = $investmentTransaction->user->baseCurrency()?->id;
+
+        if (
+            ! $settlementAccount?->config instanceof Account
+            || $baseCurrencyId === null
+            || $settlementAccount->config->currency_id !== $baseCurrencyId
+            || $account->config->currency_id === $baseCurrencyId
+        ) {
+            throw ValidationException::withMessages([
+                'settlement.amount' => __('The settlement account must be in your default currency.'),
+            ]);
+        }
+
         $cashflow = $this->transactionService->getTransactionCashFlow($investmentTransaction);
         $foreignAmount = $cashflow?->getAmount()->toScale(4, RoundingMode::HalfUp);
 
         if ($foreignAmount === null || $foreignAmount->isZero()) {
             throw ValidationException::withMessages([
                 'settlement.amount' => __('This transaction has no cash flow to settle.'),
+            ]);
+        }
+
+        // Transfer amounts are DECIMAL(12,4) UNSIGNED, while an investment's cash flow can be larger
+        if ($foreignAmount->abs()->isGreaterThan(self::MAX_TRANSFER_AMOUNT)) {
+            throw ValidationException::withMessages([
+                'settlement.amount' => __('The cash flow of this transaction is too large to record as a transfer.'),
             ]);
         }
 

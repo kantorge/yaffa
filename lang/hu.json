@@ -1885,5 +1885,7 @@
     "Implied exchange rate": "Számított árfolyam",
     "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "Ehhez a tranzakcióhoz elszámolási átvezetés tartozik. Ha módosítod az összegeket, az átvezetést is frissítsd.",
     "Edit settlement transfer": "Elszámolási átvezetés szerkesztése",
-    "Settlement transfer recorded": "Elszámolási átvezetés rögzítve"
+    "Settlement transfer recorded": "Elszámolási átvezetés rögzítve",
+    "The cash flow of this transaction is too large to record as a transfer.": "Ennek a tranzakciónak a pénzmozgása túl nagy ahhoz, hogy átvezetésként rögzíthető legyen.",
+    "The currency cannot be changed because other accounts settle into this account.": "A pénznem nem módosítható, mert más számlák erre a számlára számolnak el."
 }

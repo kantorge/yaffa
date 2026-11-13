@@ -1885,5 +1885,7 @@
     "Implied exchange rate": "Taux de change implicite",
     "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "Cette transaction a un virement de règlement. Si vous modifiez les montants, mettez aussi le virement à jour.",
     "Edit settlement transfer": "Modifier le virement de règlement",
-    "Settlement transfer recorded": "Virement de règlement enregistré"
+    "Settlement transfer recorded": "Virement de règlement enregistré",
+    "The cash flow of this transaction is too large to record as a transfer.": "Le flux de trésorerie de cette transaction est trop important pour être enregistré comme virement.",
+    "The currency cannot be changed because other accounts settle into this account.": "La devise ne peut pas être modifiée, car d'autres comptes sont réglés vers ce compte."
 }

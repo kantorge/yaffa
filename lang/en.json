@@ -1886,5 +1886,7 @@
     "Implied exchange rate": "Implied exchange rate",
     "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "This transaction has a settlement transfer. If you change the amounts, update the transfer too.",
     "Edit settlement transfer": "Edit settlement transfer",
-    "Settlement transfer recorded": "Settlement transfer recorded"
+    "Settlement transfer recorded": "Settlement transfer recorded",
+    "The cash flow of this transaction is too large to record as a transfer.": "The cash flow of this transaction is too large to record as a transfer.",
+    "The currency cannot be changed because other accounts settle into this account.": "The currency cannot be changed because other accounts settle into this account."
 }

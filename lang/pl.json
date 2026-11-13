@@ -1886,5 +1886,7 @@
     "Implied exchange rate": "Wynikowy kurs wymiany",
     "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "Ta transakcja ma przelew rozliczeniowy. Jeśli zmienisz kwoty, zaktualizuj też przelew.",
     "Edit settlement transfer": "Edytuj przelew rozliczeniowy",
-    "Settlement transfer recorded": "Zapisano przelew rozliczeniowy"
+    "Settlement transfer recorded": "Zapisano przelew rozliczeniowy",
+    "The cash flow of this transaction is too large to record as a transfer.": "Przepływ pieniężny tej transakcji jest zbyt duży, aby zapisać go jako przelew.",
+    "The currency cannot be changed because other accounts settle into this account.": "Nie można zmienić waluty, ponieważ inne konta są rozliczane na to konto."
 }

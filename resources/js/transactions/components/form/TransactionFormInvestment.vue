@@ -454,7 +454,7 @@
                 <div class="col-md-8 mb-2">
                   <label for="settlement_amount" class="form-label">
                     {{
-                      total > 0
+                      signedCashflow > 0
                         ? __('Settled into :account', {
                             account: settlementAccount.name,
                           })
@@ -864,6 +864,14 @@
         return this.account_currency || this.investment_currency;
       },
 
+      // The account's cash flow with its sign: positive when cash comes in (sell, dividend), negative when it goes out
+      // (buy, fee). `total` itself is unsigned, e.g. a purchase's cost is positive. Zero for types without a cash flow.
+      signedCashflow() {
+        return (
+          this.total * (this.transactionTypeSettings.amount_multiplier || 0)
+        );
+      },
+
       // Only a new, unscheduled transaction that moves cash can be settled in the same step
       showSettlement() {
         return (
@@ -873,17 +881,17 @@
           this.settlementAccount !== null &&
           this.baseCurrency !== null &&
           this.currency !== null &&
-          this.total !== 0
+          this.signedCashflow !== 0
         );
       },
 
       // Default-currency units per foreign unit, from the entered amount and the cashflow
       impliedRate() {
         const amount = Number(this.settlementAmount);
-        if (!this.showSettlement || !amount || !this.total) {
+        if (!this.showSettlement || !amount) {
           return null;
         }
-        return (amount / Math.abs(this.total)).toFixed(6);
+        return (amount / Math.abs(this.signedCashflow)).toFixed(6);
       },
 
       existingSettlementTransferId() {
@@ -1691,7 +1699,9 @@
       isDirty() {
         return (
           JSON.stringify(this.form.data()) !==
-          JSON.stringify(this.form.originalData)
+            JSON.stringify(this.form.originalData) ||
+          // Kept outside `form` (it is only sent when shown) and never prefilled, so any value is a change
+          ![null, undefined, ''].includes(this.settlementAmount)
         );
       },
 

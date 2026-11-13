@@ -117,6 +117,20 @@ describe('settlement account on the account form', function () {
         ],
     ]);
 
+    it('does not change the currency of an account other accounts settle into', function () {
+        $this->actingAs($this->user)
+            ->patch(route('account-entity.update', $this->parent), accountFormData($this->parent, ['currency_id' => $this->foreign->id]))
+            ->assertSessionHasErrors('config.currency_id');
+
+        expect($this->parent->fresh()->config->currency_id)->toBe($this->base->id);
+
+        $this->child->config->update(['settlement_account_id' => null]);
+
+        $this->actingAs($this->user)
+            ->patch(route('account-entity.update', $this->parent), accountFormData($this->parent, ['currency_id' => $this->foreign->id]))
+            ->assertSessionHasNoErrors();
+    });
+
     it('lists only default-currency accounts as settlement options', function () {
         $foreignAccount = AccountEntity::factory()->asAccount($this->user, ['currency_id' => $this->foreign->id])->create();
 
@@ -231,6 +245,28 @@ describe('posting an investment transaction with its settlement', function () {
         expect(Transaction::count())->toBe(0);
     });
 
+    it('rejects a settlement whose cash flow does not fit a transfer amount', function () {
+        // 1000 * 100000 = 100000000, above the DECIMAL(12,4) maximum of 99999999.9999
+        $this->postJson(route('api.v1.transactions.store-investment'), settlementPayload([
+            'config' => ['quantity' => '1000', 'price' => '100000'],
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('settlement.amount');
+
+        expect(Transaction::count())->toBe(0);
+    });
+
+    it('rejects a settlement when the link no longer points at the default currency', function () {
+        // E.g. the user changed their default currency after the link was saved
+        $this->parent->config->update(['currency_id' => $this->foreign->id]);
+
+        $this->postJson(route('api.v1.transactions.store-investment'), settlementPayload())
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('settlement.amount');
+
+        expect(Transaction::count())->toBe(0);
+    });
+
     it('does not accept a settlement on a standard transaction', function () {
         $this->postJson(route('api.v1.transactions.store-standard'), [
             'action' => 'create',
@@ -259,6 +295,7 @@ describe('posting an investment transaction with its settlement', function () {
 
         $sale->delete();
 
-        expect(Transaction::find($transferId)?->settles_transaction_id)->toBeNull();
+        $transfer = Transaction::findOrFail($transferId);
+        expect($transfer->settles_transaction_id)->toBeNull();
     });
 });
