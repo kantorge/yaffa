@@ -1870,5 +1870,21 @@
     "All accounts": "All accounts",
     "Could not load the investment data. Please try again.": "Could not load the investment data. Please try again.",
     "Select a single account": "Select a single account",
-    "Distribution by account": "Distribution by account"
+    "Distribution by account": "Distribution by account",
+    "Settles into": "Settles into",
+    "For an account in a foreign currency: the account in your default currency that its cash is moved to. Investment transactions in this account can then record the settlement transfer in the same step.": "For an account in a foreign currency: the account in your default currency that its cash is moved to. Investment transactions in this account can then record the settlement transfer in the same step.",
+    "Set a default currency before choosing a settlement account.": "Set a default currency before choosing a settlement account.",
+    "Only an account in a currency other than your default currency can have a settlement account.": "Only an account in a currency other than your default currency can have a settlement account.",
+    "The selected settlement account is invalid.": "The selected settlement account is invalid.",
+    "The settlement account must be in your default currency.": "The settlement account must be in your default currency.",
+    "A settlement transfer can only be recorded with a new, unscheduled transaction.": "A settlement transfer can only be recorded with a new, unscheduled transaction.",
+    "This transaction has no cash flow to settle.": "This transaction has no cash flow to settle.",
+    "The selected account has no settlement account.": "The selected account has no settlement account.",
+    "Settled into :account": "Settled into :account",
+    "Funded from :account": "Funded from :account",
+    "The amount the broker or bank booked in :currency. A transfer of exactly the total cashflow value is recorded with this transaction. Leave empty to skip.": "The amount the broker or bank booked in :currency. A transfer of exactly the total cashflow value is recorded with this transaction. Leave empty to skip.",
+    "Implied exchange rate": "Implied exchange rate",
+    "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "This transaction has a settlement transfer. If you change the amounts, update the transfer too.",
+    "Edit settlement transfer": "Edit settlement transfer",
+    "Settlement transfer recorded": "Settlement transfer recorded"
 }

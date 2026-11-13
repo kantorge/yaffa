@@ -446,6 +446,82 @@
                   </dl>
                 </div>
               </div>
+              <div
+                v-if="showSettlement"
+                class="row border-top pt-3"
+                dusk="settlement-block"
+              >
+                <div class="col-md-8 mb-2">
+                  <label for="settlement_amount" class="form-label">
+                    {{
+                      total > 0
+                        ? __('Settled into :account', {
+                            account: settlementAccount.name,
+                          })
+                        : __('Funded from :account', {
+                            account: settlementAccount.name,
+                          })
+                    }}
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      {{ getCurrencySymbol(locale, baseCurrency.iso_code) }}
+                    </span>
+                    <MathInput
+                      id="settlement_amount"
+                      v-model="settlementAmount"
+                      class="form-control"
+                      :class="{
+                        'is-invalid': form.errors.has('settlement.amount'),
+                      }"
+                    ></MathInput>
+                  </div>
+                  <div
+                    v-if="form.errors.has('settlement.amount')"
+                    class="invalid-feedback d-block"
+                  >
+                    {{ form.errors.get('settlement.amount') }}
+                  </div>
+                  <div class="form-text">
+                    {{
+                      __(
+                        'The amount the broker or bank booked in :currency. A transfer of exactly the total cashflow value is recorded with this transaction. Leave empty to skip.',
+                        { currency: baseCurrency.iso_code },
+                      )
+                    }}
+                  </div>
+                </div>
+                <div v-if="impliedRate" class="col-md-4">
+                  <dl class="row">
+                    <dt class="col-12 form-label">
+                      {{ __('Implied exchange rate') }}
+                    </dt>
+                    <dd class="col-12" dusk="settlement-implied-rate">
+                      1 {{ currency.iso_code }} = {{ impliedRate }}
+                      {{ baseCurrency.iso_code }}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+              <div
+                v-if="existingSettlementTransferId"
+                class="alert alert-info mb-0 mt-2"
+              >
+                {{
+                  __(
+                    'This transaction has a settlement transfer. If you change the amounts, update the transfer too.',
+                  )
+                }}
+                <a
+                  :href="
+                    route('transaction.open', {
+                      transaction: existingSettlementTransferId,
+                      action: 'edit',
+                    })
+                  "
+                  >{{ __('Edit settlement transfer') }}</a
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -676,11 +752,18 @@
         },
         ai_document_id: null,
         transaction_template_id: null,
+        // Optional transfer to/from the account's settlement account, only sent with a new transaction
+        settlement: null,
       });
 
       // Other values
       data.account_currency = null;
       data.investment_currency = null;
+      data.settlementAmount = null;
+      // Set on account selection from the (non-reactive) reference data: the account in the user's default
+      // currency the selected account settles into, and that currency
+      data.settlementAccount = null;
+      data.baseCurrency = null;
 
       // Inactive accounts/investments reactivated from the dropdown for this transaction
       data.reactivated = [];
@@ -779,6 +862,34 @@
 
       currency() {
         return this.account_currency || this.investment_currency;
+      },
+
+      // Only a new, unscheduled transaction that moves cash can be settled in the same step
+      showSettlement() {
+        return (
+          !this.isTemplate &&
+          ['create', 'clone', 'enter', 'finalize'].includes(this.action) &&
+          !this.form.schedule &&
+          this.settlementAccount !== null &&
+          this.baseCurrency !== null &&
+          this.currency !== null &&
+          this.total !== 0
+        );
+      },
+
+      // Default-currency units per foreign unit, from the entered amount and the cashflow
+      impliedRate() {
+        const amount = Number(this.settlementAmount);
+        if (!this.showSettlement || !amount || !this.total) {
+          return null;
+        }
+        return (amount / Math.abs(this.total)).toFixed(6);
+      },
+
+      existingSettlementTransferId() {
+        return this.action === 'edit'
+          ? (this.transaction?.settlement_transfer?.id ?? null)
+          : null;
       },
 
       activeCallbackOptions() {
@@ -976,6 +1087,7 @@
           onClear: () => {
             this.form.config.account_id = null;
             this.account_currency = null;
+            this.settlementAccount = null;
           },
         }),
       );
@@ -1180,6 +1292,14 @@
           );
           this.account_currency =
             this.selectData.currencies.get(account?.currency_id) ?? null;
+          this.settlementAccount = account?.settlement_account_id
+            ? (this.selectData.accounts.find(
+                (a) => a.id === account.settlement_account_id,
+              ) ?? null)
+            : null;
+          this.baseCurrency =
+            [...this.selectData.currencies.values()].find((c) => c.base) ??
+            null;
         });
       },
 
@@ -1205,6 +1325,7 @@
           () => {
             this.form.config.account_id = null;
             this.account_currency = null;
+            this.settlementAccount = null;
           },
           () => this.form.config.account_id === Number(item.id),
         );
@@ -1626,6 +1747,14 @@
           return;
         }
 
+        // Only sent when the settlement field is shown and filled in
+        this.form.settlement =
+          this.showSettlement &&
+          this.settlementAmount !== null &&
+          this.settlementAmount !== ''
+            ? { amount: this.settlementAmount }
+            : null;
+
         // Any type of new transaction needs POST method
         this.form
           .post(this.route('api.v1.transactions.store-investment'), this.form)
@@ -1638,6 +1767,11 @@
               });
             }
             this.restoreReactivated();
+
+            if (response.data.settlement_transaction) {
+              toastHelpers.showSuccessToast(__('Settlement transfer recorded'));
+            }
+            this.settlementAmount = null;
 
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(

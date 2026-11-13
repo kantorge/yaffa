@@ -1869,5 +1869,21 @@
     "All accounts": "Minden számla",
     "Could not load the investment data. Please try again.": "A befektetési adatok betöltése nem sikerült. Kérjük, próbálja újra.",
     "Select a single account": "Válasszon egyetlen számlát",
-    "Distribution by account": "Megoszlás számlák szerint"
+    "Distribution by account": "Megoszlás számlák szerint",
+    "Settles into": "Elszámolási számla",
+    "For an account in a foreign currency: the account in your default currency that its cash is moved to. Investment transactions in this account can then record the settlement transfer in the same step.": "Devizaszámla esetén: az alapértelmezett pénznemű számla, amelyre a pénzeszközei átkerülnek. A számla befektetési tranzakciói így egy lépésben rögzíthetik az elszámolási átvezetést is.",
+    "Set a default currency before choosing a settlement account.": "Elszámolási számla választása előtt állíts be alapértelmezett pénznemet.",
+    "Only an account in a currency other than your default currency can have a settlement account.": "Elszámolási számlája csak az alapértelmezettől eltérő pénznemű számlának lehet.",
+    "The selected settlement account is invalid.": "A kiválasztott elszámolási számla érvénytelen.",
+    "The settlement account must be in your default currency.": "Az elszámolási számlának az alapértelmezett pénznemben kell lennie.",
+    "A settlement transfer can only be recorded with a new, unscheduled transaction.": "Elszámolási átvezetés csak új, nem ütemezett tranzakcióval rögzíthető.",
+    "This transaction has no cash flow to settle.": "Ennek a tranzakciónak nincs elszámolandó pénzmozgása.",
+    "The selected account has no settlement account.": "A kiválasztott számlának nincs elszámolási számlája.",
+    "Settled into :account": "Elszámolva ide: :account",
+    "Funded from :account": "Fedezet innen: :account",
+    "The amount the broker or bank booked in :currency. A transfer of exactly the total cashflow value is recorded with this transaction. Leave empty to skip.": "A bróker vagy a bank által :currency pénznemben könyvelt összeg. A tranzakcióval együtt egy pontosan a teljes pénzmozgás értékével megegyező átvezetés is rögzül. Hagyd üresen, ha nem kell.",
+    "Implied exchange rate": "Számított árfolyam",
+    "This transaction has a settlement transfer. If you change the amounts, update the transfer too.": "Ehhez a tranzakcióhoz elszámolási átvezetés tartozik. Ha módosítod az összegeket, az átvezetést is frissítsd.",
+    "Edit settlement transfer": "Elszámolási átvezetés szerkesztése",
+    "Settlement transfer recorded": "Elszámolási átvezetés rögzítve"
 }

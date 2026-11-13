@@ -98,6 +98,17 @@ class AccountEntityRequest extends FormRequest
                         }
                     },
                 ],
+                'config.settlement_account_id' => [
+                    'nullable',
+                    'integer',
+                    function (string $attribute, mixed $value, Closure $fail) use ($accountEntity): void {
+                        if ($value === null) {
+                            return;
+                        }
+
+                        $this->validateSettlementAccount((int) $value, $accountEntity, $fail);
+                    },
+                ],
                 'config.default_date_range' => [
                     'nullable',
                     'string',
@@ -159,6 +170,43 @@ class AccountEntityRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * A settlement account is one of the user's own accounts in their default currency, and only an account in
+     * another currency can have one. So the link is always one level deep and never points at the account itself.
+     */
+    private function validateSettlementAccount(int $settlementAccountId, ?AccountEntity $accountEntity, Closure $fail): void
+    {
+        $baseCurrency = $this->user()->baseCurrency();
+
+        if ($baseCurrency === null) {
+            $fail(__('Set a default currency before choosing a settlement account.'));
+
+            return;
+        }
+
+        if ((int) $this->input('config.currency_id') === $baseCurrency->id) {
+            $fail(__('Only an account in a currency other than your default currency can have a settlement account.'));
+
+            return;
+        }
+
+        $settlementAccount = AccountEntity::query()
+            ->where('user_id', $this->user()->id)
+            ->where('config_type', 'account')
+            ->with('config')
+            ->find($settlementAccountId);
+
+        if (! $settlementAccount?->config instanceof Account || $settlementAccount->id === $accountEntity?->id) {
+            $fail(__('The selected settlement account is invalid.'));
+
+            return;
+        }
+
+        if ($settlementAccount->config->currency_id !== $baseCurrency->id) {
+            $fail(__('The settlement account must be in your default currency.'));
+        }
     }
 
     /**

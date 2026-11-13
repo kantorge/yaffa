@@ -78,6 +78,7 @@ The `account.history` route (`MainController::account_details`) loads all transa
 - **Currency** — must be one of the user's own currencies (pre-condition: at least one currency must exist)
 - **Import alias** — optional free-text field; newline-separated values matched against AI document processing account strings
 - **Default date range** — optional preset controlling how far back the account detail view loads by default; overrides the global user setting if set; can also be set to "Don't load data by default"
+- **Settles into** — optional, only for an account in a currency other than the user's default: an account in the default currency that this account's cash is moved to. Investment transactions in the account can then record that transfer in the same step. See `.ai/docs/features/investment-settlement/`.
 
 ### System inputs:
 

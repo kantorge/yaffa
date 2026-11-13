@@ -52,6 +52,7 @@ class ReferenceDataApiController extends Controller
                     'active' => (bool) $e->active,
                     'currency_id' => $e->config instanceof Account ? $e->config->currency_id : null,
                     'account_group_id' => $e->config instanceof Account ? $e->config->account_group_id : null,
+                    'settlement_account_id' => $e->config instanceof Account ? $e->config->settlement_account_id : null,
                 ])->values(),
             'payees' => $this->changedSince($user->payees()->getQuery(), $since)->with('config')->orderBy('id')
                 ->get(['id', 'name', 'alias', 'active', 'config_type', 'config_id'])

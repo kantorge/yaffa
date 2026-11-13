@@ -143,6 +143,37 @@ class TransactionRequest extends FormRequest
         };
     }
 
+    /**
+     * A settlement transfer is only created together with a new, one-off transaction that moves cash, in an account that
+     * has a settlement account. Scheduled transactions and edits are left out: there is no single transfer to post.
+     */
+    private function settlementAllowedRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! in_array($this->input('action'), ['create', 'clone', 'enter', 'finalize'], true) || $this->boolean('schedule')) {
+                $fail(__('A settlement transfer can only be recorded with a new, unscheduled transaction.'));
+
+                return;
+            }
+
+            if (TransactionTypeEnum::tryFrom((string) $this->input('transaction_type'))?->amountMultiplier() === null) {
+                $fail(__('This transaction has no cash flow to settle.'));
+
+                return;
+            }
+
+            $account = AccountEntity::query()
+                ->where('user_id', $this->user()->id)
+                ->where('config_type', 'account')
+                ->with('config')
+                ->find($this->input('config.account_id'));
+
+            if (! $account?->config instanceof Account || $account->config->settlement_account_id === null) {
+                $fail(__('The selected account has no settlement account.'));
+            }
+        };
+    }
+
     public function rules(): array
     {
         $ownedTransactionRule = Rule::exists('transactions', 'id')->where(function ($query) {
@@ -169,6 +200,9 @@ class TransactionRequest extends FormRequest
 
         $rules = [
             'action' => 'required|in:create,edit,clone,enter,replace,finalize',
+
+            // Only an investment transaction can be settled (see the investment rules below)
+            'settlement' => 'prohibited',
 
             'id' => ['nullable', $ownedTransactionRule],
             'transaction_type' => [
@@ -490,6 +524,20 @@ class TransactionRequest extends FormRequest
             ]);
 
             $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type));
+
+            // Optional transfer between the account and its settlement account, created together with a new transaction.
+            // The amount is in the settlement account's currency; the other side is the investment's cash flow.
+            $rules = array_merge($rules, [
+                'settlement' => ['nullable', 'array:amount'],
+                'settlement.amount' => [
+                    'required_with:settlement',
+                    'numeric',
+                    'gt:0',
+                    'max:99999999.9999',
+                    'decimal:0,4',
+                    $this->settlementAllowedRule(),
+                ],
+            ]);
         }
 
         return $rules;

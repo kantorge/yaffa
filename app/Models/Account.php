@@ -58,6 +58,8 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Account whereAccountGroupId($value)
  * @method static Builder|Account whereCurrencyId($value)
  * @property int|null $preferred_file_import_profile_id
+ * @property int|null $settlement_account_id
+ * @property-read AccountEntity|null $settlementAccount
  * @method static Builder|Account whereId($value)
  * @method static Builder|Account whereOpeningBalance($value)
  * @mixin Eloquent
@@ -67,7 +69,7 @@ use Illuminate\Support\Facades\DB;
 #[Table(key: 'id')]
 #[WithoutTimestamps]
 #[Unguarded]
-#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range', 'preferred_file_import_profile_id')]
+#[Fillable('opening_balance', 'account_group_id', 'currency_id', 'default_date_range', 'preferred_file_import_profile_id', 'settlement_account_id')]
 class Account extends Model
 {
     use HasFactory;
@@ -97,6 +99,14 @@ class Account extends Model
     public function preferredFileImportProfile(): BelongsTo
     {
         return $this->belongsTo(FileImportProfile::class, 'preferred_file_import_profile_id');
+    }
+
+    /**
+     * The account in the user's default currency that this (foreign-currency) account's cash settles into.
+     */
+    public function settlementAccount(): BelongsTo
+    {
+        return $this->belongsTo(AccountEntity::class, 'settlement_account_id');
     }
 
     public function resolveOpeningBalanceCurrency(): Currency
