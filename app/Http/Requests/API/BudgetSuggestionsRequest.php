@@ -43,7 +43,7 @@ class BudgetSuggestionsRequest extends FormRequest
                 $all = $this->boolean('all');
 
                 if ($hasIds === $all) {
-                    $validator->errors()->add('category_ids', 'Provide either category_ids or all=1.');
+                    $validator->errors()->add('category_ids', __('Provide either category_ids or all=1.'));
                 }
             },
         ];
