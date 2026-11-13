@@ -114,7 +114,7 @@
     </div>
 
     <div class="row">
-      <div class="col-12 col-sm-4 form-group">
+      <div class="col-9 col-sm-4 order-first order-sm-0 form-group">
         <span class="form-label">
           {{ __('Category') }}
         </span>
@@ -144,9 +144,7 @@
           </button>
         </div>
       </div>
-      <div
-        class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block"
-      >
+      <div class="col-12 col-sm-2 form-group">
         <span class="form-label">
           {{ __('Tags') }}
         </span>
@@ -155,10 +153,7 @@
           :data-testid="'transaction-item-tags-' + id"
         ></select>
       </div>
-      <div
-        class="col-12 col-sm-3 form-group transaction_detail_container"
-        :class="{ 'd-none d-md-block': !recommended_category_id }"
-      >
+      <div class="col-12 col-sm-3 form-group">
         <span class="form-label">
           {{ __('Comment') }}
         </span>
@@ -170,23 +165,17 @@
           @blur="$emit('update:comment', $event.target.value)"
         />
       </div>
-      <div class="col-12 col-sm-1 justify-content-end d-flex align-items-start">
-        <button
-          type="button"
-          class="btn btn-sm btn-info d-sm-none"
-          :title="__('Show item details')"
-          @click="toggleItemDetails"
-        >
-          <span class="fa fa-edit"></span>
-        </button>
+      <div
+        class="col-3 col-sm-1 order-first order-sm-last d-flex justify-content-end align-items-start"
+      >
         <button
           type="button"
           class="btn btn-sm btn-danger"
-          style="margin-left: 10px"
           :title="__('Remove transaction item')"
+          :aria-label="__('Remove transaction item')"
           @click="removeItem"
         >
-          <span class="fa fa-minus"></span>
+          <span class="fa fa-trash"></span>
         </button>
       </div>
     </div>
@@ -567,13 +556,6 @@
       // Emit an event to instruct items container to remove this item
       removeItem() {
         this.$emit('removeItem');
-      },
-
-      // Toggle the visibility of event details (comment / tags)
-      toggleItemDetails() {
-        $(this.$el)
-          .find('.transaction_detail_container')
-          .toggleClass('d-none d-md-block');
       },
 
       // Add the currently available remainder amount to this item, using the

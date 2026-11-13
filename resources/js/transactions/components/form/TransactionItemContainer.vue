@@ -31,32 +31,6 @@
         </button>
       </div>
       <div>
-        <div class="btn-group d-sm-none">
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Collapse all items')"
-            @click="itemListCollapse"
-          >
-            <i class="fa fa-compress"></i>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Expand items with data')"
-            @click="itemListShow"
-          >
-            <i class="fa fa-expand"></i>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Expand all items')"
-            @click="itemListExpand"
-          >
-            <i class="fa fa-arrows-alt"></i>
-          </button>
-        </div>
         <button
           type="button"
           class="btn btn-sm btn-success ms-1"
@@ -114,32 +88,6 @@
 
     <div v-if="transactionItems.length > 0" class="card-footer">
       <div class="text-end">
-        <div class="btn-group d-sm-none">
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Collapse all items')"
-            @click="itemListCollapse"
-          >
-            <i class="fa fa-compress"></i>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Expand items with data')"
-            @click="itemListShow"
-          >
-            <i class="fa fa-expand"></i>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-info"
-            :title="__('Expand all items')"
-            @click="itemListExpand"
-          >
-            <i class="fa fa-arrows-alt"></i>
-          </button>
-        </div>
         <button
           type="button"
           class="btn btn-sm btn-success ms-1"
@@ -228,11 +176,6 @@
       },
     },
 
-    mounted() {
-      // Set initial state of detail visibility
-      this.itemListShow();
-    },
-
     methods: {
       // The parent owns the items array; changes are requested via events
 
@@ -268,45 +211,6 @@
           field: 'learnRecommendation',
           value: value.learnRecommendation,
         });
-      },
-
-      // Item list collapse and expand functionality
-      itemListCollapse() {
-        $('.transaction_item_row')
-          .find('.transaction_detail_container')
-          .addClass('d-xs-none');
-      },
-
-      itemListShow() {
-        $('.transaction_item_row').each(function () {
-          if (
-            $(this)
-              .find(
-                'div.transaction_detail_container input.transaction_item_comment',
-              )
-              .val() != '' ||
-            $(this)
-              .find('div.transaction_detail_container select')
-              .toArray()
-              .some((select) =>
-                [...select.selectedOptions].some(
-                  (option) => option.value !== '',
-                ),
-              )
-          ) {
-            $(this)
-              .find('.transaction_detail_container')
-              .removeClass('d-xs-none');
-          } else {
-            $(this).find('.transaction_detail_container').addClass('d-xs-none');
-          }
-        });
-      },
-
-      itemListExpand() {
-        $('.transaction_item_row')
-          .find('.transaction_detail_container')
-          .removeClass('d-xs-none');
       },
 
       async applyStandardTransactionItems() {

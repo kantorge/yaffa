@@ -42,7 +42,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col-9 btn-group mb-3 mb-xl-0">
+                <div class="col-9 btn-group">
                   <button
                     class="btn"
                     :class="transactionTypeBaseClass('withdrawal')"
@@ -50,10 +50,12 @@
                     dusk="transaction-type-withdrawal"
                     type="button"
                     value="withdrawal"
+                    :title="__('Withdraw')"
+                    :aria-label="__('Withdraw')"
                     @click="changeTransactionType"
                   >
-                    <span class="fa fa-circle-minus text-danger"></span><br />
-                    {{ __('Withdraw') }}
+                    <span class="fa fa-circle-minus text-danger"></span>
+                    <span class="d-none d-xl-block">{{ __('Withdraw') }}</span>
                   </button>
                   <button
                     class="btn"
@@ -62,10 +64,12 @@
                     dusk="transaction-type-deposit"
                     type="button"
                     value="deposit"
+                    :title="__('Deposit')"
+                    :aria-label="__('Deposit')"
                     @click="changeTransactionType"
                   >
-                    <span class="fa fa-circle-plus text-success"></span><br />
-                    {{ __('Deposit') }}
+                    <span class="fa fa-circle-plus text-success"></span>
+                    <span class="d-none d-xl-block">{{ __('Deposit') }}</span>
                   </button>
                   <button
                     class="btn"
@@ -74,10 +78,12 @@
                     dusk="transaction-type-transfer"
                     type="button"
                     value="transfer"
+                    :title="__('Transfer')"
+                    :aria-label="__('Transfer')"
                     @click="changeTransactionType"
                   >
-                    <span class="fa fa-exchange-alt"></span><br />
-                    {{ __('Transfer') }}
+                    <span class="fa fa-exchange-alt"></span>
+                    <span class="d-none d-xl-block">{{ __('Transfer') }}</span>
                   </button>
                 </div>
                 <div
@@ -102,12 +108,13 @@
                         ? __(
                             'You cannot change schedule settings for this type of action',
                           )
-                        : ''
+                        : __('Scheduled')
                     "
+                    :aria-label="__('Scheduled')"
                     :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
-                    <span class="fa-solid fa-arrows-rotate"></span><br />
-                    {{ __('Scheduled') }}
+                    <span class="fa-solid fa-arrows-rotate"></span>
+                    <span class="d-none d-xl-block">{{ __('Scheduled') }}</span>
                   </label>
                 </div>
               </div>
