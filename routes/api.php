@@ -362,6 +362,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Report endpoints
     Route::get('/reports/budget-chart', [ReportApiController::class, 'budgetChart'])
         ->name('reports.budget-chart');
+    Route::get('/reports/budget-suggestions', [ReportApiController::class, 'budgetSuggestions'])
+        ->name('reports.budget-suggestions');
     Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])
         ->name('reports.cashflow');
     Route::get(

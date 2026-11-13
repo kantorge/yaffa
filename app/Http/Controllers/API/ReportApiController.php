@@ -11,6 +11,8 @@ use App\Models\Budget;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Http\Requests\API\BudgetChartRequest;
+use App\Http\Requests\API\BudgetSuggestionsRequest;
+use App\Services\BudgetSuggestionService;
 use App\Services\BudgetChartService;
 use App\Services\CategoryService;
 use App\Services\CategoryWaterfallCacheService;
@@ -25,11 +27,12 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 #[Middleware('auth:sanctum')]
 #[Middleware('verified')]
 #[Middleware('abilities:read', only: [
-    'budgetChart', 'getCategoryWaterfallData', 'getCashflowData',
+    'budgetChart', 'budgetSuggestions', 'getCategoryWaterfallData', 'getCashflowData',
 ])]
 class ReportApiController extends Controller
 {
@@ -41,6 +44,27 @@ class ReportApiController extends Controller
     public function __construct(private BudgetChartService $budgetChartService)
     {
         $this->categoryService = new CategoryService();
+    }
+
+    /**
+     * Review budgets against recent actuals (read-only; see budget-drift-suggestions spec).
+     */
+    public function budgetSuggestions(BudgetSuggestionsRequest $request, BudgetSuggestionService $service): JsonResponse
+    {
+        try {
+            $result = $service->run(
+                $request->user(),
+                $request->boolean('all') ? null : array_map('intval', $request->validated('category_ids')),
+                $request->validated('data_through'),
+                $request->validated('sensitivity'),
+                $request->validated('bias'),
+            );
+        } catch (InvalidArgumentException $e) {
+            // The user has no base currency yet.
+            abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
+        }
+
+        return response()->json($result);
     }
 
     /**
