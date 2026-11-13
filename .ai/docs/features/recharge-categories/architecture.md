@@ -44,8 +44,9 @@ Design decisions: [`specifications/recharge-categories/spec.md`](../../specifica
   Balance = sum of **all** standard (withdrawal/deposit) non-schedule items carrying the tag, in any
   category, deposits `+`, withdrawals `-` (`TransactionType::amountMultiplier()`), converted to the
   base currency with the user's monthly rates (same approach as `AssetOverviewService`).
-  `rates_missing` flags a foreign amount added unconverted. Settled = `|balance| <= 0.01`
-  (`SETTLED_TOLERANCE`). An item with several tags counts towards each.
+  `rates_missing` flags a foreign amount added unconverted. Settled = no missing rate **and** `|balance| <= 0.01`
+  (`SETTLED_TOLERANCE`); a tag with a missing rate is never settled, so it is never deactivated or
+  counted as settled. An item with several tags counts towards each.
 - `deactivateSettled(user, ?ids)`: sets `active = false` on tags that are settled **and** active,
   optionally limited to the given ids; ids of other users, open or inactive tags are ignored.
 - `summary()`: counts for the dashboard widget.

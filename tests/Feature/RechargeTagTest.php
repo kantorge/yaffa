@@ -32,12 +32,12 @@ function rechargeUser(bool $enabled = true): User
  *
  * @param  array<int>  $tagIds
  */
-function rechargeItem(User $user, string $type, Category $category, string $amount, array $tagIds = [], bool $schedule = false, ?string $date = null): TransactionItem
+function rechargeItem(User $user, string $type, Category $category, string $amount, array $tagIds = [], bool $schedule = false, ?string $date = null, ?int $currencyId = null): TransactionItem
 {
     $factory = Transaction::factory()->for($user);
     $factory = $type === 'deposit' ? $factory->deposit($user) : $factory->withdrawal($user);
     // make() + save() skips the factory's afterCreating hook, which adds random items and tags
-    $transaction = $factory->make(array_filter(['schedule' => $schedule ?: null, 'date' => $date]));
+    $transaction = $factory->make(array_filter(['schedule' => $schedule ?: null, 'date' => $date, 'currency_id' => $currencyId]));
     $transaction->save();
 
     $item = TransactionItem::factory()->create([
@@ -110,15 +110,40 @@ it('lists only untagged real items in tag-requiring categories', function () {
         ->assertSee('12.5');
 });
 
-it('saves a transaction with an untagged item in a tag-requiring category', function () {
+it('accepts a transaction with an untagged item in a tag-requiring category through the API', function () {
     // The requirement is a reminder only: the API must never reject the transaction
     $user = rechargeUser();
     $recharge = Category::factory()->for($user)->create(['tag_requirement' => 'required_nil']);
+    $account = AccountEntity::where('user_id', $user->id)->where('config_type', 'account')->firstOrFail();
+    $payee = AccountEntity::where('user_id', $user->id)->where('config_type', 'payee')->firstOrFail();
 
-    $item = rechargeItem($user, 'withdrawal', $recharge, '10');
+    Sanctum::actingAs($user, ['*']);
+    $response = $this->postJson(route('api.v1.transactions.store-standard'), [
+        'action' => 'create',
+        'transaction_type' => 'withdrawal',
+        'config_type' => 'standard',
+        'date' => now()->format('Y-m-d'),
+        'reconciled' => false,
+        'schedule' => false,
+        'budget' => false,
+        'config' => [
+            'account_from_id' => $account->id,
+            'account_to_id' => $payee->id,
+            'amount_from' => 10,
+            'amount_to' => 10,
+        ],
+        'items' => [
+            ['amount' => 10, 'category_id' => $recharge->id, 'tags' => []],
+        ],
+    ]);
 
-    expect($item->fresh())->not->toBeNull()
-        ->and(app(RechargeTagService::class)->untaggedItemCount($user))->toBe(1);
+    $response->assertSuccessful();
+
+    $item = TransactionItem::where('category_id', $recharge->id)->sole();
+    expect($item->tags()->count())->toBe(0);
+
+    $this->actingAs($user);
+    expect(app(RechargeTagService::class)->untaggedItems($user)->pluck('id')->all())->toBe([$item->id]);
 });
 
 it('balances a tag across all standard items, settling within 0.01', function () {
@@ -329,4 +354,26 @@ it('hides tags whose latest item is before the backstop date, keeping the full b
 
     expect($balances->pluck('id')->all())->toBe([$spanning->id])
         ->and($balances->first()['settled'])->toBeTrue();
+});
+
+it('never settles a tag whose balance has an unconverted foreign amount', function () {
+    $user = rechargeUser();
+    // A second currency with no rates to the base currency
+    $foreign = Currency::factory()->for($user)->create();
+    $recharge = Category::factory()->for($user)->create(['tag_requirement' => 'required_nil']);
+    $tag = Tag::factory()->for($user)->create(['active' => true]);
+
+    // 50 in the base currency out, 50 in the foreign currency back: nets to zero only unconverted
+    rechargeItem($user, 'withdrawal', $recharge, '50', [$tag->id]);
+    rechargeItem($user, 'deposit', $recharge, '50', [$tag->id], currencyId: $foreign->id);
+
+    $this->actingAs($user);
+    $service = app(RechargeTagService::class);
+    $row = $service->tagBalances($user)->first();
+
+    expect($row['rates_missing'])->toBeTrue()
+        ->and($row['settled'])->toBeFalse()
+        ->and($service->deactivateSettled($user))->toBe(0)
+        ->and($service->summary($user)['settled_active_tags'])->toBe(0)
+        ->and($tag->fresh()->active)->toBeTrue();
 });

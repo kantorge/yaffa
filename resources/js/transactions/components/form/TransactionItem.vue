@@ -145,7 +145,7 @@
         </div>
       </div>
       <div
-        class="col-12 col-sm-2 form-group transaction_detail_container"
+        class="col-12 col-sm-2 form-group transaction_detail_container transaction_item_tags_container"
         :class="{ 'd-none d-md-block': !tagRequired }"
       >
         <span class="form-label">
@@ -237,6 +237,10 @@
       currencySymbol: String,
       comment: String,
       tags: Array,
+      tagReminder: {
+        type: Boolean,
+        default: true,
+      },
       remainingAmount: Number,
       payee: [Number, String],
       match_type: {
@@ -278,7 +282,10 @@
     computed: {
       // The selected category expects a tag (e.g. a recharge claim number)
       tagRequired() {
-        return this.tagRequiredCategoryIds.has(this.categoryIdData);
+        return (
+          this.tagReminder &&
+          this.tagRequiredCategoryIds.has(this.categoryIdData)
+        );
       },
 
       isMissingRequiredTag() {
@@ -595,8 +602,10 @@
 
       // Toggle the visibility of event details (comment / tags)
       toggleItemDetails() {
+        // A required tag field stays visible: its visibility is bound to tagRequired instead
         $(this.$el)
           .find('.transaction_detail_container')
+          .not(this.tagRequired ? '.transaction_item_tags_container' : [])
           .toggleClass('d-none d-md-block');
       },
 

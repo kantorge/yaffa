@@ -163,7 +163,8 @@ class RechargeTagService
                     'first_date' => $this->dateString($tagRows->min('first_date')),
                     'last_date' => $this->dateString($tagRows->max('last_date')),
                     'rates_missing' => $ratesMissing,
-                    'settled' => $balance->abs()->isLessThanOrEqualTo($tolerance),
+                    // An amount added unconverted (missing rate) could cancel out by accident: never settled
+                    'settled' => ! $ratesMissing && $balance->abs()->isLessThanOrEqualTo($tolerance),
                 ];
             })
             // Hide tags with no activity on or after the backstop date

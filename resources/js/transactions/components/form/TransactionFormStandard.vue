@@ -588,6 +588,7 @@
               remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0
             "
             :enabled="!transactionTypeIsTransfer"
+            :tag-reminder="!form.schedule && !isTemplate"
             :swal-target-selector="swalTargetSelector"
             @add-transaction-item="addTransactionItem"
             @remove-transaction-item="removeTransactionItem"
@@ -2082,12 +2083,22 @@
         }
 
         const tagRequiredIds = await loadTagRequiredCategoryIds();
-        const missing = this.form.items.filter(
+        let missing = this.form.items.filter(
           (item) =>
             item.category_id &&
             tagRequiredIds.has(Number(item.category_id)) &&
             (item.tags || []).length === 0,
         ).length;
+
+        // The server adds the payee default remainder as one more item, always without tags
+        if (
+          Number(this.form.remaining_payee_default_amount) > 0 &&
+          tagRequiredIds.has(
+            Number(this.form.remaining_payee_default_category_id),
+          )
+        ) {
+          missing += 1;
+        }
 
         if (missing === 0) {
           return true;
