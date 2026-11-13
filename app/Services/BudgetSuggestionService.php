@@ -95,6 +95,15 @@ class BudgetSuggestionService
                 continue;
             }
 
+            if ($explicit) {
+                foreach ($unit['members'] as $memberId) {
+                    $member = $categories->get($memberId);
+                    if ($memberId !== $root->id && isset($selected[$memberId]) && $member->active && $member->budget_suggestions_excluded) {
+                        $units[] = $this->unitOutput($member, null, 'excluded', null);
+                    }
+                }
+            }
+
             if ($this->isExcluded($root, $categories)) {
                 if ($explicit) {
                     $units[] = $this->unitOutput($root, null, 'excluded', null);
@@ -236,8 +245,8 @@ class BudgetSuggestionService
     }
 
     /**
-     * Period length of a recurrence in months. Daily and weekly count as monthly: the unit is
-     * never analysed finer than a month.
+     * Period length of a recurrence in months. Daily and weekly intervals convert by actual
+     * length (30.4375 days a month, rounded, at least one month), so 13 weeks is 3 months.
      */
     private function cadenceMonths(string $frequency, int $interval): int
     {
@@ -246,7 +255,8 @@ class BudgetSuggestionService
         return match ($frequency) {
             'YEARLY' => 12 * $interval,
             'MONTHLY' => $interval,
-            default => 1,
+            'WEEKLY' => max((int) round($interval * 7 / 30.4375), 1),
+            default => max((int) round($interval / 30.4375), 1),
         };
     }
 
@@ -366,6 +376,9 @@ class BudgetSuggestionService
         $horizon = min($cfg['horizon'][$g], intdiv($c['endIdx'] - $effective + 1, $m));
         if ($horizon < 1) {
             return $this->verdict('insufficient_data', $m);
+        }
+        if ($this->hasMissingRates($unit['members'], $effective, $effective + $horizon * $m - 1, $c)) {
+            return $this->verdict('missing_rates', $m);
         }
         $expected = $this->sumExpected($series, $effective, $horizon * $m) / $horizon;
 
@@ -529,17 +542,20 @@ class BudgetSuggestionService
         $candidates = [];
 
         foreach ($rows as $budget) {
-            $occurrences = count($this->budgetService->projectOccurrences($budget, $from, $to));
+            $dates = $this->budgetService->projectOccurrences($budget, $from, $to);
+            $occurrences = count($dates);
             if ($occurrences === 0) {
                 continue;
             }
+            // Inflation compounds on the new amount from the effective date, so the delta spreads over the multipliers, not the count
+            $multipliers = array_sum(array_map(fn ($date) => $this->inflationCalculator->applyAnnualRate(1.0, $budget->inflation, $from, $date), $dates));
 
             $currency = $this->rowCurrency($budget, $c['base']);
             $rate = (float) ($this->getLatestRateFromMap($currency->id, $c['today'], $c['rates'], $c['base']->id) ?? 1);
             $sign = $budget->transaction_type->amountMultiplier();
             $current = (float) $budget->getRawOriginal('amount') * $sign
                 * $this->inflationCalculator->applyAnnualRate(1.0, $budget->inflation, $budget->start_date, $from);
-            $occurrenceDelta = $deltaPerPeriod / ($occurrences / $horizon) / $rate;
+            $occurrenceDelta = $deltaPerPeriod * $horizon / $multipliers / $rate;
             $suggested = $current + $occurrenceDelta;
 
             $candidates[] = [
@@ -680,7 +696,9 @@ class BudgetSuggestionService
                 $rrule = 'FREQ=' . $proposal['cadence']['frequency'] . ';INTERVAL=' . $proposal['cadence']['interval'];
             }
 
-            $occurrences = $this->recurrenceRuleService->getRecurrenceBetween($effective, $rrule, $effective, $to);
+            // A replacement keeps the old row's recurrence phase and count; a new row starts at the effective date
+            $anchor = $proposal['type'] === 'replace' ? $old->start_date : $effective;
+            $occurrences = $this->recurrenceRuleService->getRecurrenceBetween($anchor, $rrule, $effective, $to);
             foreach ($occurrences as $occurrence) {
                 $date = Carbon::instance($occurrence->getStart());
                 $this->addDelta($delta, $date, $proposal['amount'] * $this->inflationCalculator->applyAnnualRate(1.0, $inflation, $effective, $date), $currency->id, $c);

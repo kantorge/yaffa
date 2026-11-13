@@ -424,3 +424,26 @@ it('creates a quarterly budget for a quarterly-regular category without one', fu
         ->and($unit['suggestion'])->toMatchArray(['proposal_type' => 'create', 'suggested_amount' => -45000.0])
         ->and($unit['suggestion']['cadence'])->toBe(['frequency' => 'MONTHLY', 'interval' => 3]);
 });
+
+it('spreads the gap over inflation multipliers when the horizon crosses a year boundary', function () {
+    Carbon::setTestNow('2027-03-03 12:00:00');
+    $category = newCategory();
+    budgetRow($category, ['amount' => 1000, 'inflation' => 10.0]);
+    spendMonthly($category, '2026-03', '2027-02', 1500);
+
+    $suggestion = unitFor(review([$category->id]), $category)['suggestion'];
+
+    // 9 months at x1 and 3 at x1.1 after 1210 now: the projected mean of the new row must equal the 1500 level
+    expect($suggestion['current_amount'])->toBe(-1210.0)
+        ->and(abs($suggestion['suggested_amount']))->toEqualWithDelta(1463.41, 0.01);
+});
+
+it('reports an excluded member the user explicitly selected under a non-excluded root', function () {
+    $parent = newCategory();
+    $child = newCategory(['parent_id' => $parent->id, 'budget_suggestions_excluded' => true]);
+    budgetRow($parent, ['amount' => 30000]);
+    spendMonthly($parent, '2025-12', '2026-11', 20000);
+    spendMonthly($child, '2025-12', '2026-11', 10000);
+
+    expect(unitFor(review([$child->id]), $child)['verdict'])->toBe('excluded');
+});
