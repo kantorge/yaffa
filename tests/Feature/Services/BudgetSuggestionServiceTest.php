@@ -583,8 +583,8 @@ it('puts the impact and run fields in the documented order and types', function 
 
 // ---------------------------------------------------------------- schedule-aware fixes (phase 3, level 0)
 
-/** Owner's SZJA case: quarterly -400,000 schedule to 2045, actuals about -482,000 a quarter. */
-function szja(array $schedule = []): array
+/** quarterly -400,000 schedule to 2045, actuals about -482,000 a quarter. */
+function quarterlyScheduleCase(array $schedule = []): array
 {
     $category = newCategory(['default_aggregation' => 'quarter']);
     foreach (range(0, 10) as $q) {
@@ -596,7 +596,7 @@ function szja(array $schedule = []): array
 
 it('ends a gap budget next to a schedule with the schedule, and the recommended series follows', function () {
     test()->user->update(['end_date' => '2046-12-31']);
-    [$category, $schedule] = szja();
+    [$category, $schedule] = quarterlyScheduleCase();
 
     $result = review([$category->id]);
     $suggestion = unitFor($result, $category)['suggestion'];

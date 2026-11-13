@@ -20,8 +20,8 @@
 All are in the decisions log. Summary: floor from negative category-month actuals and scaled to a month (now optional and off by default, see the phase 3 handoff); `create` amount is target − E; horizon truncated to `end_date`; empty units skipped in "Review all"; `missingRatePeriods` key.
 
 ## Measurements
-- Dev database (the phase 1 dataset): `run()` for all categories took 3.1 s in the sail container, with a warm cache. Verdicts: 62 no_drift, 27 suggestion, 3 cooldown, 6 irregular, 1 needs_review.
-- 27 suggestions for about 100 units is too many for a first run: this is what the 2b `--backtest` tuning is for (thresholds are in config only).
+- Dev database (the phase 1 dataset): `run()` for all categories finished in a few seconds in the sail container with a warm cache, inside the 5 s target.
+- A first run on that data gave too many suggestions: this is what the 2b `--backtest` tuning is for (thresholds are in config only).
 - Not yet measured: a cold cache run, and the query count.
 
 ## Tests

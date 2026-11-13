@@ -470,7 +470,7 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
     - `impact_share` is computed correctly, and is `null` when average monthly expenses are 0
     - contract: the new `run` and `suggestion` fields exist with the right types, in the documented order
 - **Schedule-aware tests (phase 3, level 0):**
-    - SZJA fixture (quarterly -400,000 schedule ending 2045, actuals about -482,000 a quarter): the `create` ends with the schedule, the recommended series is 0 after it (not the gap amount), and `schedules[]` lists -400,000 with MONTHLY/3
+    - quarterly schedule fixture (a schedule ending in 2045, actuals above its amount): the `create` ends with the schedule, the recommended series is 0 after it (not the gap amount), and `schedules[]` lists the schedule with MONTHLY/3
     - a count-based schedule gives the date of its last occurrence as the end date; an open-ended one gives no end date
     - a schedule ending inside the horizon gives `needs_review`; one that ended before the effective date is not listed
     - a `create` with no expectation has `end_date: null` and `schedules: []`
@@ -488,7 +488,7 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
 ### Open decisions
 
 - **Threshold values.** The rules are decided; the numbers get tuned during the build. Method: a `--backtest` option on the review command re-runs the detector with `data_through` set to each month of the last two years. It counts suggestions per category per year (target: at most one or two) and checks them against the actuals that followed.
-- **Queued fallback: deferred to the backlog.** Phase 1 measured only the aggregation step (1.3 s warm, 3.4 s cold), so it is not built in the MVP for now. Re-measure the full "Review all" run in phase 2b, and revisit it if that or user testing shows a bottleneck on larger datasets.
+- **Queued fallback: deferred to the backlog.** Phase 1 measured only the aggregation step (well inside the target), so it is not built in the MVP for now. Re-measure the full "Review all" run in phase 2b, and revisit it if that or user testing shows a bottleneck on larger datasets.
 
 Decided: parent and child budgets follow the remainder rule (option A, matching the chart); quarterly and yearly persistence is fixed across sensitivities; the level uses the moving-average window; no materiality floor in the MVP; suggestions are ranked by monthly impact; any single transaction makes a period count as non-zero.
 
@@ -501,7 +501,7 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-11 | Design | Stateless MVP, no scheduled run                           | User-initiated self-check fits the mindful-finance approach; scheduling stays additive |
 | 2026-11-11 | Design | Parent/child budgets use the remainder rule (option A)    | Matches how the budget chart sums budgets today                                        |
 | 2026-11-11 | Design | Level L = plain mean over the chart moving-average window | Consistency with the chart line the user sees                                          |
-| 2026-11-11 | 1      | Queued fallback deferred to backlog (owner confirmed)      | aggregation step measured at 1.3 s warm and 3.4 s cold on 43k items; full "Review all" to be re-measured in phase 2b, revisit if it or user testing finds a bottleneck |
+| 2026-11-11 | 1      | Queued fallback deferred to backlog (owner confirmed)      | aggregation step measured well inside the target on the dev data; full "Review all" to be re-measured in phase 2b, revisit if it or user testing finds a bottleneck |
 | 2026-11-11 | 1      | `aggregateByCategory` returns per-category series         | Sums are additive, so units can be composed later without re-querying                 |
 | 2026-11-13 | 2a     | `aggregateByCategory()` also returns `missingRatePeriods` | Additive. Rates only go missing for a currency with no rates at all (`getLatestRateFromMap` falls back to the oldest rate), flagged here per category and period, like the reports' `currenciesWithoutRates` |
 | 2026-11-13 | 2a     | Average monthly expenses = sum of negative category-month actuals over the last 12 complete months / 12 | `aggregateByCategory` nets withdrawals and deposits per category, so exact withdrawals are not available; the floor is coarse *(Superseded in part by the 2026-11-13 phase 3 row: the floor is optional and off by default.)* |
@@ -514,7 +514,7 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 2a     | The recommended series reuses the old row's rrule for a `replace` (a `COUNT` would restart at the effective date) and is `null` for "Review all" | Counted rules are rare; the series is only returned for named categories |
 | 2026-11-13 | 2b     | `category_ids` must exist and belong to the user (422 otherwise); exactly one of `category_ids` or `all=1` is required | Spec names the parameters only; ownership check avoids returning data shape for foreign ids |
 | 2026-11-13 | 2b     | Backtest counts every month with a `suggestion` verdict per category per calendar year, without deduplicating by `key`; more than 2 in a year is flagged | Repeats are the instability the tuning must expose |
-| 2026-11-13 | 2b     | Full "Review all" run measured: 4.1 s cold, 1.9 s warm (92 units on the dev data); queued fallback stays in the backlog | Under the 5 s target on one dev user; the cold margin is small, so re-measure on a larger dataset; see phase-2b-handoff.md |
+| 2026-11-13 | 2b     | Full "Review all" run measured on the dev data: under the 5 s target, cold cache close; queued fallback stays in the backlog | Under the 5 s target on one dev user; the cold margin is small, so re-measure on a larger dataset; see phase-2b-handoff.md |
 | 2026-11-13 | 2b     | The backtest only counts suggestions per category per year; it does not compare them with the actuals that followed | Spec asked for both; the comparison is left to the owner's manual check during tuning |
 | 2026-11-13 | 2b     | A user without any currency gets a 422 (endpoint) or an error (command) | The service throws; found in review |
 | 2026-11-13 | 3      | Column renamed `budget_suggestions_excluded` (default false) to `calculate_budget_suggestions` (default true), 2a migration edited in place | "Excluded" was not intuitive on the category form (owner); the column only existed in the dev database, which was rolled back and migrated again. The `excluded` verdict name is unchanged |
@@ -527,6 +527,6 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 3      | The chart's moving average counts history from the first period with an actual, but it still ends at the last complete month by today's date (L ends at `data_through`) and is computed at the chart's view granularity | Found in review: the line equals L only when `data_through` is the last complete month and the chart is shown at the unit's own granularity |
 | 2026-11-13 | 3      | The recommended series always assumes the top-ranked candidate and is not refetched after the user picks another row, hides or stops an item | The service computes one series per run; refetching per pick is deferred |
 | 2026-11-13 | 3      | Materiality floor off by default (config 0); suggestions ranked by monthly impact, with impact fields in the contract | In a user-initiated review the floor hid real persistent changes in small categories; ranking keeps large items first without hiding anything (owner) |
-| 2026-11-13 | 3      | A create that fills a gap next to schedules ends with the latest contributing schedule; a schedule ending inside the horizon gives needs_review | Without it, the gap budget outlives the schedule and the forecast drops after the schedule ends (owner's SZJA case) |
+| 2026-11-13 | 3      | A create that fills a gap next to schedules ends with the latest contributing schedule; a schedule ending inside the horizon gives needs_review | Without it, the gap budget outlives the schedule and the forecast drops after the schedule ends (owner's quarterly-tax case) |
 | 2026-11-13 | 3      | Suggestions list contributing schedules with a link to their replace page; the schedules non-goal is reworded | A persistent gap next to a schedule often means the schedule amount is out of date; full adjust_schedule proposals are deferred to level 1 |
 | 2026-11-13 | 3      | monthly_impact and impact_share use the final rounded target | The impact must match the suggested amount |
