@@ -64,6 +64,22 @@ test('create prefill carries category and cadence', () => {
   assert.equal(p.transaction_type, 'deposit');
   assert.equal(p.interval, 3);
   assert.equal(p.category_id, 57);
+  assert.equal(p.end_date, undefined);
+});
+
+test('create prefill carries the end date', () => {
+  const unit = {
+    category_id: 57,
+    category_name: 'Tax',
+    suggestion: {
+      proposal_type: 'create',
+      effective_date: '2027-01-01',
+      suggested_amount: -97000,
+      end_date: '2045-12-31',
+      cadence: { frequency: 'MONTHLY', interval: 3 },
+    },
+  };
+  assert.equal(buildFormPrefill(unit).end_date, '2045-12-31');
 });
 
 test('candidates with a null amount are not offered', () => {

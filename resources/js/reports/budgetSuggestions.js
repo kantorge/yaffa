@@ -63,6 +63,9 @@ export function buildFormPrefill(unit, candidate = null, precision = 2) {
     prefill.category_name = unit.category_name;
     prefill.frequency = s.cadence.frequency;
     prefill.interval = s.cadence.interval;
+    if (s.end_date) {
+      prefill.end_date = s.end_date;
+    }
   }
 
   return prefill;

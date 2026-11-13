@@ -1880,6 +1880,7 @@
     "Estimate": "Szacowanie",
     "Neutral": "Neutralne",
     "Conservative": "Ostrożne",
+    "Conservative and rounded": "Ostrożne i zaokrąglone",
     "Check selected categories": "Sprawdź wybrane kategorie",
     "Review all categories": "Przejrzyj wszystkie kategorie",
     "Pick the month your data is complete through, then check the selected categories or review all of them. Nothing is changed until you create a budget period.": "Wybierz miesiąc, do którego Twoje dane są kompletne, a następnie sprawdź wybrane kategorie lub przejrzyj wszystkie. Nic się nie zmieni, dopóki nie utworzysz okresu budżetu.",
@@ -1889,8 +1890,6 @@
     "Recent level": "Ostatni poziom",
     "Expected": "Oczekiwane",
     "per :period": "na :period",
-    ":k of :n periods": ":k z :n okresów",
-    "data through :month": "dane do :month",
     "New budget, suggested cadence: :cadence": "Nowy budżet, sugerowana częstotliwość: :cadence",
     "Differs from the category's default aggregation, which is not changed.": "Różni się od domyślnej agregacji kategorii, która nie zostanie zmieniona.",
     "Budget row to replace": "Wiersz budżetu do zastąpienia",
@@ -1916,5 +1915,13 @@
     "Provide either category_ids or all=1.": "Podaj category_ids albo all=1.",
     "Monthly impact": "Miesięczny wpływ",
     "per month": "miesięcznie",
-    ":share of monthly expenses": ":share miesięcznych wydatków"
+    ":share of monthly expenses": ":share miesięcznych wydatków",
+    "Or adjust the schedule instead": "Lub zmień harmonogram",
+    "Replace this schedule": "Zastąp ten harmonogram",
+    "After changing a schedule, run the check again.": "Po zmianie harmonogramu uruchom sprawdzenie ponownie.",
+    "Every :n days": "Co :n dni",
+    "Every :n weeks": "Co :n tygodni",
+    "Every :n months": "Co :n miesięcy",
+    "Every :n years": "Co :n lat",
+    "until :date": "do :date"
 }

@@ -280,7 +280,7 @@
        * @param {number|null} budgetId Budget to load (edit, replace); null for a new one
        * @param {Object|null} prefill Optional values applied on top (budget suggestions):
        *   amount, transaction_type, start_date, and for new budgets category_id,
-       *   category_name, frequency, interval
+       *   category_name, frequency, interval, end_date
        */
       show(budgetId = null, prefill = null) {
         this.resetForm();
@@ -379,6 +379,9 @@
         if (prefill.frequency) {
           this.form.frequency = prefill.frequency;
           this.form.interval = prefill.interval;
+        }
+        if (prefill.end_date) {
+          this.form.end_date = prefill.end_date;
         }
 
         // A replace closes the source period the day before the new one starts

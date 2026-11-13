@@ -339,6 +339,7 @@ let rawData = [];
 // Shown only while the loaded chart covers exactly those categories.
 let recommended = null;
 let loadedCategoryKey = '';
+let loadedAllAccounts = true;
 
 const categoryKey = (ids) => ids.map(String).sort().join(',');
 
@@ -364,6 +365,8 @@ let reloadData = function () {
   const selectedCategories = $(treeSelector).jstree()
     ? $(treeSelector).jstree('get_checked', true)
     : [];
+
+  const loadedScope = $('input[name=table_filter_account_scope]:checked').val();
 
   $.ajax({
     url: window.route('api.v1.reports.budget-chart'),
@@ -391,6 +394,7 @@ let reloadData = function () {
     .done(function (data) {
       markDataFresh();
       loadedCategoryKey = categoryKey(selectedCategories.map((c) => c.id));
+      loadedAllAccounts = loadedScope === 'any';
 
       const chartData = Array.isArray(data) ? data : data.chartData || [];
 
@@ -460,6 +464,15 @@ let reloadData = function () {
     });
 };
 
+// The recommendation covers all accounts and the categories of the last check
+function showsRecommended() {
+  return (
+    recommended !== null &&
+    recommended.key === loadedCategoryKey &&
+    loadedAllAccounts
+  );
+}
+
 function updateChart(rawData) {
   if (rawData.length === 0) {
     chart.data = [];
@@ -471,6 +484,22 @@ function updateChart(rawData) {
     document.querySelector('input[name="chart_time_interval"]:checked')
       ?.value || 'month';
   let data;
+
+  // A category without budget or schedule has no rows after its last actual: add the months the
+  // recommended line covers
+  if (showsRecommended()) {
+    const have = new Set(rawData.map((row) => row.period.slice(0, 7)));
+    const extra = [...recommended.byMonth.keys()]
+      .filter((month) => !have.has(month))
+      .map((month) => ({
+        period: month + '-01',
+        date: new Date(month + '-01'),
+        actual: 0,
+        budget: 0,
+        forecast: 0,
+      }));
+    rawData = rawData.concat(extra).sort((a, b) => a.date - b.date);
+  }
 
   // Aggregate the data by quarter or year, based on user selection
   if (aggregation === 'quarter') {
@@ -631,7 +660,7 @@ function updateChart(rawData) {
 
   // Add moving average (knowing that data is ordered)
   data = computeMovingAverage(data, aggregation);
-  if (recommended && recommended.key === loadedCategoryKey) {
+  if (showsRecommended()) {
     applyRecommended(data, aggregation, rawData, recommended.byMonth);
   }
 
@@ -732,12 +761,17 @@ const suggestionsApp = createApp(BudgetSuggestions, {
   getDefaultAggregation: (id) =>
     $(treeSelector).jstree(true)?.get_node(String(id))?.original
       ?.default_aggregation,
-  onResult: ({ series, categoryIds }) => {
+  onResult: ({ series, categoryIds, reload }) => {
     recommended =
       series && categoryIds
         ? { key: categoryKey(categoryIds), byMonth: indexSeries(series) }
         : null;
-    if (rawData.length > 0) {
+    if (reload) {
+      // The check covers all accounts, so the chart is loaded for the same categories and scope
+      showAllAccounts();
+      rebuildUrl();
+      reloadData();
+    } else if (rawData.length > 0) {
       updateChart(rawData);
     }
   },
@@ -745,9 +779,13 @@ const suggestionsApp = createApp(BudgetSuggestions, {
     // Show only this category on the chart, with its recommended series
     $(treeSelector).jstree('uncheck_all');
     $(treeSelector).jstree('check_node', String(categoryId));
+    showAllAccounts();
     rebuildUrl();
     reloadData();
     suggestionsPanel.loadSeries();
+    document
+      .getElementById('chartdiv')
+      .scrollIntoView({ behavior: 'smooth', block: 'center' });
   },
   onApply: ({ budgetId, prefill }) => {
     if (budgetId !== null) {
@@ -1102,8 +1140,8 @@ const accountSelect = createRemoteSelect(accountElement, {
   params: (term) => ({ q: term || undefined, withInactive: true }),
   mapResult: (account) => ({ id: account.id, text: account.name }),
   placeholder: __('Select account'),
-  onSelect: rebuildUrl,
-  onClear: rebuildUrl,
+  // onChange, not onSelect: Tom Select fires item_add before it updates the <select> value
+  onChange: rebuildUrl,
 });
 
 // Default account
@@ -1142,6 +1180,13 @@ document.getElementById('clear').addEventListener('click', function () {
   $(treeSelector).jstree('uncheck_all');
   rebuildUrl();
 });
+
+// The budget check always covers all accounts: the chart must use the same scope
+function showAllAccounts() {
+  document.getElementById('table_filter_account_scope_any').checked = true;
+  accountSelect.disable();
+  clearSelect(accountSelect, { silent: true });
+}
 
 // Account type switch
 $('input[name=table_filter_account_scope]').on('change', function () {

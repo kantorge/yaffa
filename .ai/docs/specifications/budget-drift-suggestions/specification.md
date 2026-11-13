@@ -10,7 +10,7 @@ A regular, user-initiated review fits YAFFA's mindful-finance approach: the user
 
 - **Goal:** make the forecast accurate from now on.
 - **Non-goal:** retro-fitting past periods so history looks well forecast.
-- **Non-goal:** changing scheduled transactions. They stand for specific real events and are fixed inputs here.
+- **Non-goal:** never changes scheduled transactions itself. A schedule whose amount looks out of date is pointed out, and the user changes it through the existing replace flow.
 - **Non-goal for the MVP:** background monitoring and notifications (see "Future extension").
 - **Constraint:** no suggestions from one-off deviations, from too little data, or right after a budget change.
 
@@ -144,6 +144,12 @@ The suggested cadence is the finest one at which the unit is regular over comple
 
 - **Amount** = L at that cadence plus the bias margin. Every unit that passes the regularity test and the other rules gets a suggestion, whatever its size; the list is ranked by impact.
 - **Defaults:** account-agnostic, `transaction_type` from the net sign, no inflation, starting at the first period after the current one.
+- **End date next to schedules.** When a `create` complements schedules (the unit's E includes schedule forecast), the new row ends with them, otherwise it would outlive the schedule and the forecast would drop to the gap amount after the schedule ends:
+    - the end date is the latest end among the unit's contributing schedules; for a schedule with a count it is the date of its last occurrence
+    - a schedule that ended before the effective date does not contribute
+    - if any contributing schedule is open-ended, the row has no end date
+    - if the latest end falls inside the horizon H from the effective date, the verdict is `needs_review`: E changes within the horizon, so one gap amount would be wrong
+    - a `create` for a unit with no expectation has no end date; a `replace` keeps the old row's recurrence, including its end
 - If the suggested cadence differs from the category's `default_aggregation`, the panel says so. The setting itself is not changed.
 - A category that is irregular on purpose (occasional large purchases) can be opted out with "Stop monitoring this category".
 
@@ -209,8 +215,10 @@ The contract is designed so that stored suggestions and scheduling can be added 
 - **`suggestion`:**
     - `key`: a stable fingerprint, the hash of category, proposal type, budget id, effective date and the amount rounded to tolerance/2. Computed but not stored. Identical runs give identical keys, so a later dismiss, dedupe or notification can key on it.
     - `proposal_type` (replace or create), `budget_id`, `effective_date`, `current_amount`, `suggested_amount`, `currency`
+    - `end_date`: the proposed row's end date (`Y-m-d`), or `null`. Only a `create` next to schedules can have one.
+    - `schedules[]`: one entry per contributing schedule (active, with an occurrence on or after the effective date), empty when none contributes: `transaction_id`, `name` (payee, else the transaction's comment, else `#id`), `amount` (signed, per occurrence, only this unit's categories' items, in the schedule's currency), `currency`, `cadence` (`frequency`, `interval`) and `end_date` (or `null`). Listed for `replace` and `create` alike; the schedules are never changed by the feature.
     - `level` (L), `expected` (E), `target`, `monthly_impact`, `impact_share`, `direction`, `persistence` (k of n), in that order
-    - `monthly_impact`: (`target` − E) per month, in base currency, signed like other amounts (negative = more spending expected). Per-period gaps are divided by 1, 3 or 12 for monthly, quarterly and yearly units. For `create` on a schedule-only unit it is target − E as already defined.
+    - `monthly_impact`: the monthly change the suggestion makes to E, in base currency, signed like other amounts (negative = more spending expected). It comes from the **final** target: after the bias margin and, for "Conservative and rounded", after rounding, so it always matches `suggested_amount`. For one occurrence per period in base currency: `monthly_impact` × months per period (1, 3 or 12) = `suggested_amount` − `current_amount`, with `current_amount` counted as 0 for a `create`. `level`, `expected` and `target` are unchanged evidence (`target` is not rounded). The service's ordering uses this same value.
     - `impact_share`: |`monthly_impact`| ÷ `run.average_monthly_expenses`, a fraction (4 decimals), or `null` when average monthly expenses are 0
     - `candidates[]`: ranked, each with its converted amount
     - `cadence`: for create
@@ -264,6 +272,8 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
                 "direction": "expense",
                 "persistence": { "k": 3, "n": 3 },
                 "candidates": [],
+                "end_date": null,
+                "schedules": [],
                 "evidence": [
                     { "period": "2026-07-01", "actual": -38000, "expected": 0 },
                     { "period": "2026-10-01", "actual": -51000, "expected": 0 }
@@ -302,6 +312,8 @@ This is a run on 3 Dec 2026 for four selected categories, with data through Nove
                         "currency": { "id": 1, "iso_code": "HUF" }
                     }
                 ],
+                "end_date": null,
+                "schedules": [],
                 "evidence": [
                     {
                         "period": "2026-10-01",
@@ -373,8 +385,10 @@ Query parameters: `category_ids[]` or `all=1`, plus optional `data_through`, `se
     - **Create new budget period** opens the existing `BudgetForm` replace modal, or the new-budget modal for `create`, prefilled with the effective date and amount.
     - **Hide** removes it from this list only.
     - **Stop monitoring this category.**
+- **"Or adjust the schedule instead" block.** For each item with a non-empty `schedules[]` the item lists every schedule with its name, current amount (`money`) and cadence, plus a link to the existing schedule replace page (`route('transaction.open', {transaction, action: 'replace'})`), opening in a new tab with no prefill. A short note says the check must be run again after changing a schedule. The `create`/`replace` button stays the default proposal; this is an alternative path.
+- **End-date prefill.** The "Create new budget period" modal for a `create` is prefilled with `end_date` as well when the suggestion has one.
 - **Collapsed list of units without a recommendation,** grouped by verdict: no drift, cooldown, insufficient data, irregular, missing rates, needs review.
-- **Chart:** a new dashed "Recommended budget" series. From each effective date onward it shows the expected amount (budget plus forecast) with the selected categories' proposals applied. It is computed server-side by projecting each proposed row as an unsaved `Budget` through `projectOccurrences`, so cadence and inflation are exact. It is returned monthly so the chart's existing quarter/year aggregation applies. L appears in the tooltip and the list, not as its own series.
+- **Chart:** a new dashed "Recommended budget" series. From each effective date onward it shows the expected amount (budget plus forecast) with the selected categories' proposals applied. It is computed server-side by projecting each proposed row as an unsaved `Budget` (its RRULE, end date included, is composed by the model and expanded through `RecurrenceRuleService`; `projectOccurrences` is not used for it because its cache key needs an id), so cadence, end date and inflation are exact. It is returned monthly so the chart's existing quarter/year aggregation applies. L appears in the tooltip and the list, not as its own series.
 - **Separate small fix:** `computeMovingAverage` includes the current, unfinished period and uses a 13-period inclusive window. Exclude the open period and use exactly 12 months, 4 quarters or 5 years, so the line equals the detector's level L.
 
 ## Future extension: scheduled monitoring
@@ -387,6 +401,11 @@ Scheduling is additive. The detector, the endpoint and the response contract sta
 - **A scheduled command** (weekly), a per-user job, and a database notification following `AiDocumentStatusNotification`.
 - **An optional lag warning** for accounts with no recent user-entered transactions. Open question: does `RecordScheduledTransactions` write a `TransactionOrigin` row with the created relation?
 - **Alternative:** an external agent calls the MCP read tool on a schedule. Monitoring then needs no in-app state, but avoiding repeat alerts becomes the agent's job.
+
+### Future extension: schedule proposals
+
+- **Level 1: `adjust_schedule` as a proposal type.** Schedules become candidates next to Budget rows; when there are no Budget rows the schedule is the default; per-occurrence item conversion; the recommended series projects the changed schedule; the replace form opens prefilled.
+- **Level 2: split the gap by matching actuals to schedules** by payee, account and category, since recorded instances do not link back to their schedule.
 
 ## Phases, files and verification
 
@@ -450,6 +469,14 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
     - suggestions are ordered by |`monthly_impact`| descending (a quarterly gap divided by 3), then other units by name
     - `impact_share` is computed correctly, and is `null` when average monthly expenses are 0
     - contract: the new `run` and `suggestion` fields exist with the right types, in the documented order
+- **Schedule-aware tests (phase 3, level 0):**
+    - SZJA fixture (quarterly -400,000 schedule ending 2045, actuals about -482,000 a quarter): the `create` ends with the schedule, the recommended series is 0 after it (not the gap amount), and `schedules[]` lists -400,000 with MONTHLY/3
+    - a count-based schedule gives the date of its last occurrence as the end date; an open-ended one gives no end date
+    - a schedule ending inside the horizon gives `needs_review`; one that ended before the effective date is not listed
+    - a `create` with no expectation has `end_date: null` and `schedules: []`
+    - a split schedule shows only the amount of this unit's categories
+    - the impact invariant holds with rounding on and off, and the ordering follows the reported (rounded) impact
+    - contract: `end_date` and `schedules[]` exist with the right types
 - **Contract tests:**
     - two identical runs return identical keys
     - the endpoint writes nothing (no database changes after a call)
@@ -500,3 +527,6 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 3      | The chart's moving average counts history from the first period with an actual, but it still ends at the last complete month by today's date (L ends at `data_through`) and is computed at the chart's view granularity | Found in review: the line equals L only when `data_through` is the last complete month and the chart is shown at the unit's own granularity |
 | 2026-11-13 | 3      | The recommended series always assumes the top-ranked candidate and is not refetched after the user picks another row, hides or stops an item | The service computes one series per run; refetching per pick is deferred |
 | 2026-11-13 | 3      | Materiality floor off by default (config 0); suggestions ranked by monthly impact, with impact fields in the contract | In a user-initiated review the floor hid real persistent changes in small categories; ranking keeps large items first without hiding anything (owner) |
+| 2026-11-13 | 3      | A create that fills a gap next to schedules ends with the latest contributing schedule; a schedule ending inside the horizon gives needs_review | Without it, the gap budget outlives the schedule and the forecast drops after the schedule ends (owner's SZJA case) |
+| 2026-11-13 | 3      | Suggestions list contributing schedules with a link to their replace page; the schedules non-goal is reworded | A persistent gap next to a schedule often means the schedule amount is out of date; full adjust_schedule proposals are deferred to level 1 |
+| 2026-11-13 | 3      | monthly_impact and impact_share use the final rounded target | The impact must match the suggested amount |

@@ -43,3 +43,22 @@ Owner change request: the 0.5% materiality floor hid real, persistent changes in
 - **Phase 3, report page:** each recommendation shows the monthly impact (per month) and its share as a percent; the list keeps the server order. New strings (`Monthly impact`, `per month`, `:share of monthly expenses`) are in all four `/lang` files; fr, hu and pl are machine drafts for native-speaker review.
 - **Tests:** new cases in `BudgetSuggestionServiceTest.php` (small category suggests by default; none with the floor at 0.005; small `create`; ordering with quarterly ÷ 3; impact share and its `null` case; field order and types) and a contract line in `ReportApiBudgetSuggestionsTest.php`. No existing test asserted floor suppression, so none was removed.
 - **Not fixed, observed:** none.
+
+## Cross-phase change: schedule-aware fixes (2026-11-13, separate commit on this branch)
+Owner change request from the SZJA case (quarterly schedule of -400,000 to 2045, actuals about -482,000 a quarter): the detector proposed a `create` of -97,000 a quarter without an end date, so the recommended series dropped to -97,000 after the schedule ended; the schedule itself was not reachable from the panel; and the impact (-32,124 a month) came from the unrounded target while the suggested amount was rounded (-97,000, so -32,333). It touches code from phases 2a and 2b.
+
+- **2a, `BudgetSuggestionService`:**
+    - `loadExpectations()` keeps its single schedule query (now also eager loading `currency` and the payee accounts) and returns a third element: per category and schedule transaction the id, name, signed per-occurrence amount, currency, cadence and last occurrence (`scheduleEnd()`: UNTIL date, or the final occurrence for a count, via `RecurrenceRuleService`). No per-unit reloads.
+    - `evaluate()` collects a unit's contributing schedules (ended before the effective date: dropped). A `create` next to schedules gets the latest end as `end_date`; none if any is open-ended; `needs_review` if that end is before the horizon's last day. `replace` is unchanged.
+    - `monthly_impact` / `impact_share` now come from the final `suggested_amount`: `createProposal()` uses `round(delta, 2) ÷ m`, `replaceProposal()` uses `(suggested − current) × rate × Σ inflation multipliers ÷ horizon ÷ m` (a candidate-internal `impact_factor`, not output). The placeholders in `common` keep the documented key order. `target` stays unrounded evidence.
+    - `recommendedSeries()` projects a `create` as an unsaved `Budget` (frequency, interval, end date) and expands its `effectiveRrule()` through `RecurrenceRuleService` directly, not `BudgetService::projectOccurrences()`, whose cache key (`budget-occurrences:{id}:{updated_at}:…`) would collide for unsaved rows (null id and timestamp).
+    - New `suggestion` fields `end_date` and `schedules[]` (after `candidates`).
+- **2b:** `ReviewBudgetSuggestions` and `BudgetSuggestionsRequest` need nothing for this; `--json` and the endpoint pass the new fields through. The `mcp-integration.md` output notes are updated.
+- **Phase 3, report page:** `BudgetSuggestions.vue` shows the "Or adjust the schedule instead" block (name, amount, cadence, end, link to `transaction.open`/`replace` in a new tab, re-run note); `buildFormPrefill()` and `BudgetForm.applyPrefill()` carry `end_date` for a `create`. New strings (8) in all four `/lang` files; fr, hu and pl are machine drafts for native-speaker review.
+- **Tests:** nine new cases in `BudgetSuggestionServiceTest.php` (SZJA incl. series, count, open-ended, inside horizon, ended schedule, no expectation, split schedule, replace lists schedules, impact invariant with three biases) and a JS test for the end-date prefill. The `scheduleFor()` helper takes recurrence overrides and a second item. No existing test needed changes.
+- **Measurement ("Review all"):** dev data, user with 128 categories, 99 units, 63 suggestions: 21 queries, 1.9–2.1 s warm. Under the 5 s target.
+- **Not fixed, observed:**
+    - for a unit with a Budget row and a schedule, the whole gap goes to the Budget row (`replace`); the schedule is only listed
+    - a unit's schedules are assumed to share the unit's sign; a mixed-sign schedule just lists its signed amount
+    - `check-translations.php` warns that `from :date` and `New budget, suggested cadence: :cadence` are unused in code (not from this change)
+

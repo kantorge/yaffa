@@ -7,7 +7,10 @@ use App\Models\Account;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Enums\TransactionType;
 use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionSchedule;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -52,7 +55,7 @@ class BudgetSuggestionService
     ): array {
         $cfg = config('yaffa.budget_suggestions');
         $sensitivity = array_key_exists((string) $sensitivity, $cfg['sensitivity']) ? $sensitivity : $cfg['default_sensitivity'];
-        $bias = in_array($bias, ['neutral', 'conservative'], true) ? $bias : $cfg['default_bias'];
+        $bias = in_array($bias, ['neutral', 'conservative', 'conservative_rounded'], true) ? $bias : $cfg['default_bias'];
 
         $baseCurrency = $this->getBaseCurrency($user->id);
         if ($baseCurrency === null) {
@@ -83,7 +86,7 @@ class BudgetSuggestionService
         ];
         $c['avgMonthly'] = $this->averageMonthlyExpenses($c);
         $c['floor'] = $cfg['materiality_floor_share'] * $c['avgMonthly'];
-        [$c['budgets'], $c['scheduleMonths']] = $this->loadExpectations($user, $baseCurrency);
+        [$c['budgets'], $c['scheduleMonths'], $c['schedules']] = $this->loadExpectations($user, $baseCurrency);
 
         $units = [];
         $analysed = [];
@@ -215,9 +218,11 @@ class BudgetSuggestionService
     // ---------------------------------------------------------------- data loading
 
     /**
-     * Active Budget rows and active schedule cadences by category.
+     * Active Budget rows, active schedule cadences and per-schedule details, all by category.
+     * The schedule details (id, name, per-category amount, cadence, last occurrence) are read from
+     * the same single query, so no unit reloads a transaction.
      *
-     * @return array{0: array<int, Budget[]>, 1: array<int, int[]>}
+     * @return array{0: array<int, Budget[]>, 1: array<int, int[]>, 2: array<int, array<int, array<string, mixed>>>}
      */
     private function loadExpectations(User $user, Currency $baseCurrency): array
     {
@@ -231,20 +236,62 @@ class BudgetSuggestionService
             });
 
         $scheduleMonths = [];
-        Transaction::with(['transactionItems', 'transactionSchedule'])
+        $schedules = [];
+        Transaction::with(['transactionItems', 'transactionSchedule', 'currency', 'config.accountFrom', 'config.accountTo'])
             ->where('user_id', $user->id)
             ->byType('standard')
             ->isSchedule()
             ->whereHas('transactionSchedule', fn ($query) => $query->where('active', true))
             ->get()
-            ->each(function (Transaction $transaction) use (&$scheduleMonths) {
-                $months = $this->cadenceMonths($transaction->transactionSchedule->frequency, (int) $transaction->transactionSchedule->interval);
+            ->each(function (Transaction $transaction) use (&$scheduleMonths, &$schedules, $baseCurrency) {
+                $schedule = $transaction->transactionSchedule;
+                $months = $this->cadenceMonths($schedule->frequency, (int) $schedule->interval);
+                $sign = $transaction->transaction_type->amountMultiplier() ?? 1;
+                $detail = $transaction->config;
+                $payee = $detail instanceof TransactionDetailStandard
+                    ? ($transaction->transaction_type === TransactionType::WITHDRAWAL ? $detail->accountTo : $detail->accountFrom)
+                    : null;
+                $name = $payee?->name ?: ($transaction->comment ?: '#' . $transaction->id);
+                $end = $this->scheduleEnd($schedule);
+                $currency = $transaction->currency ?? $baseCurrency;
+
                 foreach ($transaction->transactionItems as $item) {
-                    $scheduleMonths[(int) $item->category_id][] = $months;
+                    $categoryId = (int) $item->category_id;
+                    $scheduleMonths[$categoryId][] = $months;
+                    // One entry per schedule and category: split items in the same category add up
+                    $entry = $schedules[$categoryId][$transaction->id] ?? [
+                        'transaction_id' => $transaction->id,
+                        'name' => $name,
+                        'amount' => 0.0,
+                        'currency' => $this->currencyArray($currency),
+                        'cadence' => ['frequency' => $schedule->frequency, 'interval' => (int) $schedule->interval],
+                        'end' => $end,
+                    ];
+                    $entry['amount'] += $item->amount->getAmount()->toFloat() * $sign;
+                    $schedules[$categoryId][$transaction->id] = $entry;
                 }
             });
 
-        return [$budgets, $scheduleMonths];
+        return [$budgets, $scheduleMonths, $schedules];
+    }
+
+    /**
+     * Date of the last occurrence of a schedule: its end date, or for a count the date of the
+     * final occurrence. Null when the schedule is open-ended.
+     */
+    private function scheduleEnd(TransactionSchedule $schedule): ?Carbon
+    {
+        $rrule = $schedule->effectiveRrule();
+        $rule = $this->recurrenceRuleService->buildRule($schedule->start_date, $rrule);
+        if ($rule->getCount() !== null) {
+            $last = $this->recurrenceRuleService
+                ->getRecurrenceBetween($schedule->start_date, $rrule, $schedule->start_date, $schedule->start_date->copy()->addYears(200))
+                ->last();
+
+            return $last ? Carbon::instance($last->getStart()) : null;
+        }
+
+        return $rule->getUntil() ? Carbon::instance($rule->getUntil()) : null;
     }
 
     /**
@@ -395,7 +442,7 @@ class BudgetSuggestionService
 
         // Direction and bias
         $neutral = $this->isNeutral($unit['members'], $expected, $effective, $horizon * $m, $windowStart, $last + $m - 1, $c);
-        $conservative = $c['bias'] === 'conservative' && !$neutral;
+        $conservative = $c['bias'] !== 'neutral' && !$neutral;
         $unfavorable = $gap < 0;
         $factor = $conservative ? ($unfavorable ? $cfg['bias']['unfavorable_factor'] : $cfg['bias']['favorable_factor']) : 1.0;
         $tolerance = $c['sens']['tolerance'] * $factor;
@@ -428,25 +475,74 @@ class BudgetSuggestionService
         }
 
         $basis = $expected !== 0.0 ? $expected : $level;
-        $monthlyImpact = ($target - $expected) / $m;
         $common = [
             'effective_date' => $this->date($effective),
             'level' => round($level, 2),
             'expected' => round($expected, 2),
             'target' => round($target, 2),
-            'monthly_impact' => round($monthlyImpact, 2),
-            'impact_share' => $c['avgMonthly'] > 0 ? round(abs($monthlyImpact) / $c['avgMonthly'], 4) : null,
+            'monthly_impact' => null,
+            'impact_share' => null,
             'direction' => $neutral ? 'neutral' : ($basis < 0 ? 'expense' : 'income'),
             'persistence' => ['k' => $matches, 'n' => $n],
             'evidence' => array_reverse($evidence),
         ];
 
-        $candidates = $isNew ? [] : $this->candidates($rows, $effective, $horizon, $m, $target - $expected, $c);
+        // Schedules that still produce occurrences from the effective date on
+        $effectiveDate = Carbon::parse($this->date($effective));
+        $schedules = collect($unit['members'])
+            ->flatMap(fn ($id) => $c['schedules'][$id] ?? [])
+            ->groupBy('transaction_id')
+            ->map(fn ($entries) => array_merge($entries[0], ['amount' => $entries->sum('amount')]))
+            ->filter(fn ($schedule) => $schedule['end'] === null || $schedule['end']->gte($effectiveDate))
+            ->values()
+            ->all();
+
+        $candidates = $isNew ? [] : $this->candidates($rows, $effective, $horizon, $m, $target - $expected, $c, $conservative);
         if ($candidates === []) {
-            return $this->createProposal($unit, $m, $g, $isNew, $target - $expected, $common, $c);
+            // A row that fills the gap next to schedules ends with the last of them. If that end falls
+            // inside the horizon, E changes within it and one gap amount would be wrong.
+            $endDate = null;
+            if ($schedules !== [] && !in_array(null, array_column($schedules, 'end'), true)) {
+                $endDate = collect($schedules)->max('end');
+                if ($endDate->lt(Carbon::parse($this->date($effective + $horizon * $m))->subDay())) {
+                    return $this->verdict('needs_review', $m);
+                }
+            }
+
+            return $this->createProposal($unit, $m, $g, $isNew, $target - $expected, $common, $c, $conservative, $schedules, $endDate);
         }
 
-        return $this->replaceProposal($unit, $m, $candidates, $common, $c);
+        return $this->replaceProposal($unit, $m, $candidates, $common, $c, $schedules);
+    }
+
+    /**
+     * Impact fields from the final proposed amount: the monthly change in the base currency of
+     * (suggested - current) over the horizon's occurrences, so they always match suggested_amount.
+     *
+     * @return array{monthly_impact: float, impact_share: float|null}
+     */
+    private function impact(float $monthly, array $c): array
+    {
+        return [
+            'monthly_impact' => round($monthly, 2),
+            'impact_share' => $c['avgMonthly'] > 0 ? round(abs($monthly) / $c['avgMonthly'], 4) : null,
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $schedules
+     * @return array<int, array<string, mixed>>
+     */
+    private function scheduleOutput(array $schedules): array
+    {
+        return array_map(fn ($s) => [
+            'transaction_id' => $s['transaction_id'],
+            'name' => $s['name'],
+            'amount' => round($s['amount'], 2),
+            'currency' => $s['currency'],
+            'cadence' => $s['cadence'],
+            'end_date' => $s['end']?->toDateString(),
+        ], $schedules);
     }
 
     /**
@@ -542,7 +638,7 @@ class BudgetSuggestionService
      * @param Collection<int, Budget> $rows
      * @return array<int, array<string, mixed>>
      */
-    private function candidates(Collection $rows, int $effective, int $horizon, int $m, float $deltaPerPeriod, array $c): array
+    private function candidates(Collection $rows, int $effective, int $horizon, int $m, float $deltaPerPeriod, array $c, bool $round = false): array
     {
         $from = Carbon::parse($this->date($effective));
         $to = Carbon::parse($this->date($effective + $horizon * $m))->subDay();
@@ -564,6 +660,9 @@ class BudgetSuggestionService
                 * $this->inflationCalculator->applyAnnualRate(1.0, $budget->inflation, $budget->start_date, $from);
             $occurrenceDelta = $deltaPerPeriod * $horizon / $multipliers / $rate;
             $suggested = $current + $occurrenceDelta;
+            if ($round && $c['bias'] === 'conservative_rounded') {
+                $suggested = $this->roundDown($suggested, $current);
+            }
 
             $candidates[] = [
                 'budget' => $budget,
@@ -576,6 +675,7 @@ class BudgetSuggestionService
                 'suggested_amount' => $suggested * $current > 0 ? round($suggested, 2) : null,
                 'currency' => $this->currencyArray($currency),
                 'weight' => abs($current * $occurrences * $rate),
+                'impact_factor' => $rate * $multipliers / $horizon / $m,
             ];
         }
 
@@ -585,7 +685,30 @@ class BudgetSuggestionService
         return $candidates;
     }
 
-    private function replaceProposal(array $unit, int $m, array $candidates, array $common, array $c): array
+    /**
+     * Rounds toward the unfavorable side (down: a bigger expense, a smaller income) to the
+     * roundness of the baseline: its trailing zeros, but never finer than two significant
+     * digits of the amount. Without a baseline (new budget) it is two significant digits.
+     * An amount that is not round to begin with is kept to the unit.
+     */
+    private function roundDown(float $amount, ?float $baseline): float
+    {
+        $digits = mb_strlen((string) (int) floor(abs($amount)));
+        $step = 10 ** max($digits - 2, 0);
+        if ($baseline !== null) {
+            $whole = (int) round(abs($baseline));
+            $zeros = 0;
+            while ($whole > 0 && $whole % 10 === 0) {
+                $whole = intdiv($whole, 10);
+                $zeros++;
+            }
+            $step = min($step, 10 ** $zeros);
+        }
+
+        return floor($amount / $step) * $step;
+    }
+
+    private function replaceProposal(array $unit, int $m, array $candidates, array $common, array $c, array $schedules): array
     {
         $top = $candidates[0];
         $granularity = array_search($m, self::MONTHS, true);
@@ -593,6 +716,7 @@ class BudgetSuggestionService
             return $this->verdict('needs_review', $m);
         }
 
+        $common = array_replace($common, $this->impact(($top['suggested_amount'] - $top['current_amount']) * $top['impact_factor'], $c));
         $suggestion = $common + [
             'proposal_type' => 'replace',
             'budget_id' => $top['budget_id'],
@@ -600,7 +724,9 @@ class BudgetSuggestionService
             'suggested_amount' => $top['suggested_amount'],
             'currency' => $top['currency'],
             'cadence' => $top['cadence'],
-            'candidates' => array_map(fn ($cand) => array_diff_key($cand, ['budget' => 1, 'weight' => 1]), $candidates),
+            'candidates' => array_map(fn ($cand) => array_diff_key($cand, ['budget' => 1, 'weight' => 1, 'impact_factor' => 1]), $candidates),
+            'end_date' => null,
+            'schedules' => $this->scheduleOutput($schedules),
         ];
         $suggestion = ['key' => $this->key($unit['root']->id, $suggestion, $c)] + $suggestion;
 
@@ -615,13 +741,17 @@ class BudgetSuggestionService
     /**
      * A new account-agnostic row in base currency, absorbing the gap to the target.
      */
-    private function createProposal(array $unit, int $m, string $g, bool $isNew, float $delta, array $common, array $c): array
+    private function createProposal(array $unit, int $m, string $g, bool $isNew, float $delta, array $common, array $c, bool $round, array $schedules, ?Carbon $endDate): array
     {
+        if ($round && $c['bias'] === 'conservative_rounded') {
+            $delta = $this->roundDown($delta, null);
+        }
         if (abs(round($delta, 2)) === 0.0) {
             return $this->verdict('no_drift', $m);
         }
 
         $cadence = $m === 12 ? ['frequency' => 'YEARLY', 'interval' => 1] : ['frequency' => 'MONTHLY', 'interval' => $m];
+        $common = array_replace($common, $this->impact(round($delta, 2) / $m, $c));
         $suggestion = $common + [
             'proposal_type' => 'create',
             'budget_id' => null,
@@ -630,6 +760,8 @@ class BudgetSuggestionService
             'currency' => $this->currencyArray($c['base']),
             'cadence' => $cadence,
             'candidates' => [],
+            'end_date' => $endDate?->toDateString(),
+            'schedules' => $this->scheduleOutput($schedules),
         ];
         $suggestion = ['key' => $this->key($unit['root']->id, $suggestion, $c)] + $suggestion;
 
@@ -637,7 +769,7 @@ class BudgetSuggestionService
             'verdict' => 'suggestion',
             'granularity' => $g,
             'suggestion' => $suggestion,
-            'proposal' => ['type' => 'create', 'cadence' => $cadence, 'amount' => round($delta, 2), 'effective' => $common['effective_date']],
+            'proposal' => ['type' => 'create', 'cadence' => $cadence, 'amount' => round($delta, 2), 'effective' => $common['effective_date'], 'end_date' => $endDate],
         ];
     }
 
@@ -700,7 +832,12 @@ class BudgetSuggestionService
             } else {
                 $currency = $c['base'];
                 $inflation = null;
-                $rrule = 'FREQ=' . $proposal['cadence']['frequency'] . ';INTERVAL=' . $proposal['cadence']['interval'];
+                // Unsaved row: its RRULE is composed by the model. Not projected via BudgetService, whose cache key needs an id
+                $rrule = (new Budget([
+                    'frequency' => $proposal['cadence']['frequency'],
+                    'interval' => $proposal['cadence']['interval'],
+                    'end_date' => $proposal['end_date'],
+                ]))->effectiveRrule();
             }
 
             // A replacement keeps the old row's recurrence phase and count; a new row starts at the effective date

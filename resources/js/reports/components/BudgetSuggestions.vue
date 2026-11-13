@@ -42,6 +42,9 @@
           >
             <option value="neutral">{{ __('Neutral') }}</option>
             <option value="conservative">{{ __('Conservative') }}</option>
+            <option value="conservative_rounded">
+              {{ __('Conservative and rounded') }}
+            </option>
           </select>
         </div>
         <div class="col-lg-5 text-lg-end">
@@ -51,6 +54,7 @@
             :disabled="loading"
             @click="run('selected')"
           >
+            <i class="fa fa-fw fa-list-check"></i>
             {{ __('Check selected categories') }}
           </button>
           <button
@@ -59,6 +63,7 @@
             :disabled="loading"
             @click="run('all')"
           >
+            <i class="fa fa-fw fa-magnifying-glass"></i>
             {{ __('Review all categories') }}
           </button>
         </div>
@@ -96,127 +101,215 @@
             class="list-group-item"
             data-testid="suggestion"
           >
-            <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
               <button
                 type="button"
-                class="btn btn-link p-0 fw-bold text-start"
-                :title="__('Show this category on the chart')"
-                @click="$emit('focus-category', unit.category_id)"
+                class="btn btn-link p-0 text-reset text-decoration-none text-start flex-grow-1 d-flex flex-wrap align-items-center column-gap-3"
+                :aria-expanded="isExpanded(unit)"
+                data-testid="suggestion-toggle"
+                @click="toggle(unit)"
               >
-                {{ unit.category_name }}
-              </button>
-              <div>
-                <span class="text-muted">{{
-                  money(shown(unit).current_amount, shown(unit).currency)
-                }}</span>
-                <i class="fa fa-arrow-right mx-1"></i>
-                <strong>{{
-                  money(shown(unit).suggested_amount, shown(unit).currency)
-                }}</strong>
-                <span class="text-muted small">
-                  {{
-                    __('from :date', {
-                      date: shortDate(unit.suggestion.effective_date),
-                    })
-                  }}
+                <span class="fw-bold">
+                  <i
+                    class="fa fa-fw text-muted me-1"
+                    :class="
+                      isExpanded(unit) ? 'fa-angle-down' : 'fa-angle-right'
+                    "
+                  ></i
+                  >{{ unit.category_name }}
                 </span>
-              </div>
-            </div>
-
-            <div class="small text-muted mt-1">
-              {{ __('Recent level') }}:
-              {{ money(unit.suggestion.level, base) }} · {{ __('Expected') }}:
-              {{ money(unit.suggestion.expected, base) }} ({{
-                __('per :period', { period: periodLabel(unit.granularity) })
-              }}) ·
-              {{
-                __(':k of :n periods', {
-                  k: unit.suggestion.persistence.k,
-                  n: unit.suggestion.persistence.n,
-                })
-              }}
-              ·
-              {{
-                __('data through :month', { month: result.run.data_through })
-              }}
-            </div>
-            <div class="small text-muted" data-testid="suggestion-impact">
-              {{ __('Monthly impact') }}:
-              {{ money(unit.suggestion.monthly_impact, base) }}
-              {{ __('per month') }}
-              <span v-if="unit.suggestion.impact_share !== null">
-                ({{
-                  __(':share of monthly expenses', {
-                    share: percent(unit.suggestion.impact_share),
-                  })
-                }})
-              </span>
-            </div>
-            <div
-              v-if="unit.suggestion.proposal_type === 'create'"
-              class="small text-muted"
-            >
-              {{
-                __('New budget, suggested cadence: :cadence', {
-                  cadence: periodLabel(unit.granularity),
-                })
-              }}
-              <span v-if="aggregationDiffers(unit)">
-                ·
-                {{
-                  __(
-                    "Differs from the category's default aggregation, which is not changed.",
-                  )
-                }}
-              </span>
-            </div>
-
-            <div v-if="candidatesOf(unit).length > 1" class="mt-2">
-              <label class="form-label small mb-0">{{
-                __('Budget row to replace')
-              }}</label>
-              <select
-                v-model="picked[unit.suggestion.key]"
-                class="form-select form-select-sm"
-              >
-                <option
-                  v-for="candidate in candidatesOf(unit)"
-                  :key="candidate.budget_id"
-                  :value="candidate.budget_id"
-                >
-                  {{ candidate.account_name || __('All accounts') }}:
-                  {{ money(candidate.current_amount, candidate.currency) }} →
-                  {{ money(candidate.suggested_amount, candidate.currency) }}
-                </option>
-              </select>
-            </div>
-
-            <div class="mt-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-success me-1"
-                :disabled="
-                  unit.suggestion.proposal_type === 'replace' &&
-                  candidatesOf(unit).length === 0
-                "
-                @click="apply(unit)"
-              >
-                {{ __('Create new budget period') }}
+                <span class="ms-auto text-nowrap">
+                  <span class="text-muted">{{
+                    money(shown(unit).current_amount, shown(unit).currency)
+                  }}</span>
+                  <i class="fa fa-arrow-right mx-1"></i>
+                  <strong>{{
+                    money(shown(unit).suggested_amount, shown(unit).currency)
+                  }}</strong>
+                </span>
               </button>
               <button
                 type="button"
-                class="btn btn-sm btn-outline-secondary me-1"
+                class="btn-close"
+                :title="__('Hide')"
+                :aria-label="__('Hide')"
                 @click="hide(unit)"
-              >
-                {{ __('Hide') }}
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger"
-                @click="stopMonitoring(unit)"
-              >
-                {{ __('Stop monitoring this category') }}
-              </button>
+              ></button>
+            </div>
+
+            <div v-if="isExpanded(unit)" class="mt-2 ps-4">
+              <div class="row g-3">
+                <div
+                  :class="
+                    unit.suggestion.schedules.length > 0 ? 'col-lg-7' : 'col-12'
+                  "
+                >
+                  <dl class="row small mb-2">
+                    <dt class="col-sm-4 col-lg-3 fw-normal text-muted">
+                      {{ __('Recent level') }}
+                    </dt>
+                    <dd class="col-sm-8 col-lg-9 mb-1 fw-bold">
+                      {{ money(unit.suggestion.level, base) }}
+                      <span class="fw-normal text-muted">
+                        ({{
+                          __('per :period', {
+                            period: periodLabel(unit.granularity),
+                          })
+                        }})
+                      </span>
+                    </dd>
+                    <dt class="col-sm-4 col-lg-3 fw-normal text-muted">
+                      {{ __('Expected') }}
+                    </dt>
+                    <dd class="col-sm-8 col-lg-9 mb-1 fw-bold">
+                      {{ money(unit.suggestion.expected, base) }}
+                    </dd>
+                    <dt class="col-sm-4 col-lg-3 fw-normal text-muted">
+                      {{ __('Monthly impact') }}
+                    </dt>
+                    <dd
+                      class="col-sm-8 col-lg-9 mb-1"
+                      data-testid="suggestion-impact"
+                    >
+                      <strong>{{
+                        money(unit.suggestion.monthly_impact, base)
+                      }}</strong>
+                      {{ __('per month') }}
+                      <span
+                        v-if="unit.suggestion.impact_share !== null"
+                        class="text-muted"
+                      >
+                        ({{
+                          __(':share of monthly expenses', {
+                            share: percent(unit.suggestion.impact_share),
+                          })
+                        }})
+                      </span>
+                    </dd>
+                    <dt class="col-sm-4 col-lg-3 fw-normal text-muted">
+                      {{ __('Start date') }}
+                    </dt>
+                    <dd class="col-sm-8 col-lg-9 mb-1 fw-bold">
+                      {{ shortDate(unit.suggestion.effective_date) }}
+                    </dd>
+                    <template v-if="unit.suggestion.proposal_type === 'create'">
+                      <dt class="col-sm-4 col-lg-3 fw-normal text-muted">
+                        {{ __('Cadence') }}
+                      </dt>
+                      <dd class="col-sm-8 col-lg-9 mb-1">
+                        <strong>{{ periodLabel(unit.granularity) }}</strong>
+                        <span
+                          v-if="aggregationDiffers(unit)"
+                          class="text-muted"
+                        >
+                          ·
+                          {{
+                            __(
+                              "Differs from the category's default aggregation, which is not changed.",
+                            )
+                          }}
+                        </span>
+                      </dd>
+                    </template>
+                  </dl>
+                  <div v-if="candidatesOf(unit).length > 1" class="mb-2">
+                    <label class="form-label small mb-0">{{
+                      __('Budget row to replace')
+                    }}</label>
+                    <select
+                      v-model="picked[unit.suggestion.key]"
+                      class="form-select form-select-sm"
+                    >
+                      <option
+                        v-for="candidate in candidatesOf(unit)"
+                        :key="candidate.budget_id"
+                        :value="candidate.budget_id"
+                      >
+                        {{ candidate.account_name || __('All accounts') }}:
+                        {{
+                          money(candidate.current_amount, candidate.currency)
+                        }}
+                        →
+                        {{
+                          money(candidate.suggested_amount, candidate.currency)
+                        }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-success"
+                      :disabled="
+                        unit.suggestion.proposal_type === 'replace' &&
+                        candidatesOf(unit).length === 0
+                      "
+                      @click="apply(unit)"
+                    >
+                      <i class="fa fa-fw fa-plus"></i>
+                      {{ __('Create new budget period') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      @click="$emit('focus-category', unit.category_id)"
+                    >
+                      <i class="fa fa-fw fa-chart-line"></i>
+                      {{ __('Show this category on the chart') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="stopMonitoring(unit)"
+                    >
+                      <i class="fa fa-fw fa-bell-slash"></i>
+                      {{ __('Stop monitoring this category') }}
+                    </button>
+                  </div>
+                </div>
+                <div
+                  v-if="unit.suggestion.schedules.length > 0"
+                  class="col-lg-5"
+                >
+                  <div class="border rounded p-2 small h-100">
+                    <div class="fw-semibold mb-1">
+                      {{ __('Or adjust the schedule instead') }}
+                    </div>
+                    <ul class="list-unstyled mb-1">
+                      <li
+                        v-for="schedule in unit.suggestion.schedules"
+                        :key="schedule.transaction_id"
+                      >
+                        {{ schedule.name }}:
+                        {{ money(schedule.amount, schedule.currency) }},
+                        {{ cadenceText(schedule.cadence) }}
+                        <span v-if="schedule.end_date">
+                          ({{
+                            __('until :date', {
+                              date: shortDate(schedule.end_date),
+                            })
+                          }})
+                        </span>
+                        <a
+                          :href="scheduleReplaceUrl(schedule)"
+                          target="_blank"
+                          rel="noopener"
+                          class="ms-1"
+                        >
+                          {{ __('Replace this schedule') }}
+                          <i class="fa fa-fw fa-up-right-from-square"></i>
+                        </a>
+                      </li>
+                    </ul>
+                    <div class="text-muted">
+                      {{
+                        __('After changing a schedule, run the check again.')
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </li>
         </ul>
@@ -227,7 +320,33 @@
             <div class="fw-bold small">
               {{ verdictLabel(group.verdict) }} ({{ group.units.length }})
             </div>
-            <div class="small text-muted">
+            <div v-if="group.verdict === 'no_drift'" class="small text-muted">
+              <div
+                v-for="unit in group.units"
+                :key="unit.category_id"
+                class="d-flex align-items-center gap-2 mb-1"
+                data-testid="no-drift-unit"
+              >
+                <span>{{ unit.category_name }}</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary py-0"
+                  @click="$emit('focus-category', unit.category_id)"
+                >
+                  <i class="fa fa-fw fa-chart-line"></i>
+                  {{ __('Show this category on the chart') }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger py-0"
+                  @click="stopMonitoring(unit)"
+                >
+                  <i class="fa fa-fw fa-bell-slash"></i>
+                  {{ __('Stop monitoring this category') }}
+                </button>
+              </div>
+            </div>
+            <div v-else class="small text-muted">
               {{ group.units.map((unit) => unit.category_name).join(', ') }}
             </div>
           </div>
@@ -262,8 +381,9 @@
       getDefaultAggregation: { type: Function, required: true },
     },
 
-    // focus-category: the user clicked a recommendation; apply: open the prefilled budget form;
-    // result: a run finished (series may be null)
+    // focus-category: the user asked to show a category on the chart; apply: open the prefilled budget form;
+    // result: a run finished (series may be null); reload is set when the page should also
+    // load the chart for the same categories
     emits: ['focus-category', 'apply', 'result'],
 
     data() {
@@ -277,6 +397,10 @@
         error: null,
         result: null,
         hidden: [],
+        // suggestion key => open (the list starts folded)
+        expanded: {},
+        // categories whose monitoring was switched off from this list
+        stopped: [],
         // suggestion key => picked candidate budget_id
         picked: {},
         // the unit whose form is open, dropped from the list once the budget is saved
@@ -291,11 +415,17 @@
       suggestions() {
         return (this.result?.units || []).filter(
           (unit) =>
-            unit.suggestion && !this.hidden.includes(unit.suggestion.key),
+            unit.suggestion &&
+            !this.hidden.includes(unit.suggestion.key) &&
+            !this.stopped.includes(unit.category_id),
         );
       },
       groups() {
-        return groupUnitsByVerdict(this.result?.units || []);
+        return groupUnitsByVerdict(
+          (this.result?.units || []).filter(
+            (unit) => !this.stopped.includes(unit.category_id),
+          ),
+        );
       },
     },
 
@@ -330,6 +460,8 @@
           .then(({ data }) => {
             this.result = data;
             this.hidden = [];
+            this.expanded = {};
+            this.stopped = [];
             this.picked = {};
             data.units.forEach((unit) => {
               if (unit.suggestion) {
@@ -340,6 +472,7 @@
             this.$emit('result', {
               series: data.series,
               categoryIds: mode === 'all' ? null : categoryIds.map(String),
+              reload: mode !== 'all',
             });
           })
           .catch((error) => {
@@ -429,6 +562,14 @@
         return true;
       },
 
+      isExpanded(unit) {
+        return !!this.expanded[unit.suggestion.key];
+      },
+
+      toggle(unit) {
+        this.expanded[unit.suggestion.key] = !this.isExpanded(unit);
+      },
+
       hide(unit) {
         this.hidden.push(unit.suggestion.key);
       },
@@ -442,7 +583,7 @@
             { calculate_budget_suggestions: false },
           )
           .then(() => {
-            this.hide(unit);
+            this.stopped.push(unit.category_id);
             toastHelpers.showSuccessToast(
               __(
                 'Budget suggestions are off for :category. Switch them back on in the category settings.',
@@ -483,6 +624,30 @@
             );
       },
       shortDate: (date) => toFormattedShortDate(date),
+      cadenceText(cadence) {
+        const n = cadence.interval;
+        const every = {
+          DAILY: __('Every :n days', { n }),
+          WEEKLY: __('Every :n weeks', { n }),
+          MONTHLY: __('Every :n months', { n }),
+          YEARLY: __('Every :n years', { n }),
+        };
+        const single = {
+          DAILY: __('Daily'),
+          WEEKLY: __('Weekly'),
+          MONTHLY: __('Monthly'),
+          YEARLY: __('Yearly'),
+        };
+        return (
+          (n === 1 ? single : every)[cadence.frequency] || cadence.frequency
+        );
+      },
+      scheduleReplaceUrl(schedule) {
+        return window.route('transaction.open', {
+          transaction: schedule.transaction_id,
+          action: 'replace',
+        });
+      },
       periodLabel(granularity) {
         return (
           { month: __('Month'), quarter: __('Quarter'), year: __('Year') }[

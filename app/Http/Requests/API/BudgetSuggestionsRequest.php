@@ -28,7 +28,7 @@ class BudgetSuggestionsRequest extends FormRequest
             'all' => ['nullable', 'boolean'],
             'data_through' => ['nullable', 'date_format:Y-m'],
             'sensitivity' => ['nullable', Rule::in(array_keys(config('yaffa.budget_suggestions.sensitivity')))],
-            'bias' => ['nullable', Rule::in(['neutral', 'conservative'])],
+            'bias' => ['nullable', Rule::in(['neutral', 'conservative', 'conservative_rounded'])],
         ];
     }
 

@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 
-#[Signature('budget-suggestions:review {user : User ID} {--through= : Data-through month (Y-m)} {--sensitivity= : low|medium|high} {--bias= : neutral|conservative} {--json : Print the service result as JSON} {--backtest : Re-run for each of the last 24 months and count suggestions per category per year}')]
+#[Signature('budget-suggestions:review {user : User ID} {--through= : Data-through month (Y-m)} {--sensitivity= : low|medium|high} {--bias= : neutral|conservative|conservative_rounded} {--json : Print the service result as JSON} {--backtest : Re-run for each of the last 24 months and count suggestions per category per year}')]
 #[Description('Review all budgets of a user against recent actuals (the same result as the budget-suggestions API endpoint)')]
 class ReviewBudgetSuggestions extends Command
 {
@@ -41,8 +41,8 @@ class ReviewBudgetSuggestions extends Command
 
             return Command::FAILURE;
         }
-        if ($bias !== null && ! in_array($bias, ['neutral', 'conservative'], true)) {
-            $this->error('--bias must be one of: neutral, conservative');
+        if ($bias !== null && ! in_array($bias, ['neutral', 'conservative', 'conservative_rounded'], true)) {
+            $this->error('--bias must be one of: neutral, conservative, conservative_rounded');
 
             return Command::FAILURE;
         }

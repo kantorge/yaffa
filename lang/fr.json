@@ -1879,6 +1879,7 @@
     "Estimate": "Estimation",
     "Neutral": "Neutre",
     "Conservative": "Prudente",
+    "Conservative and rounded": "Prudente et arrondie",
     "Check selected categories": "Vérifier les catégories sélectionnées",
     "Review all categories": "Examiner toutes les catégories",
     "Pick the month your data is complete through, then check the selected categories or review all of them. Nothing is changed until you create a budget period.": "Choisissez le mois jusqu'auquel vos données sont complètes, puis vérifiez les catégories sélectionnées ou examinez-les toutes. Rien n'est modifié tant que vous ne créez pas de période budgétaire.",
@@ -1888,8 +1889,6 @@
     "Recent level": "Niveau récent",
     "Expected": "Attendu",
     "per :period": "par :period",
-    ":k of :n periods": ":k périodes sur :n",
-    "data through :month": "données jusqu'à :month",
     "New budget, suggested cadence: :cadence": "Nouveau budget, périodicité suggérée : :cadence",
     "Differs from the category's default aggregation, which is not changed.": "Diffère de l'agrégation par défaut de la catégorie, qui n'est pas modifiée.",
     "Budget row to replace": "Ligne de budget à remplacer",
@@ -1915,5 +1914,13 @@
     "Provide either category_ids or all=1.": "Fournissez soit category_ids, soit all=1.",
     "Monthly impact": "Impact mensuel",
     "per month": "par mois",
-    ":share of monthly expenses": ":share des dépenses mensuelles"
+    ":share of monthly expenses": ":share des dépenses mensuelles",
+    "Or adjust the schedule instead": "Ou ajuster plutôt la planification",
+    "Replace this schedule": "Remplacer cette planification",
+    "After changing a schedule, run the check again.": "Après avoir modifié une planification, relancez la vérification.",
+    "Every :n days": "Tous les :n jours",
+    "Every :n weeks": "Toutes les :n semaines",
+    "Every :n months": "Tous les :n mois",
+    "Every :n years": "Tous les :n ans",
+    "until :date": "jusqu'au :date"
 }
